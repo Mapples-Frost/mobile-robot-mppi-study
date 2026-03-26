@@ -1,2 +1,26 @@
-# mobile-robot-mppi-study
-A study repo for MPPI (Model Predictive Path Integral, 模型预测路径积分控制) in mobile robot navigation and obstacle avoidance, including learning notes, algorithm implementation, and experiment records.
+# Mobile Robot MPPI Study
+
+## 项目简介
+本项目用于学习和实现二维移动机器人导航避障中的 MPPI（Model Predictive Path Integral，模型预测路径积分控制）算法，并在此基础上尝试进行采样策略、代价函数或先验策略的改进。
+
+## 当前阶段
+- [ ] 搭建二维仿真环境
+- [ ] 实现机器人运动学模型
+- [ ] 实现 vanilla MPPI
+- [ ] 设计改进版 MPPI
+- [ ] 完成实验对比
+
+## 项目结构
+- `docs/`：路线图、论文笔记、学习记录
+- `src/`：环境、模型、规划器、代价函数等源码
+- `experiments/`：实验脚本、配置与日志
+- `results/`：图像、动画、表格
+- `reports/`：周报与阶段总结
+
+## 本周目标
+1. 建立项目仓库与目录结构
+2. 搭建二维环境与障碍物可视化
+3. 实现简单机器人状态更新
+
+## 研究问题
+如何在二维移动机器人避障任务中，利用 MPPI（Model Predictive Path Integral，模型预测路径积分控制）及其改进策略，提高规划效率、成功率与轨迹质量？

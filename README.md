@@ -25,8 +25,8 @@ Learning and implementing MPPI for mobile robot navigation and obstacle avoidanc
 - [x] 实现多候选控制比较
 - [x] 从单个控制采样推进到控制序列采样
 - [x] 理解并实现 weighted update（加权更新）原型
-- [ ] 串起 receding horizon（滚动时域）主循环
-- [ ] 跑通 vanilla MPPI baseline
+- [x] 串起 receding horizon（滚动时域）主循环
+- [x] 跑通 vanilla MPPI baseline
 - [ ] 开始系统整理实验结果与论文笔记
 
 ### 当前暂时不做

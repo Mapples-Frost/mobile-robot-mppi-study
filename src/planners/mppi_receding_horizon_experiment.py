@@ -201,14 +201,24 @@ def trajectory_cost(trajectory, control_sequence, goal, obstacles, robot_radius,
         total_cost += 0.01 * (omega ** 2)
 
         # 4. 靠障碍太近 / 碰撞
+        safe_clearance = 0.70
+        danger_clearance = 0.20
+
         for obstacle in obstacles:
             clearance = obstacle_clearance(x, y, obstacle, robot_radius)
 
             if clearance <= 0.0:
                 collided = True
-                total_cost += 10000.0
-            elif clearance < 0.35:
-                total_cost += 20.0 * (0.8 - clearance) ** 2
+                total_cost += 20000.0
+                break
+
+            # 第一层：进入安全缓冲区就开始罚
+            if clearance < safe_clearance:
+                total_cost += 80.0 * (safe_clearance - clearance) ** 2
+
+            # 第二层：进入危险区后，再加更强的 barrier 惩罚
+            if clearance < danger_clearance:
+                total_cost += 400.0 * (danger_clearance - clearance) ** 2
 
         # 5. 边界惩罚
         total_cost += boundary_penalty(x, y, bounds)
@@ -221,6 +231,15 @@ def trajectory_cost(trajectory, control_sequence, goal, obstacles, robot_radius,
     final_desired_heading = math.atan2(goal_y - final_y, goal_x - final_x)
     final_heading_error = abs(wrap_angle(final_desired_heading - final_theta))
     total_cost += 2.0 * final_heading_error
+
+    final_min_clearance = float("inf")
+    for obstacle in obstacles:
+        clearance = obstacle_clearance(final_x, final_y, obstacle, robot_radius)
+        if clearance < final_min_clearance:
+            final_min_clearance = clearance
+
+    if final_min_clearance < 0.70:
+        total_cost += 120.0 * (0.70 - final_min_clearance) ** 2
 
     # 7. 控制变化不平滑
     for i in range(1, len(control_sequence)):
@@ -316,6 +335,19 @@ def compute_min_clearance(trajectory, obstacles, robot_radius):
 
     return min_clearance
 
+def select_top_k_trajectories(sampled_trajectories, costs, k=5):
+    """
+    从当前这一步的所有候选轨迹里，选出 cost 最小的前 k 条轨迹。
+    返回值是一个 trajectory 列表。
+    """
+    if not sampled_trajectories or not costs:
+        return []
+
+    sorted_indices = sorted(range(len(costs)), key=lambda i: costs[i])
+    top_k_indices = sorted_indices[:k]
+
+    top_k_trajectories = [sampled_trajectories[i] for i in top_k_indices]
+    return top_k_trajectories
 
 def plot_result(
     executed_trajectory,
@@ -329,6 +361,9 @@ def plot_result(
     horizon=None,
     num_samples=None,
     temperature=None,
+    use_goal_warm_start=False,
+    top_k_first_step_trajectories=None,
+    top_k_last_step_trajectories=None,
 ):
     """画图并保存结果。"""
     fig, ax = plt.subplots(figsize=(8, 6))
@@ -338,6 +373,26 @@ def plot_result(
 
     ax.scatter(start_x, start_y, s=80, label="start")
     ax.scatter(goal_x, goal_y, s=80, label="goal")
+
+    if top_k_first_step_trajectories is not None:
+        for traj_idx, trajectory in enumerate(top_k_first_step_trajectories):
+            xs = [state[0] for state in trajectory]
+            ys = [state[1] for state in trajectory]
+
+            if traj_idx == 0:
+                ax.plot(xs, ys, color="gray", alpha=0.25, linewidth=1.2, label="top-k at first step")
+            else:
+                ax.plot(xs, ys, color="gray", alpha=0.25, linewidth=1.2)
+
+    if top_k_last_step_trajectories is not None:
+        for traj_idx, trajectory in enumerate(top_k_last_step_trajectories):
+            xs = [state[0] for state in trajectory]
+            ys = [state[1] for state in trajectory]
+
+            if traj_idx == 0:
+                ax.plot(xs, ys, color="green", alpha=0.25, linewidth=1.2, label="top-k at last step")
+            else:
+                ax.plot(xs, ys, color="green", alpha=0.25, linewidth=1.2)
 
     if sampled_best_trajectory is not None:
         best_xs = [state[0] for state in sampled_best_trajectory]
@@ -368,14 +423,16 @@ def plot_result(
     project_root = Path(__file__).resolve().parents[2]
     figure_dir = project_root / "results" / "figures"
     figure_dir.mkdir(parents=True, exist_ok=True)
+    mode_tag = "warm" if use_goal_warm_start else "baseline"
+
     if horizon is None:
-        save_path = figure_dir / f"mppi_{scene_name}.png"
+        save_path = figure_dir / f"mppi_{scene_name}_{mode_tag}.png"
     elif num_samples is None:
-        save_path = figure_dir / f"mppi_{scene_name}_h{horizon}.png"
+        save_path = figure_dir / f"mppi_{scene_name}_h{horizon}_{mode_tag}.png"
     elif temperature is None:
-        save_path = figure_dir / f"mppi_{scene_name}_h{horizon}_n{num_samples}.png"
+        save_path = figure_dir / f"mppi_{scene_name}_h{horizon}_n{num_samples}_{mode_tag}.png"
     else:
-        save_path = figure_dir / f"mppi_{scene_name}_h{horizon}_n{num_samples}_t{temperature}.png"
+        save_path = figure_dir / f"mppi_{scene_name}_h{horizon}_n{num_samples}_t{temperature}_{mode_tag}.png"
     plt.tight_layout()
     plt.savefig(save_path, dpi=150)
     plt.close(fig)
@@ -426,8 +483,12 @@ def run_experiment(
     executed_trajectory = [current_state]
     executed_controls = []
     sampled_best_trajectory = None
+    top_k_first_step_trajectories = None
+    top_k_last_step_trajectories = None
     total_planning_time = 0.0
     planning_steps = 0
+
+
 
     print("=== MPPI Receding Horizon Demo ===")
     print("start_state =", start_state)
@@ -482,6 +543,17 @@ def run_experiment(
         sampled_best_trajectory = sampled_trajectories[best_idx]
         best_cost = costs[best_idx]
         best_collision = collisions[best_idx]
+
+        current_top_k_trajectories = select_top_k_trajectories(
+            sampled_trajectories=sampled_trajectories,
+            costs=costs,
+            k=5,
+        )
+
+        if step_idx == 0:
+            top_k_first_step_trajectories = current_top_k_trajectories
+
+        top_k_last_step_trajectories = current_top_k_trajectories
 
         executed_control = updated_sequence[0]
         current_state = step(current_state, executed_control, dt)
@@ -551,6 +623,9 @@ def run_experiment(
         horizon=horizon,
         num_samples=num_samples,
         temperature=temperature,
+        use_goal_warm_start=use_goal_warm_start,
+        top_k_first_step_trajectories=top_k_first_step_trajectories,
+        top_k_last_step_trajectories=top_k_last_step_trajectories,
     )
 
     result = {
@@ -558,6 +633,7 @@ def run_experiment(
         "horizon": horizon,
         "num_samples": num_samples,
         "temperature": temperature,
+        "use_goal_warm_start":use_goal_warm_start,
         "dt": dt,
         "execute_steps": execute_steps,
         "executed_trajectory_points": len(executed_trajectory),

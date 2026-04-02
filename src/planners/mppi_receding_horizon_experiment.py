@@ -72,11 +72,15 @@ def build_goal_warm_start_sequence(
     dt,
     v_max,
     omega_max,
+    warm_start_prefix_steps=8,
+    nominal_tail_control=(1.0, 0.0),
 ):
     warm_start_sequence = []
     rollout_state = current_state
 
-    for _ in range(horizon):
+    effective_prefix_steps = min(horizon, warm_start_prefix_steps)# 热启动前缀步数
+
+    for _ in range(effective_prefix_steps):
         x, y, theta = rollout_state
         goal_x, goal_y = goal
 
@@ -95,6 +99,10 @@ def build_goal_warm_start_sequence(
         control = (v, omega)
         warm_start_sequence.append(control)
         rollout_state = step(rollout_state, control, dt)
+
+    remaining_steps = horizon - effective_prefix_steps
+    for _ in range(remaining_steps):
+        warm_start_sequence.append(nominal_tail_control)
 
     return warm_start_sequence
 
@@ -181,24 +189,30 @@ def trajectory_cost(trajectory, control_sequence, goal, obstacles, robot_radius,
     7. 控制变化不平滑
     """
     goal_x, goal_y = goal
-    total_cost = 0.0
+
+    progress_cost = 0.0 #推进代价，鼓励朝着终点走
+    safety_cost = 0.0 #安全代价，罚过于贴近边界和碰撞
+    smoothness_cost = 0.0 #平滑代价，罚一次变化过大
+    terminal_cost = 0.0 #终点代价，罚离中带你太远
+
     collided = False
+    horizon_steps = max(len(control_sequence), 1)#horizon总步数
 
     for i, state in enumerate(trajectory[1:], start=1):
         x, y, theta = state
 
         # 1. 每一步离目标太远
         goal_distance = math.hypot(goal_x - x, goal_y - y)
-        total_cost += 0.15 * goal_distance
+        progress_cost += 0.15 * goal_distance
 
         # 2. 每一步朝向误差
         desired_heading = math.atan2(goal_y - y, goal_x - x)
         heading_error = abs(wrap_angle(desired_heading - theta))
-        total_cost += 0.05 * heading_error
+        progress_cost += 0.05 * heading_error
 
         # 3. 每一步角速度过大
         _, omega = control_sequence[i - 1]
-        total_cost += 0.01 * (omega ** 2)
+        progress_cost += 0.01 * (omega ** 2)
 
         # 4. 靠障碍太近 / 碰撞
         safe_clearance = 0.70
@@ -209,28 +223,26 @@ def trajectory_cost(trajectory, control_sequence, goal, obstacles, robot_radius,
 
             if clearance <= 0.0:
                 collided = True
-                total_cost += 20000.0
+                safety_cost += 20000.0
                 break
 
-            # 第一层：进入安全缓冲区就开始罚
             if clearance < safe_clearance:
-                total_cost += 80.0 * (safe_clearance - clearance) ** 2
+                safety_cost += 80.0 * (safe_clearance - clearance) ** 2
 
-            # 第二层：进入危险区后，再加更强的 barrier 惩罚
             if clearance < danger_clearance:
-                total_cost += 400.0 * (danger_clearance - clearance) ** 2
+                safety_cost += 400.0 * (danger_clearance - clearance) ** 2
 
         # 5. 边界惩罚
-        total_cost += boundary_penalty(x, y, bounds)
+        safety_cost += boundary_penalty(x, y, bounds)
 
     # 6. 最终终点距离和终点朝向误差
     final_x, final_y, final_theta = trajectory[-1]
     final_goal_distance = math.hypot(goal_x - final_x, goal_y - final_y)
-    total_cost += 100.0 * final_goal_distance
+    terminal_cost += 100.0 * final_goal_distance
 
     final_desired_heading = math.atan2(goal_y - final_y, goal_x - final_x)
     final_heading_error = abs(wrap_angle(final_desired_heading - final_theta))
-    total_cost += 2.0 * final_heading_error
+    terminal_cost += 2.0 * final_heading_error
 
     final_min_clearance = float("inf")
     for obstacle in obstacles:
@@ -239,13 +251,21 @@ def trajectory_cost(trajectory, control_sequence, goal, obstacles, robot_radius,
             final_min_clearance = clearance
 
     if final_min_clearance < 0.70:
-        total_cost += 120.0 * (0.70 - final_min_clearance) ** 2
+        safety_cost += 120.0 * (0.70 - final_min_clearance) ** 2
 
     # 7. 控制变化不平滑
     for i in range(1, len(control_sequence)):
         prev_v, prev_omega = control_sequence[i - 1]
         curr_v, curr_omega = control_sequence[i]
-        total_cost += 0.08 * ((curr_v - prev_v) ** 2 + 0.2 * (curr_omega - prev_omega) ** 2)
+        smoothness_cost += 0.08 * (
+            (curr_v - prev_v) ** 2 + 0.2 * (curr_omega - prev_omega) ** 2
+        )
+
+    total_cost = (
+        (progress_cost + smoothness_cost) / horizon_steps
+        + safety_cost
+        + terminal_cost
+    )
 
     return total_cost, collided
 

@@ -1,296 +1,288 @@
 <mujoco model="dense_scene">
+  <compiler angle="radian"/>
   <option timestep="0.02" gravity="0 0 -9.81"/>
 
+  <statistic center="3.0 0.35 0.20" extent="5.2"/>
+
   <visual>
-    <headlight ambient="0.6 0.6 0.6" diffuse="0.8 0.8 0.8" specular="0.2 0.2 0.2"/>
+    <headlight ambient="0.44 0.45 0.46" diffuse="0.66 0.67 0.69" specular="0.05 0.05 0.05"/>
+    <rgba haze="0.78 0.79 0.80 1"/>
+    <map znear="0.01" zfar="40"/>
   </visual>
 
-  <worldbody>
-    <!-- 地面 -->
-    <geom name="floor" type="plane" size="8 8 0.1" rgba="0.94 0.94 0.94 1"/>
+  <asset>
+    <texture name="sky_tex" type="skybox" builtin="gradient"
+             rgb1="0.70 0.72 0.74" rgb2="0.52 0.55 0.58"
+             width="512" height="512"/>
 
-    <!-- 机器人：先继续用一个蓝色圆柱占位 -->
+    <texture name="floor_tex" type="2d" builtin="checker"
+             rgb1="0.64 0.64 0.62" rgb2="0.55 0.56 0.54"
+             width="512" height="512"/>
+
+    <material name="floor_mat" texture="floor_tex" texrepeat="12 12" reflectance="0.02"/>
+    <material name="arena_mat" rgba="0.57 0.58 0.56 1"/>
+    <material name="guide_mat" rgba="0.44 0.45 0.43 0.88"/>
+
+    <material name="wall_mat" rgba="0.37 0.40 0.42 0.96"/>
+    <material name="wall_cap_mat" rgba="0.54 0.57 0.59 1"/>
+
+    <material name="robot_base_mat" rgba="0.39 0.49 0.53 1"/>
+    <material name="robot_top_mat" rgba="0.74 0.76 0.74 1"/>
+    <material name="robot_nose_mat" rgba="0.62 0.56 0.50 1"/>
+    <material name="robot_wheel_mat" rgba="0.28 0.31 0.34 1"/>
+
+    <material name="goal_ring_mat" rgba="0.55 0.63 0.52 0.94"/>
+    <material name="goal_core_mat" rgba="0.44 0.54 0.43 1"/>
+    <material name="goal_flag_mat" rgba="0.49 0.59 0.47 1"/>
+
+    <material name="obs_body_mat" rgba="0.70 0.57 0.55 1"/>
+    <material name="obs_cap_mat" rgba="0.78 0.68 0.66 1"/>
+    <material name="obs_shadow_mat" rgba="0.38 0.31 0.30 0.14"/>
+
+    <material name="pred_best_mat" rgba="0.36 0.60 0.62 1.00"/>
+    <material name="pred_aux0_mat" rgba="0.74 0.63 0.42 1.00"/>
+    <material name="pred_aux1_mat" rgba="0.66 0.54 0.60 1.00"/>
+    <material name="trail_mat" rgba="0.67 0.54 0.40 0.92"/>
+  </asset>
+
+  <default>
+    <default class="viz_only">
+      <geom contype="0" conaffinity="0"/>
+    </default>
+
+    <default class="boundary_wall">
+      <geom type="box" material="wall_mat"/>
+    </default>
+
+    <default class="pred_best_point">
+      <geom type="sphere" size="0.0120" material="pred_best_mat" contype="0" conaffinity="0"/>
+    </default>
+    <default class="pred_aux0_point">
+      <geom type="sphere" size="0.0100" material="pred_aux0_mat" contype="0" conaffinity="0"/>
+    </default>
+    <default class="pred_aux1_point">
+      <geom type="sphere" size="0.0100" material="pred_aux1_mat" contype="0" conaffinity="0"/>
+    </default>
+    <default class="trail_point">
+      <geom type="sphere" size="0.0060" material="trail_mat" contype="0" conaffinity="0"/>
+    </default>
+  </default>
+
+  <worldbody>
+    <light name="sun" pos="3.0 0.35 6.5" dir="0 0 -1" directional="true"
+           diffuse="0.76 0.76 0.77" specular="0.08 0.08 0.08"/>
+    <light name="fill" pos="1.5 -2.8 3.4" diffuse="0.18 0.18 0.18" specular="0 0 0"/>
+
+    <geom name="floor" type="plane" size="8 8 0.1" material="floor_mat"/>
+    <geom name="arena_pad" type="box" pos="3.0 0.35 0.006" size="3.60 1.85 0.006" material="arena_mat"/>
+
+    <geom name="guide_center_x" type="box" pos="3.0 0.35 0.012" size="3.05 0.018 0.001" material="guide_mat" contype="0" conaffinity="0"/>
+    <geom name="guide_center_y" type="box" pos="3.0 0.35 0.012" size="0.018 1.55 0.001" material="guide_mat" contype="0" conaffinity="0"/>
+
+    <!-- visible bounds aligned with dense scene bounds -->
+    <body name="boundary_left" pos="-0.65 0.35 0.12">
+      <geom class="boundary_wall" size="0.05 1.85 0.12"/>
+      <geom type="box" pos="0 0 0.13" size="0.055 1.88 0.015" material="wall_cap_mat"/>
+    </body>
+
+    <body name="boundary_right" pos="6.65 0.35 0.12">
+      <geom class="boundary_wall" size="0.05 1.85 0.12"/>
+      <geom type="box" pos="0 0 0.13" size="0.055 1.88 0.015" material="wall_cap_mat"/>
+    </body>
+
+    <body name="boundary_bottom" pos="3.0 -1.55 0.12">
+      <geom class="boundary_wall" size="3.65 0.05 0.12"/>
+      <geom type="box" pos="0 0 0.13" size="3.68 0.055 0.015" material="wall_cap_mat"/>
+    </body>
+
+    <body name="boundary_top" pos="3.0 2.25 0.12">
+      <geom class="boundary_wall" size="3.65 0.05 0.12"/>
+      <geom type="box" pos="0 0 0.13" size="3.68 0.055 0.015" material="wall_cap_mat"/>
+    </body>
+
+    <body name="corner_lb" pos="-0.65 -1.55 0.14">
+      <geom type="cylinder" size="0.07 0.14" material="wall_cap_mat"/>
+    </body>
+    <body name="corner_lt" pos="-0.65 2.25 0.14">
+      <geom type="cylinder" size="0.07 0.14" material="wall_cap_mat"/>
+    </body>
+    <body name="corner_rb" pos="6.65 -1.55 0.14">
+      <geom type="cylinder" size="0.07 0.14" material="wall_cap_mat"/>
+    </body>
+    <body name="corner_rt" pos="6.65 2.25 0.14">
+      <geom type="cylinder" size="0.07 0.14" material="wall_cap_mat"/>
+    </body>
+
     <body name="robot" pos="0 0 0.08">
       <freejoint/>
-      <geom name="robot_body" type="cylinder" size="0.18 0.08" rgba="0.2 0.4 0.9 1"/>
+      <geom name="robot_body" type="cylinder" size="0.18 0.08" material="robot_base_mat"/>
+      <geom name="robot_top" type="cylinder" pos="0 0 0.050" size="0.135 0.018" material="robot_top_mat"/>
+      <geom name="robot_nose" type="box" pos="0.125 0 0.055" size="0.050 0.028 0.018" material="robot_nose_mat"/>
+      <geom name="robot_left_wheel" type="box" pos="0 0.170 0.035" size="0.105 0.020 0.035" material="robot_wheel_mat"/>
+      <geom name="robot_right_wheel" type="box" pos="0 -0.170 0.035" size="0.105 0.020 0.035" material="robot_wheel_mat"/>
     </body>
 
-    <!-- goal 标记 -->
-    <body name="goal_marker" pos="6.0 0.0 0.02">
-      <geom type="cylinder" size="0.12 0.02" rgba="0.2 0.8 0.2 1"/>
+    <body name="goal_marker" pos="6.0 0.0 0.0">
+      <geom name="goal_ring" type="cylinder" pos="0 0 0.010" size="0.18 0.010" material="goal_ring_mat" contype="0" conaffinity="0"/>
+      <geom name="goal_core" type="cylinder" pos="0 0 0.022" size="0.085 0.010" material="goal_core_mat" contype="0" conaffinity="0"/>
+      <geom name="goal_pole" type="cylinder" pos="0 0 0.145" size="0.010 0.120" material="goal_core_mat" contype="0" conaffinity="0"/>
+      <geom name="goal_flag" type="box" pos="0.055 0 0.245" size="0.055 0.010 0.035" material="goal_flag_mat" contype="0" conaffinity="0"/>
     </body>
 
-    <!-- dense 场景障碍物：把二维圆障碍翻成竖直圆柱 -->
-    <body name="obs1" pos="1.0 0.55 0.25">
-      <geom type="cylinder" size="0.33 0.25" rgba="0.82 0.22 0.22 1"/>
+    <body name="obs1" pos="1.0 0.55 0.23">
+      <geom type="cylinder" size="0.33 0.23" material="obs_body_mat"/>
+      <geom type="cylinder" pos="0 0 0.185" size="0.28 0.035" material="obs_cap_mat"/>
+      <geom type="cylinder" pos="0 0 -0.228" size="0.39 0.004" material="obs_shadow_mat" contype="0" conaffinity="0"/>
     </body>
-
-    <body name="obs2" pos="2.1 -0.35 0.25">
-      <geom type="cylinder" size="0.36 0.25" rgba="0.82 0.22 0.22 1"/>
+    <body name="obs2" pos="2.1 -0.35 0.23">
+      <geom type="cylinder" size="0.36 0.23" material="obs_body_mat"/>
+      <geom type="cylinder" pos="0 0 0.185" size="0.31 0.035" material="obs_cap_mat"/>
+      <geom type="cylinder" pos="0 0 -0.228" size="0.42 0.004" material="obs_shadow_mat" contype="0" conaffinity="0"/>
     </body>
-
-    <body name="obs3" pos="3.2 0.60 0.25">
-      <geom type="cylinder" size="0.36 0.25" rgba="0.82 0.22 0.22 1"/>
+    <body name="obs3" pos="3.2 0.60 0.23">
+      <geom type="cylinder" size="0.36 0.23" material="obs_body_mat"/>
+      <geom type="cylinder" pos="0 0 0.185" size="0.31 0.035" material="obs_cap_mat"/>
+      <geom type="cylinder" pos="0 0 -0.228" size="0.42 0.004" material="obs_shadow_mat" contype="0" conaffinity="0"/>
     </body>
-
-    <body name="obs4" pos="4.3 -0.50 0.25">
-      <geom type="cylinder" size="0.36 0.25" rgba="0.82 0.22 0.22 1"/>
+    <body name="obs4" pos="4.3 -0.50 0.23">
+      <geom type="cylinder" size="0.36 0.23" material="obs_body_mat"/>
+      <geom type="cylinder" pos="0 0 0.185" size="0.31 0.035" material="obs_cap_mat"/>
+      <geom type="cylinder" pos="0 0 -0.228" size="0.42 0.004" material="obs_shadow_mat" contype="0" conaffinity="0"/>
     </body>
-
-    <body name="obs5" pos="5.1 0.40 0.25">
-      <geom type="cylinder" size="0.30 0.25" rgba="0.82 0.22 0.22 1"/>
+    <body name="obs5" pos="5.1 0.40 0.23">
+      <geom type="cylinder" size="0.30 0.23" material="obs_body_mat"/>
+      <geom type="cylinder" pos="0 0 0.185" size="0.25 0.035" material="obs_cap_mat"/>
+      <geom type="cylinder" pos="0 0 -0.228" size="0.36 0.004" material="obs_shadow_mat" contype="0" conaffinity="0"/>
     </body>
-
-    <body name="obs6" pos="2.7 1.35 0.25">
-      <geom type="cylinder" size="0.28 0.25" rgba="0.82 0.22 0.22 1"/>
+    <body name="obs6" pos="2.7 1.35 0.23">
+      <geom type="cylinder" size="0.28 0.23" material="obs_body_mat"/>
+      <geom type="cylinder" pos="0 0 0.185" size="0.23 0.035" material="obs_cap_mat"/>
+      <geom type="cylinder" pos="0 0 -0.228" size="0.34 0.004" material="obs_shadow_mat" contype="0" conaffinity="0"/>
     </body>
-
-    <body name="obs7" pos="3.8 -1.35 0.25">
-      <geom type="cylinder" size="0.28 0.25" rgba="0.82 0.22 0.22 1"/>
+    <body name="obs7" pos="3.8 -1.35 0.23">
+      <geom type="cylinder" size="0.28 0.23" material="obs_body_mat"/>
+      <geom type="cylinder" pos="0 0 0.185" size="0.23 0.035" material="obs_cap_mat"/>
+      <geom type="cylinder" pos="0 0 -0.228" size="0.34 0.004" material="obs_shadow_mat" contype="0" conaffinity="0"/>
     </body>
-
-
-<body name="pred_best_0" mocap="true" pos="0 0 -1">
-    <geom type="sphere" size="0.0100" rgba="0.00 1.00 1.00 1.00" contype="0" conaffinity="0"/>
-</body>
-<body name="pred_best_1" mocap="true" pos="0 0 -1">
-    <geom type="sphere" size="0.0100" rgba="0.00 1.00 1.00 1.00" contype="0" conaffinity="0"/>
-</body>
-<body name="pred_best_2" mocap="true" pos="0 0 -1">
-    <geom type="sphere" size="0.0100" rgba="0.00 1.00 1.00 1.00" contype="0" conaffinity="0"/>
-</body>
-<body name="pred_best_3" mocap="true" pos="0 0 -1">
-    <geom type="sphere" size="0.0100" rgba="0.00 1.00 1.00 1.00" contype="0" conaffinity="0"/>
-</body>
-<body name="pred_best_4" mocap="true" pos="0 0 -1">
-    <geom type="sphere" size="0.0100" rgba="0.00 1.00 1.00 1.00" contype="0" conaffinity="0"/>
-</body>
-<body name="pred_best_5" mocap="true" pos="0 0 -1">
-    <geom type="sphere" size="0.0100" rgba="0.00 1.00 1.00 1.00" contype="0" conaffinity="0"/>
-</body>
-<body name="pred_best_6" mocap="true" pos="0 0 -1">
-    <geom type="sphere" size="0.0100" rgba="0.00 1.00 1.00 1.00" contype="0" conaffinity="0"/>
-</body>
-<body name="pred_best_7" mocap="true" pos="0 0 -1">
-    <geom type="sphere" size="0.0100" rgba="0.00 1.00 1.00 1.00" contype="0" conaffinity="0"/>
-</body>
-<body name="pred_best_8" mocap="true" pos="0 0 -1">
-    <geom type="sphere" size="0.0100" rgba="0.00 1.00 1.00 1.00" contype="0" conaffinity="0"/>
-</body>
-<body name="pred_best_9" mocap="true" pos="0 0 -1">
-    <geom type="sphere" size="0.0100" rgba="0.00 1.00 1.00 1.00" contype="0" conaffinity="0"/>
-</body>
-<body name="pred_best_10" mocap="true" pos="0 0 -1">
-    <geom type="sphere" size="0.0100" rgba="0.00 1.00 1.00 1.00" contype="0" conaffinity="0"/>
-</body>
-<body name="pred_best_11" mocap="true" pos="0 0 -1">
-    <geom type="sphere" size="0.0100" rgba="0.00 1.00 1.00 1.00" contype="0" conaffinity="0"/>
-</body>
-<body name="pred_best_12" mocap="true" pos="0 0 -1">
-    <geom type="sphere" size="0.0100" rgba="0.00 1.00 1.00 1.00" contype="0" conaffinity="0"/>
-</body>
-<body name="pred_best_13" mocap="true" pos="0 0 -1">
-    <geom type="sphere" size="0.0100" rgba="0.00 1.00 1.00 1.00" contype="0" conaffinity="0"/>
-</body>
-<body name="pred_best_14" mocap="true" pos="0 0 -1">
-    <geom type="sphere" size="0.0100" rgba="0.00 1.00 1.00 1.00" contype="0" conaffinity="0"/>
-</body>
-<body name="pred_best_15" mocap="true" pos="0 0 -1">
-    <geom type="sphere" size="0.0100" rgba="0.00 1.00 1.00 1.00" contype="0" conaffinity="0"/>
-</body>
-<body name="pred_best_16" mocap="true" pos="0 0 -1">
-    <geom type="sphere" size="0.0100" rgba="0.00 1.00 1.00 1.00" contype="0" conaffinity="0"/>
-</body>
-<body name="pred_best_17" mocap="true" pos="0 0 -1">
-    <geom type="sphere" size="0.0100" rgba="0.00 1.00 1.00 1.00" contype="0" conaffinity="0"/>
-</body>
-<body name="pred_best_18" mocap="true" pos="0 0 -1">
-    <geom type="sphere" size="0.0100" rgba="0.00 1.00 1.00 1.00" contype="0" conaffinity="0"/>
-</body>
-<body name="pred_best_19" mocap="true" pos="0 0 -1">
-    <geom type="sphere" size="0.0100" rgba="0.00 1.00 1.00 1.00" contype="0" conaffinity="0"/>
-</body>
-<body name="pred_best_20" mocap="true" pos="0 0 -1">
-    <geom type="sphere" size="0.0100" rgba="0.00 1.00 1.00 1.00" contype="0" conaffinity="0"/>
-</body>
-<body name="pred_best_21" mocap="true" pos="0 0 -1">
-    <geom type="sphere" size="0.0100" rgba="0.00 1.00 1.00 1.00" contype="0" conaffinity="0"/>
-</body>
-<body name="pred_best_22" mocap="true" pos="0 0 -1">
-    <geom type="sphere" size="0.0100" rgba="0.00 1.00 1.00 1.00" contype="0" conaffinity="0"/>
-</body>
-<body name="pred_best_23" mocap="true" pos="0 0 -1">
-    <geom type="sphere" size="0.0100" rgba="0.00 1.00 1.00 1.00" contype="0" conaffinity="0"/>
-</body>
-<body name="pred_best_24" mocap="true" pos="0 0 -1">
-    <geom type="sphere" size="0.0100" rgba="0.00 1.00 1.00 1.00" contype="0" conaffinity="0"/>
-</body>
-<body name="pred_best_25" mocap="true" pos="0 0 -1">
-    <geom type="sphere" size="0.0100" rgba="0.00 1.00 1.00 1.00" contype="0" conaffinity="0"/>
-</body>
-<body name="pred_best_26" mocap="true" pos="0 0 -1">
-    <geom type="sphere" size="0.0100" rgba="0.00 1.00 1.00 1.00" contype="0" conaffinity="0"/>
-</body>
-<body name="pred_best_27" mocap="true" pos="0 0 -1">
-    <geom type="sphere" size="0.0100" rgba="0.00 1.00 1.00 1.00" contype="0" conaffinity="0"/>
-</body>
-<body name="pred_best_28" mocap="true" pos="0 0 -1">
-    <geom type="sphere" size="0.0100" rgba="0.00 1.00 1.00 1.00" contype="0" conaffinity="0"/>
-</body>
-<body name="pred_best_29" mocap="true" pos="0 0 -1">
-    <geom type="sphere" size="0.0100" rgba="0.00 1.00 1.00 1.00" contype="0" conaffinity="0"/>
-</body>
-<body name="pred_best_30" mocap="true" pos="0 0 -1">
-    <geom type="sphere" size="0.0100" rgba="0.00 1.00 1.00 1.00" contype="0" conaffinity="0"/>
-</body>
-<body name="pred_best_31" mocap="true" pos="0 0 -1">
-    <geom type="sphere" size="0.0100" rgba="0.00 1.00 1.00 1.00" contype="0" conaffinity="0"/>
-</body>
-<body name="pred_best_32" mocap="true" pos="0 0 -1">
-    <geom type="sphere" size="0.0100" rgba="0.00 1.00 1.00 1.00" contype="0" conaffinity="0"/>
-</body>
-<body name="pred_best_33" mocap="true" pos="0 0 -1">
-    <geom type="sphere" size="0.0100" rgba="0.00 1.00 1.00 1.00" contype="0" conaffinity="0"/>
-</body>
-<body name="pred_best_34" mocap="true" pos="0 0 -1">
-    <geom type="sphere" size="0.0100" rgba="0.00 1.00 1.00 1.00" contype="0" conaffinity="0"/>
-</body>
-<body name="pred_best_35" mocap="true" pos="0 0 -1">
-    <geom type="sphere" size="0.0100" rgba="0.00 1.00 1.00 1.00" contype="0" conaffinity="0"/>
-</body>
-<body name="pred_best_36" mocap="true" pos="0 0 -1">
-    <geom type="sphere" size="0.0100" rgba="0.00 1.00 1.00 1.00" contype="0" conaffinity="0"/>
-</body>
-<body name="pred_best_37" mocap="true" pos="0 0 -1">
-    <geom type="sphere" size="0.0100" rgba="0.00 1.00 1.00 1.00" contype="0" conaffinity="0"/>
-</body>
-<body name="pred_best_38" mocap="true" pos="0 0 -1">
-    <geom type="sphere" size="0.0100" rgba="0.00 1.00 1.00 1.00" contype="0" conaffinity="0"/>
-</body>
-<body name="pred_best_39" mocap="true" pos="0 0 -1">
-    <geom type="sphere" size="0.0100" rgba="0.00 1.00 1.00 1.00" contype="0" conaffinity="0"/>
-</body>
-
-<body name="pred_aux0_0" mocap="true" pos="0 0 -1">
-    <geom type="sphere" size="0.0075" rgba="1.00 0.55 0.05 0.95" contype="0" conaffinity="0"/>
-</body>
-<body name="pred_aux0_1" mocap="true" pos="0 0 -1">
-    <geom type="sphere" size="0.0075" rgba="1.00 0.55 0.05 0.95" contype="0" conaffinity="0"/>
-</body>
-<body name="pred_aux0_2" mocap="true" pos="0 0 -1">
-    <geom type="sphere" size="0.0075" rgba="1.00 0.55 0.05 0.95" contype="0" conaffinity="0"/>
-</body>
-<body name="pred_aux0_3" mocap="true" pos="0 0 -1">
-    <geom type="sphere" size="0.0075" rgba="1.00 0.55 0.05 0.95" contype="0" conaffinity="0"/>
-</body>
-<body name="pred_aux0_4" mocap="true" pos="0 0 -1">
-    <geom type="sphere" size="0.0075" rgba="1.00 0.55 0.05 0.95" contype="0" conaffinity="0"/>
-</body>
-<body name="pred_aux0_5" mocap="true" pos="0 0 -1">
-    <geom type="sphere" size="0.0075" rgba="1.00 0.55 0.05 0.95" contype="0" conaffinity="0"/>
-</body>
-<body name="pred_aux0_6" mocap="true" pos="0 0 -1">
-    <geom type="sphere" size="0.0075" rgba="1.00 0.55 0.05 0.95" contype="0" conaffinity="0"/>
-</body>
-<body name="pred_aux0_7" mocap="true" pos="0 0 -1">
-    <geom type="sphere" size="0.0075" rgba="1.00 0.55 0.05 0.95" contype="0" conaffinity="0"/>
-</body>
-<body name="pred_aux0_8" mocap="true" pos="0 0 -1">
-    <geom type="sphere" size="0.0075" rgba="1.00 0.55 0.05 0.95" contype="0" conaffinity="0"/>
-</body>
-<body name="pred_aux0_9" mocap="true" pos="0 0 -1">
-    <geom type="sphere" size="0.0075" rgba="1.00 0.55 0.05 0.95" contype="0" conaffinity="0"/>
-</body>
-<body name="pred_aux0_10" mocap="true" pos="0 0 -1">
-    <geom type="sphere" size="0.0075" rgba="1.00 0.55 0.05 0.95" contype="0" conaffinity="0"/>
-</body>
-<body name="pred_aux0_11" mocap="true" pos="0 0 -1">
-    <geom type="sphere" size="0.0075" rgba="1.00 0.55 0.05 0.95" contype="0" conaffinity="0"/>
-</body>
-<body name="pred_aux0_12" mocap="true" pos="0 0 -1">
-    <geom type="sphere" size="0.0075" rgba="1.00 0.55 0.05 0.95" contype="0" conaffinity="0"/>
-</body>
-<body name="pred_aux0_13" mocap="true" pos="0 0 -1">
-    <geom type="sphere" size="0.0075" rgba="1.00 0.55 0.05 0.95" contype="0" conaffinity="0"/>
-</body>
-<body name="pred_aux0_14" mocap="true" pos="0 0 -1">
-    <geom type="sphere" size="0.0075" rgba="1.00 0.55 0.05 0.95" contype="0" conaffinity="0"/>
-</body>
-<body name="pred_aux0_15" mocap="true" pos="0 0 -1">
-    <geom type="sphere" size="0.0075" rgba="1.00 0.55 0.05 0.95" contype="0" conaffinity="0"/>
-</body>
-<body name="pred_aux0_16" mocap="true" pos="0 0 -1">
-    <geom type="sphere" size="0.0075" rgba="1.00 0.55 0.05 0.95" contype="0" conaffinity="0"/>
-</body>
-<body name="pred_aux0_17" mocap="true" pos="0 0 -1">
-    <geom type="sphere" size="0.0075" rgba="1.00 0.55 0.05 0.95" contype="0" conaffinity="0"/>
-</body>
-<body name="pred_aux0_18" mocap="true" pos="0 0 -1">
-    <geom type="sphere" size="0.0075" rgba="1.00 0.55 0.05 0.95" contype="0" conaffinity="0"/>
-</body>
-<body name="pred_aux0_19" mocap="true" pos="0 0 -1">
-    <geom type="sphere" size="0.0075" rgba="1.00 0.55 0.05 0.95" contype="0" conaffinity="0"/>
-</body>
-
-<body name="pred_aux1_0" mocap="true" pos="0 0 -1">
-    <geom type="sphere" size="0.0075" rgba="0.95 0.15 0.95 0.95" contype="0" conaffinity="0"/>
-</body>
-<body name="pred_aux1_1" mocap="true" pos="0 0 -1">
-    <geom type="sphere" size="0.0075" rgba="0.95 0.15 0.95 0.95" contype="0" conaffinity="0"/>
-</body>
-<body name="pred_aux1_2" mocap="true" pos="0 0 -1">
-    <geom type="sphere" size="0.0075" rgba="0.95 0.15 0.95 0.95" contype="0" conaffinity="0"/>
-</body>
-<body name="pred_aux1_3" mocap="true" pos="0 0 -1">
-    <geom type="sphere" size="0.0075" rgba="0.95 0.15 0.95 0.95" contype="0" conaffinity="0"/>
-</body>
-<body name="pred_aux1_4" mocap="true" pos="0 0 -1">
-    <geom type="sphere" size="0.0075" rgba="0.95 0.15 0.95 0.95" contype="0" conaffinity="0"/>
-</body>
-<body name="pred_aux1_5" mocap="true" pos="0 0 -1">
-    <geom type="sphere" size="0.0075" rgba="0.95 0.15 0.95 0.95" contype="0" conaffinity="0"/>
-</body>
-<body name="pred_aux1_6" mocap="true" pos="0 0 -1">
-    <geom type="sphere" size="0.0075" rgba="0.95 0.15 0.95 0.95" contype="0" conaffinity="0"/>
-</body>
-<body name="pred_aux1_7" mocap="true" pos="0 0 -1">
-    <geom type="sphere" size="0.0075" rgba="0.95 0.15 0.95 0.95" contype="0" conaffinity="0"/>
-</body>
-<body name="pred_aux1_8" mocap="true" pos="0 0 -1">
-    <geom type="sphere" size="0.0075" rgba="0.95 0.15 0.95 0.95" contype="0" conaffinity="0"/>
-</body>
-<body name="pred_aux1_9" mocap="true" pos="0 0 -1">
-    <geom type="sphere" size="0.0075" rgba="0.95 0.15 0.95 0.95" contype="0" conaffinity="0"/>
-</body>
-<body name="pred_aux1_10" mocap="true" pos="0 0 -1">
-    <geom type="sphere" size="0.0075" rgba="0.95 0.15 0.95 0.95" contype="0" conaffinity="0"/>
-</body>
-<body name="pred_aux1_11" mocap="true" pos="0 0 -1">
-    <geom type="sphere" size="0.0075" rgba="0.95 0.15 0.95 0.95" contype="0" conaffinity="0"/>
-</body>
-<body name="pred_aux1_12" mocap="true" pos="0 0 -1">
-    <geom type="sphere" size="0.0075" rgba="0.95 0.15 0.95 0.95" contype="0" conaffinity="0"/>
-</body>
-<body name="pred_aux1_13" mocap="true" pos="0 0 -1">
-    <geom type="sphere" size="0.0075" rgba="0.95 0.15 0.95 0.95" contype="0" conaffinity="0"/>
-</body>
-<body name="pred_aux1_14" mocap="true" pos="0 0 -1">
-    <geom type="sphere" size="0.0075" rgba="0.95 0.15 0.95 0.95" contype="0" conaffinity="0"/>
-</body>
-<body name="pred_aux1_15" mocap="true" pos="0 0 -1">
-    <geom type="sphere" size="0.0075" rgba="0.95 0.15 0.95 0.95" contype="0" conaffinity="0"/>
-</body>
-<body name="pred_aux1_16" mocap="true" pos="0 0 -1">
-    <geom type="sphere" size="0.0075" rgba="0.95 0.15 0.95 0.95" contype="0" conaffinity="0"/>
-</body>
-<body name="pred_aux1_17" mocap="true" pos="0 0 -1">
-    <geom type="sphere" size="0.0075" rgba="0.95 0.15 0.95 0.95" contype="0" conaffinity="0"/>
-</body>
-<body name="pred_aux1_18" mocap="true" pos="0 0 -1">
-    <geom type="sphere" size="0.0075" rgba="0.95 0.15 0.95 0.95" contype="0" conaffinity="0"/>
-</body>
-<body name="pred_aux1_19" mocap="true" pos="0 0 -1">
-    <geom type="sphere" size="0.0075" rgba="0.95 0.15 0.95 0.95" contype="0" conaffinity="0"/>
-</body>
+    <body name="pred_best_0" mocap="true" pos="0 0 -1"><geom class="pred_best_point"/></body>
+    <body name="pred_best_1" mocap="true" pos="0 0 -1"><geom class="pred_best_point"/></body>
+    <body name="pred_best_2" mocap="true" pos="0 0 -1"><geom class="pred_best_point"/></body>
+    <body name="pred_best_3" mocap="true" pos="0 0 -1"><geom class="pred_best_point"/></body>
+    <body name="pred_best_4" mocap="true" pos="0 0 -1"><geom class="pred_best_point"/></body>
+    <body name="pred_best_5" mocap="true" pos="0 0 -1"><geom class="pred_best_point"/></body>
+    <body name="pred_best_6" mocap="true" pos="0 0 -1"><geom class="pred_best_point"/></body>
+    <body name="pred_best_7" mocap="true" pos="0 0 -1"><geom class="pred_best_point"/></body>
+    <body name="pred_best_8" mocap="true" pos="0 0 -1"><geom class="pred_best_point"/></body>
+    <body name="pred_best_9" mocap="true" pos="0 0 -1"><geom class="pred_best_point"/></body>
+    <body name="pred_best_10" mocap="true" pos="0 0 -1"><geom class="pred_best_point"/></body>
+    <body name="pred_best_11" mocap="true" pos="0 0 -1"><geom class="pred_best_point"/></body>
+    <body name="pred_best_12" mocap="true" pos="0 0 -1"><geom class="pred_best_point"/></body>
+    <body name="pred_best_13" mocap="true" pos="0 0 -1"><geom class="pred_best_point"/></body>
+    <body name="pred_best_14" mocap="true" pos="0 0 -1"><geom class="pred_best_point"/></body>
+    <body name="pred_best_15" mocap="true" pos="0 0 -1"><geom class="pred_best_point"/></body>
+    <body name="pred_best_16" mocap="true" pos="0 0 -1"><geom class="pred_best_point"/></body>
+    <body name="pred_best_17" mocap="true" pos="0 0 -1"><geom class="pred_best_point"/></body>
+    <body name="pred_best_18" mocap="true" pos="0 0 -1"><geom class="pred_best_point"/></body>
+    <body name="pred_best_19" mocap="true" pos="0 0 -1"><geom class="pred_best_point"/></body>
+    <body name="pred_best_20" mocap="true" pos="0 0 -1"><geom class="pred_best_point"/></body>
+    <body name="pred_best_21" mocap="true" pos="0 0 -1"><geom class="pred_best_point"/></body>
+    <body name="pred_best_22" mocap="true" pos="0 0 -1"><geom class="pred_best_point"/></body>
+    <body name="pred_best_23" mocap="true" pos="0 0 -1"><geom class="pred_best_point"/></body>
+    <body name="pred_best_24" mocap="true" pos="0 0 -1"><geom class="pred_best_point"/></body>
+    <body name="pred_best_25" mocap="true" pos="0 0 -1"><geom class="pred_best_point"/></body>
+    <body name="pred_best_26" mocap="true" pos="0 0 -1"><geom class="pred_best_point"/></body>
+    <body name="pred_best_27" mocap="true" pos="0 0 -1"><geom class="pred_best_point"/></body>
+    <body name="pred_best_28" mocap="true" pos="0 0 -1"><geom class="pred_best_point"/></body>
+    <body name="pred_best_29" mocap="true" pos="0 0 -1"><geom class="pred_best_point"/></body>
+    <body name="pred_best_30" mocap="true" pos="0 0 -1"><geom class="pred_best_point"/></body>
+    <body name="pred_best_31" mocap="true" pos="0 0 -1"><geom class="pred_best_point"/></body>
+    <body name="pred_best_32" mocap="true" pos="0 0 -1"><geom class="pred_best_point"/></body>
+    <body name="pred_best_33" mocap="true" pos="0 0 -1"><geom class="pred_best_point"/></body>
+    <body name="pred_best_34" mocap="true" pos="0 0 -1"><geom class="pred_best_point"/></body>
+    <body name="pred_best_35" mocap="true" pos="0 0 -1"><geom class="pred_best_point"/></body>
+    <body name="pred_best_36" mocap="true" pos="0 0 -1"><geom class="pred_best_point"/></body>
+    <body name="pred_best_37" mocap="true" pos="0 0 -1"><geom class="pred_best_point"/></body>
+    <body name="pred_best_38" mocap="true" pos="0 0 -1"><geom class="pred_best_point"/></body>
+    <body name="pred_best_39" mocap="true" pos="0 0 -1"><geom class="pred_best_point"/></body>
+    <body name="pred_aux0_0" mocap="true" pos="0 0 -1"><geom class="pred_aux0_point"/></body>
+    <body name="pred_aux0_1" mocap="true" pos="0 0 -1"><geom class="pred_aux0_point"/></body>
+    <body name="pred_aux0_2" mocap="true" pos="0 0 -1"><geom class="pred_aux0_point"/></body>
+    <body name="pred_aux0_3" mocap="true" pos="0 0 -1"><geom class="pred_aux0_point"/></body>
+    <body name="pred_aux0_4" mocap="true" pos="0 0 -1"><geom class="pred_aux0_point"/></body>
+    <body name="pred_aux0_5" mocap="true" pos="0 0 -1"><geom class="pred_aux0_point"/></body>
+    <body name="pred_aux0_6" mocap="true" pos="0 0 -1"><geom class="pred_aux0_point"/></body>
+    <body name="pred_aux0_7" mocap="true" pos="0 0 -1"><geom class="pred_aux0_point"/></body>
+    <body name="pred_aux0_8" mocap="true" pos="0 0 -1"><geom class="pred_aux0_point"/></body>
+    <body name="pred_aux0_9" mocap="true" pos="0 0 -1"><geom class="pred_aux0_point"/></body>
+    <body name="pred_aux0_10" mocap="true" pos="0 0 -1"><geom class="pred_aux0_point"/></body>
+    <body name="pred_aux0_11" mocap="true" pos="0 0 -1"><geom class="pred_aux0_point"/></body>
+    <body name="pred_aux0_12" mocap="true" pos="0 0 -1"><geom class="pred_aux0_point"/></body>
+    <body name="pred_aux0_13" mocap="true" pos="0 0 -1"><geom class="pred_aux0_point"/></body>
+    <body name="pred_aux0_14" mocap="true" pos="0 0 -1"><geom class="pred_aux0_point"/></body>
+    <body name="pred_aux0_15" mocap="true" pos="0 0 -1"><geom class="pred_aux0_point"/></body>
+    <body name="pred_aux0_16" mocap="true" pos="0 0 -1"><geom class="pred_aux0_point"/></body>
+    <body name="pred_aux0_17" mocap="true" pos="0 0 -1"><geom class="pred_aux0_point"/></body>
+    <body name="pred_aux0_18" mocap="true" pos="0 0 -1"><geom class="pred_aux0_point"/></body>
+    <body name="pred_aux0_19" mocap="true" pos="0 0 -1"><geom class="pred_aux0_point"/></body>
+    <body name="pred_aux0_20" mocap="true" pos="0 0 -1"><geom class="pred_aux0_point"/></body>
+    <body name="pred_aux0_21" mocap="true" pos="0 0 -1"><geom class="pred_aux0_point"/></body>
+    <body name="pred_aux0_22" mocap="true" pos="0 0 -1"><geom class="pred_aux0_point"/></body>
+    <body name="pred_aux0_23" mocap="true" pos="0 0 -1"><geom class="pred_aux0_point"/></body>
+    <body name="pred_aux0_24" mocap="true" pos="0 0 -1"><geom class="pred_aux0_point"/></body>
+    <body name="pred_aux0_25" mocap="true" pos="0 0 -1"><geom class="pred_aux0_point"/></body>
+    <body name="pred_aux0_26" mocap="true" pos="0 0 -1"><geom class="pred_aux0_point"/></body>
+    <body name="pred_aux0_27" mocap="true" pos="0 0 -1"><geom class="pred_aux0_point"/></body>
+    <body name="pred_aux0_28" mocap="true" pos="0 0 -1"><geom class="pred_aux0_point"/></body>
+    <body name="pred_aux0_29" mocap="true" pos="0 0 -1"><geom class="pred_aux0_point"/></body>
+    <body name="pred_aux0_30" mocap="true" pos="0 0 -1"><geom class="pred_aux0_point"/></body>
+    <body name="pred_aux0_31" mocap="true" pos="0 0 -1"><geom class="pred_aux0_point"/></body>
+    <body name="pred_aux0_32" mocap="true" pos="0 0 -1"><geom class="pred_aux0_point"/></body>
+    <body name="pred_aux0_33" mocap="true" pos="0 0 -1"><geom class="pred_aux0_point"/></body>
+    <body name="pred_aux0_34" mocap="true" pos="0 0 -1"><geom class="pred_aux0_point"/></body>
+    <body name="pred_aux0_35" mocap="true" pos="0 0 -1"><geom class="pred_aux0_point"/></body>
+    <body name="pred_aux0_36" mocap="true" pos="0 0 -1"><geom class="pred_aux0_point"/></body>
+    <body name="pred_aux0_37" mocap="true" pos="0 0 -1"><geom class="pred_aux0_point"/></body>
+    <body name="pred_aux0_38" mocap="true" pos="0 0 -1"><geom class="pred_aux0_point"/></body>
+    <body name="pred_aux0_39" mocap="true" pos="0 0 -1"><geom class="pred_aux0_point"/></body>
+    <body name="pred_aux1_0" mocap="true" pos="0 0 -1"><geom class="pred_aux1_point"/></body>
+    <body name="pred_aux1_1" mocap="true" pos="0 0 -1"><geom class="pred_aux1_point"/></body>
+    <body name="pred_aux1_2" mocap="true" pos="0 0 -1"><geom class="pred_aux1_point"/></body>
+    <body name="pred_aux1_3" mocap="true" pos="0 0 -1"><geom class="pred_aux1_point"/></body>
+    <body name="pred_aux1_4" mocap="true" pos="0 0 -1"><geom class="pred_aux1_point"/></body>
+    <body name="pred_aux1_5" mocap="true" pos="0 0 -1"><geom class="pred_aux1_point"/></body>
+    <body name="pred_aux1_6" mocap="true" pos="0 0 -1"><geom class="pred_aux1_point"/></body>
+    <body name="pred_aux1_7" mocap="true" pos="0 0 -1"><geom class="pred_aux1_point"/></body>
+    <body name="pred_aux1_8" mocap="true" pos="0 0 -1"><geom class="pred_aux1_point"/></body>
+    <body name="pred_aux1_9" mocap="true" pos="0 0 -1"><geom class="pred_aux1_point"/></body>
+    <body name="pred_aux1_10" mocap="true" pos="0 0 -1"><geom class="pred_aux1_point"/></body>
+    <body name="pred_aux1_11" mocap="true" pos="0 0 -1"><geom class="pred_aux1_point"/></body>
+    <body name="pred_aux1_12" mocap="true" pos="0 0 -1"><geom class="pred_aux1_point"/></body>
+    <body name="pred_aux1_13" mocap="true" pos="0 0 -1"><geom class="pred_aux1_point"/></body>
+    <body name="pred_aux1_14" mocap="true" pos="0 0 -1"><geom class="pred_aux1_point"/></body>
+    <body name="pred_aux1_15" mocap="true" pos="0 0 -1"><geom class="pred_aux1_point"/></body>
+    <body name="pred_aux1_16" mocap="true" pos="0 0 -1"><geom class="pred_aux1_point"/></body>
+    <body name="pred_aux1_17" mocap="true" pos="0 0 -1"><geom class="pred_aux1_point"/></body>
+    <body name="pred_aux1_18" mocap="true" pos="0 0 -1"><geom class="pred_aux1_point"/></body>
+    <body name="pred_aux1_19" mocap="true" pos="0 0 -1"><geom class="pred_aux1_point"/></body>
+    <body name="pred_aux1_20" mocap="true" pos="0 0 -1"><geom class="pred_aux1_point"/></body>
+    <body name="pred_aux1_21" mocap="true" pos="0 0 -1"><geom class="pred_aux1_point"/></body>
+    <body name="pred_aux1_22" mocap="true" pos="0 0 -1"><geom class="pred_aux1_point"/></body>
+    <body name="pred_aux1_23" mocap="true" pos="0 0 -1"><geom class="pred_aux1_point"/></body>
+    <body name="pred_aux1_24" mocap="true" pos="0 0 -1"><geom class="pred_aux1_point"/></body>
+    <body name="pred_aux1_25" mocap="true" pos="0 0 -1"><geom class="pred_aux1_point"/></body>
+    <body name="pred_aux1_26" mocap="true" pos="0 0 -1"><geom class="pred_aux1_point"/></body>
+    <body name="pred_aux1_27" mocap="true" pos="0 0 -1"><geom class="pred_aux1_point"/></body>
+    <body name="pred_aux1_28" mocap="true" pos="0 0 -1"><geom class="pred_aux1_point"/></body>
+    <body name="pred_aux1_29" mocap="true" pos="0 0 -1"><geom class="pred_aux1_point"/></body>
+    <body name="pred_aux1_30" mocap="true" pos="0 0 -1"><geom class="pred_aux1_point"/></body>
+    <body name="pred_aux1_31" mocap="true" pos="0 0 -1"><geom class="pred_aux1_point"/></body>
+    <body name="pred_aux1_32" mocap="true" pos="0 0 -1"><geom class="pred_aux1_point"/></body>
+    <body name="pred_aux1_33" mocap="true" pos="0 0 -1"><geom class="pred_aux1_point"/></body>
+    <body name="pred_aux1_34" mocap="true" pos="0 0 -1"><geom class="pred_aux1_point"/></body>
+    <body name="pred_aux1_35" mocap="true" pos="0 0 -1"><geom class="pred_aux1_point"/></body>
+    <body name="pred_aux1_36" mocap="true" pos="0 0 -1"><geom class="pred_aux1_point"/></body>
+    <body name="pred_aux1_37" mocap="true" pos="0 0 -1"><geom class="pred_aux1_point"/></body>
+    <body name="pred_aux1_38" mocap="true" pos="0 0 -1"><geom class="pred_aux1_point"/></body>
+    <body name="pred_aux1_39" mocap="true" pos="0 0 -1"><geom class="pred_aux1_point"/></body>
   </worldbody>
 </mujoco>

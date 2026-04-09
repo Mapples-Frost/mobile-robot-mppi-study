@@ -136,92 +136,23 @@ def sample_control_sequences(
         dt=dt,
     )
 
-    anisotropic_meta = None
-    zero_mean_xy = np.zeros(2, dtype=float)
-    if use_anisotropic_sampling:
-        anisotropic_meta = []
-
-        # Cache nominal-rollout geometry once; it does not depend on sample index.
-        for t, (nominal_v, nominal_omega) in enumerate(nominal_sequence):
-            x_t, y_t, theta_t = nominal_trajectory[t]
-            clearance_t, grad_t = nearest_obstacle_sdf_gradient(
-                x=x_t,
-                y=y_t,
-                obstacles=obstacles,
-                robot_radius=robot_radius,
-            )
-
-            step_meta = {
-                "clearance_t": clearance_t,
-                "theta_t": theta_t,
-                "nominal_v": nominal_v,
-                "nominal_omega": nominal_omega,
-            }
-
-            if clearance_t <= sdf_influence_distance:
-                n = grad_t / max(np.linalg.norm(grad_t), 1e-8)
-                t_dir = np.array([-n[1], n[0]], dtype=float)
-
-                u_nom_xy = np.array(
-                    [
-                        nominal_v * math.cos(theta_t),
-                        nominal_v * math.sin(theta_t),
-                    ],
-                    dtype=float,
-                )
-
-                if goal is not None:
-                    goal_dir = np.array([goal[0] - x_t, goal[1] - y_t], dtype=float)
-                    goal_dir_norm = np.linalg.norm(goal_dir)
-
-                    if goal_dir_norm > 1e-8:
-                        goal_dir = goal_dir / goal_dir_norm
-
-                        if np.dot(t_dir, goal_dir) < 0.0:
-                            t_dir = -t_dir
-
-                tangent_bias_xy = tangent_push_gain * t_dir
-
-                boundary_bias_xy = np.zeros(2, dtype=float)
-                if bounds is not None:
-                    boundary_margin, inward_normal = nearest_boundary_inward_normal(
-                        x=x_t,
-                        y=y_t,
-                        bounds=bounds,
-                        robot_radius=robot_radius,
-                    )
-
-                    if boundary_margin < boundary_bias_distance:
-                        boundary_strength = boundary_push_gain * (
-                            boundary_bias_distance - boundary_margin
-                        )
-                        boundary_bias_xy = boundary_strength * inward_normal
-
-                step_meta["Sigma"] = (
-                    sigma_parallel * np.outer(t_dir, t_dir)
-                    + sigma_perp * np.outer(n, n)
-                )
-                step_meta["u_nom_xy"] = u_nom_xy
-                step_meta["tangent_bias_xy"] = tangent_bias_xy
-                step_meta["boundary_bias_xy"] = boundary_bias_xy
-
-            anisotropic_meta.append(step_meta)
-
     for _ in range(num_samples):
         sampled_sequence = []
 
         for t, (nominal_v, nominal_omega) in enumerate(nominal_sequence):
+            x_t, y_t, theta_t = nominal_trajectory[t]
 
             if not use_anisotropic_sampling:
                 sampled_v = random.gauss(nominal_v, v_std)
                 sampled_omega = random.gauss(nominal_omega, omega_std)
 
             else:
-                step_meta = anisotropic_meta[t]
-                clearance_t = step_meta["clearance_t"]
-                theta_t = step_meta["theta_t"]
-                nominal_v = step_meta["nominal_v"]
-                nominal_omega = step_meta["nominal_omega"]
+                clearance_t, grad_t = nearest_obstacle_sdf_gradient(
+                    x=x_t,
+                    y=y_t,
+                    obstacles=obstacles,
+                    robot_radius=robot_radius,
+                )
 
                 # 先留一部分各向同性 anchor，防止 sample cloud 一起塌向同一边
                 if (
@@ -231,16 +162,61 @@ def sample_control_sequences(
                     sampled_v = random.gauss(nominal_v, v_std)
                     sampled_omega = random.gauss(nominal_omega, omega_std)
                 else:
-                    eps_xy = np.random.multivariate_normal(
-                        mean=zero_mean_xy,
-                        cov=step_meta["Sigma"],
+                    n = grad_t / max(np.linalg.norm(grad_t), 1e-8)
+                    t_dir = np.array([-n[1], n[0]], dtype=float)
+
+                    Sigma = (
+                            sigma_parallel * np.outer(t_dir, t_dir)
+                            + sigma_perp * np.outer(n, n)
                     )
+
+                    eps_xy = np.random.multivariate_normal(
+                        mean=np.zeros(2),
+                        cov=Sigma,
+                    )
+
+                    u_nom_xy = np.array(
+                        [
+                            nominal_v * math.cos(theta_t),
+                            nominal_v * math.sin(theta_t),
+                        ],
+                        dtype=float,
+                    )
+
+                    # ---------- 新增 1：goal-aware tangent bias ----------
+                    if goal is not None:
+                        goal_dir = np.array([goal[0] - x_t, goal[1] - y_t], dtype=float)
+                        goal_dir_norm = np.linalg.norm(goal_dir)
+
+                        if goal_dir_norm > 1e-8:
+                            goal_dir = goal_dir / goal_dir_norm
+
+                            if np.dot(t_dir, goal_dir) < 0.0:
+                                t_dir = -t_dir
+
+                    tangent_bias_xy = tangent_push_gain * t_dir
+
+                    # ---------- 新增 2：boundary inward bias ----------
+                    boundary_bias_xy = np.zeros(2, dtype=float)
+                    if bounds is not None:
+                        boundary_margin, inward_normal = nearest_boundary_inward_normal(
+                            x=x_t,
+                            y=y_t,
+                            bounds=bounds,
+                            robot_radius=robot_radius,
+                        )
+
+                        if boundary_margin < boundary_bias_distance:
+                            boundary_strength = boundary_push_gain * (
+                                    boundary_bias_distance - boundary_margin
+                            )
+                            boundary_bias_xy = boundary_strength * inward_normal
 
                     # 最终真正参与采样的二维速度向量
                     u_sample_xy = (
-                            step_meta["u_nom_xy"]
-                            + step_meta["tangent_bias_xy"]
-                            + step_meta["boundary_bias_xy"]
+                            u_nom_xy
+                            + tangent_bias_xy
+                            + boundary_bias_xy
                             + eps_xy
                     )
 
@@ -1079,7 +1055,7 @@ def run_experiment_mujoco(
 def main():
     result = run_experiment_mujoco(
         scene_name="dense",
-        horizon=15,
+        horizon=30,
         num_samples=250,
         temperature=8.0,
         dt=0.2,

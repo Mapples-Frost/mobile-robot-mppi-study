@@ -1,0 +1,296 @@
+<mujoco model="dense_scene">
+  <option timestep="0.02" gravity="0 0 -9.81"/>
+
+  <visual>
+    <headlight ambient="0.6 0.6 0.6" diffuse="0.8 0.8 0.8" specular="0.2 0.2 0.2"/>
+  </visual>
+
+  <worldbody>
+    <!-- 地面 -->
+    <geom name="floor" type="plane" size="8 8 0.1" rgba="0.94 0.94 0.94 1"/>
+
+    <!-- 机器人：先继续用一个蓝色圆柱占位 -->
+    <body name="robot" pos="0 0 0.08">
+      <freejoint/>
+      <geom name="robot_body" type="cylinder" size="0.18 0.08" rgba="0.2 0.4 0.9 1"/>
+    </body>
+
+    <!-- goal 标记 -->
+    <body name="goal_marker" pos="6.0 0.0 0.02">
+      <geom type="cylinder" size="0.12 0.02" rgba="0.2 0.8 0.2 1"/>
+    </body>
+
+    <!-- dense 场景障碍物：把二维圆障碍翻成竖直圆柱 -->
+    <body name="obs1" pos="1.0 0.55 0.25">
+      <geom type="cylinder" size="0.33 0.25" rgba="0.82 0.22 0.22 1"/>
+    </body>
+
+    <body name="obs2" pos="2.1 -0.35 0.25">
+      <geom type="cylinder" size="0.36 0.25" rgba="0.82 0.22 0.22 1"/>
+    </body>
+
+    <body name="obs3" pos="3.2 0.60 0.25">
+      <geom type="cylinder" size="0.36 0.25" rgba="0.82 0.22 0.22 1"/>
+    </body>
+
+    <body name="obs4" pos="4.3 -0.50 0.25">
+      <geom type="cylinder" size="0.36 0.25" rgba="0.82 0.22 0.22 1"/>
+    </body>
+
+    <body name="obs5" pos="5.1 0.40 0.25">
+      <geom type="cylinder" size="0.30 0.25" rgba="0.82 0.22 0.22 1"/>
+    </body>
+
+    <body name="obs6" pos="2.7 1.35 0.25">
+      <geom type="cylinder" size="0.28 0.25" rgba="0.82 0.22 0.22 1"/>
+    </body>
+
+    <body name="obs7" pos="3.8 -1.35 0.25">
+      <geom type="cylinder" size="0.28 0.25" rgba="0.82 0.22 0.22 1"/>
+    </body>
+
+
+<body name="pred_best_0" mocap="true" pos="0 0 -1">
+    <geom type="sphere" size="0.0100" rgba="0.00 1.00 1.00 1.00" contype="0" conaffinity="0"/>
+</body>
+<body name="pred_best_1" mocap="true" pos="0 0 -1">
+    <geom type="sphere" size="0.0100" rgba="0.00 1.00 1.00 1.00" contype="0" conaffinity="0"/>
+</body>
+<body name="pred_best_2" mocap="true" pos="0 0 -1">
+    <geom type="sphere" size="0.0100" rgba="0.00 1.00 1.00 1.00" contype="0" conaffinity="0"/>
+</body>
+<body name="pred_best_3" mocap="true" pos="0 0 -1">
+    <geom type="sphere" size="0.0100" rgba="0.00 1.00 1.00 1.00" contype="0" conaffinity="0"/>
+</body>
+<body name="pred_best_4" mocap="true" pos="0 0 -1">
+    <geom type="sphere" size="0.0100" rgba="0.00 1.00 1.00 1.00" contype="0" conaffinity="0"/>
+</body>
+<body name="pred_best_5" mocap="true" pos="0 0 -1">
+    <geom type="sphere" size="0.0100" rgba="0.00 1.00 1.00 1.00" contype="0" conaffinity="0"/>
+</body>
+<body name="pred_best_6" mocap="true" pos="0 0 -1">
+    <geom type="sphere" size="0.0100" rgba="0.00 1.00 1.00 1.00" contype="0" conaffinity="0"/>
+</body>
+<body name="pred_best_7" mocap="true" pos="0 0 -1">
+    <geom type="sphere" size="0.0100" rgba="0.00 1.00 1.00 1.00" contype="0" conaffinity="0"/>
+</body>
+<body name="pred_best_8" mocap="true" pos="0 0 -1">
+    <geom type="sphere" size="0.0100" rgba="0.00 1.00 1.00 1.00" contype="0" conaffinity="0"/>
+</body>
+<body name="pred_best_9" mocap="true" pos="0 0 -1">
+    <geom type="sphere" size="0.0100" rgba="0.00 1.00 1.00 1.00" contype="0" conaffinity="0"/>
+</body>
+<body name="pred_best_10" mocap="true" pos="0 0 -1">
+    <geom type="sphere" size="0.0100" rgba="0.00 1.00 1.00 1.00" contype="0" conaffinity="0"/>
+</body>
+<body name="pred_best_11" mocap="true" pos="0 0 -1">
+    <geom type="sphere" size="0.0100" rgba="0.00 1.00 1.00 1.00" contype="0" conaffinity="0"/>
+</body>
+<body name="pred_best_12" mocap="true" pos="0 0 -1">
+    <geom type="sphere" size="0.0100" rgba="0.00 1.00 1.00 1.00" contype="0" conaffinity="0"/>
+</body>
+<body name="pred_best_13" mocap="true" pos="0 0 -1">
+    <geom type="sphere" size="0.0100" rgba="0.00 1.00 1.00 1.00" contype="0" conaffinity="0"/>
+</body>
+<body name="pred_best_14" mocap="true" pos="0 0 -1">
+    <geom type="sphere" size="0.0100" rgba="0.00 1.00 1.00 1.00" contype="0" conaffinity="0"/>
+</body>
+<body name="pred_best_15" mocap="true" pos="0 0 -1">
+    <geom type="sphere" size="0.0100" rgba="0.00 1.00 1.00 1.00" contype="0" conaffinity="0"/>
+</body>
+<body name="pred_best_16" mocap="true" pos="0 0 -1">
+    <geom type="sphere" size="0.0100" rgba="0.00 1.00 1.00 1.00" contype="0" conaffinity="0"/>
+</body>
+<body name="pred_best_17" mocap="true" pos="0 0 -1">
+    <geom type="sphere" size="0.0100" rgba="0.00 1.00 1.00 1.00" contype="0" conaffinity="0"/>
+</body>
+<body name="pred_best_18" mocap="true" pos="0 0 -1">
+    <geom type="sphere" size="0.0100" rgba="0.00 1.00 1.00 1.00" contype="0" conaffinity="0"/>
+</body>
+<body name="pred_best_19" mocap="true" pos="0 0 -1">
+    <geom type="sphere" size="0.0100" rgba="0.00 1.00 1.00 1.00" contype="0" conaffinity="0"/>
+</body>
+<body name="pred_best_20" mocap="true" pos="0 0 -1">
+    <geom type="sphere" size="0.0100" rgba="0.00 1.00 1.00 1.00" contype="0" conaffinity="0"/>
+</body>
+<body name="pred_best_21" mocap="true" pos="0 0 -1">
+    <geom type="sphere" size="0.0100" rgba="0.00 1.00 1.00 1.00" contype="0" conaffinity="0"/>
+</body>
+<body name="pred_best_22" mocap="true" pos="0 0 -1">
+    <geom type="sphere" size="0.0100" rgba="0.00 1.00 1.00 1.00" contype="0" conaffinity="0"/>
+</body>
+<body name="pred_best_23" mocap="true" pos="0 0 -1">
+    <geom type="sphere" size="0.0100" rgba="0.00 1.00 1.00 1.00" contype="0" conaffinity="0"/>
+</body>
+<body name="pred_best_24" mocap="true" pos="0 0 -1">
+    <geom type="sphere" size="0.0100" rgba="0.00 1.00 1.00 1.00" contype="0" conaffinity="0"/>
+</body>
+<body name="pred_best_25" mocap="true" pos="0 0 -1">
+    <geom type="sphere" size="0.0100" rgba="0.00 1.00 1.00 1.00" contype="0" conaffinity="0"/>
+</body>
+<body name="pred_best_26" mocap="true" pos="0 0 -1">
+    <geom type="sphere" size="0.0100" rgba="0.00 1.00 1.00 1.00" contype="0" conaffinity="0"/>
+</body>
+<body name="pred_best_27" mocap="true" pos="0 0 -1">
+    <geom type="sphere" size="0.0100" rgba="0.00 1.00 1.00 1.00" contype="0" conaffinity="0"/>
+</body>
+<body name="pred_best_28" mocap="true" pos="0 0 -1">
+    <geom type="sphere" size="0.0100" rgba="0.00 1.00 1.00 1.00" contype="0" conaffinity="0"/>
+</body>
+<body name="pred_best_29" mocap="true" pos="0 0 -1">
+    <geom type="sphere" size="0.0100" rgba="0.00 1.00 1.00 1.00" contype="0" conaffinity="0"/>
+</body>
+<body name="pred_best_30" mocap="true" pos="0 0 -1">
+    <geom type="sphere" size="0.0100" rgba="0.00 1.00 1.00 1.00" contype="0" conaffinity="0"/>
+</body>
+<body name="pred_best_31" mocap="true" pos="0 0 -1">
+    <geom type="sphere" size="0.0100" rgba="0.00 1.00 1.00 1.00" contype="0" conaffinity="0"/>
+</body>
+<body name="pred_best_32" mocap="true" pos="0 0 -1">
+    <geom type="sphere" size="0.0100" rgba="0.00 1.00 1.00 1.00" contype="0" conaffinity="0"/>
+</body>
+<body name="pred_best_33" mocap="true" pos="0 0 -1">
+    <geom type="sphere" size="0.0100" rgba="0.00 1.00 1.00 1.00" contype="0" conaffinity="0"/>
+</body>
+<body name="pred_best_34" mocap="true" pos="0 0 -1">
+    <geom type="sphere" size="0.0100" rgba="0.00 1.00 1.00 1.00" contype="0" conaffinity="0"/>
+</body>
+<body name="pred_best_35" mocap="true" pos="0 0 -1">
+    <geom type="sphere" size="0.0100" rgba="0.00 1.00 1.00 1.00" contype="0" conaffinity="0"/>
+</body>
+<body name="pred_best_36" mocap="true" pos="0 0 -1">
+    <geom type="sphere" size="0.0100" rgba="0.00 1.00 1.00 1.00" contype="0" conaffinity="0"/>
+</body>
+<body name="pred_best_37" mocap="true" pos="0 0 -1">
+    <geom type="sphere" size="0.0100" rgba="0.00 1.00 1.00 1.00" contype="0" conaffinity="0"/>
+</body>
+<body name="pred_best_38" mocap="true" pos="0 0 -1">
+    <geom type="sphere" size="0.0100" rgba="0.00 1.00 1.00 1.00" contype="0" conaffinity="0"/>
+</body>
+<body name="pred_best_39" mocap="true" pos="0 0 -1">
+    <geom type="sphere" size="0.0100" rgba="0.00 1.00 1.00 1.00" contype="0" conaffinity="0"/>
+</body>
+
+<body name="pred_aux0_0" mocap="true" pos="0 0 -1">
+    <geom type="sphere" size="0.0075" rgba="1.00 0.55 0.05 0.95" contype="0" conaffinity="0"/>
+</body>
+<body name="pred_aux0_1" mocap="true" pos="0 0 -1">
+    <geom type="sphere" size="0.0075" rgba="1.00 0.55 0.05 0.95" contype="0" conaffinity="0"/>
+</body>
+<body name="pred_aux0_2" mocap="true" pos="0 0 -1">
+    <geom type="sphere" size="0.0075" rgba="1.00 0.55 0.05 0.95" contype="0" conaffinity="0"/>
+</body>
+<body name="pred_aux0_3" mocap="true" pos="0 0 -1">
+    <geom type="sphere" size="0.0075" rgba="1.00 0.55 0.05 0.95" contype="0" conaffinity="0"/>
+</body>
+<body name="pred_aux0_4" mocap="true" pos="0 0 -1">
+    <geom type="sphere" size="0.0075" rgba="1.00 0.55 0.05 0.95" contype="0" conaffinity="0"/>
+</body>
+<body name="pred_aux0_5" mocap="true" pos="0 0 -1">
+    <geom type="sphere" size="0.0075" rgba="1.00 0.55 0.05 0.95" contype="0" conaffinity="0"/>
+</body>
+<body name="pred_aux0_6" mocap="true" pos="0 0 -1">
+    <geom type="sphere" size="0.0075" rgba="1.00 0.55 0.05 0.95" contype="0" conaffinity="0"/>
+</body>
+<body name="pred_aux0_7" mocap="true" pos="0 0 -1">
+    <geom type="sphere" size="0.0075" rgba="1.00 0.55 0.05 0.95" contype="0" conaffinity="0"/>
+</body>
+<body name="pred_aux0_8" mocap="true" pos="0 0 -1">
+    <geom type="sphere" size="0.0075" rgba="1.00 0.55 0.05 0.95" contype="0" conaffinity="0"/>
+</body>
+<body name="pred_aux0_9" mocap="true" pos="0 0 -1">
+    <geom type="sphere" size="0.0075" rgba="1.00 0.55 0.05 0.95" contype="0" conaffinity="0"/>
+</body>
+<body name="pred_aux0_10" mocap="true" pos="0 0 -1">
+    <geom type="sphere" size="0.0075" rgba="1.00 0.55 0.05 0.95" contype="0" conaffinity="0"/>
+</body>
+<body name="pred_aux0_11" mocap="true" pos="0 0 -1">
+    <geom type="sphere" size="0.0075" rgba="1.00 0.55 0.05 0.95" contype="0" conaffinity="0"/>
+</body>
+<body name="pred_aux0_12" mocap="true" pos="0 0 -1">
+    <geom type="sphere" size="0.0075" rgba="1.00 0.55 0.05 0.95" contype="0" conaffinity="0"/>
+</body>
+<body name="pred_aux0_13" mocap="true" pos="0 0 -1">
+    <geom type="sphere" size="0.0075" rgba="1.00 0.55 0.05 0.95" contype="0" conaffinity="0"/>
+</body>
+<body name="pred_aux0_14" mocap="true" pos="0 0 -1">
+    <geom type="sphere" size="0.0075" rgba="1.00 0.55 0.05 0.95" contype="0" conaffinity="0"/>
+</body>
+<body name="pred_aux0_15" mocap="true" pos="0 0 -1">
+    <geom type="sphere" size="0.0075" rgba="1.00 0.55 0.05 0.95" contype="0" conaffinity="0"/>
+</body>
+<body name="pred_aux0_16" mocap="true" pos="0 0 -1">
+    <geom type="sphere" size="0.0075" rgba="1.00 0.55 0.05 0.95" contype="0" conaffinity="0"/>
+</body>
+<body name="pred_aux0_17" mocap="true" pos="0 0 -1">
+    <geom type="sphere" size="0.0075" rgba="1.00 0.55 0.05 0.95" contype="0" conaffinity="0"/>
+</body>
+<body name="pred_aux0_18" mocap="true" pos="0 0 -1">
+    <geom type="sphere" size="0.0075" rgba="1.00 0.55 0.05 0.95" contype="0" conaffinity="0"/>
+</body>
+<body name="pred_aux0_19" mocap="true" pos="0 0 -1">
+    <geom type="sphere" size="0.0075" rgba="1.00 0.55 0.05 0.95" contype="0" conaffinity="0"/>
+</body>
+
+<body name="pred_aux1_0" mocap="true" pos="0 0 -1">
+    <geom type="sphere" size="0.0075" rgba="0.95 0.15 0.95 0.95" contype="0" conaffinity="0"/>
+</body>
+<body name="pred_aux1_1" mocap="true" pos="0 0 -1">
+    <geom type="sphere" size="0.0075" rgba="0.95 0.15 0.95 0.95" contype="0" conaffinity="0"/>
+</body>
+<body name="pred_aux1_2" mocap="true" pos="0 0 -1">
+    <geom type="sphere" size="0.0075" rgba="0.95 0.15 0.95 0.95" contype="0" conaffinity="0"/>
+</body>
+<body name="pred_aux1_3" mocap="true" pos="0 0 -1">
+    <geom type="sphere" size="0.0075" rgba="0.95 0.15 0.95 0.95" contype="0" conaffinity="0"/>
+</body>
+<body name="pred_aux1_4" mocap="true" pos="0 0 -1">
+    <geom type="sphere" size="0.0075" rgba="0.95 0.15 0.95 0.95" contype="0" conaffinity="0"/>
+</body>
+<body name="pred_aux1_5" mocap="true" pos="0 0 -1">
+    <geom type="sphere" size="0.0075" rgba="0.95 0.15 0.95 0.95" contype="0" conaffinity="0"/>
+</body>
+<body name="pred_aux1_6" mocap="true" pos="0 0 -1">
+    <geom type="sphere" size="0.0075" rgba="0.95 0.15 0.95 0.95" contype="0" conaffinity="0"/>
+</body>
+<body name="pred_aux1_7" mocap="true" pos="0 0 -1">
+    <geom type="sphere" size="0.0075" rgba="0.95 0.15 0.95 0.95" contype="0" conaffinity="0"/>
+</body>
+<body name="pred_aux1_8" mocap="true" pos="0 0 -1">
+    <geom type="sphere" size="0.0075" rgba="0.95 0.15 0.95 0.95" contype="0" conaffinity="0"/>
+</body>
+<body name="pred_aux1_9" mocap="true" pos="0 0 -1">
+    <geom type="sphere" size="0.0075" rgba="0.95 0.15 0.95 0.95" contype="0" conaffinity="0"/>
+</body>
+<body name="pred_aux1_10" mocap="true" pos="0 0 -1">
+    <geom type="sphere" size="0.0075" rgba="0.95 0.15 0.95 0.95" contype="0" conaffinity="0"/>
+</body>
+<body name="pred_aux1_11" mocap="true" pos="0 0 -1">
+    <geom type="sphere" size="0.0075" rgba="0.95 0.15 0.95 0.95" contype="0" conaffinity="0"/>
+</body>
+<body name="pred_aux1_12" mocap="true" pos="0 0 -1">
+    <geom type="sphere" size="0.0075" rgba="0.95 0.15 0.95 0.95" contype="0" conaffinity="0"/>
+</body>
+<body name="pred_aux1_13" mocap="true" pos="0 0 -1">
+    <geom type="sphere" size="0.0075" rgba="0.95 0.15 0.95 0.95" contype="0" conaffinity="0"/>
+</body>
+<body name="pred_aux1_14" mocap="true" pos="0 0 -1">
+    <geom type="sphere" size="0.0075" rgba="0.95 0.15 0.95 0.95" contype="0" conaffinity="0"/>
+</body>
+<body name="pred_aux1_15" mocap="true" pos="0 0 -1">
+    <geom type="sphere" size="0.0075" rgba="0.95 0.15 0.95 0.95" contype="0" conaffinity="0"/>
+</body>
+<body name="pred_aux1_16" mocap="true" pos="0 0 -1">
+    <geom type="sphere" size="0.0075" rgba="0.95 0.15 0.95 0.95" contype="0" conaffinity="0"/>
+</body>
+<body name="pred_aux1_17" mocap="true" pos="0 0 -1">
+    <geom type="sphere" size="0.0075" rgba="0.95 0.15 0.95 0.95" contype="0" conaffinity="0"/>
+</body>
+<body name="pred_aux1_18" mocap="true" pos="0 0 -1">
+    <geom type="sphere" size="0.0075" rgba="0.95 0.15 0.95 0.95" contype="0" conaffinity="0"/>
+</body>
+<body name="pred_aux1_19" mocap="true" pos="0 0 -1">
+    <geom type="sphere" size="0.0075" rgba="0.95 0.15 0.95 0.95" contype="0" conaffinity="0"/>
+</body>
+  </worldbody>
+</mujoco>

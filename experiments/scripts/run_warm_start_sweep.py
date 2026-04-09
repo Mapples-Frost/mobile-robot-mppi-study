@@ -12,7 +12,7 @@ def build_experiment_configs():
     configs = [
         {
             "scene_name": "dense",
-            "horizon": 205,
+            "horizon": 15,
             "num_samples": 250,
             "temperature": 8.0,
             "dt": 0.2,

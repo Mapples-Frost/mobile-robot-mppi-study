@@ -22,6 +22,7 @@ RESULT_FIELDNAMES = [
     "final_executed_cost",
     "final_collision",
     "final_state",
+    "use_goal_warm_start"
 ]
 
 
@@ -68,10 +69,22 @@ SWEEP_CONFIGS = {
         "fixed": {},
         "table_filename": "dense_h35_temperature_summary.csv",
     },
+     "dense_horizon_baseline": {
+          "grid": {
+             "scene_name": ["dense"],
+           "horizon": [10, 15, 20, 25, 30, 35],
+          },
+          "fixed": {
+                "num_samples": 250,
+                "temperature": 8.0,
+                "use_goal_warm_start": False,
+    },
+    "table_filename": "dense_horizon_baseline_summary.csv",
+},
 }
 
 
-ACTIVE_SWEEP_NAME = "dense_temperature"
+ACTIVE_SWEEP_NAME = "dense_horizon_baseline"
 
 
 def build_experiment_cases(base_config, sweep_config):

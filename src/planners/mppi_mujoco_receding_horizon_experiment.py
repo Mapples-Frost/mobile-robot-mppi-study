@@ -1,18 +1,10 @@
-"""
-最小 2D MPPI receding horizon demo（重构版）
-
-这版重构主要做了 4 件事：
-1. 从 experiments/configs/baseline_scenes.py 读取场景。
-2. 给每个场景增加 bounds（工作空间边界）。
-3. 在 trajectory_cost(...) 里增加边界惩罚，避免机器人钻地图外圈漏洞。
-4. 每个场景单独保存一张图到 results/figures/。
-"""
 
 import math
 import random
 from pathlib import Path
 import numpy as np
 import time
+from src.envs.mujoco_point_env import MujocoPointEnv
 
 import matplotlib.pyplot as plt
 from matplotlib.patches import Circle
@@ -112,7 +104,6 @@ def sample_control_sequences(
     current_state,
     dt,
     obstacles,
-    bounds,
     robot_radius,
     num_samples,
     v_std,
@@ -124,6 +115,12 @@ def sample_control_sequences(
     sdf_influence_distance=1.2,#几何采样引导距离
     sigma_parallel=0.08,#切向扩散强度
     sigma_perp=0.01,#法向扩散强度
+    goal=None,#goal 坐标，后面用来判断“哪边切向更朝目标”
+    bounds=None,#边界，后面用来算 inward bias
+    isotropic_anchor_ratio=0.25,#保留 25% 的各向同性样本，防止全体 sample 一起塌缩
+    tangent_push_gain=0.12,#给 goal-aligned 切向一个轻微前推
+    boundary_bias_distance=0.45,#距离边界 0.45m 内，就开始给 inward bias
+    boundary_push_gain=0.90,#边界内推强度
 ):
     """
     围绕 nominal_sequence 采样很多条候选控制序列。
@@ -150,25 +147,27 @@ def sample_control_sequences(
                 sampled_omega = random.gauss(nominal_omega, omega_std)
 
             else:
-                clearance_t, grad_t = nearest_geometry_sdf_gradient(
+                clearance_t, grad_t = nearest_obstacle_sdf_gradient(
                     x=x_t,
                     y=y_t,
                     obstacles=obstacles,
-                    bounds=bounds,
                     robot_radius=robot_radius,
                 )
 
-                if clearance_t > sdf_influence_distance:
+                # 先留一部分各向同性 anchor，防止 sample cloud 一起塌向同一边
+                if (
+                        clearance_t > sdf_influence_distance
+                        or random.random() < isotropic_anchor_ratio
+                ):
                     sampled_v = random.gauss(nominal_v, v_std)
                     sampled_omega = random.gauss(nominal_omega, omega_std)
                 else:
                     n = grad_t / max(np.linalg.norm(grad_t), 1e-8)
                     t_dir = np.array([-n[1], n[0]], dtype=float)
-                    '''这里t与n正交'''
 
-                    Sigma =(#协方差矩阵的Sigma
-                        sigma_parallel * np.outer(t_dir, t_dir)#求内积，结果是一个矩阵-
-                        + sigma_perp * np.outer(n, n)
+                    Sigma = (
+                            sigma_parallel * np.outer(t_dir, t_dir)
+                            + sigma_perp * np.outer(n, n)
                     )
 
                     eps_xy = np.random.multivariate_normal(
@@ -184,7 +183,42 @@ def sample_control_sequences(
                         dtype=float,
                     )
 
-                    u_sample_xy = u_nom_xy + eps_xy
+                    # ---------- 新增 1：goal-aware tangent bias ----------
+                    if goal is not None:
+                        goal_dir = np.array([goal[0] - x_t, goal[1] - y_t], dtype=float)
+                        goal_dir_norm = np.linalg.norm(goal_dir)
+
+                        if goal_dir_norm > 1e-8:
+                            goal_dir = goal_dir / goal_dir_norm
+
+                            if np.dot(t_dir, goal_dir) < 0.0:
+                                t_dir = -t_dir
+
+                    tangent_bias_xy = tangent_push_gain * t_dir
+
+                    # ---------- 新增 2：boundary inward bias ----------
+                    boundary_bias_xy = np.zeros(2, dtype=float)
+                    if bounds is not None:
+                        boundary_margin, inward_normal = nearest_boundary_inward_normal(
+                            x=x_t,
+                            y=y_t,
+                            bounds=bounds,
+                            robot_radius=robot_radius,
+                        )
+
+                        if boundary_margin < boundary_bias_distance:
+                            boundary_strength = boundary_push_gain * (
+                                    boundary_bias_distance - boundary_margin
+                            )
+                            boundary_bias_xy = boundary_strength * inward_normal
+
+                    # 最终真正参与采样的二维速度向量
+                    u_sample_xy = (
+                            u_nom_xy
+                            + tangent_bias_xy
+                            + boundary_bias_xy
+                            + eps_xy
+                    )
 
                     sampled_v = float(np.linalg.norm(u_sample_xy))
                     sampled_v = max(v_min, min(v_max, sampled_v))
@@ -196,15 +230,16 @@ def sample_control_sequences(
                             u_sample_xy[1],
                             u_sample_xy[0],
                         )
+
                         """
-                        新版逻辑：
-                        nominal_sequence⟶nominal_trajectory⟶(xt​,yt​,θt​)⟶(clearancet​,gradt​)⟶(n,t)⟶Σ⟶ϵxy​∼N(0,Σ)⟶usample,xy​⟶(sampledv​,sampledω​)
-                        即，先根据nominal sequnce算出一个轨迹，然后从第一步开始，计算每一步的clearance and grand，
-                        然后根据这两个数据构造协方差矩阵，再在xy方向上加一个
-                        加权后的噪声，由于此时的噪声是一个二维空间里的速度向量扰动
-                        因此需要先把这一步的线速度v转换成一个速度向量，再对速度向量加噪声
-                        最后反解出加噪声后的v和Omega构造sample sequence
-                        """
+                          新版逻辑：
+                          nominal_sequence⟶nominal_trajectory⟶(xt​,yt​,θt​)⟶(clearancet​,gradt​)⟶(n,t)⟶Σ⟶ϵxy​∼N(0,Σ)⟶usample,xy​⟶(sampledv​,sampledω​)
+                          即，先根据nominal sequnce算出一个轨迹，然后从第一步开始，计算每一步的clearance and grand，
+                          然后根据这两个数据构造协方差矩阵，再在xy方向上加一个
+                          加权后的噪声，由于此时的噪声是一个二维空间里的速度向量扰动
+                          因此需要先把这一步的线速度v转换成一个速度向量，再对速度向量加噪声
+                           最后反解出加噪声后的v和Omega构造sample sequence
+                         """
 
                     sampled_omega = wrap_angle(desired_heading - theta_t) / max(dt, 1e-8)
 
@@ -263,7 +298,6 @@ def nearest_obstacle_sdf_gradient(x, y, obstacles, robot_radius):
     return min_clearance, best_grad
 
 
-
 def nearest_geometry_sdf_gradient(x, y, obstacles, bounds, robot_radius):
     """
     返回当前位置相对于“最近几何体”的 clearance 和法向梯度。
@@ -301,7 +335,6 @@ def nearest_geometry_sdf_gradient(x, y, obstacles, bounds, robot_radius):
             best_grad = grad
 
     return min_clearance, best_grad
-
 
 def boundary_penalty(x, y, bounds, robot_radius):
     """
@@ -343,6 +376,24 @@ def boundary_penalty(x, y, bounds, robot_radius):
         return 300.0 * (warning_margin - margin) ** 2
 
     return 0.0
+
+
+def nearest_boundary_inward_normal(x, y, bounds, robot_radius):
+    effective_x_min = bounds["x_min"] + robot_radius
+    effective_x_max = bounds["x_max"] - robot_radius
+    effective_y_min = bounds["y_min"] + robot_radius
+    effective_y_max = bounds["y_max"] - robot_radius
+
+    candidates = [
+        (x - effective_x_min, np.array([1.0, 0.0], dtype=float)),   # 左边界，向右推
+        (effective_x_max - x, np.array([-1.0, 0.0], dtype=float)),  # 右边界，向左推
+        (y - effective_y_min, np.array([0.0, 1.0], dtype=float)),   # 下边界，向上推
+        (effective_y_max - y, np.array([0.0, -1.0], dtype=float)),  # 上边界，向下推
+    ]
+
+    min_margin, inward_normal = min(candidates, key=lambda item: item[0])
+    return min_margin, inward_normal
+
 
 def is_inside_effective_bounds(state, bounds, robot_radius):
     """
@@ -733,7 +784,7 @@ def plot_result(
 
     print("saved figure =", save_path)
 
-def run_experiment(
+def run_experiment_mujoco(
     scene_name,
     horizon,
     num_samples=250,
@@ -764,6 +815,13 @@ def run_experiment(
     goal = scene["goal"]
     obstacles = scene["obstacles"]
     bounds = scene["bounds"]
+
+    project_root = Path(__file__).resolve().parents[2]
+    xml_path = project_root / "src" / "models" / "mujoco" / "scene_minimal_robot.xml"
+
+    env = MujocoPointEnv(xml_path=xml_path)
+    env.launch_viewer()
+    env.reset(start_state)
 
     nominal_control = (1.0, 0.0)
     if use_goal_warm_start:
@@ -806,7 +864,6 @@ def run_experiment(
             current_state=current_state,
             dt=dt,
             obstacles=obstacles,
-            bounds=bounds,
             robot_radius=robot_radius,
             num_samples=num_samples,
             v_std=v_std,
@@ -818,6 +875,8 @@ def run_experiment(
             sdf_influence_distance=sdf_influence_distance,
             sigma_parallel=sigma_parallel,
             sigma_perp=sigma_perp,
+            goal=goal,
+            bounds=bounds,
         )
 
         sampled_trajectories = []
@@ -852,11 +911,20 @@ def run_experiment(
         best_cost = costs[best_idx]
         best_collision = collisions[best_idx]
 
+
         current_top_k_trajectories = select_top_k_trajectories(
             sampled_trajectories=sampled_trajectories,
             costs=costs,
             k=5,
         )
+
+        aux_predicted_trajectories = current_top_k_trajectories[1:3]
+
+        env.update_best_predicted_trajectory(sampled_best_trajectory)
+        env.update_aux_predicted_trajectories(aux_predicted_trajectories)
+
+
+
 
         if step_idx == 0:
             top_k_first_step_trajectories = current_top_k_trajectories
@@ -872,7 +940,8 @@ def run_experiment(
             robot_radius=robot_radius,
         )
 
-        current_state = step(current_state, executed_control, dt)
+        current_state = env.step(executed_control, dt)
+        env.render()
 
         executed_controls.append(executed_control)
         executed_trajectory.append(current_state)
@@ -886,6 +955,7 @@ def run_experiment(
             f"Step {step_idx:02d} | "
             f"best_cost = {best_cost:.3f} | "
             f"best_collision = {best_collision} | "
+            f"safety_intervened = {safety_intervened} | "
             f"executed_control = ({executed_control[0]:.3f}, {executed_control[1]:.3f}) | "
             f"current_state = ({current_state[0]:.3f}, {current_state[1]:.3f}, {current_state[2]:.3f}) | "
             f"goal_distance = {goal_distance:.3f}"
@@ -959,8 +1029,8 @@ def run_experiment(
         "use_goal_warm_start": use_goal_warm_start,
         "use_anisotropic_sampling": use_anisotropic_sampling,  # 新增
         "sdf_influence_distance": sdf_influence_distance,  # 新增
-        "sigma_parallel": sigma_parallel,  # 新增
-        "sigma_perp": sigma_perp,  # 新增
+        "sigma_parallel": sigma_parallel,
+        "sigma_perp": sigma_perp,
         "dt": dt,
         "execute_steps": execute_steps,
         "executed_trajectory_points": len(executed_trajectory),
@@ -974,25 +1044,29 @@ def run_experiment(
         "final_collision": final_collision,
         "final_state": final_state,
     }
+    env.close()
 
     return result
 
 
 
 def main():
-    result = run_experiment(
+    result = run_experiment_mujoco(
         scene_name="dense",
-        horizon=35,
+        horizon=15,
         num_samples=250,
         temperature=8.0,
         dt=0.2,
-        execute_steps=100,
+        execute_steps=150,
         use_goal_warm_start=False,
-        use_anisotropic_sampling=True,   # 新增
+        use_anisotropic_sampling=True,
+        sdf_influence_distance=1.2,
+        sigma_parallel=0.08,
+        sigma_perp=0.01,
     )
 
     print()
-    print("=== Main Wrapper Result ===")
+    print("=== MuJoCo Main Wrapper Result ===")
     print(result)
 
 

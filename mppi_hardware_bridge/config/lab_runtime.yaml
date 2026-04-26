@@ -1,0 +1,62 @@
+# E1/E2 小车现场运行配置
+
+
+mode: "scan_only"
+
+frame:
+  type: "relative_to_start"
+  origin: "adapter_start_pose"
+  x_axis: "initial_robot_heading"
+  y_axis: "left_of_initial_heading"
+  position_unit: "m"
+  linear_velocity_unit: "m/s"
+  angular_velocity_unit: "rad/s"
+  config_angle_unit: "deg"
+
+ros:
+  odom_topic: "/robot_pose_ekf/odom_combined"
+  fallback_odom_topic: "/odom"
+  scan_topic: "/scan"
+  cmd_vel_topic: "/cmd_vel"
+  runtime_goal_topic: "/move_base_simple/goal"
+
+goal:
+  # 第一版固定目标点，后续可由命令行或 RViz 覆盖
+  x: 0.5
+  y: 0.0
+  tolerance: 0.15
+
+boundary:
+  enabled: true
+  xmin: -2.0
+  xmax: 2.0
+  ymin: -1.5
+  ymax: 1.5
+
+limits:
+  profile: "safe"
+  v_max: 0.08
+  w_max: 0.30
+  k_yaw: 1.5
+  yaw_stop_deg: 60.0
+
+safety:
+  enable_publish: false
+  enable_scan_guard: true
+  enable_dynamic_obstacle_cost: true
+  emergency_stop: true
+  front_stop_distance: 0.45
+  front_slow_distance: 0.80
+  front_angle_deg: 35.0
+  local_obstacle_radius: 2.0
+
+mppi:
+  use_existing_planner: true
+  use_anisotropic_sampling: true
+  sdf_influence_distance: 1.2
+  scan_obstacle_influence_distance: 0.7
+
+logging:
+  print_debug: true
+  save_runtime_log: true
+

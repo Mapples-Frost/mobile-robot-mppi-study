@@ -45,7 +45,7 @@ class MujocoPointEnv:
                 if mocap_id != -1:
                     self.pred_aux_mocap_ids[path_idx].append(mocap_id)
 
-        self.history_points = deque(maxlen=140)
+        self.history_points = deque(maxlen=60)
         self.history_z = 0.028
         self.history_segment_radius = 0.009
         self.history_rgba_start = np.array([0.78, 0.68, 0.54, 0.40], dtype=np.float32)
@@ -56,12 +56,12 @@ class MujocoPointEnv:
         self._overlay_dirty = True
         self._previous_visual_state = None
         self._current_visual_state = None
-        self.visual_interpolation_frames = 3
-        self.visual_frame_pause = 0.0015
+        self.visual_interpolation_frames = 8
+        self.visual_frame_pause = 0.0018
 
         self.best_predicted_points = []
         self.aux_predicted_points = [[], []]
-        self.predicted_max_length = 1.85
+        self.predicted_max_length = 1.10
         self.best_predicted_z = 0.064
         self.aux_predicted_z = [0.058, 0.054]
         self.best_predicted_segment_radius = 0.0105

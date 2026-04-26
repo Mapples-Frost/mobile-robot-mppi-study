@@ -1,4 +1,6 @@
-
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 import math
 import random
 from pathlib import Path
@@ -119,8 +121,8 @@ def sample_control_sequences(
     bounds=None,#边界，后面用来算 inward bias
     isotropic_anchor_ratio=0.25,#保留 25% 的各向同性样本，防止全体 sample 一起塌缩
     tangent_push_gain=0.12,#给 goal-aligned 切向一个轻微前推
-    boundary_bias_distance=0.45,#距离边界 0.45m 内，就开始给 inward bias
-    boundary_push_gain=0.90,#边界内推强度
+    boundary_bias_distance=0.45#距离边界 0.45m 内，就开始给 inward bias
+    ,boundary_push_gain=0.90#界内推强度
 ):
     """
     围绕 nominal_sequence 采样很多条候选控制序列。
@@ -243,6 +245,10 @@ def sample_control_sequences(
                             + step_meta["boundary_bias_xy"]
                             + eps_xy
                     )
+
+
+
+
 
                     sampled_v = float(np.linalg.norm(u_sample_xy))
                     sampled_v = max(v_min, min(v_max, sampled_v))
@@ -1085,7 +1091,7 @@ def main():
         dt=0.2,
         execute_steps=150,
         use_goal_warm_start=False,
-        use_anisotropic_sampling=True,
+        use_anisotropic_sampling=False,
         sdf_influence_distance=1.2,
         sigma_parallel=0.08,
         sigma_perp=0.01,

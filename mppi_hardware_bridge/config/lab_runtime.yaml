@@ -28,10 +28,10 @@ goal:
 
 boundary:
   enabled: true
-  xmin: -2.0
-  xmax: 2.0
-  ymin: -1.5
-  ymax: 1.5
+  xmin: -0.3
+  xmax: 1.2
+  ymin: -0.6
+  ymax: 0.6
 
 limits:
   profile: "safe"

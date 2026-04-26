@@ -11,3 +11,17 @@ venv/
 results/gifs/*.mp4
 results/gifs/*.avi
 experiments/logs/*.tmp
+
+# Local IDE files
+.idea/
+
+# Experiment outputs
+results/
+
+# Backup files
+*.bak
+*.codex_*.bak
+
+# Python cache
+__pycache__/
+*.pyc

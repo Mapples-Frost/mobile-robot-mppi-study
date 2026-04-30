@@ -1,14 +1,20 @@
+# -*- coding: utf-8 -*-
 from __future__ import print_function
-from pathlib import Path
 
 import argparse
 import io
 import os
 import yaml
 
-THIS_FILE = Path(__file__).resolve()
-PROJECT_ROOT = THIS_FILE.parents[2]
-DEFAULT_CONFIG_PATH = PROJECT_ROOT / "mppi_hardware_bridge" / "config" / "lab_runtime.yaml"
+THIS_FILE = os.path.abspath(__file__)
+SCRIPT_DIR = os.path.dirname(THIS_FILE)
+PROJECT_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, "..", ".."))
+DEFAULT_CONFIG_PATH = os.path.join(
+    PROJECT_ROOT,
+    "mppi_hardware_bridge",
+    "config",
+    "lab_runtime.yaml",
+)
 
 
 class ConfigNode(dict):

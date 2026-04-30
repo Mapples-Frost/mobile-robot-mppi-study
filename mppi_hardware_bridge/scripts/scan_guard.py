@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from __future__ import print_function
 
 import math
@@ -20,7 +21,7 @@ def is_finite_range(value):
     except (TypeError, ValueError):
         return False
 
-    return math.isfinite(value)
+    return not (math.isnan(value) or math.isinf(value))
 
 
 def normalize_angle(angle):

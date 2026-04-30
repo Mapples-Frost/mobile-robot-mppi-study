@@ -48,7 +48,7 @@ safety:
   front_stop_distance: 0.45
   front_slow_distance: 0.80
   front_angle_deg: 35.0
-  local_obstacle_radius: 2.0
+  local_obstacle_radius: 0.08
 
 mppi:
   use_existing_planner: true

@@ -1,0 +1,177 @@
+# E1/E2 Dashgo conservative safety profile for goal (3.0, 3.0).
+
+mode: "scan_only"
+
+frame:
+  type: "relative_to_start"
+  origin: "adapter_start_pose"
+  x_axis: "initial_robot_heading"
+  y_axis: "left_of_initial_heading"
+  position_unit: "m"
+  linear_velocity_unit: "m/s"
+  angular_velocity_unit: "rad/s"
+  config_angle_unit: "deg"
+
+ros:
+  odom_topic: "/odom"
+  fallback_odom_topic: "/odom_combined"
+  scan_topic: "/scan"
+  cmd_vel_topic: "/cmd_vel"
+  runtime_goal_topic: "/move_base_simple/goal"
+
+goal:
+  x: 3.0
+  y: 3.0
+  tolerance: 0.20
+  latch_on_reached: true
+
+boundary:
+  enabled: true
+  xmin: -0.5
+  xmax: 4.0
+  ymin: -0.5
+  ymax: 4.0
+
+limits:
+  profile: "goal_3_3_safe"
+  v_max: 0.12
+  w_max: 0.45
+  k_yaw: 0.75
+  yaw_stop_deg: 130.0
+  omega_slew_rate: 0.14
+  omega_lowpass_alpha: 0.03
+  obstacle_omega_slew_rate: 2.5
+  obstacle_omega_lowpass_alpha: 0.85
+  hard_stop_omega_slew_rate: 4.0
+  hard_stop_omega_lowpass_alpha: 1.0
+
+tracking:
+  enable_goal_tracking_override: true
+  yaw_align_deg: 75.0
+  yaw_slow_deg: 45.0
+  yaw_deadband_deg: 3.0
+  k_yaw: 0.18
+  omega_align_max: 0.18
+  omega_track_max: 0.18
+  omega_deadband_max: 0.03
+  min_v_scale: 0.05
+  suppress_wrong_sign_omega: true
+  reset_smoother_on_omega_sign_flip: false
+
+safety:
+  enable_publish: false
+  enable_scan_guard: true
+  enable_dynamic_obstacle_cost: true
+  emergency_stop: true
+  base_frame_id: "base_footprint"
+  use_scan_tf: true
+  scan_angle_offset_deg: 0.0
+  front_stop_distance: 0.30
+  front_soft_block_distance: 0.32
+  front_stop_release_distance: 0.30
+  hard_stop_distance: 0.25
+  hard_stop_release_margin: 0.04
+  front_turn_distance: 1.20
+  front_turn_release_distance: 1.35
+  front_corridor_half_width: 0.38
+  front_turn_min_omega: 0.10
+  front_turn_max_omega: 0.18
+  front_turn_keep_v_scale: 0.75
+  front_slow_distance: 1.05
+  soft_avoid_min_v: 0.055
+  soft_avoid_target_v: 0.075
+  front_slow_min_scale: 0.45
+  obstacle_turn_hold_sec: 0.7
+  obstacle_turn_damp_yaw_error_deg: 14.0
+  obstacle_turn_max_yaw_error_deg: 22.0
+  obstacle_turn_bias_omega: 0.06
+  obstacle_turn_override_min_risk: 0.65
+  obstacle_turn_score_deadband: 0.20
+  obstacle_turn_lock_min_sec: 0.25
+  obstacle_turn_lock_max_sec: 0.7
+  mppi_omega_trust_frames: 3
+  hard_override_margin_streak_frames: 3
+  hard_override_conflict_streak_frames: 2
+  front_angle_deg: 70.0
+  side_stop_distance: 0.28
+  side_angle_deg: 120.0
+  side_soft_distance: 0.26
+  side_hard_distance: 0.18
+  side_release_distance: 0.34
+  side_soft_min_v: 0.05
+  side_avoid_v_scale: 0.80
+  side_avoid_min_omega: 0.10
+  side_avoid_max_omega: 0.18
+  side_avoid_hold_sec: 0.8
+  side_front_exclusion_angle_deg: 25.0
+  near_body_stop_radius: 0.18
+  corridor_switch_margin: 0.15
+  corridor_switch_streak_frames: 3
+  corridor_side_risk_weight: 1.5
+  corridor_goal_error_weight: 0.8
+  corridor_clearance_weight: 1.0
+  avoidance_release_clear_frames: 3
+  avoidance_progress_release_frames: 3
+  avoidance_no_obstacle_release_frames: 2
+  local_obstacle_radius: 0.12
+  rotate_escape_w: 0.8
+  avoidance_side_hold_sec: 1.2
+  allow_rotate_in_front_stop: true
+  front_stop_recovery_w_min: 0.15
+  front_stop_recovery_w_max: 0.22
+  hard_stop_recovery_no_improve_frames: 8
+  hard_stop_recovery_switch_min_sec: 0.8
+  front_stop_recovery_use_goal_direction: false
+  planner_creep_enable: true
+  planner_creep_v: 0.060
+  planner_creep_max_omega: 0.14
+  creep_max_duration_sec: 2.0
+
+mppi:
+  use_existing_planner: true
+  use_anisotropic_sampling: true
+  horizon: 25
+  num_samples: 350
+  realtime_degraded_num_samples: 200
+  realtime_degraded_horizon: 20
+  emergency_degraded_num_samples: 180
+  emergency_degraded_horizon: 20
+  realtime_core_ms_threshold: 180.0
+  realtime_recover_core_ms: 140.0
+  emergency_degraded_core_streak: 4
+  realtime_recover_streak: 5
+  temperature: 24.0
+  omega_max: 0.45
+  v_max: 0.12
+  omega_std: 0.12
+  v_std: 0.05
+  sdf_influence_distance: 0.80
+  scan_obstacle_influence_distance: 0.85
+  scan_obstacle_mode: geometric
+  scan_downsample_step: 1
+  dynamic_obstacle_max_count: 4
+  geometric_max_obstacle_count: 4
+  geometric_min_segment_points: 4
+  geometric_line_spacing: 0.20
+  geometric_obstacle_inflation: 0.04
+  geometric_smooth_window_size: 3
+  geometric_max_neighbor_distance: 0.18
+  geometric_tangent_jump_threshold_rad: 0.55
+  geometric_curvature_threshold: 2.5
+  geometric_curvature_delta_threshold: 2.0
+  geometric_line_error_threshold: 0.04
+  geometric_line_curvature_threshold: 0.35
+  geometric_min_line_length: 0.15
+  geometric_circle_error_threshold: 0.04
+  geometric_circle_curvature_std_threshold: 0.60
+  geometric_min_circle_radius: 0.04
+  geometric_max_circle_radius: 0.60
+  geometric_min_circle_arc_angle: 0.35
+  geometric_line_sample_spacing: 0.20
+  geometric_line_max_obstacles: 3
+  geometric_edge_corner_radius_scale: 1.5
+  geometric_irregular_max_points: 3
+
+logging:
+  print_debug: true
+  save_runtime_log: true

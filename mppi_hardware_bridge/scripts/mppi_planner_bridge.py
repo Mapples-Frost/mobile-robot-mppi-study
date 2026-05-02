@@ -262,6 +262,12 @@ class MppiPlannerBridge(object):
 
         self.horizon = int(self._cfg_mppi("horizon", 15))
         self.num_samples = int(self._cfg_mppi("num_samples", 250))
+        self.base_horizon = int(self.horizon)
+        self.base_num_samples = int(self.num_samples)
+        self.effective_horizon = int(self.horizon)
+        self.effective_num_samples = int(self.num_samples)
+        self.runtime_profile = "normal"
+        self.degraded_reason = "normal"
         self.temperature = float(self._cfg_mppi("temperature", 8.0))
         self.dt = float(self._cfg_mppi("dt", 0.2))
 
@@ -278,6 +284,10 @@ class MppiPlannerBridge(object):
                 float(_cfg_get(cfg, ["limits", "w_max"], 1.2)),
             )
         )
+        limit_w_max = float(_cfg_get(cfg, ["limits", "w_max"], self.omega_max))
+        if self.omega_max > limit_w_max:
+            self.defaults_used["omega_max_clamped_to_limits_w_max"] = limit_w_max
+            self.omega_max = limit_w_max
         self.v_std = float(self._cfg_mppi("v_std", 0.25))
         self.omega_std = float(self._cfg_mppi("omega_std", 0.35))
         self.robot_radius = float(self._cfg_mppi("robot_radius", 0.25))
@@ -324,8 +334,46 @@ class MppiPlannerBridge(object):
     def reset(self):
         self.nominal_sequence = self.planner.initialize_control_sequence(
             self.nominal_control,
-            self.horizon,
+            self.effective_horizon,
         )
+
+    def resize_nominal_sequence(self, new_horizon):
+        new_horizon = max(1, int(new_horizon))
+        if self.nominal_sequence is None:
+            self.effective_horizon = new_horizon
+            self.reset()
+            return
+
+        current_sequence = list(self.nominal_sequence)
+        if len(current_sequence) > new_horizon:
+            self.nominal_sequence = current_sequence[:new_horizon]
+        elif len(current_sequence) < new_horizon:
+            if current_sequence:
+                tail_control = current_sequence[-1]
+            else:
+                tail_control = self.nominal_control
+            self.nominal_sequence = current_sequence + [
+                tail_control for _ in range(new_horizon - len(current_sequence))
+            ]
+        self.effective_horizon = new_horizon
+
+    def set_runtime_profile(self, profile_name, num_samples=None, horizon=None, reason="none"):
+        profile_name = str(profile_name or "normal")
+        if num_samples is None:
+            num_samples = self.base_num_samples
+        if horizon is None:
+            horizon = self.base_horizon
+
+        num_samples = max(1, int(num_samples))
+        horizon = max(1, int(horizon))
+        if horizon != int(self.effective_horizon):
+            self.resize_nominal_sequence(horizon)
+
+        self.runtime_profile = profile_name
+        self.degraded_reason = str(reason or "none")
+        self.effective_num_samples = num_samples
+        self.num_samples = num_samples
+        self.horizon = horizon
 
     def set_obstacles(self, obstacles):
         self.obstacles = _coerce_obstacles(obstacles)
@@ -341,19 +389,20 @@ class MppiPlannerBridge(object):
         )
         goal = _as_float_tuple(goal_xy, 2, "goal_xy")
 
-        if self.nominal_sequence is None or len(self.nominal_sequence) != self.horizon:
+        if self.nominal_sequence is None or len(self.nominal_sequence) != self.effective_horizon:
             self.reset()
 
         nominal_first_before = self.nominal_sequence[0]
         plan_start = time.time()
 
+        sample_start = time.time()
         sampled_sequences = self.planner.sample_control_sequences(
             nominal_sequence=self.nominal_sequence,
             current_state=current_state,
             dt=self.dt,
             obstacles=self.obstacles,
             robot_radius=self.robot_radius,
-            num_samples=self.num_samples,
+            num_samples=self.effective_num_samples,
             v_std=self.v_std,
             omega_std=self.omega_std,
             v_min=self.v_min,
@@ -366,10 +415,12 @@ class MppiPlannerBridge(object):
             goal=goal,
             bounds=self.bounds,
         )
+        sample_time_sec = time.time() - sample_start
 
         costs = []
         collisions = []
 
+        rollout_cost_start = time.time()
         for control_sequence in sampled_sequences:
             trajectory = self.planner.rollout_control_sequence(
                 start_state=current_state,
@@ -386,17 +437,20 @@ class MppiPlannerBridge(object):
             )
             costs.append(float(total_cost))
             collisions.append(bool(collided))
+        rollout_cost_time_sec = time.time() - rollout_cost_start
 
         if not costs:
             raise MppiPlannerBridgeError(
                 "Existing planner returned no sampled trajectories; cannot compute MPPI control."
             )
 
+        update_start = time.time()
         weights = self.planner.compute_weights(costs, self.temperature)
         updated_sequence = self.planner.weighted_update_sequence(
             sampled_sequences,
             weights,
         )
+        update_time_sec = time.time() - update_start
 
         if not updated_sequence:
             raise MppiPlannerBridgeError(
@@ -436,8 +490,14 @@ class MppiPlannerBridge(object):
             "planner_type": "mppi",
             "proposed_control": proposed_control,
             "raw_mppi_control": raw_mppi_control,
-            "horizon": self.horizon,
-            "num_samples": self.num_samples,
+            "horizon": self.effective_horizon,
+            "num_samples": self.effective_num_samples,
+            "effective_horizon": self.effective_horizon,
+            "effective_num_samples": self.effective_num_samples,
+            "base_horizon": self.base_horizon,
+            "base_num_samples": self.base_num_samples,
+            "runtime_profile": self.runtime_profile,
+            "degraded_reason": self.degraded_reason,
             "temperature": self.temperature,
             "dt": self.dt,
             "use_anisotropic_sampling": self.use_anisotropic_sampling,
@@ -455,6 +515,10 @@ class MppiPlannerBridge(object):
             "cost_max": float(max(costs)),
             "collision_count": int(sum(1 for collided in collisions if collided)),
             "plan_time_sec": plan_time_sec,
+            "planner_compute_ms": plan_time_sec * 1000.0,
+            "sampling_ms": sample_time_sec * 1000.0,
+            "rollout_cost_ms": rollout_cost_time_sec * 1000.0,
+            "weights_update_ms": update_time_sec * 1000.0,
             "bounds": self.bounds,
             "obstacle_count": len(self.obstacles),
             "used_mujoco_stub": bool(self.used_mujoco_stub),

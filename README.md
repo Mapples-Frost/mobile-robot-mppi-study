@@ -1,117 +1,71 @@
 # Mobile Robot MPPI Study
 
-Learning and implementing MPPI for mobile robot navigation and obstacle avoidance, with notes, code, and experiment logs.
+本仓库用于研究移动机器人导航与动态避障中的 MPPI（Model Predictive Path Integral）控制方法，并逐步从二维 Python 原型推进到 MuJoCo 仿真和 ROS 实车硬件桥接。
 
----
+当前项目重点已经从最初的二维算法学习，推进到：
 
-## 项目简介
-
-这个仓库用于记录我在“移动机器人导航与避障”方向上的前期学习与实现过程。当前阶段先不急着上实体机器人、ROS 或正式仿真平台，而是先在 **WSL + PyCharm + Python** 环境下，搭建一个**最小二维算法实验台**，把环境、运动学、碰撞检测、轨迹生成、控制采样和代价评估这些基础问题看清楚、跑通、能解释、能逐步扩展。
-
-项目的核心主线是：
-
-- 先完成二维环境与机器人运动学基础
-- 再逐步实现 vanilla MPPI（Model Predictive Path Integral，模型预测路径积分控制）原型
-- 后续再整理实验、阅读论文、尝试第一版改进方向
+- vanilla MPPI / receding horizon 控制
+- MuJoCo 点机器人仿真
+- ROS Kinetic 实车桥接
+- LaserScan 局部障碍物建模
+- 长条障碍物的几何表达
+- 安全状态机与控制仲裁
+- Memory-Augmented Potential Field / MA-MPPI 方向探索
 
 ---
 
 ## 当前阶段
 
-### 当前正在做
-- [x] 搭建二维环境与障碍物表示
-- [x] 实现机器人状态表示与运动学更新
-- [x] 实现轨迹 rollout 与碰撞检测
-- [x] 实现多候选控制比较
-- [x] 从单个控制采样推进到控制序列采样
-- [x] 理解并实现 weighted update（加权更新）原型
-- [x] 串起 receding horizon（滚动时域）主循环
-- [x] 跑通 vanilla MPPI baseline
-- [ ] 开始系统整理实验结果与论文笔记
+### 已完成
 
-### 当前暂时不做
-- [ ] 实体小车联调
-- [ ] ROS 节点系统开发
-- [ ] Gazebo / Webots / MATLAB 平台迁移
-- [ ] RL-guided MPPI / Residual-MPPI 等改进版实现
+- [x] 二维环境与圆形障碍物实验台
+- [x] unicycle / point robot 运动学 rollout
+- [x] vanilla MPPI 采样、rollout、trajectory cost、weighted update
+- [x] receding horizon MPPI 主循环
+- [x] MuJoCo 点机器人 MPPI 初步实验
+- [x] ROS 硬件桥接层原型
+- [x] LaserScan scan_guard 安全检测
+- [x] LaserScan 局部障碍物提取
+- [x] 长条障碍 line surface + representative circles 表达
+- [x] MPPI 实车动态障碍物 cost 接入
+- [x] CLEAR / APPROACH_SLOW / CREEP_ESCAPE / HARD_STOP_RECOVERY / GOAL_REACQUIRE 避障状态机
+- [x] MPPI / safety / goal tracking / smoothing 控制仲裁
+- [x] Memory-Augmented Potential Field 轻量实现
+- [x] 实车日志记录、行为测试与 runtime diagnostics
 
----
+### 正在做
 
-## 当前已经完成的内容
-
-### 1. 二维环境与可视化
-- `src/envs/simple_env.py`
-- `src/envs/trajectory_demo.py`
-
-已经可以画出：
-- 起点
-- 终点
-- 圆形障碍物
-- 轨迹与机器人朝向
-
-### 2. 机器人运动学
-- `src/models/unicycle_model.py`
-
-已经实现：
-- `step(state, control, dt)` 单步状态更新
-- `rollout(...)` 多步轨迹展开
-
-当前默认状态与控制表示为：
-- `state = (x, y, theta)`
-- `control = (v, omega)`
-
-### 3. 碰撞检测
-- `src/envs/collision_demo.py`
-
-已经实现：
-- 单点碰撞检测
-- 整条轨迹碰撞检测
-- 基于圆形机器人与圆形障碍物的最简碰撞判断
-
-### 4. 从控制选择到采样控制
-- 多候选控制比较
-- 围绕 `nominal_control` 的高斯采样
-- 从“单个控制采样”推进到“控制序列采样”
-- rollout → trajectory → cost 的整条链路理解与实现
-
-### 5. MPPI 原型理解推进
-目前已经进入 vanilla MPPI 的核心骨架前半段：
-
-- 控制序列初始化
-- 噪声采样
-- rollout
-- cost evaluation
-- weighted update
-
-下一步重点是把这些模块真正串进 receding horizon 主循环。
+- [ ] 将 Memory-Augmented MPPI 接入 MuJoCo 仿真平台
+- [ ] 做 memory on/off 消融实验
+- [ ] 对比普通 MPPI 与 Memory-Augmented MPPI 的局部最优逃逸能力
+- [ ] 统计不同 samples / horizon / realtime profile 下的计算耗时
+- [ ] 整理组会汇报图和实验表格
 
 ---
 
-## 项目结构
+## 当前系统架构
+
+当前实车控制链路如下：
 
 ```text
-mobile-robot-mppi-study/
-├── .venv/
-├── docs/
-│   ├── paper_notes/         # 论文笔记
-│   ├── roadmap.md           # 项目路线图
-│   └── weekly_logs/         # 学习记录 / 周志
-├── experiments/
-│   ├── configs/             # 实验配置
-│   ├── logs/                # 实验日志
-│   └── scripts/             # 批量实验脚本
-├── reports/
-│   ├── milestone_reports/   # 阶段总结
-│   └── weekly_reports/      # 周报
-├── results/
-│   ├── figures/             # 图片结果
-│   ├── gifs/                # 动图结果
-│   └── tables/              # 表格结果
-├── src/
-│   ├── costs/               # 代价函数
-│   ├── envs/                # 环境相关代码
-│   ├── models/              # 运动学 / 动力学模型
-│   ├── planners/            # 规划与控制器原型
-│   └── utils/               # 工具函数
-├── .gitignore
-└── README.md
+Odometry + LaserScan
+        ↓
+scan_guard / local_obstacle_layer
+        ↓
+front range / side range / line surface / representative circles
+        ↓
+MppiPlannerBridge
+        ↓
+MPPI sampling + rollout + trajectory cost
+        ↓
+goal cost + obstacle cost + control cost + spin cost + memory cost
+        ↓
+proposed_control = (v, omega)
+        ↓
+ROS Adapter Arbitration
+        ↓
+safety clamp / creep escape / memory escape / goal tracking / smoothing
+        ↓
+final_control
+        ↓
+/cmd_vel

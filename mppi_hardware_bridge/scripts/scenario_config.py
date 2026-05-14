@@ -32,6 +32,13 @@ DEFAULT_MPPI_SCAN_OBSTACLE_CONFIG = {
     "emergency_degraded_core_streak": 4,
     "realtime_recover_streak": 5,
     "temperature": 14.0,
+    "omega_cost_weight": 0.05,
+    "domega_cost_weight": 0.08,
+    "spin_in_place_cost_weight": 0.30,
+    "wrong_way_spin_cost_weight": 0.40,
+    "spin_v_threshold": 0.015,
+    "spin_omega_threshold": 0.15,
+    "memory_eval_stride": 3,
     "omega_std": 0.95,
     "v_std": 0.16,
     "scan_obstacle_mode": "geometric",
@@ -58,6 +65,26 @@ DEFAULT_MPPI_SCAN_OBSTACLE_CONFIG = {
     "geometric_line_max_obstacles": 3,
     "geometric_edge_corner_radius_scale": 1.5,
     "geometric_irregular_max_points": 3,
+}
+
+DEFAULT_MEMORY_CONFIG = {
+    "enable": True,
+    "max_features": 30,
+    "stuck_window_sec": 3.0,
+    "stuck_pos_radius": 0.18,
+    "stuck_goal_progress_threshold": 0.04,
+    "spin_omega_threshold": 0.16,
+    "spin_v_threshold": 0.025,
+    "feature_merge_distance": 0.30,
+    "feature_radius": 0.45,
+    "feature_strength_initial": 1.0,
+    "feature_strength_max": 5.0,
+    "feature_decay": 0.995,
+    "local_min_cost_weight": 1.0,
+    "spin_trap_cost_weight": 0.8,
+    "low_progress_cost_weight": 0.6,
+    "escape_direction_cost_weight": 0.8,
+    "temperature_boost_max": 1.8,
 }
 
 DEFAULT_LIMITS_STABILITY_CONFIG = {
@@ -234,6 +261,13 @@ def apply_optional_defaults(raw):
     for key, value in DEFAULT_TRACKING_CONFIG.items():
         if key not in tracking:
             tracking[key] = value
+
+    if "memory" not in raw:
+        raw["memory"] = {}
+    memory = raw.get("memory", {})
+    for key, value in DEFAULT_MEMORY_CONFIG.items():
+        if key not in memory:
+            memory[key] = value
 
 
 def strip_yaml_comment(line):
@@ -727,6 +761,8 @@ def validate_lab_runtime_config(raw):
         "temperature",
         "omega_std",
         "v_std",
+        "spin_omega_threshold",
+        "memory_eval_stride",
         "geometric_line_spacing",
         "geometric_smooth_window_size",
         "geometric_max_neighbor_distance",
@@ -762,6 +798,43 @@ def validate_lab_runtime_config(raw):
         raise ValueError(
             "mppi.geometric_min_circle_radius must be <= geometric_max_circle_radius."
         )
+
+    for key in (
+        "omega_cost_weight",
+        "domega_cost_weight",
+        "spin_in_place_cost_weight",
+        "wrong_way_spin_cost_weight",
+        "spin_v_threshold",
+    ):
+        if float(raw["mppi"][key]) < 0.0:
+            raise ValueError("mppi.{} must be >= 0.".format(key))
+
+    if int(raw["memory"]["max_features"]) <= 0:
+        raise ValueError("memory.max_features must be positive.")
+    for key in (
+        "stuck_window_sec",
+        "stuck_pos_radius",
+        "feature_merge_distance",
+        "feature_radius",
+        "feature_strength_initial",
+        "feature_strength_max",
+        "temperature_boost_max",
+    ):
+        if float(raw["memory"][key]) <= 0.0:
+            raise ValueError("memory.{} must be positive.".format(key))
+    for key in (
+        "stuck_goal_progress_threshold",
+        "spin_omega_threshold",
+        "spin_v_threshold",
+        "local_min_cost_weight",
+        "spin_trap_cost_weight",
+        "low_progress_cost_weight",
+        "escape_direction_cost_weight",
+    ):
+        if float(raw["memory"][key]) < 0.0:
+            raise ValueError("memory.{} must be >= 0.".format(key))
+    if float(raw["memory"]["feature_decay"]) <= 0.0 or float(raw["memory"]["feature_decay"]) > 1.0:
+        raise ValueError("memory.feature_decay must be in (0, 1].")
 
 
 def load_lab_runtime_config(config_path):
@@ -853,6 +926,27 @@ def print_config_summary(cfg):
     print("  dynamic_obstacle_max_count = {}".format(
         cfg.mppi.dynamic_obstacle_max_count
     ))
+    print("  horizon/num_samples = {}/{}".format(
+        cfg.mppi.horizon,
+        cfg.mppi.num_samples,
+    ))
+    print("  realtime profile = samples {}, horizon {}".format(
+        cfg.mppi.realtime_degraded_num_samples,
+        cfg.mppi.realtime_degraded_horizon,
+    ))
+    print("  omega costs = omega {:.3f}, domega {:.3f}, spin {:.3f}, wrong-way {:.3f}".format(
+        cfg.mppi.omega_cost_weight,
+        cfg.mppi.domega_cost_weight,
+        cfg.mppi.spin_in_place_cost_weight,
+        cfg.mppi.wrong_way_spin_cost_weight,
+    ))
+    print("")
+    print("Memory field:")
+    print("  enable = {}".format(cfg.memory.enable))
+    print("  max_features = {}".format(cfg.memory.max_features))
+    print("  stuck_window_sec = {:.3f}".format(cfg.memory.stuck_window_sec))
+    print("  feature_radius = {:.3f}".format(cfg.memory.feature_radius))
+    print("  temperature_boost_max = {:.3f}".format(cfg.memory.temperature_boost_max))
     print("")
 
 

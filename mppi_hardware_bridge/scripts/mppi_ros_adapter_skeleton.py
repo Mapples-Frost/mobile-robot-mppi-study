@@ -913,6 +913,8 @@ class MppiRosAdapterSkeleton(object):
             "hard_stop_recovery_last_min_front": None,
             "hard_stop_exit_to_creep": False,
             "line_surface_streak": 0,
+            "line_surface_memory_obstacles": [],
+            "line_surface_memory_ttl": 0,
             "mppi_runtime_profile": "normal",
             "mppi_degraded_reason": "normal",
             "mppi_core_overrun_streak": 0,
@@ -921,6 +923,101 @@ class MppiRosAdapterSkeleton(object):
         for name, value in defaults.items():
             if not hasattr(self, name):
                 setattr(self, name, value)
+
+    def memory_debug_snapshot(self, state=None):
+        bridge = getattr(self, "mppi_bridge", None)
+        if bridge is not None and hasattr(bridge, "memory_debug"):
+            return bridge.memory_debug(state)
+        return {
+            "memory_enabled": False,
+            "memory_feature_count": 0,
+            "memory_nearest_type": "none",
+            "memory_nearest_distance": None,
+            "memory_nearest_strength": 0.0,
+            "memory_cost": 0.0,
+            "memory_escape_direction": None,
+            "memory_temperature_scale": 1.0,
+            "stuck_feature_added": False,
+            "memory_feature_hit_count": 0,
+            "memory_decay_applied": False,
+        }
+
+    def near_obstacle_v_cap(self, min_front_range):
+        if min_front_range is None:
+            return float(self.cfg.limits.v_max), False
+        distance = float(min_front_range)
+        if distance <= float(getattr(self.cfg.safety, "hard_stop_distance", 0.25)):
+            return 0.0, True
+        if distance <= 0.35:
+            return min(0.030, float(self.cfg.limits.v_max)), True
+        if distance <= 0.45:
+            return min(0.040, float(self.cfg.limits.v_max)), True
+        if distance <= 0.55:
+            return min(0.055, float(self.cfg.limits.v_max)), True
+        return float(self.cfg.limits.v_max), False
+
+    def apply_memory_escape_bias(self, control, state, scan_result, planner_debug):
+        memory_debug = self.memory_debug_snapshot(state)
+        debug = dict(memory_debug)
+        debug.update({
+            "memory_escape_active": False,
+            "memory_escape_reason": "none",
+            "sustained_conflict_override": False,
+        })
+        feature_type = memory_debug.get("memory_nearest_type", "none")
+        distance = memory_debug.get("memory_nearest_distance")
+        escape_direction = memory_debug.get("memory_escape_direction")
+        if (
+            feature_type == "none"
+            or distance is None
+            or distance > 0.50
+            or escape_direction is None
+        ):
+            return control, debug
+
+        escape_norm = math.hypot(float(escape_direction[0]), float(escape_direction[1]))
+        if escape_norm <= 1e-6:
+            return control, debug
+
+        desired_heading = math.atan2(float(escape_direction[1]), float(escape_direction[0]))
+        yaw_error = normalize_angle(desired_heading - float(state[2]))
+        desired_omega = clip_value(
+            0.5 * yaw_error,
+            -float(self.cfg.limits.w_max),
+            float(self.cfg.limits.w_max),
+        )
+        if abs(desired_omega) < 0.03:
+            return control, debug
+
+        v = float(control[0])
+        omega_before = float(control[1])
+        conflict = (
+            sign_of(omega_before) != 0
+            and sign_of(desired_omega) != 0
+            and sign_of(omega_before) != sign_of(desired_omega)
+        )
+        conflict_frames = int(planner_debug.get("mppi_conflict_frames", 0))
+        hard_override_allowed = bool(planner_debug.get("hard_override_allowed", False))
+        mode = "memory_bias"
+        if conflict and hard_override_allowed and conflict_frames >= 2:
+            omega = desired_omega
+            mode = "memory_escape"
+            debug["sustained_conflict_override"] = True
+        else:
+            omega = 0.70 * omega_before + 0.30 * desired_omega
+        v_cap, capped = self.near_obstacle_v_cap(scan_result.get("min_front_range"))
+        if capped:
+            v = min(v, v_cap)
+        debug.update({
+            "memory_escape_active": True,
+            "memory_escape_reason": feature_type,
+            "arbitration_mode": mode,
+            "omega_source": mode,
+            "omega_before_memory_escape": omega_before,
+            "omega_after_memory_escape": omega,
+            "memory_desired_omega": desired_omega,
+        })
+        return (v, omega), debug
 
     def clear_planner_obstacles_only(self):
         if self.planner_mode != "mppi" or self.mppi_bridge is None:
@@ -1481,8 +1578,24 @@ class MppiRosAdapterSkeleton(object):
         self.ensure_runtime_state_defaults()
         if int(obstacle_debug.get("line_surface_count", 0)) > 0:
             self.line_surface_streak += 1
+            self.line_surface_memory_obstacles = list(dynamic_obstacles)
+            self.line_surface_memory_ttl = 3
+            obstacle_debug["line_surface_memory_active"] = False
         else:
             self.line_surface_streak = max(0, self.line_surface_streak - 1)
+            if (
+                not dynamic_obstacles
+                and getattr(self, "line_surface_memory_ttl", 0) > 0
+                and getattr(self, "line_surface_memory_obstacles", None)
+            ):
+                dynamic_obstacles = list(self.line_surface_memory_obstacles)
+                self.line_surface_memory_ttl -= 1
+                obstacle_debug["line_surface_memory_active"] = True
+                obstacle_debug["representative_circle_count"] = len(dynamic_obstacles)
+                obstacle_debug["compressed_line_obstacles"] = len(dynamic_obstacles)
+                obstacle_debug["obstacle_budget_mode"] = "line_surface_temporal_memory"
+            else:
+                obstacle_debug["line_surface_memory_active"] = False
         obstacle_debug["line_surface_streak"] = self.line_surface_streak
         if "representative_circle_count" not in obstacle_debug:
             obstacle_debug["representative_circle_count"] = obstacle_debug.get(
@@ -2430,6 +2543,7 @@ class MppiRosAdapterSkeleton(object):
                 and trust_count >= trust_frames
                 and trust_sign == sign_of(omega_before)
                 and override_risk_score < override_min_risk + override_deadband
+                and not hard_override_allowed
             )
             if hard_override_allowed and not trust_blocks_override:
                 omega = desired_omega
@@ -2541,6 +2655,12 @@ class MppiRosAdapterSkeleton(object):
                 "obstacle_yaw_deadband_escape_applied": False,
                 "goal_reacquire_active": False,
                 "anti_goal_drive_blocked": False,
+                "heading_align_in_place": False,
+                "heading_align_v_limited": False,
+                "heading_align_omega_source": "none",
+                "anti_goal_drive_reason": "disabled",
+                "forced_goal_align_omega": 0.0,
+                "goal_align_sign_source": "none",
                 "heading_gate_reason": "disabled",
                 "goal_tracking_suppression_release_reason": "disabled",
             })
@@ -2639,8 +2759,75 @@ class MppiRosAdapterSkeleton(object):
         goal_tracking_reverse_blocked = False
         anti_goal_drive_blocked = False
         heading_gate_reason = "none"
+        heading_align_in_place = False
+        heading_align_v_limited = False
+        heading_align_omega_source = "none"
+        anti_goal_drive_reason = "none"
+        forced_goal_align_omega = 0.0
+        goal_align_sign_source = "none"
+        startup_align_active = False
+        clear_no_obstacles = (
+            avoidance_state in ("CLEAR", "GOAL_REACQUIRE")
+            and scan_result.get("reason") == "front_clear"
+            and planner_obstacles <= 0
+            and dynamic_obstacles_current_scan <= 0
+        )
+        if clear_no_obstacles and scan_result.get("min_front_range") is not None:
+            try:
+                clear_no_obstacles = float(scan_result.get("min_front_range")) >= 0.90
+            except (TypeError, ValueError):
+                clear_no_obstacles = True
 
-        if obstacle_turn_mode or side_soft_avoid or avoidance_state in (
+        if clear_no_obstacles and abs_yaw_error_deg > 75.0:
+            startup_align_active = True
+            tracking_mode = "heading_align_in_place"
+            v = min(v, 0.005)
+            v_scale = 0.0
+            anti_goal_drive_blocked = True
+            anti_goal_drive_reason = "large_yaw_error_front_clear"
+            heading_gate_reason = "yaw_align_in_place"
+            goal_sign = sign_of(yaw_error)
+            if goal_sign == 0:
+                goal_sign = 1
+                goal_align_sign_source = "default_left"
+            else:
+                goal_align_sign_source = "goal_bearing"
+            forced_goal_align_omega = goal_sign * clip_value(
+                max(abs(k_yaw * yaw_error), 0.12),
+                0.12,
+                omega_align_max,
+            )
+            omega = forced_goal_align_omega
+            tracking_omega_limit = omega_align_max
+            heading_align_in_place = True
+            heading_align_v_limited = True
+            heading_align_omega_source = "goal_bearing_forced"
+            goal_tracking_reason = "forced_goal_align_wrong_sign_block"
+        elif clear_no_obstacles and abs_yaw_error_deg > 55.0:
+            startup_align_active = True
+            tracking_mode = "heading_align_slow"
+            v = min(v, 0.035)
+            v_scale = min(v_scale, 0.30)
+            anti_goal_drive_blocked = True
+            anti_goal_drive_reason = "medium_yaw_error_front_clear"
+            heading_gate_reason = "yaw_align_slow"
+            goal_sign = sign_of(yaw_error)
+            if goal_sign == 0:
+                goal_sign = 1
+                goal_align_sign_source = "default_left"
+            else:
+                goal_align_sign_source = "goal_bearing"
+            forced_goal_align_omega = goal_sign * clip_value(
+                max(abs(k_yaw * yaw_error), 0.08),
+                0.08,
+                omega_track_max,
+            )
+            omega = forced_goal_align_omega
+            tracking_omega_limit = omega_track_max
+            heading_align_v_limited = True
+            heading_align_omega_source = "goal_bearing_limited"
+            goal_tracking_reason = "goal_align_slow_wrong_sign_block"
+        elif obstacle_turn_mode or side_soft_avoid or avoidance_state in (
             "APPROACH_SLOW",
             "CREEP_ESCAPE",
             "HARD_STOP_RECOVERY",
@@ -2737,7 +2924,7 @@ class MppiRosAdapterSkeleton(object):
                 goal_tracking_reason = "yaw_deadband"
 
         reference_sign = sign_of(goal_tracking_reference_omega)
-        if goal_tracking_sign_guard_active and reference_sign != 0:
+        if goal_tracking_sign_guard_active and reference_sign != 0 and not startup_align_active:
             omega_sign = sign_of(omega)
             if omega_sign != reference_sign:
                 guard_limit = min(float(config.limits.w_max), tracking_omega_limit)
@@ -2780,6 +2967,12 @@ class MppiRosAdapterSkeleton(object):
             "goal_tracking_reverse_blocked": goal_tracking_reverse_blocked,
             "goal_reacquire_active": goal_reacquire_active,
             "anti_goal_drive_blocked": anti_goal_drive_blocked,
+            "heading_align_in_place": heading_align_in_place,
+            "heading_align_v_limited": heading_align_v_limited,
+            "heading_align_omega_source": heading_align_omega_source,
+            "anti_goal_drive_reason": anti_goal_drive_reason,
+            "forced_goal_align_omega": forced_goal_align_omega,
+            "goal_align_sign_source": goal_align_sign_source,
             "heading_gate_reason": heading_gate_reason,
             "goal_tracking_suppression_release_reason": goal_tracking_suppression_release_reason,
         })
@@ -3188,6 +3381,8 @@ class MppiRosAdapterSkeleton(object):
         soft_min_v = float(getattr(self.cfg.safety, "soft_avoid_min_v", 0.055))
         soft_target_v = float(getattr(self.cfg.safety, "soft_avoid_target_v", 0.075))
         v_max = float(self.cfg.limits.v_max)
+        near_obstacle_speed_limited = False
+        near_obstacle_v_cap = v_max
 
         scan_reason = scan_result.get("reason", "")
         front_stop_mode = scan_result.get("front_stop_mode", scan_reason)
@@ -3213,12 +3408,27 @@ class MppiRosAdapterSkeleton(object):
                 v_after = floor_v
                 reason = "side_obstacle_soft"
 
+        min_front_range = scan_result.get("min_front_range")
+        near_obstacle_v_cap, near_obstacle_speed_limited = self.near_obstacle_v_cap(
+            min_front_range
+        )
+        if near_obstacle_speed_limited and front_stop_mode != "front_soft_block":
+            if v_after > near_obstacle_v_cap:
+                v_after = near_obstacle_v_cap
+                reason = (
+                    "near_obstacle_speed_cap"
+                    if reason == "none"
+                    else reason + "+near_obstacle_speed_cap"
+                )
+
         debug = {
             "soft_avoid_v_before": v_before,
             "soft_avoid_v_after": v_after,
             "soft_avoid_reason": reason,
             "front_slow_min_scale": front_slow_min_scale,
             "side_soft_min_v": side_soft_min_v,
+            "near_obstacle_speed_limited": near_obstacle_speed_limited,
+            "near_obstacle_v_cap": near_obstacle_v_cap,
         }
         return (v_after, omega), debug
 
@@ -4005,7 +4215,12 @@ class MppiRosAdapterSkeleton(object):
             "achieved_rate_hz={achieved_rate_hz:.2f} | "
             "control_period_target_ms={control_period_target_ms:.1f} | "
             "overrun={overrun} | realtime_degraded={realtime_degraded} | "
+            "raw_loop_rate_hz={raw_loop_rate_hz:.2f} | control_rate_hz={control_rate_hz:.2f} | "
+            "control_pipeline_stage={control_pipeline_stage} | "
             "proposed_control={proposed_control} | "
+            "after_goal_tracking_control={after_goal_tracking_control} | "
+            "after_safety_control={after_safety_control} | "
+            "after_smoothing_control={after_smoothing_control} | "
             "scan_reason={reason} | emergency_stop={emergency_stop} | "
             "front_stop_mode={front_stop_mode} | planner_creep_mode={planner_creep_mode} | "
             "planner_called_under_front_block={planner_called_under_front_block} | "
@@ -4073,6 +4288,9 @@ class MppiRosAdapterSkeleton(object):
             "omega_before_obstacle_turn={omega_before_obstacle_turn} | "
             "omega_after_obstacle_turn={omega_after_obstacle_turn} | "
             "omega_source={omega_source} | "
+            "cmd_vel_published_by={cmd_vel_published_by} | "
+            "cmd_vel_publish_reason={cmd_vel_publish_reason} | "
+            "v_source={v_source} | "
             "mppi_omega_preserved={mppi_omega_preserved} | "
             "mppi_omega_overridden={mppi_omega_overridden} | "
             "omega_override_reason={omega_override_reason} | "
@@ -4133,8 +4351,34 @@ class MppiRosAdapterSkeleton(object):
             "smoother_reset_on_direction_switch={smoother_reset_on_direction_switch} | "
             "goal_reacquire_active={goal_reacquire_active} | "
             "anti_goal_drive_blocked={anti_goal_drive_blocked} | "
+            "heading_align_in_place={heading_align_in_place} | "
+            "heading_align_v_limited={heading_align_v_limited} | "
+            "heading_align_omega_source={heading_align_omega_source} | "
+            "anti_goal_drive_reason={anti_goal_drive_reason} | "
+            "forced_goal_align_omega={forced_goal_align_omega} | "
+            "goal_align_sign_source={goal_align_sign_source} | "
             "heading_gate_reason={heading_gate_reason} | "
             "goal_tracking_suppression_release_reason={goal_tracking_suppression_release_reason} | "
+            "omega_cost={omega_cost} | domega_cost={domega_cost} | "
+            "spin_in_place_cost={spin_in_place_cost} | "
+            "wrong_way_spin_cost={wrong_way_spin_cost} | "
+            "total_control_smooth_cost={total_control_smooth_cost} | "
+            "memory_enabled={memory_enabled} | "
+            "memory_feature_count={memory_feature_count} | "
+            "memory_nearest_type={memory_nearest_type} | "
+            "memory_nearest_distance={memory_nearest_distance} | "
+            "memory_nearest_strength={memory_nearest_strength} | "
+            "memory_cost={memory_cost} | "
+            "memory_escape_direction={memory_escape_direction} | "
+            "memory_temperature_scale={memory_temperature_scale} | "
+            "effective_temperature={effective_temperature} | "
+            "stuck_feature_added={stuck_feature_added} | "
+            "memory_feature_hit_count={memory_feature_hit_count} | "
+            "memory_decay_applied={memory_decay_applied} | "
+            "memory_escape_active={memory_escape_active} | "
+            "memory_escape_reason={memory_escape_reason} | "
+            "safety_override_active={safety_override_active} | "
+            "sustained_conflict_override={sustained_conflict_override} | "
             "degraded_level={degraded_level} | "
             "degraded_enter_reason={degraded_enter_reason} | "
             "degraded_exit_reason={degraded_exit_reason} | "
@@ -4145,8 +4389,10 @@ class MppiRosAdapterSkeleton(object):
             "line_fit_accepted={line_fit_accepted} | "
             "line_fit_rejected_reason={line_fit_rejected_reason} | "
             "line_surface_streak={line_surface_streak} | "
+            "line_surface_memory_active={line_surface_memory_active} | "
             "representative_circle_count={representative_circle_count} | "
             "obstacle_budget_mode={obstacle_budget_mode} | "
+            "long_obstacle_slow_active={long_obstacle_slow_active} | "
             "obstacle_yaw_deadband_escape_applied={obstacle_yaw_deadband_escape_applied} | "
             "avoidance_side={avoidance_side} | "
             "avoidance_override_applied={avoidance_override_applied} | "
@@ -4178,10 +4424,19 @@ class MppiRosAdapterSkeleton(object):
                     getattr(self, "mppi_degraded_reason", "normal"),
                 ),
                 achieved_rate_hz=achieved_rate_hz,
+                raw_loop_rate_hz=achieved_rate_hz,
+                control_rate_hz=min(
+                    float(getattr(self, "rate_hz", 5.0)),
+                    achieved_rate_hz,
+                ),
                 control_period_target_ms=control_period_target_ms,
                 overrun=overrun,
                 realtime_degraded=planner_debug.get("realtime_degraded", False),
+                control_pipeline_stage=planner_debug.get("control_pipeline_stage", "unknown"),
                 proposed_control=proposed_text,
+                after_goal_tracking_control=planner_debug.get("after_goal_tracking_control", "None"),
+                after_safety_control=planner_debug.get("after_safety_control", "None"),
+                after_smoothing_control=planner_debug.get("after_smoothing_control", "None"),
                 reason=scan_result.get("reason"),
                 emergency_stop=scan_result.get("emergency_stop"),
                 front_stop_mode=planner_debug.get(
@@ -4384,6 +4639,9 @@ class MppiRosAdapterSkeleton(object):
                     "None",
                 ),
                 omega_source=planner_debug.get("omega_source", "mppi"),
+                cmd_vel_published_by=planner_debug.get("cmd_vel_published_by", "none"),
+                cmd_vel_publish_reason=planner_debug.get("cmd_vel_publish_reason", "none"),
+                v_source=planner_debug.get("v_source", "mppi"),
                 mppi_omega_preserved=planner_debug.get("mppi_omega_preserved", True),
                 mppi_omega_overridden=planner_debug.get("mppi_omega_overridden", False),
                 omega_override_reason=planner_debug.get("omega_override_reason", "none"),
@@ -4536,11 +4794,38 @@ class MppiRosAdapterSkeleton(object):
                 ),
                 goal_reacquire_active=planner_debug.get("goal_reacquire_active", False),
                 anti_goal_drive_blocked=planner_debug.get("anti_goal_drive_blocked", False),
+                heading_align_in_place=planner_debug.get("heading_align_in_place", False),
+                heading_align_v_limited=planner_debug.get("heading_align_v_limited", False),
+                heading_align_omega_source=planner_debug.get("heading_align_omega_source", "none"),
+                anti_goal_drive_reason=planner_debug.get("anti_goal_drive_reason", "none"),
+                forced_goal_align_omega=planner_debug.get("forced_goal_align_omega", 0.0),
+                goal_align_sign_source=planner_debug.get("goal_align_sign_source", "none"),
                 heading_gate_reason=planner_debug.get("heading_gate_reason", "none"),
                 goal_tracking_suppression_release_reason=planner_debug.get(
                     "goal_tracking_suppression_release_reason",
                     "none",
                 ),
+                omega_cost=planner_debug.get("omega_cost", 0.0),
+                domega_cost=planner_debug.get("domega_cost", 0.0),
+                spin_in_place_cost=planner_debug.get("spin_in_place_cost", 0.0),
+                wrong_way_spin_cost=planner_debug.get("wrong_way_spin_cost", 0.0),
+                total_control_smooth_cost=planner_debug.get("total_control_smooth_cost", 0.0),
+                memory_enabled=planner_debug.get("memory_enabled", False),
+                memory_feature_count=planner_debug.get("memory_feature_count", 0),
+                memory_nearest_type=planner_debug.get("memory_nearest_type", "none"),
+                memory_nearest_distance=planner_debug.get("memory_nearest_distance", "None"),
+                memory_nearest_strength=planner_debug.get("memory_nearest_strength", 0.0),
+                memory_cost=planner_debug.get("memory_cost", 0.0),
+                memory_escape_direction=planner_debug.get("memory_escape_direction", "None"),
+                memory_temperature_scale=planner_debug.get("memory_temperature_scale", 1.0),
+                effective_temperature=planner_debug.get("effective_temperature", planner_debug.get("temperature", "None")),
+                stuck_feature_added=planner_debug.get("stuck_feature_added", False),
+                memory_feature_hit_count=planner_debug.get("memory_feature_hit_count", 0),
+                memory_decay_applied=planner_debug.get("memory_decay_applied", False),
+                memory_escape_active=planner_debug.get("memory_escape_active", False),
+                memory_escape_reason=planner_debug.get("memory_escape_reason", "none"),
+                safety_override_active=planner_debug.get("safety_override_active", False),
+                sustained_conflict_override=planner_debug.get("sustained_conflict_override", False),
                 degraded_level=planner_debug.get("degraded_level", "normal"),
                 degraded_enter_reason=planner_debug.get("degraded_enter_reason", "none"),
                 degraded_exit_reason=planner_debug.get("degraded_exit_reason", "none"),
@@ -4554,8 +4839,13 @@ class MppiRosAdapterSkeleton(object):
                 line_fit_accepted=line_fit_accepted,
                 line_fit_rejected_reason=line_fit_rejected_reason,
                 line_surface_streak=line_surface_streak,
+                line_surface_memory_active=obstacle_debug.get("line_surface_memory_active", False),
                 representative_circle_count=representative_circle_count,
                 obstacle_budget_mode=obstacle_budget_mode,
+                long_obstacle_slow_active=bool(
+                    front_corridor_min_range_text != "None"
+                    and float(front_corridor_min_range_text) < 1.0
+                ) if front_corridor_min_range_text != "None" else False,
                 obstacle_yaw_deadband_escape_applied=planner_debug.get(
                     "obstacle_yaw_deadband_escape_applied",
                     False,
@@ -4886,6 +5176,29 @@ class MppiRosAdapterSkeleton(object):
                     planner_obstacles=self.latest_dynamic_obstacle_count,
                     dynamic_obstacles_current_scan=self.latest_dynamic_obstacle_current_scan_count,
                 )
+                if hasattr(self.mppi_bridge, "set_runtime_context"):
+                    memory_snapshot = self.memory_debug_snapshot(state)
+                    self.mppi_bridge.set_runtime_context({
+                        "scan_reason": scan_result.get("reason", "none"),
+                        "front_stop_mode": scan_result.get(
+                            "front_stop_mode",
+                            scan_result.get("reason", "none"),
+                        ),
+                        "avoidance_state": avoidance_debug.get(
+                            "avoidance_state",
+                            self.avoidance_state,
+                        ),
+                        "yaw_error": heading_debug.get("yaw_error", 0.0),
+                        "yaw_error_deg": heading_debug.get("yaw_error_deg", 0.0),
+                        "min_front_range": scan_result.get("min_front_range"),
+                        "stuck_trap_active": (
+                            int(avoidance_debug.get("stuck_streak", 0)) >= 3
+                            or (
+                                memory_snapshot.get("memory_nearest_distance") is not None
+                                and memory_snapshot.get("memory_nearest_distance") < 0.50
+                            )
+                        ),
+                    })
                 proposed_control, planner_debug = self.mppi_bridge.compute_control(
                     current_state_exp=state,
                     goal_xy=goal,
@@ -4976,10 +5289,16 @@ class MppiRosAdapterSkeleton(object):
             scan_result,
             side_avoid_debug=side_avoid_debug,
         )
+        memory_control, memory_escape_debug = self.apply_memory_escape_bias(
+            soft_floor_control,
+            state,
+            scan_result,
+            obstacle_turn_debug,
+        )
         tracking_control, tracking_debug = self._apply_goal_tracking_override(
             state,
             goal,
-            soft_floor_control,
+            memory_control,
             self.cfg,
             {
                 "scan_result": scan_result,
@@ -5043,6 +5362,11 @@ class MppiRosAdapterSkeleton(object):
             intervention_reason = "preemptive_obstacle_turn"
         if side_avoid_debug.get("side_avoid_applied"):
             intervention_reason = "side_soft_avoid"
+        if memory_escape_debug.get("memory_escape_active") and not (
+            obstacle_turn_debug.get("obstacle_turn_mode")
+            or side_avoid_debug.get("side_avoid_applied")
+        ):
+            intervention_reason = memory_escape_debug.get("arbitration_mode", "memory_bias")
 
         smoothing_context = "clear"
         if avoidance_debug.get("avoidance_state") == "CREEP_ESCAPE":
@@ -5102,6 +5426,13 @@ class MppiRosAdapterSkeleton(object):
             and not side_avoid_debug.get("side_avoid_applied", False)
         ):
             final_omega_source = "goal_tracking"
+        if (
+            memory_escape_debug.get("memory_escape_active", False)
+            and not obstacle_turn_debug.get("obstacle_turn_mode", False)
+            and not side_avoid_debug.get("side_avoid_applied", False)
+            and not tracking_debug.get("goal_tracking_intervened", False)
+        ):
+            final_omega_source = memory_escape_debug.get("omega_source", "memory_bias")
 
         planner_debug["raw_final_control"] = tracking_control
         planner_debug["smoothed_control"] = final_control
@@ -5124,6 +5455,7 @@ class MppiRosAdapterSkeleton(object):
         planner_debug["final_omega_after_smoothing"] = final_control[1]
         planner_debug.update(obstacle_turn_debug)
         planner_debug.update(side_avoid_debug)
+        planner_debug.update(memory_escape_debug)
         planner_debug.update(front_creep_debug)
         planner_debug.update(soft_avoid_debug)
         planner_debug.update(tracking_debug)
@@ -5168,7 +5500,44 @@ class MppiRosAdapterSkeleton(object):
         planner_debug["final_omega_after_smoothing"] = final_control[1]
         planner_debug["heading_gate_active"] = tracking_debug.get(
             "tracking_mode"
-        ) in ("heading_align_soft", "heading_slow_gate")
+        ) in ("heading_align_soft", "heading_slow_gate", "heading_align_in_place", "heading_align_slow")
+        planner_debug["safety_override_active"] = bool(
+            side_avoid_debug.get("side_avoid_applied", False)
+            or obstacle_turn_debug.get("obstacle_turn_mode", False)
+        )
+        if side_avoid_debug.get("side_avoid_applied", False):
+            planner_debug["arbitration_mode"] = "safety_clamp"
+        elif obstacle_turn_debug.get("obstacle_turn_mode", False):
+            planner_debug["arbitration_mode"] = obstacle_turn_debug.get(
+                "arbitration_mode",
+                planner_debug.get("arbitration_mode", "mppi"),
+            )
+        elif memory_escape_debug.get("memory_escape_active", False):
+            planner_debug["arbitration_mode"] = memory_escape_debug.get(
+                "arbitration_mode",
+                "memory_bias",
+            )
+        planner_debug["control_pipeline_stage"] = "final_publish"
+        planner_debug["proposed_control"] = proposed_control
+        planner_debug["after_goal_tracking_control"] = tracking_control
+        planner_debug["after_safety_control"] = memory_control
+        planner_debug["after_smoothing_control"] = final_control
+        planner_debug["final_control"] = final_control
+        planner_debug["cmd_vel_published_by"] = "mppi_ros_adapter_skeleton"
+        planner_debug["cmd_vel_publish_reason"] = (
+            "published" if self.enable_publish else "dry_run_publish_disabled"
+        )
+        planner_debug["v_source"] = "safety_goal_tracking_smoothing"
+
+        if self.mppi_bridge is not None and hasattr(self.mppi_bridge, "update_memory"):
+            memory_update_debug = self.mppi_bridge.update_memory(
+                state=state,
+                goal_distance=goal_distance,
+                control=final_control,
+                min_front_range=scan_result.get("min_front_range"),
+                avoidance_state=avoidance_debug.get("avoidance_state", self.avoidance_state),
+            )
+            planner_debug.update(memory_update_debug)
 
         self.maybe_publish_control(twist_dict)
         self.publish_final_cmd_debug(final_control, intervention_reason)

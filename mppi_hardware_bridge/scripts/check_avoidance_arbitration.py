@@ -404,6 +404,124 @@ def test_creep_escape_limits_small_radius_turn(cfg):
     assert_condition(debug["creep_progress_ok"], "stable front range should be progress-ok")
 
 
+def test_clear_large_yaw_forces_goal_align(cfg):
+    adapter = make_adapter(cfg)
+    adapter.planner_mode = "mppi"
+    adapter.avoidance_state = "CLEAR"
+    scan_result = base_scan_result("front_clear", 1.5, [])
+    yaw = math.radians(85.0)
+    goal = (math.cos(yaw), math.sin(yaw))
+    control, debug = adapter._apply_goal_tracking_override(
+        (0.0, 0.0, 0.0),
+        goal,
+        (0.12, -0.20),
+        cfg,
+        {
+            "scan_result": scan_result,
+            "dynamic_obstacles": 0,
+            "dynamic_obstacles_current_scan": 0,
+            "planner_obstacles": 0,
+            "obstacle_mode": "geometric",
+            "proposed_omega": -0.20,
+            "avoidance_state": "CLEAR",
+            "obstacle_turn_mode": False,
+            "side_soft_avoid": False,
+        },
+    )
+    assert_condition(debug["heading_align_in_place"], "85 deg clear yaw must align in place")
+    assert_condition(control[0] <= 0.005 + 1e-9, "in-place align must cap v near zero")
+    assert_condition(control[1] > 0.0, "align omega must point toward goal bearing")
+    assert_condition(
+        debug["goal_tracking_reason"] == "forced_goal_align_wrong_sign_block",
+        "wrong-sign MPPI omega must not be preserved",
+    )
+
+
+def test_clear_medium_yaw_limits_forward_speed(cfg):
+    adapter = make_adapter(cfg)
+    adapter.planner_mode = "mppi"
+    adapter.avoidance_state = "CLEAR"
+    scan_result = base_scan_result("front_clear", 1.5, [])
+    yaw = math.radians(65.0)
+    goal = (math.cos(yaw), math.sin(yaw))
+    control, debug = adapter._apply_goal_tracking_override(
+        (0.0, 0.0, 0.0),
+        goal,
+        (0.12, -0.08),
+        cfg,
+        {
+            "scan_result": scan_result,
+            "dynamic_obstacles": 0,
+            "dynamic_obstacles_current_scan": 0,
+            "planner_obstacles": 0,
+            "obstacle_mode": "geometric",
+            "proposed_omega": -0.08,
+            "avoidance_state": "CLEAR",
+            "obstacle_turn_mode": False,
+            "side_soft_avoid": False,
+        },
+    )
+    assert_condition(not debug["heading_align_in_place"], "65 deg should not use in-place align")
+    assert_condition(debug["heading_align_v_limited"], "65 deg should limit v")
+    assert_condition(control[0] <= 0.035 + 1e-9, "65 deg clear yaw must cap v")
+    assert_condition(control[1] > 0.0, "65 deg omega must point toward goal")
+
+
+def test_clear_small_yaw_does_not_in_place_align(cfg):
+    adapter = make_adapter(cfg)
+    adapter.planner_mode = "mppi"
+    adapter.avoidance_state = "CLEAR"
+    scan_result = base_scan_result("front_clear", 1.5, [])
+    yaw = math.radians(40.0)
+    goal = (math.cos(yaw), math.sin(yaw))
+    _, debug = adapter._apply_goal_tracking_override(
+        (0.0, 0.0, 0.0),
+        goal,
+        (0.12, 0.04),
+        cfg,
+        {
+            "scan_result": scan_result,
+            "dynamic_obstacles": 0,
+            "dynamic_obstacles_current_scan": 0,
+            "planner_obstacles": 0,
+            "obstacle_mode": "geometric",
+            "proposed_omega": 0.04,
+            "avoidance_state": "CLEAR",
+            "obstacle_turn_mode": False,
+            "side_soft_avoid": False,
+        },
+    )
+    assert_condition(not debug["heading_align_in_place"], "40 deg must not trigger in-place align")
+
+
+def test_sustained_hard_override_does_not_preserve_mppi_trust(cfg):
+    adapter = make_adapter(cfg)
+    adapter.avoidance_state = "CREEP_ESCAPE"
+    adapter.avoidance_state_reason = "front_soft_block"
+    adapter.min_front_range_trend = "decreasing"
+    adapter.goal_distance_trend = "stable"
+    adapter.mppi_omega_trust_sign = -1
+    adapter.mppi_omega_trust_count = 15
+    scan_result = base_scan_result(
+        "front_soft_block",
+        0.29,
+        [{"x": 0.29, "y": -0.02, "range": 0.291}],
+    )
+    scan_result["front_stop_mode"] = "front_soft_block"
+    debug = {}
+    control = (0.060, -0.45)
+    for _ in range(5):
+        control, debug = adapter.apply_preemptive_obstacle_turn(
+            (0.060, -0.45),
+            scan_result,
+            planner_obstacles=2,
+            heading_debug={"yaw_error": 0.0, "yaw_error_deg": 0.0},
+        )
+    assert_condition(debug["hard_override_allowed"], "sustained conflict should allow hard override")
+    assert_condition(not debug["mppi_omega_preserved"], "hard override must not preserve stale MPPI trust")
+    assert_condition(control[1] > 0.0, "hard override should flip away from conflict")
+
+
 def test_goal_reacquire_releases_suppression_and_blocks_anti_goal_drive(cfg):
     adapter = make_adapter(cfg)
     adapter.planner_mode = "mppi"
@@ -599,6 +717,10 @@ def main():
         test_mppi_omega_opposite_high_risk_can_override_with_reason,
         test_corridor_hysteresis_blocks_single_frame_switch,
         test_creep_escape_limits_small_radius_turn,
+        test_clear_large_yaw_forces_goal_align,
+        test_clear_medium_yaw_limits_forward_speed,
+        test_clear_small_yaw_does_not_in_place_align,
+        test_sustained_hard_override_does_not_preserve_mppi_trust,
         test_goal_reacquire_releases_suppression_and_blocks_anti_goal_drive,
         test_obstacle_smoothing_magnitude_clamp,
         test_clear_goal_tracking_smoothing_keeps_useful_omega,

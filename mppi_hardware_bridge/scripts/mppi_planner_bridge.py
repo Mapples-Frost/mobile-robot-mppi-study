@@ -3,9 +3,15 @@ from __future__ import print_function
 
 import importlib
 import inspect
+import math
 import os
 import sys
 import time
+
+try:
+    from mppi_memory_field import MppiMemoryField
+except ImportError:
+    MppiMemoryField = None
 import types
 
 
@@ -270,6 +276,17 @@ class MppiPlannerBridge(object):
         self.degraded_reason = "normal"
         self.temperature = float(self._cfg_mppi("temperature", 8.0))
         self.dt = float(self._cfg_mppi("dt", 0.2))
+        self.omega_cost_weight = float(self._cfg_mppi("omega_cost_weight", 0.05))
+        self.domega_cost_weight = float(self._cfg_mppi("domega_cost_weight", 0.08))
+        self.spin_in_place_cost_weight = float(
+            self._cfg_mppi("spin_in_place_cost_weight", 0.30)
+        )
+        self.wrong_way_spin_cost_weight = float(
+            self._cfg_mppi("wrong_way_spin_cost_weight", 0.40)
+        )
+        self.spin_v_threshold = float(self._cfg_mppi("spin_v_threshold", 0.015))
+        self.spin_omega_threshold = float(self._cfg_mppi("spin_omega_threshold", 0.15))
+        self.memory_eval_stride = int(self._cfg_mppi("memory_eval_stride", 3))
 
         self.v_min = float(self._cfg_mppi("v_min", 0.0))
         self.v_max = float(
@@ -320,6 +337,8 @@ class MppiPlannerBridge(object):
             self.defaults_used["bounds"] = "wide fallback [-10, 10]"
 
         self.obstacles = _coerce_obstacles(obstacles)
+        self.runtime_context = {}
+        self.memory_field = MppiMemoryField(cfg) if MppiMemoryField is not None else None
         self.nominal_sequence = None
         self.reset()
 
@@ -381,6 +400,98 @@ class MppiPlannerBridge(object):
     def clear_obstacles(self):
         self.obstacles = []
 
+    def set_runtime_context(self, context):
+        self.runtime_context = dict(context or {})
+
+    def update_memory(self, state, goal_distance, control, min_front_range, avoidance_state):
+        if self.memory_field is None:
+            return {}
+        return self.memory_field.update(
+            state=state,
+            goal_distance=goal_distance,
+            control=control,
+            min_front_range=min_front_range,
+            avoidance_state=avoidance_state,
+        )
+
+    def memory_debug(self, state=None):
+        if self.memory_field is None:
+            return {
+                "memory_enabled": False,
+                "memory_feature_count": 0,
+                "memory_nearest_type": "none",
+                "memory_nearest_distance": None,
+                "memory_nearest_strength": 0.0,
+                "memory_cost": 0.0,
+                "memory_escape_direction": None,
+                "memory_temperature_scale": 1.0,
+                "stuck_feature_added": False,
+                "memory_feature_hit_count": 0,
+                "memory_decay_applied": False,
+            }
+        return self.memory_field.debug_snapshot(state)
+
+    def control_sequence_cost(self, control_sequence, current_state, goal):
+        omega_cost = 0.0
+        domega_cost = 0.0
+        spin_cost = 0.0
+        wrong_way_spin_cost = 0.0
+        previous_omega = None
+        horizon_steps = max(1, len(control_sequence))
+        context = self.runtime_context or {}
+        avoidance_state = str(context.get("avoidance_state", "CLEAR"))
+        scan_reason = str(context.get("scan_reason", "none"))
+        front_clear = scan_reason == "front_clear"
+        goal_dx = float(goal[0]) - float(current_state[0])
+        goal_dy = float(goal[1]) - float(current_state[1])
+        goal_bearing_error = 0.0
+        if abs(goal_dx) > 1e-9 or abs(goal_dy) > 1e-9:
+            goal_bearing = math.atan2(goal_dy, goal_dx)
+            goal_bearing_error = self.planner.wrap_angle(
+                goal_bearing - float(current_state[2])
+            ) if hasattr(self.planner, "wrap_angle") else goal_bearing - float(current_state[2])
+        goal_sign = 1 if goal_bearing_error > 0.0 else -1 if goal_bearing_error < 0.0 else 0
+        strong_spin_suppression = avoidance_state in ("CLEAR", "GOAL_REACQUIRE")
+
+        for v_value, omega_value in control_sequence:
+            v_value = float(v_value)
+            omega_value = float(omega_value)
+            omega_cost += self.omega_cost_weight * (omega_value ** 2)
+            if previous_omega is not None:
+                domega_cost += self.domega_cost_weight * (
+                    (omega_value - previous_omega) ** 2
+                )
+            previous_omega = omega_value
+            if abs(v_value) <= self.spin_v_threshold and abs(omega_value) >= self.spin_omega_threshold:
+                multiplier = 1.6 if strong_spin_suppression else 0.6
+                spin_cost += (
+                    multiplier
+                    * self.spin_in_place_cost_weight
+                    * (abs(omega_value) - self.spin_omega_threshold) ** 2
+                )
+            if (
+                front_clear
+                and strong_spin_suppression
+                and goal_sign != 0
+                and abs(goal_bearing_error) > math.radians(20.0)
+                and abs(omega_value) >= self.spin_omega_threshold
+                and (1 if omega_value > 0.0 else -1) != goal_sign
+            ):
+                wrong_way_spin_cost += self.wrong_way_spin_cost_weight * (
+                    abs(omega_value) ** 2
+                )
+
+        total = (
+            omega_cost + domega_cost + spin_cost + wrong_way_spin_cost
+        ) / float(horizon_steps)
+        return total, {
+            "omega_cost": omega_cost / float(horizon_steps),
+            "domega_cost": domega_cost / float(horizon_steps),
+            "spin_in_place_cost": spin_cost / float(horizon_steps),
+            "wrong_way_spin_cost": wrong_way_spin_cost / float(horizon_steps),
+            "total_control_smooth_cost": total,
+        }
+
     def compute_control(self, current_state_exp, goal_xy):
         current_state = _as_float_tuple(
             current_state_exp,
@@ -419,6 +530,15 @@ class MppiPlannerBridge(object):
 
         costs = []
         collisions = []
+        control_costs = []
+        memory_costs = []
+        cost_component_debug = {
+            "omega_cost": 0.0,
+            "domega_cost": 0.0,
+            "spin_in_place_cost": 0.0,
+            "wrong_way_spin_cost": 0.0,
+            "total_control_smooth_cost": 0.0,
+        }
 
         rollout_cost_start = time.time()
         for control_sequence in sampled_sequences:
@@ -435,8 +555,24 @@ class MppiPlannerBridge(object):
                 robot_radius=self.robot_radius,
                 bounds=self.bounds,
             )
+            control_cost, control_component_debug = self.control_sequence_cost(
+                control_sequence,
+                current_state,
+                goal,
+            )
+            memory_cost = 0.0
+            if self.memory_field is not None:
+                memory_cost = self.memory_field.cost_for_trajectory(
+                    trajectory,
+                    step_stride=self.memory_eval_stride,
+                )
+            total_cost = float(total_cost) + control_cost + memory_cost
             costs.append(float(total_cost))
             collisions.append(bool(collided))
+            control_costs.append(float(control_cost))
+            memory_costs.append(float(memory_cost))
+            for key in cost_component_debug:
+                cost_component_debug[key] += float(control_component_debug.get(key, 0.0))
         rollout_cost_time_sec = time.time() - rollout_cost_start
 
         if not costs:
@@ -445,7 +581,14 @@ class MppiPlannerBridge(object):
             )
 
         update_start = time.time()
-        weights = self.planner.compute_weights(costs, self.temperature)
+        memory_temperature_scale = 1.0
+        if self.memory_field is not None:
+            memory_temperature_scale = self.memory_field.temperature_scale(
+                current_state,
+                stuck_trap_active=bool(self.runtime_context.get("stuck_trap_active", False)),
+            )
+        effective_temperature = self.temperature * memory_temperature_scale
+        weights = self.planner.compute_weights(costs, effective_temperature)
         updated_sequence = self.planner.weighted_update_sequence(
             sampled_sequences,
             weights,
@@ -485,6 +628,11 @@ class MppiPlannerBridge(object):
 
         best_idx = min(range(len(costs)), key=lambda idx: costs[idx])
         plan_time_sec = time.time() - plan_start
+        if sampled_sequences:
+            for key in cost_component_debug:
+                cost_component_debug[key] /= float(len(sampled_sequences))
+        memory_debug = self.memory_debug(current_state)
+        memory_debug["memory_cost"] = float(memory_costs[best_idx]) if memory_costs else 0.0
 
         debug = {
             "planner_type": "mppi",
@@ -499,6 +647,8 @@ class MppiPlannerBridge(object):
             "runtime_profile": self.runtime_profile,
             "degraded_reason": self.degraded_reason,
             "temperature": self.temperature,
+            "effective_temperature": effective_temperature,
+            "memory_temperature_scale": memory_temperature_scale,
             "dt": self.dt,
             "use_anisotropic_sampling": self.use_anisotropic_sampling,
             "sdf_influence_distance": self.sdf_influence_distance,
@@ -510,6 +660,8 @@ class MppiPlannerBridge(object):
             "current_state_exp": current_state,
             "safety_intervened": bool(safety_intervened),
             "best_cost": float(costs[best_idx]),
+            "best_control_smooth_cost": float(control_costs[best_idx]),
+            "best_memory_cost": float(memory_costs[best_idx]),
             "best_collision": bool(collisions[best_idx]),
             "cost_min": float(min(costs)),
             "cost_max": float(max(costs)),
@@ -524,6 +676,8 @@ class MppiPlannerBridge(object):
             "used_mujoco_stub": bool(self.used_mujoco_stub),
             "defaults_used": dict(self.defaults_used),
         }
+        debug.update(cost_component_debug)
+        debug.update(memory_debug)
 
         return proposed_control, debug
 

@@ -11,6 +11,7 @@ if SCRIPT_DIR not in sys.path:
     sys.path.insert(0, SCRIPT_DIR)
 
 from local_obstacle_layer import scan_to_experiment_obstacles_geometric
+from mppi_memory_field import MppiMemoryField
 from mppi_ros_adapter_skeleton import MppiRosAdapterSkeleton
 from scan_guard import analyze_scan_front_sector
 from scenario_config import load_lab_runtime_config
@@ -269,8 +270,12 @@ def test_front_obstacle_slow_keeps_min_velocity(cfg):
         (0.02, 0.0),
         adapter.latest_scan_result,
     )
-    assert_condition(control[0] >= cfg.safety.soft_avoid_min_v, "front slow must keep soft min v")
-    assert_condition(debug["soft_avoid_reason"] == "front_obstacle_slow", "front slow floor reason missing")
+    assert_condition(control[0] <= 0.055 + 1e-9, "front slow near obstacle must respect v cap")
+    assert_condition(
+        "front_obstacle_slow" in debug["soft_avoid_reason"],
+        "front slow floor reason missing",
+    )
+    assert_condition(debug["near_obstacle_speed_limited"], "near obstacle speed cap should be logged")
 
 
 def test_front_soft_block_calls_planner_and_creeps(cfg):
@@ -456,6 +461,132 @@ def test_degraded_keeps_planner_obstacles(cfg):
     assert_condition(len(bridge.obstacles) <= 4, "degraded profile should keep bounded obstacle budget")
 
 
+def test_near_obstacle_velocity_cap(cfg):
+    adapter = make_runtime_adapter(
+        cfg,
+        make_scan_result(cfg, "front_obstacle_slow", 0.43),
+        FakeBridge(),
+    )
+    control, debug = adapter.apply_soft_avoid_velocity_floor(
+        (0.12, 0.0),
+        adapter.latest_scan_result,
+    )
+    assert_condition(control[0] <= 0.040 + 1e-9, "0.43m front range should cap v at 0.04")
+    assert_condition(debug["near_obstacle_speed_limited"], "near obstacle cap must be logged")
+
+
+def test_memory_field_adds_and_costs(cfg):
+    field = MppiMemoryField(cfg)
+    now = time.time()
+    for idx in range(8):
+        field.update(
+            state=(0.005 * idx, 0.0, 0.0),
+            goal_distance=3.0 - 0.001 * idx,
+            control=(0.02, 0.20),
+            min_front_range=0.50,
+            avoidance_state="CLEAR",
+            now=now + 0.5 * idx,
+        )
+    assert_condition(len(field.features) > 0, "stuck history should create memory features")
+    assert_condition(field.cost_for_state((0.0, 0.0, 0.0)) > 0.0, "near memory cost should be positive")
+
+
+def test_memory_escape_direction_penalizes_reverse(cfg):
+    field = MppiMemoryField(cfg)
+    field.add_or_update_feature(
+        "LOW_PROGRESS_CORRIDOR",
+        (0.0, 0.0),
+        (1.0, 0.0),
+        time.time(),
+    )
+    forward_cost = field.cost_for_state((0.20, 0.0, 0.0))
+    reverse_cost = field.cost_for_state((-0.20, 0.0, 0.0))
+    assert_condition(reverse_cost > forward_cost, "reverse escape direction should cost more")
+
+
+def test_memory_feature_cap(cfg):
+    field = MppiMemoryField(cfg)
+    field.max_features = 3
+    for idx in range(8):
+        field.add_or_update_feature(
+            "STUCK_LOCAL_MIN",
+            (float(idx), 0.0),
+            (1.0, 0.0),
+            time.time() + idx,
+        )
+    assert_condition(len(field.features) <= 3, "memory feature cap should trim weak features")
+
+
+def test_memory_disabled_zero_cost(cfg):
+    cfg.memory.enable = False
+    field = MppiMemoryField(cfg)
+    field.add_or_update_feature(
+        "STUCK_LOCAL_MIN",
+        (0.0, 0.0),
+        (1.0, 0.0),
+        time.time(),
+    )
+    assert_condition(field.cost_for_state((0.0, 0.0, 0.0)) == 0.0, "disabled memory cost must be zero")
+    cfg.memory.enable = True
+
+
+def test_memory_escape_bias_sets_arbitration_mode(cfg):
+    adapter = make_runtime_adapter(
+        cfg,
+        make_scan_result(cfg, "front_clear", 1.5),
+        FakeBridge(),
+    )
+    adapter.mppi_bridge = FakeBridge()
+    adapter.mppi_bridge.memory_debug = lambda state=None: {
+        "memory_enabled": True,
+        "memory_feature_count": 1,
+        "memory_nearest_type": "STUCK_LOCAL_MIN",
+        "memory_nearest_distance": 0.10,
+        "memory_nearest_strength": 1.0,
+        "memory_cost": 1.0,
+        "memory_escape_direction": (0.0, 1.0),
+        "memory_temperature_scale": 1.5,
+        "stuck_feature_added": False,
+        "memory_feature_hit_count": 2,
+        "memory_decay_applied": False,
+    }
+    control, debug = adapter.apply_memory_escape_bias(
+        (0.08, 0.0),
+        (0.0, 0.0, 0.0),
+        adapter.latest_scan_result,
+        {},
+    )
+    assert_condition(debug["memory_escape_active"], "near memory feature should activate escape")
+    assert_condition(debug["arbitration_mode"] in ("memory_bias", "memory_escape"), "memory mode should be logged")
+    assert_condition(abs(control[1]) > 0.0, "memory escape should bias omega")
+
+
+def test_hard_stop_priority_over_memory_escape(cfg):
+    bridge = FakeBridge(control=(0.12, 0.0), compute_ms=20.0)
+    adapter = make_runtime_adapter(
+        cfg,
+        analyze_front_scan(cfg, 0.16),
+        bridge,
+    )
+    adapter.run_once()
+    assert_condition(not bridge.called, "hard stop must remain above memory escape")
+
+
+def test_memory_escape_does_not_increase_horizon(cfg):
+    bridge = FakeBridge(control=(0.12, 0.0), compute_ms=20.0)
+    adapter = make_runtime_adapter(
+        cfg,
+        make_scan_result(cfg, "front_clear", 1.5),
+        bridge,
+    )
+    adapter.mppi_runtime_profile = "normal"
+    adapter.run_once()
+    assert_condition(
+        bridge.profile_calls[-1][2] == cfg.mppi.horizon,
+        "memory escape path must not blindly increase horizon",
+    )
+
+
 def test_long_obstacle_compression(cfg):
     ranges, angle_min, angle_increment = make_wall_scan()
     obstacles, debug = scan_to_experiment_obstacles_geometric(
@@ -492,6 +623,14 @@ def main():
         test_mppi_profile_degrades_after_sustained_core_overrun,
         test_degraded_scan_guard_still_hard_stops,
         test_degraded_keeps_planner_obstacles,
+        test_near_obstacle_velocity_cap,
+        test_memory_field_adds_and_costs,
+        test_memory_escape_direction_penalizes_reverse,
+        test_memory_feature_cap,
+        test_memory_disabled_zero_cost,
+        test_memory_escape_bias_sets_arbitration_mode,
+        test_hard_stop_priority_over_memory_escape,
+        test_memory_escape_does_not_increase_horizon,
         test_long_obstacle_compression,
     ]
     for test_func in tests:

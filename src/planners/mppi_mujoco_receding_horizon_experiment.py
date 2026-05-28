@@ -6,7 +6,10 @@ import random
 from pathlib import Path
 import numpy as np
 import time
-from src.envs.mujoco_point_env import MujocoPointEnv
+try:
+    from src.envs.mujoco_point_env import MujocoPointEnv
+except Exception:
+    MujocoPointEnv = None
 
 import matplotlib.pyplot as plt
 from matplotlib.patches import Circle
@@ -848,6 +851,9 @@ def run_experiment_mujoco(
 
     project_root = Path(__file__).resolve().parents[2]
     xml_path = project_root / "src" / "models" / "mujoco" / "scene_minimal_robot.xml"
+
+    if MujocoPointEnv is None:
+        raise RuntimeError("MuJoCo environment is unavailable")
 
     env = MujocoPointEnv(xml_path=xml_path)
     env.launch_viewer()

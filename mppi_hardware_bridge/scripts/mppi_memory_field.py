@@ -412,6 +412,15 @@ class MppiMemoryField(object):
             return 0.0
         return total / float(count)
 
+    def memory_cost_for_state(self, state):
+        return self.cost_for_state(state)
+
+    def memory_cost_for_trajectory(self, trajectory, stride=3):
+        return self.cost_for_trajectory(trajectory, step_stride=stride)
+
+    def temperature_scale_for_state(self, state):
+        return self.temperature_scale(state)
+
     def temperature_scale(self, state, stuck_trap_active=False):
         if not self.enabled:
             return 1.0

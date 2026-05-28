@@ -532,6 +532,7 @@ class MppiPlannerBridge(object):
         collisions = []
         control_costs = []
         memory_costs = []
+        memory_breakdowns = []
         cost_component_debug = {
             "omega_cost": 0.0,
             "domega_cost": 0.0,
@@ -561,16 +562,26 @@ class MppiPlannerBridge(object):
                 goal,
             )
             memory_cost = 0.0
+            memory_breakdown = None
             if self.memory_field is not None:
-                memory_cost = self.memory_field.cost_for_trajectory(
-                    trajectory,
-                    step_stride=self.memory_eval_stride,
-                )
+                if hasattr(self.memory_field, "memory_cost_breakdown_for_trajectory"):
+                    memory_breakdown = self.memory_field.memory_cost_breakdown_for_trajectory(
+                        trajectory,
+                        controls=control_sequence,
+                        stride=self.memory_eval_stride,
+                    )
+                    memory_cost = float(memory_breakdown.get("total", 0.0))
+                else:
+                    memory_cost = self.memory_field.cost_for_trajectory(
+                        trajectory,
+                        step_stride=self.memory_eval_stride,
+                    )
             total_cost = float(total_cost) + control_cost + memory_cost
             costs.append(float(total_cost))
             collisions.append(bool(collided))
             control_costs.append(float(control_cost))
             memory_costs.append(float(memory_cost))
+            memory_breakdowns.append(memory_breakdown)
             for key in cost_component_debug:
                 cost_component_debug[key] += float(control_component_debug.get(key, 0.0))
         rollout_cost_time_sec = time.time() - rollout_cost_start
@@ -633,6 +644,22 @@ class MppiPlannerBridge(object):
                 cost_component_debug[key] /= float(len(sampled_sequences))
         memory_debug = self.memory_debug(current_state)
         memory_debug["memory_cost"] = float(memory_costs[best_idx]) if memory_costs else 0.0
+        if memory_breakdowns and memory_breakdowns[best_idx] is not None:
+            best_memory_breakdown = memory_breakdowns[best_idx]
+            memory_debug["memory_cost_total"] = float(best_memory_breakdown.get("total", 0.0))
+            memory_debug["memory_cost_by_type"] = best_memory_breakdown.get("by_type", {})
+            memory_debug["memory_nearest_type"] = best_memory_breakdown.get(
+                "nearest_type",
+                memory_debug.get("memory_nearest_type", "none"),
+            )
+            memory_debug["memory_nearest_distance"] = best_memory_breakdown.get(
+                "nearest_distance",
+                memory_debug.get("memory_nearest_distance"),
+            )
+            memory_debug["memory_nearest_strength"] = best_memory_breakdown.get(
+                "nearest_strength",
+                memory_debug.get("memory_nearest_strength", 0.0),
+            )
 
         debug = {
             "planner_type": "mppi",

@@ -262,6 +262,30 @@ def get_memory_debug(memory_field, state=None):
         return memory_field.debug_snapshot()
 
 
+def format_memory_cost_by_type(by_type):
+    if not by_type:
+        return ""
+    parts = []
+    for key in sorted(by_type.keys()):
+        value = float(by_type.get(key, 0.0))
+        if abs(value) <= 1e-9:
+            continue
+        parts.append("%s:%.3f" % (key, value))
+    return "|".join(parts)
+
+
+def format_memory_feature_types(memory_debug):
+    feature_types = memory_debug.get("memory_feature_types", {})
+    if not feature_types:
+        return ""
+    parts = []
+    for key in sorted(feature_types.keys()):
+        count = int(feature_types.get(key, 0))
+        if count > 0:
+            parts.append("%s:%d" % (key, count))
+    return "|".join(parts)
+
+
 def get_memory_feature_positions(memory_field):
     if memory_field is None:
         return []
@@ -370,6 +394,40 @@ def memory_cost_for_trajectory(memory_field, trajectory, memory_stride):
     return 0.0
 
 
+def memory_breakdown_for_trajectory(memory_field, trajectory, control_sequence=None, memory_stride=3):
+    if memory_field is None:
+        return {
+            "total": 0.0,
+            "by_type": {},
+            "nearest_type": "none",
+            "nearest_distance": None,
+            "nearest_strength": 0.0,
+            "active_feature_count": 0,
+            "temperature_scale": 1.0,
+        }
+    if hasattr(memory_field, "memory_cost_breakdown_for_trajectory"):
+        try:
+            return memory_field.memory_cost_breakdown_for_trajectory(
+                trajectory,
+                controls=control_sequence,
+                stride=memory_stride,
+            )
+        except TypeError:
+            return memory_field.memory_cost_breakdown_for_trajectory(
+                trajectory,
+                stride=memory_stride,
+            )
+    return {
+        "total": memory_cost_for_trajectory(memory_field, trajectory, memory_stride),
+        "by_type": {},
+        "nearest_type": "none",
+        "nearest_distance": None,
+        "nearest_strength": 0.0,
+        "active_feature_count": 0,
+        "temperature_scale": 1.0,
+    }
+
+
 def compute_rollout_cost(
     helpers,
     trajectory,
@@ -413,6 +471,16 @@ def effective_temperature_for_state(args, memory_field, memory_enabled, current_
             scale = memory_field.temperature_scale(current_state)
     scale = clamp_value(float(scale), 1.0, 3.0)
     return float(args.temperature) * scale
+
+
+def memory_temperature_scale_for_state(memory_field, memory_enabled, current_state):
+    if not memory_enabled or memory_field is None:
+        return 1.0
+    if hasattr(memory_field, "temperature_scale_for_state"):
+        return clamp_value(float(memory_field.temperature_scale_for_state(current_state)), 1.0, 3.0)
+    if hasattr(memory_field, "temperature_scale"):
+        return clamp_value(float(memory_field.temperature_scale(current_state)), 1.0, 3.0)
+    return 1.0
 
 
 def plan_one_step(
@@ -490,6 +558,12 @@ def plan_one_step(
         memory_enabled=memory_enabled,
         memory_stride=3,
     )
+    updated_memory_breakdown = memory_breakdown_for_trajectory(
+        memory_field,
+        updated_trajectory,
+        control_sequence=updated_sequence,
+        memory_stride=3,
+    )
     t1 = timer_now()
 
     best_index = min(range(len(costs)), key=lambda index: costs[index])
@@ -503,8 +577,18 @@ def plan_one_step(
         "updated_sequence": updated_sequence,
         "proposed_control": updated_sequence[0],
         "effective_temperature": effective_temperature,
+        "memory_temperature_scale": memory_temperature_scale_for_state(
+            memory_field,
+            memory_enabled,
+            current_state,
+        ),
         "planner_compute_ms": (t1 - t0) * 1000.0,
         "memory_cost": updated_memory_cost,
+        "memory_cost_total": float(updated_memory_breakdown.get("total", updated_memory_cost)),
+        "memory_cost_by_type": updated_memory_breakdown.get("by_type", {}),
+        "memory_nearest_type": updated_memory_breakdown.get("nearest_type", "none"),
+        "memory_nearest_distance": updated_memory_breakdown.get("nearest_distance"),
+        "memory_nearest_strength": updated_memory_breakdown.get("nearest_strength", 0.0),
         "best_cost": costs[best_index],
         "best_collision": collisions[best_index] or updated_collided,
         "best_trajectory": trajectories[best_index],
@@ -631,8 +715,11 @@ def run_episode(helpers, args, memory_enabled, episode_index):
     bounds = scene["bounds"]
     run_id = "%s_ep%03d" % ("memory_on" if memory_enabled else "memory_off", episode_index + 1)
 
-    random.seed(args.seed + episode_index)
-    np.random.seed(args.seed + episode_index)
+    seed_value = getattr(args, "episode_seed_override", None)
+    if seed_value is None:
+        seed_value = args.seed + episode_index
+    random.seed(seed_value)
+    np.random.seed(seed_value)
 
     env, used_mujoco, viewer_enabled, fallback_reason = make_env(args, start_state)
     memory_field = initialize_memory_field(args) if memory_enabled else None
@@ -720,7 +807,8 @@ def run_episode(helpers, args, memory_enabled, episode_index):
                 now=(step_index + 1) * args.dt,
             )
             feature_count = int(debug.get("memory_feature_count", 0))
-            nearest_type = debug.get("memory_nearest_type", "none")
+            nearest_type = debug.get("memory_nearest_type", plan_info.get("memory_nearest_type", "none"))
+            nearest_distance = debug.get("memory_nearest_distance", plan_info.get("memory_nearest_distance"))
             memory_feature_history.append(get_memory_feature_positions(memory_field))
 
             trajectory_rows.append(
@@ -738,7 +826,13 @@ def run_episode(helpers, args, memory_enabled, episode_index):
                     "memory_enabled": bool(memory_enabled),
                     "memory_feature_count": feature_count,
                     "memory_nearest_type": nearest_type,
+                    "memory_nearest_distance": nearest_distance,
                     "memory_cost": plan_info["memory_cost"],
+                    "memory_cost_total": plan_info.get("memory_cost_total", plan_info["memory_cost"]),
+                    "memory_cost_by_type": format_memory_cost_by_type(
+                        plan_info.get("memory_cost_by_type", {})
+                    ),
+                    "memory_temperature_scale": plan_info.get("memory_temperature_scale", 1.0),
                     "effective_temperature": plan_info["effective_temperature"],
                     "planner_compute_ms": plan_info["planner_compute_ms"],
                     "collision": bool(collision),
@@ -778,6 +872,10 @@ def run_episode(helpers, args, memory_enabled, episode_index):
     omega_values = [row["omega"] for row in trajectory_rows]
     memory_debug = get_memory_debug(memory_field, final_state)
     success = final_goal_distance < 0.25 and not collision_any
+    memory_total_costs = [float(row["memory_cost_total"]) for row in trajectory_rows]
+    memory_temperature_scales = [
+        float(row["memory_temperature_scale"]) for row in trajectory_rows
+    ]
 
     summary = {
         "run_id": run_id,
@@ -791,6 +889,11 @@ def run_episode(helpers, args, memory_enabled, episode_index):
         "mean_abs_omega": average([abs(value) for value in omega_values]),
         "mean_v": average(v_values),
         "memory_feature_count_final": int(memory_debug.get("memory_feature_count", 0)),
+        "memory_nearest_type_final": memory_debug.get("memory_nearest_type", "none"),
+        "memory_total_cost_mean": average(memory_total_costs),
+        "memory_total_cost_max": max(memory_total_costs) if memory_total_costs else 0.0,
+        "memory_temperature_scale_mean": average(memory_temperature_scales, default=1.0),
+        "memory_feature_types_final": format_memory_feature_types(memory_debug),
         "average_planner_compute_ms": average(compute_times),
         "collision": bool(collision_any),
         "used_mujoco": bool(used_mujoco),
@@ -821,7 +924,11 @@ TRAJECTORY_FIELDS = [
     "memory_enabled",
     "memory_feature_count",
     "memory_nearest_type",
+    "memory_nearest_distance",
     "memory_cost",
+    "memory_cost_total",
+    "memory_cost_by_type",
+    "memory_temperature_scale",
     "effective_temperature",
     "planner_compute_ms",
     "collision",
@@ -843,6 +950,11 @@ SUMMARY_FIELDS = [
     "mean_abs_omega",
     "mean_v",
     "memory_feature_count_final",
+    "memory_nearest_type_final",
+    "memory_total_cost_mean",
+    "memory_total_cost_max",
+    "memory_temperature_scale_mean",
+    "memory_feature_types_final",
     "average_planner_compute_ms",
     "collision",
     "used_mujoco",
@@ -1102,6 +1214,8 @@ def parse_args():
     parser.add_argument("--save-gif", action="store_true")
     parser.add_argument("--no-gif", action="store_true")
     parser.add_argument("--gif-fps", type=int, default=8)
+    parser.add_argument("--benchmark", action="store_true", help="run memory off/on over explicit seed list")
+    parser.add_argument("--seeds", default="11,12,13", help="comma-separated seeds for --benchmark")
     args = parser.parse_args()
     if args.viewer:
         args.use_mujoco = True
@@ -1109,6 +1223,18 @@ def parse_args():
     args.render_every = max(1, int(args.render_every))
     args.gif_fps = max(1, int(args.gif_fps))
     return args
+
+
+def parse_seed_list(seed_text):
+    seeds = []
+    for part in str(seed_text).split(","):
+        part = part.strip()
+        if not part:
+            continue
+        seeds.append(int(part))
+    if not seeds:
+        seeds = [11]
+    return seeds
 
 
 def select_memory_modes(args):
@@ -1133,6 +1259,10 @@ def print_run_summary(summary, trajectory_csv, summary_csv, figure_path):
     print("trajectory_csv=%s" % trajectory_csv)
     print("summary_csv=%s" % summary_csv)
     print("figure_path=%s" % figure_path)
+    print(
+        "note=offline ablation uses fallback/global circular obstacles; "
+        "live sim uses synthetic LaserScan -> local_obstacle_layer."
+    )
 
 
 def main():
@@ -1153,6 +1283,9 @@ def main():
     figure_path = os.path.join(output_dir, "mujoco_memory_mppi_ablation.png")
 
     modes = select_memory_modes(args)
+    if args.benchmark and not args.run_both and not args.memory_disable and not args.memory_enable:
+        modes = [False, True]
+    episode_seeds = parse_seed_list(args.seeds) if args.benchmark else None
     all_summary_rows = []
     trajectory_rows_by_mode = {False: [], True: []}
     plot_trajectories = {False: [], True: []}
@@ -1161,7 +1294,14 @@ def main():
 
     for memory_enabled in modes:
         print("=== Running memory_enabled=%s ===" % memory_enabled)
-        for episode_index in range(max(1, int(args.episodes))):
+        if episode_seeds is None:
+            seed_values = [None for _ in range(max(1, int(args.episodes)))]
+        else:
+            seed_values = list(episode_seeds)
+        for episode_index, seed_value in enumerate(seed_values):
+            args.episode_seed_override = seed_value
+            if seed_value is not None:
+                print("seed=%d" % seed_value)
             result = run_episode(helpers, args, memory_enabled, episode_index)
             summary = result["summary"]
             all_summary_rows.append(summary)
@@ -1176,6 +1316,7 @@ def main():
                 summary_csv,
                 figure_path,
             )
+        args.episode_seed_override = None
 
     for memory_enabled in modes:
         write_trajectory_csv(

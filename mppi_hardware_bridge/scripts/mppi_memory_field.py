@@ -10,6 +10,16 @@ LOW_PROGRESS_CORRIDOR = "LOW_PROGRESS_CORRIDOR"
 SPIN_TRAP = "SPIN_TRAP"
 NEAR_OBSTACLE_TRAP = "NEAR_OBSTACLE_TRAP"
 HARD_STOP_RECOVERY_TRAP = "HARD_STOP_RECOVERY_TRAP"
+HIGH_CURVATURE_REGION = "HIGH_CURVATURE_REGION"
+
+FEATURE_TYPES = (
+    STUCK_LOCAL_MIN,
+    LOW_PROGRESS_CORRIDOR,
+    SPIN_TRAP,
+    NEAR_OBSTACLE_TRAP,
+    HARD_STOP_RECOVERY_TRAP,
+    HIGH_CURVATURE_REGION,
+)
 
 
 def _cfg_get(cfg, section, name, default):
@@ -45,6 +55,7 @@ class MemoryFeature(object):
         decay=0.995,
     ):
         self.type = str(feature_type)
+        self.feature_type = self.type
         self.position = (float(position[0]), float(position[1]))
         self.heading = heading
         self.escape_direction = _normalize(escape_direction or (0.0, 0.0))
@@ -104,11 +115,29 @@ class MppiMemoryField(object):
         self.low_progress_cost_weight = float(
             _cfg_get(cfg, "memory", "low_progress_cost_weight", 0.6)
         )
+        self.near_obstacle_cost_weight = float(
+            _cfg_get(cfg, "memory", "near_obstacle_cost_weight", self.local_min_cost_weight * 1.15)
+        )
+        self.hard_stop_cost_weight = float(
+            _cfg_get(cfg, "memory", "hard_stop_cost_weight", self.local_min_cost_weight * 1.35)
+        )
+        self.high_curvature_cost_weight = float(
+            _cfg_get(cfg, "memory", "high_curvature_cost_weight", 0.45)
+        )
         self.escape_direction_cost_weight = float(
             _cfg_get(cfg, "memory", "escape_direction_cost_weight", 0.8)
         )
         self.temperature_boost_max = float(
             _cfg_get(cfg, "memory", "temperature_boost_max", 1.8)
+        )
+        self.near_obstacle_range_threshold = float(
+            _cfg_get(cfg, "memory", "near_obstacle_range_threshold", 0.40)
+        )
+        self.high_curvature_omega_threshold = float(
+            _cfg_get(cfg, "memory", "high_curvature_omega_threshold", 0.35)
+        )
+        self.high_curvature_sign_flip_threshold = int(
+            _cfg_get(cfg, "memory", "high_curvature_sign_flip_threshold", 3)
         )
         self.features = []
         self.history = []
@@ -124,9 +153,29 @@ class MppiMemoryField(object):
             return self.spin_trap_cost_weight
         if feature_type == LOW_PROGRESS_CORRIDOR:
             return self.low_progress_cost_weight
+        if feature_type == NEAR_OBSTACLE_TRAP:
+            return self.near_obstacle_cost_weight
         if feature_type == HARD_STOP_RECOVERY_TRAP:
-            return max(self.local_min_cost_weight, 1.4)
+            return self.hard_stop_cost_weight
+        if feature_type == HIGH_CURVATURE_REGION:
+            return self.high_curvature_cost_weight
         return self.local_min_cost_weight
+
+    def _feature_priority(self, feature_type):
+        priorities = {
+            HARD_STOP_RECOVERY_TRAP: 6,
+            NEAR_OBSTACLE_TRAP: 5,
+            SPIN_TRAP: 4,
+            STUCK_LOCAL_MIN: 3,
+            LOW_PROGRESS_CORRIDOR: 2,
+            HIGH_CURVATURE_REGION: 1,
+        }
+        return priorities.get(feature_type, 0)
+
+    def _combine_feature_type(self, old_type, new_type):
+        if self._feature_priority(new_type) > self._feature_priority(old_type):
+            return new_type
+        return old_type
 
     def decay_features(self):
         if not self.enabled:
@@ -163,26 +212,39 @@ class MppiMemoryField(object):
         if not self.enabled:
             return None, False
         position = (float(position[0]), float(position[1]))
-        best_feature = None
-        best_distance = None
+        best_same_type = None
+        best_same_type_distance = None
+        best_any_feature = None
+        best_any_distance = None
         for feature in self.features:
-            if feature.type != feature_type:
-                continue
             distance = math.hypot(
                 position[0] - feature.position[0],
                 position[1] - feature.position[1],
             )
-            if best_distance is None or distance < best_distance:
-                best_distance = distance
-                best_feature = feature
+            if best_any_distance is None or distance < best_any_distance:
+                best_any_distance = distance
+                best_any_feature = feature
+            if feature.type == feature_type and (
+                best_same_type_distance is None or distance < best_same_type_distance
+            ):
+                best_same_type_distance = distance
+                best_same_type = feature
 
         added = False
+        best_feature = best_same_type
+        best_distance = best_same_type_distance
+        if best_feature is None:
+            best_feature = best_any_feature
+            best_distance = best_any_distance
+
         if best_feature is not None and best_distance <= self.feature_merge_distance:
             alpha = 1.0 / float(best_feature.hit_count + 1)
             best_feature.position = (
                 (1.0 - alpha) * best_feature.position[0] + alpha * position[0],
                 (1.0 - alpha) * best_feature.position[1] + alpha * position[1],
             )
+            best_feature.type = self._combine_feature_type(best_feature.type, feature_type)
+            best_feature.feature_type = best_feature.type
             new_escape = _normalize(escape_direction or (0.0, 0.0))
             if new_escape is not None:
                 best_feature.escape_direction = new_escape
@@ -193,6 +255,7 @@ class MppiMemoryField(object):
                 self.feature_strength_max,
                 best_feature.strength + 0.35 * self.feature_strength_initial,
             )
+            best_feature.radius = max(best_feature.radius, self.feature_radius)
             feature = best_feature
         else:
             feature = MemoryFeature(
@@ -215,9 +278,28 @@ class MppiMemoryField(object):
         if len(self.features) <= max_features:
             return
         self.features.sort(
-            key=lambda feature: (float(feature.strength), int(feature.hit_count))
+            key=lambda feature: (
+                float(feature.strength),
+                float(feature.last_seen_time),
+                int(feature.hit_count),
+            )
         )
         self.features = self.features[-max_features:]
+
+    def _omega_sign_flips(self, history):
+        signs = []
+        for item in history:
+            omega_value = float(item.get("omega_cmd", 0.0))
+            if abs(omega_value) < self.high_curvature_omega_threshold:
+                continue
+            signs.append(1 if omega_value > 0.0 else -1)
+        flips = 0
+        previous = None
+        for sign in signs:
+            if previous is not None and sign != previous:
+                flips += 1
+            previous = sign
+        return flips
 
     def update(
         self,
@@ -277,6 +359,8 @@ class MppiMemoryField(object):
             len(self.history)
         )
         elapsed = max(0.0, last["time"] - first["time"])
+        avoidance_upper = str(avoidance_state or "CLEAR").upper()
+        omega_sign_flips = self._omega_sign_flips(self.history)
 
         escape_direction = _normalize(
             (
@@ -305,7 +389,8 @@ class MppiMemoryField(object):
         if (
             elapsed >= 0.8 * self.stuck_window_sec
             and mean_abs_v > self.spin_v_threshold
-            and displacement <= self.stuck_pos_radius
+            and displacement > 0.55 * self.stuck_pos_radius
+            and position_span <= 2.20 * self.stuck_pos_radius
             and goal_progress <= self.stuck_goal_progress_threshold
         ):
             _, added = self.add_or_update_feature(
@@ -339,9 +424,16 @@ class MppiMemoryField(object):
                 front_value = None
             if (
                 front_value is not None
-                and front_value < 0.40
+                and front_value < self.near_obstacle_range_threshold
                 and elapsed >= 0.8 * self.stuck_window_sec
                 and goal_progress <= self.stuck_goal_progress_threshold
+                and avoidance_upper in (
+                    "CREEP_ESCAPE",
+                    "FRONT_SOFT_BLOCK",
+                    "FRONT_OBSTACLE_SLOW",
+                    "SIDE_OBSTACLE_SOFT",
+                    "APPROACH_SLOW",
+                )
             ):
                 _, added = self.add_or_update_feature(
                     NEAR_OBSTACLE_TRAP,
@@ -353,8 +445,8 @@ class MppiMemoryField(object):
                     added_types.append(NEAR_OBSTACLE_TRAP)
 
         if (
-            str(avoidance_state) == "HARD_STOP_RECOVERY"
-            and elapsed >= 0.8 * self.stuck_window_sec
+            avoidance_upper == "HARD_STOP_RECOVERY"
+            and elapsed >= 0.5 * self.stuck_window_sec
         ):
             _, added = self.add_or_update_feature(
                 HARD_STOP_RECOVERY_TRAP,
@@ -365,6 +457,21 @@ class MppiMemoryField(object):
             if added:
                 added_types.append(HARD_STOP_RECOVERY_TRAP)
 
+        if (
+            elapsed >= 0.8 * self.stuck_window_sec
+            and omega_sign_flips >= self.high_curvature_sign_flip_threshold
+            and mean_abs_omega >= self.high_curvature_omega_threshold
+            and goal_progress <= self.stuck_goal_progress_threshold
+        ):
+            _, added = self.add_or_update_feature(
+                HIGH_CURVATURE_REGION,
+                (x_value, y_value),
+                escape_direction,
+                now,
+            )
+            if added:
+                added_types.append(HIGH_CURVATURE_REGION)
+
         debug = self.debug_snapshot(state)
         debug["stuck_feature_added"] = bool(added_types)
         debug["memory_added_types"] = ",".join(added_types) if added_types else "none"
@@ -372,30 +479,93 @@ class MppiMemoryField(object):
         self.last_debug = debug
         return debug
 
+    def _feature_radius_for_cost(self, feature):
+        if feature.type == HARD_STOP_RECOVERY_TRAP:
+            return 0.82 * feature.radius
+        if feature.type == NEAR_OBSTACLE_TRAP:
+            return 0.88 * feature.radius
+        if feature.type == HIGH_CURVATURE_REGION:
+            return 0.72 * feature.radius
+        return feature.radius
+
+    def _cost_contribution_for_state(self, feature, state):
+        x_value, y_value = float(state[0]), float(state[1])
+        dx = x_value - feature.position[0]
+        dy = y_value - feature.position[1]
+        distance = math.hypot(dx, dy)
+        effective_radius = max(self._feature_radius_for_cost(feature), 1e-6)
+        if distance >= effective_radius:
+            return 0.0
+
+        influence = (1.0 - distance / effective_radius) ** 2
+        weight = self._weight_for_type(feature.type)
+
+        if feature.type == HIGH_CURVATURE_REGION:
+            base = 0.55 * weight * feature.strength * influence
+        elif feature.type == LOW_PROGRESS_CORRIDOR:
+            base = 0.70 * weight * feature.strength * influence
+        else:
+            base = weight * feature.strength * influence
+
+        directional = 0.0
+        if feature.escape_direction is not None:
+            projected_progress = (
+                dx * feature.escape_direction[0] + dy * feature.escape_direction[1]
+            )
+            if projected_progress < 0.0:
+                direction_scale = 1.0
+                if feature.type == LOW_PROGRESS_CORRIDOR:
+                    direction_scale = 1.20
+                elif feature.type == HIGH_CURVATURE_REGION:
+                    direction_scale = 0.35
+                directional = (
+                    direction_scale
+                    * self.escape_direction_cost_weight
+                    * feature.strength
+                    * influence
+                )
+        return base + directional
+
+    def memory_cost_breakdown_for_state(self, state):
+        by_type = {}
+        for feature_type in FEATURE_TYPES:
+            by_type[feature_type] = 0.0
+
+        if not self.enabled or not self.features or state is None:
+            return {
+                "total": 0.0,
+                "by_type": by_type,
+                "nearest_type": "none",
+                "nearest_distance": None,
+                "nearest_strength": 0.0,
+                "active_feature_count": 0,
+                "temperature_scale": 1.0,
+            }
+
+        active_count = 0
+        total = 0.0
+        for feature in self.features:
+            contribution = self._cost_contribution_for_state(feature, state)
+            if contribution > 0.0:
+                active_count += 1
+                by_type[feature.type] = by_type.get(feature.type, 0.0) + contribution
+                total += contribution
+
+        nearest, distance = self.nearest_feature(state)
+        return {
+            "total": total,
+            "by_type": by_type,
+            "nearest_type": nearest.type if nearest is not None else "none",
+            "nearest_distance": distance,
+            "nearest_strength": nearest.strength if nearest is not None else 0.0,
+            "active_feature_count": active_count,
+            "temperature_scale": self.temperature_scale(state),
+        }
+
     def cost_for_state(self, state):
         if not self.enabled or not self.features or state is None:
             return 0.0
-        x_value, y_value = float(state[0]), float(state[1])
-        total = 0.0
-        for feature in self.features:
-            dx = x_value - feature.position[0]
-            dy = y_value - feature.position[1]
-            distance = math.hypot(dx, dy)
-            if distance >= feature.radius:
-                continue
-            influence = (1.0 - distance / max(feature.radius, 1e-6)) ** 2
-            total += self._weight_for_type(feature.type) * feature.strength * influence
-            if feature.escape_direction is not None:
-                projected_progress = (
-                    dx * feature.escape_direction[0] + dy * feature.escape_direction[1]
-                )
-                if projected_progress < 0.0:
-                    total += (
-                        self.escape_direction_cost_weight
-                        * feature.strength
-                        * influence
-                    )
-        return total
+        return float(self.memory_cost_breakdown_for_state(state).get("total", 0.0))
 
     def cost_for_trajectory(self, trajectory, step_stride=3):
         if not self.enabled or not self.features or not trajectory:
@@ -411,6 +581,104 @@ class MppiMemoryField(object):
         if count <= 0:
             return 0.0
         return total / float(count)
+
+    def memory_cost_breakdown_for_trajectory(self, trajectory, controls=None, stride=3):
+        by_type = {}
+        for feature_type in FEATURE_TYPES:
+            by_type[feature_type] = 0.0
+
+        if not self.enabled or not self.features or not trajectory:
+            return {
+                "total": 0.0,
+                "by_type": by_type,
+                "nearest_type": "none",
+                "nearest_distance": None,
+                "nearest_strength": 0.0,
+                "active_feature_count": 0,
+                "temperature_scale": 1.0,
+            }
+
+        stride = max(1, int(stride))
+        total = 0.0
+        count = 0
+        active_feature_count = 0
+        nearest_state = trajectory[0]
+        nearest_distance = None
+        nearest_type = "none"
+        nearest_strength = 0.0
+
+        for index, state in enumerate(trajectory):
+            if index != len(trajectory) - 1 and index % stride != 0:
+                continue
+            breakdown = self.memory_cost_breakdown_for_state(state)
+            total += float(breakdown.get("total", 0.0))
+            count += 1
+            active_feature_count = max(
+                active_feature_count,
+                int(breakdown.get("active_feature_count", 0)),
+            )
+            for key, value in breakdown.get("by_type", {}).items():
+                by_type[key] = by_type.get(key, 0.0) + float(value)
+            distance = breakdown.get("nearest_distance")
+            if distance is not None and (nearest_distance is None or distance < nearest_distance):
+                nearest_distance = distance
+                nearest_type = breakdown.get("nearest_type", "none")
+                nearest_strength = breakdown.get("nearest_strength", 0.0)
+                nearest_state = state
+
+        if count <= 0:
+            count = 1
+        for key in list(by_type.keys()):
+            by_type[key] = by_type[key] / float(count)
+        total = total / float(count)
+
+        if controls:
+            sign_flips = 0
+            previous_sign = None
+            for control in controls:
+                omega_value = float(control[1])
+                if abs(omega_value) < self.high_curvature_omega_threshold:
+                    continue
+                sign = 1 if omega_value > 0.0 else -1
+                if previous_sign is not None and sign != previous_sign:
+                    sign_flips += 1
+                previous_sign = sign
+            if sign_flips > 0:
+                high_curvature_nearby = False
+                high_strength = 0.0
+                for feature in self.features:
+                    if feature.type != HIGH_CURVATURE_REGION:
+                        continue
+                    for state in trajectory[::stride]:
+                        distance = math.hypot(
+                            float(state[0]) - feature.position[0],
+                            float(state[1]) - feature.position[1],
+                        )
+                        if distance <= max(feature.radius, 1e-6):
+                            high_curvature_nearby = True
+                            high_strength = max(high_strength, feature.strength)
+                            break
+                if high_curvature_nearby:
+                    oscillation_cost = (
+                        self.high_curvature_cost_weight
+                        * max(1.0, high_strength)
+                        * float(sign_flips)
+                        / float(max(1, len(controls)))
+                    )
+                    by_type[HIGH_CURVATURE_REGION] = (
+                        by_type.get(HIGH_CURVATURE_REGION, 0.0) + oscillation_cost
+                    )
+                    total += oscillation_cost
+
+        return {
+            "total": total,
+            "by_type": by_type,
+            "nearest_type": nearest_type,
+            "nearest_distance": nearest_distance,
+            "nearest_strength": nearest_strength,
+            "active_feature_count": active_feature_count,
+            "temperature_scale": self.temperature_scale(nearest_state),
+        }
 
     def memory_cost_for_state(self, state):
         return self.cost_for_state(state)
@@ -433,6 +701,72 @@ class MppiMemoryField(object):
             scale = max(scale, min(self.temperature_boost_max, 1.25))
         return _clip(scale, 1.0, max(1.0, self.temperature_boost_max))
 
+    def suggest_escape_direction(self, state, goal=None):
+        debug = {
+            "has_escape_direction": False,
+            "nearest_type": "none",
+            "nearest_distance": None,
+            "nearest_strength": 0.0,
+            "source": "none",
+        }
+        feature, distance = self.nearest_feature(state)
+        if not self.enabled or feature is None or state is None:
+            return None, debug
+
+        current_xy = (float(state[0]), float(state[1]))
+        escape_direction = feature.escape_direction
+        source = "feature_escape_direction"
+        if escape_direction is None:
+            escape_direction = _normalize(
+                (
+                    current_xy[0] - feature.position[0],
+                    current_xy[1] - feature.position[1],
+                )
+            )
+            source = "radial_from_feature"
+
+        goal_direction = None
+        if goal is not None:
+            goal_direction = _normalize(
+                (
+                    float(goal[0]) - current_xy[0],
+                    float(goal[1]) - current_xy[1],
+                )
+            )
+
+        if escape_direction is None:
+            escape_direction = goal_direction
+            source = "goal_direction"
+        if escape_direction is None:
+            debug.update(
+                {
+                    "nearest_type": feature.type,
+                    "nearest_distance": distance,
+                    "nearest_strength": feature.strength,
+                }
+            )
+            return None, debug
+
+        if goal_direction is not None:
+            escape_direction = _normalize(
+                (
+                    0.65 * escape_direction[0] + 0.35 * goal_direction[0],
+                    0.65 * escape_direction[1] + 0.35 * goal_direction[1],
+                )
+            )
+            source = source + "+goal"
+
+        debug.update(
+            {
+                "has_escape_direction": escape_direction is not None,
+                "nearest_type": feature.type,
+                "nearest_distance": distance,
+                "nearest_strength": feature.strength,
+                "source": source,
+            }
+        )
+        return escape_direction, debug
+
     def debug_snapshot(self, state=None):
         nearest, distance = self.nearest_feature(state)
         nearest_type = "none"
@@ -444,12 +778,21 @@ class MppiMemoryField(object):
             nearest_strength = nearest.strength
             nearest_hit_count = nearest.hit_count
             nearest_escape = nearest.escape_direction
+        cost_breakdown = self.memory_cost_breakdown_for_state(state)
+        feature_types = {}
+        for feature in self.features:
+            feature_types[feature.type] = feature_types.get(feature.type, 0) + 1
         return {
             "memory_enabled": bool(self.enabled),
             "memory_feature_count": len(self.features),
+            "memory_active_feature_count": int(cost_breakdown.get("active_feature_count", 0)),
             "memory_nearest_type": nearest_type,
             "memory_nearest_distance": distance,
             "memory_nearest_strength": nearest_strength,
+            "memory_cost": float(cost_breakdown.get("total", 0.0)),
+            "memory_cost_total": float(cost_breakdown.get("total", 0.0)),
+            "memory_cost_by_type": cost_breakdown.get("by_type", {}),
+            "memory_feature_types": feature_types,
             "memory_escape_direction": nearest_escape,
             "memory_temperature_scale": self.temperature_scale(state),
             "memory_feature_hit_count": nearest_hit_count,

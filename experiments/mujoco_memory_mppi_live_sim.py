@@ -1099,6 +1099,66 @@ def get_memory_feature_positions(memory_field):
     return positions
 
 
+def get_memory_debug(memory_field, state=None):
+    if memory_field is None:
+        return {
+            "memory_feature_count": 0,
+            "memory_nearest_type": "none",
+            "memory_nearest_distance": None,
+            "memory_nearest_strength": 0.0,
+            "memory_cost_total": 0.0,
+            "memory_cost_by_type": {},
+            "memory_temperature_scale": 1.0,
+        }
+    try:
+        return memory_field.debug_snapshot(state)
+    except TypeError:
+        return memory_field.debug_snapshot()
+
+
+def format_memory_cost_by_type(by_type):
+    if not by_type:
+        return ""
+    parts = []
+    for key in sorted(by_type.keys()):
+        value = float(by_type.get(key, 0.0))
+        if abs(value) <= 1e-9:
+            continue
+        parts.append("%s:%.3f" % (key, value))
+    return "|".join(parts)
+
+
+def memory_breakdown_for_trajectory(memory_field, trajectory, controls=None):
+    if memory_field is None:
+        return {
+            "total": 0.0,
+            "by_type": {},
+            "nearest_type": "none",
+            "nearest_distance": None,
+            "nearest_strength": 0.0,
+            "active_feature_count": 0,
+            "temperature_scale": 1.0,
+        }
+    if hasattr(memory_field, "memory_cost_breakdown_for_trajectory"):
+        try:
+            return memory_field.memory_cost_breakdown_for_trajectory(
+                trajectory,
+                controls=controls,
+                stride=3,
+            )
+        except TypeError:
+            return memory_field.memory_cost_breakdown_for_trajectory(trajectory, stride=3)
+    return {
+        "total": memory_cost_for_trajectory(memory_field, trajectory),
+        "by_type": {},
+        "nearest_type": "none",
+        "nearest_distance": None,
+        "nearest_strength": 0.0,
+        "active_feature_count": 0,
+        "temperature_scale": 1.0,
+    }
+
+
 def nearest_memory_feature(memory_field, state):
     if memory_field is None:
         return None, None
@@ -1175,17 +1235,20 @@ def apply_escape_bias_to_nominal_sequence(
     nearest_feature_position,
     front_clear,
     horizon_prefix=7,
+    preferred_escape_dir=None,
 ):
-    if nearest_feature_position is None:
+    if nearest_feature_position is None and preferred_escape_dir is None:
         return nominal_sequence, False, None
 
     current_xy = (float(state[0]), float(state[1]))
-    escape_from_memory = normalize_xy(
-        (
-            current_xy[0] - float(nearest_feature_position[0]),
-            current_xy[1] - float(nearest_feature_position[1]),
+    escape_from_memory = normalize_xy(preferred_escape_dir) if preferred_escape_dir is not None else None
+    if escape_from_memory is None and nearest_feature_position is not None:
+        escape_from_memory = normalize_xy(
+            (
+                current_xy[0] - float(nearest_feature_position[0]),
+                current_xy[1] - float(nearest_feature_position[1]),
+            )
         )
-    )
     goal_dir = normalize_xy((float(goal[0]) - current_xy[0], float(goal[1]) - current_xy[1]))
     if escape_from_memory is None:
         escape_from_memory = goal_dir
@@ -1242,6 +1305,16 @@ def effective_temperature(args, memory_field, state):
         elif hasattr(memory_field, "temperature_scale"):
             scale = memory_field.temperature_scale(state)
     return float(args.temperature) * clamp(float(scale), 1.0, 3.0)
+
+
+def memory_temperature_scale(memory_field, state):
+    if memory_field is None:
+        return 1.0
+    if hasattr(memory_field, "temperature_scale_for_state"):
+        return clamp(float(memory_field.temperature_scale_for_state(state)), 1.0, 3.0)
+    if hasattr(memory_field, "temperature_scale"):
+        return clamp(float(memory_field.temperature_scale(state)), 1.0, 3.0)
+    return 1.0
 
 
 def compute_goal_distance(state, goal=GOAL):
@@ -1333,6 +1406,11 @@ def plan_one_step(
         goal,
         bounds,
     )
+    updated_memory_breakdown = memory_breakdown_for_trajectory(
+        memory_field,
+        updated_trajectory,
+        controls=updated_sequence,
+    )
 
     sorted_indices = sorted(range(len(costs)), key=lambda index: costs[index])
     best_index = sorted_indices[0]
@@ -1347,6 +1425,12 @@ def plan_one_step(
         "best_cost": costs[best_index],
         "best_collision": collisions[best_index],
         "memory_cost": updated_memory_cost,
+        "memory_cost_total": float(updated_memory_breakdown.get("total", updated_memory_cost)),
+        "memory_cost_by_type": updated_memory_breakdown.get("by_type", {}),
+        "memory_nearest_type": updated_memory_breakdown.get("nearest_type", "none"),
+        "memory_nearest_distance": updated_memory_breakdown.get("nearest_distance"),
+        "memory_nearest_strength": updated_memory_breakdown.get("nearest_strength", 0.0),
+        "temperature_scale": memory_temperature_scale(memory_field, state),
         "effective_temperature": temperature,
         "planner_compute_ms": (t1 - t0) * 1000.0,
     }
@@ -1415,8 +1499,17 @@ CSV_FIELDS = [
     "front_stop_mode",
     "planner_obstacle_count",
     "memory_feature_count",
+    "memory_nearest_type",
+    "memory_nearest_distance",
+    "memory_nearest_strength",
     "memory_cost",
+    "memory_cost_total",
+    "memory_cost_by_type",
+    "temperature_scale",
     "effective_temperature",
+    "escape_active",
+    "repeated_spin",
+    "stuck_low_progress",
     "planner_compute_ms",
     "collision",
 ]
@@ -1496,6 +1589,13 @@ def run_live_sim(args):
                 memory_field,
                 state,
             )
+            suggested_escape_dir = None
+            escape_debug = {}
+            if memory_field is not None and hasattr(memory_field, "suggest_escape_direction"):
+                suggested_escape_dir, escape_debug = memory_field.suggest_escape_direction(
+                    state,
+                    scene_config["goal"],
+                )
             memory_feature_count_before = len(get_memory_feature_positions(memory_field))
             min_front_range = scan_result.get("min_front_range")
             front_clear = (
@@ -1517,6 +1617,7 @@ def run_live_sim(args):
                     scene_config["goal"],
                     nearest_memory_position,
                     front_clear=front_clear,
+                    preferred_escape_dir=suggested_escape_dir,
                 )
 
             plan_info = plan_one_step(
@@ -1549,9 +1650,26 @@ def run_live_sim(args):
                 now=(step_index + 1) * args.dt,
             )
             if memory_debug is None:
+                memory_debug = get_memory_debug(memory_field, next_state)
+            if memory_debug is None:
                 memory_feature_count = 0
             else:
                 memory_feature_count = int(memory_debug.get("memory_feature_count", 0))
+            memory_nearest_type = memory_debug.get(
+                "memory_nearest_type",
+                plan_info.get("memory_nearest_type", "none"),
+            )
+            memory_nearest_distance = memory_debug.get(
+                "memory_nearest_distance",
+                plan_info.get("memory_nearest_distance"),
+            )
+            memory_nearest_strength = memory_debug.get(
+                "memory_nearest_strength",
+                plan_info.get("memory_nearest_strength", 0.0),
+            )
+            memory_cost_total = float(plan_info.get("memory_cost_total", plan_info["memory_cost"]))
+            memory_cost_by_type = plan_info.get("memory_cost_by_type", {})
+            temperature_scale = float(plan_info.get("temperature_scale", 1.0))
 
             env.update_debug_visuals(
                 scan=scan,
@@ -1600,8 +1718,17 @@ def run_live_sim(args):
                     "front_stop_mode": scan_result.get("front_stop_mode"),
                     "planner_obstacle_count": len(planner_obstacles),
                     "memory_feature_count": memory_feature_count,
+                    "memory_nearest_type": memory_nearest_type,
+                    "memory_nearest_distance": memory_nearest_distance,
+                    "memory_nearest_strength": memory_nearest_strength,
                     "memory_cost": plan_info["memory_cost"],
+                    "memory_cost_total": memory_cost_total,
+                    "memory_cost_by_type": format_memory_cost_by_type(memory_cost_by_type),
+                    "temperature_scale": temperature_scale,
                     "effective_temperature": plan_info["effective_temperature"],
+                    "escape_active": bool(escape_active),
+                    "repeated_spin": bool(repeated_spin),
+                    "stuck_low_progress": bool(stuck_low_progress),
                     "planner_compute_ms": plan_info["planner_compute_ms"],
                     "collision": bool(collision),
                 }
@@ -1612,7 +1739,8 @@ def run_live_sim(args):
                     "step=%03d scene=%s goal=%.3f repeated_spin=%s stuck_low_progress=%s escape_active=%s "
                     "proposed_v=%.3f proposed_omega=%.3f final_v=%.3f final_omega=%.3f "
                     "front_stop_mode=%s scan_reason=%s obs=%d raw_obs=%d memory=%d "
-                    "nearest_memory_distance=%s effective_temperature=%.3f compute_ms=%.2f"
+                    "nearest_memory_type=%s nearest_memory_distance=%s nearest_memory_strength=%.3f "
+                    "memory_cost_total=%.3f temperature_scale=%.3f effective_temperature=%.3f compute_ms=%.2f"
                     % (
                         step_index + 1,
                         scene_config["name"],
@@ -1629,19 +1757,25 @@ def run_live_sim(args):
                         len(planner_obstacles),
                         raw_planner_obstacle_count,
                         memory_feature_count,
-                        "%.3f" % nearest_memory_distance if nearest_memory_distance is not None else "none",
+                        memory_nearest_type,
+                        "%.3f" % memory_nearest_distance if memory_nearest_distance is not None else "none",
+                        float(memory_nearest_strength or 0.0),
+                        memory_cost_total,
+                        temperature_scale,
                         plan_info["effective_temperature"],
                         plan_info["planner_compute_ms"],
                     )
                 )
                 print(
-                    "          front=%s mode=%s obs=%d v=%.3f omega=%.3f"
+                    "          front=%s mode=%s obs=%d v=%.3f omega=%.3f memory_by_type=%s escape_source=%s"
                     % (
                         scan_result.get("min_front_range"),
                         scan_result.get("front_stop_mode"),
                         len(planner_obstacles),
                         final_control[0],
                         final_control[1],
+                        format_memory_cost_by_type(memory_cost_by_type),
+                        escape_debug.get("source", "none"),
                     )
                 )
 

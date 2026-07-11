@@ -1,0 +1,16 @@
+include: mujoco_diff_drive.yaml
+
+experiment:
+  name: mujoco_u_trap_long_board
+
+scene:
+  name: u_trap_long_board
+  obstacles:
+    - {type: box, position: [1.58, 1.38], size: [0.08, 0.62], height: 0.32}
+    - {type: box, position: [1.95, 1.95], size: [0.45, 0.08], height: 0.32}
+    - {type: box, position: [2.32, 1.38], size: [0.08, 0.62], height: 0.32}
+    - {type: box, position: [0.95, 1.05], size: [0.08, 0.72], height: 0.32, yaw: -0.2094395102}
+    - {type: box, position: [2.65, 2.35], size: [0.46, 0.07], height: 0.32, yaw: -0.3141592654}
+    - {type: box, position: [1.28, 2.55], size: [0.42, 0.07], height: 0.30}
+    - {type: cylinder, position: [1.95, 1.18], radius: 0.12, height: 0.34}
+    - {type: cylinder, position: [2.55, 2.78], radius: 0.13, height: 0.34}

@@ -1,0 +1,45 @@
+experiment:
+  name: icode_dynamic5_training
+  control_dt: 0.10
+  max_steps: 1
+task:
+  type: point_goal
+  position: [3.0, 3.0]
+state_space:
+  preset: dynamic_unicycle_5
+action_space:
+  names: [v_cmd, omega_cmd]
+  lower: [0.0, -0.9]
+  upper: [0.35, 0.9]
+plant:
+  backend: mujoco_diff_drive
+planner:
+  horizon: 20
+  num_samples: 100
+
+seed: 20260711
+dynamics:
+  state_dim: 5
+  control_dim: 2
+  angle_indices: [2]
+  velocity_time_constant: 0.18
+  yaw_time_constant: 0.12
+  integrator: rk4
+model:
+  type: icode_residual
+  angle_indices: [2]
+  hidden_sizes: [256, 256]
+  activation: softplus
+  final_layer_scale: 0.001
+training:
+  epochs: 300
+  batch_size: 256
+  rollout_horizon: 10
+  learning_rate: 0.0005
+  weight_decay: 0.0
+  gradient_clip_norm: 1.0
+  early_stopping_patience: 30
+  loss_weights:
+    derivative: 1.0
+    one_step: 1.0
+    multistep: 1.0

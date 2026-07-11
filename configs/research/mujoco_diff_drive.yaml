@@ -1,0 +1,134 @@
+experiment:
+  name: mujoco_diff_drive_nominal
+  seed: 7
+  control_dt: 0.10
+  max_steps: 180
+  initial_state: [0.0, 0.0, 0.0, 0.0, 0.0]
+  terminate_on_collision: true
+
+task:
+  type: point_goal
+  position: [3.0, 3.0]
+  position_tolerance: 0.20
+
+state_space:
+  preset: dynamic_unicycle_5
+
+action_space:
+  names: [v_cmd, omega_cmd]
+  lower: [0.0, -0.9]
+  upper: [0.35, 0.9]
+  rate_limits: [0.6, 2.0]
+
+plant:
+  backend: mujoco_diff_drive
+  nominal_velocity_time_constant: 0.18
+  nominal_yaw_time_constant: 0.12
+  robot:
+    wheel_radius: 0.08
+    wheel_width: 0.035
+    track_width: 0.32
+    collision_radius: 0.25
+    chassis_half_size: [0.19, 0.14, 0.045]
+    chassis_mass: 9.0
+    chassis_inertia: [0.08, 0.12, 0.16]
+    wheel_mass: 0.32
+  actuator:
+    profile: torque_pi
+    torque_limit: 2.2
+    kp: 0.55
+    ki: 1.5
+    integral_limit: 2.5
+    deadband: 0.0
+    command_delay: 0.04
+    torque_slew_rate: 50.0
+  contact:
+    wheel_friction: [1.2, 0.01, 0.002]
+    floor_friction: [1.0, 0.005, 0.0005]
+    caster_friction: [0.05, 0.001, 0.0001]
+    solref: "0.01 1"
+    solimp: "0.95 0.99 0.001"
+  physics:
+    timestep: 0.002
+    integrator: implicitfast
+    solver: Newton
+    iterations: 60
+    tolerance: 1.0e-10
+
+scene:
+  name: simple
+  obstacles:
+    - type: box
+      position: [1.35, 1.00]
+      size: [0.08, 0.75]
+      height: 0.32
+    - type: box
+      position: [1.80, 1.50]
+      size: [0.08, 0.55]
+      height: 0.32
+    - type: box
+      position: [2.15, 2.00]
+      size: [0.45, 0.08]
+      height: 0.32
+    - type: box
+      position: [2.50, 1.50]
+      size: [0.08, 0.55]
+      height: 0.32
+    - type: cylinder
+      position: [2.35, 2.45]
+      radius: 0.18
+      height: 0.36
+
+sensors:
+  lidar_beams: 181
+  lidar_angle_min: -3.141592653589793
+  lidar_angle_max: 3.141592653589793
+  lidar_range_min: 0.05
+  lidar_range_max: 4.0
+  lidar_noise_std: 0.002
+  lidar_dropout_probability: 0.0
+  odom_noise_std: [0.0005, 0.0005, 0.0005]
+  twist_noise_std: [0.001, 0.002]
+  latency: 0.0
+
+perception:
+  scan_guard:
+    front_stop_distance: 0.34
+    hard_stop_distance: 0.28
+    front_soft_block_distance: 0.45
+    front_slow_distance: 0.85
+    front_slow_min_scale: 0.45
+    front_angle_deg: 35.0
+    side_stop_distance: 0.18
+    side_angle_deg: 125.0
+    near_body_stop_radius: 0.20
+  local_obstacle_layer:
+    downsample_step: 1
+    fallback_downsample_step: 3
+    obstacle_radius: 0.08
+    max_obstacle_count: 80
+    planner_max_obstacles: 24
+
+planner:
+  horizon: 24
+  num_samples: 320
+  temperature: 5.0
+  integrator: rk4
+  noise_sigma: [0.10, 0.28]
+  sampling_prior: goal_warm_start
+  prior_v_gain: 0.7
+  prior_yaw_gain: 1.2
+  robot_radius: 0.25
+  goal_running_weight: 1.0
+  goal_terminal_weight: 15.0
+  obstacle_weight: 35.0
+  obstacle_influence: 0.60
+  collision_penalty: 6000.0
+
+memory:
+  enable: false
+
+rl:
+  enabled: false
+  integration: sampling_prior
+  policy_backend: none

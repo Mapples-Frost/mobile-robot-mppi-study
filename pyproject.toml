@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mobile-robot-mppi"
+version = "0.2.0"
+description = "Research platform for MPPI, residual dynamics, MuJoCo, and safe mobile-robot control"
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+  "numpy>=1.22,<2.0",
+  "PyYAML>=5.3",
+]
+
+[project.optional-dependencies]
+simulation = ["mujoco==3.2.3"]
+learning = ["torch>=2.0", "tensorboard>=2.10"]
+dev = ["pytest>=8,<9"]
+
+[project.scripts]
+mppi-sim = "mobile_robot_mppi.cli.simulate:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["mobile_robot_mppi*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"

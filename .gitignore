@@ -1,5 +1,13 @@
 __pycache__/
 *.pyc
+
+# Refactored Python package build/test artifacts
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+build/
+dist/
+*.egg-info/
 *.pyo
 *.pyd
 .venv/
@@ -17,6 +25,11 @@ experiments/logs/*.tmp
 
 # Experiment outputs
 results/
+
+# ICODE research artifacts (datasets, checkpoints, logs, figures, tables)
+results/icode/
+experiments/results/icode/
+runs/icode/
 
 # Backup files
 *.bak

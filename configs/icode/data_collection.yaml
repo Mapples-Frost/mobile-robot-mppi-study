@@ -1,0 +1,97 @@
+# Synthetic residual-dynamics dataset used by experiments/icode/collect_synthetic_residual_data.py.
+# Episode counts are totals across the listed disturbance cases.  Remainders are
+# assigned deterministically in list order.
+schema_version: 1
+master_seed: 20260711
+
+collection:
+  dt: 0.1
+  integrator: rk4
+  episodes:
+    seen:
+      random_exploration: 96
+      task_specific_goal_tracking: 64
+    unseen:
+      random_exploration: 24
+      task_specific_goal_tracking: 16
+  steps_per_episode:
+    random_exploration: 160
+    task_specific_goal_tracking: 160
+
+state_ranges:
+  random_exploration:
+    x: [-3.0, 3.0]
+    y: [-3.0, 3.0]
+    theta: [-3.141592653589793, 3.141592653589793]
+  task_specific_goal_tracking:
+    x: [-2.5, 1.0]
+    y: [-2.5, 1.0]
+    theta: [-3.141592653589793, 3.141592653589793]
+
+control_ranges:
+  velocity: [0.0, 1.2]
+  yaw_rate: [-1.5, 1.5]
+
+goal: [3.0, 3.0]
+
+random_exploration:
+  # Piecewise-constant commands excite the dynamics without unrealistically
+  # changing both inputs at every integration step.
+  command_hold_steps: [2, 8]
+
+task_specific_goal_tracking:
+  controller: proportional_goal_tracker
+  controller_version: proportional_goal_tracker_v1
+  distance_gain: 0.8
+  heading_gain: 1.8
+  goal_tolerance: 0.08
+
+split:
+  train_fraction: 0.70
+  validation_fraction: 0.15
+  test_fraction: 0.15
+
+# These cases are used for train/validation/test.  This is an obstacle-free
+# dynamics benchmark; "clean" describes the task scene, not a nominal plant.
+train_disturbances:
+  - id: velocity_yaw_gain
+    velocity_gain: 0.82
+    yaw_gain: 1.15
+    yaw_bias: 0.0
+    control_delay_steps: 0
+    world_disturbance_amplitude: [0.0, 0.0, 0.0]
+    world_disturbance_frequency: [0.0, 0.0, 0.0]
+    world_disturbance_phase: [0.0, 0.0, 0.0]
+    state_disturbance_gain: [0.0, 0.0, 0.0]
+  - id: bias_only
+    velocity_gain: 1.0
+    yaw_gain: 1.0
+    yaw_bias: 0.12
+    control_delay_steps: 0
+    world_disturbance_amplitude: [0.0, 0.0, 0.0]
+    world_disturbance_frequency: [0.0, 0.0, 0.0]
+    world_disturbance_phase: [0.0, 0.0, 0.0]
+    state_disturbance_gain: [0.0, 0.0, 0.0]
+  - id: periodic_and_state
+    velocity_gain: 1.0
+    yaw_gain: 1.0
+    yaw_bias: 0.0
+    control_delay_steps: 0
+    world_disturbance_amplitude: [0.08, 0.06, 0.04]
+    world_disturbance_frequency: [0.35, 0.27, 0.40]
+    world_disturbance_phase: [0.0, 0.7, -0.4]
+    state_disturbance_gain: [0.015, -0.012, 0.05]
+
+# Held out as a complete disturbance regime; no episode from this list enters
+# the train, validation, or in-distribution test artifacts.  Its delay is an
+# explicit non-Markov stress test because [x, y, theta] has no command history.
+unseen_disturbances:
+  - id: unseen_combined_shift
+    velocity_gain: 0.72
+    yaw_gain: 1.28
+    yaw_bias: -0.16
+    control_delay_steps: 3
+    world_disturbance_amplitude: [0.11, 0.09, 0.06]
+    world_disturbance_frequency: [0.22, 0.43, 0.31]
+    world_disturbance_phase: [0.4, -0.8, 1.1]
+    state_disturbance_gain: [-0.018, 0.022, 0.07]

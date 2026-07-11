@@ -18,6 +18,11 @@ experiments/logs/*.tmp
 # Experiment outputs
 results/
 
+# ICODE research artifacts (datasets, checkpoints, logs, figures, tables)
+results/icode/
+experiments/results/icode/
+runs/icode/
+
 # Backup files
 *.bak
 *.codex_*.bak

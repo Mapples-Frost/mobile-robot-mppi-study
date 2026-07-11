@@ -69,3 +69,26 @@ safety clamp / creep escape / memory escape / goal tracking / smoothing
 final_control
         ↓
 /cmd_vel
+```
+
+---
+
+## ICODE 残差动力学研究框架
+
+仓库现已包含兼容式的 Python 3 residual-dynamics 研究层：
+
+- 三状态 unicycle nominal model 与可控 disturbed true plant；
+- Euler / RK4、角度周期编码、Oracle residual；
+- 可追踪 NPZ + JSON + CSV 数据集与 episode-level split；
+- MLP baseline 与 control-affine ICODE-style residual；
+- derivative / one-step / multi-step rollout loss、完整 checkpoint、resume；
+- 原 MPPI rollout 的可选 dynamics adapter，默认 nominal 行为保持不变；
+- clean dynamics model/control benchmark 与五方法多 seed runner。
+
+ICODE 代码不会进入 `mppi_hardware_bridge/scripts/`，不会替换
+LaserScan、`scan_guard`、`local_obstacle_layer` 或控制安全仲裁。当前实现复现
+公开的 `f_theta(x) + G_theta(x)u` residual structure，但没有实现或声称原始
+ICODE contraction、稳定性或收敛保证。
+
+从零开始的入口与边界说明见 [`docs/icode/01_architecture.md`](docs/icode/01_architecture.md)
+和 [`docs/icode/07_experiment_protocol.md`](docs/icode/07_experiment_protocol.md)。

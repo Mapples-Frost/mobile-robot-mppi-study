@@ -1,0 +1,60 @@
+# Research configuration for the unstructured residual-network baseline.
+schema_version: 1
+
+run:
+  seed: 20260711
+  device: auto
+  dtype: float32
+
+paths:
+  dataset_dir: results/icode/datasets
+  output_dir: results/icode/training/mlp_residual
+  train_file: train.npz
+  validation_file: validation.npz
+
+dynamics:
+  state_dim: 3
+  control_dim: 2
+  integration_method: rk4
+  angle_indices: [2]
+
+model:
+  type: mlp_residual
+  state_encoding:
+    mode: sincos
+    angle_indices: [2]
+  hidden_sizes: [256, 256]
+  activation: softplus
+  final_layer_scale: 0.001
+
+training:
+  epochs: 300
+  batch_size: 256
+  rollout_batch_size: 64
+  train_rollout_horizon: 10
+  validation_rollout_horizon: 20
+  rollout_stride: 1
+  require_time_continuity: true
+  require_constant_dt: false
+  shuffle: true
+  num_workers: 0
+  optimizer:
+    type: adam
+    learning_rate: 0.0005
+    weight_decay: 0.0
+  loss:
+    derivative_weight: 1.0
+    one_step_weight: 1.0
+    multistep_weight: 1.0
+    regularization_weight: 0.000001
+  gradient_clip_norm: 1.0
+  scheduler:
+    type: reduce_on_plateau
+    factor: 0.5
+    patience: 10
+    threshold: 0.0001
+    cooldown: 0
+    min_learning_rate: 0.000001
+  early_stopping:
+    patience: 30
+    min_delta: 0.00001

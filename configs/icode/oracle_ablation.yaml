@@ -1,0 +1,81 @@
+# Clean, obstacle-free dynamics/control ablation for residual-aware MPPI.
+# Smoke runs verify wiring and reproducibility only; they are not paper results.
+schema_version: 1
+
+run:
+  name: oracle_residual_ablation
+  seeds: [101, 211, 307, 401, 503]
+  smoke_seeds: [1103, 2207]
+  output_dir: results/icode/oracle_ablation
+  headless: true
+
+benchmark:
+  start_state: [0.0, 0.0, 0.0]
+  goal: [3.0, 3.0]
+  goal_tolerance: 0.18
+  dt: 0.1
+  max_steps: 90
+  integration_method: rk4
+  obstacle_free: true
+  obstacles: []
+  memory_enabled: false
+  robot_radius: 0.20
+  bounds:
+    x_min: -1.5
+    x_max: 4.5
+    y_min: -1.5
+    y_max: 4.5
+
+# This mismatch is instantaneous and Markov in [x, y, theta].  Delay and
+# time-varying forcing are deliberately disabled so the analytic oracle can be
+# an exact planner-model upper bound over every rollout stage.
+plant:
+  velocity_gain: 0.78
+  yaw_gain: 1.25
+  yaw_bias: 0.10
+  control_delay_steps: 0
+  world_disturbance_amplitude: [0.0, 0.0, 0.0]
+  world_disturbance_frequency: [0.0, 0.0, 0.0]
+  world_disturbance_phase: [0.0, 0.0, 0.0]
+  state_disturbance_gain: [0.020, -0.015, 0.060]
+  enable_velocity_gain: true
+  enable_yaw_gain: true
+  enable_yaw_bias: true
+  enable_control_delay: false
+  enable_world_disturbance: false
+  enable_state_disturbance: true
+
+planner:
+  horizon: 25
+  num_samples: 256
+  temperature: 8.0
+  nominal_control: [0.80, 0.0]
+  tail_control: [0.60, 0.0]
+  warm_start_prefix_steps: 10
+  velocity_std: 0.22
+  yaw_rate_std: 0.42
+  velocity_min: 0.0
+  velocity_max: 1.20
+  yaw_rate_max: 1.50
+  anisotropic_sampling: false
+  sdf_influence_distance: 1.2
+  sigma_parallel: 0.08
+  sigma_perpendicular: 0.01
+
+identity_check:
+  absolute_tolerance: 1.0e-10
+  minimum_nominal_mismatch: 1.0e-5
+  states:
+    - [0.0, 0.0, 0.0]
+    - [1.0, -0.5, 1.2]
+    - [-0.7, 0.8, -2.4]
+  controls:
+    - [0.4, 0.2]
+    - [1.0, -0.6]
+    - [0.2, 0.9]
+  times: [0.0, 0.7, 1.3]
+
+smoke:
+  horizon: 12
+  num_samples: 32
+  max_steps: 60

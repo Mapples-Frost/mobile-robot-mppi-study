@@ -44,18 +44,28 @@ def step(state, control, dt):
     return next_x, next_y, next_theta
 
 
-def rollout_control_sequence(start_state, control_sequence, dt):
+def rollout_control_sequence(start_state, control_sequence, dt, dynamics_model=None):
     """
     从起点状态出发，把一整条控制序列 rollout 成一条轨迹。
     """
-    trajectory = [start_state]
-    current_state = start_state
+    if dynamics_model is None:
+        trajectory = [start_state]
+        current_state = start_state
 
-    for control in control_sequence:
-        current_state = step(current_state, control, dt)
-        trajectory.append(current_state)
+        for control in control_sequence:
+            current_state = step(current_state, control, dt)
+            trajectory.append(current_state)
 
-    return trajectory
+        return trajectory
+
+    from src.planners.mppi_dynamics_adapter import MppiDynamicsAdapter
+
+    adapter = (
+        dynamics_model
+        if isinstance(dynamics_model, MppiDynamicsAdapter)
+        else MppiDynamicsAdapter(dynamics_model)
+    )
+    return adapter.rollout(start_state, control_sequence, dt)
 
 
 def initialize_control_sequence(nominal_control, horizon):
@@ -125,7 +135,8 @@ def sample_control_sequences(
     isotropic_anchor_ratio=0.25,#保留 25% 的各向同性样本，防止全体 sample 一起塌缩
     tangent_push_gain=0.12,#给 goal-aligned 切向一个轻微前推
     boundary_bias_distance=0.45#距离边界 0.45m 内，就开始给 inward bias
-    ,boundary_push_gain=0.90#界内推强度
+    ,boundary_push_gain=0.90,#界内推强度
+    dynamics_model=None,
 ):
     """
     围绕 nominal_sequence 采样很多条候选控制序列。
@@ -139,6 +150,7 @@ def sample_control_sequences(
         start_state=current_state,
         control_sequence=nominal_sequence,
         dt=dt,
+        dynamics_model=dynamics_model,
     )
 
     anisotropic_meta = None

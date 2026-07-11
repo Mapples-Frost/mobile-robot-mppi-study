@@ -1,0 +1,11 @@
+include: icode_dynamic5.yaml
+
+experiment:
+  name: mlp_dynamic5_training
+
+model:
+  type: mlp_residual
+  angle_indices: [2]
+  hidden_sizes: [256, 256]
+  activation: softplus
+  final_layer_scale: 0.001

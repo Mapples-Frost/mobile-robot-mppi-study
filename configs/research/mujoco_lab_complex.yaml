@@ -1,0 +1,16 @@
+include: mujoco_diff_drive.yaml
+
+experiment:
+  name: mujoco_lab_complex
+
+scene:
+  name: lab_complex
+  obstacles:
+    - {type: box, position: [0.85, 0.65], size: [0.08, 0.45], height: 0.32, yaw: 0.2617993878}
+    - {type: box, position: [1.55, 1.35], size: [0.45, 0.07], height: 0.32}
+    - {type: box, position: [1.65, 2.25], size: [0.07, 0.42], height: 0.30}
+    - {type: cylinder, position: [2.25, 1.05], radius: 0.16, height: 0.36}
+    - {type: cylinder, position: [2.55, 1.75], radius: 0.15, height: 0.36}
+    - {type: cylinder, position: [2.45, 2.55], radius: 0.13, height: 0.36}
+    - {type: cylinder, position: [2.85, 2.35], radius: 0.12, height: 0.32}
+    - {type: cylinder, position: [0.65, 2.25], radius: 0.12, height: 0.32}

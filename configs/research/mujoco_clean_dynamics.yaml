@@ -1,0 +1,13 @@
+include: mujoco_diff_drive.yaml
+
+experiment:
+  name: mujoco_clean_dynamics
+
+task:
+  type: point_goal
+  position: [2.0, 1.0]
+  position_tolerance: 0.20
+
+scene:
+  name: clean_dynamics
+  obstacles: []

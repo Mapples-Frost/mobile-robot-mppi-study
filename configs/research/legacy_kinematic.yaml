@@ -1,0 +1,62 @@
+experiment:
+  name: legacy_kinematic_regression
+  seed: 7
+  control_dt: 0.10
+  max_steps: 120
+  initial_state: [0.0, 0.0, 0.0]
+  terminate_on_collision: true
+
+task:
+  type: point_goal
+  position: [3.0, 3.0]
+  position_tolerance: 0.20
+
+state_space:
+  preset: unicycle_3
+
+action_space:
+  names: [v_cmd, omega_cmd]
+  lower: [0.0, -1.0]
+  upper: [0.40, 1.0]
+  rate_limits: [0.8, 2.5]
+
+plant:
+  backend: legacy_kinematic
+  robot_radius: 0.25
+  bounds: [-1.0, 4.0, -1.0, 4.0]
+
+scene:
+  name: clean_dynamics
+  obstacles: []
+
+sensors:
+  lidar_beams: 181
+  lidar_range_min: 0.05
+  lidar_range_max: 4.0
+  odom_noise_std: [0.0, 0.0, 0.0]
+  twist_noise_std: [0.0, 0.0]
+  latency: 0.0
+
+perception:
+  scan_guard:
+    front_stop_distance: 0.34
+    front_soft_block_distance: 0.45
+    front_slow_distance: 0.85
+  local_obstacle_layer:
+    planner_max_obstacles: 24
+
+planner:
+  horizon: 20
+  num_samples: 200
+  temperature: 4.0
+  integrator: rk4
+  noise_sigma: [0.10, 0.30]
+  sampling_prior: goal_warm_start
+  robot_radius: 0.25
+
+memory:
+  enable: false
+
+rl:
+  enabled: false
+  integration: sampling_prior

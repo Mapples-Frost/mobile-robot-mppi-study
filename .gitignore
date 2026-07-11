@@ -1,5 +1,13 @@
 __pycache__/
 *.pyc
+
+# Refactored Python package build/test artifacts
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+build/
+dist/
+*.egg-info/
 *.pyo
 *.pyd
 .venv/

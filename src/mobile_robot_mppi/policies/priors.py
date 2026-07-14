@@ -48,15 +48,34 @@ class PreviousSequencePrior:
 
 
 class GoalWarmStartPrior:
-    def __init__(self, v_gain=0.8, yaw_gain=1.2):
+    def __init__(
+        self,
+        v_gain=0.8,
+        yaw_gain=1.2,
+        translation_heading_gate_rad=None,
+        translation_heading_gate_terminal_only=False,
+    ):
         self.v_gain = float(v_gain)
         self.yaw_gain = float(yaw_gain)
+        self.translation_heading_gate_rad = (
+            None
+            if translation_heading_gate_rad is None
+            else float(translation_heading_gate_rad)
+        )
+        if (
+            self.translation_heading_gate_rad is not None
+            and not 0.0 < self.translation_heading_gate_rad <= np.pi
+        ):
+            raise ValueError("translation heading gate must be in (0, pi]")
+        self.translation_heading_gate_terminal_only = bool(
+            translation_heading_gate_terminal_only
+        )
 
     def propose(self, observation: RobotObservation, reference, horizon, action_spec):
         state = observation.pose.as_array()
-        target = reference.target_at(observation.timestamp, state).pose
-        dx = target.x - observation.pose.x
-        dy = target.y - observation.pose.y
+        target = reference.target_at(observation.timestamp, state)
+        dx = target.pose.x - observation.pose.x
+        dy = target.pose.y - observation.pose.y
         distance = float(np.hypot(dx, dy))
         desired = float(np.arctan2(dy, dx))
         yaw_error = float(np.arctan2(
@@ -64,14 +83,44 @@ class GoalWarmStartPrior:
             np.cos(desired - observation.pose.theta),
         ))
         action = np.zeros(action_spec.dimension, dtype=np.float64)
+        alignment = 0.0
+        gate_active = False
         if "v_cmd" in action_spec.names:
-            action[action_spec.index("v_cmd")] = self.v_gain * distance * max(0.0, np.cos(yaw_error))
+            alignment = max(0.0, float(np.cos(yaw_error)))
+            gate_active = (
+                self.translation_heading_gate_rad is not None
+                and (
+                    not self.translation_heading_gate_terminal_only
+                    or target.phase in ("terminal_approach", "terminal")
+                )
+            )
+            if gate_active:
+                gate_cosine = float(np.cos(self.translation_heading_gate_rad))
+                if abs(yaw_error) >= self.translation_heading_gate_rad:
+                    alignment = 0.0
+                else:
+                    # Smoothly recover translation after an in-place turn;
+                    # discontinuous on/off motion excites the actuator loop.
+                    alignment = max(
+                        0.0,
+                        (float(np.cos(yaw_error)) - gate_cosine)
+                        / max(1.0 - gate_cosine, 1e-12),
+                    )
+            action[action_spec.index("v_cmd")] = self.v_gain * distance * alignment
         if "omega_cmd" in action_spec.names:
             action[action_spec.index("omega_cmd")] = self.yaw_gain * yaw_error
         action = action_spec.clip(action)
         return PriorOutput(
             mean=np.repeat(action[None, :], int(horizon), axis=0),
-            metadata={"type": "goal_warm_start", "yaw_error": yaw_error},
+            metadata={
+                "type": "goal_warm_start",
+                "yaw_error": yaw_error,
+                "translation_alignment": alignment,
+                "translation_heading_gate_rad": self.translation_heading_gate_rad,
+                "translation_heading_gate_active": gate_active,
+                "target_is_terminal": target.is_terminal,
+                "target_phase": target.phase,
+            },
         )
 
 

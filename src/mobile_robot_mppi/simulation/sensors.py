@@ -22,6 +22,17 @@ class SimulatedSensorSuite:
         self.lidar_noise = float(config.get("lidar_noise_std", 0.0))
         self.dropout = float(config.get("lidar_dropout_probability", 0.0))
         self.latency = float(config.get("latency", 0.0))
+        self.pose_source = str(config.get("pose_source", "wheel_odometry"))
+        self.twist_source = str(config.get("twist_source", "wheel_odometry"))
+        valid_sources = ("wheel_odometry", "ground_truth")
+        if self.pose_source not in valid_sources:
+            raise ValueError(
+                "sensor pose_source must be wheel_odometry or ground_truth"
+            )
+        if self.twist_source not in valid_sources:
+            raise ValueError(
+                "sensor twist_source must be wheel_odometry or ground_truth"
+            )
         self.num_beams = int(config.get("lidar_beams", 181))
         self.angle_min = float(config.get("lidar_angle_min", -math.pi))
         self.angle_max = float(config.get("lidar_angle_max", math.pi))
@@ -141,21 +152,36 @@ class SimulatedSensorSuite:
         )
 
     def observe(self, truth: GroundTruth) -> RobotObservation:
-        v_value, omega = self._integrate_odometry(truth)
+        odom_v, odom_omega = self._integrate_odometry(truth)
+        pose_value = (
+            truth.pose.as_array()
+            if self.pose_source == "ground_truth"
+            else self._odom_pose.copy()
+        )
+        twist_value = (
+            truth.twist.as_array()
+            if self.twist_source == "ground_truth"
+            else np.asarray((odom_v, odom_omega), dtype=np.float64)
+        )
         pose_noise = self.rng.normal(0.0, self.odom_noise) if np.any(self.odom_noise) else np.zeros(3)
         twist_noise = self.rng.normal(0.0, self.twist_noise) if np.any(self.twist_noise) else np.zeros(2)
         observation = RobotObservation(
             timestamp=truth.timestamp,
             pose=Pose2D(
-                float(self._odom_pose[0] + pose_noise[0]),
-                float(self._odom_pose[1] + pose_noise[1]),
-                self._wrap(float(self._odom_pose[2] + pose_noise[2])),
+                float(pose_value[0] + pose_noise[0]),
+                float(pose_value[1] + pose_noise[1]),
+                self._wrap(float(pose_value[2] + pose_noise[2])),
             ),
-            twist=Twist2D(float(v_value + twist_noise[0]), float(omega + twist_noise[1])),
+            twist=Twist2D(
+                float(twist_value[0] + twist_noise[0]),
+                float(twist_value[1] + twist_noise[1]),
+            ),
             scan=self._raycast(truth),
             auxiliary={
                 "wheel_left": truth.wheel_speeds[0],
                 "wheel_right": truth.wheel_speeds[1],
+                "pose_source": self.pose_source,
+                "twist_source": self.twist_source,
             },
         )
         self._queue.append(observation)

@@ -1,0 +1,10 @@
+include: sac_mppi_subgoal_dynamic_l8.yaml
+
+experiment:
+  name: sac_mppi_subgoal_dynamic_wheel_odom_l8
+
+rl:
+  policy_id: scripted_dynamic_wheel_odom_l8_robustness
+  sensor_overrides:
+    pose_source: wheel_odometry
+    twist_source: wheel_odometry

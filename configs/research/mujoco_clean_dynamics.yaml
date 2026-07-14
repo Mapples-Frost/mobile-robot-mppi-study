@@ -11,3 +11,7 @@ task:
 scene:
   name: clean_dynamics
   obstacles: []
+
+data_collection:
+  random_hold_steps: 5
+  random_action_smoothing: 0.65

@@ -1,0 +1,18 @@
+include: mujoco_strong_mppi_baseline.yaml
+
+experiment:
+  name: mujoco_strong_mppi_combined_unseen_physics
+
+# Held out from ICODE training in the physics-domain gate. This combines
+# heavier inertia, lower friction, longer delay, and a weaker drive actuator.
+plant:
+  robot:
+    chassis_mass: 12.0
+    chassis_inertia: [0.11, 0.16, 0.22]
+  actuator:
+    command_delay: 0.10
+    torque_limit: 1.8
+    kp: 0.48
+  contact:
+    wheel_friction: [0.72, 0.006, 0.001]
+    floor_friction: [0.60, 0.003, 0.0003]

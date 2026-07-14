@@ -113,6 +113,10 @@ planner:
   horizon: 24
   num_samples: 320
   temperature: 5.0
+  # Enable the likelihood-ratio term used when rollouts are sampled around a
+  # non-zero warm-start sequence. Archived configs without this key retain the
+  # former weighted-sampling behavior for exact regression.
+  importance_sampling_correction: true
   integrator: rk4
   noise_sigma: [0.10, 0.28]
   sampling_prior: goal_warm_start

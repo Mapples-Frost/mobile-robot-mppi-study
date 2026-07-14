@@ -1,4 +1,4 @@
-include: mujoco_diff_drive.yaml
+include: mujoco_strong_mppi_baseline.yaml
 
 experiment:
   name: mujoco_u_trap_long_board

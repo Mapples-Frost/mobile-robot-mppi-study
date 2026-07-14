@@ -72,6 +72,12 @@ def make_components(config, project_root, rl_policy=None):
             dynamics, OracleResidualPrediction(true_dynamics, dynamics)
         )
     elif prediction_mode in ("mlp_residual", "icode_residual"):
+        if str(planner_cfg.get("device", "cpu")) == "cpu":
+            import torch
+            thread_count = int(planner_cfg.get("residual_torch_num_threads", 1))
+            if thread_count <= 0:
+                raise ValueError("residual_torch_num_threads must be positive")
+            torch.set_num_threads(thread_count)
         import sys
         root_text = str(Path(project_root).resolve())
         if root_text not in sys.path:
@@ -85,7 +91,11 @@ def make_components(config, project_root, rl_policy=None):
         device = str(planner_cfg.get("device", "cpu"))
         try:
             from mobile_robot_mppi.learning.models import PlatformResidualDynamics
-            residual = PlatformResidualDynamics.from_checkpoint(checkpoint_path, device=device)
+            residual = PlatformResidualDynamics.from_checkpoint(
+                checkpoint_path,
+                device=device,
+                use_torchscript=bool(planner_cfg.get("residual_torchscript", False)),
+            )
             if residual.model.model_type != prediction_mode:
                 raise ValueError(
                     "checkpoint model type %s does not match %s"
@@ -115,12 +125,64 @@ def make_components(config, project_root, rl_policy=None):
         prior = PreviousSequencePrior()
     elif prior_kind == "goal_warm_start":
         prior = GoalWarmStartPrior(
-            planner_cfg.get("prior_v_gain", 0.8), planner_cfg.get("prior_yaw_gain", 1.2)
+            planner_cfg.get("prior_v_gain", 0.8),
+            planner_cfg.get("prior_yaw_gain", 1.2),
+            planner_cfg.get("prior_translation_heading_gate_rad"),
+            planner_cfg.get("prior_translation_heading_gate_terminal_only", False),
         )
     elif prior_kind == "rl":
-        if rl_policy is None:
-            raise ValueError("sampling_prior=rl requires an injected policy callable")
-        prior = RLPolicyPrior(rl_policy, str(config.get("rl", {}).get("policy_id", "rl_policy")))
+        rl_cfg = dict(config.get("rl", {}))
+        if not bool(rl_cfg.get("enabled", False)):
+            raise ValueError("sampling_prior=rl requires rl.enabled=true")
+        if rl_policy is not None:
+            # Training injects a stateful prior object.  Legacy integrations may
+            # still inject a plain callable through the framework-free adapter.
+            prior = (
+                rl_policy
+                if callable(getattr(rl_policy, "propose", None))
+                else RLPolicyPrior(
+                    rl_policy, str(rl_cfg.get("policy_id", "rl_policy"))
+                )
+            )
+        else:
+            checkpoint = rl_cfg.get("checkpoint")
+            if not checkpoint:
+                raise ValueError(
+                    "RL inference requires rl.checkpoint or an injected training prior"
+                )
+            checkpoint_path = Path(checkpoint)
+            if not checkpoint_path.is_absolute():
+                checkpoint_path = Path(project_root) / checkpoint_path
+            fallback = GoalWarmStartPrior(
+                planner_cfg.get("prior_v_gain", 0.8),
+                planner_cfg.get("prior_yaw_gain", 1.2),
+                planner_cfg.get("prior_translation_heading_gate_rad"),
+                planner_cfg.get(
+                    "prior_translation_heading_gate_terminal_only", False
+                ),
+            )
+            from mobile_robot_mppi.rl.prior import TorchSACPrior
+
+            rl_device = str(rl_cfg.get("device", "cpu"))
+            if rl_device == "auto":
+                import torch
+                rl_device = "cuda" if torch.cuda.is_available() else "cpu"
+            if rl_device == "cpu":
+                import torch
+                thread_count = int(rl_cfg.get("torch_num_threads", 1))
+                if thread_count <= 0:
+                    raise ValueError("rl.torch_num_threads must be positive")
+                torch.set_num_threads(thread_count)
+
+            prior = TorchSACPrior.from_checkpoint(
+                checkpoint_path,
+                action_spec,
+                mppi_config.noise_sigma,
+                device=rl_device,
+                gate_config=rl_cfg.get("gate", {}),
+                fallback_prior=fallback,
+                policy_id=str(rl_cfg.get("policy_id", "sac_mppi_prior")),
+            )
     else:
         raise ValueError("unknown built-in sampling prior: %s" % prior_kind)
     memory_cfg = dict(config.get("memory", {}))
@@ -134,7 +196,10 @@ def make_components(config, project_root, rl_policy=None):
         memory_cost=(None if memory is None else memory.trajectory_cost),
     )
     perception = LegacyScanPipeline(project_root, config.get("perception", {}))
-    safety = ScanGuardArbiter(action_spec)
+    safety = ScanGuardArbiter(
+        action_spec,
+        config.get("perception", {}).get("scan_guard", {}),
+    )
     return {
         "state_spec": state_spec,
         "action_spec": action_spec,

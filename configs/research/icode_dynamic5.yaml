@@ -28,7 +28,9 @@ dynamics:
 model:
   type: icode_residual
   angle_indices: [2]
-  hidden_sizes: [256, 256]
+  # CPU-real-time default. Larger networks remain an ablation, not the online
+  # default, because MPPI evaluates this model repeatedly inside every rollout.
+  hidden_sizes: [64, 64]
   activation: softplus
   final_layer_scale: 0.001
 training:

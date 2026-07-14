@@ -1,0 +1,40 @@
+include: sac_mppi_subgoal_balanced_l9.yaml
+
+experiment:
+  name: sac_mppi_subgoal_stationary_l10
+  output_dir: results/research_platform/rl/subgoal_stationary_l10_20260713
+
+rl:
+  policy_id: sac_mppi_subgoal_stationary_l10_v1
+
+  # L9 critic loss and scene performance changed sharply at curriculum phase
+  # boundaries.  L10 tests a stationary data distribution with lower update
+  # rates; it does not add a new observation or privileged deployment input.
+  sac:
+    actor_lr: 0.00005
+    critic_lr: 0.00010
+    alpha_lr: 0.00005
+
+  training:
+    total_steps: 40000
+    warmup_steps: 3000
+    update_after: 2000
+    batch_size: 256
+    replay_sampling: scene_balanced
+    replay_require_all_scenes: true
+
+    curriculum:
+      enabled: false
+
+    initial_state_curriculum:
+      enabled: true
+      phases:
+        - name: stationary_multistart
+          until_step: 40000
+          scenes:
+            u_trap_long_board:
+              - {name: original_start, state: [0.0, 0.0, 0.0, 0.0, 0.0], weight: 0.45}
+              - {name: left_lower, state: [0.0, 1.45, 1.5708, 0.0, 0.0], weight: 0.15}
+              - {name: left_upper, state: [0.20, 2.90, 0.35, 0.0, 0.0], weight: 0.15}
+              - {name: trap_exit, state: [1.20, 3.45, 0.0, 0.0, 0.0], weight: 0.10}
+              - {name: terminal_approach, state: [3.15, 3.65, -1.5708, 0.0, 0.0], weight: 0.15}

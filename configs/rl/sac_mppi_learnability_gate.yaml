@@ -1,0 +1,71 @@
+include: sac_mppi_prior.yaml
+
+experiment:
+  name: sac_mppi_learnability_gate
+  output_dir: results/research_platform/rl/learnability_gate_20260713
+  max_steps: 360
+
+# Gate L1 isolates the sampling policy.  ICODE and Memory are deliberately off.
+planner:
+  prediction_mode: nominal
+  sampling_prior: rl
+  horizon: 36
+  num_samples: 100
+  previous_sequence_blend: 0.20
+
+memory:
+  enable: false
+
+rl:
+  enabled: true
+  policy_id: sac_mppi_learnability_gate_v1
+  device: cpu
+  torch_num_threads: 1
+
+  prior:
+    num_knots: 6
+    mode: delta
+    delta_scale: 0.65
+    learn_covariance: false
+
+  sac:
+    hidden_sizes: [128, 128]
+    activation: relu
+    gamma: 0.99
+    tau: 0.005
+    actor_lr: 0.0003
+    critic_lr: 0.0003
+    alpha_lr: 0.0003
+    initial_alpha: 0.2
+    automatic_entropy_tuning: true
+    log_std_min: -5.0
+    log_std_max: 1.0
+    gradient_clip_norm: 10.0
+
+  training:
+    total_steps: 30000
+    warmup_steps: 2000
+    update_after: 1000
+    batch_size: 256
+    replay_capacity: 100000
+    updates_per_step: 1
+    evaluation_interval: 5000
+    evaluation_episodes: 5
+    checkpoint_interval: 5000
+    save_replay_buffer: true
+    seed: 20260713
+    device: cpu
+    rl_prior_alpha: 1.0
+    initial_state_noise: [0.03, 0.03, 0.08, 0.0, 0.0]
+    scene_configs:
+      - configs/research/mujoco_strong_mppi_baseline.yaml
+      - configs/research/mujoco_u_trap_long_board.yaml
+    validation_scene_configs:
+      - configs/research/mujoco_strong_mppi_baseline.yaml
+      - configs/research/mujoco_u_trap_long_board.yaml
+    physics_domain_config: null
+
+  # Gate L1 measures raw RL contribution.  OOD gating is evaluated only after
+  # learnability has been established.
+  gate:
+    mode: none

@@ -1,0 +1,30 @@
+include: sac_mppi_subgoal_l6.yaml
+
+experiment:
+  name: sac_mppi_subgoal_dynamic_l8
+  output_dir: results/research_platform/rl/subgoal_dynamic_l8_20260713
+
+rl:
+  policy_id: sac_mppi_subgoal_dynamic_l8_v1
+
+  # Isolate sampling-prior and dynamics questions from accumulated wheel-slip
+  # localization drift.  This is a mocap/localization-like observation, not
+  # obstacle-truth access; LaserScan and scan_guard remain unchanged.  A
+  # separate wheel_odometry ablation is retained for robustness reporting.
+  sensor_overrides:
+    pose_source: ground_truth
+    twist_source: ground_truth
+
+  prior:
+    # Preserve SAC's two-dimensional action: normalized local-subgoal distance
+    # and bearing.  Only the deterministic action-to-sequence decoder changes.
+    kind: local_subgoal
+    subgoal_decoder: dynamic_first_order
+
+    # Null means "inherit from the resolved plant configuration".  The
+    # runtime writes the resulting numeric values into configs/checkpoints.
+    subgoal_control_dt: null
+    subgoal_velocity_time_constant: null
+    subgoal_yaw_time_constant: null
+    subgoal_command_delay: null
+    subgoal_max_integration_step: 0.02

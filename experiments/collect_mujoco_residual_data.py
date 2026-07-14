@@ -4,6 +4,7 @@
 import argparse
 import json
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
 import numpy as np
@@ -14,6 +15,11 @@ for candidate in (ROOT, ROOT / "src"):
         sys.path.insert(0, str(candidate))
 
 from mobile_robot_mppi.core.config import config_hash, git_sha, load_yaml
+from mobile_robot_mppi.core.types import ControlCommand
+from mobile_robot_mppi.learning.dataset_quality import (
+    assert_episode_disjoint_splits,
+    assert_residual_dataset_quality,
+)
 from mobile_robot_mppi.planning.dynamics import DynamicUnicyclePrediction, LegacyUnicyclePrediction
 from mobile_robot_mppi.runtime.factories import make_components
 from src.learning.residual_dataset import ResidualDataset
@@ -35,7 +41,14 @@ def observed_derivative(state, following, dt, periodic_indices):
     return difference / float(dt)
 
 
-def collect(config, episodes, steps, source):
+def collect(
+    config,
+    episodes,
+    steps,
+    source,
+    episode_prefix="mujoco",
+    disturbance_type="mujoco_physics",
+):
     records = []
     base_seed = int(config["experiment"].get("seed", 0))
     for episode in range(int(episodes)):
@@ -59,6 +72,12 @@ def collect(config, episodes, steps, source):
         observation = components["sensors"].reset(truth, seed)
         components["controller"].reset()
         dt = float(config["experiment"]["control_dt"])
+        collection_cfg = dict(config.get("data_collection", {}))
+        hold_steps = max(1, int(collection_cfg.get("random_hold_steps", 5)))
+        smoothing = float(collection_cfg.get("random_action_smoothing", 0.65))
+        if not 0.0 <= smoothing < 1.0:
+            raise ValueError("data_collection.random_action_smoothing must be in [0, 1)")
+        random_action = np.zeros(action_spec.dimension, dtype=np.float64)
         episode_source = source
         if source == "mixed":
             episode_source = "random_exploration" if episode % 2 == 0 else "task_specific"
@@ -68,36 +87,52 @@ def collect(config, episodes, steps, source):
                 perceived = components["perception"].process(observation)
                 plan = components["controller"].plan(perceived.observation, components["reference"])
                 decision = components["safety"].arbitrate(plan.proposed_control, perceived.guard)
+                components["controller"].observe_safety_decision(decision)
                 commanded = decision.executed_control
             else:
-                from mobile_robot_mppi.core.types import ControlCommand
-                action = rng.uniform(action_spec.lower, action_spec.upper)
-                commanded = ControlCommand(action, truth.timestamp, "random_exploration")
+                if step_index % hold_steps == 0:
+                    target_action = rng.uniform(action_spec.lower, action_spec.upper)
+                random_action = smoothing * random_action + (1.0 - smoothing) * target_action
+                proposed = ControlCommand(
+                    action_spec.clip(random_action), truth.timestamp, "random_exploration"
+                )
+                # Exploration is still downstream of the protected LaserScan
+                # safety chain; data collection is not allowed to bypass it.
+                perceived = components["perception"].process(observation)
+                decision = components["safety"].arbitrate(proposed, perceived.guard)
+                commanded = decision.executed_control
             transition = plant.step(commanded, dt)
             following_truth = transition.ground_truth
             following = state_vector(following_truth, state_spec)
             observed = observed_derivative(current, following, dt, state_spec.periodic_indices)
             nominal_value = np.asarray(nominal.derivative(current, commanded.values), dtype=np.float64)
             model_version = following_truth.metadata.get("model_hash", "legacy_kinematic")
+            average_applied = np.asarray(
+                transition.metadata.get(
+                    "average_applied_control", transition.executed_control.values
+                ),
+                dtype=np.float64,
+            )
             records.append({
-                "episode_id": "mujoco_%05d" % episode,
+                "episode_id": "%s_%05d" % (episode_prefix, episode),
                 "seed": seed,
                 "step": step_index,
                 "time": truth.timestamp,
                 "dt": dt,
                 "state_t": current,
                 "control_t": commanded.values,
-                "applied_control_t": transition.executed_control.values,
+                "applied_control_t": average_applied,
                 "state_t_plus_1": following,
                 "nominal_derivative": nominal_value,
                 "observed_derivative": observed,
                 "residual_target": observed - nominal_value,
-                "disturbance_type": "mujoco_physics",
+                "disturbance_type": str(disturbance_type),
                 "disturbance_parameters": {
                     "slip_ratio": following_truth.slip_ratio,
                     "wheel_speeds": list(following_truth.wheel_speeds),
                     "actuator_effort": list(following_truth.actuator_effort),
                     "plant": config["plant"],
+                    "domain": str(disturbance_type),
                 },
                 "scene": str(config.get("scene", {}).get("name", "unknown")),
                 "data_source": episode_source,
@@ -116,6 +151,13 @@ def collect(config, episodes, steps, source):
         "episodes_requested": int(episodes),
         "steps_requested": int(steps),
         "source": source,
+        "episode_prefix": str(episode_prefix),
+        "disturbance_type": str(disturbance_type),
+        "generated_utc": datetime.now(timezone.utc).isoformat(),
+        "state_semantics": [str(name) for name in state_spec.names],
+        "control_semantics": [str(name) for name in action_spec.names],
+        "control_t_semantics": "safety-issued command presented to prediction dynamics",
+        "applied_control_t_semantics": "physics-substep average command over transition",
     }
     return ResidualDataset.from_records(records, metadata=metadata)
 
@@ -133,10 +175,21 @@ def main(argv=None):
     destination = Path(args.output_dir)
     destination.mkdir(parents=True, exist_ok=True)
     dataset.save(destination / "all.npz")
+    quality = assert_residual_dataset_quality(dataset, angle_indices=(2,))
     splits = dataset.split(validation_fraction=0.15, test_fraction=0.15, seed=int(config["experiment"].get("seed", 0)))
+    split_audit = assert_episode_disjoint_splits(splits)
     for name in ("train", "validation", "test", "unseen"):
         splits[name].save(destination / (name + ".npz"))
-    print(json.dumps(dataset.summary(), indent=2, sort_keys=True))
+    manifest = {
+        "dataset_summary": dataset.summary(),
+        "quality_gate": quality,
+        "split_audit": split_audit,
+        "git_sha": git_sha(ROOT),
+        "config_hash": config_hash(config),
+    }
+    with (destination / "dataset_manifest.json").open("w", encoding="utf-8") as handle:
+        json.dump(manifest, handle, indent=2, sort_keys=True, allow_nan=False)
+    print(json.dumps(manifest, indent=2, sort_keys=True))
     return 0
 
 

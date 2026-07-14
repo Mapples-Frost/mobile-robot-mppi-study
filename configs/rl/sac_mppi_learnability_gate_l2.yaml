@@ -1,0 +1,47 @@
+include: sac_mppi_learnability_gate.yaml
+
+experiment:
+  name: sac_mppi_learnability_gate_l2
+  output_dir: results/research_platform/rl/learnability_gate_l2_20260713
+
+rl:
+  policy_id: sac_mppi_learnability_gate_l2_v1
+  torch_num_threads: 1
+
+  sac:
+    # Preserve stochastic exploration in the difficult scene instead of
+    # allowing automatic entropy tuning to collapse alpha toward zero.
+    minimum_alpha: 0.05
+
+  training:
+    total_steps: 20000
+    warmup_steps: 1000
+    update_after: 512
+    batch_size: 256
+    replay_capacity: 80000
+    evaluation_interval: 4000
+    evaluation_episodes: 5
+    checkpoint_interval: 4000
+    seed: 20260714
+    curriculum:
+      enabled: true
+      # Scene order is fixed by scene_configs:
+      # [clean_single_obstacle, u_trap_long_board].
+      phases:
+        - name: goal_capture_bootstrap
+          until_step: 3000
+          scene_weights: [1.0, 0.0]
+        - name: mixed_transition
+          until_step: 7000
+          scene_weights: [0.6, 0.4]
+        - name: u_trap_focus
+          until_step: 20000
+          scene_weights: [0.2, 0.8]
+
+  gate:
+    mode: none
+    # Far from the target RL bends the sampling prior.  Near the target its
+    # influence fades smoothly and conventional goal MPPI captures the goal.
+    near_goal_fallback_enabled: true
+    near_goal_full_fallback_distance: 0.55
+    near_goal_full_rl_distance: 1.75

@@ -1,0 +1,33 @@
+include: sac_mppi_utrap_exploration_l11_no_intrinsic.yaml
+
+experiment:
+  name: sac_mppi_utrap_bc_l13
+  output_dir: results/research_platform/rl/utrap_bc_l13_20260714
+
+# L13 is a causal bootstrap gate, not the final combined method.  A privileged
+# offline route teaches only the deployable two-dimensional local-subgoal
+# action.  The actor still observes only goal-relative odometry, LaserScan,
+# measured twist, previous command and safety state.
+rl:
+  policy_id: sac_mppi_utrap_bc_l13_v1
+
+  behavior_cloning:
+    epochs: 100
+    batch_size: 256
+    early_stopping_patience: 15
+    minimum_delta: 0.000001
+    log_std_weight: 0.001
+    target_log_std: -2.0
+    seed: 20260721
+    device: auto
+
+  training:
+    replay_sampling: uniform
+    # A uniformly random warm-up would discard the very behavior being tested
+    # and could update the actor on unrelated replay before it is ever used.
+    # Stochastic actions from the BC actor retain bounded exploration instead.
+    warmup_policy: actor
+    # Preserve the train-split observation coordinate system during the
+    # BC-to-SAC gate.  The SAC-only control keeps its original online setting.
+    normalizer_update: frozen
+    validation_seed_base: 20270718

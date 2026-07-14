@@ -109,15 +109,55 @@ f_pred(x, u) = f_nominal(x, u) + f_res(x, u)
 
 当前实现复现公开的 control-affine residual structure，但没有实现或声称原始 ICODE 的 contraction、稳定性或收敛保证。
 
-## RL 扩展
+## RL-guided MPPI
 
-推荐的第一接入点：
+当前已实现可训练的 SAC sampling prior，而不只是接口占位：
 
 ```text
-RLPolicyPrior → MPPI mean/covariance → MPPI optimization → safety arbitration
+Odom + LaserScan + Goal + Previous Control
+                    ↓
+          SAC policy (sequence knots)
+                    ↓
+       bounded MPPI mean / covariance
+                    ↓
+     MPPI optimization + ICODE (optional)
+                    ↓
+          scan_guard safety arbitration
+                    ↓
+                 MuJoCo
 ```
 
-核心 planner 不依赖 Torch policy。可选 Gymnasium 风格 adapter 会分别记录 `proposed_action`、`executed_action` 和 `safety_override`。RL 永远不能绕过 `scan_guard`。
+默认研究配置仍关闭 RL；只有同时设置 `planner.sampling_prior: rl` 和
+`rl.enabled: true` 才会加载策略。训练、断点恢复、确定性评估、OOD 门控、
+多场景/物理域训练和 baseline/RL/gated-RL/ICODE+RL 消融入口见
+[`docs/rl/00_rl_mppi_architecture.md`](docs/rl/00_rl_mppi_architecture.md)。
+首轮30k-step可学习性Gate的真实结果与未通过项见
+[`docs/rl/03_learnability_gate_2026-07-13.md`](docs/rl/03_learnability_gate_2026-07-13.md)。
+L2-L5 的课程学习、奖励修正、低维 prior 与独立种子证据见
+[`docs/rl/04_sampling_prior_learnability_iterations_2026-07-13.md`](docs/rl/04_sampling_prior_learnability_iterations_2026-07-13.md)。
+L6 的二维局部子目标、三帧历史与严格 Gate 结果见
+[`docs/rl/05_local_subgoal_history_gate_2026-07-13.md`](docs/rl/05_local_subgoal_history_gate_2026-07-13.md)。
+L7 的人工子目标上界诊断、停止条件与解码器定位结果见
+[`docs/rl/06_scripted_subgoal_upper_bound_gate_2026-07-13.md`](docs/rl/06_scripted_subgoal_upper_bound_gate_2026-07-13.md)。
+L8 的动态翻译器、分段净空路线、定位漂移审计与独立种子 Gate 见
+[`docs/rl/07_dynamic_decoder_and_localization_gate_2026-07-13.md`](docs/rl/07_dynamic_decoder_and_localization_gate_2026-07-13.md)。
+L9--L12 的多场景遗忘、探索负消融、成功轨迹回放、held-out 结果与定位边界见
+[`docs/rl/08_exploration_and_success_replay_gate_2026-07-13.md`](docs/rl/08_exploration_and_success_replay_gate_2026-07-13.md)。
+L12 的三训练种子复现、单种子结论撤回、固定验证种子与跨种子聚合规则见
+[`docs/rl/09_multitraining_seed_replication_2026-07-14.md`](docs/rl/09_multitraining_seed_replication_2026-07-14.md)。
+L13 的特权教师数据隔离、行为克隆（BC）预训练、BC→SAC 状态边界与预注册决策门见
+[`docs/rl/10_behavior_cloning_bootstrap_gate_2026-07-14.md`](docs/rl/10_behavior_cloning_bootstrap_gate_2026-07-14.md)。
+
+最小 MuJoCo smoke（仅检查链路，不代表性能）：
+
+```bash
+.venv/bin/python experiments/rl/train_rl_sampling_prior.py \
+  --config configs/rl/sac_mppi_prior_smoke.yaml \
+  --output-dir results/research_platform/rl/smoke --smoke
+```
+
+RL 只影响候选序列的抽样先验，不直接输出最终 `/cmd_vel`，也不能绕过
+`scan_guard`。`mppi_hardware_bridge/scripts/` 不 import PyTorch。
 
 ## 安装
 

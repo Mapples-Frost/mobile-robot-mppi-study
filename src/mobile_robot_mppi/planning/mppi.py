@@ -48,12 +48,17 @@ class MppiConfig:
     goal_running_weight: float = 1.0
     goal_terminal_weight: float = 12.0
     heading_weight: float = 0.2
+    terminal_velocity_weight: float = 0.0
+    terminal_yaw_rate_weight: float = 0.0
     control_weight: float = 0.05
     control_rate_weight: float = 0.08
     obstacle_weight: float = 30.0
     obstacle_influence: float = 0.55
     robot_radius: float = 0.25
     collision_penalty: float = 5000.0
+    importance_sampling_correction: bool = False
+    previous_sequence_blend: float = 0.5
+    safety_recovery_prefix_steps: int = 0
     seed: int = 0
 
     @classmethod
@@ -71,12 +76,21 @@ class MppiConfig:
             goal_running_weight=float(values.get("goal_running_weight", 1.0)),
             goal_terminal_weight=float(values.get("goal_terminal_weight", 12.0)),
             heading_weight=float(values.get("heading_weight", 0.2)),
+            terminal_velocity_weight=float(values.get("terminal_velocity_weight", 0.0)),
+            terminal_yaw_rate_weight=float(values.get("terminal_yaw_rate_weight", 0.0)),
             control_weight=float(values.get("control_weight", 0.05)),
             control_rate_weight=float(values.get("control_rate_weight", 0.08)),
             obstacle_weight=float(values.get("obstacle_weight", 30.0)),
             obstacle_influence=float(values.get("obstacle_influence", 0.55)),
             robot_radius=float(values.get("robot_radius", 0.25)),
             collision_penalty=float(values.get("collision_penalty", 5000.0)),
+            importance_sampling_correction=bool(
+                values.get("importance_sampling_correction", False)
+            ),
+            previous_sequence_blend=float(values.get("previous_sequence_blend", 0.5)),
+            safety_recovery_prefix_steps=int(
+                values.get("safety_recovery_prefix_steps", 0)
+            ),
             seed=int(values.get("seed", 0)),
         )
 
@@ -87,6 +101,27 @@ class MppiConfig:
             raise ValueError("MPPI temperature must be positive")
         if len(self.noise_sigma) != action_dim or any(value <= 0.0 for value in self.noise_sigma):
             raise ValueError("noise_sigma must contain one positive value per action dimension")
+        numeric_costs = (
+            self.goal_running_weight,
+            self.goal_terminal_weight,
+            self.heading_weight,
+            self.terminal_velocity_weight,
+            self.terminal_yaw_rate_weight,
+            self.control_weight,
+            self.control_rate_weight,
+            self.obstacle_weight,
+            self.obstacle_influence,
+            self.robot_radius,
+            self.collision_penalty,
+        )
+        if not np.isfinite(numeric_costs).all() or any(value < 0.0 for value in numeric_costs):
+            raise ValueError("MPPI cost and geometry parameters must be finite and non-negative")
+        if self.integrator not in ("euler", "rk4"):
+            raise ValueError("MPPI integrator must be 'euler' or 'rk4'")
+        if not 0.0 <= self.previous_sequence_blend <= 1.0:
+            raise ValueError("previous_sequence_blend must be between zero and one")
+        if not 0 <= self.safety_recovery_prefix_steps <= self.horizon:
+            raise ValueError("safety_recovery_prefix_steps must be within the horizon")
 
 
 class MppiController:
@@ -113,11 +148,13 @@ class MppiController:
         self.rng = np.random.RandomState(config.seed)
         self.previous_sequence = None
         self.previous_action = np.zeros(action_spec.dimension, dtype=np.float64)
+        self._safety_blocked = False
 
     def reset(self):
         self.rng = np.random.RandomState(self.config.seed)
         self.previous_sequence = None
         self.previous_action = np.zeros(self.action_spec.dimension, dtype=np.float64)
+        self._safety_blocked = False
         reset = getattr(self.sampling_prior, "reset", None)
         if callable(reset):
             reset()
@@ -145,12 +182,64 @@ class MppiController:
         expected = (self.config.horizon, self.action_spec.dimension)
         if mean.shape != expected or not np.isfinite(mean).all():
             raise ValueError("sampling prior returned an invalid mean")
+        metadata = dict(output.metadata)
         if self.previous_sequence is not None:
             shifted = np.empty_like(self.previous_sequence)
             shifted[:-1] = self.previous_sequence[1:]
             shifted[-1] = self.previous_sequence[-1]
-            mean = 0.5 * mean + 0.5 * shifted
-        return PriorOutput(np.clip(mean, self.action_spec.lower, self.action_spec.upper), output.covariance, output.metadata)
+            blend = self.config.previous_sequence_blend
+            mean = (1.0 - blend) * mean + blend * shifted
+        if (
+            self._safety_blocked
+            and self.config.safety_recovery_prefix_steps > 0
+            and "v_cmd" in self.action_spec.names
+        ):
+            v_index = self.action_spec.index("v_cmd")
+            mean[:self.config.safety_recovery_prefix_steps, v_index] = 0.0
+            metadata["safety_recovery"] = True
+            metadata["safety_recovery_prefix_steps"] = int(
+                self.config.safety_recovery_prefix_steps
+            )
+        else:
+            metadata["safety_recovery"] = False
+        return PriorOutput(
+            np.clip(mean, self.action_spec.lower, self.action_spec.upper),
+            output.covariance,
+            metadata,
+        )
+
+    def observe_safety_decision(self, decision) -> None:
+        """Close the loop between MPPI's proposal and the command actually sent.
+
+        A forward stop must not erase angular control.  When scan_guard blocks
+        translation, the next proposal therefore starts with a zero-translation
+        prefix while retaining the angular sequence, allowing an in-place turn.
+        """
+        executed = np.asarray(decision.executed_control.values, dtype=np.float64).reshape(-1)
+        proposed = np.asarray(decision.proposed_control.values, dtype=np.float64).reshape(-1)
+        expected = (self.action_spec.dimension,)
+        if (
+            executed.shape != expected
+            or proposed.shape != expected
+            or not np.isfinite(executed).all()
+            or not np.isfinite(proposed).all()
+        ):
+            raise ValueError("safety feedback actions must be finite and match action dimension")
+        self.previous_action = executed.copy()
+        blocked = False
+        if "v_cmd" in self.action_spec.names:
+            v_index = self.action_spec.index("v_cmd")
+            blocked = bool(
+                decision.overridden
+                and proposed[v_index] > executed[v_index] + 1e-12
+            )
+            if blocked and self.previous_sequence is not None:
+                prefix = max(1, self.config.safety_recovery_prefix_steps)
+                self.previous_sequence[:prefix, v_index] = executed[v_index]
+        self._safety_blocked = blocked
+        prior_observer = getattr(self.sampling_prior, "observe_safety_decision", None)
+        if callable(prior_observer):
+            prior_observer(decision)
 
     def _sample(self, prior: PriorOutput) -> np.ndarray:
         shape = (self.config.num_samples, self.config.horizon, self.action_spec.dimension)
@@ -169,6 +258,44 @@ class MppiController:
         samples = np.clip(samples, self.action_spec.lower, self.action_spec.upper)
         samples[0] = prior.mean
         return samples
+
+    def _sampling_covariance(self, prior: PriorOutput) -> np.ndarray:
+        if prior.covariance is None:
+            sigma = np.asarray(self.config.noise_sigma, dtype=np.float64)
+            return np.diag(sigma ** 2)
+        covariance = np.asarray(prior.covariance, dtype=np.float64)
+        expected = (self.action_spec.dimension, self.action_spec.dimension)
+        if covariance.shape != expected or not np.isfinite(covariance).all():
+            raise ValueError("prior covariance must be a finite [action_dim, action_dim] matrix")
+        if not np.allclose(covariance, covariance.T, atol=1e-10):
+            raise ValueError("prior covariance must be symmetric")
+        try:
+            np.linalg.cholesky(covariance)
+        except np.linalg.LinAlgError as exc:
+            raise ValueError("prior covariance must be positive definite") from exc
+        return covariance
+
+    def _importance_sampling_cost(self, nominal, perturbations, covariance):
+        """Return the MPPI likelihood-ratio correction for each rollout.
+
+        For a Gaussian proposal with mean ``nominal`` and covariance Sigma,
+        the practical MPPI correction is
+
+            lambda * R * sum_t nominal_t^T Sigma^-1 epsilon_t,
+
+        where this implementation uses ``control_weight`` as the scalar
+        control-cost matrix R.  Keeping R explicit prevents a small sampling
+        variance from unintentionally collapsing all weight onto one rollout.
+
+        It is intentionally optional so archived experiments can reproduce the
+        repository's former weighted-sampling behavior exactly.
+        """
+        if not self.config.importance_sampling_correction:
+            return np.zeros(perturbations.shape[0], dtype=np.float64)
+        inverse_covariance = np.linalg.inv(covariance)
+        return self.config.temperature * self.config.control_weight * np.einsum(
+            "ha,ab,kha->k", nominal, inverse_covariance, perturbations
+        )
 
     def rollout(self, initial_state: np.ndarray, controls: np.ndarray) -> np.ndarray:
         controls = np.asarray(controls, dtype=np.float64)
@@ -199,6 +326,12 @@ class MppiController:
             theta = trajectories[:, -1, self.state_spec.index("theta")]
             error = np.arctan2(np.sin(theta - target.pose.theta), np.cos(theta - target.pose.theta))
             costs += self.config.heading_weight * error ** 2
+        if "v" in self.state_spec.names:
+            terminal_v = trajectories[:, -1, self.state_spec.index("v")]
+            costs += self.config.terminal_velocity_weight * terminal_v ** 2
+        if "omega" in self.state_spec.names:
+            terminal_omega = trajectories[:, -1, self.state_spec.index("omega")]
+            costs += self.config.terminal_yaw_rate_weight * terminal_omega ** 2
         costs += self.config.control_weight * np.sum(controls ** 2, axis=(1, 2))
         previous = np.broadcast_to(
             self.previous_action[None, None, :],
@@ -226,13 +359,21 @@ class MppiController:
         target = reference.target_at(observation.timestamp, state)
         prior = self._prior(observation, reference)
         samples = self._sample(prior)
+        # Effective perturbations include actuator-bound clipping.  Expressing
+        # the update this way makes the MPPI control law explicit while
+        # remaining numerically equivalent to the historical weighted average.
+        perturbations = samples - prior.mean[None, :, :]
+        covariance = self._sampling_covariance(prior)
         trajectories = self.rollout(state, samples)
         costs = self._cost(trajectories, samples, target, observation.local_obstacles)
+        correction = self._importance_sampling_cost(prior.mean, perturbations, covariance)
+        costs = costs + correction
         beta = float(np.min(costs))
         exponent = np.clip(-(costs - beta) / self.config.temperature, -700.0, 0.0)
         weights = np.exp(exponent)
         weights /= max(float(np.sum(weights)), 1e-12)
-        sequence = np.sum(weights[:, None, None] * samples, axis=0)
+        weighted_perturbation = np.sum(weights[:, None, None] * perturbations, axis=0)
+        sequence = prior.mean + weighted_perturbation
         sequence = np.clip(sequence, self.action_spec.lower, self.action_spec.upper)
         action = self.action_spec.clip(
             sequence[0], self.previous_action, self.config.dt
@@ -254,6 +395,17 @@ class MppiController:
                 "cost_min": float(costs.min()),
                 "cost_mean": float(costs.mean()),
                 "effective_sample_size": float(1.0 / np.sum(weights ** 2)),
+                "importance_sampling_correction": bool(
+                    self.config.importance_sampling_correction
+                ),
+                "importance_cost_mean": float(correction.mean()),
+                "weighted_perturbation_norm": float(np.linalg.norm(weighted_perturbation)),
+                "sample_saturation_fraction": float(
+                    np.mean(
+                        (samples <= self.action_spec.lower[None, None, :])
+                        | (samples >= self.action_spec.upper[None, None, :])
+                    )
+                ),
                 "reference_id": target.reference_id,
                 "prior": dict(prior.metadata),
             },

@@ -1,0 +1,15 @@
+include: sac_mppi_utrap_exploration_l11_no_intrinsic.yaml
+
+experiment:
+  name: sac_mppi_utrap_success_replay_l12
+  output_dir: results/research_platform/rl/utrap_success_replay_l12_20260713
+
+rl:
+  policy_id: sac_mppi_utrap_success_replay_l12_v1
+
+  # Preserve rare, self-generated successful episodes after the reverse
+  # curriculum reaches harder reset states.  The matching L11 control uses
+  # uniform replay; all plant, reward, prior and safety settings are identical.
+  training:
+    replay_sampling: outcome_balanced
+    replay_success_fraction: 0.25

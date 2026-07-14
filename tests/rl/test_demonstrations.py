@@ -1,0 +1,274 @@
+import json
+from types import SimpleNamespace
+
+import numpy as np
+import pytest
+
+from experiments.rl.collect_scripted_subgoal_demonstrations import _collect_episode
+from mobile_robot_mppi.rl.demonstrations import (
+    DEMONSTRATION_SCHEMA,
+    DEMONSTRATION_SCHEMA_VERSION,
+    load_demonstration_manifest,
+    load_demonstration_split,
+    sha256_file,
+    split_episode_seeds,
+    validate_demonstration_arrays,
+    write_demonstration_manifest,
+    write_demonstration_shard,
+)
+
+
+def _arrays(episode_id, observation_dim=3):
+    return {
+        "observation": np.asarray(
+            [[0.1, 0.2, 0.3], [0.2, 0.3, 0.4]], dtype=np.float32
+        )[:, :observation_dim],
+        "teacher_action": np.asarray(
+            [[-0.2, 0.5], [0.1, -0.4]], dtype=np.float32
+        ),
+        "episode_id": np.asarray([episode_id, episode_id], dtype=np.int64),
+        "step": np.asarray([0, 1], dtype=np.int64),
+    }
+
+
+def _dataset(tmp_path):
+    descriptors = {}
+    split_plan = {"train": [11], "validation": [12], "test": [13]}
+    for index, split in enumerate(("train", "validation", "test")):
+        path = tmp_path / "splits" / (split + ".npz")
+        result = write_demonstration_shard(path, _arrays(index + 1))
+        descriptors[split] = {
+            "file": "splits/%s.npz" % split,
+            "sha256": result["sha256"],
+            "bytes": result["bytes"],
+            "samples": result["sample_count"],
+            "episodes": result["episode_count"],
+            "seeds": list(split_plan[split]),
+        }
+    (tmp_path / "audit").mkdir(exist_ok=True)
+    manifest = {
+        "schema": DEMONSTRATION_SCHEMA,
+        "schema_version": DEMONSTRATION_SCHEMA_VERSION,
+        "created_utc": "2026-07-14T00:00:00+00:00",
+        "git_sha": "a" * 40,
+        "config": {"observation_encoder": {"include_absolute_pose": False}},
+        "observation_dim": 3,
+        "action_dim": 2,
+        "teacher": {
+            "class": "ScriptedPolylineSubgoal",
+            "action_space": "normalized_local_subgoal_distance_bearing",
+            "student_observation_source": "MppiPriorEnv.reset_and_step",
+        },
+        "split_plan": split_plan,
+        "splits": descriptors,
+        "counts": {
+            "successful_episodes": 3,
+            "failed_episodes": 0,
+        },
+        "audit": {
+            "directory": "audit",
+            "included_in_training_shards": False,
+        },
+    }
+    write_demonstration_manifest(tmp_path, manifest)
+    return manifest
+
+
+def test_seed_split_is_deterministic_disjoint_and_never_splits_timesteps():
+    first = split_episode_seeds(
+        range(20, 30), validation_fraction=0.2, test_fraction=0.2, seed=77
+    )
+    second = split_episode_seeds(
+        range(20, 30), validation_fraction=0.2, test_fraction=0.2, seed=77
+    )
+
+    assert first == second
+    assert len(first["train"]) == 6
+    assert len(first["validation"]) == 2
+    assert len(first["test"]) == 2
+    all_values = [value for values in first.values() for value in values]
+    assert len(all_values) == len(set(all_values)) == 10
+
+
+def test_seed_split_rejects_duplicates_bad_fractions_and_too_few_seeds():
+    with pytest.raises(ValueError, match="unique"):
+        split_episode_seeds([1, 1])
+    with pytest.raises(ValueError, match="sum below one"):
+        split_episode_seeds([1, 2, 3], 0.5, 0.5)
+    with pytest.raises(ValueError, match="too few"):
+        split_episode_seeds([1, 2], 0.2, 0.2)
+
+
+def test_demonstration_loader_roundtrip_exposes_only_student_arrays(tmp_path):
+    _dataset(tmp_path)
+
+    manifest = load_demonstration_manifest(tmp_path)
+    split = load_demonstration_split(tmp_path, "train")
+
+    assert manifest["audit"]["included_in_training_shards"] is False
+    assert set(split) == {
+        "observations", "teacher_actions", "episode_ids", "steps"
+    }
+    np.testing.assert_allclose(split["observations"], _arrays(1)["observation"])
+    np.testing.assert_allclose(
+        split["teacher_actions"], _arrays(1)["teacher_action"]
+    )
+    assert split["teacher_actions"].shape == (2, 2)
+
+
+@pytest.mark.parametrize(
+    "mutation,match",
+    [
+        (lambda arrays: arrays.update({"truth_pose": np.zeros((2, 3))}), "allowlist"),
+        (lambda arrays: arrays.pop("teacher_action"), "allowlist"),
+        (
+            lambda arrays: arrays["observation"].__setitem__((0, 0), np.nan),
+            "finite",
+        ),
+        (
+            lambda arrays: arrays["teacher_action"].__setitem__((0, 0), 1.2),
+            r"\[-1, 1\]",
+        ),
+        (
+            lambda arrays: arrays["step"].__setitem__(1, 2),
+            "contiguous",
+        ),
+    ],
+)
+def test_validation_rejects_privileged_missing_invalid_or_partial_fields(
+    mutation, match
+):
+    arrays = _arrays(4)
+    mutation(arrays)
+    with pytest.raises(ValueError, match=match):
+        validate_demonstration_arrays(arrays)
+
+
+def test_loader_rejects_checksum_tampering(tmp_path):
+    _dataset(tmp_path)
+    with (tmp_path / "splits" / "train.npz").open("ab") as handle:
+        handle.write(b"tamper")
+
+    with pytest.raises(ValueError, match="checksum mismatch"):
+        load_demonstration_split(tmp_path, "train")
+
+
+def test_loader_rejects_extra_npz_field_even_with_updated_checksum(tmp_path):
+    manifest = _dataset(tmp_path)
+    path = tmp_path / "splits" / "train.npz"
+    arrays = _arrays(1)
+    np.savez_compressed(str(path), **arrays, truth_pose=np.zeros((2, 3)))
+    manifest["splits"]["train"]["sha256"] = sha256_file(path)
+    manifest["splits"]["train"]["bytes"] = path.stat().st_size
+    with (tmp_path / "manifest.json").open("w", encoding="utf-8") as handle:
+        json.dump(manifest, handle)
+
+    with pytest.raises(ValueError, match="allowlist"):
+        load_demonstration_split(tmp_path, "train")
+
+
+def test_manifest_rejects_seed_leakage_and_escaped_shard_path(tmp_path):
+    manifest = _dataset(tmp_path)
+    manifest["split_plan"]["validation"] = [11]
+    with pytest.raises(ValueError, match="outside split_plan|leak"):
+        write_demonstration_manifest(tmp_path, manifest)
+
+    manifest = _dataset(tmp_path)
+    manifest["splits"]["train"]["file"] = "../train.npz"
+    with (tmp_path / "manifest.json").open("w", encoding="utf-8") as handle:
+        json.dump(manifest, handle)
+    with pytest.raises(ValueError, match="escapes"):
+        load_demonstration_split(tmp_path, "train")
+
+
+class _FakePolicy:
+    def reset(self):
+        pass
+
+    def action(self, pose):
+        action = np.asarray((0.25 * pose.x, -0.5), dtype=np.float32)
+        return action, {
+            "route_progress": pose.x,
+            "target_progress": pose.x + 0.7,
+            "route_length": 2.0,
+            "cross_track_error": 0.0,
+            "target_x": pose.x + 0.7,
+            "target_y": 0.0,
+            "target_distance": 0.7,
+            "target_bearing": 0.0,
+        }
+
+
+class _FakeEnvironment:
+    def __init__(self, success=True):
+        self.config = {
+            "scene": {"name": "fake"},
+            "sensors": {"pose_source": "ground_truth", "twist_source": "ground_truth"},
+        }
+        self.success = success
+        self.index = 0
+        self.truth = None
+        self.perceived = None
+
+    @staticmethod
+    def _pose(x):
+        return SimpleNamespace(x=float(x), y=0.0, theta=0.0)
+
+    def _state(self, x):
+        pose = self._pose(x)
+        self.truth = SimpleNamespace(pose=pose, timestamp=float(x))
+        self.perceived = SimpleNamespace(
+            observation=SimpleNamespace(pose=self._pose(x))
+        )
+
+    def reset(self, seed=None):
+        self.index = 0
+        self._state(0.0)
+        return np.asarray((10.0, 11.0, 12.0), dtype=np.float32), {
+            "goal_distance": 3.0,
+        }
+
+    def step(self, action):
+        self.index += 1
+        self._state(float(self.index))
+        done = self.index == 2
+        info = {
+            "proposed_control": np.asarray((0.1, 0.2)),
+            "executed_control": np.asarray((0.1, 0.2)),
+            "goal_distance": float(3 - self.index),
+            "minimum_clearance": 0.5,
+            "safety_override": False,
+            "collision": False,
+            "success": bool(done and self.success),
+        }
+        observation = np.asarray(
+            (10.0 + self.index, 11.0 + self.index, 12.0 + self.index),
+            dtype=np.float32,
+        )
+        return observation, 1.0, done, False, info
+
+
+def test_collection_uses_reset_step_observations_and_exact_teacher_actions():
+    arrays, _, summary = _collect_episode(
+        _FakeEnvironment(success=True), _FakePolicy(), 7, 101, "train"
+    )
+
+    np.testing.assert_allclose(
+        arrays["observation"],
+        [[10.0, 11.0, 12.0], [11.0, 12.0, 13.0]],
+    )
+    np.testing.assert_allclose(
+        arrays["teacher_action"], [[0.0, -0.5], [0.25, -0.5]]
+    )
+    np.testing.assert_array_equal(arrays["step"], [0, 1])
+    assert summary["included_in_training_shard"] is True
+
+
+def test_failed_teacher_episode_is_marked_audit_only():
+    _, audit, summary = _collect_episode(
+        _FakeEnvironment(success=False), _FakePolicy(), 8, 102, "validation"
+    )
+
+    assert audit
+    assert summary["success"] is False
+    assert summary["included_in_training_shard"] is False

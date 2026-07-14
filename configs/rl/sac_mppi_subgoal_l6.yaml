@@ -1,0 +1,79 @@
+include: sac_mppi_learnability_gate_l5.yaml
+
+experiment:
+  name: sac_mppi_subgoal_l6
+  output_dir: results/research_platform/rl/subgoal_l6_20260713
+
+rl:
+  policy_id: sac_mppi_subgoal_l6_v1
+
+  observation:
+    lidar_sectors: 36
+    lidar_max_range: 4.0
+    goal_distance_scale: 5.0
+    velocity_scale: 0.5
+    yaw_rate_scale: 1.2
+    include_absolute_pose: false
+    include_previous_action: true
+    include_safety_state: true
+    history_frames: 1
+
+  prior:
+    kind: local_subgoal
+    learn_covariance: false
+    subgoal_min_distance: 0.25
+    subgoal_max_distance: 1.25
+    subgoal_max_bearing: 3.141592653589793
+    subgoal_v_gain: 0.8
+    subgoal_yaw_gain: 1.5
+    subgoal_heading_gate_rad: 1.0471975511965976
+    subgoal_control_dt: 0.1
+
+  training:
+    total_steps: 40000
+    warmup_steps: 2000
+    update_after: 1000
+    batch_size: 256
+    replay_capacity: 150000
+    evaluation_interval: 5000
+    evaluation_episodes: 5
+    checkpoint_interval: 5000
+    seed: 20260718
+
+    curriculum:
+      enabled: true
+      phases:
+        - name: reverse_terminal_bootstrap
+          until_step: 8000
+          scene_weights: [0.30, 0.70]
+        - name: reverse_route_expansion
+          until_step: 20000
+          scene_weights: [0.25, 0.75]
+        - name: original_start_focus
+          until_step: 40000
+          scene_weights: [0.20, 0.80]
+
+    initial_state_curriculum:
+      enabled: true
+      phases:
+        - name: terminal_and_exit
+          until_step: 8000
+          scenes:
+            u_trap_long_board:
+              - {name: trap_exit, state: [1.20, 3.45, 0.0, 0.0, 0.0], weight: 0.40}
+              - {name: terminal_approach, state: [3.15, 3.65, -1.5708, 0.0, 0.0], weight: 0.60}
+        - name: route_expansion
+          until_step: 20000
+          scenes:
+            u_trap_long_board:
+              - {name: left_lower, state: [0.0, 1.45, 1.5708, 0.0, 0.0], weight: 0.30}
+              - {name: left_upper, state: [0.20, 2.90, 0.35, 0.0, 0.0], weight: 0.45}
+              - {name: trap_exit, state: [1.20, 3.45, 0.0, 0.0, 0.0], weight: 0.25}
+        - name: original_start_focus
+          until_step: 40000
+          scenes:
+            u_trap_long_board:
+              - {name: original_start, state: [0.0, 0.0, 0.0, 0.0, 0.0], weight: 0.75}
+              - {name: left_lower, state: [0.0, 1.45, 1.5708, 0.0, 0.0], weight: 0.15}
+              - {name: left_upper, state: [0.20, 2.90, 0.35, 0.0, 0.0], weight: 0.07}
+              - {name: trap_exit, state: [1.20, 3.45, 0.0, 0.0, 0.0], weight: 0.03}

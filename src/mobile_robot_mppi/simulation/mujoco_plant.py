@@ -100,14 +100,18 @@ class MujocoDiffDrivePlant:
         right = (command.v + 0.5 * self.track_width * command.omega) / self.wheel_radius
         return np.asarray((left, right), dtype=np.float64)
 
-    def _delayed_command(self, command, dt):
-        delay_steps = max(0, int(round(self.command_delay / float(dt))))
-        self._delay_queue.append(command)
-        while len(self._delay_queue) > delay_steps + 1:
-            self._delay_queue.popleft()
-        if len(self._delay_queue) <= delay_steps:
-            return ControlCommand(np.zeros(2), command.timestamp, "actuator_delay")
-        return self._delay_queue[0]
+    def _schedule_command(self, command):
+        activation_time = self.time + self.command_delay
+        self._delay_queue.append((activation_time, command))
+
+    def _activate_due_commands(self):
+        # Evaluate delay at the MuJoCo physics clock, not at the slower outer
+        # controller rate.  This preserves delays such as 40 ms when the MPPI
+        # control period is 100 ms.
+        tolerance = 1e-12
+        while self._delay_queue and self._delay_queue[0][0] <= self.time + tolerance:
+            _, self._last_control = self._delay_queue.popleft()
+        return self._last_control
 
     def _apply_actuator(self, targets, physics_dt):
         if self.profile == "ideal_velocity":
@@ -208,15 +212,31 @@ class MujocoDiffDrivePlant:
     def step(self, command: ControlCommand, dt: float) -> PlantStep:
         if dt <= 0.0:
             raise ValueError("dt must be positive")
-        delayed = self._delayed_command(command, dt)
-        targets = self.wheel_targets(delayed)
+        if not np.isfinite(dt):
+            raise ValueError("dt must be finite")
         physics_dt = float(self.model.opt.timestep)
-        substeps = max(1, int(round(float(dt) / physics_dt)))
+        ratio = float(dt) / physics_dt
+        substeps = int(round(ratio))
+        if substeps < 1 or not math.isclose(ratio, substeps, rel_tol=0.0, abs_tol=1e-9):
+            raise ValueError("dt must be a positive integer multiple of the MuJoCo timestep")
+        self._schedule_command(command)
+        applied_values = []
         for _ in range(substeps):
+            delayed = self._activate_due_commands()
+            applied_values.append(delayed.values.copy())
+            targets = self.wheel_targets(delayed)
             self._apply_actuator(targets, physics_dt)
             self.mujoco.mj_step(self.model, self.data)
-        self._last_control = delayed
-        return PlantStep(self.ground_truth(), delayed, float(dt))
+        return PlantStep(
+            self.ground_truth(),
+            self._last_control,
+            float(dt),
+            metadata={
+                "average_applied_control": np.mean(applied_values, axis=0).tolist(),
+                "command_delay": self.command_delay,
+                "physics_substeps": substeps,
+            },
+        )
 
     def close(self):
         return None

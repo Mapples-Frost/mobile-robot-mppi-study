@@ -1,0 +1,60 @@
+include: sac_mppi_learnability_gate_l3.yaml
+
+experiment:
+  name: sac_mppi_learnability_gate_l4
+  output_dir: results/research_platform/rl/learnability_gate_l4_20260713
+
+rl:
+  policy_id: sac_mppi_learnability_gate_l4_v1
+
+  training:
+    total_steps: 30000
+    evaluation_interval: 5000
+    checkpoint_interval: 5000
+    seed: 20260716
+
+    curriculum:
+      enabled: true
+      phases:
+        - name: mixed_reverse_bootstrap
+          until_step: 8000
+          scene_weights: [0.5, 0.5]
+        - name: u_trap_expansion
+          until_step: 16000
+          scene_weights: [0.25, 0.75]
+        - name: full_task_focus
+          until_step: 30000
+          scene_weights: [0.20, 0.80]
+
+    # Reverse curriculum is used only when collecting training transitions.
+    # Fixed-seed validation always uses each scene's original initial state.
+    initial_state_curriculum:
+      enabled: true
+      phases:
+        - name: reverse_bootstrap
+          until_step: 8000
+          scenes:
+            u_trap_long_board:
+              - {name: original_start, state: [0.0, 0.0, 0.0, 0.0, 0.0], weight: 0.10}
+              - {name: left_lower, state: [0.0, 1.45, 1.5708, 0.0, 0.0], weight: 0.15}
+              - {name: left_upper, state: [0.20, 2.90, 0.35, 0.0, 0.0], weight: 0.20}
+              - {name: trap_exit, state: [1.20, 3.45, 0.0, 0.0, 0.0], weight: 0.25}
+              - {name: terminal_approach, state: [3.15, 3.65, -1.5708, 0.0, 0.0], weight: 0.30}
+        - name: start_expansion
+          until_step: 16000
+          scenes:
+            u_trap_long_board:
+              - {name: original_start, state: [0.0, 0.0, 0.0, 0.0, 0.0], weight: 0.40}
+              - {name: left_lower, state: [0.0, 1.45, 1.5708, 0.0, 0.0], weight: 0.20}
+              - {name: left_upper, state: [0.20, 2.90, 0.35, 0.0, 0.0], weight: 0.15}
+              - {name: trap_exit, state: [1.20, 3.45, 0.0, 0.0, 0.0], weight: 0.15}
+              - {name: terminal_approach, state: [3.15, 3.65, -1.5708, 0.0, 0.0], weight: 0.10}
+        - name: original_start_focus
+          until_step: 30000
+          scenes:
+            u_trap_long_board:
+              - {name: original_start, state: [0.0, 0.0, 0.0, 0.0, 0.0], weight: 0.70}
+              - {name: left_lower, state: [0.0, 1.45, 1.5708, 0.0, 0.0], weight: 0.15}
+              - {name: left_upper, state: [0.20, 2.90, 0.35, 0.0, 0.0], weight: 0.08}
+              - {name: trap_exit, state: [1.20, 3.45, 0.0, 0.0, 0.0], weight: 0.05}
+              - {name: terminal_approach, state: [3.15, 3.65, -1.5708, 0.0, 0.0], weight: 0.02}

@@ -97,6 +97,7 @@ class PlantStep:
     ground_truth: GroundTruth
     executed_control: ControlCommand
     dt: float
+    metadata: Dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)

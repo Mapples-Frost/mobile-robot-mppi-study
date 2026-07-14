@@ -1,0 +1,14 @@
+include: sac_mppi_subgoal_l6.yaml
+
+experiment:
+  name: sac_mppi_subgoal_history_l6
+  output_dir: results/research_platform/rl/subgoal_history_l6_20260713
+
+rl:
+  policy_id: sac_mppi_subgoal_history_l6_v1
+
+  observation:
+    history_frames: 3
+
+  training:
+    seed: 20260719

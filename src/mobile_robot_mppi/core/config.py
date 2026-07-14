@@ -57,6 +57,9 @@ def validate_experiment_config(config: Mapping[str, Any]) -> None:
         raise ConfigError("planner.horizon must be positive")
     if int(config["planner"].get("num_samples", 0)) <= 0:
         raise ConfigError("planner.num_samples must be positive")
+    prior = str(config["planner"].get("sampling_prior", "goal_warm_start"))
+    if prior == "rl" and not bool(config.get("rl", {}).get("enabled", False)):
+        raise ConfigError("planner.sampling_prior=rl requires rl.enabled=true")
 
 
 def canonical_json(config: Mapping[str, Any]) -> str:

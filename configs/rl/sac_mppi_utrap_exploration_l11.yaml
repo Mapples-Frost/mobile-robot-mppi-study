@@ -1,0 +1,94 @@
+include: sac_mppi_subgoal_kinematic_localized_l8.yaml
+
+experiment:
+  name: sac_mppi_utrap_exploration_l11
+  output_dir: results/research_platform/rl/utrap_exploration_l11_20260713
+
+# L11 follows the paper story established by the L9/L10 evidence: conventional
+# MPPI remains the simple-scene controller, while RL is trained as a difficult-
+# scene exploration specialist.  ICODE and Memory remain disabled so this is a
+# clean sampling-prior experiment.
+planner:
+  prediction_mode: nominal
+  sampling_prior: rl
+
+memory:
+  enable: false
+
+rl:
+  policy_id: sac_mppi_utrap_exploration_l11_v1
+
+  sac:
+    actor_lr: 0.00010
+    critic_lr: 0.00020
+    alpha_lr: 0.00010
+    minimum_alpha: 0.05
+
+  # Training-only episodic novelty from noisy odometry pose bins.  Validation
+  # automatically disables this term and selects checkpoints using extrinsic
+  # task success, collisions and return.
+  intrinsic_exploration:
+    enabled: true
+    weight: 0.03
+    maximum_bonus: 0.03
+    position_bin_size: 0.25
+    heading_bins: 8
+    count_exponent: 0.5
+
+  gate:
+    mode: none
+    # RL supplies the detour; conventional MPPI captures the final goal.  This
+    # split is fixed before evaluation and is independently ablated.
+    near_goal_fallback_enabled: true
+    near_goal_full_fallback_distance: 0.35
+    near_goal_full_rl_distance: 0.80
+
+  training:
+    total_steps: 40000
+    # Keep checkpoint-selection episodes fixed when --seed changes the SAC and
+    # environment training randomness.  Held-out evaluation uses separate
+    # seeds and remains mandatory.
+    validation_seed_base: 20270718
+    warmup_steps: 3000
+    update_after: 2000
+    batch_size: 256
+    replay_sampling: uniform
+    replay_require_all_scenes: false
+    scene_configs:
+      - configs/research/mujoco_u_trap_long_board.yaml
+    validation_scene_configs:
+      - configs/research/mujoco_u_trap_long_board.yaml
+
+    curriculum:
+      enabled: true
+      phases:
+        - {name: terminal_bootstrap, until_step: 8000, scene_weights: [1.0]}
+        - {name: route_expansion, until_step: 20000, scene_weights: [1.0]}
+        - {name: original_start_focus, until_step: 40000, scene_weights: [1.0]}
+
+    # Reset states are offline experiment definitions, never policy inputs.
+    # Validation always starts from the configured original scene state.
+    initial_state_curriculum:
+      enabled: true
+      phases:
+        - name: terminal_bootstrap
+          until_step: 8000
+          scenes:
+            u_trap_long_board:
+              - {name: trap_exit, state: [1.20, 3.45, 0.0, 0.0, 0.0], weight: 0.40}
+              - {name: terminal_approach, state: [3.15, 3.65, -1.5708, 0.0, 0.0], weight: 0.60}
+        - name: route_expansion
+          until_step: 20000
+          scenes:
+            u_trap_long_board:
+              - {name: left_lower, state: [0.0, 1.45, 1.5708, 0.0, 0.0], weight: 0.30}
+              - {name: left_upper, state: [0.20, 2.90, 0.35, 0.0, 0.0], weight: 0.45}
+              - {name: trap_exit, state: [1.20, 3.45, 0.0, 0.0, 0.0], weight: 0.25}
+        - name: original_start_focus
+          until_step: 40000
+          scenes:
+            u_trap_long_board:
+              - {name: original_start, state: [0.0, 0.0, 0.0, 0.0, 0.0], weight: 0.70}
+              - {name: left_lower, state: [0.0, 1.45, 1.5708, 0.0, 0.0], weight: 0.15}
+              - {name: left_upper, state: [0.20, 2.90, 0.35, 0.0, 0.0], weight: 0.10}
+              - {name: trap_exit, state: [1.20, 3.45, 0.0, 0.0, 0.0], weight: 0.05}

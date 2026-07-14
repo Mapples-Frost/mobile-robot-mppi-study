@@ -16,6 +16,7 @@ dependencies = [
 [project.optional-dependencies]
 simulation = ["mujoco==3.2.3"]
 learning = ["torch>=2.0", "tensorboard>=2.10"]
+rl = ["torch>=2.0"]
 dev = ["pytest>=8,<9"]
 
 [project.scripts]

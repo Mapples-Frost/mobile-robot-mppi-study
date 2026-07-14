@@ -1,0 +1,55 @@
+include: sac_mppi_learnability_gate_l2.yaml
+
+experiment:
+  name: sac_mppi_learnability_gate_l3
+  output_dir: results/research_platform/rl/learnability_gate_l3_20260713
+
+rl:
+  policy_id: sac_mppi_learnability_gate_l3_v1
+
+  reward:
+    # Unlike discounted potential shaping, distance_delta gives exactly zero
+    # for no progress.  The small state/path costs favor a short, completed
+    # route instead of a large but collision-free orbit around the goal.
+    progress_mode: distance_delta
+    potential_progress_weight: 12.0
+    distance_penalty_weight: 0.08
+    path_length_penalty_weight: 0.20
+    step_penalty: 0.04
+    goal_bonus: 150.0
+    collision_penalty: 150.0
+    clearance_margin: 0.42
+    clearance_penalty_weight: 1.25
+    safety_override_penalty: 0.20
+    control_effort_weight: 0.02
+    control_rate_weight: 0.04
+    stuck_penalty: 0.05
+
+  training:
+    total_steps: 30000
+    warmup_steps: 1500
+    update_after: 768
+    batch_size: 256
+    replay_capacity: 100000
+    evaluation_interval: 5000
+    evaluation_episodes: 5
+    checkpoint_interval: 5000
+    seed: 20260715
+    curriculum:
+      enabled: true
+      phases:
+        - name: goal_capture_bootstrap
+          until_step: 4000
+          scene_weights: [1.0, 0.0]
+        - name: mixed_transition
+          until_step: 10000
+          scene_weights: [0.5, 0.5]
+        - name: u_trap_focus
+          until_step: 30000
+          scene_weights: [0.1, 0.9]
+
+  gate:
+    mode: none
+    # The policy must experience its own terminal behavior during training.
+    # Near-goal fallback remains an independent inference-time ablation.
+    near_goal_fallback_enabled: false

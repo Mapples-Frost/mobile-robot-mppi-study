@@ -1,4 +1,5 @@
 import copy
+import csv
 import json
 import math
 import random
@@ -9,6 +10,7 @@ import numpy as np
 import torch
 
 from mobile_robot_mppi.core.config import git_sha
+from .dataset_quality import assert_residual_dataset_quality
 from .models import ResidualNetwork, encode_state
 
 
@@ -108,6 +110,33 @@ def rollout_loss(model, dataset, starts, horizon, dynamics_config, device, max_w
     return loss / float(horizon)
 
 
+def rollout_endpoint_error(model, dataset, starts, horizon, dynamics_config, device, max_windows=512):
+    if starts.size == 0:
+        return torch.empty((0, dataset["state_t"].shape[1]), device=device)
+    selected = starts[:max_windows]
+    state = torch.as_tensor(dataset["state_t"][selected], dtype=torch.float32, device=device)
+    target = None
+    for offset in range(horizon):
+        control = torch.as_tensor(
+            dataset["control_t"][selected + offset], dtype=torch.float32, device=device
+        )
+        dt = torch.as_tensor(
+            dataset["dt"][selected + offset], dtype=torch.float32, device=device
+        ).unsqueeze(-1)
+        state = integrate(
+            model, state, control, dt, dynamics_config,
+            dynamics_config.get("integrator", "rk4"),
+        )
+        target = torch.as_tensor(
+            dataset["state_t_plus_1"][selected + offset],
+            dtype=torch.float32,
+            device=device,
+        )
+    error = state - target
+    wrapped = torch.atan2(torch.sin(error[..., 2:3]), torch.cos(error[..., 2:3]))
+    return torch.cat((error[..., :2], wrapped, error[..., 3:]), dim=-1)
+
+
 def train_residual(config: Mapping[str, object], dataset_dir, output_dir, device="cpu", epochs=None):
     config = copy.deepcopy(dict(config))
     seed = int(config.get("seed", 0))
@@ -117,6 +146,10 @@ def train_residual(config: Mapping[str, object], dataset_dir, output_dir, device
     torch.use_deterministic_algorithms(True)
     train = load_split(dataset_dir, "train")
     validation = load_split(dataset_dir, "validation")
+    if len(train["state_t"]) == 0 or len(validation["state_t"]) == 0:
+        raise ValueError("training and validation splits must both be non-empty")
+    assert_residual_dataset_quality(train, angle_indices=(2,))
+    assert_residual_dataset_quality(validation, angle_indices=(2,))
     state_dim = int(train["state_t"].shape[1])
     control_dim = int(train["control_t"].shape[1])
     model_cfg = dict(config["model"])
@@ -130,9 +163,16 @@ def train_residual(config: Mapping[str, object], dataset_dir, output_dir, device
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode="min", patience=5, factor=0.5)
     batch_size = int(training.get("batch_size", 256))
     total_epochs = int(epochs or training.get("epochs", 100))
+    if total_epochs <= 0:
+        raise ValueError("epochs must be positive")
     horizon = int(training.get("rollout_horizon", 10))
     train_windows = contiguous_windows(train, horizon)
     validation_windows = contiguous_windows(validation, horizon)
+    if train_windows.size == 0 or validation_windows.size == 0:
+        raise ValueError(
+            "rollout_horizon=%d requires at least one contiguous window in train and validation"
+            % horizon
+        )
     weights = training.get("loss_weights", {})
     derivative_weight = float(weights.get("derivative", 1.0))
     one_step_weight = float(weights.get("one_step", 1.0))
@@ -165,7 +205,8 @@ def train_residual(config: Mapping[str, object], dataset_dir, output_dir, device
             epoch_losses.append(float(loss.detach().cpu()))
         model.train()
         optimizer.zero_grad()
-        multi = rollout_loss(model, train, train_windows, horizon, config["dynamics"], device)
+        window_order = np.random.RandomState(seed + 100000 + epoch).permutation(train_windows)
+        multi = rollout_loss(model, train, window_order, horizon, config["dynamics"], device)
         if multi.requires_grad and multistep_weight > 0.0:
             (multistep_weight * multi).backward()
             torch.nn.utils.clip_grad_norm_(model.parameters(), float(training.get("gradient_clip_norm", 1.0)))
@@ -194,6 +235,9 @@ def train_residual(config: Mapping[str, object], dataset_dir, output_dir, device
             "epoch": epoch + 1,
             "best_validation_multistep_rmse": min(best, record["validation_multistep_rmse"]),
             "git_sha": git_sha(Path(__file__).resolve().parents[3]),
+            "parameter_count": model.parameter_count(),
+            "state_dim": state_dim,
+            "control_dim": control_dim,
         }
         torch.save(payload, output / "last.pt")
         if record["validation_multistep_rmse"] < best:
@@ -206,4 +250,13 @@ def train_residual(config: Mapping[str, object], dataset_dir, output_dir, device
                 break
     with (output / "training_log.json").open("w", encoding="utf-8") as handle:
         json.dump(history, handle, indent=2)
-    return {"model": model, "history": history, "best_validation_multistep_rmse": best}
+    with (output / "training_log.csv").open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(handle, fieldnames=list(history[0].keys()))
+        writer.writeheader()
+        writer.writerows(history)
+    return {
+        "model": model,
+        "history": history,
+        "best_validation_multistep_rmse": best,
+        "parameter_count": model.parameter_count(),
+    }

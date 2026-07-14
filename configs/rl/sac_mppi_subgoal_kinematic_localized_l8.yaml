@@ -1,0 +1,18 @@
+include: sac_mppi_subgoal_l6.yaml
+
+experiment:
+  name: sac_mppi_subgoal_kinematic_localized_l8
+
+rl:
+  policy_id: scripted_kinematic_localized_l8_control
+
+  # Match the L8 dynamic-decoder diagnostic localization condition so the
+  # decoder ablation changes one factor only.
+  sensor_overrides:
+    pose_source: ground_truth
+    twist_source: ground_truth
+
+  prior:
+    kind: local_subgoal
+    subgoal_decoder: kinematic
+    subgoal_control_dt: 0.1

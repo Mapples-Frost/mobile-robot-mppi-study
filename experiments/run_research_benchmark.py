@@ -30,7 +30,10 @@ def aggregate(rows):
     for (method, samples), values in sorted(groups.items()):
         numeric = (
             "final_goal_distance", "trajectory_length", "mean_abs_omega", "control_jerk",
-            "mean_slip_ratio", "safety_interventions", "planner_compute_ms_mean", "planner_compute_ms_max",
+            "applied_control_jerk", "mean_slip_ratio", "safety_interventions",
+            "stuck_steps", "spin_steps", "planner_compute_ms_mean",
+            "planner_compute_ms_p95", "planner_compute_ms_p99", "planner_compute_ms_max",
+            "planner_deadline_misses", "planner_deadline_miss_rate",
         )
         record = {
             "method": method,
@@ -43,6 +46,18 @@ def aggregate(rows):
             data = np.asarray([float(value[name]) for value in values], dtype=np.float64)
             record[name + "_mean"] = float(data.mean())
             record[name + "_std"] = float(data.std())
+        clearance = [
+            float(value["minimum_clearance"])
+            for value in values if value.get("minimum_clearance") is not None
+        ]
+        record["minimum_clearance_min"] = min(clearance) if clearance else None
+        successful_times = [
+            float(value["time_to_goal_s"])
+            for value in values if value.get("time_to_goal_s") is not None
+        ]
+        record["time_to_goal_s_mean_successes"] = (
+            float(np.mean(successful_times)) if successful_times else None
+        )
         summary.append(record)
     return summary
 

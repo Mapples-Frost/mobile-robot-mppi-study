@@ -1,0 +1,116 @@
+include: ../research/mujoco_strong_mppi_baseline.yaml
+
+experiment:
+  name: sac_mppi_prior_training
+  output_dir: results/research_platform/rl/sac_mppi_prior
+  max_steps: 450
+
+# RL affects only the sampling distribution.  MPPI prediction, scan_guard and
+# final safety arbitration remain active and separately configurable.
+planner:
+  sampling_prior: rl
+  # Formal training uses fewer candidates than final evaluation for throughput.
+  # Sample-efficiency experiments must sweep this value explicitly.
+  num_samples: 200
+  horizon: 36
+  previous_sequence_blend: 0.20
+
+memory:
+  enable: false
+
+rl:
+  enabled: true
+  integration: sampling_prior
+  algorithm: sac
+  policy_id: sac_mppi_prior_v1
+  checkpoint: null
+  device: cpu
+
+  observation:
+    lidar_sectors: 36
+    lidar_max_range: 4.0
+    goal_distance_scale: 5.0
+    velocity_scale: 0.5
+    yaw_rate_scale: 1.2
+    include_absolute_pose: false
+    include_previous_action: true
+    include_safety_state: true
+
+  prior:
+    num_knots: 6
+    # delta is the stable default: RL bends the conventional goal prior.
+    # absolute is retained as an explicit ablation.
+    mode: delta
+    delta_scale: 0.65
+    learn_covariance: false
+    covariance_min_scale: 0.5
+    covariance_max_scale: 2.0
+
+  sac:
+    hidden_sizes: [256, 256]
+    activation: relu
+    gamma: 0.99
+    tau: 0.005
+    actor_lr: 0.0003
+    critic_lr: 0.0003
+    alpha_lr: 0.0003
+    initial_alpha: 0.2
+    automatic_entropy_tuning: true
+    log_std_min: -5.0
+    log_std_max: 1.0
+    gradient_clip_norm: 10.0
+
+  reward:
+    potential_progress_weight: 8.0
+    step_penalty: 0.02
+    goal_bonus: 100.0
+    collision_penalty: 100.0
+    clearance_margin: 0.45
+    clearance_penalty_weight: 1.5
+    safety_override_penalty: 0.15
+    control_effort_weight: 0.02
+    control_rate_weight: 0.04
+    stuck_penalty: 0.03
+
+  training:
+    total_steps: 200000
+    warmup_steps: 5000
+    update_after: 1000
+    batch_size: 256
+    replay_capacity: 500000
+    updates_per_step: 1
+    evaluation_interval: 10000
+    evaluation_episodes: 3
+    checkpoint_interval: 10000
+    save_replay_buffer: true
+    seed: 20260713
+    device: auto
+    rl_prior_alpha: 1.0
+    initial_state_noise: [0.05, 0.05, 0.10, 0.0, 0.0]
+    scene_configs:
+      - configs/research/mujoco_strong_mppi_baseline.yaml
+      - configs/research/mujoco_lab_complex.yaml
+      - configs/research/mujoco_narrow_corridor.yaml
+      - configs/research/mujoco_u_trap_long_board.yaml
+    validation_scene_configs:
+      - configs/research/mujoco_strong_mppi_baseline.yaml
+      - configs/research/mujoco_u_trap_long_board.yaml
+    # Domain expansion is an explicit switch.  Set to null for scene-only
+    # training; the formal configuration trains on seen physics and validates
+    # both seen and held-out combined mismatch.
+    physics_domain_config: configs/research/mujoco_physics_domains.yaml
+    training_domain_roles: [seen]
+    validation_domain_roles: [seen, unseen]
+
+  # This gate is used at checkpoint inference/evaluation.  Training uses the
+  # separate rl_prior_alpha switch above.  OOD score is max standardized input
+  # distance, not a calibrated probability or theoretical safety certificate.
+  gate:
+    mode: none
+    fixed_alpha: 1.0
+    ood_soft_threshold: 3.0
+    ood_hard_threshold: 7.0
+    use_critic_disagreement: false
+    critic_soft_threshold: 2.0
+    critic_hard_threshold: 10.0
+    fallback_after_safety_override: false

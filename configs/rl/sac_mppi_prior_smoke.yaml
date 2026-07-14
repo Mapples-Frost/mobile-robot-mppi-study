@@ -1,0 +1,34 @@
+include: sac_mppi_prior.yaml
+
+experiment:
+  name: sac_mppi_prior_smoke
+  output_dir: results/research_platform/rl/smoke
+  max_steps: 15
+
+planner:
+  horizon: 8
+  num_samples: 32
+
+rl:
+  sac:
+    hidden_sizes: [32, 32]
+  prior:
+    num_knots: 3
+  training:
+    total_steps: 60
+    warmup_steps: 8
+    update_after: 8
+    batch_size: 8
+    replay_capacity: 256
+    evaluation_interval: 30
+    evaluation_episodes: 1
+    checkpoint_interval: 30
+    save_replay_buffer: true
+    seed: 17
+    device: cpu
+    initial_state_noise: [0.0, 0.0, 0.0, 0.0, 0.0]
+    scene_configs:
+      - configs/research/mujoco_strong_mppi_baseline.yaml
+    validation_scene_configs:
+      - configs/research/mujoco_strong_mppi_baseline.yaml
+    physics_domain_config: null

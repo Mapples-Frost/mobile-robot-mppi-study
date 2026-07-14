@@ -1,0 +1,98 @@
+include: sac_mppi_learnability_gate_l4.yaml
+
+experiment:
+  name: sac_mppi_learnability_gate_l5
+  output_dir: results/research_platform/rl/learnability_gate_l5_20260713
+
+rl:
+  policy_id: sac_mppi_learnability_gate_l5_v1
+
+  # A sampling prior should provide direction, not reproduce a 36-step
+  # controller.  Two interpolated knots reduce SAC's action from 12 to 4
+  # dimensions while MPPI still owns the full-resolution control sequence.
+  prior:
+    num_knots: 2
+    mode: delta
+    delta_scale: 0.65
+    learn_covariance: false
+
+  sac:
+    hidden_sizes: [128, 128]
+    activation: relu
+    gamma: 0.99
+    tau: 0.005
+    actor_lr: 0.0001
+    critic_lr: 0.0002
+    alpha_lr: 0.0001
+    initial_alpha: 0.10
+    minimum_alpha: 0.01
+    automatic_entropy_tuning: true
+    log_std_min: -5.0
+    log_std_max: 1.0
+    gradient_clip_norm: 10.0
+
+  # Reward scale is kept near O(1) per transition and O(10) per episode so
+  # critic targets remain well conditioned during the staged curriculum.
+  reward:
+    progress_mode: distance_delta
+    potential_progress_weight: 2.0
+    distance_penalty_weight: 0.015
+    path_length_penalty_weight: 0.05
+    step_penalty: 0.005
+    goal_bonus: 25.0
+    collision_penalty: 30.0
+    clearance_margin: 0.42
+    clearance_penalty_weight: 0.25
+    safety_override_penalty: 0.05
+    control_effort_weight: 0.005
+    control_rate_weight: 0.01
+    stuck_penalty: 0.01
+
+  training:
+    total_steps: 50000
+    warmup_steps: 2000
+    update_after: 1000
+    batch_size: 256
+    replay_capacity: 150000
+    evaluation_interval: 5000
+    evaluation_episodes: 5
+    checkpoint_interval: 5000
+    seed: 20260717
+
+    curriculum:
+      enabled: true
+      phases:
+        - name: reverse_terminal_bootstrap
+          until_step: 10000
+          scene_weights: [0.30, 0.70]
+        - name: reverse_route_expansion
+          until_step: 25000
+          scene_weights: [0.25, 0.75]
+        - name: original_start_focus
+          until_step: 50000
+          scene_weights: [0.20, 0.80]
+
+    initial_state_curriculum:
+      enabled: true
+      phases:
+        - name: terminal_and_exit
+          until_step: 10000
+          scenes:
+            u_trap_long_board:
+              - {name: trap_exit, state: [1.20, 3.45, 0.0, 0.0, 0.0], weight: 0.40}
+              - {name: terminal_approach, state: [3.15, 3.65, -1.5708, 0.0, 0.0], weight: 0.60}
+        - name: route_expansion
+          until_step: 25000
+          scenes:
+            u_trap_long_board:
+              - {name: left_lower, state: [0.0, 1.45, 1.5708, 0.0, 0.0], weight: 0.30}
+              - {name: left_upper, state: [0.20, 2.90, 0.35, 0.0, 0.0], weight: 0.45}
+              - {name: trap_exit, state: [1.20, 3.45, 0.0, 0.0, 0.0], weight: 0.25}
+        - name: original_start_focus
+          until_step: 50000
+          scenes:
+            u_trap_long_board:
+              - {name: original_start, state: [0.0, 0.0, 0.0, 0.0, 0.0], weight: 0.75}
+              - {name: left_lower, state: [0.0, 1.45, 1.5708, 0.0, 0.0], weight: 0.15}
+              - {name: left_upper, state: [0.20, 2.90, 0.35, 0.0, 0.0], weight: 0.07}
+              - {name: trap_exit, state: [1.20, 3.45, 0.0, 0.0, 0.0], weight: 0.03}

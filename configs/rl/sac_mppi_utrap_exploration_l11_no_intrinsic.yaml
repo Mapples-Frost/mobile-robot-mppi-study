@@ -1,0 +1,9 @@
+include: sac_mppi_utrap_exploration_l11.yaml
+
+experiment:
+  name: sac_mppi_utrap_exploration_l11_no_intrinsic
+
+rl:
+  policy_id: sac_mppi_utrap_exploration_l11_no_intrinsic_v1
+  intrinsic_exploration:
+    enabled: false

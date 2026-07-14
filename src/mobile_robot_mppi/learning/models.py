@@ -76,6 +76,7 @@ class ResidualNetwork(nn.Module):
             value = torch.as_tensor(statistics[name], dtype=torch.float32)
             self.register_buffer(name, value)
         self.model_config = dict(config)
+        self.check_finite = True
 
     def components(self, state, control):
         feature = encode_state(state, self.angle_indices)
@@ -90,6 +91,21 @@ class ResidualNetwork(nn.Module):
                 gain_normalized, control_normalized.unsqueeze(-1)
             ).squeeze(-1)
             normalized = drift_normalized + control_contribution
+            gain_physical = (
+                self.residual_scale[..., :, None]
+                * gain_normalized
+                / self.control_scale[..., None, :]
+            )
+            drift_physical = self.residual_mean + self.residual_scale * (
+                drift_normalized
+                - torch.matmul(
+                    gain_normalized,
+                    (self.control_mean / self.control_scale).unsqueeze(-1),
+                ).squeeze(-1)
+            )
+            control_contribution_physical = torch.matmul(
+                gain_physical, control.unsqueeze(-1)
+            ).squeeze(-1)
         else:
             normalized = self.direct(torch.cat((feature_normalized, control_normalized), dim=-1))
             drift_normalized = normalized
@@ -98,13 +114,19 @@ class ResidualNetwork(nn.Module):
                 dtype=state.dtype, device=state.device,
             )
             control_contribution = torch.zeros_like(normalized)
+            gain_physical = torch.zeros_like(gain_normalized)
+            drift_physical = self.residual_mean + self.residual_scale * normalized
+            control_contribution_physical = torch.zeros_like(normalized)
         residual = self.residual_mean + self.residual_scale * normalized
-        if not torch.isfinite(residual).all():
+        if self.check_finite and not torch.isfinite(residual).all():
             raise FloatingPointError("residual network produced NaN or Inf")
         return residual, {
             "drift_normalized": drift_normalized,
             "gain_normalized": gain_normalized,
             "control_contribution_normalized": control_contribution,
+            "drift_physical": drift_physical,
+            "gain_physical": gain_physical,
+            "control_contribution_physical": control_contribution_physical,
         }
 
     def forward(self, state, control):
@@ -142,23 +164,42 @@ def load_platform_checkpoint(path, device="cpu"):
 
 
 class PlatformResidualDynamics:
-    def __init__(self, model, device="cpu"):
+    def __init__(self, model, device="cpu", use_torchscript=False):
         self.model = model.to(device).eval()
         self.device = torch.device(device)
         self.state_dim = int(model.state_dim)
         self.control_dim = int(model.control_dim)
+        self.use_torchscript = bool(use_torchscript)
+        self.inference_model = self.model
+        if self.use_torchscript:
+            example_state = torch.zeros((1, self.state_dim), device=self.device)
+            example_control = torch.zeros((1, self.control_dim), device=self.device)
+            # The external NumPy boundary below retains the runtime finite
+            # check; disabling the Python conditional only while tracing avoids
+            # hard-coding a tensor-to-bool branch into the graph.
+            self.model.check_finite = False
+            try:
+                traced = torch.jit.trace(
+                    self.model, (example_state, example_control), check_trace=False
+                )
+                self.inference_model = torch.jit.optimize_for_inference(traced)
+            finally:
+                self.model.check_finite = True
 
     @classmethod
-    def from_checkpoint(cls, path, device="cpu"):
+    def from_checkpoint(cls, path, device="cpu", use_torchscript=False):
         model, _ = load_platform_checkpoint(path, device)
-        return cls(model, device)
+        return cls(model, device, use_torchscript=use_torchscript)
 
     def derivative(self, state, control, time=None):
         del time
         state_value = np.asarray(state, dtype=np.float32)
         control_value = np.asarray(control, dtype=np.float32)
-        with torch.no_grad():
+        with torch.inference_mode():
             state_tensor = torch.as_tensor(state_value, device=self.device)
             control_tensor = torch.as_tensor(control_value, device=self.device)
-            output = self.model(state_tensor, control_tensor)
-        return output.detach().cpu().numpy().astype(np.float64, copy=False)
+            output = self.inference_model(state_tensor, control_tensor)
+        result = output.detach().cpu().numpy().astype(np.float64, copy=False)
+        if not np.isfinite(result).all():
+            raise FloatingPointError("compiled residual inference produced NaN or Inf")
+        return result

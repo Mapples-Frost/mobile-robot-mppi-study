@@ -16,6 +16,14 @@ controller.  The strict final-package jerk confidence interval versus fixed
 failed; no jerk-superiority claim is made.  See
 `docs/rl/149_l97_contextual_covariance_jerk_confirmation_results_2026-07-18.md`.
 
+L98 then evaluated ICODE and contextual sampling in one blocked 2 x 3
+factorial. The ICODE contribution and complete-package Gates passed, but the
+contextual `K=50` arm did not meet the frozen +2 mm RMSE noninferiority margin
+against ICODE fixed `K=100`; consequently L99 remains sealed. The retained next
+question is a causal anytime `K=50 -> K=100` stop/continue policy, not a change
+of the ICODE + RL research direction. See
+`docs/rl/151_l98_cross_layer_factorial_results_and_anytime_pivot_2026-07-18.md`.
+
 本仓库是一套面向科研实验的移动机器人控制平台，主线包括：
 
 - 可变目标、路径与轨迹参考；

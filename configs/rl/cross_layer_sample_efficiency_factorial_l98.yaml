@@ -1,0 +1,87 @@
+schema_version: 1
+design_id: l98_cross_layer_sample_efficiency_factorial_v1
+phase: development
+base_config: configs/rl/sac_mppi_covariance_only_l84.yaml
+icode_checkpoint: results/research_platform/l57_icode_high_dynamic_h36_seed20261201_v1/best.pt
+bandit_checkpoint: results/research_platform/rl/l89_contextual_covariance_bandit_20260718_v1/checkpoint.json
+schedule_seed: 2026071898
+bootstrap_seed: 2026071899
+seeds: [20271001, 20271002, 20271003]
+cross_track_noninferiority_margin_m: 0.002
+planner_mean_deadline_ms: 50.0
+
+scenes:
+  - configs/research/mujoco_high_dynamic_hairpin_unseen_l56.yaml
+  - configs/research/mujoco_high_dynamic_reverse_s_unseen_l56.yaml
+
+physics_domains:
+  - name: train_anchor
+    plant_override: {}
+  - name: friction_high
+    plant_override:
+      contact:
+        wheel_friction: [0.90, 0.007, 0.0011]
+        floor_friction: [0.80, 0.004, 0.0004]
+  - name: delay_long
+    plant_override:
+      actuator:
+        command_delay: 0.10
+  - name: combined_moderate
+    plant_override:
+      robot:
+        chassis_mass: 15.0
+        chassis_inertia: [0.15, 0.219, 0.311]
+        wheel_mass: 0.40
+      actuator:
+        torque_limit: 1.20
+        kp: 0.32
+        ki: 1.00
+        command_delay: 0.08
+        torque_slew_rate: 20.0
+      contact:
+        wheel_friction: [0.78, 0.0062, 0.0010]
+        floor_friction: [0.70, 0.0035, 0.00035]
+
+# All arms share the L96-selected actuator-facing smoothing.  The predictive
+# rate cost is retained only to preserve the already-confirmed final package.
+shared_override:
+  action_space:
+    rate_limits: [1.10, 2.50]
+  planner:
+    control_rate_weight: 0.16
+
+arms:
+  - name: nominal_fixed_k50
+    factors: {dynamics: nominal, sampler: fixed, budget: 50}
+    prediction_mode: nominal
+    sampler_kind: fixed
+    num_samples: 50
+    fixed_covariance_scale: [1.75, 0.75]
+  - name: nominal_contextual_k50
+    factors: {dynamics: nominal, sampler: contextual_bandit, budget: 50}
+    prediction_mode: nominal
+    sampler_kind: contextual_bandit
+    num_samples: 50
+  - name: nominal_fixed_k100
+    factors: {dynamics: nominal, sampler: fixed, budget: 100}
+    prediction_mode: nominal
+    sampler_kind: fixed
+    num_samples: 100
+    fixed_covariance_scale: [1.75, 0.75]
+  - name: icode_fixed_k50
+    factors: {dynamics: icode_residual, sampler: fixed, budget: 50}
+    prediction_mode: icode_residual
+    sampler_kind: fixed
+    num_samples: 50
+    fixed_covariance_scale: [1.75, 0.75]
+  - name: icode_contextual_k50
+    factors: {dynamics: icode_residual, sampler: contextual_bandit, budget: 50}
+    prediction_mode: icode_residual
+    sampler_kind: contextual_bandit
+    num_samples: 50
+  - name: icode_fixed_k100
+    factors: {dynamics: icode_residual, sampler: fixed, budget: 100}
+    prediction_mode: icode_residual
+    sampler_kind: fixed
+    num_samples: 100
+    fixed_covariance_scale: [1.75, 0.75]

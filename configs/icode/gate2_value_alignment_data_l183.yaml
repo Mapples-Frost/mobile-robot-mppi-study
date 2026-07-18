@@ -1,0 +1,33 @@
+output_dir: results/research_platform/datasets/gate2_value_alignment_l183
+actor_run_dir: results/research_platform/rl/gate1_direct_control_multidomain_screen_l175
+actor_checkpoint: results/research_platform/rl/gate1_direct_control_multidomain_screen_l175/checkpoints/best.pt
+seed: 20260719
+
+action_noise_std: 0.03
+random_action_probability: 0.05
+
+splits:
+  train:
+    source: training
+    roles: [seen]
+    episodes_per_environment: 1
+    max_steps: 180
+    seed_base: 22831000
+  validation:
+    source: validation
+    roles: [seen]
+    episodes_per_environment: 1
+    max_steps: 180
+    seed_base: 22832000
+  test:
+    source: validation
+    roles: [seen]
+    episodes_per_environment: 1
+    max_steps: 180
+    seed_base: 22833000
+  unseen:
+    source: validation
+    roles: [unseen]
+    episodes_per_environment: 2
+    max_steps: 180
+    seed_base: 22834000

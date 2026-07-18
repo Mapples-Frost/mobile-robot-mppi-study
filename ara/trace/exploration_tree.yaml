@@ -1121,3 +1121,60 @@ tree:
                         result: >
                           Thirty paired cells across five untouched seeds passed source, checkpoint and disjoint-seed provenance validation. Competence-gated ICODE reduced final goal distance by 19.86% with favorable seed-cluster interval [0.0325, 0.2201] m, increased success from 40% to 50%, reduced stuck steps by 26.70% and retained zero collisions. Jerk was 0.066% worse with a near-zero interval spanning both directions, so the frozen exact-zero secondary Gate formally failed. Clean-scene success rose from 80% to 100%, while narrow-corridor success remained 0%.
                         evidence: [C81, C82, H60, H61, "results/research_platform/rl/gate2_competence_confirmation_l191/gate2_full_analysis.json", "docs/rl/173_gate2_competence_gated_value_alignment_results_2026-07-18.md", "ara/evidence/tables/table12_l188_l191_value_alignment.md"]
+  - id: N117
+    type: question
+    title: "Can ICODE reliability calibrate persistent RL sampling authority at fixed K?"
+    provenance: ai-suggested
+    timestamp: "2026-07-18T23:45:00+08:00"
+    description: >
+      Gate 3 tests whether ensemble disagreement, support distance, causal innovation and Actor support can decide when persistent SAC Actor trajectories deserve 0%, 30% or 60% of an unchanged MPPI sampling budget.
+    also_depends_on: [N116]
+    children:
+      - id: N118
+        type: experiment
+        title: "L192 three-member value-aligned ICODE ensemble"
+        provenance: ai-executed
+        timestamp: "2026-07-18T23:48:00+08:00"
+        result: >
+          Three members initialized from independent qualified L57 checkpoints and trained on distinct episode-bootstrap samples all passed their offline value/rollout Gates on test and unseen splits.
+        evidence: [C81, H62, "results/research_platform/gate3_value_aligned_ensemble_member1_l192/training_summary.json", "results/research_platform/gate3_value_aligned_ensemble_member2_l192/training_summary.json", "results/research_platform/gate3_value_aligned_ensemble_member3_l192/training_summary.json"]
+        children:
+          - id: N119
+            type: dead_end
+            title: "Original Gate 3A severe-unseen discrete calibration"
+            provenance: ai-executed
+            timestamp: "2026-07-18T23:50:00+08:00"
+            hypothesis: >
+              The L183 test and four-episode severe-unseen splits are sufficient to validate discrete high/medium/low reliability ordering.
+            failure_mode: >
+              Test authority strongly anticorrelated with error, but all four severe-unseen episodes occupied the low bin. The original Gate failed because discrete ordering lacked resolution on that split.
+            lesson: >
+              Severe-only OOD saturation can show fallback activation but cannot validate a multi-level calibrated authority mechanism.
+            evidence: [H63, "results/research_platform/rl/gate3_reliability_calibration_l193/calibration_summary.json", "docs/rl/176_gate3_reliability_hss_results_2026-07-18.md"]
+            children:
+              - id: N120
+                type: experiment
+                title: "Gate 3A2 independent graded reliability stress"
+                provenance: ai-executed
+                timestamp: "2026-07-18T23:52:00+08:00"
+                result: >
+                  Thirty new episodes occupied high/medium/low bins 3/8/19. Mean normalized ten-step error increased 0.0462/0.0595/0.0776 and episode-level authority-error Spearman association was -0.878; all frozen Gate 3A2 conditions passed.
+                evidence: [C83, H63, "results/research_platform/rl/gate3_reliability_stress_evaluation_l194/stress_summary.json", "ara/evidence/tables/table13_gate3_reliability_hss.md"]
+                children:
+                  - id: N121
+                    type: experiment
+                    title: "Gate 3B equal-budget development"
+                    provenance: ai-executed
+                    timestamp: "2026-07-18T23:56:00+08:00"
+                    result: >
+                      Across 18 paired cells on seeds 32-34, adaptive HSS reduced final goal distance by 10.18%, stuck steps by 34.52% and jerk by 3.34% at exactly 100 rollouts with zero collisions; every frozen development condition passed.
+                    evidence: [C84, "results/research_platform/rl/gate3_hss_development_l195/paired_comparison.json", "docs/rl/176_gate3_reliability_hss_results_2026-07-18.md"]
+                    children:
+                      - id: N122
+                        type: experiment
+                        title: "Gate 3C sealed independent confirmation"
+                        provenance: ai-executed
+                        timestamp: "2026-07-18T23:59:00+08:00"
+                        result: >
+                          Thirty paired cells on untouched seeds 35-39 confirmed a 6.82% final-distance reduction with favorable seed-cluster interval [0.0639, 0.2578] m, 1.97% lower jerk, 4.23% lower serial planner time and zero collisions at equal K. Both arms had zero successes, and the complex-scene distance effect was approximately neutral, bounding the claim.
+                        evidence: [C84, C85, H64, "results/research_platform/rl/gate3_hss_confirmation_l196/paired_comparison.json", "results/research_platform/rl/gate3_hss_combined_l197/gate3_hss_analysis.json", "ara/evidence/tables/table13_gate3_reliability_hss.md"]

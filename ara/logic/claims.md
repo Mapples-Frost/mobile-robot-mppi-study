@@ -738,3 +738,30 @@
 - **Proof**: [`results/research_platform/rl/gate2_competence_confirmation_l191/gate2_full_analysis.json`, `docs/rl/173_gate2_competence_gated_value_alignment_results_2026-07-18.md`]
 - **Dependencies**: [C81]
 - **Tags**: scope-boundary, jerk, clearance, narrow-corridor, negative-result
+
+## C83: Cross-layer reliability ranks ICODE rollout error under graded dynamics shift
+- **Statement**: With the frozen three-member value-aligned ICODE ensemble and frozen SAC Actor support statistics, the causal cross-layer authority score orders high-, medium- and low-confidence episodes by increasing ten-step prediction error on an independently collected 30-episode graded MuJoCo stress set.
+- **Status**: supported
+- **Provenance**: ai-suggested
+- **Falsification criteria**: Reanalysis finds split leakage or threshold selection on the stress set; fewer than two occupied authority bins; a positive authority-error rank association; non-monotone high-to-low error; or missing independent episode support.
+- **Proof**: [`results/research_platform/rl/gate3_reliability_stress_evaluation_l194/stress_summary.json`, `docs/rl/176_gate3_reliability_hss_results_2026-07-18.md`, `ara/evidence/tables/table13_gate3_reliability_hss.md`]
+- **Dependencies**: [C81]
+- **Tags**: ICODE, ensemble, uncertainty, reliability, OOD, calibration
+
+## C84: Reliability-calibrated hybrid sampling improves fixed-budget MPPI progress
+- **Statement**: Relative to a fixed 30% persistent Actor sampling ratio, reliability-adaptive 0/30/60% hybrid sampling with the same 100-rollout budget, value-aligned ICODE ensemble and frozen Actor/critic reduces final goal distance and control jerk without collision or compute regression on five sealed confirmation seeds across two MuJoCo scenes and three physics domains.
+- **Status**: supported
+- **Provenance**: ai-suggested
+- **Falsification criteria**: Confirmation provenance or seed separation fails; rollout budgets differ; final-distance seed-cluster bootstrap interval includes zero; collisions increase; jerk worsens by more than the frozen 1% margin; or low and non-low authority are not both exercised.
+- **Proof**: [`results/research_platform/rl/gate3_hss_confirmation_l196/paired_comparison.json`, `results/research_platform/rl/gate3_hss_combined_l197/gate3_hss_analysis.json`, `docs/rl/176_gate3_reliability_hss_results_2026-07-18.md`, `ara/evidence/tables/table13_gate3_reliability_hss.md`]
+- **Dependencies**: [C81, C83]
+- **Tags**: RL, ICODE, MPPI, hybrid-sampling, fixed-budget, confirmation
+
+## C85: Gate 3 proves universal complex-navigation or success-rate improvement
+- **Statement**: The current reliability-adaptive HSS improves success and complex navigation generally.
+- **Status**: refuted
+- **Provenance**: ai-suggested
+- **Falsification criteria**: This boundary can be revised only by a preregistered independent study with nonzero success resolution and favorable effects across multiple complex task families.
+- **Proof**: [`results/research_platform/rl/gate3_hss_combined_l197/stratified_effects.csv`, `docs/rl/176_gate3_reliability_hss_results_2026-07-18.md`]
+- **Dependencies**: [C84]
+- **Tags**: RL, ICODE, MPPI, scope-boundary, refuted

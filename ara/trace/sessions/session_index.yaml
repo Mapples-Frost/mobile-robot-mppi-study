@@ -83,3 +83,6 @@ sessions:
   - id: "2026-07-18_027"
     path: "trace/sessions/2026-07-18_027.yaml"
     summary: "Gate 2 retained a failed unconditional critic-alignment run, introduced training-outcome competence gating, and independently confirmed large progress and completion gains with a negligible unresolved jerk tradeoff."
+  - id: "2026-07-18_028"
+    path: "trace/sessions/2026-07-18_028.yaml"
+    summary: "Gate 3 retained a failed severe-only calibration, validated graded cross-layer reliability, and independently confirmed fixed-budget adaptive hybrid-sampling progress and smoothness gains."

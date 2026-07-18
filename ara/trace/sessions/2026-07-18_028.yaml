@@ -1,0 +1,55 @@
+session:
+  id: "2026-07-18_028"
+  timestamp: "2026-07-18T23:59:00+08:00"
+  summary: "Gate 3 retained a failed severe-only calibration, validated graded cross-layer reliability, and independently confirmed fixed-budget adaptive hybrid-sampling progress and smoothness gains."
+
+events_logged:
+  - {type: question, id: N117, provenance: ai-suggested, summary: "Test whether ICODE reliability can calibrate persistent SAC sampling authority at fixed K."}
+  - {type: experiment, id: N118, provenance: ai-executed, summary: "Trained three independently initialized, episode-bootstrap value-aligned ICODE ensemble members."}
+  - {type: dead_end, id: N119, provenance: ai-executed, summary: "Retained the original Gate 3A failure when the severe-unseen split saturated in the low bin."}
+  - {type: experiment, id: N120, provenance: ai-executed, summary: "Gate 3A2 independently validated monotone graded reliability across 30 new episodes."}
+  - {type: experiment, id: N121, provenance: ai-executed, summary: "Gate 3B development showed fixed-budget progress, stuck and jerk improvements."}
+  - {type: experiment, id: N122, provenance: ai-executed, summary: "Gate 3C sealed seeds confirmed final-distance and jerk gains with zero collisions."}
+  - {type: claim, id: C83, provenance: ai-suggested, summary: "Cross-layer reliability ranks ICODE rollout error under graded shift."}
+  - {type: claim, id: C84, provenance: ai-suggested, summary: "Reliability-adaptive HSS improves fixed-budget MPPI progress in the tested scope."}
+  - {type: claim, id: C85, provenance: ai-suggested, summary: "Universal success and complex-navigation improvement remain refuted."}
+  - {type: heuristic, id: H62, provenance: ai-suggested, summary: "Separate derivative disagreement and state innovation scales."}
+  - {type: heuristic, id: H63, provenance: ai-suggested, summary: "Use a graded severity spectrum for discrete reliability validation."}
+  - {type: heuristic, id: H64, provenance: ai-suggested, summary: "Use reliability for sampling authority without attenuating the residual model."}
+
+ai_actions:
+  - action: "Implemented three-member value-aligned residual ensembles, dimensionally separate reliability signals and checkpoint-loading compatibility."
+    provenance: ai-executed
+    files_changed: ["src/mobile_robot_mppi/learning/models.py", "src/mobile_robot_mppi/runtime/factories.py", "experiments/icode/train_value_aligned_icode.py"]
+  - action: "Implemented causal reliability-calibrated 0/30/60% persistent Actor hybrid sampling with default-behavior regression."
+    provenance: ai-executed
+    files_changed: ["src/mobile_robot_mppi/rl/reliability.py", "src/mobile_robot_mppi/rl/paper_policy.py", "src/mobile_robot_mppi/planning/rl_driven_mppi.py"]
+  - action: "Preregistered and executed validation-only calibration, independent graded stress, development and sealed confirmation."
+    provenance: ai-executed
+    files_changed: ["experiments/rl/calibrate_gate3_reliability.py", "experiments/rl/evaluate_gate3_reliability_stress.py", "experiments/rl/run_gate3_hss_paired.py", "docs/rl/174_gate3_reliability_hss_prereg_2026-07-18.md", "docs/rl/175_gate3a2_graded_stress_prereg_2026-07-18.md"]
+  - action: "Added seed-clustered combined analysis, bounded result documentation and forensic evidence bindings."
+    provenance: ai-executed
+    files_changed: ["experiments/rl/analyze_gate3_hss.py", "docs/rl/176_gate3_reliability_hss_results_2026-07-18.md", "ara/evidence/tables/table13_gate3_reliability_hss.md"]
+
+claims_touched:
+  - {id: C83, action: created, provenance: ai-suggested}
+  - {id: C84, action: created, provenance: ai-suggested}
+  - {id: C85, action: created, provenance: ai-suggested}
+
+open_threads:
+  - "Add reliability-weighted terminal value as the next frozen coupling Gate, retaining fixed-budget HSS as the comparator."
+  - "Calibrate a task horizon or progress endpoint with nonzero success resolution before any success-rate claim."
+  - "Test additional complex geometries because the current lab-complex final-distance effect is approximately neutral."
+  - "Repeat final paper experiments across additional independently trained Actor/ICODE blocks and real-robot shadow-mode logs."
+
+ai_suggestions_pending:
+  - "Use Gate 3 HSS as an independently confirmed contribution, but bound the present claim to progress and smoothness rather than universal success."
+  - "Do not tune the frozen Gate 3 thresholds on confirmation results."
+
+provenance_summary:
+  user_confirmed: 0
+  ai_suggested: 8
+  ai_executed: 10
+  user_revised: 0
+  confirmation_rate: 0.0
+

@@ -366,3 +366,21 @@
 - **Provenance**: ai-suggested
 - **Sensitivity**: high
 - **Code ref**: [`src/mobile_robot_mppi/evaluation/paired_checkpoint.py`, `docs/rl/173_gate2_competence_gated_value_alignment_results_2026-07-18.md`]
+
+## H62: Keep ensemble-disagreement and innovation normalization dimensionally separate
+- **Rationale**: ICODE ensemble disagreement measures derivative spread, while completed-transition innovation measures state prediction error. Reusing one scale vector gives physically inconsistent authority. Normalize disagreement by training residual-derivative scales and innovation by task-relevant one-step state-error scales, and version both in the calibration config.
+- **Provenance**: ai-suggested
+- **Sensitivity**: high
+- **Code ref**: [`src/mobile_robot_mppi/learning/models.py`, `configs/rl/gate3_reliability_calibration_l193.yaml`, `tests/learning/test_residual_ensemble.py`]
+
+## H63: Validate reliability on a severity spectrum rather than a severe-only OOD split
+- **Rationale**: The original four-episode unseen set correctly saturated at low authority but could not test ordering across discrete authority bins. Retain that failed Gate, freeze thresholds, then use new seeds and a preregistered mix of nominal, single-factor and combined shifts with episode as the independent unit. A severe-only split is useful for fallback activation, not for calibration resolution.
+- **Provenance**: ai-suggested
+- **Sensitivity**: high
+- **Code ref**: [`docs/rl/175_gate3a2_graded_stress_prereg_2026-07-18.md`, `experiments/rl/evaluate_gate3_reliability_stress.py`, `configs/icode/gate3_reliability_stress_data_l194.yaml`]
+
+## H64: Let reliability allocate sampling authority without attenuating learned dynamics
+- **Rationale**: Falling back toward nominal dynamics when uncertainty grows can discard a residual model that remains better than nominal. Keep the ensemble mean as the rollout model, use only online-available disagreement/support/innovation signals to choose 0/30/60% persistent Actor samples, and apply current-rollout authority on the next control cycle to preserve causal joint batching.
+- **Provenance**: ai-suggested
+- **Sensitivity**: high
+- **Code ref**: [`src/mobile_robot_mppi/learning/models.py`, `src/mobile_robot_mppi/rl/reliability.py`, `src/mobile_robot_mppi/planning/rl_driven_mppi.py`, `docs/rl/174_gate3_reliability_hss_prereg_2026-07-18.md`]

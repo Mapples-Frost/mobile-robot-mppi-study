@@ -1,0 +1,21 @@
+include: counterfactual_utility_l23.yaml
+
+experiment:
+  name: counterfactual_trajectory_utility_l24
+  output_dir: results/research_platform/rl/counterfactual_trajectory_utility_l24_20260715
+
+rl:
+  policy_id: counterfactual_trajectory_utility_l24
+  risk_dataset:
+    trajectory_features:
+      enabled: true
+      common_random_numbers: true
+      expected_state_feature_dim: 67
+      expected_metric_dim: 20
+      expected_total_dim: 127
+
+  counterfactual_utility:
+    model_selection_episode_seeds: [20281621, 20281622, 20281623, 20281624, 20281625, 20281626, 20281627, 20281628]
+    calibration_episode_seeds: [20281629, 20281630, 20281631, 20281632, 20281633, 20281634, 20281635, 20281636]
+    ensemble_seeds: [20260741, 20260742, 20260743, 20260744, 20260745]
+    minimum_state_ablation_rmse_improvement_fraction: 0.05

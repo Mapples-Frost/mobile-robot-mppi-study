@@ -1,0 +1,26 @@
+include: mujoco_high_dynamic_fixed_plant_l56.yaml
+
+experiment:
+  name: high_dynamic_accel_straight_l56
+  # Use the common 36 s budget.  The shorter development-only timeout stopped
+  # the robot while the terminal controller was still converging.
+  max_steps: 360
+
+task:
+  lookahead_distance: 0.75
+  points:
+    - [0.00, 0.00]
+    - [0.50, 0.00]
+    - [1.00, 0.00]
+    - [1.50, 0.00]
+    - [2.00, 0.00]
+    - [2.50, 0.00]
+    - [3.00, 0.00]
+    - [3.50, 0.00]
+    - [4.00, 0.00]
+    - [4.50, 0.00]
+    - [5.00, 0.00]
+    - [5.50, 0.00]
+
+scene:
+  name: high_dynamic_accel_straight_l56

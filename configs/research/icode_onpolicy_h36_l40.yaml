@@ -1,0 +1,20 @@
+include: icode_dynamic5.yaml
+
+experiment:
+  name: icode_onpolicy_h36_l40
+
+seed: 20260801
+
+training:
+  epochs: 120
+  batch_size: 256
+  rollout_horizon: 36
+  learning_rate: 0.0003
+  early_stopping_patience: 20
+  state_loss_weights: [4.0, 4.0, 2.0, 1.0, 1.0]
+  rollout_step_weighting: linear
+  rollout_terminal_weight: 4.0
+  loss_weights:
+    derivative: 0.25
+    one_step: 1.0
+    multistep: 4.0

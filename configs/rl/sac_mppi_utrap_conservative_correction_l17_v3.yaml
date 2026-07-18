@@ -1,0 +1,14 @@
+include: sac_mppi_utrap_conservative_correction_l17_v2.yaml
+
+experiment:
+  name: sac_mppi_utrap_conservative_correction_l17_v3_validation_contract
+  output_dir: results/research_platform/rl/utrap_conservative_correction_l17_v3_20260714
+
+# V3 makes the validation initial-state distribution explicit.  Training keeps
+# its small start jitter, while checkpoint selection uses the exact benchmark
+# initial state so the trainer and standard evaluator execute the same task.
+rl:
+  policy_id: sac_mppi_utrap_conservative_correction_l17_v3
+  training:
+    validation_initial_state_noise: [0.0, 0.0, 0.0, 0.0, 0.0]
+

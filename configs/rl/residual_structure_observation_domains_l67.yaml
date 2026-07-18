@@ -1,0 +1,77 @@
+include: residual_structure_closed_loop_l61.yaml
+
+experiment:
+  name: residual_structure_observation_domains_l67
+  output_dir: results/research_platform/rl/l67_residual_structure_observation_domains_20260716_v1
+
+rl:
+  enabled: false
+  checkpoint: null
+  cross_layer_factorial:
+    design_id: l67_parameter_matched_residual_structure_observation_domains_v1
+    confirmation_mode: false
+    schedule_seed: 2026071657
+    bootstrap_seed: 2026071658
+    conditions: [traditional_nominal, traditional_mlp, traditional_icode]
+    scenes:
+      - {role: seen_chicane, path: configs/research/mujoco_high_dynamic_chicane_l56.yaml}
+      - {role: unseen_reverse_s, path: configs/research/mujoco_high_dynamic_reverse_s_unseen_l56.yaml}
+    physics_domains:
+      - {name: clean_ground_truth, role: primary_anchor, plant_override: {}, sensor_override: {}}
+      - name: latency_100ms
+        role: primary_latency
+        plant_override: {}
+        sensor_override:
+          pose_source: ground_truth
+          twist_source: ground_truth
+          odom_noise_std: [0.0, 0.0, 0.0]
+          twist_noise_std: [0.0, 0.0]
+          latency: 0.10
+      - name: combined_medium_100ms
+        role: primary_combined
+        plant_override: {}
+        sensor_override:
+          pose_source: ground_truth
+          twist_source: ground_truth
+          odom_noise_std: [0.010, 0.010, 0.020]
+          twist_noise_std: [0.020, 0.040]
+          latency: 0.10
+      - name: raw_wheel_odometry
+        role: exploratory_stress
+        plant_override: {}
+        sensor_override:
+          pose_source: wheel_odometry
+          twist_source: wheel_odometry
+          odom_noise_std: [0.0, 0.0, 0.0]
+          twist_noise_std: [0.0, 0.0]
+          latency: 0.0
+    development_episode_seeds: [21860851, 21860852, 21860853]
+    sealed_confirmation_episode_seeds: [21860861, 21860862, 21860863, 21860864, 21860865]
+    protected_config_paths:
+      - configs/rl/residual_structure_cross_plant_confirmation_l65.yaml
+      - configs/rl/observation_domain_nominal_calibration_l66.yaml
+      - configs/rl/observation_domain_nominal_calibration_l66_v2.yaml
+    planner_known_command_delay: true
+    observation_structure_gate:
+      primary_domains: [clean_ground_truth, latency_100ms, combined_medium_100ms]
+      shifted_domains: [latency_100ms, combined_medium_100ms]
+      stress_domain: raw_wheel_odometry
+      calibration_config_path: configs/rl/observation_domain_nominal_calibration_l66_v2.yaml
+      calibration_summary_path: results/research_platform/rl/l66_observation_domain_nominal_calibration_20260716_v2/observation_domain_calibration_summary.json
+      expected_calibration_failure: noise shift below threshold
+      minimum_positive_learned_vs_nominal_primary_blocks: 3
+      minimum_learned_vs_nominal_primary_ci95_lower_m: 0.0
+      minimum_positive_icode_vs_mlp_primary_blocks: 2
+      minimum_positive_icode_vs_mlp_primary_domains: 3
+      minimum_icode_vs_mlp_primary_ci95_lower_m: 0.0
+      minimum_positive_icode_vs_mlp_shifted_blocks: 2
+      minimum_positive_icode_vs_mlp_shifted_domains: 2
+      minimum_icode_vs_mlp_shifted_ci95_lower_m: 0.0
+      minimum_positive_unseen_primary_icode_vs_mlp_blocks: 2
+      minimum_unseen_primary_icode_vs_mlp_ci95_lower_m: 0.0
+      minimum_net_success_gain_vs_nominal: 0
+      maximum_net_collision_increase_vs_nominal: 0
+      minimum_completion_ratio_difference_vs_nominal: -0.01
+      maximum_stress_collision_increase: 0
+      maximum_mean_planner_compute_ms: 50.0
+

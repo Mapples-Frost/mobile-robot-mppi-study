@@ -1,0 +1,99 @@
+session:
+  id: "2026-07-15_007"
+  timestamp: "2026-07-15T14:43:00+08:00"
+  summary: "Implemented L24 side-effect-free paired MPPI preview and direct trajectory-vs-state utility ablation; trajectory context did not improve macro-utility prediction, motivating a simpler OOD-conditioned RL-prior story."
+
+events_logged:
+  - type: question
+    id: N27
+    provenance: ai-suggested
+    summary: "Test whether paired BC/SAC MPPI candidate previews predict forty-step correction-burst utility better than current-state features."
+  - type: experiment
+    id: N28
+    provenance: ai-executed
+    summary: "Collected 409 accepted branches in 108 independent groups and compared trajectory-augmented and state-only ensembles under identical splits and seeds."
+  - type: dead_end
+    id: N29
+    provenance: ai-executed
+    summary: "Rejected one-preview prediction of repeated-replanning macro utility after trajectory features degraded the direct state-only ablation and calibrated acceptance remained zero."
+  - type: pivot
+    id: N30
+    provenance: ai-suggested
+    summary: "Proposed simplifying the paper to interpretable OOD/complexity activation of the RL sampling prior, with ICODE evaluated independently."
+  - type: claim
+    id: C18
+    provenance: ai-suggested
+    summary: "Side-effect-free paired MPPI preview was supported by exact enabled-versus-disabled branch regression."
+  - type: claim
+    id: C19
+    provenance: ai-suggested
+    summary: "Trajectory augmentation improving macro-utility prediction over state-only features was refuted."
+  - type: claim
+    id: C20
+    provenance: ai-suggested
+    summary: "Stable utility associations from current candidate-trajectory differences were refuted across development splits."
+  - type: heuristic
+    id: H13
+    provenance: ai-suggested
+    summary: "Use common random numbers and exact state restoration for stochastic candidate preview."
+  - type: heuristic
+    id: H14
+    provenance: ai-suggested
+    summary: "Evaluate added representations against a same-data, same-seed direct ablation."
+  - type: heuristic
+    id: H15
+    provenance: ai-suggested
+    summary: "Align observable feature horizon with the intervention estimand before adding model capacity."
+
+ai_actions:
+  - action: "Preregistered the L24 feature schema, independent group splits, power target, direct state-only ablation, development gate and sealed-test contract."
+    provenance: ai-executed
+    files_changed:
+      - "configs/rl/counterfactual_trajectory_utility_l24.yaml"
+      - "docs/rl/29_l24_trajectory_utility_prereg_2026-07-15.md"
+  - action: "Implemented side-effect-free MPPI preview, paired trajectory metrics, common-random-number feature collection and exact no-treatment-change regression tests."
+    provenance: ai-executed
+    files_changed:
+      - "src/mobile_robot_mppi/planning/mppi.py"
+      - "src/mobile_robot_mppi/rl/environment.py"
+      - "src/mobile_robot_mppi/rl/trajectory_features.py"
+      - "experiments/rl/collect_correction_counterfactual_branches.py"
+      - "tests/platform/test_generic_mppi.py"
+      - "tests/rl/test_trajectory_features.py"
+  - action: "Implemented same-data state-only ensemble ablation, trajectory EDA, fail-closed eligibility checks and grouped development evaluation."
+    provenance: ai-executed
+    files_changed:
+      - "src/mobile_robot_mppi/rl/utility_dataset.py"
+      - "src/mobile_robot_mppi/rl/utility_model.py"
+      - "experiments/rl/train_counterfactual_utility_ensemble.py"
+      - "experiments/rl/analyze_trajectory_utility_dataset.py"
+      - "tests/rl/test_utility_model.py"
+  - action: "Collected and audited L24 development data, trained both ensembles, kept all test seeds sealed, recorded the negative result and ran the full 314-test suite."
+    provenance: ai-executed
+    files_changed:
+      - "docs/rl/30_l24_trajectory_utility_results_2026-07-15.md"
+      - "results/research_platform/rl/l24_trajectory_utility_data_multiseed_20260715_v1/"
+      - "results/research_platform/rl/l24_trajectory_utility_ensemble_development_20260715_v1/"
+      - "README.md"
+
+claims_touched:
+  - id: C18
+    action: created
+    provenance: ai-suggested
+  - id: C19
+    action: created
+    provenance: ai-suggested
+  - id: C20
+    action: created
+    provenance: ai-suggested
+
+open_threads:
+  - "Keep legacy and L24 test groups sealed because the development gate failed."
+  - "Keep closed-loop selection seeds 20281101--20281115 sealed."
+  - "Decide whether to accept the proposed OOD/scene-complexity pivot before preregistering the next experiment."
+  - "Freeze the failed L23/L24 learned macro-utility gates as documented negative results rather than continuing model-capacity sweeps."
+
+ai_suggestions_pending:
+  - "Use an interpretable OOD or scene-complexity score to activate the RL sampling prior only where traditional MPPI/BC is expected to be insufficient."
+  - "Keep ICODE as an independent dynamics-model ablation and freeze or update it only at low frequency in fixed environments."
+  - "Build the next evidence matrix across simple/complex, static/dynamic and seen/OOD scenes before spending sealed test seeds."

@@ -1,0 +1,17 @@
+include: residual_structure_cross_plant_l64.yaml
+
+experiment:
+  name: residual_structure_cross_plant_confirmation_l65
+  output_dir: results/research_platform/rl/l65_residual_structure_cross_plant_confirmation_20260716_v1
+
+rl:
+  cross_layer_factorial:
+    design_id: l65_parameter_matched_residual_structure_cross_plant_confirmation_v1
+    confirmation_mode: true
+    schedule_seed: 2026071650
+    bootstrap_seed: 2026071651
+    development_episode_seeds: [21860831, 21860832, 21860833, 21860834, 21860835]
+    sealed_confirmation_episode_seeds: [21860831, 21860832, 21860833, 21860834, 21860835]
+    protected_config_paths:
+      - configs/rl/residual_structure_cross_plant_l64.yaml
+

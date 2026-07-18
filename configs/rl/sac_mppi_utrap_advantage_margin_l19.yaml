@@ -1,0 +1,13 @@
+include: sac_mppi_utrap_critic_advantage_l18.yaml
+
+experiment:
+  name: sac_mppi_utrap_advantage_margin_l19
+  output_dir: results/research_platform/rl/utrap_advantage_margin_l19_20260715
+
+rl:
+  policy_id: sac_mppi_utrap_advantage_margin_l19
+  gate:
+    mode: none
+    correction_advantage_gate_mode: hard
+    correction_advantage_critic_source: target
+    correction_advantage_threshold: 0.0

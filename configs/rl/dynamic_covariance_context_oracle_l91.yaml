@@ -1,0 +1,20 @@
+schema_version: 1
+design_id: l91_dynamic_obstacle_covariance_context_oracle_v1
+base_config: configs/rl/sac_mppi_covariance_only_l84.yaml
+schedule_seed: 2026071831
+bootstrap_seed: 2026071832
+selection_seeds: [20270001, 20270002, 20270003]
+evaluation_seeds: [20270101, 20270102, 20270103, 20270104, 20270105]
+
+scenes:
+  - configs/research/mujoco_clean_goal_3_3.yaml
+  - configs/research/mujoco_dynamic_calibrated_easy_l37.yaml
+  - configs/research/mujoco_dynamic_calibrated_moderate_l37.yaml
+  - configs/research/mujoco_dynamic_calibrated_hard_l37.yaml
+
+candidates:
+  - {name: narrow, scale: [0.5, 0.5]}
+  - {name: baseline, scale: [1.0, 1.0]}
+  - {name: turn, scale: [0.75, 1.75]}
+  - {name: speed, scale: [1.75, 0.75]}
+  - {name: broad, scale: [1.75, 1.75]}

@@ -1,0 +1,934 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" width="850.79952pt" height="605.99952pt" viewBox="0 0 850.79952 605.99952" xmlns="http://www.w3.org/2000/svg" version="1.1">
+ <metadata>
+  <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+   <cc:Work>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:date>2026-07-16T10:35:45.202900</dc:date>
+    <dc:format>image/svg+xml</dc:format>
+    <dc:creator>
+     <cc:Agent>
+      <dc:title>Matplotlib v3.7.5, https://matplotlib.org/</dc:title>
+     </cc:Agent>
+    </dc:creator>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <defs>
+  <style type="text/css">*{stroke-linejoin: round; stroke-linecap: butt}</style>
+ </defs>
+ <g id="figure_1">
+  <g id="patch_1">
+   <path d="M 0 605.99952 
+L 850.79952 605.99952 
+L 850.79952 0 
+L 0 0 
+z
+" style="fill: #ffffff"/>
+  </g>
+  <g id="patch_2">
+   <path d="M 52.255638 371.284309 
+L 376.132122 371.284309 
+L 376.132122 47.407824 
+L 52.255638 47.407824 
+z
+" style="fill: #ffffff"/>
+  </g>
+  <g id="axes_1">
+   <g id="Poly3DCollection_1">
+    <path d="M 154.663497 253.732873 
+L 168.41467 246.568264 
+L 170.239999 246.939605 
+L 156.488825 254.104213 
+z
+" clip-path="url(#pb06abd4568)" style="fill: #ffd2b8; fill-opacity: 0.94; stroke: #7a3100; stroke-width: 0.7"/>
+    <path d="M 168.41467 246.568264 
+L 154.663497 220.307822 
+L 156.488825 220.679162 
+L 170.239999 246.939605 
+z
+" clip-path="url(#pb06abd4568)" style="fill: #ffd2b8; fill-opacity: 0.94; stroke: #7a3100; stroke-width: 0.7"/>
+    <path d="M 154.663497 253.732873 
+L 168.41467 246.568264 
+L 154.663497 220.307822 
+z
+" clip-path="url(#pb06abd4568)" style="fill: #ffd2b8; fill-opacity: 0.94; stroke: #7a3100; stroke-width: 0.7"/>
+    <path d="M 156.488825 254.104213 
+L 170.239999 246.939605 
+L 156.488825 220.679162 
+z
+" clip-path="url(#pb06abd4568)" style="fill: #ffd2b8; fill-opacity: 0.94; stroke: #7a3100; stroke-width: 0.7"/>
+    <path d="M 154.663497 220.307822 
+L 154.663497 253.732873 
+L 156.488825 254.104213 
+L 156.488825 220.679162 
+z
+" clip-path="url(#pb06abd4568)" style="fill: #ffd2b8; fill-opacity: 0.94; stroke: #7a3100; stroke-width: 0.7"/>
+   </g>
+   <g id="text_1">
+    <text style="font: 700 10px 'Microsoft YaHei'" transform="translate(202.315465 176.57255)">A  主墙板</text>
+    <text style="font: 700 10px 'Microsoft YaHei'" transform="translate(195.851403 188.650987)">600×344×6</text>
+   </g>
+   <g id="text_2">
+    <text style="font: 700 9px 'Microsoft YaHei'" transform="translate(195.137073 281.516208)">B  底板</text>
+    <text style="font: 700 9px 'Microsoft YaHei'" transform="translate(184.476995 292.386802)">600×160×6</text>
+   </g>
+   <g id="text_3">
+    <text style="font: 700 9px 'Microsoft YaHei'" transform="translate(231.532304 237.550483)">C  加强肋</text>
+    <text style="font: 700 9px 'Microsoft YaHei'" transform="translate(216.566992 248.421076)">前后成对，共6件</text>
+   </g>
+   <g id="text_4">
+    <g id="patch_3">
+     <path d="M 55.494402 126.386759 
+L 117.431277 126.386759 
+Q 119.681277 126.386759 119.681277 124.136759 
+L 119.681277 114.70504 
+Q 119.681277 112.45504 117.431277 112.45504 
+L 55.494402 112.45504 
+Q 53.244402 112.45504 53.244402 114.70504 
+L 53.244402 124.136759 
+Q 53.244402 126.386759 55.494402 126.386759 
+z
+" style="fill: #f2a477; stroke: #7a3100; stroke-linejoin: miter"/>
+    </g>
+    <text style="font: 700 9px 'Microsoft YaHei'; text-anchor: start" x="55.494402" y="121.899415" transform="rotate(-0 55.494402 121.899415)">A  主墙板：1件</text>
+   </g>
+   <g id="text_5">
+    <g id="patch_4">
+     <path d="M 55.494402 162.013172 
+L 107.746434 162.013172 
+Q 109.996434 162.013172 109.996434 159.763172 
+L 109.996434 150.331454 
+Q 109.996434 148.081454 107.746434 148.081454 
+L 55.494402 148.081454 
+Q 53.244402 148.081454 53.244402 150.331454 
+L 53.244402 159.763172 
+Q 53.244402 162.013172 55.494402 162.013172 
+z
+" style="fill: #f6d5c1; stroke: #7a3100; stroke-linejoin: miter"/>
+    </g>
+    <text style="font: 700 9px 'Microsoft YaHei'; text-anchor: start" x="55.494402" y="157.525829" transform="rotate(-0 55.494402 157.525829)">B  底板：1件</text>
+   </g>
+   <g id="text_6">
+    <g id="patch_5">
+     <path d="M 55.494402 197.639586 
+L 117.11909 197.639586 
+Q 119.36909 197.639586 119.36909 195.389586 
+L 119.36909 185.957867 
+Q 119.36909 183.707867 117.11909 183.707867 
+L 55.494402 183.707867 
+Q 53.244402 183.707867 53.244402 185.957867 
+L 53.244402 195.389586 
+Q 53.244402 197.639586 55.494402 197.639586 
+z
+" style="fill: #ffd2b8; stroke: #7a3100; stroke-linejoin: miter"/>
+    </g>
+    <text style="font: 700 9px 'Microsoft YaHei'; text-anchor: start" x="55.494402" y="193.152242" transform="rotate(-0 55.494402 193.152242)">C  加强肋：6件</text>
+   </g>
+   <g id="text_7">
+    <text style="font: 700 13px 'Microsoft YaHei'; text-anchor: middle" x="214.19388" y="41.407824" transform="rotate(-0 214.19388 41.407824)">① 爆炸图：A、B、C 三种板件如何组合</text>
+   </g>
+   <g id="Poly3DCollection_2">
+    <path d="M 134.626073 230.74768 
+L 134.626073 264.172731 
+L 136.451401 264.544071 
+L 136.451401 231.11902 
+z
+" clip-path="url(#pb06abd4568)" style="fill: #ffd2b8; fill-opacity: 0.94; stroke: #7a3100; stroke-width: 0.7"/>
+    <path d="M 134.626073 264.172731 
+L 120.874899 271.337339 
+L 134.626073 230.74768 
+z
+" clip-path="url(#pb06abd4568)" style="fill: #ffd2b8; fill-opacity: 0.94; stroke: #7a3100; stroke-width: 0.7"/>
+    <path d="M 134.626073 264.172731 
+L 120.874899 271.337339 
+L 122.700228 271.708679 
+L 136.451401 264.544071 
+z
+" clip-path="url(#pb06abd4568)" style="fill: #ffd2b8; fill-opacity: 0.94; stroke: #7a3100; stroke-width: 0.7"/>
+    <path d="M 136.451401 264.544071 
+L 122.700228 271.708679 
+L 136.451401 231.11902 
+z
+" clip-path="url(#pb06abd4568)" style="fill: #ffd2b8; fill-opacity: 0.94; stroke: #7a3100; stroke-width: 0.7"/>
+    <path d="M 120.874899 271.337339 
+L 134.626073 230.74768 
+L 136.451401 231.11902 
+L 122.700228 271.708679 
+z
+" clip-path="url(#pb06abd4568)" style="fill: #ffd2b8; fill-opacity: 0.94; stroke: #7a3100; stroke-width: 0.7"/>
+   </g>
+   <g id="Poly3DCollection_3">
+    <path d="M 227.676637 268.586488 
+L 241.427811 261.42188 
+L 243.253139 261.79322 
+L 229.501966 268.957828 
+z
+" clip-path="url(#pb06abd4568)" style="fill: #ffd2b8; fill-opacity: 0.94; stroke: #7a3100; stroke-width: 0.7"/>
+    <path d="M 241.427811 261.42188 
+L 227.676637 235.161437 
+L 229.501966 235.532777 
+L 243.253139 261.79322 
+z
+" clip-path="url(#pb06abd4568)" style="fill: #ffd2b8; fill-opacity: 0.94; stroke: #7a3100; stroke-width: 0.7"/>
+    <path d="M 227.676637 268.586488 
+L 241.427811 261.42188 
+L 227.676637 235.161437 
+z
+" clip-path="url(#pb06abd4568)" style="fill: #ffd2b8; fill-opacity: 0.94; stroke: #7a3100; stroke-width: 0.7"/>
+    <path d="M 229.501966 268.957828 
+L 243.253139 261.79322 
+L 229.501966 235.532777 
+z
+" clip-path="url(#pb06abd4568)" style="fill: #ffd2b8; fill-opacity: 0.94; stroke: #7a3100; stroke-width: 0.7"/>
+    <path d="M 227.676637 235.161437 
+L 227.676637 268.586488 
+L 229.501966 268.957828 
+L 229.501966 235.532777 
+z
+" clip-path="url(#pb06abd4568)" style="fill: #ffd2b8; fill-opacity: 0.94; stroke: #7a3100; stroke-width: 0.7"/>
+   </g>
+   <g id="Poly3DCollection_4">
+    <path d="M 207.639213 245.601295 
+L 207.639213 279.026346 
+L 209.464541 279.397686 
+L 209.464541 245.972635 
+z
+" clip-path="url(#pb06abd4568)" style="fill: #ffd2b8; fill-opacity: 0.94; stroke: #7a3100; stroke-width: 0.7"/>
+    <path d="M 207.639213 279.026346 
+L 193.888039 286.190954 
+L 207.639213 245.601295 
+z
+" clip-path="url(#pb06abd4568)" style="fill: #ffd2b8; fill-opacity: 0.94; stroke: #7a3100; stroke-width: 0.7"/>
+    <path d="M 207.639213 279.026346 
+L 193.888039 286.190954 
+L 195.713368 286.562294 
+L 209.464541 279.397686 
+z
+" clip-path="url(#pb06abd4568)" style="fill: #ffd2b8; fill-opacity: 0.94; stroke: #7a3100; stroke-width: 0.7"/>
+    <path d="M 209.464541 279.397686 
+L 195.713368 286.562294 
+L 209.464541 245.972635 
+z
+" clip-path="url(#pb06abd4568)" style="fill: #ffd2b8; fill-opacity: 0.94; stroke: #7a3100; stroke-width: 0.7"/>
+    <path d="M 193.888039 286.190954 
+L 207.639213 245.601295 
+L 209.464541 245.972635 
+L 195.713368 286.562294 
+z
+" clip-path="url(#pb06abd4568)" style="fill: #ffd2b8; fill-opacity: 0.94; stroke: #7a3100; stroke-width: 0.7"/>
+   </g>
+   <g id="Poly3DCollection_5">
+    <path d="M 300.689777 283.440103 
+L 314.440951 276.275495 
+L 316.266279 276.646835 
+L 302.515106 283.811443 
+z
+" clip-path="url(#pb06abd4568)" style="fill: #ffd2b8; fill-opacity: 0.94; stroke: #7a3100; stroke-width: 0.7"/>
+    <path d="M 314.440951 276.275495 
+L 300.689777 250.015052 
+L 302.515106 250.386393 
+L 316.266279 276.646835 
+z
+" clip-path="url(#pb06abd4568)" style="fill: #ffd2b8; fill-opacity: 0.94; stroke: #7a3100; stroke-width: 0.7"/>
+    <path d="M 300.689777 283.440103 
+L 314.440951 276.275495 
+L 300.689777 250.015052 
+z
+" clip-path="url(#pb06abd4568)" style="fill: #ffd2b8; fill-opacity: 0.94; stroke: #7a3100; stroke-width: 0.7"/>
+    <path d="M 302.515106 283.811443 
+L 316.266279 276.646835 
+L 302.515106 250.386393 
+z
+" clip-path="url(#pb06abd4568)" style="fill: #ffd2b8; fill-opacity: 0.94; stroke: #7a3100; stroke-width: 0.7"/>
+    <path d="M 300.689777 250.015052 
+L 300.689777 283.440103 
+L 302.515106 283.811443 
+L 302.515106 250.386393 
+z
+" clip-path="url(#pb06abd4568)" style="fill: #ffd2b8; fill-opacity: 0.94; stroke: #7a3100; stroke-width: 0.7"/>
+   </g>
+   <g id="Poly3DCollection_6">
+    <path d="M 143.019791 259.269962 
+L 111.588537 275.64621 
+L 111.588537 273.640707 
+L 143.019791 257.264459 
+z
+" clip-path="url(#pb06abd4568)" style="fill: #f6d5c1; fill-opacity: 0.86; stroke: #7a3100; stroke-width: 0.7"/>
+    <path d="M 325.552641 296.404 
+L 143.019791 259.269962 
+L 143.019791 257.264459 
+L 325.552641 294.398497 
+z
+" clip-path="url(#pb06abd4568)" style="fill: #f6d5c1; fill-opacity: 0.86; stroke: #7a3100; stroke-width: 0.7"/>
+    <path d="M 111.588537 275.64621 
+L 294.121388 312.780248 
+L 325.552641 296.404 
+L 143.019791 259.269962 
+z
+" clip-path="url(#pb06abd4568)" style="fill: #f6d5c1; fill-opacity: 0.86; stroke: #7a3100; stroke-width: 0.7"/>
+    <path d="M 111.588537 273.640707 
+L 294.121388 310.774745 
+L 325.552641 294.398497 
+L 143.019791 257.264459 
+z
+" clip-path="url(#pb06abd4568)" style="fill: #f6d5c1; fill-opacity: 0.86; stroke: #7a3100; stroke-width: 0.7"/>
+    <path d="M 111.588537 275.64621 
+L 294.121388 312.780248 
+L 294.121388 310.774745 
+L 111.588537 273.640707 
+z
+" clip-path="url(#pb06abd4568)" style="fill: #f6d5c1; fill-opacity: 0.86; stroke: #7a3100; stroke-width: 0.7"/>
+    <path d="M 294.121388 312.780248 
+L 325.552641 296.404 
+L 325.552641 294.398497 
+L 294.121388 310.774745 
+z
+" clip-path="url(#pb06abd4568)" style="fill: #f6d5c1; fill-opacity: 0.86; stroke: #7a3100; stroke-width: 0.7"/>
+   </g>
+   <g id="Poly3DCollection_7">
+    <path d="M 280.652353 260.45491 
+L 280.652353 293.879961 
+L 282.477682 294.251301 
+L 282.477682 260.82625 
+z
+" clip-path="url(#pb06abd4568)" style="fill: #ffd2b8; fill-opacity: 0.94; stroke: #7a3100; stroke-width: 0.7"/>
+    <path d="M 280.652353 293.879961 
+L 266.90118 301.044569 
+L 280.652353 260.45491 
+z
+" clip-path="url(#pb06abd4568)" style="fill: #ffd2b8; fill-opacity: 0.94; stroke: #7a3100; stroke-width: 0.7"/>
+    <path d="M 280.652353 293.879961 
+L 266.90118 301.044569 
+L 268.726508 301.41591 
+L 282.477682 294.251301 
+z
+" clip-path="url(#pb06abd4568)" style="fill: #ffd2b8; fill-opacity: 0.94; stroke: #7a3100; stroke-width: 0.7"/>
+    <path d="M 282.477682 294.251301 
+L 268.726508 301.41591 
+L 282.477682 260.82625 
+z
+" clip-path="url(#pb06abd4568)" style="fill: #ffd2b8; fill-opacity: 0.94; stroke: #7a3100; stroke-width: 0.7"/>
+    <path d="M 266.90118 301.044569 
+L 280.652353 260.45491 
+L 282.477682 260.82625 
+L 268.726508 301.41591 
+z
+" clip-path="url(#pb06abd4568)" style="fill: #ffd2b8; fill-opacity: 0.94; stroke: #7a3100; stroke-width: 0.7"/>
+   </g>
+   <g id="Poly3DCollection_8">
+    <path d="M 127.8935 230.049225 
+L 126.714828 230.663334 
+L 126.714828 115.68116 
+L 127.8935 115.06705 
+z
+" clip-path="url(#pb06abd4568)" style="fill: #f2a477; fill-opacity: 0.86; stroke: #7a3100; stroke-width: 0.7"/>
+    <path d="M 126.714828 230.663334 
+L 309.247678 267.797372 
+L 310.42635 267.183263 
+L 127.8935 230.049225 
+z
+" clip-path="url(#pb06abd4568)" style="fill: #f2a477; fill-opacity: 0.86; stroke: #7a3100; stroke-width: 0.7"/>
+    <path d="M 310.42635 267.183263 
+L 127.8935 230.049225 
+L 127.8935 115.06705 
+L 310.42635 152.201088 
+z
+" clip-path="url(#pb06abd4568)" style="fill: #f2a477; fill-opacity: 0.86; stroke: #7a3100; stroke-width: 0.7"/>
+    <path d="M 126.714828 230.663334 
+L 309.247678 267.797372 
+L 309.247678 152.815198 
+L 126.714828 115.68116 
+z
+" clip-path="url(#pb06abd4568)" style="fill: #f2a477; fill-opacity: 0.86; stroke: #7a3100; stroke-width: 0.7"/>
+    <path d="M 126.714828 115.68116 
+L 309.247678 152.815198 
+L 310.42635 152.201088 
+L 127.8935 115.06705 
+z
+" clip-path="url(#pb06abd4568)" style="fill: #f2a477; fill-opacity: 0.86; stroke: #7a3100; stroke-width: 0.7"/>
+    <path d="M 309.247678 267.797372 
+L 310.42635 267.183263 
+L 310.42635 152.201088 
+L 309.247678 152.815198 
+z
+" clip-path="url(#pb06abd4568)" style="fill: #f2a477; fill-opacity: 0.86; stroke: #7a3100; stroke-width: 0.7"/>
+   </g>
+  </g>
+  <g id="patch_6">
+   <path d="M 474.667398 371.284309 
+L 798.543882 371.284309 
+L 798.543882 47.407824 
+L 474.667398 47.407824 
+z
+" style="fill: #ffffff"/>
+  </g>
+  <g id="axes_2">
+   <g id="Poly3DCollection_9">
+    <path d="M 567.645881 268.673262 
+L 581.397054 261.508654 
+L 583.222383 261.879994 
+L 569.471209 269.044603 
+z
+" clip-path="url(#p92e06c9120)" style="fill: #ffd2b8; fill-opacity: 0.94; stroke: #7a3100; stroke-width: 0.7"/>
+    <path d="M 581.397054 261.508654 
+L 567.645881 235.248211 
+L 569.471209 235.619552 
+L 583.222383 261.879994 
+z
+" clip-path="url(#p92e06c9120)" style="fill: #ffd2b8; fill-opacity: 0.94; stroke: #7a3100; stroke-width: 0.7"/>
+    <path d="M 567.645881 268.673262 
+L 581.397054 261.508654 
+L 567.645881 235.248211 
+z
+" clip-path="url(#p92e06c9120)" style="fill: #ffd2b8; fill-opacity: 0.94; stroke: #7a3100; stroke-width: 0.7"/>
+    <path d="M 569.471209 269.044603 
+L 583.222383 261.879994 
+L 569.471209 235.619552 
+z
+" clip-path="url(#p92e06c9120)" style="fill: #ffd2b8; fill-opacity: 0.94; stroke: #7a3100; stroke-width: 0.7"/>
+    <path d="M 567.645881 235.248211 
+L 567.645881 268.673262 
+L 569.471209 269.044603 
+L 569.471209 235.619552 
+z
+" clip-path="url(#p92e06c9120)" style="fill: #ffd2b8; fill-opacity: 0.94; stroke: #7a3100; stroke-width: 0.7"/>
+   </g>
+   <g id="text_8">
+    <text style="font: 700 10px 'Microsoft YaHei'" transform="translate(611.688795 203.750046)">成品总高 350</text>
+    <text style="font: 700 10px 'Microsoft YaHei'" transform="translate(621.688795 215.828484)">板长 600</text>
+    <text style="font: 700 10px 'Microsoft YaHei'" transform="translate(616.688795 227.906921)">底板深 160</text>
+   </g>
+   <g id="text_9">
+    <text style="font: 700 13px 'Microsoft YaHei'; text-anchor: middle" x="636.60564" y="41.407824" transform="rotate(-0 636.60564 41.407824)">② 成品图：加强肋必须前后成对</text>
+   </g>
+   <g id="Poly3DCollection_10">
+    <path d="M 566.467209 235.862321 
+L 566.467209 269.287371 
+L 568.292537 269.658712 
+L 568.292537 236.233661 
+z
+" clip-path="url(#p92e06c9120)" style="fill: #ffd2b8; fill-opacity: 0.94; stroke: #7a3100; stroke-width: 0.7"/>
+    <path d="M 566.467209 269.287371 
+L 552.716035 276.45198 
+L 566.467209 235.862321 
+z
+" clip-path="url(#p92e06c9120)" style="fill: #ffd2b8; fill-opacity: 0.94; stroke: #7a3100; stroke-width: 0.7"/>
+    <path d="M 566.467209 269.287371 
+L 552.716035 276.45198 
+L 554.541364 276.82332 
+L 568.292537 269.658712 
+z
+" clip-path="url(#p92e06c9120)" style="fill: #ffd2b8; fill-opacity: 0.94; stroke: #7a3100; stroke-width: 0.7"/>
+    <path d="M 568.292537 269.658712 
+L 554.541364 276.82332 
+L 568.292537 236.233661 
+z
+" clip-path="url(#p92e06c9120)" style="fill: #ffd2b8; fill-opacity: 0.94; stroke: #7a3100; stroke-width: 0.7"/>
+    <path d="M 552.716035 276.45198 
+L 566.467209 235.862321 
+L 568.292537 236.233661 
+L 554.541364 276.82332 
+z
+" clip-path="url(#p92e06c9120)" style="fill: #ffd2b8; fill-opacity: 0.94; stroke: #7a3100; stroke-width: 0.7"/>
+   </g>
+   <g id="Poly3DCollection_11">
+    <path d="M 640.659021 283.526877 
+L 654.410194 276.362269 
+L 656.235523 276.733609 
+L 642.48435 283.898218 
+z
+" clip-path="url(#p92e06c9120)" style="fill: #ffd2b8; fill-opacity: 0.94; stroke: #7a3100; stroke-width: 0.7"/>
+    <path d="M 654.410194 276.362269 
+L 640.659021 250.101827 
+L 642.48435 250.473167 
+L 656.235523 276.733609 
+z
+" clip-path="url(#p92e06c9120)" style="fill: #ffd2b8; fill-opacity: 0.94; stroke: #7a3100; stroke-width: 0.7"/>
+    <path d="M 640.659021 283.526877 
+L 654.410194 276.362269 
+L 640.659021 250.101827 
+z
+" clip-path="url(#p92e06c9120)" style="fill: #ffd2b8; fill-opacity: 0.94; stroke: #7a3100; stroke-width: 0.7"/>
+    <path d="M 642.48435 283.898218 
+L 656.235523 276.733609 
+L 642.48435 250.473167 
+z
+" clip-path="url(#p92e06c9120)" style="fill: #ffd2b8; fill-opacity: 0.94; stroke: #7a3100; stroke-width: 0.7"/>
+    <path d="M 640.659021 250.101827 
+L 640.659021 283.526877 
+L 642.48435 283.898218 
+L 642.48435 250.473167 
+z
+" clip-path="url(#p92e06c9120)" style="fill: #ffd2b8; fill-opacity: 0.94; stroke: #7a3100; stroke-width: 0.7"/>
+   </g>
+   <g id="Poly3DCollection_12">
+    <path d="M 639.480349 250.715936 
+L 639.480349 284.140987 
+L 641.305678 284.512327 
+L 641.305678 251.087276 
+z
+" clip-path="url(#p92e06c9120)" style="fill: #ffd2b8; fill-opacity: 0.94; stroke: #7a3100; stroke-width: 0.7"/>
+    <path d="M 639.480349 284.140987 
+L 625.729176 291.305595 
+L 639.480349 250.715936 
+z
+" clip-path="url(#p92e06c9120)" style="fill: #ffd2b8; fill-opacity: 0.94; stroke: #7a3100; stroke-width: 0.7"/>
+    <path d="M 639.480349 284.140987 
+L 625.729176 291.305595 
+L 627.554504 291.676935 
+L 641.305678 284.512327 
+z
+" clip-path="url(#p92e06c9120)" style="fill: #ffd2b8; fill-opacity: 0.94; stroke: #7a3100; stroke-width: 0.7"/>
+    <path d="M 641.305678 284.512327 
+L 627.554504 291.676935 
+L 641.305678 251.087276 
+z
+" clip-path="url(#p92e06c9120)" style="fill: #ffd2b8; fill-opacity: 0.94; stroke: #7a3100; stroke-width: 0.7"/>
+    <path d="M 625.729176 291.305595 
+L 639.480349 250.715936 
+L 641.305678 251.087276 
+L 627.554504 291.676935 
+z
+" clip-path="url(#p92e06c9120)" style="fill: #ffd2b8; fill-opacity: 0.94; stroke: #7a3100; stroke-width: 0.7"/>
+   </g>
+   <g id="Poly3DCollection_13">
+    <path d="M 713.672161 298.380493 
+L 727.423335 291.215884 
+L 729.248663 291.587225 
+L 715.49749 298.751833 
+z
+" clip-path="url(#p92e06c9120)" style="fill: #ffd2b8; fill-opacity: 0.94; stroke: #7a3100; stroke-width: 0.7"/>
+    <path d="M 727.423335 291.215884 
+L 713.672161 264.955442 
+L 715.49749 265.326782 
+L 729.248663 291.587225 
+z
+" clip-path="url(#p92e06c9120)" style="fill: #ffd2b8; fill-opacity: 0.94; stroke: #7a3100; stroke-width: 0.7"/>
+    <path d="M 713.672161 298.380493 
+L 727.423335 291.215884 
+L 713.672161 264.955442 
+z
+" clip-path="url(#p92e06c9120)" style="fill: #ffd2b8; fill-opacity: 0.94; stroke: #7a3100; stroke-width: 0.7"/>
+    <path d="M 715.49749 298.751833 
+L 729.248663 291.587225 
+L 715.49749 265.326782 
+z
+" clip-path="url(#p92e06c9120)" style="fill: #ffd2b8; fill-opacity: 0.94; stroke: #7a3100; stroke-width: 0.7"/>
+    <path d="M 713.672161 264.955442 
+L 713.672161 298.380493 
+L 715.49749 298.751833 
+L 715.49749 265.326782 
+z
+" clip-path="url(#p92e06c9120)" style="fill: #ffd2b8; fill-opacity: 0.94; stroke: #7a3100; stroke-width: 0.7"/>
+   </g>
+   <g id="Poly3DCollection_14">
+    <path d="M 712.493489 265.569551 
+L 712.493489 298.994602 
+L 714.318818 299.365942 
+L 714.318818 265.940891 
+z
+" clip-path="url(#p92e06c9120)" style="fill: #ffd2b8; fill-opacity: 0.94; stroke: #7a3100; stroke-width: 0.7"/>
+    <path d="M 712.493489 298.994602 
+L 698.742316 306.15921 
+L 712.493489 265.569551 
+z
+" clip-path="url(#p92e06c9120)" style="fill: #ffd2b8; fill-opacity: 0.94; stroke: #7a3100; stroke-width: 0.7"/>
+    <path d="M 712.493489 298.994602 
+L 698.742316 306.15921 
+L 700.567644 306.530551 
+L 714.318818 299.365942 
+z
+" clip-path="url(#p92e06c9120)" style="fill: #ffd2b8; fill-opacity: 0.94; stroke: #7a3100; stroke-width: 0.7"/>
+    <path d="M 714.318818 299.365942 
+L 700.567644 306.530551 
+L 714.318818 265.940891 
+z
+" clip-path="url(#p92e06c9120)" style="fill: #ffd2b8; fill-opacity: 0.94; stroke: #7a3100; stroke-width: 0.7"/>
+    <path d="M 698.742316 306.15921 
+L 712.493489 265.569551 
+L 714.318818 265.940891 
+L 700.567644 306.530551 
+z
+" clip-path="url(#p92e06c9120)" style="fill: #ffd2b8; fill-opacity: 0.94; stroke: #7a3100; stroke-width: 0.7"/>
+   </g>
+   <g id="Poly3DCollection_15">
+    <path d="M 565.431551 259.269962 
+L 534.000297 275.64621 
+L 534.000297 273.640707 
+L 565.431551 257.264459 
+z
+" clip-path="url(#p92e06c9120)" style="fill: #f6d5c1; fill-opacity: 0.86; stroke: #7a3100; stroke-width: 0.7"/>
+    <path d="M 747.964401 296.404 
+L 565.431551 259.269962 
+L 565.431551 257.264459 
+L 747.964401 294.398497 
+z
+" clip-path="url(#p92e06c9120)" style="fill: #f6d5c1; fill-opacity: 0.86; stroke: #7a3100; stroke-width: 0.7"/>
+    <path d="M 534.000297 275.64621 
+L 716.533148 312.780248 
+L 747.964401 296.404 
+L 565.431551 259.269962 
+z
+" clip-path="url(#p92e06c9120)" style="fill: #f6d5c1; fill-opacity: 0.86; stroke: #7a3100; stroke-width: 0.7"/>
+    <path d="M 534.000297 273.640707 
+L 716.533148 310.774745 
+L 747.964401 294.398497 
+L 565.431551 257.264459 
+z
+" clip-path="url(#p92e06c9120)" style="fill: #f6d5c1; fill-opacity: 0.86; stroke: #7a3100; stroke-width: 0.7"/>
+    <path d="M 534.000297 275.64621 
+L 716.533148 312.780248 
+L 716.533148 310.774745 
+L 534.000297 273.640707 
+z
+" clip-path="url(#p92e06c9120)" style="fill: #f6d5c1; fill-opacity: 0.86; stroke: #7a3100; stroke-width: 0.7"/>
+    <path d="M 716.533148 312.780248 
+L 747.964401 296.404 
+L 747.964401 294.398497 
+L 716.533148 310.774745 
+z
+" clip-path="url(#p92e06c9120)" style="fill: #f6d5c1; fill-opacity: 0.86; stroke: #7a3100; stroke-width: 0.7"/>
+   </g>
+   <g id="Poly3DCollection_16">
+    <path d="M 550.30526 265.145529 
+L 549.126588 265.759638 
+L 549.126588 150.777463 
+L 550.30526 150.163354 
+z
+" clip-path="url(#p92e06c9120)" style="fill: #f2a477; fill-opacity: 0.86; stroke: #7a3100; stroke-width: 0.7"/>
+    <path d="M 549.126588 265.759638 
+L 731.659438 302.893676 
+L 732.83811 302.279567 
+L 550.30526 265.145529 
+z
+" clip-path="url(#p92e06c9120)" style="fill: #f2a477; fill-opacity: 0.86; stroke: #7a3100; stroke-width: 0.7"/>
+    <path d="M 732.83811 302.279567 
+L 550.30526 265.145529 
+L 550.30526 150.163354 
+L 732.83811 187.297392 
+z
+" clip-path="url(#p92e06c9120)" style="fill: #f2a477; fill-opacity: 0.86; stroke: #7a3100; stroke-width: 0.7"/>
+    <path d="M 549.126588 265.759638 
+L 731.659438 302.893676 
+L 731.659438 187.911501 
+L 549.126588 150.777463 
+z
+" clip-path="url(#p92e06c9120)" style="fill: #f2a477; fill-opacity: 0.86; stroke: #7a3100; stroke-width: 0.7"/>
+    <path d="M 549.126588 150.777463 
+L 731.659438 187.911501 
+L 732.83811 187.297392 
+L 550.30526 150.163354 
+z
+" clip-path="url(#p92e06c9120)" style="fill: #f2a477; fill-opacity: 0.86; stroke: #7a3100; stroke-width: 0.7"/>
+    <path d="M 731.659438 302.893676 
+L 732.83811 302.279567 
+L 732.83811 187.297392 
+L 731.659438 187.911501 
+z
+" clip-path="url(#p92e06c9120)" style="fill: #f2a477; fill-opacity: 0.86; stroke: #7a3100; stroke-width: 0.7"/>
+   </g>
+   <g id="text_10">
+    <g id="patch_7">
+     <path d="M 481.144927 110.727232 
+L 604.120943 110.727232 
+Q 606.780943 110.727232 606.780943 108.067232 
+L 606.780943 98.111529 
+Q 606.780943 95.451529 604.120943 95.451529 
+L 481.144927 95.451529 
+Q 478.484927 95.451529 478.484927 98.111529 
+L 478.484927 108.067232 
+Q 478.484927 110.727232 481.144927 110.727232 
+z
+" style="fill: #ffffff; stroke: #7a3100; stroke-linejoin: miter"/>
+    </g>
+    <text style="font: 700 9.5px 'Microsoft YaHei'; text-anchor: start" x="481.144927" y="105.705591" transform="rotate(-0 481.144927 105.705591)">成品外形：600 × 160 × 350</text>
+   </g>
+   <g id="text_11">
+    <g id="patch_8">
+     <path d="M 481.144927 143.11488 
+L 569.070396 143.11488 
+Q 571.730396 143.11488 571.730396 140.45488 
+L 571.730396 130.499177 
+Q 571.730396 127.839177 569.070396 127.839177 
+L 481.144927 127.839177 
+Q 478.484927 127.839177 478.484927 130.499177 
+L 478.484927 140.45488 
+Q 478.484927 143.11488 481.144927 143.11488 
+z
+" style="fill: #ffffff; stroke: #7a3100; stroke-linejoin: miter"/>
+    </g>
+    <text style="font: 700 9.5px 'Microsoft YaHei'; text-anchor: start" x="481.144927" y="138.09324" transform="rotate(-0 481.144927 138.09324)">C：前后成对，共6件</text>
+   </g>
+  </g>
+  <g id="axes_3">
+   <g id="table_1">
+    <g id="patch_9">
+     <path d="M 7.2 473.37059 
+L 40.319021 473.37059 
+L 40.319021 449.902776 
+L 7.2 449.902776 
+z
+" style="fill: #f6d5c1; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_12">
+     <text style="font: 700 9px 'Microsoft YaHei'; text-anchor: middle" x="23.75951" y="464.115198" transform="rotate(-0 23.75951 464.115198)">代号</text>
+    </g>
+    <g id="patch_10">
+     <path d="M 40.319021 473.37059 
+L 114.836818 473.37059 
+L 114.836818 449.902776 
+L 40.319021 449.902776 
+z
+" style="fill: #f6d5c1; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_13">
+     <text style="font: 700 9px 'Microsoft YaHei'; text-anchor: middle" x="77.577919" y="464.115198" transform="rotate(-0 77.577919 464.115198)">零件</text>
+    </g>
+    <g id="patch_11">
+     <path d="M 114.836818 473.37059 
+L 214.19388 473.37059 
+L 214.19388 449.902776 
+L 114.836818 449.902776 
+z
+" style="fill: #f6d5c1; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_14">
+     <text style="font: 700 9px 'Microsoft YaHei'; text-anchor: middle" x="164.515349" y="464.115198" transform="rotate(-0 164.515349 464.115198)">下料尺寸 / 外形</text>
+    </g>
+    <g id="patch_12">
+     <path d="M 214.19388 473.37059 
+L 251.452778 473.37059 
+L 251.452778 449.902776 
+L 214.19388 449.902776 
+z
+" style="fill: #f6d5c1; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_15">
+     <text style="font: 700 9px 'Microsoft YaHei'; text-anchor: middle" x="232.823329" y="464.115198" transform="rotate(-0 232.823329 464.115198)">数量</text>
+    </g>
+    <g id="patch_13">
+     <path d="M 251.452778 473.37059 
+L 421.18776 473.37059 
+L 421.18776 449.902776 
+L 251.452778 449.902776 
+z
+" style="fill: #f6d5c1; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_16">
+     <text style="font: 700 9px 'Microsoft YaHei'; text-anchor: middle" x="336.320269" y="464.115198" transform="rotate(-0 336.320269 464.115198)">说明</text>
+    </g>
+    <g id="patch_14">
+     <path d="M 7.2 496.838404 
+L 40.319021 496.838404 
+L 40.319021 473.37059 
+L 7.2 473.37059 
+z
+" style="fill: #ffffff; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_17">
+     <text style="font: 9px 'Microsoft YaHei'; text-anchor: start" x="10.511902" y="487.583013" transform="rotate(-0 10.511902 487.583013)">A</text>
+    </g>
+    <g id="patch_15">
+     <path d="M 40.319021 496.838404 
+L 114.836818 496.838404 
+L 114.836818 473.37059 
+L 40.319021 473.37059 
+z
+" style="fill: #ffffff; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_18">
+     <text style="font: 9px 'Microsoft YaHei'; text-anchor: start" x="47.7708" y="487.583013" transform="rotate(-0 47.7708 487.583013)">主墙板</text>
+    </g>
+    <g id="patch_16">
+     <path d="M 114.836818 496.838404 
+L 214.19388 496.838404 
+L 214.19388 473.37059 
+L 114.836818 473.37059 
+z
+" style="fill: #ffffff; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_19">
+     <text style="font: 9px 'Microsoft YaHei'; text-anchor: start" x="124.772524" y="487.583013" transform="rotate(-0 124.772524 487.583013)">600 × 344 × 6</text>
+    </g>
+    <g id="patch_17">
+     <path d="M 214.19388 496.838404 
+L 251.452778 496.838404 
+L 251.452778 473.37059 
+L 214.19388 473.37059 
+z
+" style="fill: #ffffff; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_20">
+     <text style="font: 9px 'Microsoft YaHei'; text-anchor: start" x="217.91977" y="487.583013" transform="rotate(-0 217.91977 487.583013)">1</text>
+    </g>
+    <g id="patch_18">
+     <path d="M 251.452778 496.838404 
+L 421.18776 496.838404 
+L 421.18776 473.37059 
+L 251.452778 473.37059 
+z
+" style="fill: #ffffff; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_21">
+     <text style="font: 9px 'Microsoft YaHei'; text-anchor: start" x="268.426277" y="487.583013" transform="rotate(-0 268.426277 487.583013)">上角 R20；下角 R5</text>
+    </g>
+    <g id="patch_19">
+     <path d="M 7.2 520.306219 
+L 40.319021 520.306219 
+L 40.319021 496.838404 
+L 7.2 496.838404 
+z
+" style="fill: #ffffff; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_22">
+     <text style="font: 9px 'Microsoft YaHei'; text-anchor: start" x="10.511902" y="511.050827" transform="rotate(-0 10.511902 511.050827)">B</text>
+    </g>
+    <g id="patch_20">
+     <path d="M 40.319021 520.306219 
+L 114.836818 520.306219 
+L 114.836818 496.838404 
+L 40.319021 496.838404 
+z
+" style="fill: #ffffff; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_23">
+     <text style="font: 9px 'Microsoft YaHei'; text-anchor: start" x="47.7708" y="511.050827" transform="rotate(-0 47.7708 511.050827)">底板</text>
+    </g>
+    <g id="patch_21">
+     <path d="M 114.836818 520.306219 
+L 214.19388 520.306219 
+L 214.19388 496.838404 
+L 114.836818 496.838404 
+z
+" style="fill: #ffffff; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_24">
+     <text style="font: 9px 'Microsoft YaHei'; text-anchor: start" x="124.772524" y="511.050827" transform="rotate(-0 124.772524 511.050827)">600 × 160 × 6</text>
+    </g>
+    <g id="patch_22">
+     <path d="M 214.19388 520.306219 
+L 251.452778 520.306219 
+L 251.452778 496.838404 
+L 214.19388 496.838404 
+z
+" style="fill: #ffffff; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_25">
+     <text style="font: 9px 'Microsoft YaHei'; text-anchor: start" x="217.91977" y="511.050827" transform="rotate(-0 217.91977 511.050827)">1</text>
+    </g>
+    <g id="patch_23">
+     <path d="M 251.452778 520.306219 
+L 421.18776 520.306219 
+L 421.18776 496.838404 
+L 251.452778 496.838404 
+z
+" style="fill: #ffffff; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_26">
+     <text style="font: 9px 'Microsoft YaHei'; text-anchor: start" x="268.426277" y="511.050827" transform="rotate(-0 268.426277 511.050827)">刻中心线及肋板定位线</text>
+    </g>
+    <g id="patch_24">
+     <path d="M 7.2 543.774033 
+L 40.319021 543.774033 
+L 40.319021 520.306219 
+L 7.2 520.306219 
+z
+" style="fill: #ffffff; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_27">
+     <text style="font: 9px 'Microsoft YaHei'; text-anchor: start" x="10.511902" y="534.518642" transform="rotate(-0 10.511902 534.518642)">C</text>
+    </g>
+    <g id="patch_25">
+     <path d="M 40.319021 543.774033 
+L 114.836818 543.774033 
+L 114.836818 520.306219 
+L 40.319021 520.306219 
+z
+" style="fill: #ffffff; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_28">
+     <text style="font: 9px 'Microsoft YaHei'; text-anchor: start" x="47.7708" y="534.518642" transform="rotate(-0 47.7708 534.518642)">三角加强肋</text>
+    </g>
+    <g id="patch_26">
+     <path d="M 114.836818 543.774033 
+L 214.19388 543.774033 
+L 214.19388 520.306219 
+L 114.836818 520.306219 
+z
+" style="fill: #ffffff; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_29">
+     <text style="font: 9px 'Microsoft YaHei'; text-anchor: start" x="124.772524" y="534.518642" transform="rotate(-0 124.772524 534.518642)">70 × 100 × 6</text>
+    </g>
+    <g id="patch_27">
+     <path d="M 214.19388 543.774033 
+L 251.452778 543.774033 
+L 251.452778 520.306219 
+L 214.19388 520.306219 
+z
+" style="fill: #ffffff; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_30">
+     <text style="font: 9px 'Microsoft YaHei'; text-anchor: start" x="217.91977" y="534.518642" transform="rotate(-0 217.91977 534.518642)">6</text>
+    </g>
+    <g id="patch_28">
+     <path d="M 251.452778 543.774033 
+L 421.18776 543.774033 
+L 421.18776 520.306219 
+L 251.452778 520.306219 
+z
+" style="fill: #ffffff; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_31">
+     <text style="font: 9px 'Microsoft YaHei'; text-anchor: start" x="268.426277" y="534.518642" transform="rotate(-0 268.426277 534.518642)">3 个位置，每处前后各 1 件</text>
+    </g>
+   </g>
+   <g id="text_32">
+    <text style="font: 700 12px 'Microsoft YaHei'; text-anchor: middle" x="214.19388" y="386.877289" transform="rotate(-0 214.19388 386.877289)">W600 单件物料（W300 差异见下一页）</text>
+   </g>
+  </g>
+  <g id="axes_4">
+   <g id="text_33">
+    <g id="patch_29">
+     <path d="M 437.891515 571.016856 
+L 729.071234 571.016856 
+Q 735.191234 571.016856 735.191234 564.896856 
+L 735.191234 398.955733 
+Q 735.191234 392.835733 729.071234 392.835733 
+L 437.891515 392.835733 
+Q 431.771515 392.835733 431.771515 398.955733 
+L 431.771515 564.896856 
+Q 431.771515 571.016856 437.891515 571.016856 
+z
+" style="fill: #fff8f1; stroke: #d55e00; stroke-width: 1.4; stroke-linejoin: miter"/>
+    </g>
+    <text style="font: 10.2px 'Microsoft YaHei'" transform="translate(437.891515 407.109358)">装配顺序（不得自行改成通长开槽）</text>
+    <text style="font: 10.2px 'Microsoft YaHei'" transform="translate(437.891515 421.223162)"/>
+    <text style="font: 10.2px 'Microsoft YaHei'" transform="translate(437.891515 435.336966)">1. 在底板 B 上刻长向中心线和加强肋位置线。</text>
+    <text style="font: 10.2px 'Microsoft YaHei'" transform="translate(437.891515 449.45077)">2. 主墙板 A 沿中心线立放，用直角夹具校正为 90°。</text>
+    <text style="font: 10.2px 'Microsoft YaHei'" transform="translate(437.891515 463.564573)">3. 沿 A/B 接缝两侧连续施加 PMMA 专用溶剂胶。</text>
+    <text style="font: 10.2px 'Microsoft YaHei'" transform="translate(437.891515 477.678377)">4. 每个定位位置粘 2 件 C：墙板前后各 1 件。</text>
+    <text style="font: 10.2px 'Microsoft YaHei'" transform="translate(437.891515 491.792181)">5. 按胶黏剂说明固化后，再装 U 形护边和防滑垫。</text>
+    <text style="font: 10.2px 'Microsoft YaHei'" transform="translate(437.891515 505.905985)"/>
+    <text style="font: 10.2px 'Microsoft YaHei'" transform="translate(437.891515 520.019788)">关键尺寸：344 + 6 = 成品总高 350；底板中心线两侧各 80。</text>
+    <text style="font: 10.2px 'Microsoft YaHei'" transform="translate(437.891515 534.133592)">70 mm 肋脚不会超出底板，外缘保留约 7 mm 余量。</text>
+    <text style="font: 10.2px 'Microsoft YaHei'" transform="translate(437.891515 548.247396)"/>
+    <text style="font: 10.2px 'Microsoft YaHei'" transform="translate(437.891515 562.3612)">先做 1 件 W600 首件，确认粘接、抗倾倒和雷达回波后再批量。</text>
+   </g>
+  </g>
+  <g id="text_34">
+   <text style="font: 700 17px 'Microsoft YaHei'; text-anchor: middle" x="425.39976" y="20.789375" transform="rotate(-0 425.39976 20.789375)">低矮亚克力墙体——供应商装配总图（单位：mm）</text>
+  </g>
+ </g>
+ <defs>
+  <clipPath id="pb06abd4568">
+   <rect x="52.255638" y="47.407824" width="323.876485" height="323.876485"/>
+  </clipPath>
+  <clipPath id="p92e06c9120">
+   <rect x="474.667398" y="47.407824" width="323.876485" height="323.876485"/>
+  </clipPath>
+ </defs>
+</svg>

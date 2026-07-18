@@ -1,0 +1,76 @@
+include: static_risk_balanced_sealed_confirmation_l74.yaml
+
+experiment:
+  name: progress_competence_activation_l75
+  output_dir: results/research_platform/rl/l75_progress_competence_activation_20260717_v1
+
+rl:
+  policy_id: progress_competence_activation_l75
+  gate:
+    progress:
+      observation_window_s: 2.0
+      minimum_window_coverage_s: 1.8
+      full_activation_progress_m: 0.04
+      zero_activation_progress_m: 0.20
+      activation_hold_s: 1.0
+  cross_layer_factorial:
+    study_label: L75
+    artifact_prefix: l75
+    design_id: l75_progress_competence_activation_v1
+    confirmation_mode: false
+    schedule_seed: 2026071775
+    conditions:
+      - complexity_bc_icode
+      - gated_lcb_icode
+      - progress_gated_lcb_icode
+    model_blocks:
+      - rl_seed: 20260751
+        icode_seed: 20261201
+        icode_checkpoint: results/research_platform/l57_icode_high_dynamic_h36_seed20261201_v1/best.pt
+        condition_checkpoints:
+          complexity_bc_icode: results/research_platform/rl/l72_static_risk_balanced_seed20260751_30k_20260717_v2/checkpoints/initial.pt
+          gated_lcb_icode: results/research_platform/rl/l72_static_risk_balanced_seed20260751_30k_20260717_v2/checkpoints/step_000030000.pt
+          progress_gated_lcb_icode: results/research_platform/rl/l72_static_risk_balanced_seed20260751_30k_20260717_v2/checkpoints/step_000030000.pt
+      - rl_seed: 20260752
+        icode_seed: 20261202
+        icode_checkpoint: results/research_platform/l57_icode_high_dynamic_h36_seed20261202_v1/best.pt
+        condition_checkpoints:
+          complexity_bc_icode: results/research_platform/rl/l72_static_risk_balanced_seed20260752_30k_20260717_v2/checkpoints/initial.pt
+          gated_lcb_icode: results/research_platform/rl/l72_static_risk_balanced_seed20260752_30k_20260717_v2/checkpoints/step_000030000.pt
+          progress_gated_lcb_icode: results/research_platform/rl/l72_static_risk_balanced_seed20260752_30k_20260717_v2/checkpoints/step_000030000.pt
+      - rl_seed: 20260753
+        icode_seed: 20261203
+        icode_checkpoint: results/research_platform/l57_icode_high_dynamic_h36_seed20261203_v1/best.pt
+        condition_checkpoints:
+          complexity_bc_icode: results/research_platform/rl/l72_static_risk_balanced_seed20260753_30k_20260717_v2/checkpoints/initial.pt
+          gated_lcb_icode: results/research_platform/rl/l72_static_risk_balanced_seed20260753_30k_20260717_v2/checkpoints/step_000030000.pt
+          progress_gated_lcb_icode: results/research_platform/rl/l72_static_risk_balanced_seed20260753_30k_20260717_v2/checkpoints/step_000030000.pt
+    development_episode_seeds:
+      [22200801, 22200802, 22200803, 22200804, 22200805]
+    sealed_confirmation_episode_seeds:
+      [22200811, 22200812, 22200813, 22200814, 22200815]
+    protected_config_paths:
+      - configs/rl/static_rl_contribution_l69.yaml
+      - configs/rl/static_multigeometry_deployment_selection_l71.yaml
+      - configs/rl/static_risk_balanced_deployment_selection_l73.yaml
+      - configs/rl/static_risk_balanced_sealed_confirmation_l74.yaml
+    progress_competence_gate:
+      base_condition: complexity_bc_icode
+      always_condition: gated_lcb_icode
+      progress_condition: progress_gated_lcb_icode
+      minimum_nonnegative_net_success_blocks: 2
+      minimum_total_success_gains: 2
+      maximum_total_success_losses: 1
+      minimum_total_net_success_gain: 1
+      maximum_u_trap_success_losses: 0
+      minimum_corridor_net_success_gain: 2
+      maximum_collision_regressions: 0
+      minimum_mean_goal_distance_improvement_m: 0.0
+      minimum_gate_alpha_reduction_vs_always: 0.50
+      minimum_corridor_stagnation_activation_mean: 0.02
+      maximum_frozen_base_correction_gate_alpha: 0.0
+    interpretation_guard: >-
+      L75 evaluates a preregistered, online progress-based activation rule on
+      fresh development seeds. Scene names and simulator truth are unavailable
+      to the gate. L74 confirmation seeds are protected and cannot be used for
+      threshold calibration.

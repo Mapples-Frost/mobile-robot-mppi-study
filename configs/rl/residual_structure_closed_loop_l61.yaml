@@ -1,0 +1,56 @@
+include: icode_high_dynamic_closed_loop_l58.yaml
+
+experiment:
+  name: residual_structure_closed_loop_l61
+  output_dir: results/research_platform/rl/l61_residual_structure_closed_loop_20260716_v1
+
+planner:
+  sampling_prior: goal_warm_start
+
+memory:
+  enable: false
+
+rl:
+  enabled: false
+  checkpoint: null
+  cross_layer_factorial:
+    design_id: l61_parameter_matched_residual_structure_closed_loop_v1
+    confirmation_mode: false
+    schedule_seed: 2026071637
+    bootstrap_seed: 2026071638
+    bootstrap_replicates: 20000
+    conditions: [traditional_nominal, traditional_mlp, traditional_icode]
+    model_blocks:
+      - rl_seed: 20260731
+        mlp_seed: 20261201
+        icode_seed: 20261201
+        rl_checkpoint: results/research_platform/rl/subgoal_history_l6_20260713/checkpoints/best.pt
+        mlp_checkpoint: results/research_platform/l60_mlp_high_dynamic_h36_seed20261201_v1/best.pt
+        icode_checkpoint: results/research_platform/l57_icode_high_dynamic_h36_seed20261201_v1/best.pt
+      - rl_seed: 20260731
+        mlp_seed: 20261202
+        icode_seed: 20261202
+        rl_checkpoint: results/research_platform/rl/subgoal_history_l6_20260713/checkpoints/best.pt
+        mlp_checkpoint: results/research_platform/l60_mlp_high_dynamic_h36_seed20261202_v1/best.pt
+        icode_checkpoint: results/research_platform/l57_icode_high_dynamic_h36_seed20261202_v1/best.pt
+      - rl_seed: 20260731
+        mlp_seed: 20261203
+        icode_seed: 20261203
+        rl_checkpoint: results/research_platform/rl/subgoal_history_l6_20260713/checkpoints/best.pt
+        mlp_checkpoint: results/research_platform/l60_mlp_high_dynamic_h36_seed20261203_v1/best.pt
+        icode_checkpoint: results/research_platform/l57_icode_high_dynamic_h36_seed20261203_v1/best.pt
+    development_episode_seeds: [21860781, 21860782, 21860783, 21860784, 21860785]
+    sealed_confirmation_episode_seeds: [21860791, 21860792, 21860793, 21860794, 21860795, 21860796, 21860797, 21860798, 21860799, 21860800]
+    protected_config_paths:
+      - configs/rl/icode_high_dynamic_confirmation_l59.yaml
+    structure_gate:
+      minimum_positive_learned_vs_nominal_blocks: 3
+      minimum_learned_vs_nominal_ci95_lower_m: 0.0
+      minimum_positive_icode_vs_mlp_blocks: 2
+      minimum_icode_vs_mlp_ci95_lower_m: 0.0
+      minimum_positive_unseen_icode_vs_mlp_blocks: 2
+      minimum_unseen_icode_vs_mlp_ci95_lower_m: 0.0
+      minimum_net_success_gain_vs_nominal: 0
+      maximum_net_collision_increase_vs_nominal: 0
+      minimum_completion_ratio_difference_vs_nominal: -0.01
+      maximum_mean_planner_compute_ms: 50.0

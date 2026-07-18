@@ -1,0 +1,57 @@
+session:
+  id: "2026-07-15_002"
+  timestamp: "2026-07-15T11:41:10+08:00"
+  summary: "Implemented L19 preregistered raw target-Q margin calibration and rejected a global margin without opening sealed selection seeds."
+
+events_logged:
+  - type: question
+    id: N10
+    provenance: ai-suggested
+    summary: "Test whether a positive raw target-Q margin can calibrate the correction gate across independent critics."
+  - type: experiment
+    id: N11
+    provenance: ai-executed
+    summary: "Ran BC and six target-Q margins over 3 training seeds x 12 paired calibration seeds."
+  - type: dead_end
+    id: N12
+    provenance: ai-executed
+    summary: "Rejected a single global raw-Q margin because pooled gains hid a training-seed-specific regression."
+  - type: claim
+    id: C07
+    provenance: ai-suggested
+    summary: "Cross-seed generalization of one raw target-Q margin was refuted."
+  - type: heuristic
+    id: H05
+    provenance: ai-suggested
+    summary: "Keep selection seeds sealed unless calibration first produces an eligible method."
+
+ai_actions:
+  - action: "Implemented a fail-closed cross-training-seed margin selector and paired MuJoCo calibration runner."
+    provenance: ai-executed
+    files_changed:
+      - "src/mobile_robot_mppi/rl/calibration.py"
+      - "experiments/rl/run_correction_advantage_margin_grid.py"
+      - "experiments/rl/select_correction_advantage_margin.py"
+      - "configs/rl/sac_mppi_utrap_advantage_margin_l19.yaml"
+      - "tests/rl/test_advantage_margin_calibration.py"
+  - action: "Preregistered the split, grid and eligibility contract before running the full calibration."
+    provenance: ai-executed
+    files_changed:
+      - "docs/rl/18_l19_advantage_margin_calibration_prereg_2026-07-15.md"
+  - action: "Executed 252 calibration episodes, audited 71,197 step rows and ran 272 repository tests."
+    provenance: ai-executed
+    files_changed:
+      - "docs/rl/19_l19_advantage_margin_calibration_results_2026-07-15.md"
+
+claims_touched:
+  - id: C07
+    action: created
+    provenance: ai-suggested
+
+open_threads:
+  - "Design L20 around a seed-invariant normalized confidence score or an independently trained risk critic."
+  - "Preserve the unopened 20281101--20281115 selection seeds for the next method that passes calibration."
+
+ai_suggestions_pending:
+  - "Do not scan additional raw target-Q margins; the failure is cross-seed scale calibration, not grid resolution."
+  - "Keep ICODE, Memory, OOD and dynamic obstacles disabled until the correction gate passes seen-scene BC non-inferiority."

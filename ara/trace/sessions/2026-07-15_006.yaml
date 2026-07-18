@@ -1,0 +1,87 @@
+session:
+  id: "2026-07-15_006"
+  timestamp: "2026-07-15T13:59:00+08:00"
+  summary: "Implemented L23 grouped continuous-utility learning; adequate data were collected, but state-only prediction and calibrated acceptance failed, motivating trajectory-aware gating."
+
+events_logged:
+  - type: question
+    id: N23
+    provenance: ai-suggested
+    summary: "Test whether frozen current-state features can safely predict continuous forty-step burst utility."
+  - type: experiment
+    id: N24
+    provenance: ai-executed
+    summary: "Collected 423 accepted branches in 108 independent groups and trained a five-member group-bootstrap utility ensemble."
+  - type: dead_end
+    id: N25
+    provenance: ai-executed
+    summary: "Rejected state-only macro-policy utility prediction after it failed predictive, sign and calibrated-acceptance gates."
+  - type: pivot
+    id: N26
+    provenance: ai-suggested
+    summary: "Proposed trajectory-aware paired-candidate features for the next gate."
+  - type: claim
+    id: C15
+    provenance: ai-suggested
+    summary: "Sufficient state-only prediction for safe sequence-utility gating was refuted."
+  - type: claim
+    id: C16
+    provenance: ai-suggested
+    summary: "Useful uncertainty calibration from deep-ensemble disagreement was refuted."
+  - type: claim
+    id: C17
+    provenance: ai-suggested
+    summary: "Burst utility was supported as trajectory-phase dependent in development EDA."
+  - type: heuristic
+    id: H10
+    provenance: ai-suggested
+    summary: "Assign unit scale to zero-variance features instead of dividing distribution shift by epsilon."
+  - type: heuristic
+    id: H11
+    provenance: ai-suggested
+    summary: "Reject development-ineligible learned gates at checkpoint load time."
+  - type: heuristic
+    id: H12
+    provenance: ai-suggested
+    summary: "Calibrate uncertainty over independent checkpoint-episode groups."
+
+ai_actions:
+  - action: "Preregistered the L23 continuous-utility target, grouped split, model, conformal procedure, development gate and sealed-test contract."
+    provenance: ai-executed
+    files_changed:
+      - "configs/rl/counterfactual_utility_l23.yaml"
+      - "docs/rl/26_l23_continuous_utility_prereg_2026-07-15.md"
+  - action: "Implemented group-aware utility data loading, neural and ridge models, conformal calibration, fail-closed loading, training CLI and regression tests."
+    provenance: ai-executed
+    files_changed:
+      - "src/mobile_robot_mppi/rl/utility_dataset.py"
+      - "src/mobile_robot_mppi/rl/utility_model.py"
+      - "experiments/rl/train_counterfactual_utility_ensemble.py"
+      - "tests/rl/test_utility_model.py"
+  - action: "Collected grouped development data, diagnosed and corrected zero-variance scaling, reran training, kept test seeds sealed and ran 309 repository tests."
+    provenance: ai-executed
+    files_changed:
+      - "docs/rl/27_l23_zero_variance_scaling_correction_2026-07-15.md"
+      - "docs/rl/28_l23_continuous_utility_results_2026-07-15.md"
+      - "results/research_platform/rl/l23_utility_data_multiseed_20260715_v1/"
+      - "results/research_platform/rl/l23_utility_ensemble_development_20260715_v2/"
+
+claims_touched:
+  - id: C15
+    action: created
+    provenance: ai-suggested
+  - id: C16
+    action: created
+    provenance: ai-suggested
+  - id: C17
+    action: created
+    provenance: ai-suggested
+
+open_threads:
+  - "Preregister trajectory-aware paired BC/RL candidate features before collecting L24 outcomes."
+  - "Keep L23 legacy and new test groups sealed because the development gate failed."
+  - "Keep closed-loop selection seeds 20281101--20281115 sealed until a future model passes development eligibility."
+
+ai_suggestions_pending:
+  - "Use predicted rollout progress, clearance, cost quantiles, curvature, jerk, obstacle-relative geometry and nominal/ICODE disagreement as candidate-trajectory features."
+  - "Make the next gate compare paired candidate trajectories instead of predicting a future macro-policy from one current-state vector."

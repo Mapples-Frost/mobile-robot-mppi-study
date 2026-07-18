@@ -1,0 +1,31 @@
+include: icode_oracle_domain_gate_l51.yaml
+
+experiment:
+  name: icode_online_reliability_calibration_l52
+  output_dir: results/research_platform/rl/l52_icode_online_reliability_calibration_20260716_v1
+
+rl:
+  cross_layer_factorial:
+    design_id: l52_icode_online_reliability_calibration_v1
+    reliability_calibration:
+      source_condition: traditional_nominal
+      matched_domain: combined_matched_delay
+      beneficial_domain: combined_long_delay
+      state_names: [v, omega]
+      state_scales: [0.25, 0.60]
+      rise_rate: 0.25
+      fall_rate: 0.50
+      active_alpha_threshold: 0.50
+      parameter_grid:
+        forgetting_factor: [0.90, 0.95, 0.98]
+        minimum_samples: [8, 12]
+        confidence_z: [0.0, 0.5, 1.0]
+        off_threshold: [0.0]
+        on_threshold: [0.15, 0.30]
+      selection_gate:
+        minimum_beneficial_domain_mean_alpha: 0.55
+        maximum_matched_domain_mean_alpha: 0.35
+        minimum_worst_model_block_alpha_separation: 0.25
+        minimum_beneficial_domain_active_fraction: 0.50
+        maximum_matched_domain_active_fraction: 0.35
+

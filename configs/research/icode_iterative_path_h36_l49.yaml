@@ -1,0 +1,10 @@
+include: icode_onpolicy_h36_delay_aligned_l46.yaml
+
+experiment:
+  name: icode_iterative_path_h36_l49
+
+training:
+  epochs: 100
+  batch_size: 512
+  early_stopping_patience: 15
+

@@ -39,14 +39,24 @@ def _scene_configs(base, names):
     if not names:
         return [copy.deepcopy(base)]
     result = []
+    perception_overrides = dict(
+        base.get("rl", {}).get("training", {}).get(
+            "perception_overrides", {}
+        )
+    )
     for name in names:
         scene = load_yaml(_resolve_config(name))
         # The selected scene owns plant/perception/geometry.  The main RL file
         # owns the controlled planner setup and every learning hyperparameter.
-        scene = deep_merge(scene, {
+        controlled = {
             "planner": base["planner"],
             "rl": base["rl"],
-        })
+        }
+        if perception_overrides:
+            controlled["perception"] = deep_merge(
+                scene.get("perception", {}), perception_overrides
+            )
+        scene = deep_merge(scene, controlled)
         result.append(scene)
     return result
 
@@ -78,6 +88,35 @@ def _physics_domains(configs, domain_file, roles):
     return expanded
 
 
+def _write_config_snapshot(
+    output_dir,
+    source_config,
+    resolved_config,
+    train_configs,
+    validation_configs,
+    cli_overrides=None,
+):
+    """Persist the exact resolved experiment contract before training starts."""
+
+    output_dir = Path(output_dir).resolve()
+    output_dir.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "schema_version": 1,
+        "source_config": str(_resolve_config(source_config)),
+        "cli_overrides": dict(cli_overrides or {}),
+        "resolved_config": resolved_config,
+        "training_environments": train_configs,
+        "validation_environments": validation_configs,
+    }
+    target = output_dir / "config_snapshot.json"
+    temporary = target.with_suffix(".json.tmp")
+    with temporary.open("w", encoding="utf-8") as handle:
+        json.dump(payload, handle, indent=2, sort_keys=True)
+        handle.write("\n")
+    temporary.replace(target)
+    return target
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -89,22 +128,46 @@ def main(argv=None):
     checkpoint_group.add_argument(
         "--initialize-actor-from",
         help=(
-            "load only actor weights and fitted observation normalizer; "
-            "critics, optimizers, replay and counters remain fresh"
+            "load only compatible direct-policy actor weights and fitted "
+            "observation normalizer; "
+            "direct mode warm-starts the actor, frozen_bc_correction mode "
+            "locks it as the base policy; critics, optimizers, replay and "
+            "counters remain fresh"
+        ),
+    )
+    parser.add_argument(
+        "--allow-legacy-resume",
+        action="store_true",
+        help=(
+            "explicitly permit an older checkpoint without a resume contract; "
+            "the resulting episode-restart continuation is recorded as legacy"
         ),
     )
     parser.add_argument("--steps", type=int)
     parser.add_argument(
+        "--bc-anchor-dataset",
+        help="override rl.training.bc_anchor.dataset_dir",
+    )
+    parser.add_argument(
         "--seed",
         type=int,
-        help="override the training/reset/validation seed in the config",
+        help=(
+            "override training and environment-reset seed; an explicit "
+            "validation_seed_base remains fixed across training seeds"
+        ),
     )
     parser.add_argument("--device", choices=("auto", "cpu", "cuda"))
     parser.add_argument("--smoke", action="store_true")
     args = parser.parse_args(argv)
+    if args.allow_legacy_resume and not args.resume:
+        parser.error("--allow-legacy-resume requires --resume")
     config = load_yaml(args.config)
     _apply_training_seed(config, args.seed)
     training = config["rl"].setdefault("training", {})
+    if args.bc_anchor_dataset is not None:
+        training.setdefault("bc_anchor", {})["dataset_dir"] = str(
+            _resolve_config(args.bc_anchor_dataset)
+        )
     if args.steps is not None:
         training["total_steps"] = int(args.steps)
     if args.device is not None:
@@ -161,6 +224,22 @@ def main(argv=None):
             "output_dir", ROOT / "results/research_platform/rl_training"
         )
     ).resolve()
+    _write_config_snapshot(
+        output,
+        args.config,
+        config,
+        train_configs,
+        validation_configs,
+        cli_overrides={
+            "seed": args.seed,
+            "steps": args.steps,
+            "device": args.device,
+            "smoke": bool(args.smoke),
+            "resume": args.resume,
+            "initialize_actor_from": args.initialize_actor_from,
+            "bc_anchor_dataset": args.bc_anchor_dataset,
+        },
+    )
     trainer = SACTrainer(
         train_configs,
         validation_configs,
@@ -169,7 +248,10 @@ def main(argv=None):
         config,
     )
     if args.resume:
-        trainer.resume(_resolve_config(args.resume))
+        trainer.resume(
+            _resolve_config(args.resume),
+            allow_legacy=bool(args.allow_legacy_resume),
+        )
     elif args.initialize_actor_from:
         trainer.initialize_actor_from(_resolve_config(args.initialize_actor_from))
     result = trainer.run()

@@ -1,0 +1,30 @@
+include: sac_mppi_utrap_bc_l13.yaml
+
+experiment:
+  name: sac_mppi_utrap_frozen_bc_correction_l16
+  output_dir: results/research_platform/rl/utrap_frozen_bc_correction_l16_20260714
+
+# L16 is a policy-correction gate.  The verified BC actor and its train-split
+# observation normalizer are immutable.  SAC controls only a bounded residual
+# in the two-dimensional local-subgoal parameter space; it does not alter the
+# MPPI objective, dynamics model, covariance, perception or safety chain.
+rl:
+  policy_id: sac_mppi_utrap_frozen_bc_correction_l16_v1
+
+  sac:
+    policy_mode: frozen_bc_correction
+    # Local-subgoal action[0] encodes distance and action[1] bearing.  With the
+    # current decoder these normalized limits correspond to at most 0.10 m
+    # and 18 degrees before action-boundary room is applied.
+    correction_scale: [0.20, 0.10]
+    correction_gate_alpha: 1.0
+    correction_initial_log_std: -2.5
+
+  training:
+    # Populate critics with small stochastic corrections while the frozen BC
+    # base remains active.  At step 10001 only the residual actor and entropy
+    # temperature become trainable; BC parameters stay frozen for the run.
+    actor_update_after: 10001
+    bc_anchor:
+      enabled: false
+      dataset_dir: null

@@ -1,0 +1,44 @@
+include: icode_high_dynamic_data_l56.yaml
+
+experiment:
+  name: icode_high_dynamic_closed_loop_l58
+  output_dir: results/research_platform/rl/l58_icode_high_dynamic_closed_loop_20260716_v1
+
+rl:
+  cross_layer_factorial:
+    design_id: l58_icode_fixed_plant_high_dynamic_closed_loop_v1
+    schedule_seed: 2026071633
+    bootstrap_seed: 2026071634
+    bootstrap_replicates: 20000
+    conditions: [traditional_nominal, traditional_icode]
+    model_blocks:
+      - rl_seed: 20260731
+        icode_seed: 20261201
+        rl_checkpoint: results/research_platform/rl/subgoal_history_l6_20260713/checkpoints/best.pt
+        icode_checkpoint: results/research_platform/l57_icode_high_dynamic_h36_seed20261201_v1/best.pt
+      - rl_seed: 20260731
+        icode_seed: 20261202
+        rl_checkpoint: results/research_platform/rl/subgoal_history_l6_20260713/checkpoints/best.pt
+        icode_checkpoint: results/research_platform/l57_icode_high_dynamic_h36_seed20261202_v1/best.pt
+      - rl_seed: 20260731
+        icode_seed: 20261203
+        rl_checkpoint: results/research_platform/rl/subgoal_history_l6_20260713/checkpoints/best.pt
+        icode_checkpoint: results/research_platform/l57_icode_high_dynamic_h36_seed20261203_v1/best.pt
+    development_episode_seeds: [21860761, 21860762, 21860763, 21860764, 21860765]
+    sealed_confirmation_episode_seeds: [21860771, 21860772, 21860773, 21860774, 21860775, 21860776, 21860777, 21860778, 21860779, 21860780]
+    protected_config_paths:
+      - configs/rl/icode_high_dynamic_data_l56.yaml
+      - configs/research/icode_high_dynamic_h36_l57.yaml
+    eligibility_gate:
+      minimum_positive_tracking_model_blocks: 3
+      minimum_relative_cross_track_rmse_reduction: 0.05
+      minimum_cross_track_improvement_ci95_lower_m: 0.0
+      minimum_net_success_gain: 0
+      maximum_net_collision_increase: 0
+      minimum_completion_ratio_difference: -0.01
+      maximum_icode_mean_planner_compute_ms: 50.0
+      minimum_positive_unseen_model_blocks: 2
+      minimum_unseen_relative_cross_track_rmse_reduction: 0.05
+      minimum_unseen_cross_track_improvement_ci95_lower_m: 0.0
+      minimum_positive_scenes: 3
+      maximum_relative_applied_jerk_increase: 0.10

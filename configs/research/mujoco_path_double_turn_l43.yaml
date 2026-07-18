@@ -1,0 +1,31 @@
+include: mujoco_strong_mppi_baseline.yaml
+
+experiment:
+  name: path_double_turn_l43
+  max_steps: 420
+  initial_state: [0.0, 0.0, 0.0, 0.0, 0.0]
+
+task:
+  type: polyline
+  position_tolerance: 0.25
+  lookahead_distance: 0.42
+  terminal_approach_distance: 0.90
+  points:
+    - [0.00, 0.00]
+    - [0.35, 0.00]
+    - [0.70, 0.08]
+    - [1.00, 0.28]
+    - [1.20, 0.58]
+    - [1.28, 0.92]
+    - [1.40, 1.24]
+    - [1.65, 1.47]
+    - [2.00, 1.55]
+    - [2.35, 1.48]
+    - [2.65, 1.28]
+    - [2.85, 0.98]
+    - [3.00, 0.65]
+
+scene:
+  name: path_double_turn_l43
+  obstacles: []
+

@@ -1,0 +1,96 @@
+session:
+  id: "2026-07-15_008"
+  timestamp: "2026-07-15T15:39:00+08:00"
+  summary: "Implemented L25 LaserScan scene-complexity gating; strong paired development gains and exact fallback were observed, but the preregistered global simple-scene gate failed and test seeds remained sealed."
+
+events_logged:
+  - type: question
+    id: N31
+    provenance: ai-suggested
+    summary: "Test whether local observable complexity can activate the RL prior only where useful."
+  - type: experiment
+    id: N32
+    provenance: ai-executed
+    summary: "Ran 480 paired MuJoCo episodes across three checkpoints, four scenes and four methods at K=200."
+  - type: dead_end
+    id: N33
+    provenance: ai-executed
+    summary: "Refuted pooling a locally blocking single-obstacle scene with obstacle-free dynamics under one simple-scene gate target."
+  - type: pivot
+    id: N34
+    provenance: ai-suggested
+    summary: "Proposed a new-seed K=50,100,200,400 factorial to test sampling-prior efficiency."
+  - type: claim
+    id: C21
+    provenance: ai-suggested
+    summary: "Complexity gating exactly recovers traditional MPPI in obstacle-free geometry."
+  - type: claim
+    id: C22
+    provenance: ai-suggested
+    summary: "At K=200 the gated prior improves traditional MPPI in three blocking static scenes without collision regression."
+  - type: claim
+    id: C23
+    provenance: ai-suggested
+    summary: "The global simple-scene proxy was refuted by the single-obstacle result."
+  - type: claim
+    id: C24
+    provenance: ai-suggested
+    summary: "Uniform dominance over always-on LCB and frozen BC was refuted."
+  - type: heuristic
+    id: H16
+    provenance: ai-suggested
+    summary: "Gate from observable local geometry rather than global scene labels."
+  - type: heuristic
+    id: H17
+    provenance: ai-suggested
+    summary: "Verify fallback step by step under common seeds."
+  - type: heuristic
+    id: H18
+    provenance: ai-suggested
+    summary: "Treat MPPI sample budget as an experimental factor."
+
+ai_actions:
+  - action: "Implemented a configurable LaserScan complexity score and integrated it into the RL sampling-prior gate with fail-closed missing-scan behavior."
+    provenance: ai-executed
+    files_changed:
+      - "src/mobile_robot_mppi/rl/scene_complexity.py"
+      - "src/mobile_robot_mppi/rl/prior.py"
+      - "src/mobile_robot_mppi/evaluation/metrics.py"
+  - action: "Implemented preregistered paired ablation, merge, fixed-gate decision and post-gate EDA scripts."
+    provenance: ai-executed
+    files_changed:
+      - "experiments/rl/run_scene_complexity_gate_ablation.py"
+      - "experiments/rl/summarize_scene_complexity_gate_ablation.py"
+      - "experiments/rl/analyze_scene_complexity_gate_ablation.py"
+      - "configs/rl/sac_mppi_scene_complexity_l25.yaml"
+  - action: "Executed smoke and formal development experiments, audited exact coverage, retained sealed test seeds, and passed 326 repository tests."
+    provenance: ai-executed
+    files_changed:
+      - "results/research_platform/rl/l25_scene_complexity_development_multiseed_20260715_v1/"
+  - action: "Documented the preregistration, data-quality audit, positive findings, non-dominance and failed eligibility criteria."
+    provenance: ai-executed
+    files_changed:
+      - "docs/rl/31_l25_scene_complexity_gate_prereg_2026-07-15.md"
+      - "docs/rl/32_l25_scene_complexity_gate_results_2026-07-15.md"
+
+claims_touched:
+  - id: C21
+    action: created
+    provenance: ai-suggested
+  - id: C22
+    action: created
+    provenance: ai-suggested
+  - id: C23
+    action: created
+    provenance: ai-suggested
+  - id: C24
+    action: created
+    provenance: ai-suggested
+
+open_threads:
+  - "Freeze L25 thresholds and run L26 with new development seeds at K=50,100,200,400."
+  - "Only open sealed L25/L26 test seeds after a newly preregistered development gate passes."
+  - "Keep ICODE as an independently switched dynamics ablation rather than mixing it into the RL-prior mechanism test."
+
+ai_suggestions_pending:
+  - "Interpret learned-prior value as a sample-efficiency interaction and preregister the K-sweep before running it."

@@ -1,0 +1,73 @@
+include: sac_mppi_dynamic_history_bounded_l34.yaml
+
+experiment:
+  name: bounded_rl_icode_factorial_l37
+  output_dir: results/research_platform/rl/l37_bounded_rl_icode_factorial_20260716_v1
+
+planner:
+  num_samples: 100
+  residual_torch_num_threads: 1
+  residual_torchscript: true
+
+rl:
+  policy_id: bounded_rl_icode_factorial_l37
+  cross_layer_factorial:
+    schedule_seed: 2026071603
+    shared_temporal_scan_enabled: true
+    shared_temporal_safety_enabled: true
+    model_blocks:
+      - rl_seed: 20260731
+        icode_seed: 20260711
+        rl_checkpoint: results/research_platform/rl/dynamic_history_bounded_l34_seed20260731_30k_20260716_v1/checkpoints/best.pt
+        icode_checkpoint: results/research_platform/ood_smoke_20260712/icode_training/best.pt
+      - rl_seed: 20260732
+        icode_seed: 20260712
+        rl_checkpoint: results/research_platform/rl/dynamic_history_bounded_l34_seed20260732_30k_20260716_v1/checkpoints/best.pt
+        icode_checkpoint: results/research_platform/icode_l29_seed20260712_20ep_20260715/best.pt
+      - rl_seed: 20260733
+        icode_seed: 20260713
+        rl_checkpoint: results/research_platform/rl/dynamic_history_bounded_l34_seed20260733_30k_20260716_v1/checkpoints/best.pt
+        icode_checkpoint: results/research_platform/icode_l29_seed20260713_20ep_20260715/best.pt
+
+    conditions:
+      - traditional_nominal
+      - traditional_icode
+      - bounded_rl_nominal
+      - bounded_rl_icode
+
+    scenes:
+      - {role: calibrated_easy, path: configs/research/mujoco_dynamic_calibrated_easy_l37.yaml}
+      - {role: calibrated_moderate, path: configs/research/mujoco_dynamic_calibrated_moderate_l37.yaml}
+      - {role: calibrated_hard, path: configs/research/mujoco_dynamic_calibrated_hard_l37.yaml}
+
+    physics_domains:
+      - name: combined_unseen
+        role: unseen
+        plant_override:
+          robot:
+            chassis_mass: 12.0
+            chassis_inertia: [0.11, 0.16, 0.22]
+          actuator:
+            command_delay: 0.10
+            torque_limit: 1.8
+            kp: 0.48
+          contact:
+            wheel_friction: [0.72, 0.006, 0.001]
+            floor_friction: [0.60, 0.003, 0.0003]
+
+    development_episode_seeds: [20660731, 20660732, 20660733, 20660734, 20660735]
+    sealed_confirmation_episode_seeds: [20660736, 20660737, 20660738, 20660739, 20660740, 20660741, 20660742, 20660743, 20660744, 20660745]
+    protected_config_paths:
+      - configs/rl/l34_independent_confirmation_l35.yaml
+      - configs/rl/dynamic_benchmark_calibration_l36.yaml
+
+    bootstrap_seed: 2026071604
+    bootstrap_replicates: 10000
+    gate:
+      minimum_combined_best_or_tied_model_blocks: 2
+      minimum_combined_vs_baseline_net_success_gain: 3
+      maximum_combined_vs_baseline_net_collision_increase: 0
+      minimum_bounded_rl_main_effect_net_success_gain: 0
+      minimum_icode_main_effect_goal_distance_improvement_m: 0.0
+      minimum_interaction_success_difference: 0.0
+      minimum_alternative_interaction_goal_distance_m: 0.05

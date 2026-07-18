@@ -1,0 +1,13 @@
+include: sac_mppi_static_multigeometry_l70.yaml
+
+experiment:
+  name: sac_mppi_static_multigeometry_l70_seed20260741
+  output_dir: results/research_platform/rl/l70_static_multigeometry_seed20260741_30k_20260716_v1
+
+planner:
+  checkpoint: results/research_platform/l57_icode_high_dynamic_h36_seed20261201_v1/best.pt
+
+rl:
+  training:
+    seed: 20260741
+

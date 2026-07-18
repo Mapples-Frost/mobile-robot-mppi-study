@@ -1,0 +1,31 @@
+include: sac_mppi_utrap_frozen_bc_correction_l16.yaml
+
+experiment:
+  name: sac_mppi_utrap_conservative_correction_l17
+  output_dir: results/research_platform/rl/utrap_conservative_correction_l17_20260714
+
+# L17 asks one narrow causal question: can SAC improve a frozen BC sampling
+# prior without degrading any paired seen-scene validation episode?  ICODE,
+# memory, intrinsic reward, covariance learning and OOD domains remain off.
+rl:
+  policy_id: sac_mppi_utrap_conservative_correction_l17_v1
+
+  sac:
+    # Penalize the squared correction after normalizing it by the maximum
+    # correction allowed by L16.  The coefficient was fixed before L17 runs.
+    correction_penalty_weight: 0.25
+
+  training:
+    # These 15 deterministic episodes are a model-selection set, not 15
+    # independent training replicates and not the sealed final-test set.
+    evaluation_episodes: 15
+    validation_seed_base: 20280701
+
+    checkpoint_selection:
+      mode: initial_noninferiority
+      maximum_success_losses: 0
+      maximum_collision_regressions: 0
+      minimum_success_gains: 1
+      minimum_mean_goal_distance_improvement: 0.005
+      maximum_mean_goal_distance_increase: 0.0
+

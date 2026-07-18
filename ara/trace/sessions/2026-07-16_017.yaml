@@ -1,0 +1,66 @@
+session:
+  id: "2026-07-16_017"
+  timestamp: "2026-07-16T22:20:00+08:00"
+  summary: "L51-L55 bounded and rejected weak conditional-gating claims; L56-L59 then produced a hashed high-dynamic dataset, three qualified ICODE models and a sealed 240-episode residual-only tracking confirmation."
+
+events_logged:
+  - {type: experiment, id: N70, provenance: ai-executed, summary: "L51 established a useful but non-deployable simulator-domain oracle upper bound."}
+  - {type: dead_end, id: N71, provenance: ai-executed, summary: "L52 refuted innovation-only residual-utility identification."}
+  - {type: experiment, id: N72, provenance: ai-executed, summary: "L53 calibrated a causal cross-layer gate from innovation and measurable delay context."}
+  - {type: experiment, id: N73, provenance: ai-executed, summary: "L54-L55 failed their primary gates and showed same-domain effects were too small for further seed expansion."}
+  - {type: pivot, id: N74, provenance: ai-suggested, summary: "Pivoted to a fixed high-dynamic plant with stronger excitation and horizon-matched evaluation."}
+  - {type: dead_end, id: N75, provenance: ai-executed, summary: "Wheel odometry confounded clean dynamics isolation; ground-truth clean-state benchmarking was adopted."}
+  - {type: experiment, id: N76, provenance: ai-executed, summary: "L56 froze a 12,074-transition high-dynamic dataset with episode-wise splits and hashes."}
+  - {type: experiment, id: N77, provenance: ai-executed, summary: "L57 passed all-window offline qualification for three independent ICODE models."}
+  - {type: experiment, id: N78, provenance: ai-executed, summary: "L58 passed its 120-episode closed-loop development gate."}
+  - {type: experiment, id: N79, provenance: ai-executed, summary: "L59 independently confirmed a 27.06% tracking-error reduction on 240 sealed-seed episodes."}
+  - {type: claim, id: C50, provenance: ai-suggested, summary: "Conditional residual authority has a useful oracle upper bound."}
+  - {type: claim, id: C51, provenance: ai-suggested, summary: "Innovation-only residual utility identification was refuted."}
+  - {type: claim, id: C52, provenance: ai-suggested, summary: "High-dynamic H=36 ICODE prediction is supported on one fixed plant."}
+  - {type: claim, id: C53, provenance: ai-suggested, summary: "Sealed fixed-plant residual-only closed-loop tracking improvement is supported."}
+  - {type: claim, id: C54, provenance: ai-suggested, summary: "Cross-plant and broader robustness remain untested."}
+  - {type: heuristic, id: H36, provenance: ai-suggested, summary: "Isolate dynamics learning from state-estimation and perception factors."}
+  - {type: heuristic, id: H37, provenance: ai-suggested, summary: "Suppress terminal translation while preserving angular authority."}
+  - {type: heuristic, id: H38, provenance: ai-suggested, summary: "Bind checkpoints to dataset hashes and evaluate all rollout windows."}
+  - {type: heuristic, id: H39, provenance: ai-suggested, summary: "After sealed same-domain confirmation, pivot to orthogonal factors."}
+
+ai_actions:
+  - action: "Implemented causal innovation-gated residual dynamics, measurable delay-context gating, fail-closed reset semantics and unbatched TorchScript residual inference."
+    provenance: ai-executed
+    files_changed: ["src/mobile_robot_mppi/learning/models.py", "src/mobile_robot_mppi/planning/mppi.py", "src/mobile_robot_mppi/runtime/factories.py", "experiments/rl/calibrate_residual_reliability_gate.py"]
+  - action: "Built and qualified a fixed high-dynamic MuJoCo benchmark with terminal convergence controls, four path families and ground-truth clean-state isolation."
+    provenance: ai-executed
+    files_changed: ["configs/research/mujoco_high_dynamic_fixed_plant.yaml", "configs/research/path_tracking_high_dynamic_base.yaml", "src/mobile_robot_mppi/planning/mppi.py", "src/mobile_robot_mppi/evaluation/metrics.py"]
+  - action: "Collected 48 successful episodes, froze episode-wise splits with SHA-256 provenance, trained three H=36 ICODE models and evaluated every rollout window."
+    provenance: ai-executed
+    files_changed: ["configs/rl/icode_high_dynamic_data_l56.yaml", "configs/research/icode_high_dynamic_h36_l57.yaml", "src/mobile_robot_mppi/learning/trainer.py", "experiments/evaluate_platform_residual.py"]
+  - action: "Completed the L58 development study and opened the predeclared L59 confirmation seeds without parameter changes; all 360 residual-only comparison episodes completed."
+    provenance: ai-executed
+    files_changed: ["configs/rl/icode_high_dynamic_development_l58.yaml", "configs/rl/icode_high_dynamic_confirmation_l59.yaml", "experiments/rl/summarize_high_dynamic_icode_closed_loop.py", "docs/rl/85_l59_high_dynamic_confirmation_results_2026-07-16.md"]
+  - action: "Compiled changed Python files and ran all 473 repository tests successfully."
+    provenance: ai-executed
+    files_changed: ["tests/planning/test_generic_mppi.py", "tests/learning/test_residual_dataset.py", "tests/rl/test_high_dynamic_data_gate.py"]
+
+claims_touched:
+  - {id: C50, action: created, provenance: ai-suggested}
+  - {id: C51, action: created, provenance: ai-suggested}
+  - {id: C52, action: created, provenance: ai-suggested}
+  - {id: C53, action: created, provenance: ai-suggested}
+  - {id: C54, action: created, provenance: ai-suggested}
+
+open_threads:
+  - "Train and evaluate an ordinary MLP residual on the immutable L56 splits as the structural ablation required to isolate the control-affine ICODE contribution."
+  - "Freeze a cross-plant mass/friction/torque/delay factorial before inspecting outcomes."
+  - "Add wheel odometry, sensor noise and latency as separate blocked external-validity factors after clean cross-plant qualification."
+  - "Only then reopen obstacle-rich residual testing and bounded-RL sampling-prior composition."
+
+ai_suggestions_pending:
+  - "Do not describe L59 as cross-plant, obstacle, real-robot or RL-composed evidence."
+  - "Do not spend more seeds on the identical fixed clean plant before completing the MLP ablation and orthogonal factor tests."
+
+provenance_summary:
+  user_confirmed: 0
+  ai_suggested: 10
+  ai_executed: 15
+  user_revised: 0
+  confirmation_rate: 0.0

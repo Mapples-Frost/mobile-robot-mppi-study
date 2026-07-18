@@ -1,0 +1,72 @@
+include: sac_mppi_zero_complexity_fastpath_l27.yaml
+
+experiment:
+  name: cross_layer_factorial_l29
+  output_dir: results/research_platform/rl/cross_layer_factorial_l29_20260715
+
+planner:
+  num_samples: 100
+  residual_torch_num_threads: 1
+  residual_torchscript: true
+
+rl:
+  policy_id: cross_layer_factorial_l29
+  gate:
+    mode: complexity
+    correction_advantage_gate_mode: lcb
+    correction_advantage_critic_source: target
+    correction_advantage_threshold: 0.0
+    correction_advantage_uncertainty_multiplier: 2.0
+    skip_zero_complexity_inference: true
+
+  cross_layer_factorial:
+    schedule_seed: 20260791
+    model_blocks:
+      - {rl_seed: 20260721, icode_seed: 20260711}
+      - {rl_seed: 20260722, icode_seed: 20260712}
+      - {rl_seed: 20260723, icode_seed: 20260713}
+
+    # Policy is a three-level factor nested around the learned prior; residual
+    # correction, physics domain and obstacle dynamics are crossed factors.
+    conditions:
+      - traditional_nominal
+      - traditional_icode
+      - lcb_nominal
+      - lcb_icode
+      - gated_lcb_nominal
+      - gated_lcb_icode
+
+    scenes:
+      - {role: clean, path: configs/research/mujoco_clean_goal_3_3.yaml}
+      - {role: static_blocking, path: configs/research/mujoco_strong_mppi_baseline.yaml}
+      - {role: dynamic_crossing, path: configs/research/mujoco_dynamic_crossing.yaml}
+
+    physics_domains:
+      - {name: nominal_seen, role: seen, plant_override: {}}
+      - name: combined_unseen
+        role: unseen
+        plant_override:
+          robot:
+            chassis_mass: 12.0
+            chassis_inertia: [0.11, 0.16, 0.22]
+          actuator:
+            command_delay: 0.10
+            torque_limit: 1.8
+            kp: 0.48
+          contact:
+            wheel_friction: [0.72, 0.006, 0.001]
+            floor_friction: [0.60, 0.003, 0.0003]
+
+    development_episode_seeds: [20282101, 20282102, 20282103, 20282104, 20282105]
+    sealed_confirmation_episode_seeds: [20282106, 20282107, 20282108, 20282109, 20282110, 20282111, 20282112, 20282113, 20282114, 20282115, 20282116, 20282117, 20282118, 20282119, 20282120]
+
+    # Development eligibility gates. Confirmation seeds remain sealed unless
+    # every integrity/safety gate and at least three of four efficacy gates pass.
+    maximum_duplicate_episode_keys: 0
+    maximum_missing_episode_keys: 0
+    maximum_clean_fallback_step_mismatches: 0
+    maximum_collision_regressions_vs_traditional: 0
+    minimum_unseen_icode_distance_improvement_m: 0.05
+    minimum_static_gated_net_success_gain: 6
+    minimum_dynamic_gated_net_success_gain: 0
+    minimum_combined_best_or_tied_blocking_strata: 3

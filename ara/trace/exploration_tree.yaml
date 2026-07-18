@@ -1,0 +1,1009 @@
+tree:
+  - id: N103
+    type: experiment
+    title: "L96 blocked 2x2 jerk-remediation screen"
+    also_depends_on: [N102]
+    provenance: ai-executed
+    timestamp: "2026-07-18T19:15:00+08:00"
+    result: >
+      All 96 episodes and 24 blocks completed with 96 successes and zero collisions. The hard yaw-slew and combined arms both passed all selection gates; doubling only the predictive rate cost failed both jerk gates. The preregistered rule selected the combined arm, which reduced issued jerk by 0.00941 and applied jerk by 0.00608 with both intervals strictly below zero while preserving precision and time.
+    evidence: [C71, H51, "results/research_platform/rl/l96_contextual_covariance_jerk_screening_20260718_v1/summary.json", "docs/rl/148_l96_jerk_screening_results_and_l97_prereg_2026-07-18.md"]
+    children:
+      - id: N104
+        type: experiment
+        title: "L97 single-process three-arm jerk confirmation"
+        provenance: ai-executed
+        timestamp: "2026-07-18T20:55:00+08:00"
+        result: >
+          All 144 episodes and 48 untouched-seed blocks completed with 144 successes and zero collisions. Raw contextual K50 again beat fixed K100 on time and compute with precision noninferiority. Smoothed K50 reduced issued jerk by 0.01078 and applied jerk by 0.00705 versus raw K50 with intervals below zero. Versus fixed K100 its mean jerk was slightly lower, but issued and applied intervals crossed zero; the preregistered overall Gate therefore failed.
+        evidence: [C69, C70, C71, C72, H52, "results/research_platform/rl/l97_contextual_covariance_jerk_confirmation_20260718_v1/summary.json", "docs/rl/149_l97_contextual_covariance_jerk_confirmation_results_2026-07-18.md", "ara/evidence/figures/fig10_l96_l97_jerk_remediation.md"]
+        children:
+          - id: N105
+            type: decision
+            title: "Defer CUDA acceleration absent experimental benefit"
+            provenance: user
+            timestamp: "2026-07-18T20:35:00+08:00"
+            choice: >
+              Keep the current CPU benchmark and do not add CUDA unless later profiling demonstrates a task-relevant real-time bottleneck or experimental benefit.
+            alternatives:
+              - "Immediately implement a torch_cuda MPPI rollout backend"
+            evidence: >
+              MuJoCo and the current NumPy MPPI are CPU-oriented, while L97 requires a stable single-process CPU timing contract; CUDA would add a new engineering variable without strengthening the current claim.
+  - id: N97
+    type: dead_end
+    title: "L90 route-local covariance oracle"
+    provenance: ai-executed
+    timestamp: "2026-07-18T12:30:00+08:00"
+    hypothesis: >
+      Local route windows contain enough observable covariance heterogeneity to justify segment-level contextual switching above the confirmed route-level bandit.
+    failure_mode: >
+      The oracle selected speed in 11 of 12 route-progress contexts; progress changed by only +0.001385 m with interval [0, +0.004884] m and RMSE by -0.000107 m with interval [-0.000481, +0.000080] m. The preregistered heterogeneity and practical-progress gates failed.
+    lesson: >
+      Retain one covariance action per route and do not add high-frequency policy authority without oracle headroom at that action timescale.
+    evidence: [C65, H47, "results/research_platform/rl/l90_local_covariance_context_oracle_20260718_v1/summary.json", "docs/rl/137_l90_local_covariance_context_oracle_results_2026-07-18.md"]
+    children:
+      - id: N98
+        type: experiment
+        title: "L91 dynamic-scene covariance oracle"
+        provenance: ai-executed
+        timestamp: "2026-07-18T13:30:00+08:00"
+        result: >
+          Across 160 complete episodes, a scene-label oracle selected clean baseline, easy speed, moderate broad and hard speed. Versus global turn it improved success by +0.30 with interval [+0.05, +0.55] and collision by -0.15 with interval [-0.40, 0], but elapsed time had interval [-9.025, +3.165] s and failed the original elapsed gate. The safety pattern remained exploratory pending independent geometry confirmation.
+        evidence: [C66, H48, "results/research_platform/rl/l91_dynamic_covariance_context_oracle_20260718_v1/summary.json", "docs/rl/138_l91_dynamic_obstacle_covariance_oracle_results_2026-07-18.md"]
+        children:
+          - id: N99
+            type: dead_end
+            title: "L92 independent dynamic-safety confirmation"
+            provenance: ai-executed
+            timestamp: "2026-07-18T14:25:00+08:00"
+            hypothesis: >
+              The L91 scene-level covariance mapping generalizes its apparent safety improvement to six pre-existing dynamic-motion geometries.
+            failure_mode: >
+              All 300 episodes completed, but held-out success changed by +0.0556 with interval [-0.1389, +0.25] and collision by 0 with interval [-0.1389, +0.1667]. The safety confirmation gate failed.
+            lesson: >
+              Do not convert a development safety pattern into a dynamic-scene policy claim until the effect reproduces on independent motion geometries.
+            evidence: [C66, H48, "results/research_platform/rl/l92_dynamic_covariance_safety_confirmation_20260718_v1/summary.json", "docs/rl/140_l92_dynamic_covariance_safety_confirmation_results_2026-07-18.md"]
+            children:
+              - id: N100
+                type: dead_end
+                title: "L93 route-crossing dynamic covariance headroom"
+                provenance: ai-executed
+                timestamp: "2026-07-18T15:10:00+08:00"
+                hypothesis: >
+                  Narrow, turn or speed covariance selection can recover measurable safety headroom on cleanly isolated route-crossing dynamic obstacles.
+                failure_mode: >
+                  The 120-episode oracle produced no success or collision change, elapsed interval [-2.236, +1.296] s, and no practical headroom. Fast and large crossing variants made every candidate collide in selection, exposing missing future-motion information rather than a sampling-spread problem.
+                lesson: >
+                  Future dynamic-obstacle work needs an explicit motion-prediction or time-indexed occupancy layer; covariance selection should not be used to mask missing observability.
+                evidence: [C67, H48, "results/research_platform/rl/l93_route_dynamic_covariance_headroom_20260718_v1/summary.json", "docs/rl/142_l93_route_dynamic_headroom_results_2026-07-18.md"]
+                children:
+                  - id: N101
+                    type: experiment
+                    title: "L94 contextual covariance sample-efficiency gate"
+                    provenance: ai-executed
+                    timestamp: "2026-07-18T16:30:00+08:00"
+                    result: >
+                      All 320 unique episodes completed on held-out hairpin and reverse-S routes, four physics domains, K in {50,100,200,400} and five new seeds. Learned K=50 versus fixed speed K=100 preserved success and zero collisions, reduced RMSE by 0.004108 m with interval [-0.007009, -0.000741], time by 1.7375 s with interval [-2.72, -0.76], and compute by 18.2905 ms/step with interval [-32.905, -2.693]. Jerk increased by 0.00944 with interval [+0.00330, +0.01573]. All preregistered primary gates passed.
+                    evidence: [C68, C69, H50, "results/research_platform/rl/l94_contextual_covariance_sample_efficiency_20260718_v1/summary.json", "docs/rl/145_l94_contextual_covariance_sample_efficiency_results_2026-07-18.md"]
+                    children:
+                      - id: N102
+                        type: experiment
+                        title: "L95 controlled half-budget confirmation"
+                        provenance: ai-executed
+                        timestamp: "2026-07-18T17:20:00+08:00"
+                        result: >
+                          A single process with alternating arm order completed 40 untouched-seed pairs. Learned K=50 versus fixed K=100 preserved 80/80 success and zero collisions; RMSE changed by -0.000273 m with interval [-0.001816, +0.001520], time by -1.725 s with interval [-2.68, -0.77], and compute by -10.359 ms/step with interval [-15.085, -6.908]. The half-budget gate independently passed while confirming a +0.01029 jerk tradeoff.
+                        evidence: [C68, C69, H49, H50, "results/research_platform/rl/l95_contextual_covariance_half_budget_confirmation_20260718_v1/summary.json", "docs/rl/146_l95_half_budget_controlled_confirmation_results_2026-07-18.md", "ara/evidence/figures/fig09_l94_l95_sample_efficiency.md"]
+  - id: N89
+    type: experiment
+    title: "L82-L84 covariance adaptation qualification"
+    provenance: ai-executed
+    timestamp: "2026-07-17T21:00:00+08:00"
+    result: >
+      Fixed-sequence ranking did not favor ICODE over matched MLP, but a covariance oracle exposed substantial sampling headroom. Three covariance-only SAC blocks improved tracking over default and broad fixed covariances; versus the strongest fixed speed setting they were faster but less precise.
+    evidence: ["docs/rl/126_l84_covariance_only_rl_results_2026-07-17.md"]
+    children:
+      - id: N90
+        type: experiment
+        title: "L85 precision-constrained free covariance policy"
+        provenance: ai-executed
+        timestamp: "2026-07-17T23:30:00+08:00"
+        result: >
+          A separate replay cost, resumable dual variable and feasible checkpoint selector were implemented. The 20k policy was 1.755 s faster than fixed speed but its RMSE was 3.899 mm worse and failed the +2 mm noninferiority gate.
+        evidence: [C60, H44, "results/research_platform/rl/l85_precision_constrained_development_eval_20260717_v1/summary.json"]
+        children:
+          - id: N91
+            type: experiment
+            title: "L86 tuned-anchor bounded covariance residual"
+            provenance: ai-executed
+            timestamp: "2026-07-18T00:45:00+08:00"
+            result: >
+              Anchoring zero action and zero gate authority at fixed (1.75, 0.75) kept all validation checkpoints feasible. On 60 new-seed episodes the selected policy was 0.151 mm more precise on average with noninferiority CI upper bound +0.857 mm, but its -0.020 s time difference had CI [-0.130, +0.090] and failed superiority.
+            evidence: [C61, C62, H44, "results/research_platform/rl/l86_anchored_covariance_development_eval_20260717_v1/summary.json", "docs/rl/129_l86_anchored_covariance_results_2026-07-17.md"]
+            children:
+              - id: N92
+                type: decision
+                title: "Require closed-loop context heterogeneity before more RL training"
+                provenance: ai-suggested
+                timestamp: "2026-07-18T00:50:00+08:00"
+                decision: >
+                  Freeze further covariance-policy scaling until a scene-by-physics-by-dynamic-obstacle oracle grid demonstrates that observable contexts require conflicting sampling optima and that a context oracle materially beats the best global fixed covariance.
+                evidence: [H44, "docs/rl/129_l86_anchored_covariance_results_2026-07-17.md"]
+                children:
+                  - id: N93
+                    type: experiment
+                    title: "L87 closed-loop covariance-context oracle"
+                    provenance: ai-executed
+                    timestamp: "2026-07-18T08:30:00+08:00"
+                    result: >
+                      All 480 unique episodes completed. The oracle used narrow covariance for chicane and hairpin and speed covariance for accel-turn and reverse-S across four physics domains. Against the strongest global fixed speed covariance on 48 held-out pairs, time changed by -1.419 s with CI [-2.125, -0.712], RMSE by -0.772 mm with CI [-1.469, -0.152], and safety was unchanged.
+                    evidence: [C63, H44, "results/research_platform/rl/l87_covariance_context_oracle_20260718_v1/summary.json", "docs/rl/131_l87_closed_loop_covariance_heterogeneity_results_2026-07-18.md"]
+                    children:
+                      - id: N94
+                        type: dead_end
+                        title: "Linear route-feature covariance critic"
+                        provenance: ai-executed
+                        timestamp: "2026-07-18T09:25:00+08:00"
+                        hypothesis: >
+                          A ridge-linear contextual reward critic over absolute turn, route indirectness and peak curvature would recover the supported narrow-versus-speed mapping.
+                        failure_mode: >
+                          The first critic selected speed even on the support-set chicane and therefore failed before any independent L89 confirmation seed was opened. The optimal action was non-monotonic across straight, medium-turn and high-turn paths.
+                        lesson: >
+                          Pass a support-set learnability gate before confirmation and add only a fixed degree-two geometry basis when a linear boundary cannot express the observed reward structure.
+                        evidence: [H45, "docs/rl/133_l89_quadratic_feature_amendment_2026-07-18.md"]
+                        children:
+                          - id: N95
+                            type: experiment
+                            title: "L89 held-out-geometry contextual-bandit confirmation"
+                            provenance: ai-executed
+                            timestamp: "2026-07-18T10:35:00+08:00"
+                            result: >
+                              The quadratic LinUCB policy selected narrow for the unfitted hairpin and speed for the unfitted reverse-S. Across 40 independent pairs spanning four physics domains, it reduced time by 1.435 s with CI [-2.488, -0.365] and RMSE by 0.652 mm with CI [-1.394, -0.022], while all 80 episodes succeeded without collision.
+                            evidence: [C64, H45, "results/research_platform/rl/l89_contextual_covariance_independent_eval_20260718_v1/summary.json", "docs/rl/134_l89_contextual_covariance_bandit_results_2026-07-18.md"]
+                            children:
+                              - id: N96
+                                type: experiment
+                                title: "Frozen-bandit inference cache remediation and full replay"
+                                provenance: ai-executed
+                                timestamp: "2026-07-18T11:10:00+08:00"
+                                result: >
+                                  Caching inverse and coefficient vectors reduced microbenchmark inference to about 14 microseconds. A second complete 80-episode run reproduced the control metrics exactly and changed paired planner mean compute by -0.175 ms with CI [-1.574, +1.081], removing the first run's +30.21 ms overhead.
+                                evidence: [C64, H46, "results/research_platform/rl/l89_contextual_covariance_independent_eval_cached_20260718_v2/summary.json"]
+  - id: N01
+    type: question
+    title: "Can bounded SAC correction safely improve a frozen BC sampling prior?"
+    provenance: ai-suggested
+    timestamp: "2026-07-14T18:00:00+08:00"
+    description: >
+      Test a narrow seen-scene gate before adding OOD, ICODE, memory or dynamic obstacles.
+    children:
+      - id: N02
+        type: experiment
+        title: "L17 v1 paired non-inferiority gate"
+        provenance: ai-executed
+        timestamp: "2026-07-14T18:30:00+08:00"
+        result: >
+          All three selectors retained step zero. The first 30301--30320 audit set showed exact BC fallback, but validation replay exposed a seed-contract mismatch.
+        evidence: [C01, C02, "docs/rl/13_conservative_correction_preregistered_gate_2026-07-14.md"]
+        children:
+          - id: N03
+            type: dead_end
+            title: "Validation episode seed did not reset MPPI sampling"
+            provenance: ai-executed
+            timestamp: "2026-07-14T19:00:00+08:00"
+            hypothesis: >
+              A validation seed defined plant, sensors and planner randomness.
+            failure_mode: >
+              MppiPriorEnv reset plant and sensors but controller.reset reused the training-config seed.
+            lesson: >
+              Episode identity must be propagated explicitly to every stochastic subsystem.
+            children:
+              - id: N04
+                type: experiment
+                title: "L17 v2 episode-seeded MPPI rerun"
+                provenance: ai-executed
+                timestamp: "2026-07-14T20:00:00+08:00"
+                result: >
+                  MPPI reseeding worked, but trainer validation and standard evaluation still differed because initial-state distributions were not the same.
+                evidence: [C03, "docs/rl/14_validation_seed_audit_and_l17_v2_prereg_2026-07-14.md"]
+                children:
+                  - id: N05
+                    type: dead_end
+                    title: "Training jitter leaked into validation"
+                    provenance: ai-executed
+                    timestamp: "2026-07-14T20:30:00+08:00"
+                    hypothesis: >
+                      Equal scene and seed implied equal initial conditions.
+                    failure_mode: >
+                      MppiPriorEnv applied rl.training.initial_state_noise during validation while ExperimentRunner used the exact benchmark start.
+                    lesson: >
+                      Training augmentation and validation initial-state distributions require separate explicit configuration.
+                    children:
+                      - id: N06
+                        type: experiment
+                        title: "L17 v3 corrected validation contract and sealed final test"
+                        provenance: ai-executed
+                        timestamp: "2026-07-14T22:00:00+08:00"
+                        result: >
+                          Trainer and evaluator matched. All three selectors retained step zero. Final seeds 40301--40320 yielded 54/60 success and 0/60 collision for both BC and selected; task rows were exactly paired.
+                        evidence: [C01, C02, C03, C04, "docs/rl/15_l17_v3_conservative_correction_results_2026-07-14.md"]
+                        children:
+                          - id: N07
+                            type: question
+                            title: "Can twin-critic advantage identify harmful SAC corrections?"
+                            provenance: ai-suggested
+                            timestamp: "2026-07-15T10:00:00+08:00"
+                            description: >
+                              Diagnose whether online or target Q differences between the learned correction and its frozen BC action predict paired closed-loop benefit.
+                            children:
+                              - id: N08
+                                type: experiment
+                                title: "L18 online/target zero-threshold advantage gates"
+                                provenance: ai-executed
+                                timestamp: "2026-07-15T10:45:00+08:00"
+                                result: >
+                                  Three training seeds and 15 paired validation seeds produced 42/45 BC successes versus 36/45 for ungated, online-hard and target-hard correction; all conditions had zero collision. Gates accepted about 77% of steps but each lost seven BC-success episodes and gained only one. Data-quality checks passed over 49,786 control-step rows.
+                                evidence: [C05, C06, "docs/rl/17_l18_critic_advantage_diagnostic_results_2026-07-15.md"]
+                                children:
+                                  - id: N09
+                                    type: dead_end
+                                    title: "Non-negative critic advantage as a deployment gate"
+                                    provenance: ai-executed
+                                    timestamp: "2026-07-15T10:50:00+08:00"
+                                    hypothesis: >
+                                      Requiring the smaller twin-critic action advantage to be non-negative would remove harmful corrections without collapsing to BC.
+                                    failure_mode: >
+                                      Online and target gates remained nondegenerate but did not improve pooled success and still lost seven paired BC-success episodes each.
+                                    lesson: >
+                                      Critic advantage is an imperfect ranking signal, not calibrated confidence; margin calibration or independent pessimistic critics require a separate experiment and data split.
+                                    children:
+                                      - id: N10
+                                        type: question
+                                        title: "Can a positive raw target-Q margin calibrate the correction gate?"
+                                        provenance: ai-suggested
+                                        timestamp: "2026-07-15T11:00:00+08:00"
+                                        description: >
+                                          Select one global margin on new calibration episodes while keeping a second set of selection episodes sealed.
+                                        children:
+                                          - id: N11
+                                            type: experiment
+                                            title: "L19 preregistered cross-seed target-Q margin calibration"
+                                            provenance: ai-executed
+                                            timestamp: "2026-07-15T11:35:00+08:00"
+                                            result: >
+                                              Three independent critics, 12 calibration seeds and six margins produced 252 episodes and 71,197 audited control-step rows. Margin 0.02 appeared best when pooled at 31/36 successes versus BC 29/36, but training seed 20260722 lost three paired BC successes and had negative mean return. Every margin failed the preregistered eligibility rule, so selection seeds remained unopened and the selector returned BC fallback.
+                                            evidence: [C07, H05, "docs/rl/19_l19_advantage_margin_calibration_results_2026-07-15.md"]
+                                            children:
+                                              - id: N12
+                                                type: dead_end
+                                                title: "Single global raw-Q margin across independently trained critics"
+                                                provenance: ai-executed
+                                                timestamp: "2026-07-15T11:40:00+08:00"
+                                                hypothesis: >
+                                                  Increasing the same raw target-Q difference threshold would remove harmful corrections while preserving beneficial ones across training seeds.
+                                                failure_mode: >
+                                                  Pooled performance concealed model-specific regression, and no grid value preserved all paired BC successes across all critics.
+                                                lesson: >
+                                                  Raw critic differences are not a seed-invariant confidence scale; the next gate must normalize score scale or use an independently trained risk signal rather than scanning more raw margins.
+                                                children:
+                                                  - id: N13
+                                                    type: question
+                                                    title: "Can scale-invariant twin-critic consensus safely gate correction?"
+                                                    provenance: ai-suggested
+                                                    timestamp: "2026-07-15T11:45:00+08:00"
+                                                    description: >
+                                                      Penalize disagreement between the two target action advantages with a dimensionless beta while keeping the prior selection seeds sealed.
+                                                    children:
+                                                      - id: N14
+                                                        type: experiment
+                                                        title: "L20 preregistered twin-critic consensus-LCB calibration"
+                                                        provenance: ai-executed
+                                                        timestamp: "2026-07-15T12:00:00+08:00"
+                                                        result: >
+                                                          Three independent critics, 12 new calibration seeds and six betas produced 252 episodes and 70,081 audited control steps. Beta 2 improved success from BC 27/36 to 31/36, gained five successes, had positive mean paired return for every training seed and zero collision, but lost one paired BC success. No beta passed the fail-closed gate; selection seeds remained unopened and BC fallback was retained.
+                                                        evidence: [C08, C09, H06, "docs/rl/21_l20_twin_critic_consensus_lcb_results_2026-07-15.md"]
+                                                        children:
+                                                          - id: N15
+                                                            type: dead_end
+                                                            title: "Self-gating with the actor's existing twin critics"
+                                                            provenance: ai-executed
+                                                            timestamp: "2026-07-15T12:03:00+08:00"
+                                                            hypothesis: >
+                                                              A scale-invariant disagreement penalty on the existing target critics would remove all harmful corrections while retaining beneficial corrections.
+                                                            failure_mode: >
+                                                              The best near-miss beta still accepted corrections in training seed 20260722 episode 20281201 and converted a BC success into failure, despite rescuing five other episodes.
+                                                            lesson: >
+                                                              Existing actor critics provide useful ranking information but are not an independent risk signal; the next gate should be trained or estimated independently from the actor optimization objective.
+                                                            children:
+                                                              - id: N16
+                                                                type: question
+                                                                title: "Can one-step counterfactual branches supply independent risk labels?"
+                                                                provenance: ai-suggested
+                                                                timestamp: "2026-07-15T12:10:00+08:00"
+                                                                description: >
+                                                                  Replay frozen-BC trajectories exactly, replace one accepted latent action with SAC correction, recover BC and compare paired 20-step outcomes without assigning full-episode failure to every step.
+                                                                children:
+                                                                  - id: N17
+                                                                    type: experiment
+                                                                    title: "L21 deterministic one-step counterfactual risk dataset"
+                                                                    provenance: ai-executed
+                                                                    timestamp: "2026-07-15T12:38:00+08:00"
+                                                                    result: >
+                                                                      Same-seed replay had zero observation error over all formal branches. Three checkpoints, ten train/validation episode seeds and six branch points produced 124 accepted samples with 101 train and 23 validation rows. All samples were neutral: train return deltas ranged from -0.0798 to +0.1043 and validation from -0.0360 to +0.1059, with zero collision, success or safety-override differences. Data quality passed but the preregistered class-coverage gate blocked model training; sealed test seeds remained unopened.
+                                                                    evidence: [C10, C11, H07, "docs/rl/23_l21_counterfactual_risk_dataset_results_2026-07-15.md"]
+                                                                    children:
+                                                                      - id: N18
+                                                                        type: dead_end
+                                                                        title: "Isolated one-step intervention as the risk-learning unit"
+                                                                        provenance: ai-executed
+                                                                        timestamp: "2026-07-15T12:40:00+08:00"
+                                                                        hypothesis: >
+                                                                          One accepted correction step followed by BC recovery would generate both harmful and beneficial short-horizon examples for an independent risk estimator.
+                                                                        failure_mode: >
+                                                                          Frozen BC recovered the local perturbation; all 124 paired branches remained neutral and no class labels crossed the preregistered joint return/distance thresholds.
+                                                                        lesson: >
+                                                                          The observed L20 episode regression is produced by a sequence of accepted corrections, so the next counterfactual treatment should be a preregistered short correction burst rather than a post-hoc lower label threshold.
+                                                                        children:
+                                                                          - id: N19
+                                                                            type: question
+                                                                            title: "Can a preregistered ten-step gated correction burst supply risk labels?"
+                                                                            provenance: ai-suggested
+                                                                            timestamp: "2026-07-15T12:45:00+08:00"
+                                                                            description: >
+                                                                              Use prior L20 accepted-run lengths to freeze a ten-step intervention, then compare forty-step BC and gated-SAC branches on new episode-grouped development seeds.
+                                                                            children:
+                                                                              - id: N20
+                                                                                type: experiment
+                                                                                title: "L22 ten-step counterfactual burst dataset"
+                                                                                provenance: ai-executed
+                                                                                timestamp: "2026-07-15T13:05:00+08:00"
+                                                                                result: >
+                                                                                  Three checkpoints and ten new train/validation seeds produced 120 valid burst samples from 180 considered branch points. Replay error was zero and burst accounting passed. Train distance effects ranged from -8.0 to +18.5 cm and validation from -9.4 to +7.1 cm, but all rows remained neutral because return delta never reached the preregistered +/-0.5 joint threshold. Model training was blocked and sealed seeds stayed unopened.
+                                                                                evidence: [C12, C13, C14, H08, H09, "docs/rl/25_l22_counterfactual_burst_results_2026-07-15.md"]
+                                                                                children:
+                                                                                  - id: N21
+                                                                                    type: dead_end
+                                                                                    title: "Forty-step joint-threshold classification for burst risk"
+                                                                                    provenance: ai-executed
+                                                                                    timestamp: "2026-07-15T13:08:00+08:00"
+                                                                                    hypothesis: >
+                                                                                      Ten-step accumulated corrections would create sufficient harmful and beneficial labels under the frozen L21 joint return/distance thresholds.
+                                                                                    failure_mode: >
+                                                                                      Return and distance were nearly redundant, with correlations 0.987 train and 0.996 validation, while the observed return range stayed inside -0.204 to +0.371. The return threshold therefore blocked every non-neutral label despite measurable positive and negative distance effects.
+                                                                                    lesson: >
+                                                                                      Do not relabel post hoc; align the next target with the actual macro-policy horizon and preserve continuous utility plus group-aware uncertainty.
+                                                                                    children:
+                                                                                      - id: N22
+                                                                                        type: pivot
+                                                                                        title: "Move from arbitrary three-class labels to sequence-level continuous utility"
+                                                                                        provenance: ai-suggested
+                                                                                        timestamp: "2026-07-15T13:10:00+08:00"
+                                                                                        from: "One-step or short-burst harmful/neutral/beneficial classification using fixed joint thresholds"
+                                                                                        to: "Preregistered macro-policy continuous utility estimation with independent episode groups and sealed testing"
+                                                                                        trigger: "L22 exposed real context-dependent positive and negative effects but no valid class coverage; validation positive effects were also sparse across checkpoints."
+                                                                                        children:
+                                                                                          - id: N23
+                                                                                            type: question
+                                                                                            title: "Can frozen current-state features predict continuous burst utility safely?"
+                                                                                            provenance: ai-suggested
+                                                                                            timestamp: "2026-07-15T13:15:00+08:00"
+                                                                                            description: >
+                                                                                              Train a group-bootstrap neural ensemble on forty-step goal-distance improvement, calibrate a one-sided group-conformal lower bound, and keep all test seeds sealed unless a fixed development gate passes.
+                                                                                            children:
+                                                                                              - id: N24
+                                                                                                type: experiment
+                                                                                                title: "L23 grouped continuous-utility ensemble"
+                                                                                                provenance: ai-executed
+                                                                                                timestamp: "2026-07-15T13:50:00+08:00"
+                                                                                                result: >
+                                                                                                  Three actor checkpoints and 36 new development episode seeds produced 423 accepted branch rows in 108 independent checkpoint-episode groups. The corrected ensemble improved selection RMSE over a zero predictor by only 0.88%, achieved 56.67% balanced sign accuracy on effects of at least three centimetres, and accepted zero calibration samples after grouped conformal scaling. The development gate failed, so all 51 test groups and closed-loop selection seeds remained sealed and BC fallback was retained.
+                                                                                                evidence: [C15, C16, C17, H10, H11, H12, "docs/rl/28_l23_continuous_utility_results_2026-07-15.md"]
+                                                                                                children:
+                                                                                                  - id: N25
+                                                                                                    type: dead_end
+                                                                                                    title: "State-only prediction of macro-policy utility"
+                                                                                                    provenance: ai-executed
+                                                                                                    timestamp: "2026-07-15T13:53:00+08:00"
+                                                                                                    hypothesis: >
+                                                                                                      The existing 67-dimensional state representation contains enough information to decide whether a future ten-step gated correction sequence will improve forty-step progress.
+                                                                                                    failure_mode: >
+                                                                                                      Predictive performance was approximately the zero baseline, meaningful negative effects were poorly classified, ensemble disagreement was under-dispersed, and the calibrated lower bound accepted no samples.
+                                                                                                    lesson: >
+                                                                                                      Future sequence utility depends on sampled candidate trajectories, future gate decisions and obstacle-relative geometry that are absent from a single pre-intervention state vector.
+                                                                                                    children:
+                                                                                                      - id: N26
+                                                                                                        type: pivot
+                                                                                                        title: "Compare candidate trajectories rather than infer them from one state"
+                                                                                                        provenance: ai-suggested
+                                                                                                        timestamp: "2026-07-15T13:55:00+08:00"
+                                                                                                        from: "State-only prediction of future gated-SAC burst utility"
+                                                                                                        to: "Trajectory-aware utility features from paired BC and RL-guided MPPI rollouts"
+                                                                                                        trigger: "L23 showed weak, unstable univariate associations and calibrated zero acceptance despite adequate grouped data and model capacity."
+                                                                                                        children:
+                                                                                                          - id: N27
+                                                                                                            type: question
+                                                                                                            title: "Can paired BC/SAC candidate previews predict macro-policy utility?"
+                                                                                                            provenance: ai-suggested
+                                                                                                            timestamp: "2026-07-15T14:00:00+08:00"
+                                                                                                            description: >
+                                                                                                              Compare paired MPPI candidate trajectories with common random numbers and test whether progress, clearance, smoothness, cost-distribution and sampling diagnostics improve forty-step utility prediction over an identical state-only ensemble.
+                                                                                                            children:
+                                                                                                              - id: N28
+                                                                                                                type: experiment
+                                                                                                                title: "L24 paired candidate-trajectory utility ablation"
+                                                                                                                provenance: ai-executed
+                                                                                                                timestamp: "2026-07-15T14:35:00+08:00"
+                                                                                                                result: >
+                                                                                                                  Side-effect-free preview passed exact regression and 409 accepted branches were collected in 108 independent checkpoint-episode groups with 127 frozen features. The trajectory ensemble achieved 5.075 cm selection RMSE versus 5.024 cm for the same-data state-only ensemble, only 57.74% balanced sign accuracy and zero calibrated acceptance. No trajectory metric had a stable same-sign group correlation of at least absolute 0.2 across train, selection and calibration. The gate failed and all sealed test groups remained unopened.
+                                                                                                                evidence: [C18, C19, C20, H13, H14, H15, "docs/rl/30_l24_trajectory_utility_results_2026-07-15.md"]
+                                                                                                                children:
+                                                                                                                  - id: N29
+                                                                                                                    type: dead_end
+                                                                                                                    title: "One-preview prediction of repeated-replanning burst utility"
+                                                                                                                    provenance: ai-executed
+                                                                                                                    timestamp: "2026-07-15T14:38:00+08:00"
+                                                                                                                    hypothesis: >
+                                                                                                                      A paired current-step BC/SAC candidate preview contains the missing trajectory context needed to predict the subsequent ten-step correction burst's forty-step outcome.
+                                                                                                                    failure_mode: >
+                                                                                                                      The full representation was worse than the state-only ablation on row and group RMSE, reduced negative-effect sign accuracy, failed to beat zero by the preregistered margin, and required a 14.44 conformal multiplier that accepted no rows.
+                                                                                                                    lesson: >
+                                                                                                                      The preview describes only the current optimization, while the treatment outcome depends on ten future sensing, sampling, replanning, gating and safety-arbitration rounds. More model capacity cannot recover random future information absent from the representation.
+                                                                                                                    children:
+                                                                                                                      - id: N30
+                                                                                                                        type: pivot
+                                                                                                                        title: "Simplify to auditable OOD-conditioned RL prior activation"
+                                                                                                                        provenance: ai-suggested
+                                                                                                                        timestamp: "2026-07-15T14:40:00+08:00"
+                                                                                                                        from: "Learned prediction of the future macro-utility of each correction burst"
+                                                                                                                        to: "Traditional MPPI/BC in simple in-distribution scenes, with interpretable OOD or scene-complexity activation of the RL sampling prior and an independent ICODE ablation"
+                                                                                                                        trigger: "L18--L24 repeatedly failed safe learned-gate eligibility, while L20 still showed that critic-guided correction can provide directional benefit and the advisor requested a narrower, technically auditable story."
+                                                                                                                        children:
+                                                                                                                          - id: N31
+                                                                                                                            type: question
+                                                                                                                            title: "Can observable scene complexity activate the RL prior only where it is useful?"
+                                                                                                                            provenance: ai-suggested
+                                                                                                                            timestamp: "2026-07-15T14:45:00+08:00"
+                                                                                                                            description: >
+                                                                                                                              Use only local LaserScan geometry to interpolate between exact traditional-MPPI fallback and the L20 target-critic LCB prior, then test it with paired scenes, episode seeds and independently trained checkpoints.
+                                                                                                                            children:
+                                                                                                                              - id: N32
+                                                                                                                                type: experiment
+                                                                                                                                title: "L25 LaserScan scene-complexity gate ablation"
+                                                                                                                                provenance: ai-executed
+                                                                                                                                timestamp: "2026-07-15T15:25:00+08:00"
+                                                                                                                                result: >
+                                                                                                                                  Three independent checkpoints, ten paired episode seeds, four scenes and four methods produced 480 episodes and 124334 control steps at K=200. Complexity gating exactly matched traditional MPPI in obstacle-free geometry, improved traditional success from 0/30 to 20/30, 24/30 and 26/30 in the three blocking scenes, and caused no collision in any episode. It did not uniformly dominate frozen BC or always-on LCB. The preregistered gate failed only because the globally simple single-obstacle scene raised pooled simple-scene alpha and active fraction above their limits; sealed test seeds remained unopened.
+                                                                                                                                evidence: [C21, C22, C23, C24, H16, H17, "docs/rl/32_l25_scene_complexity_gate_results_2026-07-15.md"]
+                                                                                                                                children:
+                                                                                                                                  - id: N33
+                                                                                                                                    type: dead_end
+                                                                                                                                    title: "Use global simple-versus-complex scene labels as the gating target"
+                                                                                                                                    provenance: ai-executed
+                                                                                                                                    timestamp: "2026-07-15T15:28:00+08:00"
+                                                                                                                                    hypothesis: >
+                                                                                                                                      A globally sparse single-obstacle scene should require little RL activation and can be pooled with obstacle-free dynamics under one simple-scene gate limit.
+                                                                                                                                    failure_mode: >
+                                                                                                                                      At K=200 traditional MPPI failed all 30 single-obstacle episodes, while local LaserScan activation recovered 20 successes. Pooling this scene with obstacle-free dynamics made the preregistered simple alpha and active-fraction limits fail despite no performance or safety regression.
+                                                                                                                                    lesson: >
+                                                                                                                                      Gating should be evaluated against local control difficulty and observable geometry, not obstacle count or a global scene name.
+                                                                                                                                    children:
+                                                                                                                                      - id: N34
+                                                                                                                                        type: pivot
+                                                                                                                                        title: "Test RL-prior value as a sample-efficiency interaction"
+                                                                                                                                        provenance: ai-suggested
+                                                                                                                                        timestamp: "2026-07-15T15:30:00+08:00"
+                                                                                                                                        from: "A fixed K=200 comparison organized by global simple and complex scene labels"
+                                                                                                                                        to: "A blocked K=50,100,200,400 factorial using new seeds and local LaserScan gate diagnostics"
+                                                                                                                                        trigger: "L25 showed strong local activation value but could not determine whether the learned prior mainly compensates for a limited MPPI sampling budget."
+                                                                                                                                        children:
+                                                                                                                                          - id: N37
+                                                                                                                                            type: experiment
+                                                                                                                                            title: "L26 scene-complexity gate sample-efficiency factorial"
+                                                                                                                                            provenance: ai-executed
+                                                                                                                                            timestamp: "2026-07-15T16:35:00+08:00"
+                                                                                                                                            result: >
+                                                                                                                                              Three independent checkpoints, ten new episode seeds, four scenes, two methods and K in 50,100,200,400 produced all 960 planned episodes and 250676 control steps with zero collision. At K=100 the gated prior achieved 20/30, 19/30 and 20/30 successes in the three blocking scenes, while traditional MPPI at K=400 achieved 6/30, 0/30 and 0/30. However, gated K=100 used 8.663 ms/step versus 9.168 ms/step for traditional K=400, a 0.945 ratio that failed the preregistered 0.60 compute threshold. Sealed seeds remained unopened.
+                                                                                                                                            evidence: [C26, C27, H21, "docs/rl/34_l26_sample_efficiency_results_2026-07-15.md"]
+                                                                                                                                            children:
+                                                                                                                                              - id: N38
+                                                                                                                                                type: dead_end
+                                                                                                                                                title: "Equate lower MPPI sample count with proportional wall-clock speedup"
+                                                                                                                                                provenance: ai-executed
+                                                                                                                                                timestamp: "2026-07-15T16:38:00+08:00"
+                                                                                                                                                hypothesis: >
+                                                                                                                                                  Reducing K from 400 to 100 with a learned sampling prior would reduce total planner time by at least forty percent while preserving or improving blocking-scene success.
+                                                                                                                                                failure_mode: >
+                                                                                                                                                  Actor, target twin-critic and decoder inference remained a fixed per-step cost even when the outer scene-complexity gate ultimately set the learned contribution to zero; the observed planner-time ratio was 0.945.
+                                                                                                                                                lesson: >
+                                                                                                                                                  Sample efficiency and compute efficiency require separate estimands and gates; neural inference must be profiled and optimized without changing controls.
+                                                                                                                                                children:
+                                                                                                                                                  - id: N39
+                                                                                                                                                    type: question
+                                                                                                                                                    title: "Can provably inactive learned inference be skipped without changing behavior?"
+                                                                                                                                                    provenance: ai-suggested
+                                                                                                                                                    timestamp: "2026-07-15T16:40:00+08:00"
+                                                                                                                                                    description: >
+                                                                                                                                                      Compare standard complexity gating against a fast path that returns the same conventional prior only when complexity, near-goal or safety logic guarantees final alpha zero and learned covariance is disabled.
+                                                                                                                                                    children:
+                                                                                                                                                      - id: N40
+                                                                                                                                                        type: experiment
+                                                                                                                                                        title: "L27 zero-complexity behavior-preserving fast path"
+                                                                                                                                                        provenance: ai-executed
+                                                                                                                                                        timestamp: "2026-07-15T17:05:00+08:00"
+                                                                                                                                                        result: >
+                                                                                                                                                          Three checkpoints, ten new episode seeds, four scenes and two paired K=100 conditions produced all 240 episodes. Across 26208 paired control steps, executed v, omega, goal distance, gate alpha, collision and safety behavior matched exactly. The fast path skipped all learned inference in clean geometry and 31.6% in blocking scenes, reducing planner time by 23.6% (95% CI 19.9--27.1%) and 9.4% (7.6--11.5%), respectively. Every preregistered development check passed; protected seeds remained unopened.
+                                                                                                                                                        evidence: [C28, H22, "docs/rl/36_l27_zero_complexity_fastpath_results_2026-07-15.md"]
+                                                                                                                                                        children:
+                                                                                                                                                          - id: N41
+                                                                                                                                                            type: question
+                                                                                                                                                            title: "Can active-gate inference be pruned exactly enough to close the compute gap?"
+                                                                                                                                                            provenance: ai-suggested
+                                                                                                                                                            timestamp: "2026-07-15T19:40:00+08:00"
+                                                                                                                                                            description: >
+                                                                                                                                                              Profile the actor, critic diagnostics, decoder and MPPI solve at K=100, then compare full diagnostics, selected-target-critic inference and selected-target-critic inference with actor-base reuse under exact paired behavior checks and fixed practical timing thresholds.
+                                                                                                                                                            children:
+                                                                                                                                                              - id: N42
+                                                                                                                                                                type: experiment
+                                                                                                                                                                title: "L28 active-prior inference profiling and exact pruning"
+                                                                                                                                                                provenance: ai-executed
+                                                                                                                                                                timestamp: "2026-07-15T20:20:00+08:00"
+                                                                                                                                                                result: >
+                                                                                                                                                                  Three checkpoints, ten new development seeds and seven scenes produced all 360 episodes and 79734 steps. Both optimized conditions exactly matched the full reference across 26578 paired steps each. Selected-critic-only reduced active-prior time by 12.26% and blocking planner time by 3.07%; adding actor-base reuse reduced them by 14.89% and 4.07%, with a two-stage bootstrap 95% CI of 1.94--6.05% for the planner reduction. The preregistered 15%/20% prior and 5% end-to-end magnitude gates were not all met, so L28 failed and cross-K plus sealed seeds remained unopened.
+                                                                                                                                                                evidence: [C29, C30, H23, "docs/rl/38_l28_inference_profile_results_2026-07-15.md"]
+                                                                                                                                                                children:
+                                                                                                                                                                  - id: N43
+                                                                                                                                                                    type: dead_end
+                                                                                                                                                                    title: "Diagnostic pruning alone as a complete L26 compute remedy"
+                                                                                                                                                                    provenance: ai-executed
+                                                                                                                                                                    timestamp: "2026-07-15T20:22:00+08:00"
+                                                                                                                                                                    hypothesis: >
+                                                                                                                                                                      Removing unselected online-critic diagnostics and reusing the already-computed actor base action would reduce active-prior time by at least 20% and blocking-scene planner time by at least 5% without changing behavior.
+                                                                                                                                                                    failure_mode: >
+                                                                                                                                                                      The behavior contract passed exactly and the speedup confidence interval excluded zero, but the observed reductions were only 14.89% for active prior and 4.07% end to end. Actor and decoder inference remained major fixed components.
+                                                                                                                                                                    lesson: >
+                                                                                                                                                                      Preserve the optimization as an optional exact improvement, but do not claim it closes the compute gap or chase the preregistered thresholds post hoc. Any decoder or inference-context optimization requires a new study and new development seeds.
+
+  - id: N35
+    type: question
+    title: "How should the 6.5 m real-robot field reproduce the decisive simulation factors?"
+    also_depends_on: [N32, N34]
+    provenance: user
+    timestamp: "2026-07-15T16:04:00+08:00"
+    description: >
+      Design a supplier-ready modular obstacle kit and reproducible placements for a 6.5 m by 6.5 m field, covering clean dynamics, local blockage, narrow passages, U-trap geometry, mixed static clutter, dynamic crossing and surface-induced dynamics mismatch.
+    children:
+      - id: N36
+        type: experiment
+        title: "Geometric reachability and package-validation audit"
+        provenance: ai-executed
+        timestamp: "2026-07-15T16:04:00+08:00"
+        result: >
+          Generated eleven supplier drawing pages, a modular bill of materials, exact placement coordinates and editable sources. A 5 cm-grid reachability audit using a 0.25 m robot radius plus a 0.05 m geometry buffer passed every configured static scene, the focused layout tests passed 4/4, and the complete repository passed 330/330 tests. These results are conditional on measuring the real robot footprint and LaserScan beam height before procurement.
+        evidence: [C25, H19, H20, "docs/real_robot/obstacle_kit_6p5m/README.md", "docs/real_robot/obstacle_kit_6p5m/obstacle_kit_6p5m_supplier_drawings.pdf", "tests/platform/test_real_robot_obstacle_layout.py"]
+
+  - id: N44
+    type: pivot
+    title: "Move from static/compute ablations to cross-layer dynamic attribution"
+    also_depends_on: [N30, N32, N43]
+    provenance: ai-suggested
+    timestamp: "2026-07-15T20:30:00+08:00"
+    from: "Static-obstacle scene-complexity and CPU micro-optimization studies"
+    to: "A blocked ICODE--RL--Gate factorial with seen/unseen physics and a collidable dynamic crossing obstacle"
+    trigger: "The main scientific program required direct attribution of residual prediction, learned sampling and gating under dynamics mismatch and moving obstacles."
+    children:
+      - id: N45
+        type: experiment
+        title: "L29 cross-layer ICODE--RL--Gate development factorial"
+        provenance: ai-executed
+        timestamp: "2026-07-15T20:55:00+08:00"
+        result: >
+          Three paired RL/ICODE training blocks, five matched development seeds, three scenes, two physics domains and six methods produced all 540 planned episodes. Integrity, protected-seed, collision and 7806-step exact-clean-fallback checks passed. The spatial gate improved static success but collided in 24/30 episodes per residual mode during lateral dynamic crossing; the fixed efficacy gate failed and confirmation stayed sealed.
+        evidence: [C31, C32, H24, "docs/rl/39_l29_cross_layer_factorial_prereg_2026-07-15.md", "results/research_platform/rl/l29_cross_layer_development_multiblock_20260715_v1/development_gate.json"]
+        children:
+          - id: N46
+            type: dead_end
+            title: "Purely spatial complexity as a sufficient dynamic-crossing gate"
+            provenance: ai-executed
+            timestamp: "2026-07-15T21:00:00+08:00"
+            hypothesis: >
+              Front proximity, bilateral constriction and obstacle density would activate the RL prior early enough for a sparse obstacle crossing laterally.
+            failure_mode: >
+              A one-sided crossing remained deliberately suppressed as wall-like geometry; average gate alpha stayed near 0.05 and the spatial-gated methods collided in 12/15 episodes in each dynamic physics stratum.
+            lesson: >
+              Moving sparse hazards require scan-temporal closing information or explicit tracking; static spatial density alone cannot distinguish a benign side wall from an approaching lateral obstacle.
+            children:
+              - id: N47
+                type: experiment
+                title: "L30 scan-temporal closing-risk remediation"
+                provenance: ai-executed
+                timestamp: "2026-07-15T21:20:00+08:00"
+                result: >
+                  A single preregistered scan-only temporal-risk rule was tested in 180 new development episodes and compared with the frozen 540 L29 episodes. Temporal-gate plus ICODE achieved 60/60 blocking-scene successes, 0/60 collisions and 0.289 m mean final distance, while retaining exact traditional-MPPI fallback over 7806 clean steps. The formal L30 gate still failed because the temporal-gate nominal ablation had one seen-dynamic collision above its matched always-RL comparator; no confirmation seed was opened.
+                evidence: [C31, C33, C34, H24, H25, "docs/rl/41_l29_l30_cross_layer_results_2026-07-15.md", "results/research_platform/rl/l30_temporal_gate_development_multiblock_20260715_v1/development_gate.json"]
+                children:
+                  - id: N48
+                    type: question
+                    title: "Does the primary temporal-gate + ICODE method generalize across dynamic-obstacle variants?"
+                    provenance: ai-suggested
+                    timestamp: "2026-07-15T21:25:00+08:00"
+                    description: >
+                      Freeze the primary deployment candidate, vary crossing direction, phase, speed and size on new development seeds, and open a new confirmation set only after a primary-method safety and non-inferiority gate passes.
+                    children:
+                      - id: N49
+                        type: experiment
+                        title: "L31 dynamic-motion generalization stress test"
+                        provenance: ai-executed
+                        timestamp: "2026-07-15T22:08:00+08:00"
+                        result: >
+                          A preregistered randomized complete-block design crossed three independent RL/ICODE checkpoint pairs, five fresh episode seeds, four obstacle-motion variants, two physics domains and five methods for all 600 planned MuJoCo episodes. Integrity, checkpoint, finite-metric and protected-seed checks passed. Temporal-gate + ICODE achieved only 64/120 successes with 56/120 collisions: reverse-direction cells had 1/15 success in each physics domain and fast cells had 2/15 and 5/15. Only one of five efficacy checks passed and the hard zero-collision check failed, so confirmation remained sealed.
+                        evidence: [C35, C36, C37, H26, H27, "docs/rl/43_l31_dynamic_variant_generalization_results_2026-07-15.md", "ara/evidence/tables/table01_l31_dynamic_variant.md", "ara/evidence/figures/fig01_l31_dynamic_variant.md"]
+                        children:
+                          - id: N50
+                            type: dead_end
+                            title: "Use scalar sector closing risk as direct RL-prior confidence"
+                            provenance: ai-executed
+                            timestamp: "2026-07-15T22:10:00+08:00"
+                            hypothesis: >
+                              Taking the maximum of spatial complexity and a scan-sector closing activation would generalize the successful L30 behavior to new crossing directions, speeds, phases and sizes.
+                            failure_mode: >
+                              All 56 primary collisions occurred with gate alpha one. Reverse crossings produced nonphysical pre-collision closing-rate means of 29--32 m/s from sector-minimum reassociation, while fast crossings produced plausible closing rates but activated an RL policy trained mainly on static observations that could not infer motion direction from one scan.
+                            lesson: >
+                              Hazard intensity and controller competence are different quantities. A temporal hazard cannot be converted directly into greater trust in an RL prior, and single-frame scan features cannot identify dynamic direction.
+                            children:
+                              - id: N51
+                                type: pivot
+                                title: "Separate temporal hazard observability from policy competence"
+                                provenance: ai-suggested
+                                timestamp: "2026-07-15T22:12:00+08:00"
+                                from: "Risk-triggered activation of a static-scene single-scan RL prior"
+                                to: "Robust scan-flow or scan-history features, dynamic-domain RL training, and a competence confidence distinct from the shared dynamic safety layer"
+                                trigger: "L31 refuted both the physical validity of sector-minimum velocity and the assumption that high dynamic risk implies high RL competence."
+                                children:
+                                  - id: N52
+                                    type: experiment
+                                    title: "L32 robust scan-flow, shared safety and competence-separation factorial"
+                                    provenance: ai-executed
+                                    timestamp: "2026-07-16T00:15:00+08:00"
+                                    result: >
+                                      A corrected 720-episode development factorial crossed three RL/ICODE model blocks, four motion variants, two physics domains, five fresh seeds and six methods. Multi-beam robust scan-flow bounded the maximum observed closing rate at 0.891 m/s, while shared temporal safety improved traditional ICODE from 32/120 to 76/120 successes and reduced collisions from 88/120 to 44/120. The primary competence-gated learned condition reached only 57/120 successes with 63/120 collisions, so the preregistered gate failed and no sealed seed was opened.
+                                    evidence: [C38, C39, H28, "docs/rl/46_l32_temporal_safety_remediation_results_2026-07-16.md"]
+                                    children:
+                                      - id: N53
+                                        type: dead_end
+                                        title: "Treat reactive temporal safety and confidence separation as a complete dynamic-policy remedy"
+                                        provenance: ai-executed
+                                        timestamp: "2026-07-16T00:18:00+08:00"
+                                        hypothesis: >
+                                          Correcting scan-flow validity, adding a common TTC-style safety layer and separating competence confidence would be sufficient for the existing static-trained RL prior to handle all dynamic variants.
+                                        failure_mode: >
+                                          Shared safety strongly helped traditional MPPI but robust learned conditions remained direction dependent; competence separation had a favorable point direction but its paired interval crossed zero, and fast/large motion cells still collided frequently.
+                                        lesson: >
+                                          A reactive layer can constrain longitudinal risk but cannot substitute for a policy that observes temporal direction and was trained on dynamic closed-loop data.
+                                        children:
+                                          - id: N54
+                                            type: experiment
+                                            title: "L33 three-frame dynamic training with full learned-prior authority"
+                                            provenance: ai-executed
+                                            timestamp: "2026-07-16T00:35:00+08:00"
+                                            result: >
+                                              SAC used three LaserScan frames, four randomized motion families and four seen MuJoCo physics domains for 30k steps, with model selection on two held-out motion paths in a combined-unseen domain. All trained checkpoints had 0/6 held-out success, the best trained checkpoint ended 3.701 m from the goal, and 87 training episodes produced no successful episode. The initialized checkpoint remained best.
+                                            evidence: [C40, "docs/rl/49_l33_l34_dynamic_bounded_correction_results_2026-07-16.md"]
+                                            children:
+                                              - id: N55
+                                                type: pivot
+                                                title: "Bound RL to a correction around the traditional MPPI prior"
+                                                provenance: ai-suggested
+                                                timestamp: "2026-07-16T00:37:00+08:00"
+                                                from: "RL local-subgoal output completely replacing the trusted sampling prior"
+                                                to: "A fixed 25% learned correction around GoalWarmStart with the same temporal observation, reward and randomized training domains"
+                                                trigger: "L33 lost all successful closed-loop data and learned collision avoidance by moving away from the goal, indicating destructive learned-prior authority rather than missing temporal input alone."
+                                                children:
+                                                  - id: N56
+                                                    type: experiment
+                                                    title: "L34 bounded dynamic correction across three independent training seeds"
+                                                    provenance: ai-executed
+                                                    timestamp: "2026-07-16T10:05:00+08:00"
+                                                    result: >
+                                                      Three independent 30k SAC runs each improved against its own fixed-seed step-zero reference. Across 18 paired held-out episodes, success increased from 4/18 to 10/18, collision decreased from 12/18 to 7/18, there were six success gains with zero losses and five collision improvements with zero regressions, and mean final distance improved by 0.547 m. All three seed audits had 42/42 validation rows, finite metrics and complete checkpoints; the preregistered multiseed development gate passed.
+                                                    evidence: [C41, H29, H30, "docs/rl/49_l33_l34_dynamic_bounded_correction_results_2026-07-16.md", "ara/evidence/tables/table02_l34_dynamic_multiseed.md", "ara/evidence/figures/fig02_l34_dynamic_multiseed.md"]
+                                                    children:
+                                                      - id: N57
+                                                        type: experiment
+                                                        title: "L35 independent confirmation of L34 bounded correction"
+                                                        provenance: ai-executed
+                                                        timestamp: "2026-07-16T10:30:00+08:00"
+                                                        result: >
+                                                          Sixty independently seeded episodes formed thirty initial-versus-best checkpoint pairs across three training seeds and two held-out motion paths. Artifact integrity passed, but success changed from 13/30 to 12/30, collision stayed 15/30, mean final-distance improvement was only 0.005 m, and only one of three training seeds had a positive success change. The hierarchical-bootstrap success difference was -0.033 with 95% CI [-0.233, 0.167], so the preregistered confirmation gate failed.
+                                                        evidence: [C42, "docs/rl/51_l35_independent_confirmation_results_2026-07-16.md", "ara/evidence/tables/table03_l35_independent_confirmation.md", "ara/evidence/figures/fig03_l35_independent_confirmation.md"]
+                                                        children:
+                                                          - id: N58
+                                                            type: dead_end
+                                                            title: "Treat L34 model-selection gains as independently generalizing bounded-RL evidence"
+                                                            provenance: ai-executed
+                                                            timestamp: "2026-07-16T10:32:00+08:00"
+                                                            hypothesis: >
+                                                              The three L34 best checkpoints would retain positive success and noninferior collision performance on new episode seeds under the same held-out paths and combined-unseen physics domain.
+                                                            failure_mode: >
+                                                              The pooled success effect reversed slightly, two training seeds were nonpositive, and the confidence intervals included both material benefit and harm. Scene diagnostics also showed complete outcome saturation: every diagonal-path episode collided while offset-path episodes never collided.
+                                                            lesson: >
+                                                              Checkpoint-selection cells cannot establish generalization, and benchmark scenes must contain within-scene outcome variation before they can identify policy effects.
+                                                            children:
+                                                              - id: N59
+                                                                type: experiment
+                                                                title: "L36 traditional-only dynamic benchmark calibration"
+                                                                provenance: ai-executed
+                                                                timestamp: "2026-07-16T10:40:00+08:00"
+                                                                result: >
+                                                                  Traditional GoalWarmStart MPPI alone evaluated eight candidate moving-obstacle geometries over eight new seeds, producing 64 complete episodes without inspecting RL or ICODE outcomes. Five candidates were eligible, and the fixed selector chose easy oblique_mid (5/8 success, 2/8 collision), moderate anti_diag_small (1/8, 4/8) and hard oblique_steep (1/8, 5/8). The selected collision-rate span was 0.375, so the identifiability gate passed.
+                                                                evidence: [C43, H31, "docs/rl/53_l36_dynamic_benchmark_calibration_results_2026-07-16.md", "ara/evidence/tables/table04_l36_dynamic_calibration.md", "ara/evidence/figures/fig04_l36_dynamic_calibration.md"]
+                                                                children:
+                                                                  - id: N60
+                                                                    type: question
+                                                                    title: "Do bounded RL and ICODE provide complementary closed-loop benefit?"
+                                                                    provenance: ai-suggested
+                                                                    timestamp: "2026-07-16T10:42:00+08:00"
+                                                                    description: >
+                                                                      On calibrated moving-obstacle scenes, use a paired two-by-two factorial to separate the bounded-RL main effect, ICODE main effect and their interaction while preserving common random numbers, shared safety and sealed-seed protection.
+                                                                    children:
+                                                                      - id: N61
+                                                                        type: experiment
+                                                                        title: "L37 bounded-RL by ICODE paired factorial"
+                                                                        provenance: ai-executed
+                                                                        timestamp: "2026-07-16T10:52:00+08:00"
+                                                                        result: >
+                                                                          All 180 planned episodes completed across three model blocks, three calibrated scenes, five fresh seeds and four conditions, with no protected or sealed seed leakage. Traditional nominal achieved 15/45 success and 21/45 collisions; bounded-RL plus ICODE achieved 8/45 success and 34/45 collisions. The combined method lost seven net successes, added thirteen collisions and worsened mean final distance by 0.542 m. Both main effects were unfavorable, although the success difference-in-differences interaction was +0.222 with 95% CI [0.022, 0.422]. The fixed gate failed in all three model blocks.
+                                                                        evidence: [C44, C45, H32, "docs/rl/55_l37_bounded_rl_icode_factorial_results_2026-07-16.md", "ara/evidence/tables/table05_l37_factorial.md", "ara/evidence/figures/fig05_l37_factorial.md"]
+                                                                        children:
+                                                                          - id: N62
+                                                                            type: dead_end
+                                                                            title: "Directly combine the current L34 bounded-RL and offline-accurate ICODE checkpoints"
+                                                                            provenance: ai-executed
+                                                                            timestamp: "2026-07-16T10:54:00+08:00"
+                                                                            hypothesis: >
+                                                                              The current bounded-RL checkpoints and ICODE checkpoints would each improve dynamic closed-loop control and provide an additional positive cross-layer interaction.
+                                                                            failure_mode: >
+                                                                              Bounded RL and ICODE each worsened the primary closed-loop metrics; the combined controller was worse than traditional nominal despite a positive statistical interaction. ICODE's offline H=20 prediction advantage did not transfer to the 36-step MPPI optimization horizon.
+                                                                            lesson: >
+                                                                              A positive interaction is not an absolute performance win. Residual models require horizon-matched rollout, cost-ranking and traditional-MPPI closed-loop eligibility before recombination with RL.
+                                                                            children:
+                                                                              - id: N63
+                                                                                type: pivot
+                                                                                title: "Qualify ICODE independently before reopening cross-layer combination"
+                                                                                provenance: ai-suggested
+                                                                                timestamp: "2026-07-16T10:55:00+08:00"
+                                                                                from: "Direct RL and ICODE composition after offline residual validation"
+                                                                                to: "On-policy residual data, H=36 rollout and MPPI cost-ranking validation, then a residual-only closed-loop gate before any renewed RL factorial"
+                                                                                trigger: "L37 showed negative bounded-RL and ICODE main effects and a worse combined controller on calibrated development scenes, despite valid artifacts and improved offline residual RMSE."
+                                                                                children:
+                                                                                  - id: N64
+                                                                                    type: experiment
+                                                                                    title: "L38-L46 horizon-matched ICODE qualification and model repair"
+                                                                                    provenance: ai-executed
+                                                                                    timestamp: "2026-07-16T13:20:00+08:00"
+                                                                                    result: >
+                                                                                      Support gating and unconstrained residual rollouts did not recover closed-loop tracking. Constraining the learned residual to dynamic states [v, omega], training on interval-average applied controls and modeling the known command delay repaired the H=36 prediction contract. All three L46 checkpoints improved total, position and heading RMSE on both test and unseen splits.
+                                                                                    evidence: [C46, H33, H34, "docs/rl/67_l45_l46_offline_results_2026-07-16.md"]
+                                                                                    children:
+                                                                                      - id: N65
+                                                                                        type: experiment
+                                                                                        title: "L47 residual-only path tracking development gate"
+                                                                                        provenance: ai-executed
+                                                                                        timestamp: "2026-07-16T13:45:00+08:00"
+                                                                                        result: >
+                                                                                          Across 270 episodes, nominal and ICODE each achieved 90/90 successes and zero collisions, but ICODE worsened pooled cross-track RMSE by 2.2% and failed the preregistered tracking gate. Exploratory paired endpoints suggested shorter paths and lower control jerk, motivating an independent efficiency confirmation rather than relabeling the failed primary gate.
+                                                                                        evidence: [C47, H34, "docs/rl/69_l47_delay_aligned_path_tracking_results_2026-07-16.md"]
+                                                                                        children:
+                                                                                          - id: N66
+                                                                                            type: experiment
+                                                                                            title: "L48 independent efficiency and smoothness confirmation"
+                                                                                            provenance: ai-executed
+                                                                                            timestamp: "2026-07-16T14:05:00+08:00"
+                                                                                            result: >
+                                                                                              The 360-episode confirmation failed its joint gate because path-length uncertainty crossed zero and only two of three model blocks had positive path-length means. Issued-control jerk reduction was 0.001230 with 95% CI [0.000264, 0.002215], and applied-control jerk reduction was 0.001234 with 95% CI [0.000567, 0.001945], independently confirming a smoothness endpoint without a global efficiency claim.
+                                                                                            evidence: [C47, C48, "docs/rl/71_l48_efficiency_confirmation_results_2026-07-16.md"]
+                                                                                            children:
+                                                                                              - id: N67
+                                                                                                type: experiment
+                                                                                                title: "L49 task-specific path-data residual retraining"
+                                                                                                provenance: ai-executed
+                                                                                                timestamp: "2026-07-16T14:50:00+08:00"
+                                                                                                result: >
+                                                                                                  Three independently initialized H=36 ICODE models trained on applied-control path transitions passed the frozen offline gate. Across test and unseen splits, total rollout RMSE fell by 49.6-50.9%, position RMSE by 64.9-70.3% and heading RMSE by 69.1-73.7% relative to nominal.
+                                                                                                evidence: [C46, C49, H33, H34, "results/research_platform/l49_icode_iterative_path_offline_gate_v1/summary.json"]
+                                                                                                children:
+                                                                                                  - id: N68
+                                                                                                    type: experiment
+                                                                                                    title: "L50 independent task-specific closed-loop confirmation"
+                                                                                                    provenance: ai-executed
+                                                                                                    timestamp: "2026-07-16T15:10:00+08:00"
+                                                                                                    result: >
+                                                                                                      All 360 planned episodes completed with zero protected-seed leakage, no collision increase and no success loss. The joint gate failed: path-length reduction was 0.01247 m with 95% CI [-0.01730, 0.04160], and issued jerk narrowly crossed zero. Applied jerk improved significantly overall. In the frozen long-delay stratum, issued jerk reduction was 0.001194 [0.000065, 0.002344] and applied jerk reduction was 0.001282 [0.000264, 0.002365], whereas matched-delay effects were indistinguishable from zero.
+                                                                                                    evidence: [C48, C49, H35, "docs/rl/74_l49_l50_iterative_path_results_2026-07-16.md", "ara/evidence/tables/table06_l49_l50.md", "ara/evidence/figures/fig06_l49_l50.md"]
+                                                                                                    children:
+                                                                                                      - id: N69
+                                                                                                        type: pivot
+                                                                                                        title: "Gate residual authority from causal online reliability evidence"
+                                                                                                        provenance: ai-suggested
+                                                                                                        timestamp: "2026-07-16T15:20:00+08:00"
+                                                                                                        from: "Always-on full-strength ICODE after task-specific retraining"
+                                                                                                        to: "A fail-closed residual-reliability gate based only on past nominal-versus-ICODE one-step innovation"
+                                                                                                        trigger: "L50 reproduced significant smoothness benefit under stronger mismatch but near-zero benefit under matched delay, while its all-domain joint gate remained failed."
+                                                                                                        children:
+                                                                                                          - id: N70
+                                                                                                            type: experiment
+                                                                                                            title: "L51 oracle-domain residual-authority upper bound"
+                                                                                                            provenance: ai-executed
+                                                                                                            timestamp: "2026-07-16T15:40:00+08:00"
+                                                                                                            result: >
+                                                                                                              A simulator-label oracle gate completed 540 episodes and passed its upper-bound smoothness gate: issued and applied jerk reductions were positive in all three model blocks with hierarchical-bootstrap intervals above zero and unchanged success/collision. This established that conditional residual authority could help, while remaining explicitly non-deployable.
+                                                                                                            evidence: [C50, "results/research_platform/rl/l51_icode_oracle_domain_gate_20260716_v1/oracle_gate_summary.json"]
+                                                                                                            children:
+                                                                                                              - id: N71
+                                                                                                                type: dead_end
+                                                                                                                title: "Use prediction-relative innovation alone to infer residual utility"
+                                                                                                                provenance: ai-executed
+                                                                                                                timestamp: "2026-07-16T16:05:00+08:00"
+                                                                                                                hypothesis: >
+                                                                                                                  A causal exponentially forgotten comparison of nominal and residual one-step errors would separate matched-delay and stronger-delay domains strongly enough to reproduce the L51 oracle gate without simulator labels.
+                                                                                                                failure_mode: >
+                                                                                                                  None of 36 frozen L52 candidates passed; the best worst-block alpha separation was only 0.0283 against a 0.25 requirement because the two predictors' one-step errors were too similar for reliable benefit classification.
+                                                                                                                lesson: >
+                                                                                                                  Prediction accuracy and closed-loop residual usefulness are not identical latent quantities. A deployable authority gate may combine causal innovation with directly measurable plant context, but must not infer hidden domain labels.
+                                                                                                                evidence: [C51, H35, "results/research_platform/rl/l52_icode_online_reliability_calibration_20260716_v1/reliability_calibration_summary.json"]
+                                                                                                                children:
+                                                                                                                  - id: N72
+                                                                                                                    type: experiment
+                                                                                                                    title: "L53 causal cross-layer reliability calibration"
+                                                                                                                    provenance: ai-executed
+                                                                                                                    timestamp: "2026-07-16T16:25:00+08:00"
+                                                                                                                    result: >
+                                                                                                                      Combining past-transition innovation evidence with the measurable command-delay/control-period ratio yielded ten passing candidates out of 48. The selected candidate failed closed, matched alpha zero in the low-delay domain, and produced mean alpha 0.718-0.750 in long-delay blocks without using a hidden domain string.
+                                                                                                                    evidence: [H36, "results/research_platform/rl/l53_icode_cross_layer_reliability_calibration_20260716_v1/reliability_calibration_summary.json"]
+                                                                                                                    children:
+                                                                                                                      - id: N73
+                                                                                                                        type: experiment
+                                                                                                                        title: "L54-L55 independent gate evaluation"
+                                                                                                                        provenance: ai-executed
+                                                                                                                        timestamp: "2026-07-16T17:05:00+08:00"
+                                                                                                                        result: >
+                                                                                                                          L54 failed its tracking clause despite small positive path and jerk effects. The preregistered L55 path-efficiency confirmation also failed because path-length uncertainty crossed zero; significant secondary jerk reductions could not be relabeled as the primary result. The same-domain practical effects were too small to justify adding more identical seeds.
+                                                                                                                        evidence: [C51, "docs/rl/78_l54_causal_reliability_gate_results_2026-07-16.md", "docs/rl/79_l55_path_efficiency_confirmation_results_2026-07-16.md", "docs/rl/80_l55_practical_effect_analysis_2026-07-16.md"]
+                                                                                                                        children:
+                                                                                                                          - id: N74
+                                                                                                                            type: pivot
+                                                                                                                            title: "Move residual qualification to a fixed high-dynamic plant"
+                                                                                                                            provenance: ai-suggested
+                                                                                                                            timestamp: "2026-07-16T17:10:00+08:00"
+                                                                                                                            from: "Seek small efficiency gains in the previous low-dynamic path benchmark"
+                                                                                                                            to: "Hold one stronger physical plant fixed, excite velocity and yaw dynamics, and test horizon-matched prediction plus closed-loop tracking"
+                                                                                                                            trigger: "L54-L55 showed statistically weak or practically tiny effects in the previous domain, making additional same-domain seed collection inefficient."
+                                                                                                                            children:
+                                                                                                                              - id: N75
+                                                                                                                                type: dead_end
+                                                                                                                                title: "Use wheel odometry as the state source for clean dynamics isolation"
+                                                                                                                                provenance: ai-executed
+                                                                                                                                timestamp: "2026-07-16T18:00:00+08:00"
+                                                                                                                                hypothesis: >
+                                                                                                                                  A clean obstacle-free path benchmark could isolate plant-model mismatch while retaining the default wheel-odometry measurement contract.
+                                                                                                                                failure_mode: >
+                                                                                                                                  Slip-biased wheel odometry dominated terminal tracking and made several feasible paths appear nonconvergent, confounding dynamics-model error with state-estimation error.
+                                                                                                                                lesson: >
+                                                                                                                                  Clean dynamics evidence should first use ground-truth MuJoCo pose and twist with zero sensor noise/latency, then introduce odometry and perception as separate orthogonal factors.
+                                                                                                                                evidence: [H36, "docs/rl/81_l56_high_dynamic_benchmark_and_data_results_2026-07-16.md"]
+                                                                                                                                children:
+                                                                                                                                  - id: N76
+                                                                                                                                    type: experiment
+                                                                                                                                    title: "L56 frozen high-dynamic dataset qualification"
+                                                                                                                                    provenance: ai-executed
+                                                                                                                                    timestamp: "2026-07-16T19:10:00+08:00"
+                                                                                                                                    result: >
+                                                                                                                                      The fixed 13 kg low-friction, torque-limited, 40 ms delay plant completed all 48 collection episodes and produced 12,074 transitions. All four path families passed excitation, success, safety and saturation gates; episode-wise train, validation, test and unseen splits were frozen with SHA-256 provenance.
+                                                                                                                                    evidence: [C52, H36, H38, "results/research_platform/rl/l56_icode_high_dynamic_data_20260716_v1/high_dynamic_data_gate_summary.json", "docs/rl/81_l56_high_dynamic_benchmark_and_data_results_2026-07-16.md"]
+                                                                                                                                    children:
+                                                                                                                                      - id: N77
+                                                                                                                                        type: experiment
+                                                                                                                                        title: "L57 high-dynamic H=36 ICODE qualification"
+                                                                                                                                        provenance: ai-executed
+                                                                                                                                        timestamp: "2026-07-16T20:10:00+08:00"
+                                                                                                                                        result: >
+                                                                                                                                          Three independently initialized ICODE models passed the frozen all-window offline gate. Mean active-derivative RMSE fell by 25.08% on test and 28.41% on unseen data; H=36 rollout RMSE fell by 36.28% and 41.77%, with positive long-horizon effects in every model block.
+                                                                                                                                        evidence: [C52, H38, "results/research_platform/l57_icode_high_dynamic_offline_gate_20260716_v1.json", "docs/rl/82_l57_high_dynamic_icode_offline_results_2026-07-16.md"]
+                                                                                                                                        children:
+                                                                                                                                          - id: N78
+                                                                                                                                            type: experiment
+                                                                                                                                            title: "L58 new-seed residual-only closed-loop development gate"
+                                                                                                                                            provenance: ai-executed
+                                                                                                                                            timestamp: "2026-07-16T21:00:00+08:00"
+                                                                                                                                            result: >
+                                                                                                                                              Across 120 episodes, ICODE reduced mean cross-track RMSE from 0.06098 m to 0.04427 m, a 26.62% reduction with hierarchical-bootstrap absolute-improvement interval [0.01478, 0.01835] m. All three blocks and four scenes improved; both methods were 60/60 successful with zero collisions.
+                                                                                                                                            evidence: [C53, "results/research_platform/rl/l58_icode_high_dynamic_closed_loop_20260716_v1/high_dynamic_closed_loop_summary.json", "docs/rl/83_l58_high_dynamic_icode_closed_loop_results_2026-07-16.md"]
+                                                                                                                                            children:
+                                                                                                                                              - id: N79
+                                                                                                                                                type: experiment
+                                                                                                                                                title: "L59 sealed independent high-dynamic confirmation"
+                                                                                                                                                provenance: ai-executed
+                                                                                                                                                timestamp: "2026-07-16T22:05:00+08:00"
+                                                                                                                                                result: >
+                                                                                                                                                  The predeclared ten confirmation seeds were opened only after the L58 gate. Across 240 episodes, ICODE reduced mean cross-track RMSE from 0.05758 m to 0.04117 m, a 27.06% reduction; the paired absolute-improvement 95% interval was [0.01385, 0.01877] m. All three blocks and all four scenes improved, including 34.26% on the unseen reverse-S path. Both methods were 120/120 successful with zero collisions, applied jerk fell 3.46%, and mean ICODE planning time remained below the frozen 50 ms bound.
+                                                                                                                                                evidence: [C53, C54, H39, "results/research_platform/rl/l59_icode_high_dynamic_confirmation_20260716_v1/high_dynamic_closed_loop_summary.json", "docs/rl/85_l59_high_dynamic_confirmation_results_2026-07-16.md"]
+                                                                                                                                                children:
+                                                                                                                                                  - id: N80
+                                                                                                                                                    type: experiment
+                                                                                                                                                    title: "L60 parameter-matched MLP versus ICODE offline ablation"
+                                                                                                                                                    provenance: ai-executed
+                                                                                                                                                    timestamp: "2026-07-16T18:40:00+08:00"
+                                                                                                                                                    result: >
+                                                                                                                                                      Three 10,049-parameter direct MLP residuals were trained on the exact L56 hashes against 10,191-parameter ICODE models. Both structures passed nominal-relative eligibility, but the frozen offline structural hypothesis failed: MLP had 4.27% lower test and 2.24% lower unseen H=36 rollout RMSE than ICODE on average.
+                                                                                                                                                    evidence: [C55, H40, "results/research_platform/l60_residual_structure_offline_20260716_v1/summary.json", "docs/rl/88_l60_l61_residual_structure_results_2026-07-16.md"]
+                                                                                                                                                    children:
+                                                                                                                                                      - id: N81
+                                                                                                                                                        type: experiment
+                                                                                                                                                        title: "L61 three-way residual-structure closed-loop development ablation"
+                                                                                                                                                        provenance: ai-executed
+                                                                                                                                                        timestamp: "2026-07-16T19:00:00+08:00"
+                                                                                                                                                        result: >
+                                                                                                                                                          Across 180 paired episodes, MLP and ICODE reduced cross-track error by 22.39% and 30.13% relative to nominal. Despite its worse offline H=36 RMSE, ICODE beat MLP by 9.85%, with absolute-improvement interval [0.00330, 0.00583] m, positive effects in all three model blocks and on the unseen path, and no success or collision difference.
+                                                                                                                                                        evidence: [C55, C56, H41, "results/research_platform/rl/l61_residual_structure_closed_loop_20260716_v1/residual_structure_closed_loop_summary.json", "docs/rl/88_l60_l61_residual_structure_results_2026-07-16.md"]
+                                                                                                                                                        children:
+                                                                                                                                                          - id: N82
+                                                                                                                                                            type: experiment
+                                                                                                                                                            title: "L62 sealed residual-structure confirmation"
+                                                                                                                                                            provenance: ai-executed
+                                                                                                                                                            timestamp: "2026-07-16T19:16:00+08:00"
+                                                                                                                                                            result: >
+                                                                                                                                                              All 360 scheduled episodes completed on the ten predeclared sealed seeds. ICODE reduced cross-track RMSE by 26.83% versus nominal and by 10.17% versus the parameter-matched MLP; the direct ICODE-versus-MLP interval was [0.00355, 0.00564] m overall and [0.00408, 0.00726] m on the unseen reverse-S path. All three model blocks were positive, every condition was 120/120 successful with zero collisions, and both learned models passed the 50 ms mean-compute gate.
+                                                                                                                                                            evidence: [C55, C56, H40, H41, "results/research_platform/rl/l62_residual_structure_confirmation_20260716_v1/residual_structure_closed_loop_summary.json", "docs/rl/90_l62_residual_structure_confirmation_results_2026-07-16.md"]
+                                                                                                                                                            children:
+                                                                                                                                                              - id: N83
+                                                                                                                                                                type: experiment
+                                                                                                                                                                title: "L63 method-blind cross-plant calibration"
+                                                                                                                                                                provenance: ai-executed
+                                                                                                                                                                timestamp: "2026-07-16T19:25:00+08:00"
+                                                                                                                                                                result: >
+                                                                                                                                                                  Nominal-only calibration retained two failed attempts: v1 found torque, delay and combined shifts below resolution, while v2 made all single factors measurable but rejected an extreme combined plant with 50% success. The capped v3 attempt froze accepted single factors and selected a moderate combined domain; all selected domains were 100% successful with zero collisions and nominal cross-track shifts of 3.2% to 22.7%.
+                                                                                                                                                                evidence: [H42, "results/research_platform/rl/l63_cross_plant_nominal_calibration_20260716_v3/cross_plant_calibration_summary.json", "docs/rl/92_l63_cross_plant_nominal_calibration_v2_amendment_2026-07-16.md"]
+                                                                                                                                                                children:
+                                                                                                                                                                  - id: N84
+                                                                                                                                                                    type: experiment
+                                                                                                                                                                    title: "L64 parameter-matched cross-plant development gate"
+                                                                                                                                                                    provenance: ai-executed
+                                                                                                                                                                    timestamp: "2026-07-16T19:48:00+08:00"
+                                                                                                                                                                    result: >
+                                                                                                                                                                      Across 324 episodes, ICODE beat MLP on every frozen physical domain. On the five shifted plants the direct improvement was 0.004754 m with hierarchical 95% lower bound 0.004000 m; both learned models improved nominal, unseen and combined-domain gates passed, and all methods preserved success and collision outcomes.
+                                                                                                                                                                    evidence: [C57, H42, "results/research_platform/rl/l64_residual_structure_cross_plant_20260716_v1/residual_structure_cross_plant_summary.json", "docs/rl/93_l64_residual_structure_cross_plant_prereg_2026-07-16.md"]
+                                                                                                                                                                    children:
+                                                                                                                                                                      - id: N85
+                                                                                                                                                                        type: experiment
+                                                                                                                                                                        title: "L65 sealed cross-plant residual-structure confirmation"
+                                                                                                                                                                        provenance: ai-executed
+                                                                                                                                                                        timestamp: "2026-07-16T20:25:00+08:00"
+                                                                                                                                                                        result: >
+                                                                                                                                                                          All 540 episodes on five untouched execution seeds completed. On shifted plants ICODE beat the parameter-matched MLP by 9.23%, or 0.004956 m with interval [0.003993, 0.005885] m; every physical domain and training block was positive, unseen and combined intervals were positive, every condition was 180/180 successful with zero collisions, and learned mean planning time remained below 50 ms.
+                                                                                                                                                                        evidence: [C57, H42, "results/research_platform/rl/l65_residual_structure_cross_plant_confirmation_20260716_v1/residual_structure_cross_plant_summary.json", "docs/rl/95_l63_l65_cross_plant_residual_structure_results_2026-07-16.md", "ara/evidence/figures/fig07_l64_l65_cross_plant.md"]
+                                                                                                                                                                        children:
+                                                                                                                                                                          - id: N86
+                                                                                                                                                                            type: experiment
+                                                                                                                                                                            title: "L66 method-blind observation-domain calibration"
+                                                                                                                                                                            provenance: ai-executed
+                                                                                                                                                                            timestamp: "2026-07-16T20:45:00+08:00"
+                                                                                                                                                                            result: >
+                                                                                                                                                                              Two nominal-only attempts completed 84 episodes. Frozen 100 ms latency and moderate noise-plus-latency domains were safe and measurable, but even stronger pure measurement noise changed nominal cross-track RMSE by only 1.61%, below the preregistered 3% resolution threshold. Pure noise was therefore removed as a standalone primary factor, while raw wheel odometry was retained only as a non-gating stress domain.
+                                                                                                                                                                            evidence: [H43, "configs/rl/observation_domain_nominal_calibration_l66_v2.yaml", "docs/rl/96_l66_observation_domain_calibration_prereg_2026-07-16.md"]
+                                                                                                                                                                            children:
+                                                                                                                                                                              - id: N87
+                                                                                                                                                                                type: experiment
+                                                                                                                                                                                title: "L67 residual-structure observation-domain development gate"
+                                                                                                                                                                                provenance: ai-executed
+                                                                                                                                                                                timestamp: "2026-07-16T21:05:00+08:00"
+                                                                                                                                                                                result: >
+                                                                                                                                                                                  All 216 episodes completed. Across clean, 100 ms latency and combined noise-plus-latency domains, ICODE beat matched MLP by 9.50%, or 0.005226 m with hierarchical 95% lower bound 0.004038 m; every primary domain and model block was positive, and all primary conditions preserved success and zero collisions. Raw wheel-odometry success improved in development but remained explicitly exploratory.
+                                                                                                                                                                                evidence: [C58, H43, "results/research_platform/rl/l67_residual_structure_observation_20260716_v1/residual_structure_observation_summary.json", "docs/rl/97_l67_residual_structure_observation_prereg_2026-07-16.md"]
+                                                                                                                                                                                children:
+                                                                                                                                                                                  - id: N88
+                                                                                                                                                                                    type: experiment
+                                                                                                                                                                                    title: "L68 sealed observation-domain confirmation"
+                                                                                                                                                                                    provenance: ai-executed
+                                                                                                                                                                                    timestamp: "2026-07-16T21:30:00+08:00"
+                                                                                                                                                                                    result: >
+                                                                                                                                                                                      All 360 scheduled artifacts were complete on five untouched seeds. Across the three primary observation domains ICODE beat matched MLP by 10.15%, or 0.005487 m with interval [0.004243, 0.006799] m; every primary domain and training block was positive, all primary conditions were 90/90 successful with zero collisions, and mean learned planning time stayed below 50 ms. The exploratory raw wheel-odometry success gain did not replicate: nominal, MLP and ICODE achieved 18/30, 13/30 and 12/30 successes respectively, refuting residual-only odometry correction.
+                                                                                                                                                                                    evidence: [C58, C59, H43, "results/research_platform/rl/l68_residual_structure_observation_confirmation_20260716_v1/residual_structure_observation_summary.json", "docs/rl/99_l66_l68_observation_robustness_results_2026-07-16.md", "ara/evidence/figures/fig08_l67_l68_observation.md"]

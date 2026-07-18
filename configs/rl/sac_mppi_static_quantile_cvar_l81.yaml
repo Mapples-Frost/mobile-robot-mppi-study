@@ -1,0 +1,22 @@
+include: sac_mppi_static_conservative_schedule_l78.yaml
+
+experiment:
+  name: sac_mppi_static_quantile_cvar_l81
+  output_dir: results/research_platform/rl/l81_static_quantile_cvar
+
+rl:
+  policy_id: sac_mppi_static_quantile_cvar_l81
+
+  sac:
+    # L81 replaces scalar mean-Q with a return distribution. The actor and
+    # deployment advantage comparison use the lower 20% tail rather than the
+    # mean, while every L78 training and control factor remains fixed.
+    critic_distribution: quantile
+    critic_num_quantiles: 25
+    critic_quantile_huber_kappa: 1.0
+    actor_cvar_fraction: 0.20
+    actor_group_robust_enabled: false
+
+  training:
+    validation_seed_base: 22320801
+

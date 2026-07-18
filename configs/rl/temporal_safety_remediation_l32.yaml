@@ -1,0 +1,60 @@
+include: dynamic_variant_generalization_l31.yaml
+
+experiment:
+  name: temporal_safety_remediation_l32
+  output_dir: results/research_platform/rl/temporal_safety_remediation_l32_20260715
+
+perception:
+  temporal_scan_guard:
+    # Frozen before L32 development episodes.  The estimator uses LaserScan
+    # only; MuJoCo motion state and obstacle identity are inaccessible.
+    enabled: false
+    safety_enabled: false
+    field_of_view_deg: 270.0
+    window_beams: 7
+    minimum_support_beams: 4
+    minimum_positive_rate_mps: 0.02
+    maximum_absolute_rate_mps: 1.50
+    maximum_dt_s: 0.40
+    maximum_clearance_m: 1.50
+    rate_soft_mps: 0.05
+    rate_hard_mps: 0.25
+    ttc_hard_s: 1.00
+    ttc_soft_s: 3.00
+    safety_hard_stop_ttc_s: 0.80
+    safety_slow_ttc_s: 2.00
+    safety_slow_scale: 0.25
+    hold_s: 0.40
+
+rl:
+  policy_id: temporal_safety_remediation_l32
+  gate:
+    # OOD is an auditable standardized-feature heuristic, not a calibrated
+    # probability.  It is used only in the competence-separated condition.
+    ood_soft_threshold: 3.0
+    ood_hard_threshold: 7.0
+
+  cross_layer_factorial:
+    schedule_seed: 20260797
+    protected_config_paths:
+      - configs/rl/dynamic_variant_generalization_l31.yaml
+
+    conditions:
+      - traditional_icode_no_temporal_safety
+      - traditional_icode_temporal_safety
+      - legacy_temporal_gated_lcb_icode
+      - robust_temporal_gated_lcb_icode
+      - robust_temporal_gated_lcb_icode_safety
+      - competence_gated_lcb_icode_safety
+
+    development_episode_seeds: [20283201, 20283202, 20283203, 20283204, 20283205]
+    sealed_confirmation_episode_seeds: [20283206, 20283207, 20283208, 20283209, 20283210, 20283211, 20283212, 20283213, 20283214, 20283215, 20283216, 20283217, 20283218, 20283219, 20283220]
+
+    # Development gates; failure keeps the L32 confirmation seeds sealed.
+    maximum_temporal_rate_mps: 1.50
+    maximum_safety_condition_collisions: 0
+    minimum_primary_successes: 108
+    minimum_safety_collision_reduction: 24
+    minimum_competence_success_difference: -6
+    maximum_competence_collision_difference: 0
+

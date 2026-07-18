@@ -1,0 +1,13 @@
+include: sac_mppi_static_conservative_schedule_l78.yaml
+
+experiment:
+  name: sac_mppi_static_conservative_schedule_l78_seed20260775
+  output_dir: results/research_platform/rl/l78_static_conservative_seed20260775_30k_20260717_v1
+
+planner:
+  checkpoint: results/research_platform/l57_icode_high_dynamic_h36_seed20261202_v1/best.pt
+
+rl:
+  training:
+    seed: 20260775
+

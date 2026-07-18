@@ -1,0 +1,40 @@
+include: icode_high_dynamic_h36_l57.yaml
+
+experiment:
+  name: mlp_high_dynamic_h36_l60
+
+model:
+  type: mlp_residual
+  # Parameter-matched against the two-branch ICODE [64,64] model.  The
+  # resulting count must remain within the frozen 3% tolerance below.
+  hidden_sizes: [93, 93]
+
+structure_ablation:
+  design_id: l60_parameter_matched_mlp_vs_icode_offline_v1
+  required_training_seeds: [20261201, 20261202, 20261203]
+  required_horizons: [1, 5, 10, 20, 36]
+  maximum_parameter_count_relative_difference: 0.03
+  model_blocks:
+    - training_seed: 20261201
+      icode_run_dir: results/research_platform/l57_icode_high_dynamic_h36_seed20261201_v1
+      mlp_run_dir: results/research_platform/l60_mlp_high_dynamic_h36_seed20261201_v1
+    - training_seed: 20261202
+      icode_run_dir: results/research_platform/l57_icode_high_dynamic_h36_seed20261202_v1
+      mlp_run_dir: results/research_platform/l60_mlp_high_dynamic_h36_seed20261202_v1
+    - training_seed: 20261203
+      icode_run_dir: results/research_platform/l57_icode_high_dynamic_h36_seed20261203_v1
+      mlp_run_dir: results/research_platform/l60_mlp_high_dynamic_h36_seed20261203_v1
+  mlp_eligibility:
+    minimum_positive_model_blocks: 2
+    minimum_active_derivative_reduction: 0.0
+    minimum_mean_test_h36_rollout_reduction: 0.10
+    minimum_mean_unseen_h36_rollout_reduction: 0.10
+    minimum_mean_test_h36_position_reduction: 0.05
+    minimum_mean_unseen_h36_position_reduction: 0.05
+  structural_hypothesis:
+    # Positive means lower error for ICODE than parameter-matched MLP.
+    minimum_positive_test_h36_model_blocks: 2
+    minimum_positive_unseen_h36_model_blocks: 2
+    minimum_mean_test_h36_icode_improvement_over_mlp: 0.0
+    minimum_mean_unseen_h36_icode_improvement_over_mlp: 0.0
+

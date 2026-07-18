@@ -1,0 +1,85 @@
+include: cross_plant_nominal_calibration_l63.yaml
+
+experiment:
+  name: cross_plant_nominal_calibration_l63_v2
+  output_dir: results/research_platform/rl/l63_cross_plant_nominal_calibration_20260716_v2
+
+rl:
+  cross_layer_factorial:
+    design_id: l63_nominal_only_cross_plant_calibration_v2
+    schedule_seed: 2026071644
+    bootstrap_seed: 2026071645
+    development_episode_seeds: [21860804, 21860805, 21860806]
+    # Version 2 is still selected without observing any learned-model result.
+    physics_domains:
+      - {name: train_anchor, role: anchor, plant_override: {}}
+      - name: mass_light
+        role: mass_candidate
+        plant_override:
+          robot:
+            chassis_mass: 10.0
+            chassis_inertia: [0.10, 0.146, 0.208]
+            wheel_mass: 0.34
+      - name: friction_high
+        role: friction_candidate
+        plant_override:
+          contact:
+            wheel_friction: [0.90, 0.007, 0.0011]
+            floor_friction: [0.80, 0.004, 0.0004]
+      - name: torque_weak_v2
+        role: torque_candidate
+        plant_override:
+          actuator:
+            torque_limit: 0.75
+            kp: 0.20
+            ki: 0.65
+            torque_slew_rate: 10.0
+      - name: torque_strong_v2
+        role: torque_candidate
+        plant_override:
+          actuator:
+            torque_limit: 2.60
+            kp: 0.65
+            ki: 1.80
+            torque_slew_rate: 50.0
+      - name: delay_zero
+        role: delay_candidate
+        plant_override:
+          actuator:
+            command_delay: 0.0
+      - name: delay_long
+        role: delay_candidate
+        plant_override:
+          actuator:
+            command_delay: 0.10
+      - name: combined_shift_v2
+        role: combined_candidate
+        plant_override:
+          robot:
+            chassis_mass: 16.0
+            chassis_inertia: [0.16, 0.234, 0.332]
+            wheel_mass: 0.42
+          actuator:
+            torque_limit: 0.75
+            kp: 0.20
+            ki: 0.65
+            command_delay: 0.10
+            torque_slew_rate: 10.0
+          contact:
+            wheel_friction: [0.90, 0.007, 0.0011]
+            floor_friction: [0.80, 0.004, 0.0004]
+    protected_config_paths:
+      - configs/rl/residual_structure_confirmation_l62.yaml
+
+cross_plant_calibration:
+  groups:
+    mass: [mass_light]
+    friction: [friction_high]
+    torque: [torque_weak_v2, torque_strong_v2]
+    delay: [delay_zero, delay_long]
+    combined: [combined_shift_v2]
+  # Delay is limited to one 100 ms control interval and is known by every
+  # planner. Its nuisance-factor resolution floor is therefore 1%; all other
+  # groups retain the original 3% floor.
+  minimum_relative_cross_track_shift_by_group:
+    delay: 0.01

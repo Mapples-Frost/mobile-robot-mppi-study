@@ -72,6 +72,24 @@ class ResidualNetwork(nn.Module):
             self.gain = None
         else:
             raise ValueError("unknown residual model type: %s" % self.model_type)
+        output_mask = np.asarray(
+            config.get("residual_output_mask", np.ones(self.state_dim)),
+            dtype=np.float32,
+        ).reshape(-1)
+        if output_mask.shape != (self.state_dim,):
+            raise ValueError("residual_output_mask must match state dimension")
+        if (
+            not np.isfinite(output_mask).all()
+            or np.any(output_mask < 0.0)
+            or np.any(output_mask > 1.0)
+            or not np.any(output_mask > 0.0)
+        ):
+            raise ValueError(
+                "residual_output_mask entries must be finite in [0,1] and retain a channel"
+            )
+        self.register_buffer(
+            "residual_output_mask", torch.as_tensor(output_mask), persistent=False
+        )
         for name in ("feature_mean", "feature_scale", "control_mean", "control_scale", "residual_mean", "residual_scale"):
             value = torch.as_tensor(statistics[name], dtype=torch.float32)
             self.register_buffer(name, value)
@@ -117,7 +135,8 @@ class ResidualNetwork(nn.Module):
             gain_physical = torch.zeros_like(gain_normalized)
             drift_physical = self.residual_mean + self.residual_scale * normalized
             control_contribution_physical = torch.zeros_like(normalized)
-        residual = self.residual_mean + self.residual_scale * normalized
+        residual_unmasked = self.residual_mean + self.residual_scale * normalized
+        residual = residual_unmasked * self.residual_output_mask
         if self.check_finite and not torch.isfinite(residual).all():
             raise FloatingPointError("residual network produced NaN or Inf")
         return residual, {
@@ -127,6 +146,8 @@ class ResidualNetwork(nn.Module):
             "drift_physical": drift_physical,
             "gain_physical": gain_physical,
             "control_contribution_physical": control_contribution_physical,
+            "residual_unmasked": residual_unmasked,
+            "residual_output_mask": self.residual_output_mask,
         }
 
     def forward(self, state, control):
@@ -195,11 +216,305 @@ class PlatformResidualDynamics:
         del time
         state_value = np.asarray(state, dtype=np.float32)
         control_value = np.asarray(control, dtype=np.float32)
+        unbatched = state_value.ndim == 1
+        if unbatched:
+            if (
+                state_value.shape != (self.state_dim,)
+                or control_value.shape != (self.control_dim,)
+            ):
+                raise ValueError("single residual input dimensions do not match checkpoint")
+            state_value = state_value[None, :]
+            control_value = control_value[None, :]
+        elif (
+            state_value.ndim < 2
+            or state_value.shape[-1] != self.state_dim
+            or control_value.shape != state_value.shape[:-1] + (self.control_dim,)
+        ):
+            raise ValueError("batched residual inputs must have aligned leading dimensions")
         with torch.inference_mode():
             state_tensor = torch.as_tensor(state_value, device=self.device)
             control_tensor = torch.as_tensor(control_value, device=self.device)
             output = self.inference_model(state_tensor, control_tensor)
         result = output.detach().cpu().numpy().astype(np.float64, copy=False)
+        if unbatched:
+            result = result[0]
         if not np.isfinite(result).all():
             raise FloatingPointError("compiled residual inference produced NaN or Inf")
         return result
+
+
+class NormalizedSupportGatedResidualDynamics:
+    """Fail toward nominal dynamics outside the residual training support.
+
+    Confidence is one inside ``soft_z``, decreases linearly, and is exactly
+    zero at and beyond ``hard_z``.  It uses only checkpoint normalization
+    statistics; simulator truth and task outcome never enter the gate.
+    """
+
+    def __init__(self, residual, soft_z=3.0, hard_z=5.0):
+        self.residual = residual
+        self.model = getattr(residual, "model", None)
+        if self.model is None:
+            raise TypeError("support gating requires an embedded residual model")
+        self.state_dim = int(residual.state_dim)
+        self.control_dim = int(residual.control_dim)
+        self.soft_z = float(soft_z)
+        self.hard_z = float(hard_z)
+        if (
+            not math.isfinite(self.soft_z)
+            or not math.isfinite(self.hard_z)
+            or self.soft_z < 0.0
+            or self.hard_z <= self.soft_z
+        ):
+            raise ValueError("support gate requires 0 <= soft_z < hard_z")
+
+    def _features(self, state):
+        angle_indices = set(int(value) for value in self.model.angle_indices)
+        values = []
+        for index in range(self.state_dim):
+            component = state[..., index:index + 1]
+            if index in angle_indices:
+                values.extend((np.sin(component), np.cos(component)))
+            else:
+                values.append(component)
+        return np.concatenate(values, axis=-1)
+
+    def confidence(self, state, control):
+        state_value = np.asarray(state, dtype=np.float64)
+        control_value = np.asarray(control, dtype=np.float64)
+        if state_value.shape[-1] != self.state_dim:
+            raise ValueError("support-gate state dimension mismatch")
+        if control_value.shape[-1] != self.control_dim:
+            raise ValueError("support-gate control dimension mismatch")
+        features = self._features(state_value)
+        feature_mean = self.model.feature_mean.detach().cpu().numpy()
+        feature_scale = self.model.feature_scale.detach().cpu().numpy()
+        control_mean = self.model.control_mean.detach().cpu().numpy()
+        control_scale = self.model.control_scale.detach().cpu().numpy()
+        feature_z = np.max(np.abs((features - feature_mean) / feature_scale), axis=-1)
+        control_z = np.max(np.abs((control_value - control_mean) / control_scale), axis=-1)
+        maximum_z = np.maximum(feature_z, control_z)
+        confidence = np.clip(
+            (self.hard_z - maximum_z) / (self.hard_z - self.soft_z), 0.0, 1.0
+        )
+        confidence = np.where(maximum_z <= self.soft_z, 1.0, confidence)
+        if not np.isfinite(confidence).all():
+            raise FloatingPointError("support confidence produced NaN or Inf")
+        return confidence
+
+    def derivative(self, state, control, time=None):
+        value = np.asarray(
+            self.residual.derivative(state, control, time), dtype=np.float64
+        )
+        confidence = np.asarray(self.confidence(state, control), dtype=np.float64)
+        return value * confidence[..., None]
+
+
+class ResidualComponentMaskedDynamics:
+    """Apply a documented structural mask to residual derivative channels.
+
+    For a dynamic unicycle, pose kinematics can remain exact while the learned
+    model corrects only the uncertain velocity and yaw-rate dynamics.  The mask
+    is supplied by configuration rather than inferred from simulator truth.
+    """
+
+    def __init__(self, residual, mask):
+        self.residual = residual
+        self.model = getattr(residual, "model", None)
+        self.state_dim = int(residual.state_dim)
+        self.control_dim = int(residual.control_dim)
+        self.mask = np.asarray(mask, dtype=np.float64).reshape(-1)
+        if self.mask.shape != (self.state_dim,):
+            raise ValueError("residual component mask must match state dimension")
+        if not np.isfinite(self.mask).all() or np.any(self.mask < 0.0) or np.any(self.mask > 1.0):
+            raise ValueError("residual component mask entries must be finite in [0,1]")
+        if not np.any(self.mask > 0.0):
+            raise ValueError("residual component mask must retain at least one channel")
+
+    def derivative(self, state, control, time=None):
+        value = np.asarray(
+            self.residual.derivative(state, control, time), dtype=np.float64
+        )
+        return value * self.mask
+
+
+class InnovationGatedResidualDynamics:
+    """Scale a learned residual using only completed transition evidence.
+
+    The gate receives paired one-step prediction errors after the next state has
+    already been observed.  It therefore cannot inspect future plant state when
+    choosing the residual scale for the current MPPI plan.  Evidence is the
+    bounded relative reduction in normalized squared error, accumulated with an
+    exponentially weighted lower confidence bound.  Cold start fails closed to
+    the nominal model.
+    """
+
+    def __init__(
+        self,
+        residual,
+        state_indices,
+        state_scales,
+        forgetting_factor=0.95,
+        minimum_samples=8,
+        confidence_z=1.0,
+        off_threshold=0.0,
+        on_threshold=0.15,
+        rise_rate=0.25,
+        fall_rate=0.5,
+        context_value=None,
+        context_off_threshold=0.5,
+        context_on_threshold=0.8,
+    ):
+        self.residual = residual
+        self.model = getattr(residual, "model", None)
+        self.state_dim = int(residual.state_dim)
+        self.control_dim = int(residual.control_dim)
+        self.state_indices = np.asarray(state_indices, dtype=np.int64).reshape(-1)
+        self.state_scales = np.asarray(state_scales, dtype=np.float64).reshape(-1)
+        if not self.state_indices.size or self.state_scales.shape != self.state_indices.shape:
+            raise ValueError("reliability state indices and scales must be nonempty and aligned")
+        if np.any(self.state_indices < 0) or np.any(self.state_indices >= self.state_dim):
+            raise ValueError("reliability state index is outside the state dimension")
+        if len(set(self.state_indices.tolist())) != int(self.state_indices.size):
+            raise ValueError("reliability state indices must be unique")
+        if not np.isfinite(self.state_scales).all() or np.any(self.state_scales <= 0.0):
+            raise ValueError("reliability state scales must be finite and positive")
+        self.forgetting_factor = float(forgetting_factor)
+        self.minimum_samples = int(minimum_samples)
+        self.confidence_z = float(confidence_z)
+        self.off_threshold = float(off_threshold)
+        self.on_threshold = float(on_threshold)
+        self.rise_rate = float(rise_rate)
+        self.fall_rate = float(fall_rate)
+        self.context_value = (
+            None if context_value is None else float(context_value)
+        )
+        self.context_off_threshold = float(context_off_threshold)
+        self.context_on_threshold = float(context_on_threshold)
+        numeric = (
+            self.forgetting_factor, self.confidence_z, self.off_threshold,
+            self.on_threshold, self.rise_rate, self.fall_rate,
+        )
+        if not np.isfinite(numeric).all():
+            raise ValueError("reliability gate parameters must be finite")
+        if not 0.0 < self.forgetting_factor <= 1.0:
+            raise ValueError("forgetting_factor must be in (0,1]")
+        if self.minimum_samples <= 0 or self.confidence_z < 0.0:
+            raise ValueError("minimum_samples must be positive and confidence_z nonnegative")
+        if self.on_threshold <= self.off_threshold:
+            raise ValueError("on_threshold must exceed off_threshold")
+        if not 0.0 < self.rise_rate <= 1.0 or not 0.0 < self.fall_rate <= 1.0:
+            raise ValueError("reliability rise/fall rates must be in (0,1]")
+        if self.context_value is None:
+            self.context_alpha = 1.0
+        else:
+            context_values = (
+                self.context_value, self.context_off_threshold,
+                self.context_on_threshold,
+            )
+            if (
+                not np.isfinite(context_values).all()
+                or self.context_value < 0.0
+                or self.context_on_threshold <= self.context_off_threshold
+            ):
+                raise ValueError(
+                    "context value must be nonnegative and finite with on > off"
+                )
+            self.context_alpha = float(np.clip(
+                (self.context_value - self.context_off_threshold)
+                / (self.context_on_threshold - self.context_off_threshold),
+                0.0, 1.0,
+            ))
+        self.reset()
+
+    def reset(self):
+        self.alpha = 0.0
+        self.evidence_alpha = 0.0
+        self.samples = 0
+        self._weight = 0.0
+        self._weight_squared = 0.0
+        self._mean = 0.0
+        self._second_moment = 0.0
+        self._lcb = -1.0
+        self._last_nominal_error = 0.0
+        self._last_residual_error = 0.0
+        self._last_relative_improvement = 0.0
+
+    def _normalized_error(self, error):
+        values = np.asarray(error, dtype=np.float64).reshape(-1)
+        if values.shape != (self.state_dim,) or not np.isfinite(values).all():
+            raise ValueError("reliability prediction error must be one finite state vector")
+        selected = values[self.state_indices] / self.state_scales
+        return float(np.mean(selected ** 2))
+
+    def observe_prediction_errors(self, nominal_error, residual_error):
+        nominal = self._normalized_error(nominal_error)
+        residual = self._normalized_error(residual_error)
+        relative = (nominal - residual) / max(nominal + residual, 1e-12)
+        relative = float(np.clip(relative, -1.0, 1.0))
+        decay = self.forgetting_factor
+        previous_weight = self._weight
+        self._weight = decay * previous_weight + 1.0
+        self._weight_squared = decay ** 2 * self._weight_squared + 1.0
+        self._mean = (
+            decay * previous_weight * self._mean + relative
+        ) / self._weight
+        self._second_moment = (
+            decay * previous_weight * self._second_moment + relative ** 2
+        ) / self._weight
+        self.samples += 1
+        variance = max(self._second_moment - self._mean ** 2, 0.0)
+        effective_samples = self._weight ** 2 / max(self._weight_squared, 1e-12)
+        standard_error = np.sqrt(variance / max(effective_samples, 1.0))
+        self._lcb = float(self._mean - self.confidence_z * standard_error)
+        if self.samples < self.minimum_samples:
+            target = 0.0
+        else:
+            target = float(np.clip(
+                (self._lcb - self.off_threshold)
+                / (self.on_threshold - self.off_threshold), 0.0, 1.0
+            ))
+        rate = self.rise_rate if target > self.evidence_alpha else self.fall_rate
+        self.evidence_alpha = float(np.clip(
+            self.evidence_alpha + rate * (target - self.evidence_alpha),
+            0.0, 1.0,
+        ))
+        self.alpha = float(self.evidence_alpha * self.context_alpha)
+        self._last_nominal_error = nominal
+        self._last_residual_error = residual
+        self._last_relative_improvement = relative
+        return self.alpha
+
+    def ungated_derivative(self, state, control, time=None):
+        return np.asarray(
+            self.residual.derivative(state, control, time), dtype=np.float64
+        )
+
+    def derivative(self, state, control, time=None):
+        return self.alpha * self.ungated_derivative(state, control, time)
+
+    def confidence(self, state, control):
+        support = getattr(self.residual, "confidence", None)
+        if callable(support):
+            return support(state, control)
+        state_value = np.asarray(state)
+        return np.ones(state_value.shape[:-1], dtype=np.float64)
+
+    def diagnostics(self):
+        return {
+            "residual_reliability_enabled": True,
+            "residual_reliability_alpha": float(self.alpha),
+            "residual_reliability_evidence_alpha": float(self.evidence_alpha),
+            "residual_reliability_context_alpha": float(self.context_alpha),
+            "residual_reliability_context_value": (
+                0.0 if self.context_value is None else float(self.context_value)
+            ),
+            "residual_reliability_samples": int(self.samples),
+            "residual_reliability_mean_improvement": float(self._mean),
+            "residual_reliability_lcb": float(self._lcb),
+            "residual_reliability_last_relative_improvement": float(
+                self._last_relative_improvement
+            ),
+            "residual_reliability_nominal_error": float(self._last_nominal_error),
+            "residual_reliability_residual_error": float(self._last_residual_error),
+        }

@@ -1,0 +1,21 @@
+include: mujoco_high_dynamic_accel_straight_l56.yaml
+
+experiment:
+  name: route_crossing_slow_l93
+
+scene:
+  name: route_crossing_slow_l93
+  obstacles:
+    - type: cylinder
+      position: [2.50, -1.20]
+      radius: 0.22
+      height: 0.50
+      motion:
+        type: linear_ping_pong
+        start: [2.50, -1.20]
+        end: [2.50, 1.20]
+        period_s: 10.0
+        phase_s: 1.0
+        phase_jitter_s: 5.0
+        period_scale_range: [0.90, 1.10]
+        endpoint_jitter_m: 0.05

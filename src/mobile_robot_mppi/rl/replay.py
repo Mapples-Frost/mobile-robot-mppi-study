@@ -13,6 +13,10 @@ class ReplayBuffer:
         self.observations = np.empty((self.capacity, self.observation_dim), dtype=np.float32)
         self.actions = np.empty((self.capacity, self.action_dim), dtype=np.float32)
         self.rewards = np.empty((self.capacity, 1), dtype=np.float32)
+        # Generic non-negative transition cost used by constrained RL.  It is
+        # deliberately stored separately from task reward so that a changing
+        # Lagrange multiplier can reweight old replay without rewriting it.
+        self.constraint_costs = np.zeros((self.capacity, 1), dtype=np.float32)
         self.next_observations = np.empty((self.capacity, self.observation_dim), dtype=np.float32)
         self.dones = np.empty((self.capacity, 1), dtype=np.float32)
         self.groups = np.empty((self.capacity,), dtype=np.int32)
@@ -25,7 +29,16 @@ class ReplayBuffer:
         self.size = 0
         self.rng = np.random.RandomState(int(seed))
 
-    def add(self, observation, action, reward, next_observation, done, group=0):
+    def add(
+        self,
+        observation,
+        action,
+        reward,
+        next_observation,
+        done,
+        group=0,
+        constraint_cost=0.0,
+    ):
         observation = np.asarray(observation, dtype=np.float32).reshape(-1)
         action = np.asarray(action, dtype=np.float32).reshape(-1)
         next_observation = np.asarray(next_observation, dtype=np.float32).reshape(-1)
@@ -38,8 +51,11 @@ class ReplayBuffer:
             and np.isfinite(action).all()
             and np.isfinite(next_observation).all()
             and np.isfinite(float(reward))
+            and np.isfinite(float(constraint_cost))
         ):
             raise ValueError("replay transition must be finite")
+        if float(constraint_cost) < 0.0:
+            raise ValueError("replay constraint_cost must be non-negative")
         group = int(group)
         if group < 0:
             raise ValueError("replay group must be a non-negative integer")
@@ -47,6 +63,7 @@ class ReplayBuffer:
         self.observations[index] = observation
         self.actions[index] = action
         self.rewards[index, 0] = float(reward)
+        self.constraint_costs[index, 0] = float(constraint_cost)
         self.next_observations[index] = next_observation
         self.dones[index, 0] = float(bool(done))
         self.groups[index] = group
@@ -127,6 +144,68 @@ class ReplayBuffer:
         )
         return indices[self.rng.permutation(indices.size)]
 
+    def _scene_outcome_balanced_indices(self, batch_size, success_fraction):
+        """Balance scenes first, then completed success/failure within scenes.
+
+        A scene-balanced buffer can still be dominated by successful episodes
+        inside every scene, which makes a critic a poor detector of rare harmful
+        corrections.  This sampler gives each populated scene an equal batch
+        budget.  Where both completed outcomes exist, it then draws the fixed
+        success/failure mixture and excludes currently incomplete episodes.
+        Scenes lacking either completed class fail safely to ordinary
+        within-scene sampling instead of inventing labels.
+        """
+
+        success_fraction = float(success_fraction)
+        if not np.isfinite(success_fraction) or not 0.0 <= success_fraction <= 1.0:
+            raise ValueError("replay success_fraction must be in [0, 1]")
+        available_groups = np.unique(self.groups[: self.size])
+        if available_groups.size == 0:
+            raise ValueError("scene-outcome-balanced replay has no populated groups")
+        base = int(batch_size) // int(available_groups.size)
+        remainder = int(batch_size) % int(available_groups.size)
+        counts = np.full(available_groups.size, base, dtype=np.int64)
+        if remainder:
+            order = self.rng.permutation(available_groups.size)
+            counts[order[:remainder]] += 1
+        selected = []
+        groups = self.groups[: self.size]
+        outcomes = self.outcomes[: self.size]
+        for group, count in zip(available_groups, counts):
+            count = int(count)
+            if count <= 0:
+                continue
+            group_candidates = np.flatnonzero(groups == group)
+            success_candidates = np.flatnonzero(
+                (groups == group) & (outcomes == 1)
+            )
+            failure_candidates = np.flatnonzero(
+                (groups == group) & (outcomes == 0)
+            )
+            if success_candidates.size and failure_candidates.size:
+                success_count = int(round(count * success_fraction))
+                if 0.0 < success_fraction < 1.0 and count >= 2:
+                    success_count = min(max(success_count, 1), count - 1)
+                else:
+                    success_count = min(max(success_count, 0), count)
+                failure_count = count - success_count
+                chunks = []
+                if success_count:
+                    chunks.append(self.rng.choice(
+                        success_candidates, size=success_count, replace=True
+                    ))
+                if failure_count:
+                    chunks.append(self.rng.choice(
+                        failure_candidates, size=failure_count, replace=True
+                    ))
+                selected.append(np.concatenate(chunks))
+            else:
+                selected.append(self.rng.choice(
+                    group_candidates, size=count, replace=True
+                ))
+        indices = np.concatenate(selected).astype(np.int64, copy=False)
+        return indices[self.rng.permutation(indices.size)]
+
     def sample(self, batch_size, strategy="uniform", success_fraction=0.25):
         batch_size = int(batch_size)
         if batch_size <= 0 or self.size < batch_size:
@@ -140,15 +219,20 @@ class ReplayBuffer:
             indices = self._outcome_balanced_indices(
                 batch_size, success_fraction
             )
+        elif strategy == "scene_outcome_balanced":
+            indices = self._scene_outcome_balanced_indices(
+                batch_size, success_fraction
+            )
         else:
             raise ValueError(
                 "replay sampling strategy must be uniform, scene_balanced, "
-                "or outcome_balanced"
+                "outcome_balanced, or scene_outcome_balanced"
             )
         return {
             "observations": self.observations[indices].copy(),
             "actions": self.actions[indices].copy(),
             "rewards": self.rewards[indices].copy(),
+            "constraint_costs": self.constraint_costs[indices].copy(),
             "next_observations": self.next_observations[indices].copy(),
             "dones": self.dones[indices].copy(),
             "groups": self.groups[indices].copy(),
@@ -188,6 +272,7 @@ class ReplayBuffer:
                 "observations": self.observations[: self.size].copy(),
                 "actions": self.actions[: self.size].copy(),
                 "rewards": self.rewards[: self.size].copy(),
+                "constraint_costs": self.constraint_costs[: self.size].copy(),
                 "next_observations": self.next_observations[: self.size].copy(),
                 "dones": self.dones[: self.size].copy(),
                 "groups": self.groups[: self.size].copy(),
@@ -204,6 +289,14 @@ class ReplayBuffer:
             result.observations[:size] = np.asarray(state["observations"], dtype=np.float32)
             result.actions[:size] = np.asarray(state["actions"], dtype=np.float32)
             result.rewards[:size] = np.asarray(state["rewards"], dtype=np.float32)
+            if "constraint_costs" in state:
+                result.constraint_costs[:size] = np.asarray(
+                    state["constraint_costs"], dtype=np.float32
+                )
+            else:
+                # Checkpoints produced before constrained training contain no
+                # cost signal.  Zero preserves their historical reward path.
+                result.constraint_costs[:size] = 0.0
             result.next_observations[:size] = np.asarray(state["next_observations"], dtype=np.float32)
             result.dones[:size] = np.asarray(state["dones"], dtype=np.float32)
             if "groups" in state:

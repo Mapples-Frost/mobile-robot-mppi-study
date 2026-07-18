@@ -1,0 +1,23 @@
+include: sac_mppi_utrap_bc_l13.yaml
+
+experiment:
+  name: sac_mppi_utrap_bc_anchor_l14
+  output_dir: results/research_platform/rl/utrap_bc_anchor_l14_20260714
+
+# L13 showed catastrophic policy forgetting: the BC actor solved held-out
+# U-trap episodes before SAC, but reverse-curriculum updates on easy suffixes
+# destroyed the original-start behavior.  L14 changes only the actor loss by
+# replaying a train-split teacher batch as an auxiliary anchor.
+rl:
+  policy_id: sac_mppi_utrap_bc_anchor_l14_v1
+
+  training:
+    bc_anchor:
+      enabled: true
+      # Required at launch via --bc-anchor-dataset.  Keeping an ignored local
+      # results path out of the tracked config prevents machine-specific runs.
+      dataset_dir: null
+      batch_size: 256
+      mean_weight: 5.0
+      log_std_weight: 0.001
+      target_log_std: -2.0

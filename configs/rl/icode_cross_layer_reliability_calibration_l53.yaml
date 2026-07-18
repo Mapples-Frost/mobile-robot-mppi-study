@@ -1,0 +1,28 @@
+include: icode_online_reliability_calibration_l52.yaml
+
+experiment:
+  name: icode_cross_layer_reliability_calibration_l53
+  output_dir: results/research_platform/rl/l53_icode_cross_layer_reliability_calibration_20260716_v1
+
+rl:
+  cross_layer_factorial:
+    design_id: l53_icode_cross_layer_reliability_calibration_v1
+    reliability_calibration:
+      actuation_delay_context:
+        enabled: true
+        off_threshold: 0.50
+        on_threshold: 0.80
+        source: measured_or_configured_command_delay_over_control_dt
+      parameter_grid:
+        forgetting_factor: [0.90, 0.95]
+        minimum_samples: [8, 12]
+        confidence_z: [0.0, 0.5]
+        off_threshold: [-0.05, 0.0]
+        on_threshold: [0.05, 0.10, 0.15]
+      selection_gate:
+        minimum_beneficial_domain_mean_alpha: 0.55
+        maximum_matched_domain_mean_alpha: 0.05
+        minimum_worst_model_block_alpha_separation: 0.50
+        minimum_beneficial_domain_active_fraction: 0.50
+        maximum_matched_domain_active_fraction: 0.05
+

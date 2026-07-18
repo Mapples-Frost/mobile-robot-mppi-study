@@ -1,0 +1,15 @@
+include: icode_efficiency_confirmation_l48.yaml
+
+experiment:
+  name: icode_iterative_path_data_l49
+
+residual_dataset:
+  source_block: 0
+  source_condition: traditional_nominal
+  control_source: applied
+  splits:
+    train: [21360731, 21360732, 21360733, 21360734, 21360735, 21360736]
+    validation: [21360737]
+    test: [21360738]
+    unseen: [21360739, 21360740]
+

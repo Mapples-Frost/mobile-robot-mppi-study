@@ -1,5 +1,21 @@
 # Mobile Robot MPPI Research Platform
 
+## Current validated research status (2026-07-18)
+
+The frozen control-affine ICODE residual model is integrated into MuJoCo MPPI
+rollouts.  The current primary RL mechanism is an interpretable route-context
+bandit that selects an MPPI covariance option rather than directly commanding
+the robot.  Independent L94, L95 and L97 evaluations show that contextual
+`K=50` preserves tracking precision and safety relative to the strongest fixed
+`K=100` sampler while reducing completion time and CPU planner compute.
+
+L96/L97 also isolate a fixed yaw-command slew constraint that significantly
+reduces both issued and physically applied jerk relative to the raw contextual
+controller.  The strict final-package jerk confidence interval versus fixed
+`K=100` crosses zero, so the preregistered L97 overall Gate is recorded as
+failed; no jerk-superiority claim is made.  See
+`docs/rl/149_l97_contextual_covariance_jerk_confirmation_results_2026-07-18.md`.
+
 本仓库是一套面向科研实验的移动机器人控制平台，主线包括：
 
 - 可变目标、路径与轨迹参考；
@@ -116,7 +132,7 @@ f_pred(x, u) = f_nominal(x, u) + f_res(x, u)
 ```text
 Odom + LaserScan + Goal + Previous Control
                     ↓
-          SAC policy (sequence knots)
+    SAC policy (local subgoal / sequence knots)
                     ↓
        bounded MPPI mean / covariance
                     ↓
@@ -147,6 +163,37 @@ L12 的三训练种子复现、单种子结论撤回、固定验证种子与跨�
 [`docs/rl/09_multitraining_seed_replication_2026-07-14.md`](docs/rl/09_multitraining_seed_replication_2026-07-14.md)。
 L13 的特权教师数据隔离、行为克隆（BC）预训练、BC→SAC 状态边界与预注册决策门见
 [`docs/rl/10_behavior_cloning_bootstrap_gate_2026-07-14.md`](docs/rl/10_behavior_cloning_bootstrap_gate_2026-07-14.md)。
+BC 三训练种子复现、SAC 非单调策略震荡、legacy-resume 作废审计、
+BC anchor/critic burn-in 消融、wheel-odometry 边界与下一步 safe policy-correction 决策见
+[`docs/rl/11_bc_multiseed_and_safe_finetuning_gate_2026-07-14.md`](docs/rl/11_bc_multiseed_and_safe_finetuning_gate_2026-07-14.md)。
+L16 的冻结 BC、有界 policy correction、zero-correction 回归、三训练种子真实结果与
+“安全结构通过但性能 Gate 未通过”的决策见
+[`docs/rl/12_frozen_bc_bounded_correction_gate_2026-07-14.md`](docs/rl/12_frozen_bc_bounded_correction_gate_2026-07-14.md)。
+L17 的保守 correction 正则、paired fail-closed checkpoint selection、验证 seed/初始状态合同审计与三训练种子 sealed-final 结果见
+[`docs/rl/13_conservative_correction_preregistered_gate_2026-07-14.md`](docs/rl/13_conservative_correction_preregistered_gate_2026-07-14.md)、
+[`docs/rl/14_validation_seed_audit_and_l17_v2_prereg_2026-07-14.md`](docs/rl/14_validation_seed_audit_and_l17_v2_prereg_2026-07-14.md) 和
+[`docs/rl/15_l17_v3_conservative_correction_results_2026-07-14.md`](docs/rl/15_l17_v3_conservative_correction_results_2026-07-14.md)。最终结论是：安全退化链路通过，但当前 SAC correction 没有优于 BC 的证据。
+L18 的 twin-critic 相对 BC 优势记录、零阈值 online/target hard gate 预注册、
+三训练种子配对结果和数据质量审计见
+[`docs/rl/16_critic_advantage_diagnostic_prereg_2026-07-15.md`](docs/rl/16_critic_advantage_diagnostic_prereg_2026-07-15.md) 和
+[`docs/rl/17_l18_critic_advantage_diagnostic_results_2026-07-15.md`](docs/rl/17_l18_critic_advantage_diagnostic_results_2026-07-15.md)。当前结论是：critic 含有弱排序信息，但零阈值优势门控仍损失 BC-success episodes，未进入新 final test。
+L19 的独立 calibration/selection 数据隔离、跨训练种子全局 raw-advantage margin 校准和 fail-closed 结果见
+[`docs/rl/18_l19_advantage_margin_calibration_prereg_2026-07-15.md`](docs/rl/18_l19_advantage_margin_calibration_prereg_2026-07-15.md) 与
+[`docs/rl/19_l19_advantage_margin_calibration_results_2026-07-15.md`](docs/rl/19_l19_advantage_margin_calibration_results_2026-07-15.md)。六个 margin 均未满足 paired BC non-inferiority，系统保留 BC fallback，预留 selection seeds 未打开。
+L20 的尺度不变 twin-critic 共识 LCB 公式、预注册数据隔离和三训练种子校准结果见
+[`docs/rl/20_l20_twin_critic_consensus_lcb_prereg_2026-07-15.md`](docs/rl/20_l20_twin_critic_consensus_lcb_prereg_2026-07-15.md) 与
+[`docs/rl/21_l20_twin_critic_consensus_lcb_results_2026-07-15.md`](docs/rl/21_l20_twin_critic_consensus_lcb_results_2026-07-15.md)。beta 2 将成功从 27/36 提高到 31/36，但仍有 1 次 paired BC-success loss，因此保持 BC fallback 且未打开 selection seeds。
+L21 的确定性同 seed action replay、单步 correction 反事实分支数据和模型训练充分性 Gate 见
+[`docs/rl/22_l21_counterfactual_risk_dataset_prereg_2026-07-15.md`](docs/rl/22_l21_counterfactual_risk_dataset_prereg_2026-07-15.md) 与
+[`docs/rl/23_l21_counterfactual_risk_dataset_results_2026-07-15.md`](docs/rl/23_l21_counterfactual_risk_dataset_results_2026-07-15.md)。124 个 accepted branches 全部为 neutral，说明单步 correction 会被 BC 快速恢复；系统按预注册规则不训练风险模型、不打开 test seeds，下一步转向短时 correction-burst 反事实。
+L22 的 10-step gated correction burst、嵌套配对设计和完整数据审计见
+[`docs/rl/24_l22_counterfactual_burst_prereg_2026-07-15.md`](docs/rl/24_l22_counterfactual_burst_prereg_2026-07-15.md) 与
+[`docs/rl/25_l22_counterfactual_burst_results_2026-07-15.md`](docs/rl/25_l22_counterfactual_burst_results_2026-07-15.md)。120 个分支的数据质量与 burst 执行合同通过，轨迹差异扩大到约 -9.4 cm 至 +18.5 cm，但预注册的 harmful/beneficial label 仍不足，因此继续保持 BC fallback、不开 sealed test，也不训练平凡分类器。
+L23 的 continuous-utility ensemble、group bootstrap、ridge/zero baselines、group conformal LCB 与 fail-closed checkpoint loader 见
+[`docs/rl/26_l23_continuous_utility_prereg_2026-07-15.md`](docs/rl/26_l23_continuous_utility_prereg_2026-07-15.md)、
+[`docs/rl/27_l23_zero_variance_scaling_correction_2026-07-15.md`](docs/rl/27_l23_zero_variance_scaling_correction_2026-07-15.md) 与
+[`docs/rl/28_l23_continuous_utility_results_2026-07-15.md`](docs/rl/28_l23_continuous_utility_results_2026-07-15.md)。423 个 development branches 的数据质量通过，但 current-state ensemble 只比 zero predictor 改善 0.88%，负效用识别和 conformal acceptance 均未过 Gate；sealed test 保持关闭，下一步转向 trajectory-aware utility features。
+L24 的 side-effect-free MPPI preview、127 维配对 BC/SAC 候选轨迹特征、state-only 直接消融与结果见 [`docs/rl/29_l24_trajectory_utility_prereg_2026-07-15.md`](docs/rl/29_l24_trajectory_utility_prereg_2026-07-15.md) 和 [`docs/rl/30_l24_trajectory_utility_results_2026-07-15.md`](docs/rl/30_l24_trajectory_utility_results_2026-07-15.md)。409 条 development branches 的质量合同通过，但 trajectory ensemble 只比 zero 改善 1.32%，并比同数据的 state-only ensemble 差 1.03%；校准后接受率仍为 0%。因此 sealed test 继续关闭，主线不再扩张 learned macro-utility Gate，而转向可审计的 OOD 场景级 RL 激活与简化 factorial ablation。
 
 最小 MuJoCo smoke（仅检查链路，不代表性能）：
 
@@ -242,3 +289,48 @@ Legacy 回归：
 - learned residual 必须先经过仿真、offline 和 shadow mode。
 
 详细说明见 [docs/refactor/00_master_plan.md](docs/refactor/00_master_plan.md)。
+
+## L25: LaserScan scene-complexity gating
+
+The RL sampling prior can now be activated continuously from local LaserScan geometry while
+preserving an exact traditional-MPPI fallback in obstacle-free geometry. The development
+ablation used 3 independently trained checkpoints, 10 paired episode seeds, 4 scenes and 4
+methods (`480` episodes, `124334` control steps, `K=200`). The gated method achieved `30/30`
+success in clean dynamics and `20/30`, `24/30`, and `26/30` in the single-obstacle, narrow-corridor,
+and U-trap scenes, with zero collisions in all 480 episodes. The preregistered development gate
+still failed because the globally labelled “simple” single-obstacle scene required substantial
+local activation; sealed test seeds therefore remain unopened.
+
+See the [L25 preregistration](docs/rl/31_l25_scene_complexity_gate_prereg_2026-07-15.md) and
+[L25 development results](docs/rl/32_l25_scene_complexity_gate_results_2026-07-15.md). These are
+development results, not final paper claims.
+
+## L29/L30: cross-layer ICODE--RL--Gate development
+
+The research platform now includes a collidable prescribed dynamic obstacle whose current
+MuJoCo geometry is shared by contact, clearance, LaserScan and visualization, while the planner
+continues to receive obstacle information only through LaserScan and the local obstacle layer.
+The L29 blocked factorial exposed a late-activation failure of the spatial gate for a sparse
+lateral crossing. L30 added a scan-only temporal closing-risk signal. Across 60 blocking-scene
+development episodes per method, temporal-gate + ICODE achieved `60/60` success, zero collisions
+and `0.289 m` mean final distance; its clean-scene trajectory remained stepwise identical to
+traditional MPPI. The fixed L30 gate nevertheless remains formally failed because the nominal
+temporal-gate ablation had one collision above its matched always-RL comparator in one dynamic
+stratum. No confirmation seed was opened.
+
+See the [L29 preregistration](docs/rl/39_l29_cross_layer_factorial_prereg_2026-07-15.md),
+[L30 remediation preregistration](docs/rl/40_l30_temporal_closing_gate_prereg_2026-07-15.md), and
+[L29/L30 development results](docs/rl/41_l29_l30_cross_layer_results_2026-07-15.md).
+
+## L31: dynamic-motion generalization stress test
+
+L31 froze the L30 temporal thresholds and evaluated four obstacle-motion variants, two physics
+domains, five paired methods, three independently trained model blocks and five fresh development
+seeds (`600` MuJoCo episodes). The data audit passed, but the preregistered development gate did
+not: temporal gate + ICODE reached `64/120` successes with `56/120` collisions. Reverse-direction
+and faster crossings exposed that sector-minimum differencing is not obstacle tracking and that a
+high hazard signal cannot be treated as high confidence in a static-scene RL prior. All L31
+confirmation seeds remain sealed.
+
+See the [L31 preregistration](docs/rl/42_l31_dynamic_variant_generalization_prereg_2026-07-15.md)
+and [L31 results and failure analysis](docs/rl/43_l31_dynamic_variant_generalization_results_2026-07-15.md).

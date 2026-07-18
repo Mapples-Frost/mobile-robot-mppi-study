@@ -1,0 +1,22 @@
+schema_version: 1
+design_id: l93_route_dynamic_covariance_headroom_v1
+base_config: configs/rl/sac_mppi_covariance_only_l84.yaml
+schedule_seed: 2026071851
+bootstrap_seed: 2026071852
+selection_seeds: [20270401, 20270402, 20270403]
+evaluation_seeds: [20270501, 20270502, 20270503, 20270504, 20270505]
+
+scenes:
+  - configs/research/mujoco_high_dynamic_accel_straight_l56.yaml
+  - configs/research/mujoco_route_crossing_slow_l93.yaml
+  - configs/research/mujoco_route_crossing_fast_l93.yaml
+  - configs/research/mujoco_route_crossing_large_l93.yaml
+  - configs/research/mujoco_route_crossing_diagonal_l93.yaml
+
+candidates:
+  - {name: baseline, scale: [1.0, 1.0]}
+  - {name: turn, scale: [0.75, 1.75]}
+  - {name: speed, scale: [1.75, 0.75]}
+
+gate:
+  mode: safety_confirmation

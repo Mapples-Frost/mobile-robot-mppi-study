@@ -1,0 +1,114 @@
+include: residual_structure_closed_loop_l61.yaml
+
+experiment:
+  name: cross_plant_nominal_calibration_l63
+  output_dir: results/research_platform/rl/l63_cross_plant_nominal_calibration_20260716_v1
+
+rl:
+  enabled: false
+  checkpoint: null
+  cross_layer_factorial:
+    design_id: l63_nominal_only_cross_plant_calibration_v1
+    confirmation_mode: false
+    schedule_seed: 2026071642
+    bootstrap_seed: 2026071643
+    conditions: [traditional_nominal]
+    scenes:
+      - {role: seen_chicane, path: configs/research/mujoco_high_dynamic_chicane_l56.yaml}
+      - {role: unseen_reverse_s, path: configs/research/mujoco_high_dynamic_reverse_s_unseen_l56.yaml}
+    physics_domains:
+      - {name: train_anchor, role: anchor, plant_override: {}}
+      - name: mass_light
+        role: mass_candidate
+        plant_override:
+          robot:
+            chassis_mass: 10.0
+            chassis_inertia: [0.10, 0.146, 0.208]
+            wheel_mass: 0.34
+      - name: mass_heavy
+        role: mass_candidate
+        plant_override:
+          robot:
+            chassis_mass: 16.0
+            chassis_inertia: [0.16, 0.234, 0.332]
+            wheel_mass: 0.42
+      - name: friction_low
+        role: friction_candidate
+        plant_override:
+          contact:
+            wheel_friction: [0.45, 0.004, 0.0006]
+            floor_friction: [0.38, 0.002, 0.0002]
+      - name: friction_high
+        role: friction_candidate
+        plant_override:
+          contact:
+            wheel_friction: [0.90, 0.007, 0.0011]
+            floor_friction: [0.80, 0.004, 0.0004]
+      - name: torque_weak
+        role: torque_candidate
+        plant_override:
+          actuator:
+            torque_limit: 1.20
+            kp: 0.32
+            ki: 1.00
+            torque_slew_rate: 20.0
+      - name: torque_strong
+        role: torque_candidate
+        plant_override:
+          actuator:
+            torque_limit: 2.00
+            kp: 0.48
+            ki: 1.40
+            torque_slew_rate: 35.0
+      - name: delay_zero
+        role: delay_candidate
+        plant_override:
+          actuator:
+            command_delay: 0.0
+      - name: delay_long
+        role: delay_candidate
+        plant_override:
+          actuator:
+            command_delay: 0.10
+      - name: combined_shift
+        role: combined_candidate
+        plant_override:
+          robot:
+            chassis_mass: 15.5
+            chassis_inertia: [0.155, 0.226, 0.322]
+            wheel_mass: 0.41
+          actuator:
+            torque_limit: 1.25
+            kp: 0.33
+            ki: 1.05
+            command_delay: 0.08
+            torque_slew_rate: 21.0
+          contact:
+            wheel_friction: [0.48, 0.0042, 0.00065]
+            floor_friction: [0.40, 0.0021, 0.00021]
+    development_episode_seeds: [21860801, 21860802, 21860803]
+    sealed_confirmation_episode_seeds: [21860831, 21860832, 21860833, 21860834, 21860835]
+    protected_config_paths:
+      - configs/rl/residual_structure_confirmation_l62.yaml
+    planner_known_command_delay: true
+    model_blocks:
+      - rl_seed: 20260731
+        mlp_seed: 20261201
+        icode_seed: 20261201
+        rl_checkpoint: results/research_platform/rl/subgoal_history_l6_20260713/checkpoints/best.pt
+        mlp_checkpoint: results/research_platform/l60_mlp_high_dynamic_h36_seed20261201_v1/best.pt
+        icode_checkpoint: results/research_platform/l57_icode_high_dynamic_h36_seed20261201_v1/best.pt
+
+cross_plant_calibration:
+  anchor_domain: train_anchor
+  groups:
+    mass: [mass_light, mass_heavy]
+    friction: [friction_low, friction_high]
+    torque: [torque_weak, torque_strong]
+    delay: [delay_zero, delay_long]
+    combined: [combined_shift]
+  minimum_success_rate: 0.80
+  maximum_collision_rate: 0.0
+  minimum_mean_completion_ratio: 0.95
+  minimum_relative_cross_track_shift: 0.03
+

@@ -1,0 +1,38 @@
+include: icode_delay_aligned_path_tracking_l47.yaml
+
+experiment:
+  name: icode_efficiency_confirmation_l48
+  output_dir: results/research_platform/rl/l48_icode_efficiency_confirmation_20260716_v1
+
+rl:
+  cross_layer_factorial:
+    design_id: l48_icode_efficiency_independent_confirmation_v1
+    schedule_seed: 2026071617
+    conditions: [traditional_nominal, traditional_icode]
+    development_episode_seeds: [21360731, 21360732, 21360733, 21360734, 21360735, 21360736, 21360737, 21360738, 21360739, 21360740]
+    sealed_confirmation_episode_seeds: [21360741, 21360742, 21360743, 21360744, 21360745, 21360746, 21360747, 21360748, 21360749, 21360750]
+    protected_config_paths:
+      - configs/rl/l34_independent_confirmation_l35.yaml
+      - configs/rl/dynamic_benchmark_calibration_l36.yaml
+      - configs/rl/bounded_rl_icode_factorial_l37.yaml
+      - configs/rl/icode_delay_identifiability_l38.yaml
+      - configs/rl/icode_closed_loop_eligibility_l41.yaml
+      - configs/rl/icode_support_gate_l42.yaml
+      - configs/rl/icode_path_tracking_eligibility_l43.yaml
+      - configs/rl/icode_structure_preserving_l44.yaml
+      - configs/rl/icode_delay_aligned_path_tracking_l47.yaml
+    bootstrap_seed: 2026071618
+    bootstrap_replicates: 20000
+    confirmation_gate:
+      minimum_positive_path_length_model_blocks: 3
+      minimum_positive_control_jerk_model_blocks: 3
+      minimum_mean_path_length_reduction_m: 0.03
+      minimum_path_length_reduction_ci95_lower_m: 0.0
+      minimum_control_jerk_reduction_ci95_lower: 0.0
+      minimum_applied_jerk_reduction_ci95_lower: 0.0
+      maximum_relative_cross_track_rmse_increase: 0.05
+      minimum_net_success_gain: 0
+      maximum_net_collision_increase: 0
+      minimum_completion_ratio_difference: -0.01
+      maximum_candidate_mean_planner_compute_ms: 50.0
+

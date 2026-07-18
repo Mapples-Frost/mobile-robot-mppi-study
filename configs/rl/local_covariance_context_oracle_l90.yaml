@@ -1,0 +1,45 @@
+schema_version: 1
+design_id: l90_local_covariance_context_oracle_v1
+base_config: configs/rl/sac_mppi_covariance_only_l84.yaml
+schedule_seed: 2026071821
+bootstrap_seed: 2026071822
+selection_seeds: [20269801, 20269802]
+evaluation_seeds: [20269901, 20269902, 20269903]
+anchor_fractions: [0.10, 0.35, 0.60]
+local_window_distance_m: 2.5
+branch_steps: 30
+initial_speed_mps: 0.35
+maximum_projection_advance_m: 2.5
+selection_rmse_slack_m: 0.002
+evaluation_rmse_noninferiority_margin_m: 0.002
+
+scenes:
+  - configs/research/mujoco_high_dynamic_accel_straight_l56.yaml
+  - configs/research/mujoco_high_dynamic_sweep_l56.yaml
+  - configs/research/mujoco_high_dynamic_accel_turn_l56.yaml
+  - configs/research/mujoco_high_dynamic_chicane_l56.yaml
+
+# The mapping is selected by observable route segment only.  Physics is a
+# blocked nuisance factor and is never part of the context key.
+physics_domains:
+  - name: train_anchor
+    plant_override: {}
+  - name: combined_moderate
+    plant_override:
+      robot:
+        chassis_mass: 15.0
+        chassis_inertia: [0.15, 0.219, 0.311]
+        wheel_mass: 0.40
+      actuator:
+        torque_limit: 1.20
+        kp: 0.32
+        ki: 1.00
+        command_delay: 0.08
+        torque_slew_rate: 20.0
+      contact:
+        wheel_friction: [0.78, 0.0062, 0.0010]
+        floor_friction: [0.70, 0.0035, 0.00035]
+
+candidates:
+  - {name: narrow, scale: [0.5, 0.5]}
+  - {name: speed, scale: [1.75, 0.75]}

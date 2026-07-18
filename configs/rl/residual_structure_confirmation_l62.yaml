@@ -1,0 +1,17 @@
+include: residual_structure_closed_loop_l61.yaml
+
+experiment:
+  name: residual_structure_confirmation_l62
+  output_dir: results/research_platform/rl/l62_residual_structure_confirmation_20260716_v1
+
+rl:
+  cross_layer_factorial:
+    design_id: l62_parameter_matched_residual_structure_sealed_confirmation_v1
+    confirmation_mode: true
+    schedule_seed: 2026071639
+    bootstrap_seed: 2026071640
+    development_episode_seeds: [21860791, 21860792, 21860793, 21860794, 21860795, 21860796, 21860797, 21860798, 21860799, 21860800]
+    sealed_confirmation_episode_seeds: [21860791, 21860792, 21860793, 21860794, 21860795, 21860796, 21860797, 21860798, 21860799, 21860800]
+    protected_config_paths:
+      - configs/rl/residual_structure_closed_loop_l61.yaml
+

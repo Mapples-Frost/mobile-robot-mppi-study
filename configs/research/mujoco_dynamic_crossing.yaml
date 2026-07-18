@@ -1,0 +1,22 @@
+include: mujoco_strong_mppi_baseline.yaml
+
+experiment:
+  name: mujoco_dynamic_crossing
+
+# A prescribed obstacle crosses the direct start-to-goal line repeatedly at
+# approximately 0.21 m/s.  It is a MuJoCo mocap collision body, so LaserScan,
+# contact, clearance and visualization all observe the same moving geometry.
+# The planner receives no trajectory or simulator-truth information.
+scene:
+  name: dynamic_crossing
+  obstacles:
+    - type: cylinder
+      position: [2.10, 0.90]
+      radius: 0.20
+      height: 0.50
+      motion:
+        type: linear_ping_pong
+        start: [2.10, 0.90]
+        end: [0.90, 2.10]
+        period_s: 16.0
+        phase_s: 6.0

@@ -1,0 +1,39 @@
+include: icode_iterative_path_confirmation_l50.yaml
+
+experiment:
+  name: icode_oracle_domain_gate_l51
+  output_dir: results/research_platform/rl/l51_icode_oracle_domain_gate_20260716_v1
+
+rl:
+  cross_layer_factorial:
+    design_id: l51_icode_oracle_domain_upper_bound_v1
+    schedule_seed: 2026071623
+    conditions:
+      - traditional_nominal
+      - traditional_icode
+      - traditional_icode_oracle_domain_gate
+    oracle_residual_active_domains: [combined_long_delay]
+    development_episode_seeds: [21560731, 21560732, 21560733, 21560734, 21560735, 21560736, 21560737, 21560738, 21560739, 21560740]
+    sealed_confirmation_episode_seeds: [21560741, 21560742, 21560743, 21560744, 21560745, 21560746, 21560747, 21560748, 21560749, 21560750]
+    protected_config_paths:
+      - configs/rl/l34_independent_confirmation_l35.yaml
+      - configs/rl/dynamic_benchmark_calibration_l36.yaml
+      - configs/rl/bounded_rl_icode_factorial_l37.yaml
+      - configs/rl/icode_delay_identifiability_l38.yaml
+      - configs/rl/icode_closed_loop_eligibility_l41.yaml
+      - configs/rl/icode_support_gate_l42.yaml
+      - configs/rl/icode_path_tracking_eligibility_l43.yaml
+      - configs/rl/icode_structure_preserving_l44.yaml
+      - configs/rl/icode_delay_aligned_path_tracking_l47.yaml
+      - configs/rl/icode_efficiency_confirmation_l48.yaml
+      - configs/rl/icode_iterative_path_confirmation_l50.yaml
+    bootstrap_seed: 2026071624
+    bootstrap_replicates: 20000
+    oracle_gate:
+      minimum_positive_applied_jerk_model_blocks: 3
+      maximum_relative_cross_track_rmse_increase: 0.05
+      minimum_net_success_gain: 0
+      maximum_net_collision_increase: 0
+      minimum_completion_ratio_difference: -0.01
+      maximum_candidate_mean_planner_compute_ms: 50.0
+

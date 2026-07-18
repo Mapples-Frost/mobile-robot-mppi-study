@@ -1,0 +1,41 @@
+session:
+  id: "2026-07-17_021"
+  timestamp: "2026-07-18T00:55:00+08:00"
+  summary: "L82-L86 identified covariance-sampling headroom, rejected free precision-constrained RL and anchored time-superiority claims, and preserved a supported precision-noninferior bounded RL result."
+
+events_logged:
+  - {type: experiment, id: N89, provenance: ai-executed, summary: "Qualified covariance adaptation after rejecting direct ICODE sequence-ranking distillation."}
+  - {type: experiment, id: N90, provenance: ai-executed, summary: "L85 passed time superiority but failed cross-track noninferiority."}
+  - {type: experiment, id: N91, provenance: ai-executed, summary: "L86 passed precision noninferiority but failed time superiority."}
+  - {type: decision, id: N92, provenance: ai-suggested, summary: "Require closed-loop context-dependent oracle headroom before more RL training."}
+  - {type: claim, id: C60, provenance: ai-suggested, summary: "Free constrained covariance RL joint dominance is refuted."}
+  - {type: claim, id: C61, provenance: ai-suggested, summary: "Tuned-anchor bounded covariance RL precision noninferiority is supported in development."}
+  - {type: claim, id: C62, provenance: ai-suggested, summary: "Anchored covariance RL time superiority is refuted."}
+  - {type: heuristic, id: H44, provenance: ai-suggested, summary: "Prove context-dependent oracle headroom before training adaptive parameters."}
+
+ai_actions:
+  - action: "Implemented resumable transition costs, projected dual ascent and precision-feasible checkpoint selection with default-off compatibility."
+    provenance: ai-executed
+  - action: "Implemented tuned-anchor bounded log-residual covariance decoding with exact zero-action and zero-gate fallback."
+    provenance: ai-executed
+  - action: "Ran two independent 20k SAC blocks and 120 paired closed-loop evaluation episodes on disjoint physical seeds."
+    provenance: ai-executed
+  - action: "Corrected machine evaluation gates to require explicit precision, time and safety clauses and passed all 577 repository tests."
+    provenance: ai-executed
+
+claims_touched:
+  - {id: C60, action: created, provenance: ai-suggested}
+  - {id: C61, action: created, provenance: ai-suggested}
+  - {id: C62, action: created, provenance: ai-suggested}
+
+open_threads:
+  - "Run a method-blind closed-loop covariance heterogeneity oracle over scene, physics and dynamic-obstacle blocks."
+  - "Continue RL only if context oracle headroom exceeds the best global fixed covariance and inference overhead."
+  - "Keep ICODE frozen while identifying the RL contribution."
+
+provenance_summary:
+  user_confirmed: 0
+  ai_suggested: 5
+  ai_executed: 8
+  user_revised: 0
+  confirmation_rate: 0.0

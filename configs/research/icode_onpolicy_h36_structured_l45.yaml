@@ -1,0 +1,8 @@
+include: icode_onpolicy_h36_l40.yaml
+
+experiment:
+  name: icode_onpolicy_h36_structured_l45
+
+model:
+  residual_output_mask: [0.0, 0.0, 0.0, 1.0, 1.0]
+

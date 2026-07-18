@@ -1,0 +1,81 @@
+session:
+  id: "2026-07-15_005"
+  timestamp: "2026-07-15T13:12:00+08:00"
+  summary: "Implemented L22 ten-step gated counterfactual bursts; continuous effects grew, but the preregistered three-class gate still failed and no risk model was trained."
+
+events_logged:
+  - type: question
+    id: N19
+    provenance: ai-suggested
+    summary: "Test whether a prior-informed ten-step correction burst supplies sequence-level risk labels."
+  - type: experiment
+    id: N20
+    provenance: ai-executed
+    summary: "Collected and audited 120 burst branches across three checkpoints with zero replay drift and valid execution accounting."
+  - type: dead_end
+    id: N21
+    provenance: ai-executed
+    summary: "Rejected the forty-step joint-threshold classifier because all rows remained neutral despite measurable continuous effects."
+  - type: pivot
+    id: N22
+    provenance: ai-suggested
+    summary: "Proposed a new preregistered sequence-level continuous-utility target instead of post-hoc class relabeling."
+  - type: claim
+    id: C12
+    provenance: ai-suggested
+    summary: "Sufficient three-class labels from a ten-step burst were refuted."
+  - type: claim
+    id: C13
+    provenance: ai-suggested
+    summary: "Ten-step bursts exposed larger continuous distance effects than one-step interventions."
+  - type: claim
+    id: C14
+    provenance: ai-suggested
+    summary: "Independent forty-step return corroboration beyond distance was refuted."
+  - type: heuristic
+    id: H08
+    provenance: ai-suggested
+    summary: "Freeze intervention duration using prior closed-loop run-length evidence."
+  - type: heuristic
+    id: H09
+    provenance: ai-suggested
+    summary: "Preserve continuous targets and fail closed instead of lowering labels after inspection."
+
+ai_actions:
+  - action: "Preregistered a paired ten-step gated-SAC burst with new grouped development seeds and unchanged label thresholds."
+    provenance: ai-executed
+    files_changed:
+      - "configs/rl/correction_counterfactual_burst_l22.yaml"
+      - "docs/rl/24_l22_counterfactual_burst_prereg_2026-07-15.md"
+  - action: "Extended the deterministic collector to configurable burst interventions with sealed-split and execution-accounting checks while preserving legacy one-step audits."
+    provenance: ai-executed
+    files_changed:
+      - "experiments/rl/collect_correction_counterfactual_branches.py"
+      - "experiments/rl/audit_correction_counterfactual_dataset.py"
+      - "src/mobile_robot_mppi/rl/risk_dataset.py"
+      - "tests/rl/test_risk_dataset.py"
+  - action: "Collected three checkpoint datasets, produced a merged audit and EDA, blocked risk-model training and ran 300 repository tests."
+    provenance: ai-executed
+    files_changed:
+      - "docs/rl/25_l22_counterfactual_burst_results_2026-07-15.md"
+      - "results/research_platform/rl/l22_burst_multiseed_20260715_v1/"
+
+claims_touched:
+  - id: C12
+    action: created
+    provenance: ai-suggested
+  - id: C13
+    action: created
+    provenance: ai-suggested
+  - id: C14
+    action: created
+    provenance: ai-suggested
+
+open_threads:
+  - "Preregister a macro-policy continuous-utility study with additional independent development episode groups."
+  - "Freeze model architecture and utility definition before opening episode seeds 20281311--20281315."
+  - "Keep closed-loop selection seeds 20281101--20281115 sealed until a model passes independent risk/benefit validation."
+
+ai_suggestions_pending:
+  - "Use continuous utility and uncertainty intervals rather than post-hoc +/-3 cm labels."
+  - "Treat the weak and sign-changing accepted-count correlation as evidence that state context, not correction quantity alone, must drive future gating."

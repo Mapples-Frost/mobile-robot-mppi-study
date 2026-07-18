@@ -1,0 +1,14 @@
+include: sac_mppi_utrap_critic_advantage_l18.yaml
+
+experiment:
+  name: sac_mppi_utrap_consensus_lcb_l20
+  output_dir: results/research_platform/rl/utrap_consensus_lcb_l20_20260715
+
+rl:
+  policy_id: sac_mppi_utrap_consensus_lcb_l20
+  gate:
+    mode: none
+    correction_advantage_gate_mode: lcb
+    correction_advantage_critic_source: target
+    correction_advantage_threshold: 0.0
+    correction_advantage_uncertainty_multiplier: 1.0

@@ -1,0 +1,17 @@
+include: residual_structure_observation_domains_l67.yaml
+
+experiment:
+  name: residual_structure_observation_confirmation_l68
+  output_dir: results/research_platform/rl/l68_residual_structure_observation_confirmation_20260716_v1
+
+rl:
+  cross_layer_factorial:
+    design_id: l68_parameter_matched_residual_structure_observation_confirmation_v1
+    confirmation_mode: true
+    schedule_seed: 2026071659
+    bootstrap_seed: 2026071660
+    development_episode_seeds: [21860861, 21860862, 21860863, 21860864, 21860865]
+    sealed_confirmation_episode_seeds: [21860861, 21860862, 21860863, 21860864, 21860865]
+    protected_config_paths:
+      - configs/rl/residual_structure_observation_domains_l67.yaml
+

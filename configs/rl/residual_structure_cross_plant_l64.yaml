@@ -1,0 +1,81 @@
+include: residual_structure_closed_loop_l61.yaml
+
+experiment:
+  name: residual_structure_cross_plant_l64
+  output_dir: results/research_platform/rl/l64_residual_structure_cross_plant_20260716_v1
+
+rl:
+  cross_layer_factorial:
+    design_id: l64_parameter_matched_residual_structure_cross_plant_v1
+    confirmation_mode: false
+    schedule_seed: 2026071648
+    bootstrap_seed: 2026071649
+    conditions: [traditional_nominal, traditional_mlp, traditional_icode]
+    scenes:
+      - {role: seen_chicane, path: configs/research/mujoco_high_dynamic_chicane_l56.yaml}
+      - {role: unseen_reverse_s, path: configs/research/mujoco_high_dynamic_reverse_s_unseen_l56.yaml}
+    # Frozen from the learned-model-blind L63 v3 calibration.
+    physics_domains:
+      - {name: train_anchor, role: anchor, plant_override: {}}
+      - name: mass_light
+        role: mass_shift
+        plant_override:
+          robot:
+            chassis_mass: 10.0
+            chassis_inertia: [0.10, 0.146, 0.208]
+            wheel_mass: 0.34
+      - name: friction_high
+        role: friction_shift
+        plant_override:
+          contact:
+            wheel_friction: [0.90, 0.007, 0.0011]
+            floor_friction: [0.80, 0.004, 0.0004]
+      - name: torque_weak_v2
+        role: actuator_shift
+        plant_override:
+          actuator:
+            torque_limit: 0.75
+            kp: 0.20
+            ki: 0.65
+            torque_slew_rate: 10.0
+      - name: delay_long
+        role: delay_shift
+        plant_override:
+          actuator:
+            command_delay: 0.10
+      - name: combined_moderate_b
+        role: combined_shift
+        plant_override:
+          robot:
+            chassis_mass: 14.5
+            chassis_inertia: [0.145, 0.212, 0.301]
+            wheel_mass: 0.40
+          actuator:
+            torque_limit: 1.00
+            kp: 0.28
+            ki: 0.90
+            command_delay: 0.08
+            torque_slew_rate: 16.0
+          contact:
+            wheel_friction: [0.82, 0.0065, 0.0010]
+            floor_friction: [0.74, 0.0037, 0.00037]
+    development_episode_seeds: [21860811, 21860812, 21860813]
+    sealed_confirmation_episode_seeds: [21860831, 21860832, 21860833, 21860834, 21860835]
+    protected_config_paths:
+      - configs/rl/residual_structure_confirmation_l62.yaml
+    planner_known_command_delay: true
+    cross_plant_structure_gate:
+      anchor_domain: train_anchor
+      combined_domain: combined_moderate_b
+      calibration_config_path: configs/rl/cross_plant_nominal_calibration_l63_v3.yaml
+      calibration_summary_path: results/research_platform/rl/l63_cross_plant_nominal_calibration_20260716_v3/cross_plant_calibration_summary.json
+      minimum_positive_learned_vs_nominal_shifted_blocks: 3
+      minimum_learned_vs_nominal_shifted_ci95_lower_m: 0.0
+      minimum_positive_icode_vs_mlp_shifted_blocks: 2
+      minimum_positive_icode_vs_mlp_shifted_domains: 4
+      minimum_icode_vs_mlp_shifted_ci95_lower_m: 0.0
+      minimum_positive_unseen_icode_vs_mlp_shifted_blocks: 2
+      minimum_unseen_icode_vs_mlp_shifted_ci95_lower_m: 0.0
+      minimum_positive_combined_icode_vs_mlp_blocks: 2
+      minimum_combined_icode_vs_mlp_ci95_lower_m: 0.0
+

@@ -1,0 +1,61 @@
+include: correction_counterfactual_burst_l22.yaml
+
+experiment:
+  name: counterfactual_utility_l23
+  output_dir: results/research_platform/rl/counterfactual_utility_l23_20260715
+
+rl:
+  policy_id: counterfactual_utility_l23
+  risk_dataset:
+    sealed_test_episode_seeds:
+      - 20281311
+      - 20281312
+      - 20281313
+      - 20281314
+      - 20281315
+      - 20281537
+      - 20281538
+      - 20281539
+      - 20281540
+      - 20281541
+      - 20281542
+      - 20281543
+      - 20281544
+      - 20281545
+      - 20281546
+      - 20281547
+      - 20281548
+
+  counterfactual_utility:
+    target: goal_distance_improvement
+    model_selection_episode_seeds: [20281521, 20281522, 20281523, 20281524, 20281525, 20281526, 20281527, 20281528]
+    calibration_episode_seeds: [20281529, 20281530, 20281531, 20281532, 20281533, 20281534, 20281535, 20281536]
+    hidden_sizes: [64, 32]
+    activation: silu
+    ensemble_size: 5
+    ensemble_seeds: [20260731, 20260732, 20260733, 20260734, 20260735]
+    epochs: 300
+    batch_size: 64
+    learning_rate: 0.001
+    weight_decay: 0.0001
+    huber_delta: 1.0
+    gradient_clip_norm: 1.0
+    early_stopping_patience: 40
+    scheduler_patience: 15
+    scheduler_factor: 0.5
+    minimum_learning_rate: 0.00001
+    ridge_lambda: 0.01
+    conformal_alpha: 0.10
+    uncertainty_floor_m: 0.005
+    meaningful_effect_m: 0.03
+    minimum_train_rows: 180
+    minimum_selection_rows: 60
+    minimum_calibration_rows: 60
+    minimum_effect_groups_per_sign: 4
+    minimum_zero_rmse_improvement_fraction: 0.05
+    maximum_ridge_rmse_ratio: 1.02
+    minimum_meaningful_sign_balanced_accuracy: 0.60
+    minimum_calibration_accept_fraction: 0.05
+    minimum_calibration_accepted_mean_utility_m: 0.01
+    harmful_accepted_utility_m: -0.03
+

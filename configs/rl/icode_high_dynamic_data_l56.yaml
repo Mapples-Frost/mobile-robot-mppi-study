@@ -1,0 +1,54 @@
+include: icode_cross_layer_efficiency_confirmation_l55.yaml
+
+experiment:
+  name: icode_high_dynamic_data_l56
+  output_dir: results/research_platform/rl/l56_icode_high_dynamic_data_20260716_v1
+
+rl:
+  cross_layer_factorial:
+    design_id: l56_fixed_plant_high_dynamic_data_v1
+    confirmation_mode: false
+    schedule_seed: 2026071632
+    conditions: [traditional_nominal]
+    scenes:
+      - {role: train_sweep, path: configs/research/mujoco_high_dynamic_sweep_l56.yaml}
+      - {role: train_chicane, path: configs/research/mujoco_high_dynamic_chicane_l56.yaml}
+      - {role: train_accel_straight, path: configs/research/mujoco_high_dynamic_accel_straight_l56.yaml}
+      - {role: unseen_reverse_s, path: configs/research/mujoco_high_dynamic_reverse_s_unseen_l56.yaml}
+    physics_domains:
+      - {name: fixed_hidden_mismatch_l56, role: fixed_plant, plant_override: {}}
+    development_episode_seeds: [21860731, 21860732, 21860733, 21860734, 21860735, 21860736, 21860737, 21860738, 21860739, 21860740, 21860741, 21860742]
+    sealed_confirmation_episode_seeds: [21860751, 21860752, 21860753, 21860754, 21860755, 21860756, 21860757, 21860758, 21860759, 21860760]
+    protected_config_paths:
+      - configs/rl/icode_cross_layer_efficiency_confirmation_l55.yaml
+    planner_known_command_delay: true
+
+residual_dataset:
+  source_block: 0
+  source_condition: traditional_nominal
+  control_source: applied
+  data_gate:
+    expected_episodes: 48
+    minimum_success_rate: 0.80
+    minimum_per_scene_success_rate: 0.75
+    maximum_collisions: 0
+    maximum_safety_override_fraction: 0.0
+    minimum_applied_v_q95: 0.35
+    minimum_abs_applied_omega_q95: 0.35
+    minimum_state_v_std: 0.08
+    minimum_state_omega_std: 0.10
+    maximum_v_upper_saturation_fraction: 0.25
+    maximum_omega_saturation_fraction: 0.25
+  split_selectors:
+    train:
+      scenes: [high_dynamic_sweep_l56, high_dynamic_chicane_l56, high_dynamic_accel_straight_l56]
+      seeds: [21860731, 21860732, 21860733, 21860734, 21860735, 21860736, 21860737, 21860738]
+    validation:
+      scenes: [high_dynamic_sweep_l56, high_dynamic_chicane_l56, high_dynamic_accel_straight_l56]
+      seeds: [21860739]
+    test:
+      scenes: [high_dynamic_sweep_l56, high_dynamic_chicane_l56, high_dynamic_accel_straight_l56]
+      seeds: [21860740, 21860741, 21860742]
+    unseen:
+      scenes: [high_dynamic_reverse_s_unseen_l56]
+      seeds: [21860731, 21860732, 21860733, 21860734, 21860735, 21860736, 21860737, 21860738, 21860739, 21860740, 21860741, 21860742]

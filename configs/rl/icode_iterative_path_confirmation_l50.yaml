@@ -1,0 +1,40 @@
+include: icode_efficiency_confirmation_l48.yaml
+
+experiment:
+  name: icode_iterative_path_confirmation_l50
+  output_dir: results/research_platform/rl/l50_icode_iterative_path_confirmation_20260716_v1
+
+rl:
+  cross_layer_factorial:
+    design_id: l50_icode_iterative_path_independent_confirmation_v1
+    schedule_seed: 2026071620
+    model_blocks:
+      - rl_seed: 20260731
+        icode_seed: 20261101
+        rl_checkpoint: results/research_platform/rl/dynamic_history_bounded_l34_seed20260731_30k_20260716_v1/checkpoints/best.pt
+        icode_checkpoint: results/research_platform/l49_icode_iterative_path_h36_seed20261101_v1/best.pt
+      - rl_seed: 20260732
+        icode_seed: 20261102
+        rl_checkpoint: results/research_platform/rl/dynamic_history_bounded_l34_seed20260732_30k_20260716_v1/checkpoints/best.pt
+        icode_checkpoint: results/research_platform/l49_icode_iterative_path_h36_seed20261102_v1/best.pt
+      - rl_seed: 20260733
+        icode_seed: 20261103
+        rl_checkpoint: results/research_platform/rl/dynamic_history_bounded_l34_seed20260733_30k_20260716_v1/checkpoints/best.pt
+        icode_checkpoint: results/research_platform/l49_icode_iterative_path_h36_seed20261103_v1/best.pt
+    conditions: [traditional_nominal, traditional_icode]
+    development_episode_seeds: [21460731, 21460732, 21460733, 21460734, 21460735, 21460736, 21460737, 21460738, 21460739, 21460740]
+    sealed_confirmation_episode_seeds: [21460741, 21460742, 21460743, 21460744, 21460745, 21460746, 21460747, 21460748, 21460749, 21460750]
+    protected_config_paths:
+      - configs/rl/l34_independent_confirmation_l35.yaml
+      - configs/rl/dynamic_benchmark_calibration_l36.yaml
+      - configs/rl/bounded_rl_icode_factorial_l37.yaml
+      - configs/rl/icode_delay_identifiability_l38.yaml
+      - configs/rl/icode_closed_loop_eligibility_l41.yaml
+      - configs/rl/icode_support_gate_l42.yaml
+      - configs/rl/icode_path_tracking_eligibility_l43.yaml
+      - configs/rl/icode_structure_preserving_l44.yaml
+      - configs/rl/icode_delay_aligned_path_tracking_l47.yaml
+      - configs/rl/icode_efficiency_confirmation_l48.yaml
+    bootstrap_seed: 2026071621
+    bootstrap_replicates: 20000
+

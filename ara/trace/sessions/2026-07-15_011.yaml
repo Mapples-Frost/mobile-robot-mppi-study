@@ -1,0 +1,72 @@
+session:
+  id: "2026-07-15_011"
+  timestamp: "2026-07-15T20:25:00+08:00"
+  summary: "Profiled and exactly pruned active-gate RL-prior inference in L28; the speedup was reproducible but missed the pre-registered practical compute thresholds."
+
+events_logged:
+  - type: question
+    id: N41
+    provenance: ai-suggested
+    summary: "Test whether active-gate critic and actor computations can be pruned exactly enough to close the L26 compute gap."
+  - type: experiment
+    id: N42
+    provenance: ai-executed
+    summary: "L28 completed 360 episodes; both candidates matched 26578 paired steps exactly, while the combined optimization reduced active-prior time by 14.89% and planner time by 4.07%."
+  - type: dead_end
+    id: N43
+    provenance: ai-executed
+    summary: "Exact diagnostic pruning alone missed the fixed 20% active-prior and 5% end-to-end magnitude thresholds, so cross-K confirmation was not run."
+  - type: claim
+    id: C29
+    provenance: ai-suggested
+    summary: "Unselected critic diagnostics and repeated actor-base evaluation can be removed without changing the selected gate in the tested implementation."
+  - type: claim
+    id: C30
+    provenance: ai-suggested
+    summary: "Diagnostic pruning alone is not sufficient to close the active-prior compute gap under the preregistered thresholds."
+  - type: heuristic
+    id: H23
+    provenance: ai-suggested
+    summary: "Distinguish statistically detectable runtime improvement from a practically sufficient compute effect."
+
+ai_actions:
+  - action: "Added optional selected-critic inference, actor-base reuse and component-level RL-prior/MPPI profilers while retaining the full-diagnostic default."
+    provenance: ai-executed
+    files_changed:
+      - "src/mobile_robot_mppi/rl/sac.py"
+      - "src/mobile_robot_mppi/rl/prior.py"
+      - "src/mobile_robot_mppi/planning/mppi.py"
+      - "src/mobile_robot_mppi/evaluation/metrics.py"
+  - action: "Preregistered, ran and analyzed the three-checkpoint L28 factorial with exact paired behavior checks and a 20000-replicate two-stage bootstrap."
+    provenance: ai-executed
+    files_changed:
+      - "configs/rl/sac_mppi_inference_profile_l28.yaml"
+      - "experiments/rl/run_inference_profile_ablation.py"
+      - "experiments/rl/summarize_inference_profile_ablation.py"
+      - "experiments/rl/analyze_inference_profile_results.py"
+      - "docs/rl/37_l28_inference_profile_prereg_2026-07-15.md"
+      - "docs/rl/38_l28_inference_profile_results_2026-07-15.md"
+  - action: "Added regression tests, generated publication PDF/PNG figures, compiled changed Python files and passed all 344 repository tests."
+    provenance: ai-executed
+    files_changed:
+      - "tests/rl/test_inference_profile_ablation.py"
+      - "tests/rl/test_sac_and_checkpoint.py"
+      - "tests/platform/test_generic_mppi.py"
+
+claims_touched:
+  - id: C29
+    action: created
+    provenance: ai-suggested
+  - id: C30
+    action: created
+    provenance: ai-suggested
+
+open_threads:
+  - "Do not run L28 cross-K confirmation or open sealed L28 seeds because the development gate failed."
+  - "If compute optimization remains a priority, preregister decoder caching or inference-context changes as a new experiment with new development seeds."
+  - "Keep the modest exact L28 optimization optional and do not reinterpret it as closing the L26 compute gap."
+  - "Repeat latency and jitter measurements on the intended real-robot compute platform before making deployment claims."
+
+ai_suggestions_pending:
+  - "Prefer moving the main scientific program to dynamic/OOD generalization rather than repeatedly optimizing a near-threshold CPU microbenchmark."
+  - "If another runtime study is approved, profile decoder caching separately and retain stepwise exactness as a non-negotiable gate."

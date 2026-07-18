@@ -1,0 +1,114 @@
+include: sac_mppi_prior.yaml
+
+experiment:
+  name: sac_mppi_covariance_only_l84
+  output_dir: results/research_platform/rl/l84_covariance_only_training
+  max_steps: 320
+
+planner:
+  prediction_mode: icode_residual
+  checkpoint: results/research_platform/l57_icode_high_dynamic_h36_seed20261201_v1/best.pt
+  command_delay_s: 0.04
+  residual_torch_num_threads: 1
+  residual_torchscript: true
+  horizon: 36
+  num_samples: 100
+  noise_sigma: [0.18, 0.65]
+  sampling_prior: rl
+  previous_sequence_blend: 0.20
+
+memory:
+  enable: false
+
+rl:
+  policy_id: sac_mppi_covariance_only_l84
+
+  observation:
+    history_frames: 3
+    lidar_sectors: 18
+    lidar_max_range: 4.0
+    goal_distance_scale: 5.0
+    velocity_scale: 0.65
+    yaw_rate_scale: 1.25
+    include_absolute_pose: false
+    include_previous_action: true
+    include_safety_state: true
+
+  prior:
+    kind: covariance_only
+    learn_covariance: true
+    covariance_min_scale: 0.5
+    covariance_max_scale: 2.0
+
+  sac:
+    hidden_sizes: [128, 128]
+    activation: relu
+    gamma: 0.99
+    tau: 0.005
+    actor_lr: 0.0003
+    critic_lr: 0.0003
+    alpha_lr: 0.0003
+    initial_alpha: 0.2
+    automatic_entropy_tuning: true
+    log_std_min: -5.0
+    log_std_max: 1.0
+    gradient_clip_norm: 10.0
+    policy_mode: direct
+
+  reward:
+    progress_mode: distance_delta
+    potential_progress_weight: 8.0
+    distance_penalty_weight: 0.0
+    path_length_penalty_weight: 0.0
+    cross_track_penalty_weight: 8.0
+    step_penalty: 0.01
+    goal_bonus: 40.0
+    collision_penalty: 100.0
+    clearance_margin: 0.45
+    clearance_penalty_weight: 0.0
+    safety_override_penalty: 0.0
+    control_effort_weight: 0.01
+    control_rate_weight: 0.02
+    stuck_penalty: 0.02
+
+  training:
+    total_steps: 20000
+    warmup_steps: 1000
+    update_after: 1000
+    actor_update_after: 1000
+    batch_size: 256
+    replay_capacity: 120000
+    updates_per_step: 1
+    evaluation_interval: 2500
+    evaluation_episodes: 4
+    checkpoint_interval: 2500
+    save_replay_buffer: true
+    evaluate_initial_policy: true
+    warmup_policy: random
+    normalizer_update: online
+    replay_sampling: scene_balanced
+    replay_require_all_scenes: true
+    seed: 20268801
+    validation_seed_base: 22468801
+    rl_prior_alpha: 1.0
+    initial_state_noise: [0.03, 0.03, 0.08, 0.0, 0.0]
+    validation_initial_state_noise: [0.0, 0.0, 0.0, 0.0, 0.0]
+    scene_configs:
+      - configs/research/mujoco_high_dynamic_accel_straight_l56.yaml
+      - configs/research/mujoco_high_dynamic_accel_turn_l56.yaml
+      - configs/research/mujoco_high_dynamic_chicane_l56.yaml
+      - configs/research/mujoco_high_dynamic_sweep_l56.yaml
+    validation_scene_configs:
+      - configs/research/mujoco_high_dynamic_accel_turn_l56.yaml
+      - configs/research/mujoco_high_dynamic_chicane_l56.yaml
+      - configs/research/mujoco_high_dynamic_hairpin_unseen_l56.yaml
+      - configs/research/mujoco_high_dynamic_reverse_s_unseen_l56.yaml
+    physics_domain_config: null
+    curriculum:
+      enabled: false
+    initial_state_curriculum:
+      enabled: false
+
+  gate:
+    mode: none
+    fixed_alpha: 1.0

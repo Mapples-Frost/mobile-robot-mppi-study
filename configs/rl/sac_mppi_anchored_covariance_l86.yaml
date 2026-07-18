@@ -1,0 +1,24 @@
+include: sac_mppi_precision_constrained_covariance_l85.yaml
+
+experiment:
+  name: sac_mppi_anchored_covariance_l86
+  output_dir: results/research_platform/rl/l86_anchored_covariance_seed20268821_v1
+
+rl:
+  policy_id: sac_mppi_anchored_covariance_l86
+
+  prior:
+    kind: covariance_only
+    learn_covariance: true
+    covariance_min_scale: 0.5
+    covariance_max_scale: 2.0
+    covariance_anchor_scale: [1.75, 0.75]
+    covariance_residual_log_bound: 0.22314355131420976  # log(1.25)
+
+  training:
+    seed: 20268821
+    validation_seed_base: 22468821
+    # Development validation remains paired and unchanged in episode count;
+    # only its cadence is reduced to avoid spending more time validating than
+    # collecting new transitions.
+    evaluation_interval: 5000

@@ -22,6 +22,7 @@ class RewardConfig:
     potential_progress_weight: float = 8.0
     distance_penalty_weight: float = 0.0
     path_length_penalty_weight: float = 0.0
+    cross_track_penalty_weight: float = 0.0
     step_penalty: float = 0.02
     goal_bonus: float = 100.0
     collision_penalty: float = 100.0
@@ -86,6 +87,29 @@ def _final_target(reference, initial_pose):
         values = reference.poses[-1]
         return pose_type(values[0], values[1], values[2])
     return reference.target_at(0.0, initial_pose.as_array()).pose
+
+
+def _cross_track_error(reference, pose):
+    """Return distance to a configured polyline, or zero when unavailable."""
+
+    points = getattr(reference, "points", None)
+    if points is None:
+        return 0.0
+    points = np.asarray(points, dtype=np.float64)
+    if points.ndim != 2 or points.shape[0] < 2 or points.shape[1] < 2:
+        raise ValueError("reference points must contain at least two x/y pairs")
+    position = np.asarray((pose.x, pose.y), dtype=np.float64)
+    starts = points[:-1, :2]
+    segments = points[1:, :2] - starts
+    squared_lengths = np.sum(segments ** 2, axis=1)
+    if np.any(squared_lengths <= 1e-18):
+        raise ValueError("reference polyline contains a zero-length segment")
+    fractions = np.sum((position[None, :] - starts) * segments, axis=1)
+    fractions = np.clip(fractions / squared_lengths, 0.0, 1.0)
+    projections = starts + fractions[:, None] * segments
+    return float(
+        np.min(np.linalg.norm(projections - position[None, :], axis=1))
+    )
 
 
 def _resolved_prior_mapping(values, plant_config, control_dt):
@@ -168,6 +192,7 @@ class MppiPriorEnv:
             planner.get("prior_yaw_gain", 1.2),
             planner.get("prior_translation_heading_gate_rad"),
             planner.get("prior_translation_heading_gate_terminal_only", False),
+            planner.get("prior_terminal_max_speed"),
         )
         training_config = dict(rl_config.get("training", {}))
         self.external_prior = ExternalActionPrior(
@@ -258,8 +283,15 @@ class MppiPriorEnv:
         reset_reference = getattr(self.components["reference"], "reset", None)
         if callable(reset_reference):
             reset_reference()
-        self.components["controller"].reset()
+        # The episode seed owns every stochastic component, including MPPI
+        # perturbation sampling.  Previously the controller silently reset to
+        # the training-config seed, so nominally fixed validation seeds did
+        # not reproduce the standard evaluation path.
+        self.components["controller"].reset(seed=self.seed)
         self.encoder.reset()
+        perception_reset = getattr(self.components["perception"], "reset", None)
+        if callable(perception_reset):
+            perception_reset()
         memory = self.components.get("memory")
         if memory is not None:
             memory.reset()
@@ -289,6 +321,9 @@ class MppiPriorEnv:
             self.previous_distance, distance, self.gamma, cfg.progress_mode
         )
         control_dt = float(self.config["experiment"]["control_dt"])
+        cross_track_error = _cross_track_error(
+            self.components["reference"], truth.pose
+        )
         terms = {
             "potential_progress": cfg.potential_progress_weight
             * progress,
@@ -296,6 +331,8 @@ class MppiPriorEnv:
             "path_length": -cfg.path_length_penalty_weight
             * abs(float(truth.twist.v))
             * control_dt,
+            "cross_track": -cfg.cross_track_penalty_weight
+            * cross_track_error ** 2,
             "step": -cfg.step_penalty,
             "goal": cfg.goal_bonus if terminated_success else 0.0,
             "collision": -cfg.collision_penalty if truth.collision else 0.0,
@@ -320,6 +357,32 @@ class MppiPriorEnv:
         if not np.isfinite(reward):
             raise FloatingPointError("RL reward produced NaN or Inf")
         return reward, terms
+
+    def preview_policy_action(self, policy_action):
+        """Return a side-effect-free MPPI plan for one latent prior action.
+
+        This is an offline research interface used to compare BC and learned
+        candidate trajectories at the same physical state with common MPPI
+        random numbers.  It does not execute control, consume the controller
+        RNG, advance the receding-horizon sequence, or change the reference.
+        """
+
+        if self.perceived is None:
+            raise RuntimeError("RL environment must be reset before preview")
+        controller = self.components["controller"]
+        reference = self.components["reference"]
+        previous_parameters = self.external_prior.parameters.copy()
+        reference_state = copy.deepcopy(getattr(reference, "__dict__", {}))
+        try:
+            self.external_prior.set_parameters(policy_action)
+            return controller.preview_plan(
+                self.perceived.observation, reference
+            )
+        finally:
+            self.external_prior.parameters = previous_parameters
+            if hasattr(reference, "__dict__"):
+                reference.__dict__.clear()
+                reference.__dict__.update(reference_state)
 
     def step(self, policy_action):
         if self.perceived is None:
@@ -398,6 +461,9 @@ class MppiPriorEnv:
             "executed_control": decision.executed_control.values.copy(),
             "applied_control": applied,
             "planner_compute_ms": float(plan.diagnostics.get("compute_ms", 0.0)),
+            "cross_track_error": _cross_track_error(
+                reference, self.truth.pose
+            ),
             "prior": prior_diagnostics,
             "reward_terms": reward_terms,
             "intrinsic_exploration": intrinsic_diagnostics,

@@ -1,0 +1,13 @@
+include: sac_mppi_covariance_only_l84.yaml
+
+experiment:
+  name: sac_mppi_covariance_only_l84_seed20268803
+  output_dir: results/research_platform/rl/l84_covariance_only_seed20268803
+
+planner:
+  checkpoint: results/research_platform/l57_icode_high_dynamic_h36_seed20261203_v1/best.pt
+
+rl:
+  policy_id: sac_mppi_covariance_only_l84_seed20268803
+  training:
+    seed: 20268803

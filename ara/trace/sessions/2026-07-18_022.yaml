@@ -1,0 +1,45 @@
+session:
+  id: "2026-07-18_022"
+  timestamp: "2026-07-18T11:20:00+08:00"
+  summary: "L87 proved covariance-context headroom and L89 independently confirmed an efficient held-out-geometry contextual-bandit improvement over the strongest fixed covariance."
+
+events_logged:
+  - {type: experiment, id: N93, provenance: ai-executed, summary: "L87 context oracle beat the strongest global covariance on held-out seeds."}
+  - {type: dead_end, id: N94, provenance: ai-executed, summary: "A linear geometry critic failed its support-set learnability gate before confirmation."}
+  - {type: experiment, id: N95, provenance: ai-executed, summary: "L89 contextual LinUCB passed held-out-geometry time, precision and safety gates."}
+  - {type: experiment, id: N96, provenance: ai-executed, summary: "Caching frozen critic algebra removed the initial planner overhead and reproduced control outcomes."}
+  - {type: claim, id: C63, provenance: ai-suggested, summary: "Closed-loop MPPI covariance optimum is path-context dependent in the tested domain."}
+  - {type: claim, id: C64, provenance: ai-suggested, summary: "A contextual-bandit covariance selector improves frozen ICODE-MPPI on held-out routes."}
+  - {type: heuristic, id: H45, provenance: ai-suggested, summary: "Move RL upward when useful adaptation is a coarse MPPI option."}
+  - {type: heuristic, id: H46, provenance: ai-suggested, summary: "Cache frozen critic factorizations at inference."}
+
+ai_actions:
+  - action: "Implemented a route-observable quadratic LinUCB policy, checkpoint contract, MPPI prior adapter, factory integration and tests."
+    provenance: ai-executed
+    files_changed: ["src/mobile_robot_mppi/rl/contextual_bandit.py", "src/mobile_robot_mppi/runtime/factories.py", "tests/rl/test_contextual_bandit.py"]
+  - action: "Completed 480 L87 oracle episodes, 96 support-expansion episodes, and two 80-episode independent L89 confirmations."
+    provenance: ai-executed
+    files_changed: ["experiments/rl/run_covariance_context_oracle.py", "experiments/rl/train_contextual_covariance_bandit.py", "experiments/rl/run_contextual_covariance_bandit_evaluation.py"]
+  - action: "Preserved the failed linear critic and pre-confirmation quadratic amendment, audited all episode keys, and passed all 585 repository tests."
+    provenance: ai-executed
+    files_changed: ["docs/rl/131_l87_closed_loop_covariance_heterogeneity_results_2026-07-18.md", "docs/rl/133_l89_quadratic_feature_amendment_2026-07-18.md", "docs/rl/134_l89_contextual_covariance_bandit_results_2026-07-18.md"]
+
+claims_touched:
+  - {id: C63, action: created, provenance: ai-suggested}
+  - {id: C64, action: created, provenance: ai-suggested}
+
+open_threads:
+  - "Extend high-level covariance selection from one action per route to causal segment-level decisions without leaking future plant outcomes."
+  - "Add dynamic-obstacle blocks and test whether LaserScan context changes the selected exploration option."
+  - "Use LinUCB confidence width as an explicit OOD/exploration trigger, with safe fallback and a separately calibrated threshold."
+  - "Keep the contextual-bandit claim scoped to simulation until offline, shadow-mode and real-robot gates pass."
+
+ai_suggestions_pending:
+  - "Use the contextual bandit as the primary RL story and retain continuous SAC variants as negative ablations."
+
+provenance_summary:
+  user_confirmed: 0
+  ai_suggested: 5
+  ai_executed: 10
+  user_revised: 0
+  confirmation_rate: 0.0

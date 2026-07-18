@@ -1,0 +1,15 @@
+include: sac_mppi_dynamic_history_l33.yaml
+
+experiment:
+  name: sac_mppi_dynamic_history_bounded_l34
+  output_dir: results/research_platform/rl/dynamic_history_bounded_l34_20260716
+
+rl:
+  policy_id: sac_mppi_dynamic_history_bounded_l34
+
+  training:
+    # L33 allowed the learned local-subgoal sequence to replace the trusted
+    # GoalWarmStart prior.  L34 changes only this mixing coefficient: SAC now
+    # learns a bounded correction around the traditional prior.
+    rl_prior_alpha: 0.25
+

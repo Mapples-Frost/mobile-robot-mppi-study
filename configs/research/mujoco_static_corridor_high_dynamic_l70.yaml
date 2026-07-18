@@ -1,0 +1,29 @@
+include: mujoco_narrow_corridor.yaml
+
+experiment:
+  name: l70_static_corridor_high_dynamic
+
+plant:
+  robot:
+    chassis_mass: 13.0
+    chassis_inertia: [0.13, 0.19, 0.27]
+    wheel_mass: 0.38
+  actuator:
+    profile: torque_pi
+    torque_limit: 1.55
+    kp: 0.38
+    ki: 1.20
+    integral_limit: 2.50
+    command_delay: 0.04
+    torque_slew_rate: 25.0
+  contact:
+    wheel_friction: [0.62, 0.005, 0.0008]
+    floor_friction: [0.55, 0.0025, 0.00025]
+
+sensors:
+  pose_source: ground_truth
+  twist_source: ground_truth
+  odom_noise_std: [0.0, 0.0, 0.0]
+  twist_noise_std: [0.0, 0.0]
+  lidar_noise_std: 0.0
+  latency: 0.0

@@ -19,15 +19,26 @@ def main(argv=None):
     parser.add_argument("--output-dir", required=True)
     parser.add_argument("--device", default="cpu")
     parser.add_argument("--epochs", type=int)
+    parser.add_argument(
+        "--seed",
+        type=int,
+        help="override the model-initialization/training seed",
+    )
     args = parser.parse_args(argv)
+    config = load_yaml(args.config)
+    if args.seed is not None:
+        if args.seed < 0:
+            parser.error("--seed must be non-negative")
+        config["seed"] = int(args.seed)
     result = train_residual(
-        load_yaml(args.config), args.dataset_dir, args.output_dir,
+        config, args.dataset_dir, args.output_dir,
         device=args.device, epochs=args.epochs,
     )
     print(json.dumps({
         "best_validation_multistep_rmse": result["best_validation_multistep_rmse"],
         "epochs": len(result["history"]),
         "checkpoint": str(Path(args.output_dir).resolve() / "best.pt"),
+        "seed": int(config.get("seed", 0)),
     }, indent=2, sort_keys=True))
     return 0
 

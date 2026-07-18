@@ -109,6 +109,21 @@ def test_running_normalizer_round_trip_and_ood_score():
     assert restored.ood_score(np.asarray((20.0, 2.0, 3.0))) > 5.0
 
 
+@pytest.mark.parametrize(
+    "field,value,match",
+    [
+        ("count", -1, "count cannot be negative"),
+        ("mean", np.asarray((0.0, np.nan, 0.0)), "must be finite"),
+        ("m2", np.asarray((0.0, -1.0, 0.0)), "variance cannot be negative"),
+    ],
+)
+def test_running_normalizer_rejects_corrupt_checkpoint(field, value, match):
+    state = RunningNormalizer(3).state_dict()
+    state[field] = value
+    with pytest.raises(ValueError, match=match):
+        RunningNormalizer.from_state_dict(state)
+
+
 def test_delta_prior_decodes_smooth_bounded_sequence():
     action_spec = body_velocity_action((0.0, 0.4), 1.0)
     config = PriorParameterizationConfig(num_knots=3, mode="delta", delta_scale=0.5)
@@ -126,6 +141,146 @@ def test_delta_prior_decodes_smooth_bounded_sequence():
     assert np.all(mean <= action_spec.upper)
     assert metadata["num_knots"] == 3
     assert np.all(np.diff(mean[:, 1]) >= -1e-12)
+
+
+def test_covariance_only_prior_preserves_mean_and_decodes_two_scales():
+    action_spec = body_velocity_action((0.0, 0.4), 1.0)
+    decoder = PriorParameterization(
+        PriorParameterizationConfig(
+            kind="covariance_only",
+            learn_covariance=True,
+            covariance_min_scale=0.5,
+            covariance_max_scale=2.0,
+        ),
+        action_spec,
+        (0.1, 0.4),
+    )
+    baseline = np.tile(np.asarray((0.2, -0.1)), (7, 1))
+    mean, covariance, metadata = decoder.decode(
+        np.asarray((-1.0, 1.0)), 7, baseline
+    )
+
+    assert decoder.parameter_dimension == 2
+    np.testing.assert_array_equal(mean, baseline)
+    np.testing.assert_allclose(covariance, np.diag((0.05 ** 2, 0.8 ** 2)))
+    np.testing.assert_allclose(metadata["covariance_scale"], (0.5, 2.0))
+    assert metadata["parameterization"] == "covariance_only"
+
+
+def test_anchored_covariance_zero_action_is_exact_strong_baseline():
+    action_spec = body_velocity_action((0.0, 0.4), 1.0)
+    decoder = PriorParameterization(
+        PriorParameterizationConfig(
+            kind="covariance_only",
+            learn_covariance=True,
+            covariance_min_scale=0.5,
+            covariance_max_scale=2.0,
+            covariance_anchor_scale=(1.75, 0.75),
+            covariance_residual_log_bound=np.log(1.25),
+        ),
+        action_spec,
+        (0.1, 0.4),
+    )
+    baseline = np.tile(np.asarray((0.2, -0.1)), (7, 1))
+    mean, covariance, metadata = decoder.decode(
+        np.zeros(2), 7, baseline
+    )
+    np.testing.assert_array_equal(mean, baseline)
+    np.testing.assert_allclose(
+        covariance,
+        np.diag(((0.1 * 1.75) ** 2, (0.4 * 0.75) ** 2)),
+    )
+    np.testing.assert_allclose(metadata["covariance_scale"], (1.75, 0.75))
+
+    _, low, low_metadata = decoder.decode(-np.ones(2), 7, baseline)
+    _, high, high_metadata = decoder.decode(np.ones(2), 7, baseline)
+    np.testing.assert_allclose(low_metadata["covariance_scale"], (1.4, 0.6))
+    np.testing.assert_allclose(high_metadata["covariance_scale"], (2.0, 0.9375))
+    assert np.all(np.diag(low) > 0.0)
+    assert np.all(np.diag(high) > np.diag(low))
+
+
+def test_anchored_covariance_zero_gate_falls_back_to_anchor():
+    action_spec = body_velocity_action((0.0, 0.4), 1.0)
+    decoder = PriorParameterization(
+        {
+            "kind": "covariance_only",
+            "learn_covariance": True,
+            "covariance_min_scale": 0.5,
+            "covariance_max_scale": 2.0,
+            "covariance_anchor_scale": [1.75, 0.75],
+        },
+        action_spec,
+        (0.1, 0.4),
+    )
+    _, learned, _ = decoder.decode(
+        np.ones(2), 4, np.zeros((4, 2))
+    )
+    np.testing.assert_allclose(
+        decoder.blend_covariance(learned, 0.0),
+        decoder.anchor_covariance,
+    )
+    with pytest.raises(ValueError, match="action dimension"):
+        PriorParameterization(
+            {
+                "kind": "covariance_only",
+                "learn_covariance": True,
+                "covariance_anchor_scale": [1.0],
+            },
+            action_spec,
+            (0.1, 0.4),
+        )
+
+
+def test_covariance_only_requires_covariance_and_gate_can_exactly_disable_it():
+    with pytest.raises(ValueError, match="requires learn_covariance"):
+        PriorParameterizationConfig(kind="covariance_only").validate()
+
+    action_spec = body_velocity_action((0.0, 0.4), 1.0)
+    decoder = PriorParameterization(
+        {
+            "kind": "covariance_only",
+            "learn_covariance": True,
+            "covariance_min_scale": 0.5,
+            "covariance_max_scale": 2.0,
+        },
+        action_spec,
+        (0.1, 0.4),
+    )
+    _, learned, _ = decoder.decode(
+        np.asarray((1.0, 1.0)), 4, np.zeros((4, 2))
+    )
+    assert decoder.blend_covariance(learned, 0.0) is None
+    np.testing.assert_allclose(
+        decoder.blend_covariance(learned, 0.5),
+        0.5 * decoder.base_covariance + 0.5 * learned,
+    )
+
+
+def test_external_covariance_only_prior_zero_gate_is_exact_baseline():
+    action_spec = body_velocity_action((0.0, 0.4), 1.0)
+    decoder = PriorParameterization(
+        {
+            "kind": "covariance_only",
+            "learn_covariance": True,
+            "covariance_min_scale": 0.5,
+            "covariance_max_scale": 2.0,
+        },
+        action_spec,
+        (0.1, 0.4),
+    )
+    prior = ExternalActionPrior(decoder, gate_alpha=0.0)
+    prior.set_parameters(np.asarray((1.0, 1.0)))
+    observation = _observation()
+    reference = PointGoal(1.0, 0.0)
+    expected = GoalWarmStartPrior().propose(
+        observation, reference, 5, action_spec
+    )
+    actual = prior.propose(observation, reference, 5, action_spec)
+
+    np.testing.assert_array_equal(actual.mean, expected.mean)
+    assert actual.covariance is None
+    assert actual.metadata["covariance_gate_alpha"] == 0.0
 
 
 def test_local_subgoal_prior_decodes_direction_into_bounded_sequence():
@@ -450,3 +605,102 @@ def test_near_goal_gate_transitions_smoothly_to_traditional_mppi():
     assert abs(middle - 0.5) < 1e-12
     assert 0.0 < _distance_gate_alpha(0.75, config) < middle
     assert middle < _distance_gate_alpha(1.25, config) < 1.0
+
+
+def test_torch_prior_applies_correction_advantage_before_decoding():
+    class DummyCorrectionAgent:
+        is_correction_policy = True
+
+        def eval(self):
+            return None
+
+        def select_action(self, observation, deterministic=False):
+            del observation, deterministic
+            return np.ones(4, dtype=np.float32), {
+                "policy_mode": "frozen_bc_correction",
+                "applied_correction_abs_mean": 0.2,
+            }
+
+        def filter_correction_by_advantage(
+            self,
+            observation,
+            candidate_action,
+            gate_mode,
+            critic_source,
+            threshold,
+            uncertainty_multiplier,
+        ):
+            del observation, candidate_action
+            assert gate_mode == "hard"
+            assert critic_source == "target"
+            assert threshold == 0.0
+            assert uncertainty_multiplier == 3.0
+            return np.zeros(4, dtype=np.float32), {
+                "correction_advantage_gate_mode": gate_mode,
+                "correction_advantage_critic_source": critic_source,
+                "correction_advantage_threshold": threshold,
+                "correction_advantage_uncertainty_multiplier": (
+                    uncertainty_multiplier
+                ),
+                "correction_advantage_gate_alpha": 0.0,
+                "target_conservative_advantage": -0.25,
+                "applied_correction_abs_mean": 0.0,
+            }
+
+        def critic_disagreement(self, observation, action):
+            del observation, action
+            return 0.0
+
+    action_spec = body_velocity_action((0.0, 0.4), 1.0)
+    encoder = ObservationEncoder(
+        {
+            "lidar_sectors": 1,
+            "include_previous_action": False,
+            "include_safety_state": False,
+        },
+        action_spec,
+    )
+    normalizer = RunningNormalizer(encoder.dimension)
+    normalizer.update(np.zeros((2, encoder.dimension)))
+    decoder = PriorParameterization(
+        PriorParameterizationConfig(num_knots=2, mode="delta"),
+        action_spec,
+        (0.1, 0.2),
+    )
+    prior = TorchSACPrior(
+        DummyCorrectionAgent(),
+        encoder,
+        normalizer,
+        decoder,
+        gate_config={
+            "mode": "none",
+            "correction_advantage_gate_mode": "hard",
+            "correction_advantage_critic_source": "target",
+            "correction_advantage_threshold": 0.0,
+            "correction_advantage_uncertainty_multiplier": 3.0,
+        },
+    )
+    result = prior.propose(
+        _observation(), PointGoal(1.0, 0.0), 5, action_spec
+    )
+    assert result.metadata["correction_advantage_gate_alpha"] == 0.0
+    assert result.metadata["target_conservative_advantage"] == -0.25
+    assert result.metadata["applied_correction_abs_mean"] == 0.0
+
+
+@pytest.mark.parametrize(
+    "mapping,match",
+    [
+        ({"correction_advantage_gate_mode": "soft"}, "mode"),
+        ({"correction_advantage_critic_source": "ensemble"}, "source"),
+        ({"correction_advantage_threshold": float("nan")}, "threshold"),
+        (
+            {"correction_advantage_uncertainty_multiplier": 0.5},
+            "multiplier",
+        ),
+    ],
+)
+def test_correction_advantage_gate_config_fails_closed(mapping, match):
+    config = GateConfig.from_mapping(mapping)
+    with pytest.raises(ValueError, match=match):
+        config.validate()

@@ -1,0 +1,50 @@
+include: icode_structure_preserving_l44.yaml
+
+experiment:
+  name: icode_delay_aligned_path_tracking_l47
+  output_dir: results/research_platform/rl/l47_icode_delay_aligned_path_tracking_20260716_v1
+
+rl:
+  cross_layer_factorial:
+    design_id: l47_icode_delay_aligned_path_tracking_v1
+    schedule_seed: 2026071615
+    planner_known_command_delay: true
+    model_blocks:
+      - rl_seed: 20260731
+        icode_seed: 20261001
+        rl_checkpoint: results/research_platform/rl/dynamic_history_bounded_l34_seed20260731_30k_20260716_v1/checkpoints/best.pt
+        icode_checkpoint: results/research_platform/l46_icode_delay_aligned_h36_seed20261001_v1/best.pt
+      - rl_seed: 20260732
+        icode_seed: 20261002
+        rl_checkpoint: results/research_platform/rl/dynamic_history_bounded_l34_seed20260732_30k_20260716_v1/checkpoints/best.pt
+        icode_checkpoint: results/research_platform/l46_icode_delay_aligned_h36_seed20261002_v1/best.pt
+      - rl_seed: 20260733
+        icode_seed: 20261003
+        rl_checkpoint: results/research_platform/rl/dynamic_history_bounded_l34_seed20260733_30k_20260716_v1/checkpoints/best.pt
+        icode_checkpoint: results/research_platform/l46_icode_delay_aligned_h36_seed20261003_v1/best.pt
+    conditions:
+      - traditional_nominal
+      - traditional_icode
+      - traditional_icode_support_gate
+    development_episode_seeds: [21260731, 21260732, 21260733, 21260734, 21260735]
+    sealed_confirmation_episode_seeds: [21260736, 21260737, 21260738, 21260739, 21260740, 21260741, 21260742, 21260743, 21260744, 21260745]
+    protected_config_paths:
+      - configs/rl/l34_independent_confirmation_l35.yaml
+      - configs/rl/dynamic_benchmark_calibration_l36.yaml
+      - configs/rl/bounded_rl_icode_factorial_l37.yaml
+      - configs/rl/icode_delay_identifiability_l38.yaml
+      - configs/rl/icode_closed_loop_eligibility_l41.yaml
+      - configs/rl/icode_support_gate_l42.yaml
+      - configs/rl/icode_path_tracking_eligibility_l43.yaml
+      - configs/rl/icode_structure_preserving_l44.yaml
+    bootstrap_seed: 2026071616
+    bootstrap_replicates: 10000
+    eligibility_gate:
+      minimum_positive_tracking_model_blocks: 2
+      minimum_relative_cross_track_rmse_reduction: 0.10
+      minimum_cross_track_improvement_ci95_lower_m: 0.0
+      minimum_net_success_gain: 0
+      maximum_net_collision_increase: 0
+      minimum_completion_ratio_difference: -0.01
+      maximum_candidate_mean_planner_compute_ms: 50.0
+

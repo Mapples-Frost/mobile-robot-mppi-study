@@ -7,8 +7,8 @@ route geometry and simulator truth stay in the collector's separate audit
 artifacts.
 """
 
+import copy
 import csv
-import hashlib
 import json
 from dataclasses import asdict, dataclass
 from pathlib import Path
@@ -20,8 +20,9 @@ import torch
 from mobile_robot_mppi.core.config import git_sha
 from .checkpointing import load_sac_checkpoint, save_sac_checkpoint
 from .demonstrations import (
+    demonstration_manifest_fingerprint,
     load_demonstration_manifest,
-    load_demonstration_split,
+    load_demonstration_splits,
 )
 from .environment import MppiPriorEnv
 from .observation import RunningNormalizer
@@ -66,13 +67,6 @@ class BehaviorCloningConfig:
             self.device
         ).startswith("cuda"):
             raise ValueError("BC device must be auto, cpu or cuda")
-
-
-def _manifest_fingerprint(manifest):
-    encoded = json.dumps(
-        manifest, sort_keys=True, separators=(",", ":"), allow_nan=False
-    ).encode("utf-8")
-    return hashlib.sha256(encoded).hexdigest()
 
 
 def evaluate_behavior_cloning(agent, normalizer, arrays):
@@ -133,12 +127,13 @@ class BehaviorCloningTrainer:
         self.config = BehaviorCloningConfig.from_mapping(values)
         self.config.validate()
         self.manifest = load_demonstration_manifest(self.dataset_dir)
-        self.manifest_fingerprint = _manifest_fingerprint(self.manifest)
-        self.train_data = load_demonstration_split(self.dataset_dir, "train")
-        self.validation_data = load_demonstration_split(
-            self.dataset_dir, "validation"
+        self.manifest_fingerprint = demonstration_manifest_fingerprint(
+            self.manifest
         )
-        self.test_data = load_demonstration_split(self.dataset_dir, "test")
+        demonstration_splits = load_demonstration_splits(self.dataset_dir)
+        self.train_data = demonstration_splits["train"]
+        self.validation_data = demonstration_splits["validation"]
+        self.test_data = demonstration_splits["test"]
 
         probe = MppiPriorEnv(
             self.environment_config, self.project_root, self.config.seed
@@ -157,6 +152,20 @@ class BehaviorCloningTrainer:
             raise ValueError("BC v1 does not supervise learned covariance")
         if action_dim != 2:
             raise ValueError("BC v1 teacher requires exactly two subgoal actions")
+        if self.encoder_config.include_absolute_pose:
+            raise ValueError("BC student encoder cannot include absolute pose")
+        if dict(self.manifest["observation_encoder"]) != (
+            self.encoder_config.to_dict()
+        ):
+            raise ValueError(
+                "demonstration observation_encoder does not match current environment"
+            )
+        if dict(self.manifest["prior_parameterization"]) != (
+            self.parameterization_config.to_dict()
+        ):
+            raise ValueError(
+                "demonstration prior_parameterization does not match current environment"
+            )
         for split_name, arrays in (
             ("train", self.train_data),
             ("validation", self.validation_data),
@@ -199,8 +208,29 @@ class BehaviorCloningTrainer:
         self.epoch = 0
         self.best_validation_mse = float("inf")
         self.epochs_without_improvement = 0
+        self.best_actor_state = None
         self.records = []
+        self.resume_provenance = None
         self._write_metadata()
+
+    def _resume_contract(self):
+        behavior_cloning = asdict(self.config)
+        # Extending the requested epoch budget is the only permitted
+        # continuation override.  Changing CPU/CUDA changes the stochastic
+        # execution contract and is therefore an explicit new run.
+        behavior_cloning.pop("epochs", None)
+        return {
+            "behavior_cloning": behavior_cloning,
+            "sac": self.agent.config.to_dict(),
+            "resolved_device": str(self.agent.device),
+            "encoder": self.encoder_config.to_dict(),
+            "parameterization": self.parameterization_config.to_dict(),
+            "action_spec": {
+                "names": tuple(self.action_spec.names),
+                "lower": self.action_spec.lower.tolist(),
+                "upper": self.action_spec.upper.tolist(),
+            },
+        }
 
     def _write_metadata(self):
         metadata = {
@@ -215,6 +245,7 @@ class BehaviorCloningTrainer:
             "teacher_privilege": (
                 "offline route is collector-only and absent from model input"
             ),
+            "resume_provenance": self.resume_provenance,
         }
         with (self.output_dir / "run_metadata.json").open(
             "w", encoding="utf-8"
@@ -233,6 +264,14 @@ class BehaviorCloningTrainer:
             "rng_state": self.rng.get_state(),
             "dataset_dir": str(self.dataset_dir),
             "dataset_manifest_sha256": self.manifest_fingerprint,
+            "resume_contract": self._resume_contract(),
+            "torch_cpu_rng_state": torch.get_rng_state().cpu(),
+            "torch_cuda_rng_state_all": (
+                [state.cpu() for state in torch.cuda.get_rng_state_all()]
+                if self.agent.device.type == "cuda" else None
+            ),
+            "best_actor_state": self.best_actor_state,
+            "resume_provenance": self.resume_provenance,
         }
 
     def save(self, name):
@@ -250,13 +289,25 @@ class BehaviorCloningTrainer:
             include_replay=False,
         )
 
-    def resume(self, checkpoint_path):
+    def resume(self, checkpoint_path, allow_legacy=False):
         payload = load_sac_checkpoint(
             checkpoint_path, map_location=self.agent.device
         )
         state = payload["training_state"]
         if state.get("phase") != "behavior_cloning":
             raise ValueError("--resume-bc requires a behavior-cloning checkpoint")
+        saved_contract = state.get("resume_contract")
+        if saved_contract is None:
+            if not allow_legacy:
+                raise ValueError(
+                    "legacy BC checkpoint has no resume contract; use the explicit "
+                    "legacy override only for a documented continuation"
+                )
+        elif saved_contract != self._resume_contract():
+            raise ValueError(
+                "BC resume experiment contract does not match checkpoint "
+                "(only epochs may change)"
+            )
         if state.get("dataset_manifest_sha256") != self.manifest_fingerprint:
             raise ValueError("BC resume dataset manifest does not match checkpoint")
         if dict(payload["encoder_config"]) != self.encoder_config.to_dict():
@@ -268,10 +319,21 @@ class BehaviorCloningTrainer:
         source_normalizer = RunningNormalizer.from_state_dict(
             payload["normalizer"]
         )
-        if source_normalizer.count != self.normalizer.count:
-            raise ValueError("BC resume train-only normalizer count does not match")
-        if not np.array_equal(source_normalizer.mean, self.normalizer.mean):
-            raise ValueError("BC resume train-only normalizer mean does not match")
+        source_normalizer_state = source_normalizer.state_dict()
+        expected_normalizer_state = self.normalizer.state_dict()
+        scalar_fields = ("dimension", "min_std", "clip", "count")
+        if any(
+            source_normalizer_state[name] != expected_normalizer_state[name]
+            for name in scalar_fields
+        ) or any(
+            not np.array_equal(
+                source_normalizer_state[name], expected_normalizer_state[name]
+            )
+            for name in ("mean", "m2")
+        ):
+            raise ValueError(
+                "BC resume train-only normalizer state does not match dataset"
+            )
         self.agent.load_state_dict(payload["agent"], load_optimizers=True)
         self.normalizer = source_normalizer
         self.epoch = int(state.get("bc_epoch", 0))
@@ -283,10 +345,46 @@ class BehaviorCloningTrainer:
         )
         if "rng_state" in state:
             self.rng.set_state(state["rng_state"])
+        cpu_rng_state = state.get("torch_cpu_rng_state")
+        if cpu_rng_state is not None:
+            torch.set_rng_state(cpu_rng_state.cpu())
+        cuda_rng_states = state.get("torch_cuda_rng_state_all")
+        if cuda_rng_states is not None:
+            if not torch.cuda.is_available():
+                raise ValueError(
+                    "BC checkpoint contains CUDA RNG state but CUDA is unavailable"
+                )
+            torch.cuda.set_rng_state_all([item.cpu() for item in cuda_rng_states])
+        self.best_actor_state = state.get("best_actor_state")
+        if self.best_actor_state is None:
+            local_best = self.checkpoint_dir / "best.pt"
+            if local_best.exists():
+                best_payload = load_sac_checkpoint(
+                    local_best, map_location=self.agent.device
+                )
+                self.best_actor_state = copy.deepcopy(
+                    best_payload["agent"]["actor"]
+                )
+            elif Path(checkpoint_path).name == "best.pt":
+                self.best_actor_state = copy.deepcopy(payload["agent"]["actor"])
+            elif not allow_legacy:
+                raise ValueError(
+                    "BC resume checkpoint is missing the best actor snapshot"
+                )
+        self.resume_provenance = {
+            "checkpoint": str(Path(checkpoint_path).resolve()),
+            "source_git_sha": payload.get("git_sha"),
+            "source_epoch": self.epoch,
+            "legacy_override": bool(saved_contract is None),
+        }
         log_path = self.output_dir / "training.csv"
         if log_path.exists():
             with log_path.open("r", encoding="utf-8", newline="") as handle:
-                self.records = list(csv.DictReader(handle))
+                self.records = [
+                    row for row in csv.DictReader(handle)
+                    if int(float(row.get("epoch", 0))) <= self.epoch
+                ]
+        self._write_metadata()
 
     def _flush_records(self):
         if not self.records:
@@ -322,9 +420,12 @@ class BehaviorCloningTrainer:
         }
 
     def run(self):
-        if self.epoch >= self.config.epochs:
-            raise ValueError("BC checkpoint already reached configured epochs")
-        while self.epoch < self.config.epochs:
+        early_stopped = bool(
+            self.config.early_stopping_patience > 0
+            and self.epochs_without_improvement
+            >= self.config.early_stopping_patience
+        )
+        while self.epoch < self.config.epochs and not early_stopped:
             train_metrics = self._train_epoch()
             self.epoch += 1
             validation = evaluate_behavior_cloning(
@@ -337,6 +438,10 @@ class BehaviorCloningTrainer:
             if improved:
                 self.best_validation_mse = validation["mse"]
                 self.epochs_without_improvement = 0
+                self.best_actor_state = {
+                    name: value.detach().cpu().clone()
+                    for name, value in self.agent.actor.state_dict().items()
+                }
             else:
                 self.epochs_without_improvement += 1
             row = {"epoch": self.epoch}
@@ -354,11 +459,29 @@ class BehaviorCloningTrainer:
                 and self.epochs_without_improvement
                 >= self.config.early_stopping_patience
             ):
+                early_stopped = True
                 break
-        best_payload = load_sac_checkpoint(
-            self.checkpoint_dir / "best.pt", map_location=self.agent.device
-        )
-        self.agent.load_state_dict(best_payload["agent"], load_optimizers=False)
+        latest_path = self.checkpoint_dir / "latest.pt"
+        if not latest_path.exists():
+            self.save("latest.pt")
+        best_path = self.checkpoint_dir / "best.pt"
+        if self.best_actor_state is None:
+            if not best_path.exists():
+                raise ValueError(
+                    "BC training has no best actor snapshot for final evaluation"
+                )
+            best_payload = load_sac_checkpoint(
+                best_path, map_location=self.agent.device
+            )
+            self.best_actor_state = copy.deepcopy(
+                best_payload["agent"]["actor"]
+            )
+        self.agent.actor.load_state_dict(self.best_actor_state)
+        if not best_path.exists():
+            # A resumed run may intentionally use a new output directory and
+            # produce no new improvement.  Materialize a self-contained best
+            # inference checkpoint from the snapshot carried by latest.pt.
+            self.save("best.pt")
         test_metrics = evaluate_behavior_cloning(
             self.agent, self.normalizer, self.test_data
         )

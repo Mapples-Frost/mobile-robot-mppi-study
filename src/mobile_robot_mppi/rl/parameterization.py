@@ -1,7 +1,7 @@
 """Low-dimensional RL action to full MPPI sampling-distribution parameters."""
 
 from dataclasses import asdict, dataclass
-from typing import Any, Mapping, Optional
+from typing import Any, Mapping, Optional, Sequence
 
 import numpy as np
 
@@ -15,6 +15,8 @@ class PriorParameterizationConfig:
     learn_covariance: bool = False
     covariance_min_scale: float = 0.5
     covariance_max_scale: float = 2.0
+    covariance_anchor_scale: Optional[Sequence[float]] = None
+    covariance_residual_log_bound: float = float(np.log(1.25))
     subgoal_min_distance: float = 0.25
     subgoal_max_distance: float = 1.50
     subgoal_max_bearing: float = float(np.pi)
@@ -39,6 +41,17 @@ class PriorParameterizationConfig:
             learn_covariance=bool(values.get("learn_covariance", False)),
             covariance_min_scale=float(values.get("covariance_min_scale", 0.5)),
             covariance_max_scale=float(values.get("covariance_max_scale", 2.0)),
+            covariance_anchor_scale=(
+                None
+                if values.get("covariance_anchor_scale") is None
+                else tuple(
+                    float(value)
+                    for value in values.get("covariance_anchor_scale")
+                )
+            ),
+            covariance_residual_log_bound=float(
+                values.get("covariance_residual_log_bound", np.log(1.25))
+            ),
             subgoal_min_distance=float(values.get("subgoal_min_distance", 0.25)),
             subgoal_max_distance=float(values.get("subgoal_max_distance", 1.50)),
             subgoal_max_bearing=float(values.get("subgoal_max_bearing", np.pi)),
@@ -66,6 +79,7 @@ class PriorParameterizationConfig:
             self.delta_scale,
             self.covariance_min_scale,
             self.covariance_max_scale,
+            self.covariance_residual_log_bound,
             self.subgoal_min_distance,
             self.subgoal_max_distance,
             self.subgoal_max_bearing,
@@ -80,10 +94,12 @@ class PriorParameterizationConfig:
         )
         if not np.isfinite(np.asarray(numeric_values, dtype=np.float64)).all():
             raise ValueError("RL prior parameterization values must be finite")
-        if self.kind not in ("control_knots", "local_subgoal"):
+        if self.kind not in ("control_knots", "local_subgoal", "covariance_only"):
             raise ValueError(
-                "RL prior kind must be control_knots or local_subgoal"
+                "RL prior kind must be control_knots, local_subgoal or covariance_only"
             )
+        if self.kind == "covariance_only" and not self.learn_covariance:
+            raise ValueError("covariance_only requires learn_covariance=true")
         if self.subgoal_decoder not in ("kinematic", "dynamic_first_order"):
             raise ValueError(
                 "local-subgoal decoder must be kinematic or dynamic_first_order"
@@ -96,6 +112,23 @@ class PriorParameterizationConfig:
             raise ValueError("RL prior delta_scale must be positive")
         if not 0.0 < self.covariance_min_scale <= self.covariance_max_scale:
             raise ValueError("invalid RL prior covariance scale bounds")
+        if self.covariance_residual_log_bound <= 0.0:
+            raise ValueError("covariance residual log bound must be positive")
+        if self.covariance_anchor_scale is not None:
+            anchor = np.asarray(
+                self.covariance_anchor_scale, dtype=np.float64
+            ).reshape(-1)
+            if (
+                anchor.size == 0
+                or not np.isfinite(anchor).all()
+                or np.any(anchor <= 0.0)
+                or np.any(anchor < self.covariance_min_scale)
+                or np.any(anchor > self.covariance_max_scale)
+            ):
+                raise ValueError(
+                    "covariance anchor scales must be finite, positive and "
+                    "inside the configured bounds"
+                )
         if (
             self.subgoal_min_distance <= 0.0
             or self.subgoal_max_distance <= self.subgoal_min_distance
@@ -217,10 +250,24 @@ class PriorParameterization:
             or np.any(self.base_noise_sigma <= 0.0)
         ):
             raise ValueError("base_noise_sigma must be positive per action dimension")
+        if self.config.covariance_anchor_scale is None:
+            self.covariance_anchor_scale = None
+        else:
+            anchor = np.asarray(
+                self.config.covariance_anchor_scale, dtype=np.float64
+            ).reshape(-1)
+            if anchor.shape != (action_spec.dimension,):
+                raise ValueError(
+                    "covariance_anchor_scale must match the action dimension"
+                )
+            self.covariance_anchor_scale = anchor.copy()
 
     @property
     def parameter_dimension(self):
         size = (
+            0
+            if self.config.kind == "covariance_only"
+            else
             2
             if self.config.kind == "local_subgoal"
             else self.config.num_knots * self.action_spec.dimension
@@ -228,6 +275,55 @@ class PriorParameterization:
         if self.config.learn_covariance:
             size += self.action_spec.dimension
         return size
+
+    @property
+    def base_covariance(self):
+        return np.diag(self.base_noise_sigma ** 2)
+
+    @property
+    def anchor_covariance(self):
+        if self.covariance_anchor_scale is None:
+            return None
+        return np.diag(
+            (self.base_noise_sigma * self.covariance_anchor_scale) ** 2
+        )
+
+    def blend_covariance(self, learned, alpha, baseline=None):
+        """Gate a learned proposal covariance against MPPI's base noise.
+
+        Returning ``None`` at zero authority preserves the historical code
+        path exactly: :class:`MppiController` then uses ``noise_sigma``.
+        Linear interpolation between positive-definite covariances remains
+        positive definite for alpha in [0, 1].
+        """
+
+        alpha = float(alpha)
+        if not np.isfinite(alpha) or not 0.0 <= alpha <= 1.0:
+            raise ValueError("covariance gate alpha must be finite in [0, 1]")
+        if learned is None:
+            return baseline
+        learned = np.asarray(learned, dtype=np.float64)
+        expected = (self.action_spec.dimension, self.action_spec.dimension)
+        if learned.shape != expected or not np.isfinite(learned).all():
+            raise ValueError("learned covariance has invalid shape or values")
+        if baseline is None and self.anchor_covariance is not None:
+            base = self.anchor_covariance
+        elif baseline is None:
+            if alpha <= 1e-12:
+                return None
+            base = self.base_covariance
+        else:
+            base = np.asarray(baseline, dtype=np.float64)
+        if base.shape != expected or not np.isfinite(base).all():
+            raise ValueError("baseline covariance has invalid shape or values")
+        result = base + alpha * (learned - base)
+        if not np.allclose(result, result.T, atol=1e-12):
+            raise ValueError("blended covariance must be symmetric")
+        try:
+            np.linalg.cholesky(result)
+        except np.linalg.LinAlgError as exc:
+            raise ValueError("blended covariance must be positive definite") from exc
+        return result
 
     @property
     def _mean_parameter_dimension(self):
@@ -468,7 +564,17 @@ class PriorParameterization:
         values = np.clip(values, -1.0, 1.0)
         action_dim = self.action_spec.dimension
         mean_parameter_count = self._mean_parameter_dimension
-        if self.config.kind == "local_subgoal":
+        if self.config.kind == "covariance_only":
+            expected = (int(horizon), action_dim)
+            if baseline_mean is None:
+                raise ValueError(
+                    "covariance_only requires a baseline mean sequence"
+                )
+            mean = np.asarray(baseline_mean, dtype=np.float64).copy()
+            if mean.shape != expected or not np.isfinite(mean).all():
+                raise ValueError("RL prior baseline has an invalid mean sequence")
+            metadata = {"parameterization": "covariance_only"}
+        elif self.config.kind == "local_subgoal":
             mean, metadata = self._decode_local_subgoal(
                 values[:mean_parameter_count],
                 horizon,
@@ -505,14 +611,30 @@ class PriorParameterization:
         covariance_scale = np.ones(action_dim, dtype=np.float64)
         if self.config.learn_covariance:
             raw = values[mean_parameter_count:]
-            unit = 0.5 * (raw + 1.0)
             low = self.config.covariance_min_scale
             high = self.config.covariance_max_scale
-            covariance_scale = np.exp(np.log(low) + unit * (np.log(high) - np.log(low)))
+            if self.covariance_anchor_scale is None:
+                unit = 0.5 * (raw + 1.0)
+                covariance_scale = np.exp(
+                    np.log(low) + unit * (np.log(high) - np.log(low))
+                )
+            else:
+                covariance_scale = self.covariance_anchor_scale * np.exp(
+                    raw * self.config.covariance_residual_log_bound
+                )
+                covariance_scale = np.clip(covariance_scale, low, high)
             covariance = np.diag((self.base_noise_sigma * covariance_scale) ** 2)
         metadata.update({
             "kind": self.config.kind,
             "learn_covariance": self.config.learn_covariance,
             "covariance_scale": covariance_scale.tolist(),
+            "covariance_anchor_scale": (
+                None
+                if self.covariance_anchor_scale is None
+                else self.covariance_anchor_scale.tolist()
+            ),
+            "covariance_residual_log_bound": float(
+                self.config.covariance_residual_log_bound
+            ),
         })
         return mean, covariance, metadata

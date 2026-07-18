@@ -1,0 +1,65 @@
+session:
+  id: "2026-07-15_001"
+  timestamp: "2026-07-15T10:56:54+08:00"
+  summary: "Implemented and rejected L18 zero-threshold twin-critic advantage gates after paired multi-training-seed validation."
+
+events_logged:
+  - type: question
+    id: N07
+    provenance: ai-suggested
+    summary: "Test whether critic action ranking explains L17 harmful corrections."
+  - type: experiment
+    id: N08
+    provenance: ai-executed
+    summary: "Ran BC, ungated, online-hard and target-hard conditions over 3 training seeds x 15 paired validation seeds."
+  - type: dead_end
+    id: N09
+    provenance: ai-executed
+    summary: "Rejected non-negative twin-critic advantage as a safe deployment gate."
+  - type: claim
+    id: C05
+    provenance: ai-suggested
+    summary: "Critic advantage retains weak descriptive ranking information."
+  - type: claim
+    id: C06
+    provenance: ai-suggested
+    summary: "Zero-threshold advantage-gate BC protection was refuted."
+  - type: heuristic
+    id: H04
+    provenance: ai-suggested
+    summary: "Correction rejection must restore frozen BC latent action, not GoalWarmStart."
+
+ai_actions:
+  - action: "Implemented online/target twin-critic action-value diagnostics and an optional hard correction gate."
+    provenance: ai-executed
+    files_changed:
+      - "src/mobile_robot_mppi/rl/sac.py"
+      - "src/mobile_robot_mppi/rl/prior.py"
+      - "src/mobile_robot_mppi/rl/trainer.py"
+      - "src/mobile_robot_mppi/evaluation/metrics.py"
+  - action: "Added paired L18 runner, multi-training-seed data audit, configuration, tests and preregistered/result documents."
+    provenance: ai-executed
+    files_changed:
+      - "experiments/rl/run_correction_advantage_diagnostic.py"
+      - "experiments/rl/summarize_correction_advantage_diagnostic.py"
+      - "configs/rl/sac_mppi_utrap_critic_advantage_l18.yaml"
+      - "docs/rl/16_critic_advantage_diagnostic_prereg_2026-07-15.md"
+      - "docs/rl/17_l18_critic_advantage_diagnostic_results_2026-07-15.md"
+  - action: "Executed 180 validation episodes plus a standard-evaluator smoke; audited 49,786 control-step rows and ran 262 tests."
+    provenance: ai-executed
+    files_changed: []
+
+claims_touched:
+  - id: C05
+    action: created
+    provenance: ai-suggested
+  - id: C06
+    action: created
+    provenance: ai-suggested
+
+open_threads:
+  - "Decide whether L19 should calibrate a held-out conservative margin or train an independent pessimistic critic ensemble."
+  - "Reserve fresh final-test seeds only after a calibration/selection protocol passes BC non-inferiority."
+
+ai_suggestions_pending:
+  - "Keep ICODE, Memory, OOD and dynamic obstacles disabled until a correction gate passes the seen-scene BC non-inferiority gate."

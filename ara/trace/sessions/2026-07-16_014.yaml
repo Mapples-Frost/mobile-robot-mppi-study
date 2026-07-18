@@ -1,0 +1,124 @@
+session:
+  id: "2026-07-16_014"
+  timestamp: "2026-07-16T10:15:00+08:00"
+  summary: "Completed L32 robust temporal remediation and L33/L34 dynamic RL training; full-prior authority failed, while bounded correction improved success and collision across three independent training seeds."
+
+events_logged:
+  - type: experiment
+    id: N52
+    provenance: ai-executed
+    summary: "L32 completed 720 corrected development episodes; robust scan-flow fixed physical validity and shared safety helped traditional MPPI, but the learned competence-gated method failed the dynamic safety gate."
+  - type: dead_end
+    id: N53
+    provenance: ai-executed
+    summary: "Reactive temporal safety and confidence separation were insufficient to make the static-trained RL prior dynamically competent."
+  - type: experiment
+    id: N54
+    provenance: ai-executed
+    summary: "L33 full learned-prior authority produced no successful training episode and no successful trained held-out checkpoint in 30k steps."
+  - type: pivot
+    id: N55
+    provenance: ai-suggested
+    summary: "Changed RL from complete sampling-prior replacement to a fixed 25% bounded correction around GoalWarmStart."
+  - type: experiment
+    id: N56
+    provenance: ai-executed
+    summary: "L34 passed the preregistered three-training-seed development gate with six success gains, zero losses, five collision improvements and zero regressions over 18 paired held-out cells."
+  - type: claim
+    id: C38
+    provenance: ai-suggested
+    summary: "Multi-beam robust scan-flow removed the L31 nonphysical closing-rate failure on L32 development data."
+  - type: claim
+    id: C39
+    provenance: ai-suggested
+    summary: "Reactive shared temporal safety does not substitute for dynamic-policy competence."
+  - type: claim
+    id: C40
+    provenance: ai-suggested
+    summary: "The claim that full learned-prior authority is learnable under L33 was refuted."
+  - type: claim
+    id: C41
+    provenance: ai-suggested
+    summary: "Bounded RL correction improved held-out dynamic control across all three development training seeds."
+  - type: heuristic
+    id: H28
+    provenance: ai-suggested
+    summary: "Cache stateful priors by complete experimental condition and quarantine invalid partial runs."
+  - type: heuristic
+    id: H29
+    provenance: ai-suggested
+    summary: "Learn bounded corrections before granting a policy full sampling-prior authority."
+  - type: heuristic
+    id: H30
+    provenance: ai-suggested
+    summary: "Evaluate fitted warm-start normalization before any seed-specific online update."
+
+ai_actions:
+  - action: "Implemented robust multi-beam scan-flow, temporal shared safety, hazard/competence separation and per-condition state isolation; preserved LaserScan-only planner inputs."
+    provenance: ai-executed
+    files_changed:
+      - "src/mobile_robot_mppi/perception/scan_flow.py"
+      - "src/mobile_robot_mppi/perception/legacy_pipeline.py"
+      - "src/mobile_robot_mppi/rl/prior.py"
+      - "experiments/rl/run_cross_layer_factorial.py"
+  - action: "Ran, audited and plotted the corrected 720-episode L32 development factorial while quarantining an invalid shared-prior partial run."
+    provenance: ai-executed
+    files_changed:
+      - "experiments/rl/summarize_temporal_safety_remediation.py"
+      - "experiments/rl/plot_temporal_safety_remediation.py"
+      - "docs/rl/46_l32_temporal_safety_remediation_results_2026-07-16.md"
+  - action: "Added seeded dynamic-motion domain randomization, disjoint training/validation paths, exact resolved config snapshots and warm-start checkpoint compatibility."
+    provenance: ai-executed
+    files_changed:
+      - "src/mobile_robot_mppi/simulation/mujoco_plant.py"
+      - "experiments/rl/train_rl_sampling_prior.py"
+      - "src/mobile_robot_mppi/rl/trainer.py"
+      - "configs/rl/sac_mppi_dynamic_history_l33.yaml"
+  - action: "Preregistered and ran L33 plus three independent L34 30k SAC training seeds, produced audited paired summaries and publication-style PDF/PNG figures."
+    provenance: ai-executed
+    files_changed:
+      - "configs/rl/sac_mppi_dynamic_history_bounded_l34.yaml"
+      - "experiments/rl/summarize_dynamic_history_training.py"
+      - "experiments/rl/summarize_dynamic_history_multiseed.py"
+      - "docs/rl/49_l33_l34_dynamic_bounded_correction_results_2026-07-16.md"
+  - action: "Extended the standard evaluator with explicit temporal-perception overlay, physics-domain selection, complexity-confidence support and evaluation snapshots."
+    provenance: ai-executed
+    files_changed:
+      - "experiments/rl/evaluate_rl_sampling_prior.py"
+      - "tests/rl/test_evaluate_cli.py"
+  - action: "Compiled 88 changed/untracked Python files and repaired one legacy safety-decision compatibility regression before passing all 400 repository tests."
+    provenance: ai-executed
+    files_changed:
+      - "src/mobile_robot_mppi/evaluation/metrics.py"
+
+claims_touched:
+  - id: C38
+    action: created
+    provenance: ai-suggested
+  - id: C39
+    action: created
+    provenance: ai-suggested
+  - id: C40
+    action: created
+    provenance: ai-suggested
+  - id: C41
+    action: created
+    provenance: ai-suggested
+
+open_threads:
+  - "Evaluate each L34 initial/best checkpoint sequentially on new episode seeds with fixed inference alpha 0.25; do not use the current model-selection cells as final test evidence."
+  - "After confirmation, run a preregistered traditional/bounded-RL by nominal/ICODE orthogonal factorial to measure complementarity without conflating layers."
+  - "Keep L32 and L31 confirmation seeds sealed because their own preregistered development gates failed."
+  - "Treat the current L34 collision rate as unresolved; bounded correction improved safety but is not deployment-ready."
+
+ai_suggestions_pending:
+  - "Use a new common step-zero reference under the repaired normalization order for future confirmation runs."
+  - "Report L34 as development evidence until new episode seeds and the ICODE interaction factorial are complete."
+
+provenance_summary:
+  user_confirmed: 0
+  ai_suggested: 8
+  ai_executed: 11
+  user_revised: 0
+  confirmation_rate: 0.0
+

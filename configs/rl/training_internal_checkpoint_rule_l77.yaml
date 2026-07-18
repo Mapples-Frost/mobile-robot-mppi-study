@@ -1,0 +1,76 @@
+include: static_risk_balanced_sealed_confirmation_l74.yaml
+
+experiment:
+  name: training_internal_checkpoint_rule_l77
+  output_dir: results/research_platform/rl/l77_training_internal_checkpoint_rule_20260717_v1
+
+rl:
+  policy_id: training_internal_checkpoint_rule_l77
+  cross_layer_factorial:
+    study_label: L77
+    artifact_prefix: l77
+    design_id: l77_training_internal_checkpoint_rule_v1
+    confirmation_mode: false
+    schedule_seed: 2026071777
+    conditions:
+      - complexity_bc_icode
+      - gated_lcb_icode
+    model_blocks:
+      - rl_seed: 20260751
+        icode_seed: 20261201
+        selected_step: 25000
+        selection_source: l72_training_internal_preregistered_gate
+        icode_checkpoint: results/research_platform/l57_icode_high_dynamic_h36_seed20261201_v1/best.pt
+        condition_checkpoints:
+          complexity_bc_icode: results/research_platform/rl/l72_static_risk_balanced_seed20260751_30k_20260717_v2/checkpoints/initial.pt
+          gated_lcb_icode: results/research_platform/rl/l72_static_risk_balanced_seed20260751_30k_20260717_v2/checkpoints/step_000025000.pt
+      - rl_seed: 20260752
+        icode_seed: 20261202
+        selected_step: 25000
+        selection_source: l72_training_internal_preregistered_gate
+        icode_checkpoint: results/research_platform/l57_icode_high_dynamic_h36_seed20261202_v1/best.pt
+        condition_checkpoints:
+          complexity_bc_icode: results/research_platform/rl/l72_static_risk_balanced_seed20260752_30k_20260717_v2/checkpoints/initial.pt
+          gated_lcb_icode: results/research_platform/rl/l72_static_risk_balanced_seed20260752_30k_20260717_v2/checkpoints/step_000025000.pt
+      - rl_seed: 20260753
+        icode_seed: 20261203
+        selected_step: 30000
+        selection_source: l72_training_internal_preregistered_gate
+        icode_checkpoint: results/research_platform/l57_icode_high_dynamic_h36_seed20261203_v1/best.pt
+        condition_checkpoints:
+          complexity_bc_icode: results/research_platform/rl/l72_static_risk_balanced_seed20260753_30k_20260717_v2/checkpoints/initial.pt
+          gated_lcb_icode: results/research_platform/rl/l72_static_risk_balanced_seed20260753_30k_20260717_v2/checkpoints/step_000030000.pt
+    development_episode_seeds:
+      [22201001, 22201002, 22201003, 22201004, 22201005]
+    sealed_confirmation_episode_seeds:
+      [22201011, 22201012, 22201013, 22201014, 22201015]
+    protected_config_paths:
+      - configs/rl/static_rl_contribution_l69.yaml
+      - configs/rl/static_multigeometry_deployment_selection_l71.yaml
+      - configs/rl/static_risk_balanced_deployment_selection_l73.yaml
+      - configs/rl/static_risk_balanced_sealed_confirmation_l74.yaml
+      - configs/rl/progress_competence_activation_l75.yaml
+      - configs/rl/correction_support_gate_l76.yaml
+    checkpoint_rule_gate:
+      base_condition: complexity_bc_icode
+      candidate_condition: gated_lcb_icode
+      minimum_eligible_model_blocks: 2
+      maximum_block_success_losses: 0
+      maximum_block_collision_regressions: 0
+      minimum_block_mean_goal_distance_improvement_m: 0.0
+      minimum_block_correction_gate_alpha: 0.01
+      minimum_block_success_gains_or_distance_improvement_m: 0.005
+      minimum_total_success_gains: 3
+      maximum_total_success_losses: 1
+      minimum_total_net_success_gain: 2
+      maximum_total_collision_regressions: 0
+      minimum_total_mean_goal_distance_improvement_m: 0.0
+      minimum_corridor_net_success_gain: 2
+      maximum_clean_success_losses: 0
+      maximum_u_trap_success_losses: 0
+      maximum_frozen_base_correction_gate_alpha: 0.0
+    interpretation_guard: >-
+      L77 validates the checkpoint choices made by the pre-existing L72
+      training-internal preregistered rule: 25k, 25k, and 30k. It introduces
+      no new deployment gate and does not reselect checkpoints using L74-L76
+      outcomes. L77 sealed seeds remain unavailable unless every gate passes.

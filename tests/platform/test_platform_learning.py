@@ -69,6 +69,11 @@ def test_torchscript_residual_inference_matches_eager_cpu():
         compiled.derivative(state, control), eager.derivative(state, control),
         rtol=1e-5, atol=1e-6,
     )
+    np.testing.assert_allclose(
+        compiled.derivative(state[0], control[0]),
+        eager.derivative(state[0], control[0]),
+        rtol=1e-5, atol=1e-6,
+    )
 
 
 def test_five_state_residual_enters_rk4_rollout():

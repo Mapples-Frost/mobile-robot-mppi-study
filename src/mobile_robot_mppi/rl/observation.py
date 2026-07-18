@@ -240,4 +240,13 @@ class RunningNormalizer:
         result.m2 = np.asarray(state["m2"], dtype=np.float64).copy()
         if result.mean.shape != (result.dimension,) or result.m2.shape != (result.dimension,):
             raise ValueError("normalizer checkpoint dimensions are inconsistent")
+        if result.count < 0:
+            raise ValueError("normalizer checkpoint count cannot be negative")
+        if not np.isfinite(result.mean).all() or not np.isfinite(result.m2).all():
+            raise ValueError("normalizer checkpoint statistics must be finite")
+        # Welford's second central moment is non-negative.  Tolerate only
+        # floating-point roundoff, never a materially corrupt variance state.
+        if np.any(result.m2 < -1e-12):
+            raise ValueError("normalizer checkpoint variance cannot be negative")
+        result.m2 = np.maximum(result.m2, 0.0)
         return result

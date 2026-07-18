@@ -1,0 +1,26 @@
+schema_version: 1
+design_id: l92_dynamic_covariance_safety_confirmation_v1
+base_config: configs/rl/sac_mppi_covariance_only_l84.yaml
+schedule_seed: 2026071841
+bootstrap_seed: 2026071842
+selection_seeds: [20270201, 20270202, 20270203, 20270204]
+evaluation_seeds: [20270301, 20270302, 20270303, 20270304, 20270305, 20270306]
+
+# These motion geometries predate L91 and were not selected from its outcomes.
+scenes:
+  - configs/research/mujoco_dynamic_training_anchor_l33.yaml
+  - configs/research/mujoco_dynamic_training_fast_l33.yaml
+  - configs/research/mujoco_dynamic_training_large_l33.yaml
+  - configs/research/mujoco_dynamic_training_reverse_l33.yaml
+  - configs/research/mujoco_dynamic_validation_diagonal_l33.yaml
+  - configs/research/mujoco_dynamic_validation_offset_l33.yaml
+
+candidates:
+  - {name: narrow, scale: [0.5, 0.5]}
+  - {name: baseline, scale: [1.0, 1.0]}
+  - {name: turn, scale: [0.75, 1.75]}
+  - {name: speed, scale: [1.75, 0.75]}
+  - {name: broad, scale: [1.75, 1.75]}
+
+gate:
+  mode: safety_confirmation

@@ -1,0 +1,31 @@
+include: mujoco_high_dynamic_fixed_plant_l56.yaml
+
+experiment:
+  name: high_dynamic_hairpin_unseen_l56
+  max_steps: 380
+
+task:
+  lookahead_distance: 0.50
+  points:
+    - [0.00, 0.00]
+    - [0.45, 0.00]
+    - [0.90, 0.00]
+    - [1.35, 0.06]
+    - [1.72, 0.26]
+    - [1.94, 0.58]
+    - [2.02, 0.96]
+    - [1.94, 1.32]
+    - [1.68, 1.56]
+    - [1.32, 1.68]
+    - [0.92, 1.68]
+    - [0.58, 1.82]
+    - [0.38, 2.10]
+    - [0.46, 2.38]
+    - [0.76, 2.58]
+    - [1.18, 2.68]
+    - [1.64, 2.70]
+    - [2.12, 2.70]
+    - [2.60, 2.70]
+
+scene:
+  name: high_dynamic_hairpin_unseen_l56

@@ -1,0 +1,13 @@
+include: sac_mppi_static_quantile_cvar_l81.yaml
+
+experiment:
+  name: sac_mppi_static_quantile_cvar_l81_seed20260786
+  output_dir: results/research_platform/rl/l81_static_quantile_cvar_seed20260786_30k_20260717_v1
+
+planner:
+  checkpoint: results/research_platform/l57_icode_high_dynamic_h36_seed20261203_v1/best.pt
+
+rl:
+  training:
+    seed: 20260786
+

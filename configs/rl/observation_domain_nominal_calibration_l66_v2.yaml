@@ -1,0 +1,68 @@
+include: observation_domain_nominal_calibration_l66.yaml
+
+experiment:
+  name: observation_domain_nominal_calibration_l66_v2
+  output_dir: results/research_platform/rl/l66_observation_domain_nominal_calibration_20260716_v2
+
+rl:
+  cross_layer_factorial:
+    design_id: l66_nominal_only_observation_domain_calibration_v2
+    schedule_seed: 2026071655
+    bootstrap_seed: 2026071656
+    development_episode_seeds: [21860844, 21860845, 21860846]
+    # Latency and combined domains are frozen from v1. Only pure-noise
+    # candidates are strengthened after v1 showed a sub-resolution 1.5% shift.
+    physics_domains:
+      - {name: clean_ground_truth, role: observation_anchor, plant_override: {}, sensor_override: {}}
+      - name: noise_high
+        role: noise_candidate
+        plant_override: {}
+        sensor_override:
+          pose_source: ground_truth
+          twist_source: ground_truth
+          odom_noise_std: [0.020, 0.020, 0.040]
+          twist_noise_std: [0.040, 0.080]
+          latency: 0.0
+      - name: noise_very_high
+        role: noise_candidate
+        plant_override: {}
+        sensor_override:
+          pose_source: ground_truth
+          twist_source: ground_truth
+          odom_noise_std: [0.040, 0.040, 0.080]
+          twist_noise_std: [0.080, 0.160]
+          latency: 0.0
+      - name: latency_100ms
+        role: frozen_latency
+        plant_override: {}
+        sensor_override:
+          pose_source: ground_truth
+          twist_source: ground_truth
+          odom_noise_std: [0.0, 0.0, 0.0]
+          twist_noise_std: [0.0, 0.0]
+          latency: 0.10
+      - name: combined_medium_100ms
+        role: frozen_combined
+        plant_override: {}
+        sensor_override:
+          pose_source: ground_truth
+          twist_source: ground_truth
+          odom_noise_std: [0.010, 0.010, 0.020]
+          twist_noise_std: [0.020, 0.040]
+          latency: 0.10
+      - name: raw_wheel_odometry
+        role: exploratory_odometry_stress
+        plant_override: {}
+        sensor_override:
+          pose_source: wheel_odometry
+          twist_source: wheel_odometry
+          odom_noise_std: [0.0, 0.0, 0.0]
+          twist_noise_std: [0.0, 0.0]
+          latency: 0.0
+
+observation_domain_calibration:
+  groups:
+    noise: [noise_high, noise_very_high]
+    latency: [latency_100ms]
+    combined: [combined_medium_100ms]
+

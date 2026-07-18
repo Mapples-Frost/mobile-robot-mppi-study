@@ -1,0 +1,1001 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" width="845.167755pt" height="605.99952pt" viewBox="0 0 845.167755 605.99952" xmlns="http://www.w3.org/2000/svg" version="1.1">
+ <metadata>
+  <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+   <cc:Work>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:date>2026-07-16T10:35:50.961025</dc:date>
+    <dc:format>image/svg+xml</dc:format>
+    <dc:creator>
+     <cc:Agent>
+      <dc:title>Matplotlib v3.7.5, https://matplotlib.org/</dc:title>
+     </cc:Agent>
+    </dc:creator>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <defs>
+  <style type="text/css">*{stroke-linejoin: round; stroke-linecap: butt}</style>
+ </defs>
+ <g id="figure_1">
+  <g id="patch_1">
+   <path d="M 0 605.99952 
+L 845.167755 605.99952 
+L 845.167755 0 
+L 0 0 
+z
+" style="fill: #ffffff"/>
+  </g>
+  <g id="patch_2">
+   <path d="M 43.44013 361.725988 
+L 358.557669 361.725988 
+L 358.557669 46.608449 
+L 43.44013 46.608449 
+z
+" style="fill: #ffffff"/>
+  </g>
+  <g id="axes_1">
+   <g id="Poly3DCollection_1">
+    <defs>
+     <path id="mbf31c17dd5" d="M 218.966671 -353.211547 
+L 186.094441 -352.538411 
+L 186.094441 -484.995969 
+L 218.966671 -485.669106 
+z
+" style="stroke: #6b3659; stroke-width: 0.8"/>
+    </defs>
+    <g clip-path="url(#p3f2df09d86)">
+     <use xlink:href="#mbf31c17dd5" x="0" y="605.99952" style="fill: #e8b8d6; fill-opacity: 0.84; stroke: #6b3659; stroke-width: 0.8"/>
+    </g>
+   </g>
+   <g id="text_1">
+    <g id="patch_3">
+     <path d="M 49.742481 123.572827 
+L 114.681699 123.572827 
+Q 116.931699 123.572827 116.931699 121.322827 
+L 116.931699 111.891108 
+Q 116.931699 109.641108 114.681699 109.641108 
+L 49.742481 109.641108 
+Q 47.492481 109.641108 47.492481 111.891108 
+L 47.492481 121.322827 
+Q 47.492481 123.572827 49.742481 123.572827 
+z
+" style="fill: #e8b8d6; stroke: #6b3659; stroke-linejoin: miter"/>
+    </g>
+    <text style="font: 700 9px 'Microsoft YaHei'; text-anchor: start" x="49.742481" y="119.085483" transform="rotate(-0 49.742481 119.085483)">A  等宽侧板 × 8</text>
+   </g>
+   <g id="text_2">
+    <g id="patch_4">
+     <path d="M 49.742481 158.235756 
+L 122.996856 158.235756 
+Q 125.246856 158.235756 125.246856 155.985756 
+L 125.246856 146.554037 
+Q 125.246856 144.304037 122.996856 144.304037 
+L 49.742481 144.304037 
+Q 47.492481 144.304037 47.492481 146.554037 
+L 47.492481 155.985756 
+Q 47.492481 158.235756 49.742481 158.235756 
+z
+" style="fill: #efd2e4; stroke: #6b3659; stroke-linejoin: miter"/>
+    </g>
+    <text style="font: 700 9px 'Microsoft YaHei'; text-anchor: start" x="49.742481" y="153.748412" transform="rotate(-0 49.742481 153.748412)">B  八边形底板 × 1</text>
+   </g>
+   <g id="text_3">
+    <g id="patch_5">
+     <path d="M 49.742481 192.898685 
+L 123.369512 192.898685 
+Q 125.619512 192.898685 125.619512 190.648685 
+L 125.619512 181.216966 
+Q 125.619512 178.966966 123.369512 178.966966 
+L 49.742481 178.966966 
+Q 47.492481 178.966966 47.492481 181.216966 
+L 47.492481 190.648685 
+Q 47.492481 192.898685 49.742481 192.898685 
+z
+" style="fill: #c989b3; stroke: #6b3659; stroke-linejoin: miter"/>
+    </g>
+    <text style="font: 700 9px 'Microsoft YaHei'; text-anchor: start" x="49.742481" y="188.411341" transform="rotate(-0 49.742481 188.411341)">C  上口加强环 × 1</text>
+   </g>
+   <g id="text_4">
+    <text style="font: 700 12px 'Microsoft YaHei'; text-anchor: middle" x="200.998899" y="40.608449" transform="rotate(-0 200.998899 40.608449)">① C320 爆炸图：8块侧板 + 底板 + 内嵌上口环</text>
+   </g>
+   <g id="Poly3DCollection_2">
+    <defs>
+     <path id="mbac1145512" d="M 252.349934 -343.37096 
+L 227.887581 -351.977204 
+L 227.887581 -484.434763 
+L 252.349934 -475.828518 
+z
+" style="stroke: #6b3659; stroke-width: 0.8"/>
+    </defs>
+    <g clip-path="url(#p3f2df09d86)">
+     <use xlink:href="#mbac1145512" x="0" y="605.99952" style="fill: #dfa8cc; fill-opacity: 0.84; stroke: #6b3659; stroke-width: 0.8"/>
+    </g>
+   </g>
+   <g id="Poly3DCollection_3">
+    <path d="M 219.613804 274.554975 
+L 186.741574 275.228111 
+L 186.741574 272.917805 
+L 219.613804 272.244669 
+z
+" clip-path="url(#p3f2df09d86)" style="fill: #efd2e4; fill-opacity: 0.9; stroke: #6b3659; stroke-width: 0.7"/>
+    <path d="M 244.076156 283.161219 
+L 219.613804 274.554975 
+L 219.613804 272.244669 
+L 244.076156 280.850913 
+z
+" clip-path="url(#p3f2df09d86)" style="fill: #efd2e4; fill-opacity: 0.9; stroke: #6b3659; stroke-width: 0.7"/>
+    <path d="M 186.741574 275.228111 
+L 164.715572 284.786314 
+L 164.715572 282.476008 
+L 186.741574 272.917805 
+z
+" clip-path="url(#p3f2df09d86)" style="fill: #efd2e4; fill-opacity: 0.9; stroke: #6b3659; stroke-width: 0.7"/>
+    <path d="M 245.798917 296.005423 
+L 244.076156 283.161219 
+L 244.076156 280.850913 
+L 245.798917 293.695117 
+z
+" clip-path="url(#p3f2df09d86)" style="fill: #efd2e4; fill-opacity: 0.9; stroke: #6b3659; stroke-width: 0.7"/>
+    <path d="M 245.798917 296.005423 
+L 244.076156 283.161219 
+L 219.613804 274.554975 
+L 186.741574 275.228111 
+L 164.715572 284.786314 
+L 166.438333 297.630517 
+L 190.900686 306.236762 
+L 223.772916 305.563625 
+z
+" clip-path="url(#p3f2df09d86)" style="fill: #efd2e4; fill-opacity: 0.9; stroke: #6b3659; stroke-width: 0.7"/>
+    <path d="M 245.798917 293.695117 
+L 244.076156 280.850913 
+L 219.613804 272.244669 
+L 186.741574 272.917805 
+L 164.715572 282.476008 
+L 166.438333 295.320211 
+L 190.900686 303.926455 
+L 223.772916 303.253319 
+z
+" clip-path="url(#p3f2df09d86)" style="fill: #efd2e4; fill-opacity: 0.9; stroke: #6b3659; stroke-width: 0.7"/>
+    <path d="M 164.715572 284.786314 
+L 166.438333 297.630517 
+L 166.438333 295.320211 
+L 164.715572 282.476008 
+z
+" clip-path="url(#p3f2df09d86)" style="fill: #efd2e4; fill-opacity: 0.9; stroke: #6b3659; stroke-width: 0.7"/>
+    <path d="M 223.772916 305.563625 
+L 245.798917 296.005423 
+L 245.798917 293.695117 
+L 223.772916 303.253319 
+z
+" clip-path="url(#p3f2df09d86)" style="fill: #efd2e4; fill-opacity: 0.9; stroke: #6b3659; stroke-width: 0.7"/>
+    <path d="M 166.438333 297.630517 
+L 190.900686 306.236762 
+L 190.900686 303.926455 
+L 166.438333 295.320211 
+z
+" clip-path="url(#p3f2df09d86)" style="fill: #efd2e4; fill-opacity: 0.9; stroke: #6b3659; stroke-width: 0.7"/>
+    <path d="M 190.900686 306.236762 
+L 223.772916 305.563625 
+L 223.772916 303.253319 
+L 190.900686 303.926455 
+z
+" clip-path="url(#p3f2df09d86)" style="fill: #efd2e4; fill-opacity: 0.9; stroke: #6b3659; stroke-width: 0.7"/>
+   </g>
+   <g id="Poly3DCollection_4">
+    <defs>
+     <path id="ma4819ac606" d="M 177.552612 -350.946477 
+L 155.526611 -341.388275 
+L 155.526611 -473.845833 
+L 177.552612 -483.404036 
+z
+" style="stroke: #6b3659; stroke-width: 0.8"/>
+    </defs>
+    <g clip-path="url(#p3f2df09d86)">
+     <use xlink:href="#ma4819ac606" x="0" y="605.99952" style="fill: #dfa8cc; fill-opacity: 0.84; stroke: #6b3659; stroke-width: 0.8"/>
+    </g>
+   </g>
+   <g id="Poly3DCollection_5">
+    <defs>
+     <path id="m008a18343e" d="M 258.146938 -327.189198 
+L 256.424177 -340.033401 
+L 256.424177 -472.49096 
+L 258.146938 -459.646756 
+z
+" style="stroke: #6b3659; stroke-width: 0.8"/>
+    </defs>
+    <g clip-path="url(#p3f2df09d86)">
+     <use xlink:href="#m008a18343e" x="0" y="605.99952" style="fill: #e8b8d6; fill-opacity: 0.84; stroke: #6b3659; stroke-width: 0.8"/>
+    </g>
+   </g>
+   <g id="Poly3DCollection_6">
+    <defs>
+     <path id="md256254120" d="M 152.367551 -337.902597 
+L 154.090312 -325.058394 
+L 154.090312 -457.515952 
+L 152.367551 -470.360156 
+z
+" style="stroke: #6b3659; stroke-width: 0.8"/>
+    </defs>
+    <g clip-path="url(#p3f2df09d86)">
+     <use xlink:href="#md256254120" x="0" y="605.99952" style="fill: #e8b8d6; fill-opacity: 0.84; stroke: #6b3659; stroke-width: 0.8"/>
+    </g>
+   </g>
+   <g id="Poly3DCollection_7">
+    <path d="M 219.225318 112.492087 
+L 187.242604 113.147008 
+L 191.000332 116.225282 
+L 216.311675 115.706973 
+z
+" clip-path="url(#p3f2df09d86)" style="fill: #c989b3; fill-opacity: 0.92; stroke: #6b3659; stroke-width: 0.65"/>
+    <path d="M 219.225318 110.18178 
+L 187.242604 110.836702 
+L 191.000332 113.914976 
+L 216.311675 113.396666 
+z
+" clip-path="url(#p3f2df09d86)" style="fill: #c989b3; fill-opacity: 0.92; stroke: #6b3659; stroke-width: 0.65"/>
+    <path d="M 243.025724 120.865448 
+L 219.225318 112.492087 
+L 216.311675 115.706973 
+L 235.147483 122.333709 
+z
+" clip-path="url(#p3f2df09d86)" style="fill: #c989b3; fill-opacity: 0.92; stroke: #6b3659; stroke-width: 0.65"/>
+    <path d="M 243.025724 118.555141 
+L 219.225318 110.18178 
+L 216.311675 113.396666 
+L 235.147483 120.023403 
+z
+" clip-path="url(#p3f2df09d86)" style="fill: #c989b3; fill-opacity: 0.92; stroke: #6b3659; stroke-width: 0.65"/>
+    <path d="M 187.242604 113.147008 
+L 165.812622 122.446567 
+L 174.040495 123.585018 
+L 191.000332 116.225282 
+z
+" clip-path="url(#p3f2df09d86)" style="fill: #c989b3; fill-opacity: 0.92; stroke: #6b3659; stroke-width: 0.65"/>
+    <path d="M 187.242604 110.836702 
+L 165.812622 120.136261 
+L 174.040495 121.274712 
+L 191.000332 113.914976 
+z
+" clip-path="url(#p3f2df09d86)" style="fill: #c989b3; fill-opacity: 0.92; stroke: #6b3659; stroke-width: 0.65"/>
+    <path d="M 244.701867 133.362089 
+L 243.025724 120.865448 
+L 235.147483 122.333709 
+L 236.473994 132.223639 
+z
+" clip-path="url(#p3f2df09d86)" style="fill: #c989b3; fill-opacity: 0.92; stroke: #6b3659; stroke-width: 0.65"/>
+    <path d="M 244.701867 131.051783 
+L 243.025724 118.555141 
+L 235.147483 120.023403 
+L 236.473994 129.913332 
+z
+" clip-path="url(#p3f2df09d86)" style="fill: #c989b3; fill-opacity: 0.92; stroke: #6b3659; stroke-width: 0.65"/>
+    <path d="M 165.812622 122.446567 
+L 167.488765 134.943209 
+L 175.367007 133.474948 
+L 174.040495 123.585018 
+z
+" clip-path="url(#p3f2df09d86)" style="fill: #c989b3; fill-opacity: 0.92; stroke: #6b3659; stroke-width: 0.65"/>
+    <path d="M 165.812622 120.136261 
+L 167.488765 132.632903 
+L 175.367007 131.164642 
+L 174.040495 121.274712 
+z
+" clip-path="url(#p3f2df09d86)" style="fill: #c989b3; fill-opacity: 0.92; stroke: #6b3659; stroke-width: 0.65"/>
+    <path d="M 223.271885 142.661649 
+L 244.701867 133.362089 
+L 236.473994 132.223639 
+L 219.514157 139.583375 
+z
+" clip-path="url(#p3f2df09d86)" style="fill: #c989b3; fill-opacity: 0.92; stroke: #6b3659; stroke-width: 0.65"/>
+    <path d="M 223.271885 140.351343 
+L 244.701867 131.051783 
+L 236.473994 129.913332 
+L 219.514157 137.273069 
+z
+" clip-path="url(#p3f2df09d86)" style="fill: #c989b3; fill-opacity: 0.92; stroke: #6b3659; stroke-width: 0.65"/>
+    <path d="M 167.488765 134.943209 
+L 191.289171 143.31657 
+L 194.202814 140.101684 
+L 175.367007 133.474948 
+z
+" clip-path="url(#p3f2df09d86)" style="fill: #c989b3; fill-opacity: 0.92; stroke: #6b3659; stroke-width: 0.65"/>
+    <path d="M 167.488765 132.632903 
+L 191.289171 141.006264 
+L 194.202814 137.791378 
+L 175.367007 131.164642 
+z
+" clip-path="url(#p3f2df09d86)" style="fill: #c989b3; fill-opacity: 0.92; stroke: #6b3659; stroke-width: 0.65"/>
+    <path d="M 191.289171 143.31657 
+L 223.271885 142.661649 
+L 219.514157 139.583375 
+L 194.202814 140.101684 
+z
+" clip-path="url(#p3f2df09d86)" style="fill: #c989b3; fill-opacity: 0.92; stroke: #6b3659; stroke-width: 0.65"/>
+    <path d="M 191.289171 141.006264 
+L 223.271885 140.351343 
+L 219.514157 137.273069 
+L 194.202814 137.791378 
+z
+" clip-path="url(#p3f2df09d86)" style="fill: #c989b3; fill-opacity: 0.92; stroke: #6b3659; stroke-width: 0.65"/>
+   </g>
+   <g id="Poly3DCollection_8">
+    <defs>
+     <path id="m24a18964dd" d="M 232.961877 -314.145318 
+L 254.987878 -323.70352 
+L 254.987878 -456.161079 
+L 232.961877 -446.602877 
+z
+" style="stroke: #6b3659; stroke-width: 0.8"/>
+    </defs>
+    <g clip-path="url(#p3f2df09d86)">
+     <use xlink:href="#m24a18964dd" x="0" y="605.99952" style="fill: #dfa8cc; fill-opacity: 0.84; stroke: #6b3659; stroke-width: 0.8"/>
+    </g>
+   </g>
+   <g id="Poly3DCollection_9">
+    <defs>
+     <path id="mcc6f5dc4d8" d="M 158.164555 -321.720835 
+L 182.626908 -313.114591 
+L 182.626908 -445.57215 
+L 158.164555 -454.178394 
+z
+" style="stroke: #6b3659; stroke-width: 0.8"/>
+    </defs>
+    <g clip-path="url(#p3f2df09d86)">
+     <use xlink:href="#mcc6f5dc4d8" x="0" y="605.99952" style="fill: #dfa8cc; fill-opacity: 0.84; stroke: #6b3659; stroke-width: 0.8"/>
+    </g>
+   </g>
+   <g id="Poly3DCollection_10">
+    <defs>
+     <path id="mad5ba9a465" d="M 191.547818 -311.880248 
+L 224.420048 -312.553384 
+L 224.420048 -445.010943 
+L 191.547818 -444.337807 
+z
+" style="stroke: #6b3659; stroke-width: 0.8"/>
+    </defs>
+    <g clip-path="url(#p3f2df09d86)">
+     <use xlink:href="#mad5ba9a465" x="0" y="605.99952" style="fill: #e8b8d6; fill-opacity: 0.84; stroke: #6b3659; stroke-width: 0.8"/>
+    </g>
+   </g>
+  </g>
+  <g id="patch_6">
+   <path d="M 439.461929 361.725988 
+L 754.579468 361.725988 
+L 754.579468 46.608449 
+L 439.461929 46.608449 
+z
+" style="fill: #ffffff"/>
+  </g>
+  <g id="axes_2">
+   <g id="Poly3DCollection_11">
+    <defs>
+     <path id="m7bb39f68d0" d="M 618.06355 -336.433826 
+L 579.632046 -335.64685 
+L 579.632046 -468.104409 
+L 618.06355 -468.891384 
+z
+" style="stroke: #6b3659; stroke-width: 0.8"/>
+    </defs>
+    <g clip-path="url(#p1a33d31286)">
+     <use xlink:href="#m7bb39f68d0" x="0" y="605.99952" style="fill: #e8b8d6; fill-opacity: 0.84; stroke: #6b3659; stroke-width: 0.8"/>
+    </g>
+   </g>
+   <g id="text_5">
+    <text style="font: 700 12px 'Microsoft YaHei'; text-anchor: middle" x="597.020698" y="40.608449" transform="rotate(-0 597.020698 40.608449)">② C320 成品图：D 为外接圆直径</text>
+   </g>
+   <g id="Poly3DCollection_12">
+    <defs>
+     <path id="m9cb94f1124" d="M 646.662918 -326.372114 
+L 618.06355 -336.433826 
+L 618.06355 -468.891384 
+L 646.662918 -458.829672 
+z
+" style="stroke: #6b3659; stroke-width: 0.8"/>
+    </defs>
+    <g clip-path="url(#p1a33d31286)">
+     <use xlink:href="#m9cb94f1124" x="0" y="605.99952" style="fill: #dfa8cc; fill-opacity: 0.84; stroke: #6b3659; stroke-width: 0.8"/>
+    </g>
+   </g>
+   <g id="Poly3DCollection_13">
+    <defs>
+     <path id="m5a3bfea5c0" d="M 579.632046 -335.64685 
+L 553.881059 -324.472187 
+L 553.881059 -456.929746 
+L 579.632046 -468.104409 
+z
+" style="stroke: #6b3659; stroke-width: 0.8"/>
+    </defs>
+    <g clip-path="url(#p1a33d31286)">
+     <use xlink:href="#m5a3bfea5c0" x="0" y="605.99952" style="fill: #dfa8cc; fill-opacity: 0.84; stroke: #6b3659; stroke-width: 0.8"/>
+    </g>
+   </g>
+   <g id="Poly3DCollection_14">
+    <path d="M 618.06355 271.876 
+L 579.632046 272.662976 
+L 579.632046 270.35267 
+L 618.06355 269.565694 
+z
+" clip-path="url(#p1a33d31286)" style="fill: #efd2e4; fill-opacity: 0.9; stroke: #6b3659; stroke-width: 0.7"/>
+    <path d="M 646.662918 281.937712 
+L 618.06355 271.876 
+L 618.06355 269.565694 
+L 646.662918 279.627406 
+z
+" clip-path="url(#p1a33d31286)" style="fill: #efd2e4; fill-opacity: 0.9; stroke: #6b3659; stroke-width: 0.7"/>
+    <path d="M 579.632046 272.662976 
+L 553.881059 283.837639 
+L 553.881059 281.527333 
+L 579.632046 270.35267 
+z
+" clip-path="url(#p1a33d31286)" style="fill: #efd2e4; fill-opacity: 0.9; stroke: #6b3659; stroke-width: 0.7"/>
+    <path d="M 648.677028 296.954098 
+L 646.662918 281.937712 
+L 646.662918 279.627406 
+L 648.677028 294.643791 
+z
+" clip-path="url(#p1a33d31286)" style="fill: #efd2e4; fill-opacity: 0.9; stroke: #6b3659; stroke-width: 0.7"/>
+    <path d="M 648.677028 296.954098 
+L 646.662918 281.937712 
+L 618.06355 271.876 
+L 579.632046 272.662976 
+L 553.881059 283.837639 
+L 555.895169 298.854024 
+L 584.494537 308.915736 
+L 622.926041 308.128761 
+z
+" clip-path="url(#p1a33d31286)" style="fill: #efd2e4; fill-opacity: 0.9; stroke: #6b3659; stroke-width: 0.7"/>
+    <path d="M 648.677028 294.643791 
+L 646.662918 279.627406 
+L 618.06355 269.565694 
+L 579.632046 270.35267 
+L 553.881059 281.527333 
+L 555.895169 296.543718 
+L 584.494537 306.60543 
+L 622.926041 305.818455 
+z
+" clip-path="url(#p1a33d31286)" style="fill: #efd2e4; fill-opacity: 0.9; stroke: #6b3659; stroke-width: 0.7"/>
+    <path d="M 553.881059 283.837639 
+L 555.895169 298.854024 
+L 555.895169 296.543718 
+L 553.881059 281.527333 
+z
+" clip-path="url(#p1a33d31286)" style="fill: #efd2e4; fill-opacity: 0.9; stroke: #6b3659; stroke-width: 0.7"/>
+    <path d="M 622.926041 308.128761 
+L 648.677028 296.954098 
+L 648.677028 294.643791 
+L 622.926041 305.818455 
+z
+" clip-path="url(#p1a33d31286)" style="fill: #efd2e4; fill-opacity: 0.9; stroke: #6b3659; stroke-width: 0.7"/>
+    <path d="M 555.895169 298.854024 
+L 584.494537 308.915736 
+L 584.494537 306.60543 
+L 555.895169 296.543718 
+z
+" clip-path="url(#p1a33d31286)" style="fill: #efd2e4; fill-opacity: 0.9; stroke: #6b3659; stroke-width: 0.7"/>
+    <path d="M 584.494537 308.915736 
+L 622.926041 308.128761 
+L 622.926041 305.818455 
+L 584.494537 306.60543 
+z
+" clip-path="url(#p1a33d31286)" style="fill: #efd2e4; fill-opacity: 0.9; stroke: #6b3659; stroke-width: 0.7"/>
+   </g>
+   <g id="Poly3DCollection_15">
+    <defs>
+     <path id="m9d616075e6" d="M 648.677028 -311.355729 
+L 646.662918 -326.372114 
+L 646.662918 -458.829672 
+L 648.677028 -443.813287 
+z
+" style="stroke: #6b3659; stroke-width: 0.8"/>
+    </defs>
+    <g clip-path="url(#p1a33d31286)">
+     <use xlink:href="#m9d616075e6" x="0" y="605.99952" style="fill: #e8b8d6; fill-opacity: 0.84; stroke: #6b3659; stroke-width: 0.8"/>
+    </g>
+   </g>
+   <g id="Poly3DCollection_16">
+    <defs>
+     <path id="maff137ca39" d="M 553.881059 -324.472187 
+L 555.895169 -309.455802 
+L 555.895169 -441.913361 
+L 553.881059 -456.929746 
+z
+" style="stroke: #6b3659; stroke-width: 0.8"/>
+    </defs>
+    <g clip-path="url(#p1a33d31286)">
+     <use xlink:href="#maff137ca39" x="0" y="605.99952" style="fill: #e8b8d6; fill-opacity: 0.84; stroke: #6b3659; stroke-width: 0.8"/>
+    </g>
+   </g>
+   <g id="Poly3DCollection_17">
+    <defs>
+     <path id="mee84b03abf" d="M 622.926041 -300.181065 
+L 648.677028 -311.355729 
+L 648.677028 -443.813287 
+L 622.926041 -432.638624 
+z
+" style="stroke: #6b3659; stroke-width: 0.8"/>
+    </defs>
+    <g clip-path="url(#p1a33d31286)">
+     <use xlink:href="#mee84b03abf" x="0" y="605.99952" style="fill: #dfa8cc; fill-opacity: 0.84; stroke: #6b3659; stroke-width: 0.8"/>
+    </g>
+   </g>
+   <g id="Poly3DCollection_18">
+    <path d="M 617.609365 139.919586 
+L 580.217809 140.685266 
+L 584.611036 144.28413 
+L 614.202973 143.678166 
+z
+" clip-path="url(#p1a33d31286)" style="fill: #c989b3; fill-opacity: 0.92; stroke: #6b3659; stroke-width: 0.65"/>
+    <path d="M 617.609365 137.60928 
+L 580.217809 138.37496 
+L 584.611036 141.973824 
+L 614.202973 141.36786 
+z
+" clip-path="url(#p1a33d31286)" style="fill: #c989b3; fill-opacity: 0.92; stroke: #6b3659; stroke-width: 0.65"/>
+    <path d="M 645.434839 149.70903 
+L 617.609365 139.919586 
+L 614.202973 143.678166 
+L 636.224248 151.4256 
+z
+" clip-path="url(#p1a33d31286)" style="fill: #c989b3; fill-opacity: 0.92; stroke: #6b3659; stroke-width: 0.65"/>
+    <path d="M 645.434839 147.398724 
+L 617.609365 137.60928 
+L 614.202973 141.36786 
+L 636.224248 149.115294 
+z
+" clip-path="url(#p1a33d31286)" style="fill: #c989b3; fill-opacity: 0.92; stroke: #6b3659; stroke-width: 0.65"/>
+    <path d="M 580.217809 140.685266 
+L 555.163639 151.557545 
+L 564.782991 152.888528 
+L 584.611036 144.28413 
+z
+" clip-path="url(#p1a33d31286)" style="fill: #c989b3; fill-opacity: 0.92; stroke: #6b3659; stroke-width: 0.65"/>
+    <path d="M 580.217809 138.37496 
+L 555.163639 149.247239 
+L 564.782991 150.578222 
+L 584.611036 141.973824 
+z
+" clip-path="url(#p1a33d31286)" style="fill: #c989b3; fill-opacity: 0.92; stroke: #6b3659; stroke-width: 0.65"/>
+    <path d="M 647.394448 164.319074 
+L 645.434839 149.70903 
+L 636.224248 151.4256 
+L 637.775096 162.988091 
+z
+" clip-path="url(#p1a33d31286)" style="fill: #c989b3; fill-opacity: 0.92; stroke: #6b3659; stroke-width: 0.65"/>
+    <path d="M 647.394448 162.008768 
+L 645.434839 147.398724 
+L 636.224248 149.115294 
+L 637.775096 160.677785 
+z
+" clip-path="url(#p1a33d31286)" style="fill: #c989b3; fill-opacity: 0.92; stroke: #6b3659; stroke-width: 0.65"/>
+    <path d="M 555.163639 151.557545 
+L 557.123248 166.16759 
+L 566.333839 164.451019 
+L 564.782991 152.888528 
+z
+" clip-path="url(#p1a33d31286)" style="fill: #c989b3; fill-opacity: 0.92; stroke: #6b3659; stroke-width: 0.65"/>
+    <path d="M 555.163639 149.247239 
+L 557.123248 163.857283 
+L 566.333839 162.140713 
+L 564.782991 150.578222 
+z
+" clip-path="url(#p1a33d31286)" style="fill: #c989b3; fill-opacity: 0.92; stroke: #6b3659; stroke-width: 0.65"/>
+    <path d="M 622.340278 175.191354 
+L 647.394448 164.319074 
+L 637.775096 162.988091 
+L 617.947051 171.592489 
+z
+" clip-path="url(#p1a33d31286)" style="fill: #c989b3; fill-opacity: 0.92; stroke: #6b3659; stroke-width: 0.65"/>
+    <path d="M 622.340278 172.881047 
+L 647.394448 162.008768 
+L 637.775096 160.677785 
+L 617.947051 169.282183 
+z
+" clip-path="url(#p1a33d31286)" style="fill: #c989b3; fill-opacity: 0.92; stroke: #6b3659; stroke-width: 0.65"/>
+    <path d="M 557.123248 166.16759 
+L 584.948722 175.957034 
+L 588.355113 172.198453 
+L 566.333839 164.451019 
+z
+" clip-path="url(#p1a33d31286)" style="fill: #c989b3; fill-opacity: 0.92; stroke: #6b3659; stroke-width: 0.65"/>
+    <path d="M 557.123248 163.857283 
+L 584.948722 173.646727 
+L 588.355113 169.888147 
+L 566.333839 162.140713 
+z
+" clip-path="url(#p1a33d31286)" style="fill: #c989b3; fill-opacity: 0.92; stroke: #6b3659; stroke-width: 0.65"/>
+    <path d="M 584.948722 175.957034 
+L 622.340278 175.191354 
+L 617.947051 171.592489 
+L 588.355113 172.198453 
+z
+" clip-path="url(#p1a33d31286)" style="fill: #c989b3; fill-opacity: 0.92; stroke: #6b3659; stroke-width: 0.65"/>
+    <path d="M 584.948722 173.646727 
+L 622.340278 172.881047 
+L 617.947051 169.282183 
+L 588.355113 169.888147 
+z
+" clip-path="url(#p1a33d31286)" style="fill: #c989b3; fill-opacity: 0.92; stroke: #6b3659; stroke-width: 0.65"/>
+   </g>
+   <g id="Poly3DCollection_19">
+    <defs>
+     <path id="md638397c3c" d="M 555.895169 -309.455802 
+L 584.494537 -299.39409 
+L 584.494537 -431.851649 
+L 555.895169 -441.913361 
+z
+" style="stroke: #6b3659; stroke-width: 0.8"/>
+    </defs>
+    <g clip-path="url(#p1a33d31286)">
+     <use xlink:href="#md638397c3c" x="0" y="605.99952" style="fill: #dfa8cc; fill-opacity: 0.84; stroke: #6b3659; stroke-width: 0.8"/>
+    </g>
+   </g>
+   <g id="Poly3DCollection_20">
+    <defs>
+     <path id="m3ed13b2827" d="M 584.494537 -299.39409 
+L 622.926041 -300.181065 
+L 622.926041 -432.638624 
+L 584.494537 -431.851649 
+z
+" style="stroke: #6b3659; stroke-width: 0.8"/>
+    </defs>
+    <g clip-path="url(#p1a33d31286)">
+     <use xlink:href="#m3ed13b2827" x="0" y="605.99952" style="fill: #e8b8d6; fill-opacity: 0.84; stroke: #6b3659; stroke-width: 0.8"/>
+    </g>
+   </g>
+   <g id="text_6">
+    <g id="patch_7">
+     <path d="M 448.915455 105.200071 
+L 557.093736 105.200071 
+Q 559.753736 105.200071 559.753736 102.540071 
+L 559.753736 92.584368 
+Q 559.753736 89.924368 557.093736 89.924368 
+L 448.915455 89.924368 
+Q 446.255455 89.924368 446.255455 92.584368 
+L 446.255455 102.540071 
+Q 446.255455 105.200071 448.915455 105.200071 
+z
+" style="fill: #ffffff; stroke: #6b3659; stroke-linejoin: miter"/>
+    </g>
+    <text style="font: 700 9.5px 'Microsoft YaHei'; text-anchor: start" x="448.915455" y="100.17843" transform="rotate(-0 448.915455 100.17843)">成品外形：D320 × H350</text>
+   </g>
+   <g id="text_7">
+    <g id="patch_8">
+     <path d="M 448.915455 136.711825 
+L 562.915455 136.711825 
+Q 565.575455 136.711825 565.575455 134.051825 
+L 565.575455 124.096122 
+Q 565.575455 121.436122 562.915455 121.436122 
+L 448.915455 121.436122 
+Q 446.255455 121.436122 446.255455 124.096122 
+L 446.255455 134.051825 
+Q 446.255455 136.711825 448.915455 136.711825 
+z
+" style="fill: #ffffff; stroke: #6b3659; stroke-linejoin: miter"/>
+    </g>
+    <text style="font: 700 9.5px 'Microsoft YaHei'; text-anchor: start" x="448.915455" y="131.690184" transform="rotate(-0 448.915455 131.690184)">上口环嵌在内部，顶面齐平</text>
+   </g>
+  </g>
+  <g id="axes_3">
+   <g id="table_1">
+    <g id="patch_9">
+     <path d="M 7.2 457.490185 
+L 57.587714 457.490185 
+L 57.587714 434.710604 
+L 7.2 434.710604 
+z
+" style="fill: #efd2e4; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_8">
+     <text style="font: 700 8.8px 'Microsoft YaHei'; text-anchor: middle" x="32.393857" y="448.523832" transform="rotate(-0 32.393857 448.523832)">模块</text>
+    </g>
+    <g id="patch_10">
+     <path d="M 57.587714 457.490185 
+L 135.107274 457.490185 
+L 135.107274 434.710604 
+L 57.587714 434.710604 
+z
+" style="fill: #efd2e4; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_9">
+     <text style="font: 700 8.8px 'Microsoft YaHei'; text-anchor: middle" x="96.347494" y="448.523832" transform="rotate(-0 96.347494 448.523832)">成品外形</text>
+    </g>
+    <g id="patch_11">
+     <path d="M 135.107274 457.490185 
+L 266.890525 457.490185 
+L 266.890525 434.710604 
+L 135.107274 434.710604 
+z
+" style="fill: #efd2e4; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_10">
+     <text style="font: 700 8.8px 'Microsoft YaHei'; text-anchor: middle" x="200.998899" y="448.523832" transform="rotate(-0 200.998899 448.523832)">A 单块侧板有效尺寸</text>
+    </g>
+    <g id="patch_12">
+     <path d="M 266.890525 457.490185 
+L 336.658129 457.490185 
+L 336.658129 434.710604 
+L 266.890525 434.710604 
+z
+" style="fill: #efd2e4; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_11">
+     <text style="font: 700 8.8px 'Microsoft YaHei'; text-anchor: middle" x="301.774327" y="448.523832" transform="rotate(-0 301.774327 448.523832)">每柱侧板数</text>
+    </g>
+    <g id="patch_13">
+     <path d="M 336.658129 457.490185 
+L 394.797799 457.490185 
+L 394.797799 434.710604 
+L 336.658129 434.710604 
+z
+" style="fill: #efd2e4; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_12">
+     <text style="font: 700 8.8px 'Microsoft YaHei'; text-anchor: middle" x="365.727964" y="448.523832" transform="rotate(-0 365.727964 448.523832)">成品数量</text>
+    </g>
+    <g id="patch_14">
+     <path d="M 7.2 480.269766 
+L 57.587714 480.269766 
+L 57.587714 457.490185 
+L 7.2 457.490185 
+z
+" style="fill: #ffffff; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_13">
+     <text style="font: 8.8px 'Microsoft YaHei'; text-anchor: middle" x="32.393857" y="471.303413" transform="rotate(-0 32.393857 471.303413)">C240</text>
+    </g>
+    <g id="patch_15">
+     <path d="M 57.587714 480.269766 
+L 135.107274 480.269766 
+L 135.107274 457.490185 
+L 57.587714 457.490185 
+z
+" style="fill: #ffffff; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_14">
+     <text style="font: 8.8px 'Microsoft YaHei'; text-anchor: middle" x="96.347494" y="471.303413" transform="rotate(-0 96.347494 471.303413)">D240 × H350</text>
+    </g>
+    <g id="patch_16">
+     <path d="M 135.107274 480.269766 
+L 266.890525 480.269766 
+L 266.890525 457.490185 
+L 135.107274 457.490185 
+z
+" style="fill: #ffffff; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_15">
+     <text style="font: 8.8px 'Microsoft YaHei'; text-anchor: middle" x="200.998899" y="471.303413" transform="rotate(-0 200.998899 471.303413)">91.8 × 344 × 4</text>
+    </g>
+    <g id="patch_17">
+     <path d="M 266.890525 480.269766 
+L 336.658129 480.269766 
+L 336.658129 457.490185 
+L 266.890525 457.490185 
+z
+" style="fill: #ffffff; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_16">
+     <text style="font: 8.8px 'Microsoft YaHei'; text-anchor: middle" x="301.774327" y="471.303413" transform="rotate(-0 301.774327 471.303413)">8</text>
+    </g>
+    <g id="patch_18">
+     <path d="M 336.658129 480.269766 
+L 394.797799 480.269766 
+L 394.797799 457.490185 
+L 336.658129 457.490185 
+z
+" style="fill: #ffffff; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_17">
+     <text style="font: 8.8px 'Microsoft YaHei'; text-anchor: middle" x="365.727964" y="471.303413" transform="rotate(-0 365.727964 471.303413)">4</text>
+    </g>
+    <g id="patch_19">
+     <path d="M 7.2 503.049347 
+L 57.587714 503.049347 
+L 57.587714 480.269766 
+L 7.2 480.269766 
+z
+" style="fill: #ffffff; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_18">
+     <text style="font: 8.8px 'Microsoft YaHei'; text-anchor: middle" x="32.393857" y="494.082994" transform="rotate(-0 32.393857 494.082994)">C320</text>
+    </g>
+    <g id="patch_20">
+     <path d="M 57.587714 503.049347 
+L 135.107274 503.049347 
+L 135.107274 480.269766 
+L 57.587714 480.269766 
+z
+" style="fill: #ffffff; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_19">
+     <text style="font: 8.8px 'Microsoft YaHei'; text-anchor: middle" x="96.347494" y="494.082994" transform="rotate(-0 96.347494 494.082994)">D320 × H350</text>
+    </g>
+    <g id="patch_21">
+     <path d="M 135.107274 503.049347 
+L 266.890525 503.049347 
+L 266.890525 480.269766 
+L 135.107274 480.269766 
+z
+" style="fill: #ffffff; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_20">
+     <text style="font: 8.8px 'Microsoft YaHei'; text-anchor: middle" x="200.998899" y="494.082994" transform="rotate(-0 200.998899 494.082994)">122.5 × 344 × 4</text>
+    </g>
+    <g id="patch_22">
+     <path d="M 266.890525 503.049347 
+L 336.658129 503.049347 
+L 336.658129 480.269766 
+L 266.890525 480.269766 
+z
+" style="fill: #ffffff; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_21">
+     <text style="font: 8.8px 'Microsoft YaHei'; text-anchor: middle" x="301.774327" y="494.082994" transform="rotate(-0 301.774327 494.082994)">8</text>
+    </g>
+    <g id="patch_23">
+     <path d="M 336.658129 503.049347 
+L 394.797799 503.049347 
+L 394.797799 480.269766 
+L 336.658129 480.269766 
+z
+" style="fill: #ffffff; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_22">
+     <text style="font: 8.8px 'Microsoft YaHei'; text-anchor: middle" x="365.727964" y="494.082994" transform="rotate(-0 365.727964 494.082994)">4</text>
+    </g>
+    <g id="patch_24">
+     <path d="M 7.2 525.828928 
+L 57.587714 525.828928 
+L 57.587714 503.049347 
+L 7.2 503.049347 
+z
+" style="fill: #ffffff; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_23">
+     <text style="font: 8.8px 'Microsoft YaHei'; text-anchor: middle" x="32.393857" y="516.862575" transform="rotate(-0 32.393857 516.862575)">C560</text>
+    </g>
+    <g id="patch_25">
+     <path d="M 57.587714 525.828928 
+L 135.107274 525.828928 
+L 135.107274 503.049347 
+L 57.587714 503.049347 
+z
+" style="fill: #ffffff; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_24">
+     <text style="font: 8.8px 'Microsoft YaHei'; text-anchor: middle" x="96.347494" y="516.862575" transform="rotate(-0 96.347494 516.862575)">D560 × H350</text>
+    </g>
+    <g id="patch_26">
+     <path d="M 135.107274 525.828928 
+L 266.890525 525.828928 
+L 266.890525 503.049347 
+L 135.107274 503.049347 
+z
+" style="fill: #ffffff; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_25">
+     <text style="font: 8.8px 'Microsoft YaHei'; text-anchor: middle" x="200.998899" y="516.862575" transform="rotate(-0 200.998899 516.862575)">214.3 × 344 × 4</text>
+    </g>
+    <g id="patch_27">
+     <path d="M 266.890525 525.828928 
+L 336.658129 525.828928 
+L 336.658129 503.049347 
+L 266.890525 503.049347 
+z
+" style="fill: #ffffff; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_26">
+     <text style="font: 8.8px 'Microsoft YaHei'; text-anchor: middle" x="301.774327" y="516.862575" transform="rotate(-0 301.774327 516.862575)">8</text>
+    </g>
+    <g id="patch_28">
+     <path d="M 336.658129 525.828928 
+L 394.797799 525.828928 
+L 394.797799 503.049347 
+L 336.658129 503.049347 
+z
+" style="fill: #ffffff; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_27">
+     <text style="font: 8.8px 'Microsoft YaHei'; text-anchor: middle" x="365.727964" y="516.862575" transform="rotate(-0 365.727964 516.862575)">1</text>
+    </g>
+    <g id="patch_29">
+     <path d="M 7.2 548.60851 
+L 57.587714 548.60851 
+L 57.587714 525.828928 
+L 7.2 525.828928 
+z
+" style="fill: #ffffff; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_28">
+     <text style="font: 8.8px 'Microsoft YaHei'; text-anchor: middle" x="32.393857" y="539.642156" transform="rotate(-0 32.393857 539.642156)">D320</text>
+    </g>
+    <g id="patch_30">
+     <path d="M 57.587714 548.60851 
+L 135.107274 548.60851 
+L 135.107274 525.828928 
+L 57.587714 525.828928 
+z
+" style="fill: #ffffff; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_29">
+     <text style="font: 8.8px 'Microsoft YaHei'; text-anchor: middle" x="96.347494" y="539.642156" transform="rotate(-0 96.347494 539.642156)">D320 × H300</text>
+    </g>
+    <g id="patch_31">
+     <path d="M 135.107274 548.60851 
+L 266.890525 548.60851 
+L 266.890525 525.828928 
+L 135.107274 525.828928 
+z
+" style="fill: #ffffff; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_30">
+     <text style="font: 8.8px 'Microsoft YaHei'; text-anchor: middle" x="200.998899" y="539.642156" transform="rotate(-0 200.998899 539.642156)">122.5 × 294 × 4</text>
+    </g>
+    <g id="patch_32">
+     <path d="M 266.890525 548.60851 
+L 336.658129 548.60851 
+L 336.658129 525.828928 
+L 266.890525 525.828928 
+z
+" style="fill: #ffffff; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_31">
+     <text style="font: 8.8px 'Microsoft YaHei'; text-anchor: middle" x="301.774327" y="539.642156" transform="rotate(-0 301.774327 539.642156)">8</text>
+    </g>
+    <g id="patch_33">
+     <path d="M 336.658129 548.60851 
+L 394.797799 548.60851 
+L 394.797799 525.828928 
+L 336.658129 525.828928 
+z
+" style="fill: #ffffff; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_32">
+     <text style="font: 8.8px 'Microsoft YaHei'; text-anchor: middle" x="365.727964" y="539.642156" transform="rotate(-0 365.727964 539.642156)">1</text>
+    </g>
+   </g>
+   <g id="text_33">
+    <text style="font: 700 11px 'Microsoft YaHei'; text-anchor: middle" x="200.998899" y="376.519593" transform="rotate(-0 200.998899 376.519593)">规格差异表（侧板高度 = 成品高 − 6 mm 底板）</text>
+   </g>
+  </g>
+  <g id="axes_4">
+   <g id="text_34">
+    <g id="patch_34">
+     <path d="M 410.973755 512.166094 
+L 837.967755 512.166094 
+Q 843.787755 512.166094 843.787755 506.346094 
+L 843.787755 388.805192 
+Q 843.787755 382.985192 837.967755 382.985192 
+L 410.973755 382.985192 
+Q 405.153755 382.985192 405.153755 388.805192 
+L 405.153755 506.346094 
+Q 405.153755 512.166094 410.973755 512.166094 
+z
+" style="fill: #fff7fc; stroke: #6b3659; stroke-width: 1.4; stroke-linejoin: miter"/>
+    </g>
+    <text style="font: 9.7px 'Microsoft YaHei'" transform="translate(410.973755 396.559129)">装配顺序</text>
+    <text style="font: 9.7px 'Microsoft YaHei'" transform="translate(410.973755 409.98108)"/>
+    <text style="font: 9.7px 'Microsoft YaHei'" transform="translate(410.973755 423.40303)">1. 8 块 A 围成正八边形；竖缝采用 22.5° 对拼斜边，或由供应商给出等效内衬方案。</text>
+    <text style="font: 9.7px 'Microsoft YaHei'" transform="translate(410.973755 436.824981)">2. 侧板底边粘在 6 mm 八边形底板 B 上；B 的 D 等于成品标称 D。</text>
+    <text style="font: 9.7px 'Microsoft YaHei'" transform="translate(410.973755 450.246932)">3. 30 mm 宽、6 mm 厚的 C 从上口嵌入，顶面与侧板齐平，不增加成品高度。</text>
+    <text style="font: 9.7px 'Microsoft YaHei'" transform="translate(410.973755 463.668882)">4. 顶边装透明硅胶护边；底面贴 2 mm 防滑垫。</text>
+    <text style="font: 9.7px 'Microsoft YaHei'" transform="translate(410.973755 477.090833)"/>
+    <text style="font: 9.7px 'Microsoft YaHei'" transform="translate(410.973755 490.512784)">侧板表中宽度为外表面有效宽度；正式批量前先做 C320 首件，按实测板厚修正斜边和上口环外径。</text>
+    <text style="font: 9.7px 'Microsoft YaHei'" transform="translate(410.973755 503.934734)">D320 为可选动态外壳，必须软边、快拆、低速并配独立急停。</text>
+   </g>
+  </g>
+  <g id="text_35">
+   <text style="font: 700 17px 'Microsoft YaHei'; text-anchor: middle" x="425.39976" y="20.789375" transform="rotate(-0 425.39976 20.789375)">八边形亚克力柱——供应商装配总图（单位：mm）</text>
+  </g>
+ </g>
+ <defs>
+  <clipPath id="p3f2df09d86">
+   <rect x="43.44013" y="46.608449" width="315.117539" height="315.117539"/>
+  </clipPath>
+  <clipPath id="p1a33d31286">
+   <rect x="439.461929" y="46.608449" width="315.117539" height="315.117539"/>
+  </clipPath>
+ </defs>
+</svg>

@@ -1,0 +1,21 @@
+include: mujoco_strong_mppi_baseline.yaml
+
+experiment:
+  name: mujoco_dynamic_crossing_reverse
+
+# Same corridor crossing geometry as the L29/L30 anchor, but with the travel
+# direction reversed.  The obstacle remains a MuJoCo collision body and is
+# visible to the controller only through the synthetic LaserScan pipeline.
+scene:
+  name: dynamic_crossing_reverse
+  obstacles:
+    - type: cylinder
+      position: [0.90, 2.10]
+      radius: 0.20
+      height: 0.50
+      motion:
+        type: linear_ping_pong
+        start: [0.90, 2.10]
+        end: [2.10, 0.90]
+        period_s: 16.0
+        phase_s: 6.0

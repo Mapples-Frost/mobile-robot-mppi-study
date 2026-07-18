@@ -1,0 +1,44 @@
+session:
+  id: "2026-07-16_019"
+  timestamp: "2026-07-16T20:27:45+08:00"
+  summary: "L63-L65 method-blindly calibrated physical shifts and sealed-confirmed a 9.23% ICODE closed-loop advantage over matched MLP across five changed MuJoCo plants."
+
+events_logged:
+  - {type: experiment, id: N83, provenance: ai-executed, summary: "L63 retained two failed nominal-only calibrations and then froze six safe, measurable plant domains on the capped v3 attempt."}
+  - {type: experiment, id: N84, provenance: ai-executed, summary: "L64 passed every cross-plant development gate across 324 episodes without opening confirmation seeds."}
+  - {type: experiment, id: N85, provenance: ai-executed, summary: "L65 sealed confirmation reproduced a 9.23% ICODE advantage over matched MLP across five shifted plants and an unseen path."}
+  - {type: claim, id: C57, provenance: ai-suggested, summary: "Bounded cross-plant control-affine ICODE superiority over parameter-matched MLP is supported."}
+  - {type: heuristic, id: H42, provenance: ai-suggested, summary: "Calibrate physical domains with the nominal baseline, preserve failures and cap amendments before learned-model evaluation."}
+
+ai_actions:
+  - action: "Implemented nominal-only physical-domain calibration with eligibility, resolution and seed-integrity checks; retained failed v1/v2 and passed v3."
+    provenance: ai-executed
+    files_changed: ["configs/rl/cross_plant_nominal_calibration_l63.yaml", "configs/rl/cross_plant_nominal_calibration_l63_v2.yaml", "configs/rl/cross_plant_nominal_calibration_l63_v3.yaml", "experiments/rl/summarize_cross_plant_nominal_calibration.py"]
+  - action: "Implemented and ran the 324-episode L64 development and 540-episode L65 sealed nominal/MLP/ICODE cross-plant factorials."
+    provenance: ai-executed
+    files_changed: ["configs/rl/residual_structure_cross_plant_l64.yaml", "configs/rl/residual_structure_cross_plant_confirmation_l65.yaml", "experiments/rl/summarize_residual_structure_cross_plant.py"]
+  - action: "Generated, visually audited and exported the reproducible cross-plant publication figure and evidence table."
+    provenance: ai-executed
+    files_changed: ["experiments/rl/plot_residual_structure_cross_plant.py", "docs/rl/95_l63_l65_cross_plant_residual_structure_results_2026-07-16.md"]
+  - action: "Compiled new scripts, ran all 493 repository tests and completed whitespace/artifact validation successfully."
+    provenance: ai-executed
+    files_changed: ["tests/rl/test_cross_plant_nominal_calibration.py", "tests/rl/test_residual_structure_cross_plant.py"]
+
+claims_touched:
+  - {id: C57, action: created, provenance: ai-suggested}
+
+open_threads:
+  - "Add wheel-odometry, state-noise and sensor-latency blocks without mixing them with physical-plant variation."
+  - "After clean-state residual external validity, reopen the bounded RL sampling-prior comparison on the same frozen plant suite."
+  - "Reproduce the residual-only result in shadow/offline real-robot data before controller deployment."
+
+ai_suggestions_pending:
+  - "Do not claim arbitrary OOD robustness or a causal mechanism from L65; the result covers five bounded frozen MuJoCo shifts."
+  - "Do not attribute any L63--L65 benefit to RL because RL and memory were disabled."
+
+provenance_summary:
+  user_confirmed: 0
+  ai_suggested: 2
+  ai_executed: 8
+  user_revised: 0
+  confirmation_rate: 0.0

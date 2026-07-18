@@ -1,0 +1,19 @@
+include: sac_mppi_utrap_consensus_lcb_l20.yaml
+
+experiment:
+  name: correction_counterfactual_branches_l21
+  output_dir: results/research_platform/rl/correction_counterfactual_l21_20260715
+
+rl:
+  policy_id: correction_counterfactual_branches_l21
+  risk_dataset:
+    reference_policy: frozen_bc
+    candidate_pre_gate: target_consensus_lcb
+    candidate_beta: 2.0
+    branch_steps: [10, 30, 50, 70, 90, 110]
+    branch_horizon: 20
+    harmful_return_delta: -0.5
+    harmful_distance_improvement: -0.03
+    beneficial_return_delta: 0.5
+    beneficial_distance_improvement: 0.03
+    replay_atol: 1.0e-10

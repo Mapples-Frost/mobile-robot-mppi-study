@@ -1,0 +1,57 @@
+include: sac_mppi_utrap_conservative_correction_l17_v3.yaml
+
+experiment:
+  name: sac_mppi_static_multigeometry_l70
+  output_dir: results/research_platform/rl/l70_static_multigeometry_training
+
+planner:
+  prediction_mode: icode_residual
+  checkpoint: results/research_platform/l57_icode_high_dynamic_h36_seed20261201_v1/best.pt
+  command_delay_s: 0.04
+  num_samples: 100
+  residual_torch_num_threads: 1
+  residual_torchscript: true
+
+memory:
+  enable: false
+
+rl:
+  policy_id: sac_mppi_static_multigeometry_l70
+  training:
+    total_steps: 30000
+    warmup_steps: 2000
+    update_after: 2000
+    actor_update_after: 5000
+    evaluation_interval: 5000
+    evaluation_episodes: 5
+    checkpoint_interval: 5000
+    replay_capacity: 150000
+    replay_sampling: scene_balanced
+    replay_require_all_scenes: true
+    evaluate_initial_policy: true
+    warmup_policy: actor
+    normalizer_update: frozen
+    validation_seed_base: 21960801
+    validation_initial_state_noise: [0.0, 0.0, 0.0, 0.0, 0.0]
+    initial_state_noise: [0.03, 0.03, 0.08, 0.0, 0.0]
+    scene_configs:
+      - configs/research/mujoco_static_single_high_dynamic_l70.yaml
+      - configs/research/mujoco_static_corridor_high_dynamic_l70.yaml
+      - configs/research/mujoco_static_utrap_high_dynamic_l70.yaml
+    validation_scene_configs:
+      - configs/research/mujoco_static_single_high_dynamic_l70.yaml
+      - configs/research/mujoco_static_corridor_high_dynamic_l70.yaml
+      - configs/research/mujoco_static_utrap_high_dynamic_l70.yaml
+    physics_domain_config: null
+    curriculum:
+      enabled: false
+    initial_state_curriculum:
+      enabled: false
+    checkpoint_selection:
+      mode: initial_noninferiority
+      maximum_success_losses: 0
+      maximum_collision_regressions: 0
+      minimum_success_gains: 1
+      minimum_mean_goal_distance_improvement: 0.005
+      maximum_mean_goal_distance_increase: 0.0
+

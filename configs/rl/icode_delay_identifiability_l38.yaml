@@ -1,0 +1,82 @@
+include: sac_mppi_dynamic_history_bounded_l34.yaml
+
+experiment:
+  name: icode_delay_identifiability_l38
+  output_dir: results/research_platform/rl/l38_icode_delay_identifiability_20260716_v1
+
+planner:
+  num_samples: 100
+  residual_torch_num_threads: 1
+  residual_torchscript: true
+
+rl:
+  cross_layer_factorial:
+    schedule_seed: 2026071605
+    shared_temporal_scan_enabled: true
+    shared_temporal_safety_enabled: true
+    model_blocks:
+      - rl_seed: 20260731
+        icode_seed: 20260711
+        rl_checkpoint: results/research_platform/rl/dynamic_history_bounded_l34_seed20260731_30k_20260716_v1/checkpoints/best.pt
+        icode_checkpoint: results/research_platform/ood_smoke_20260712/icode_training/best.pt
+      - rl_seed: 20260732
+        icode_seed: 20260712
+        rl_checkpoint: results/research_platform/rl/dynamic_history_bounded_l34_seed20260732_30k_20260716_v1/checkpoints/best.pt
+        icode_checkpoint: results/research_platform/icode_l29_seed20260712_20ep_20260715/best.pt
+      - rl_seed: 20260733
+        icode_seed: 20260713
+        rl_checkpoint: results/research_platform/rl/dynamic_history_bounded_l34_seed20260733_30k_20260716_v1/checkpoints/best.pt
+        icode_checkpoint: results/research_platform/icode_l29_seed20260713_20ep_20260715/best.pt
+
+    conditions: [traditional_nominal, traditional_icode]
+    scenes:
+      - {role: calibrated_easy, path: configs/research/mujoco_dynamic_calibrated_easy_l37.yaml}
+      - {role: calibrated_moderate, path: configs/research/mujoco_dynamic_calibrated_moderate_l37.yaml}
+      - {role: calibrated_hard, path: configs/research/mujoco_dynamic_calibrated_hard_l37.yaml}
+
+    # Every physical parameter except command delay is identical.  The 40 ms
+    # level matches the dominant ICODE training domains; 100 ms is the L37
+    # combined-unseen delay.
+    physics_domains:
+      - name: combined_matched_delay
+        role: diagnostic_matched
+        plant_override:
+          robot:
+            chassis_mass: 12.0
+            chassis_inertia: [0.11, 0.16, 0.22]
+          actuator:
+            command_delay: 0.04
+            torque_limit: 1.8
+            kp: 0.48
+          contact:
+            wheel_friction: [0.72, 0.006, 0.001]
+            floor_friction: [0.60, 0.003, 0.0003]
+      - name: combined_long_delay
+        role: diagnostic_long
+        plant_override:
+          robot:
+            chassis_mass: 12.0
+            chassis_inertia: [0.11, 0.16, 0.22]
+          actuator:
+            command_delay: 0.10
+            torque_limit: 1.8
+            kp: 0.48
+          contact:
+            wheel_friction: [0.72, 0.006, 0.001]
+            floor_friction: [0.60, 0.003, 0.0003]
+
+    development_episode_seeds: [20760731, 20760732, 20760733, 20760734, 20760735]
+    sealed_confirmation_episode_seeds: [20760736, 20760737, 20760738, 20760739, 20760740, 20760741, 20760742, 20760743, 20760744, 20760745]
+    protected_config_paths:
+      - configs/rl/l34_independent_confirmation_l35.yaml
+      - configs/rl/dynamic_benchmark_calibration_l36.yaml
+      - configs/rl/bounded_rl_icode_factorial_l37.yaml
+
+    bootstrap_seed: 2026071606
+    bootstrap_replicates: 10000
+    diagnostic_gate:
+      minimum_matched_delay_net_success_gain: 0
+      maximum_matched_delay_net_collision_increase: 0
+      minimum_matched_delay_goal_distance_improvement_m: 0.0
+      minimum_long_minus_matched_success_interaction: -0.05
+      maximum_long_minus_matched_goal_distance_interaction_m: -0.05

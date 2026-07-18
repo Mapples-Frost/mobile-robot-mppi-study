@@ -1,0 +1,194 @@
+design:
+  name: modular_acrylic_obstacle_kit_6p5m
+  revision: 3
+  date: "2026-07-16"
+  units: m
+  status: acrylic_fabrication_draft_measure_lidar_before_order
+
+field:
+  size: [6.5, 6.5]
+  active_bounds: [1.0, 5.5, 1.0, 5.5]
+  experiment_origin_in_field: [1.5, 1.5]
+  start: [1.5, 1.5]
+  goal: [4.5, 4.5]
+  perimeter_safety_band: 1.0
+
+design_assumptions:
+  robot_collision_radius: 0.25
+  robot_envelope_diameter: 0.50
+  minimum_free_passage: 0.85
+  nominal_free_passage: 1.00
+  maximum_dynamic_obstacle_speed: 0.20
+  obstacle_height: 0.35
+  acrylic_panel_thickness: 0.006
+  acrylic_prism_panel_thickness: 0.004
+  acrylic_prism_base_thickness: 0.006
+  acrylic_prism_top_ring_thickness: 0.006
+  acrylic_prism_top_ring_width: 0.03
+  wall_base_depth: 0.16
+  wall_gusset_horizontal_leg: 0.07
+  wall_gusset_vertical_leg: 0.10
+  minimum_lidar_vertical_margin: 0.10
+  compatible_lidar_beam_height_range: [0.10, 0.25]
+  minimum_static_module_mass: 2.0
+  fabrication_tolerance: 0.003
+
+materials:
+  wall_and_base: 6_mm_opaque_matte_cast_pmma
+  polygon_panels: 4_mm_opaque_matte_cast_pmma
+  finish: opaque_or_double_sided_matte_orange_film
+  exposed_edge_guard: clear_silicone_u_channel
+  floor_contact: 2_mm_nonslip_rubber_pads
+  adhesive: pmma_solvent_cement_supplier_selected
+  prohibited: [transparent_pmma, mirror_pmma, glossy_black_pmma, exposed_sharp_edges]
+
+modules:
+  W600:
+    kind: wall
+    dimensions: [0.60, 0.16, 0.35]
+    panel_thickness: 0.006
+    panel_dimensions: [0.60, 0.344, 0.006]
+    base_dimensions: [0.60, 0.16, 0.006]
+    base_depth: 0.16
+    gusset_pair_count: 3
+    gusset_count: 6
+    gusset_station_x: [0.06, 0.30, 0.54]
+    gusset_horizontal_leg: 0.07
+    gusset_vertical_leg: 0.10
+    quantity: 10
+    description: 6 mm 不透明哑光亚克力低墙标准模块（宽底座+三角加强肋）
+  W300:
+    kind: wall
+    dimensions: [0.30, 0.16, 0.35]
+    panel_thickness: 0.006
+    panel_dimensions: [0.30, 0.344, 0.006]
+    base_dimensions: [0.30, 0.16, 0.006]
+    base_depth: 0.16
+    gusset_pair_count: 2
+    gusset_count: 4
+    gusset_station_x: [0.06, 0.24]
+    gusset_horizontal_leg: 0.07
+    gusset_vertical_leg: 0.10
+    quantity: 6
+    description: 6 mm 不透明哑光亚克力低墙延长模块（宽底座+三角加强肋）
+  C240:
+    kind: octagonal_prism
+    diameter: 0.24
+    height: 0.35
+    sides: 8
+    panel_thickness: 0.004
+    quantity: 4
+    description: 4 mm 不透明哑光亚克力八边形柱（外接直径 240 mm）
+  C320:
+    kind: octagonal_prism
+    diameter: 0.32
+    height: 0.35
+    sides: 8
+    panel_thickness: 0.004
+    quantity: 4
+    description: 4 mm 不透明哑光亚克力八边形柱（外接直径 320 mm）
+  C560:
+    kind: octagonal_prism
+    diameter: 0.56
+    height: 0.35
+    sides: 8
+    panel_thickness: 0.004
+    quantity: 1
+    description: 4 mm 不透明哑光亚克力八边形基准障碍（外接直径 560 mm）
+  D320:
+    kind: dynamic_octagonal_shell
+    diameter: 0.32
+    height: 0.30
+    sides: 8
+    panel_thickness: 0.004
+    quantity: 1
+    description: 轻量亚克力八边形动态外壳（仅限低速、软边条与独立急停）
+  F1800:
+    kind: floor_patch
+    dimensions: [1.80, 1.20, 0.002]
+    quantity: 2
+    description: 动力学变化实验用可拆卸地面材料
+
+connectors:
+  straight_internal:
+    quantity: 12
+  right_angle_internal:
+    quantity: 6
+  tee_internal:
+    quantity: 2
+
+scenes:
+  clean_dynamics:
+    display_name: 空旷动力学标定
+    role: simple_control
+    obstacles: []
+
+  single_obstacle:
+    display_name: 单障碍绕行
+    role: local_detour
+    obstacles:
+      - {id: O1, module: C560, center: [3.00, 3.00], yaw_deg: 0.0}
+
+  straight_corridor_0900:
+    display_name: 0.90 m 窄通道
+    role: local_geometry_and_sample_efficiency
+    nominal_free_width: 0.90
+    obstacles:
+      - {id: L1, module: W600, center: [2.74, 3.49], yaw_deg: 45.0}
+      - {id: L2, module: W600, center: [3.16, 3.91], yaw_deg: 45.0}
+      - {id: L3, module: W600, center: [3.59, 4.34], yaw_deg: 45.0}
+      - {id: L4, module: W600, center: [4.01, 4.76], yaw_deg: 45.0}
+      - {id: R1, module: W600, center: [3.49, 2.74], yaw_deg: 45.0}
+      - {id: R2, module: W600, center: [3.91, 3.16], yaw_deg: 45.0}
+      - {id: R3, module: W600, center: [4.34, 3.59], yaw_deg: 45.0}
+      - {id: R4, module: W600, center: [4.76, 4.01], yaw_deg: 45.0}
+
+  u_trap:
+    display_name: U 形局部极小陷阱
+    role: local_minimum_and_recovery
+    nominal_free_width: 1.00
+    obstacles:
+      - {id: UL1, module: W600, center: [2.72, 2.90], yaw_deg: 90.0}
+      - {id: UL2, module: W600, center: [2.72, 3.50], yaw_deg: 90.0}
+      - {id: UR1, module: W600, center: [3.88, 2.90], yaw_deg: 90.0}
+      - {id: UR2, module: W600, center: [3.88, 3.50], yaw_deg: 90.0}
+      - {id: UB1, module: W600, center: [2.85, 3.80], yaw_deg: 0.0}
+      - {id: UB2, module: W600, center: [3.45, 3.80], yaw_deg: 0.0}
+      - {id: UB3, module: W300, center: [3.90, 3.80], yaw_deg: 0.0}
+
+  lab_complex:
+    display_name: 混合静态复杂场景
+    role: mixed_static_generalization
+    obstacles:
+      - {id: A1, module: W600, center: [2.15, 2.40], yaw_deg: 15.0}
+      - {id: A2, module: W300, center: [2.58, 2.52], yaw_deg: 15.0}
+      - {id: A3, module: W600, center: [3.25, 3.10], yaw_deg: 0.0}
+      - {id: A4, module: W300, center: [3.70, 3.10], yaw_deg: 0.0}
+      - {id: A5, module: W600, center: [2.95, 4.10], yaw_deg: 90.0}
+      - {id: C1, module: C320, center: [4.15, 2.45], yaw_deg: 0.0}
+      - {id: C2, module: C320, center: [4.15, 3.75], yaw_deg: 0.0}
+      - {id: C3, module: C240, center: [2.05, 3.65], yaw_deg: 0.0}
+      - {id: C4, module: C240, center: [4.75, 3.20], yaw_deg: 0.0}
+
+  dynamic_crossing:
+    display_name: 动态障碍横穿（可选）
+    role: optional_reactive_dynamic_obstacle
+    obstacles:
+      - {id: G1, module: C240, center: [2.10, 3.20], yaw_deg: 0.0}
+      - {id: G2, module: C240, center: [4.50, 3.20], yaw_deg: 0.0}
+    dynamic_obstacle:
+      id: D1
+      module: D320
+      path_start: [2.30, 3.20]
+      path_end: [4.30, 3.20]
+      test_speeds: [0.10, 0.20]
+      interpretation: reactive_only_without_velocity_prediction
+
+  friction_patch:
+    display_name: 可更换地面动力学实验
+    role: residual_dynamics_validation
+    obstacles: []
+    floor_patch:
+      module: F1800
+      center: [3.20, 3.20]
+      yaw_deg: 45.0

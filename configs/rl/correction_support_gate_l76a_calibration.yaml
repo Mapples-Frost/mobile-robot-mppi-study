@@ -1,0 +1,30 @@
+include: correction_support_gate_l76.yaml
+
+experiment:
+  name: correction_support_gate_l76a_calibration
+  output_dir: results/research_platform/rl/l76a_correction_support_calibration_20260717_v1
+
+rl:
+  gate:
+    correction_support_soft_threshold: 3.0
+    correction_support_hard_threshold: 7.0
+  cross_layer_factorial:
+    study_label: L76a
+    artifact_prefix: l76a
+    design_id: l76a_correction_support_calibration_v1
+    schedule_seed: 20260717761
+    conditions:
+      - support_gated_lcb_icode
+    development_episode_seeds:
+      [22200801, 22200802, 22200803, 22200804, 22200805]
+    sealed_confirmation_episode_seeds: []
+    protected_config_paths:
+      - configs/rl/static_rl_contribution_l69.yaml
+      - configs/rl/static_multigeometry_deployment_selection_l71.yaml
+      - configs/rl/static_risk_balanced_deployment_selection_l73.yaml
+      - configs/rl/static_risk_balanced_sealed_confirmation_l74.yaml
+    calibration_only: true
+    interpretation_guard: >-
+      L76a reuses only the already-open L75 development episodes to correct
+      the mismatch between episode-average OOD statistics and per-step gate
+      operation. It is threshold calibration, not confirmation evidence.

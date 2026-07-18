@@ -23,6 +23,7 @@ rl:
 
   training:
     replay_sampling: uniform
+    evaluate_initial_policy: true
     # A uniformly random warm-up would discard the very behavior being tested
     # and could update the actor on unrelated replay before it is ever used.
     # Stochastic actions from the BC actor retain bounded exploration instead.

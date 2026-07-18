@@ -1,0 +1,19 @@
+include: sac_mppi_static_conservative_schedule_l78.yaml
+
+experiment:
+  name: sac_mppi_static_group_robust_l80
+  output_dir: results/research_platform/rl/l80_static_group_robust
+
+rl:
+  policy_id: sac_mppi_static_group_robust_l80
+
+  sac:
+    # L79 showed that an ordinary mean actor loss can exchange a success in
+    # one scene for a failure in another.  L80 keeps every L78 factor fixed and
+    # changes only the aggregation of per-scene actor objectives.
+    actor_group_robust_enabled: true
+    actor_group_robust_temperature: 0.10
+
+  training:
+    validation_seed_base: 22310801
+

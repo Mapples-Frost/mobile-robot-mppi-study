@@ -1,0 +1,52 @@
+session:
+  id: "2026-07-18_024"
+  timestamp: "2026-07-18T21:15:00+08:00"
+  summary: "L96 identified an actuator-facing jerk remedy; L97 independently confirmed the mechanism and half-budget efficiency, while the strict final-package jerk Gate remained failed."
+
+events_logged:
+  - {type: experiment, id: N103, provenance: ai-executed, summary: "L96 selected combined yaw-slew and rate-cost smoothing after a blocked 2x2 screen."}
+  - {type: experiment, id: N104, provenance: ai-executed, summary: "L97 confirmed half-budget efficiency and smoothing relative to raw contextual control but failed strict jerk dominance versus fixed K100."}
+  - {type: decision, id: N105, provenance: user, summary: "CUDA is deferred unless later profiling shows experimental benefit."}
+  - {type: claim, id: C70, provenance: ai-suggested, summary: "The contextual half-budget effect replicated on a third untouched seed set."}
+  - {type: claim, id: C71, provenance: ai-suggested, summary: "A hard yaw-slew bound reduces contextual jerk without task regression."}
+  - {type: claim, id: C72, provenance: ai-suggested, summary: "Strict complete-package jerk superiority over fixed K100 is refuted under L97."}
+  - {type: heuristic, id: H51, provenance: ai-suggested, summary: "Prefer actuator-facing bounds when a predictive rate cost does not affect jerk."}
+  - {type: heuristic, id: H52, provenance: ai-suggested, summary: "Separate mechanism confirmation from final-package dominance."}
+  - {type: heuristic, id: H53, provenance: user, summary: "Defer CUDA absent a measured task-relevant bottleneck."}
+
+ai_actions:
+  - action: "Preregistered, implemented and executed the 96-episode L96 blocked 2x2 jerk-remediation screen."
+    provenance: ai-executed
+    files_changed: ["configs/rl/contextual_covariance_jerk_screening_l96.yaml", "experiments/rl/run_contextual_covariance_jerk_screening.py", "tests/rl/test_contextual_covariance_jerk_screening.py"]
+  - action: "Preregistered, implemented and executed the 144-episode single-process L97 three-arm confirmation on untouched seeds."
+    provenance: ai-executed
+    files_changed: ["configs/rl/contextual_covariance_jerk_confirmation_l97.yaml", "experiments/rl/run_contextual_covariance_jerk_confirmation.py", "tests/rl/test_contextual_covariance_jerk_confirmation.py"]
+  - action: "Retained the failed final jerk clause and documented the supported mechanism separately from the unsupported strict comparator claim."
+    provenance: ai-executed
+    files_changed: ["docs/rl/148_l96_jerk_screening_results_and_l97_prereg_2026-07-18.md", "docs/rl/149_l97_contextual_covariance_jerk_confirmation_results_2026-07-18.md"]
+  - action: "Generated and visually inspected publication-oriented PNG/PDF/SVG L96/L97 forest plots."
+    provenance: ai-executed
+    files_changed: ["experiments/rl/plot_contextual_covariance_jerk_remediation.py", "tests/rl/test_plot_contextual_covariance_jerk_remediation.py"]
+  - action: "Compiled new Python files, passed five focused tests and passed all 599 repository tests."
+    provenance: ai-executed
+
+claims_touched:
+  - {id: C69, action: advanced, provenance: ai-suggested}
+  - {id: C70, action: created, provenance: ai-suggested}
+  - {id: C71, action: created, provenance: ai-suggested}
+  - {id: C72, action: created, provenance: ai-suggested}
+
+open_threads:
+  - "Choose and preregister a practically justified jerk noninferiority margin only if a parity claim is scientifically necessary; do not relabel L97."
+  - "Transfer the fixed yaw-slew constraint and half-budget comparison to offline and shadow-mode real-robot evaluation."
+  - "Keep dynamic-obstacle motion prediction separate from the validated clean-route covariance story."
+
+ai_suggestions_pending:
+  - "Use L97 as a transparent mixed result: efficiency replication plus supported smoothing mechanism, with failed strict final jerk dominance."
+
+provenance_summary:
+  user_confirmed: 2
+  ai_suggested: 6
+  ai_executed: 8
+  user_revised: 0
+  confirmation_rate: 0.125

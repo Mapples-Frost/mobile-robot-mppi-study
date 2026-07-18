@@ -1,0 +1,158 @@
+include: sac_mppi_dynamic_history_bounded_l34.yaml
+
+experiment:
+  name: dynamic_benchmark_calibration_l36
+  output_dir: results/research_platform/rl/l36_dynamic_benchmark_calibration_20260716_v1
+
+rl:
+  benchmark_calibration:
+    design_id: l36_dynamic_benchmark_calibration_v1
+    schedule_seed: 2026071602
+    base_scene: configs/research/mujoco_strong_mppi_baseline.yaml
+    physics_domain_config: configs/research/mujoco_physics_domains.yaml
+    physics_domain: combined_unseen
+    episode_seeds: [20560731, 20560732, 20560733, 20560734, 20560735, 20560736, 20560737, 20560738]
+    forbidden_episode_seeds:
+      - 20360731
+      - 20360732
+      - 20360733
+      - 20460731
+      - 20460732
+      - 20460733
+      - 20460734
+      - 20460735
+    selection_targets_collision_rate: [0.25, 0.50, 0.75]
+    gate:
+      minimum_eligible_candidates: 3
+      minimum_selected_collision_rate_span: 0.25
+      minimum_successes_per_selected_candidate: 1
+      minimum_collisions_per_selected_candidate: 1
+    candidates:
+      - name: anti_diag_small
+        obstacle:
+          type: cylinder
+          position: [0.65, 2.35]
+          radius: 0.14
+          height: 0.50
+          motion:
+            type: linear_ping_pong
+            start: [0.65, 2.35]
+            end: [2.35, 0.65]
+            period_s: 14.0
+            phase_s: 4.0
+            phase_jitter_s: 7.0
+            period_scale_range: [0.85, 1.15]
+            endpoint_jitter_m: 0.05
+
+      - name: anti_diag_medium
+        obstacle:
+          type: cylinder
+          position: [0.65, 2.35]
+          radius: 0.18
+          height: 0.50
+          motion:
+            type: linear_ping_pong
+            start: [0.65, 2.35]
+            end: [2.35, 0.65]
+            period_s: 16.0
+            phase_s: 4.0
+            phase_jitter_s: 8.0
+            period_scale_range: [0.85, 1.15]
+            endpoint_jitter_m: 0.05
+
+      - name: oblique_steep
+        obstacle:
+          type: cylinder
+          position: [0.55, 2.20]
+          radius: 0.20
+          height: 0.50
+          motion:
+            type: linear_ping_pong
+            start: [0.55, 2.20]
+            end: [2.45, 0.80]
+            period_s: 16.0
+            phase_s: 4.0
+            phase_jitter_s: 8.0
+            period_scale_range: [0.85, 1.15]
+            endpoint_jitter_m: 0.05
+
+      - name: oblique_mid
+        obstacle:
+          type: cylinder
+          position: [0.55, 2.00]
+          radius: 0.22
+          height: 0.50
+          motion:
+            type: linear_ping_pong
+            start: [0.55, 2.00]
+            end: [2.45, 1.00]
+            period_s: 16.0
+            phase_s: 4.0
+            phase_jitter_s: 8.0
+            period_scale_range: [0.85, 1.15]
+            endpoint_jitter_m: 0.05
+
+      - name: oblique_shallow
+        obstacle:
+          type: cylinder
+          position: [0.55, 1.80]
+          radius: 0.24
+          height: 0.50
+          motion:
+            type: linear_ping_pong
+            start: [0.55, 1.80]
+            end: [2.45, 1.20]
+            period_s: 16.0
+            phase_s: 4.0
+            phase_jitter_s: 8.0
+            period_scale_range: [0.85, 1.15]
+            endpoint_jitter_m: 0.05
+
+      - name: horizontal_fast
+        obstacle:
+          type: cylinder
+          position: [0.55, 1.50]
+          radius: 0.24
+          height: 0.50
+          motion:
+            type: linear_ping_pong
+            start: [0.55, 1.50]
+            end: [2.45, 1.50]
+            period_s: 12.0
+            phase_s: 3.0
+            phase_jitter_s: 6.0
+            period_scale_range: [0.85, 1.15]
+            endpoint_jitter_m: 0.05
+
+      - name: horizontal_medium
+        obstacle:
+          type: cylinder
+          position: [0.55, 1.50]
+          radius: 0.24
+          height: 0.50
+          motion:
+            type: linear_ping_pong
+            start: [0.55, 1.50]
+            end: [2.45, 1.50]
+            period_s: 18.0
+            phase_s: 5.0
+            phase_jitter_s: 9.0
+            period_scale_range: [0.85, 1.15]
+            endpoint_jitter_m: 0.05
+
+      - name: offset_reference
+        obstacle:
+          type: cylinder
+          position: [0.55, 1.70]
+          radius: 0.26
+          height: 0.50
+          motion:
+            type: linear_ping_pong
+            start: [0.55, 1.70]
+            end: [2.45, 1.30]
+            period_s: 18.0
+            phase_s: 5.0
+            phase_jitter_s: 9.0
+            period_scale_range: [0.80, 1.20]
+            endpoint_jitter_m: 0.08
+

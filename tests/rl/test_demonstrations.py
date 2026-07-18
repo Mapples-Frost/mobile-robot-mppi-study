@@ -8,14 +8,32 @@ from experiments.rl.collect_scripted_subgoal_demonstrations import _collect_epis
 from mobile_robot_mppi.rl.demonstrations import (
     DEMONSTRATION_SCHEMA,
     DEMONSTRATION_SCHEMA_VERSION,
+    demonstration_manifest_fingerprint,
     load_demonstration_manifest,
     load_demonstration_split,
+    load_demonstration_splits,
     sha256_file,
     split_episode_seeds,
     validate_demonstration_arrays,
     write_demonstration_manifest,
     write_demonstration_shard,
 )
+from mobile_robot_mppi.rl.observation import ObservationEncoderConfig
+from mobile_robot_mppi.rl.parameterization import PriorParameterizationConfig
+
+
+def _encoder_contract():
+    return ObservationEncoderConfig(
+        lidar_sectors=1,
+        include_previous_action=False,
+        include_safety_state=False,
+    ).to_dict()
+
+
+def _prior_contract():
+    return PriorParameterizationConfig(
+        kind="local_subgoal", num_knots=2, learn_covariance=False
+    ).to_dict()
 
 
 def _arrays(episode_id, observation_dim=3):
@@ -51,9 +69,11 @@ def _dataset(tmp_path):
         "schema_version": DEMONSTRATION_SCHEMA_VERSION,
         "created_utc": "2026-07-14T00:00:00+00:00",
         "git_sha": "a" * 40,
-        "config": {"observation_encoder": {"include_absolute_pose": False}},
+        "config": {"unit": True},
         "observation_dim": 3,
         "action_dim": 2,
+        "observation_encoder": _encoder_contract(),
+        "prior_parameterization": _prior_contract(),
         "teacher": {
             "class": "ScriptedPolylineSubgoal",
             "action_space": "normalized_local_subgoal_distance_bearing",
@@ -71,6 +91,38 @@ def _dataset(tmp_path):
         },
     }
     write_demonstration_manifest(tmp_path, manifest)
+    return manifest
+
+
+def _legacy_dataset(tmp_path, mismatch=None, include_audit=True):
+    manifest = _dataset(tmp_path)
+    manifest["schema_version"] = 1
+    manifest["config"]["observation_encoder"] = manifest.pop(
+        "observation_encoder"
+    )
+    prior = manifest.pop("prior_parameterization")
+    manifest["counts"]["requested_episodes"] = 3
+    if include_audit:
+        resolved_dir = tmp_path / "audit" / "resolved_configs"
+        resolved_dir.mkdir(parents=True, exist_ok=True)
+        for index in range(3):
+            encoder = _encoder_contract()
+            current_prior = dict(prior)
+            if index == 2 and mismatch == "encoder":
+                encoder["lidar_max_range"] = 8.0
+            if index == 2 and mismatch == "prior":
+                current_prior["subgoal_max_distance"] = 2.5
+            with (resolved_dir / ("episode_%06d.json" % index)).open(
+                "w", encoding="utf-8"
+            ) as handle:
+                json.dump({
+                    "rl": {
+                        "observation": encoder,
+                        "prior": current_prior,
+                    }
+                }, handle)
+    with (tmp_path / "manifest.json").open("w", encoding="utf-8") as handle:
+        json.dump(manifest, handle, indent=2, sort_keys=True)
     return manifest
 
 
@@ -116,6 +168,48 @@ def test_demonstration_loader_roundtrip_exposes_only_student_arrays(tmp_path):
     assert split["teacher_actions"].shape == (2, 2)
 
 
+def test_legacy_v1_loader_recovers_contract_without_changing_fingerprint(tmp_path):
+    original = _legacy_dataset(tmp_path)
+    expected_fingerprint = demonstration_manifest_fingerprint(original)
+
+    loaded = load_demonstration_manifest(tmp_path)
+    splits = load_demonstration_splits(tmp_path)
+
+    assert loaded["schema_version"] == 1
+    assert loaded["observation_encoder"] == _encoder_contract()
+    assert loaded["prior_parameterization"] == _prior_contract()
+    assert demonstration_manifest_fingerprint(loaded) == expected_fingerprint
+    assert splits["train"]["observations"].shape == (2, 3)
+    with (tmp_path / "manifest.json").open("r", encoding="utf-8") as handle:
+        unchanged = json.load(handle)
+    assert "observation_encoder" not in unchanged
+    assert "prior_parameterization" not in unchanged
+
+
+def test_legacy_v1_loader_requires_resolved_config_audit(tmp_path):
+    _legacy_dataset(tmp_path, include_audit=False)
+
+    with pytest.raises(ValueError, match="requires audit/resolved_configs"):
+        load_demonstration_manifest(tmp_path)
+
+
+@pytest.mark.parametrize("mismatch", ("encoder", "prior"))
+def test_legacy_v1_loader_rejects_inconsistent_resolved_contracts(
+    tmp_path, mismatch
+):
+    _legacy_dataset(tmp_path, mismatch=mismatch)
+
+    with pytest.raises(ValueError, match="differs across resolved configs"):
+        load_demonstration_manifest(tmp_path)
+
+
+def test_new_manifest_writer_refuses_legacy_v1(tmp_path):
+    legacy = _legacy_dataset(tmp_path)
+
+    with pytest.raises(ValueError, match="unsupported.*version"):
+        write_demonstration_manifest(tmp_path, legacy)
+
+
 @pytest.mark.parametrize(
     "mutation,match",
     [
@@ -153,6 +247,15 @@ def test_loader_rejects_checksum_tampering(tmp_path):
         load_demonstration_split(tmp_path, "train")
 
 
+def test_loader_rejects_manifest_byte_count_mismatch(tmp_path):
+    manifest = _dataset(tmp_path)
+    manifest["splits"]["train"]["bytes"] += 1
+    write_demonstration_manifest(tmp_path, manifest)
+
+    with pytest.raises(ValueError, match="byte count"):
+        load_demonstration_split(tmp_path, "train")
+
+
 def test_loader_rejects_extra_npz_field_even_with_updated_checksum(tmp_path):
     manifest = _dataset(tmp_path)
     path = tmp_path / "splits" / "train.npz"
@@ -165,6 +268,39 @@ def test_loader_rejects_extra_npz_field_even_with_updated_checksum(tmp_path):
 
     with pytest.raises(ValueError, match="allowlist"):
         load_demonstration_split(tmp_path, "train")
+
+
+def test_loader_rejects_actual_episode_overlap_across_splits(tmp_path):
+    manifest = _dataset(tmp_path)
+    path = tmp_path / "splits" / "validation.npz"
+    result = write_demonstration_shard(path, _arrays(1))
+    manifest["splits"]["validation"].update({
+        "sha256": result["sha256"],
+        "bytes": result["bytes"],
+        "samples": result["sample_count"],
+        "episodes": result["episode_count"],
+    })
+    write_demonstration_manifest(tmp_path, manifest)
+
+    with pytest.raises(ValueError, match="episode_id leakage.*train.*validation"):
+        load_demonstration_splits(tmp_path)
+
+
+def test_manifest_rejects_absolute_pose_and_incomplete_semantic_contracts(tmp_path):
+    manifest = _dataset(tmp_path)
+    manifest["observation_encoder"]["include_absolute_pose"] = True
+    with pytest.raises(ValueError, match="cannot include absolute pose"):
+        write_demonstration_manifest(tmp_path, manifest)
+
+    manifest = _dataset(tmp_path)
+    manifest["observation_encoder"].pop("lidar_max_range")
+    with pytest.raises(ValueError, match="complete canonical"):
+        write_demonstration_manifest(tmp_path, manifest)
+
+    manifest = _dataset(tmp_path)
+    manifest["prior_parameterization"]["kind"] = "control_knots"
+    with pytest.raises(ValueError, match="must be local_subgoal"):
+        write_demonstration_manifest(tmp_path, manifest)
 
 
 def test_manifest_rejects_seed_leakage_and_escaped_shard_path(tmp_path):

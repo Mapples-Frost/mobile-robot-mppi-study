@@ -1,0 +1,413 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" width="850.79952pt" height="605.99952pt" viewBox="0 0 850.79952 605.99952" xmlns="http://www.w3.org/2000/svg" version="1.1">
+ <metadata>
+  <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+   <cc:Work>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:date>2026-07-16T10:36:01.946059</dc:date>
+    <dc:format>image/svg+xml</dc:format>
+    <dc:creator>
+     <cc:Agent>
+      <dc:title>Matplotlib v3.7.5, https://matplotlib.org/</dc:title>
+     </cc:Agent>
+    </dc:creator>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <defs>
+  <style type="text/css">*{stroke-linejoin: round; stroke-linecap: butt}</style>
+ </defs>
+ <g id="figure_1">
+  <g id="patch_1">
+   <path d="M 0 605.99952 
+L 850.79952 605.99952 
+L 850.79952 0 
+L 0 0 
+z
+" style="fill: #ffffff"/>
+  </g>
+  <g id="axes_1">
+   <g id="table_1">
+    <g id="patch_2">
+     <path d="M 32.291986 75.960341 
+L 132.659928 75.960341 
+L 132.659928 51.949578 
+L 32.291986 51.949578 
+z
+" style="fill: #d9eaf7; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_1">
+     <text style="font: 700 10px 'Microsoft YaHei'; text-anchor: middle" x="82.475957" y="66.708866" transform="rotate(-0 82.475957 66.708866)">编号</text>
+    </g>
+    <g id="patch_3">
+     <path d="M 132.659928 75.960341 
+L 333.395813 75.960341 
+L 333.395813 51.949578 
+L 132.659928 51.949578 
+z
+" style="fill: #d9eaf7; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_2">
+     <text style="font: 700 10px 'Microsoft YaHei'; text-anchor: middle" x="233.02787" y="66.708866" transform="rotate(-0 233.02787 66.708866)">外形尺寸</text>
+    </g>
+    <g id="patch_4">
+     <path d="M 333.395813 75.960341 
+L 417.035765 75.960341 
+L 417.035765 51.949578 
+L 333.395813 51.949578 
+z
+" style="fill: #d9eaf7; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_3">
+     <text style="font: 700 10px 'Microsoft YaHei'; text-anchor: middle" x="375.215789" y="66.708866" transform="rotate(-0 375.215789 66.708866)">数量</text>
+    </g>
+    <g id="patch_5">
+     <path d="M 417.035765 75.960341 
+L 818.507534 75.960341 
+L 818.507534 51.949578 
+L 417.035765 51.949578 
+z
+" style="fill: #d9eaf7; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_4">
+     <text style="font: 700 10px 'Microsoft YaHei'; text-anchor: middle" x="617.77165" y="66.708866" transform="rotate(-0 617.77165 66.708866)">用途</text>
+    </g>
+    <g id="patch_6">
+     <path d="M 32.291986 99.971105 
+L 132.659928 99.971105 
+L 132.659928 75.960341 
+L 32.291986 75.960341 
+z
+" style="fill: #ffffff; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_5">
+     <text style="font: 10px 'Microsoft YaHei'; text-anchor: start" x="42.32878" y="90.719629" transform="rotate(-0 42.32878 90.719629)">W600</text>
+    </g>
+    <g id="patch_7">
+     <path d="M 132.659928 99.971105 
+L 333.395813 99.971105 
+L 333.395813 75.960341 
+L 132.659928 75.960341 
+z
+" style="fill: #ffffff; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_6">
+     <text style="font: 10px 'Microsoft YaHei'; text-anchor: start" x="152.733516" y="90.719629" transform="rotate(-0 152.733516 90.719629)">600 × 160 × 350 mm</text>
+    </g>
+    <g id="patch_8">
+     <path d="M 333.395813 99.971105 
+L 417.035765 99.971105 
+L 417.035765 75.960341 
+L 333.395813 75.960341 
+z
+" style="fill: #ffffff; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_7">
+     <text style="font: 10px 'Microsoft YaHei'; text-anchor: start" x="341.759808" y="90.719629" transform="rotate(-0 341.759808 90.719629)">10</text>
+    </g>
+    <g id="patch_9">
+     <path d="M 417.035765 99.971105 
+L 818.507534 99.971105 
+L 818.507534 75.960341 
+L 417.035765 75.960341 
+z
+" style="fill: #ffffff; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_8">
+     <text style="font: 10px 'Microsoft YaHei'; text-anchor: start" x="457.182942" y="90.719629" transform="rotate(-0 457.182942 90.719629)">6 mm 不透明哑光亚克力低墙标准模块（宽底座+三角加强肋）</text>
+    </g>
+    <g id="patch_10">
+     <path d="M 32.291986 123.981869 
+L 132.659928 123.981869 
+L 132.659928 99.971105 
+L 32.291986 99.971105 
+z
+" style="fill: #ffffff; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_9">
+     <text style="font: 10px 'Microsoft YaHei'; text-anchor: start" x="42.32878" y="114.730393" transform="rotate(-0 42.32878 114.730393)">W300</text>
+    </g>
+    <g id="patch_11">
+     <path d="M 132.659928 123.981869 
+L 333.395813 123.981869 
+L 333.395813 99.971105 
+L 132.659928 99.971105 
+z
+" style="fill: #ffffff; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_10">
+     <text style="font: 10px 'Microsoft YaHei'; text-anchor: start" x="152.733516" y="114.730393" transform="rotate(-0 152.733516 114.730393)">300 × 160 × 350 mm</text>
+    </g>
+    <g id="patch_12">
+     <path d="M 333.395813 123.981869 
+L 417.035765 123.981869 
+L 417.035765 99.971105 
+L 333.395813 99.971105 
+z
+" style="fill: #ffffff; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_11">
+     <text style="font: 10px 'Microsoft YaHei'; text-anchor: start" x="341.759808" y="114.730393" transform="rotate(-0 341.759808 114.730393)">6</text>
+    </g>
+    <g id="patch_13">
+     <path d="M 417.035765 123.981869 
+L 818.507534 123.981869 
+L 818.507534 99.971105 
+L 417.035765 99.971105 
+z
+" style="fill: #ffffff; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_12">
+     <text style="font: 10px 'Microsoft YaHei'; text-anchor: start" x="457.182942" y="114.730393" transform="rotate(-0 457.182942 114.730393)">6 mm 不透明哑光亚克力低墙延长模块（宽底座+三角加强肋）</text>
+    </g>
+    <g id="patch_14">
+     <path d="M 32.291986 147.992632 
+L 132.659928 147.992632 
+L 132.659928 123.981869 
+L 32.291986 123.981869 
+z
+" style="fill: #ffffff; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_13">
+     <text style="font: 10px 'Microsoft YaHei'; text-anchor: start" x="42.32878" y="138.741157" transform="rotate(-0 42.32878 138.741157)">C240</text>
+    </g>
+    <g id="patch_15">
+     <path d="M 132.659928 147.992632 
+L 333.395813 147.992632 
+L 333.395813 123.981869 
+L 132.659928 123.981869 
+z
+" style="fill: #ffffff; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_14">
+     <text style="font: 10px 'Microsoft YaHei'; text-anchor: start" x="152.733516" y="138.741157" transform="rotate(-0 152.733516 138.741157)">D240 × H350 mm</text>
+    </g>
+    <g id="patch_16">
+     <path d="M 333.395813 147.992632 
+L 417.035765 147.992632 
+L 417.035765 123.981869 
+L 333.395813 123.981869 
+z
+" style="fill: #ffffff; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_15">
+     <text style="font: 10px 'Microsoft YaHei'; text-anchor: start" x="341.759808" y="138.741157" transform="rotate(-0 341.759808 138.741157)">4</text>
+    </g>
+    <g id="patch_17">
+     <path d="M 417.035765 147.992632 
+L 818.507534 147.992632 
+L 818.507534 123.981869 
+L 417.035765 123.981869 
+z
+" style="fill: #ffffff; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_16">
+     <text style="font: 10px 'Microsoft YaHei'; text-anchor: start" x="457.182942" y="138.741157" transform="rotate(-0 457.182942 138.741157)">4 mm 不透明哑光亚克力八边形柱（外接直径 240 mm）</text>
+    </g>
+    <g id="patch_18">
+     <path d="M 32.291986 172.003396 
+L 132.659928 172.003396 
+L 132.659928 147.992632 
+L 32.291986 147.992632 
+z
+" style="fill: #ffffff; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_17">
+     <text style="font: 10px 'Microsoft YaHei'; text-anchor: start" x="42.32878" y="162.75192" transform="rotate(-0 42.32878 162.75192)">C320</text>
+    </g>
+    <g id="patch_19">
+     <path d="M 132.659928 172.003396 
+L 333.395813 172.003396 
+L 333.395813 147.992632 
+L 132.659928 147.992632 
+z
+" style="fill: #ffffff; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_18">
+     <text style="font: 10px 'Microsoft YaHei'; text-anchor: start" x="152.733516" y="162.75192" transform="rotate(-0 152.733516 162.75192)">D320 × H350 mm</text>
+    </g>
+    <g id="patch_20">
+     <path d="M 333.395813 172.003396 
+L 417.035765 172.003396 
+L 417.035765 147.992632 
+L 333.395813 147.992632 
+z
+" style="fill: #ffffff; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_19">
+     <text style="font: 10px 'Microsoft YaHei'; text-anchor: start" x="341.759808" y="162.75192" transform="rotate(-0 341.759808 162.75192)">4</text>
+    </g>
+    <g id="patch_21">
+     <path d="M 417.035765 172.003396 
+L 818.507534 172.003396 
+L 818.507534 147.992632 
+L 417.035765 147.992632 
+z
+" style="fill: #ffffff; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_20">
+     <text style="font: 10px 'Microsoft YaHei'; text-anchor: start" x="457.182942" y="162.75192" transform="rotate(-0 457.182942 162.75192)">4 mm 不透明哑光亚克力八边形柱（外接直径 320 mm）</text>
+    </g>
+    <g id="patch_22">
+     <path d="M 32.291986 196.014159 
+L 132.659928 196.014159 
+L 132.659928 172.003396 
+L 32.291986 172.003396 
+z
+" style="fill: #ffffff; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_21">
+     <text style="font: 10px 'Microsoft YaHei'; text-anchor: start" x="42.32878" y="186.762684" transform="rotate(-0 42.32878 186.762684)">C560</text>
+    </g>
+    <g id="patch_23">
+     <path d="M 132.659928 196.014159 
+L 333.395813 196.014159 
+L 333.395813 172.003396 
+L 132.659928 172.003396 
+z
+" style="fill: #ffffff; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_22">
+     <text style="font: 10px 'Microsoft YaHei'; text-anchor: start" x="152.733516" y="186.762684" transform="rotate(-0 152.733516 186.762684)">D560 × H350 mm</text>
+    </g>
+    <g id="patch_24">
+     <path d="M 333.395813 196.014159 
+L 417.035765 196.014159 
+L 417.035765 172.003396 
+L 333.395813 172.003396 
+z
+" style="fill: #ffffff; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_23">
+     <text style="font: 10px 'Microsoft YaHei'; text-anchor: start" x="341.759808" y="186.762684" transform="rotate(-0 341.759808 186.762684)">1</text>
+    </g>
+    <g id="patch_25">
+     <path d="M 417.035765 196.014159 
+L 818.507534 196.014159 
+L 818.507534 172.003396 
+L 417.035765 172.003396 
+z
+" style="fill: #ffffff; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_24">
+     <text style="font: 10px 'Microsoft YaHei'; text-anchor: start" x="457.182942" y="186.762684" transform="rotate(-0 457.182942 186.762684)">4 mm 不透明哑光亚克力八边形基准障碍（外接直径 560 mm）</text>
+    </g>
+    <g id="patch_26">
+     <path d="M 32.291986 220.024923 
+L 132.659928 220.024923 
+L 132.659928 196.014159 
+L 32.291986 196.014159 
+z
+" style="fill: #ffffff; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_25">
+     <text style="font: 10px 'Microsoft YaHei'; text-anchor: start" x="42.32878" y="210.773447" transform="rotate(-0 42.32878 210.773447)">D320</text>
+    </g>
+    <g id="patch_27">
+     <path d="M 132.659928 220.024923 
+L 333.395813 220.024923 
+L 333.395813 196.014159 
+L 132.659928 196.014159 
+z
+" style="fill: #ffffff; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_26">
+     <text style="font: 10px 'Microsoft YaHei'; text-anchor: start" x="152.733516" y="210.773447" transform="rotate(-0 152.733516 210.773447)">D320 × H300 mm</text>
+    </g>
+    <g id="patch_28">
+     <path d="M 333.395813 220.024923 
+L 417.035765 220.024923 
+L 417.035765 196.014159 
+L 333.395813 196.014159 
+z
+" style="fill: #ffffff; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_27">
+     <text style="font: 10px 'Microsoft YaHei'; text-anchor: start" x="341.759808" y="210.773447" transform="rotate(-0 341.759808 210.773447)">1</text>
+    </g>
+    <g id="patch_29">
+     <path d="M 417.035765 220.024923 
+L 818.507534 220.024923 
+L 818.507534 196.014159 
+L 417.035765 196.014159 
+z
+" style="fill: #ffffff; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_28">
+     <text style="font: 10px 'Microsoft YaHei'; text-anchor: start" x="457.182942" y="210.773447" transform="rotate(-0 457.182942 210.773447)">轻量亚克力八边形动态外壳（仅限低速、软边条与独立急停）</text>
+    </g>
+    <g id="patch_30">
+     <path d="M 32.291986 244.035686 
+L 132.659928 244.035686 
+L 132.659928 220.024923 
+L 32.291986 220.024923 
+z
+" style="fill: #ffffff; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_29">
+     <text style="font: 10px 'Microsoft YaHei'; text-anchor: start" x="42.32878" y="234.784211" transform="rotate(-0 42.32878 234.784211)">F1800</text>
+    </g>
+    <g id="patch_31">
+     <path d="M 132.659928 244.035686 
+L 333.395813 244.035686 
+L 333.395813 220.024923 
+L 132.659928 220.024923 
+z
+" style="fill: #ffffff; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_30">
+     <text style="font: 10px 'Microsoft YaHei'; text-anchor: start" x="152.733516" y="234.784211" transform="rotate(-0 152.733516 234.784211)">1800 × 1200 × 2 mm</text>
+    </g>
+    <g id="patch_32">
+     <path d="M 333.395813 244.035686 
+L 417.035765 244.035686 
+L 417.035765 220.024923 
+L 333.395813 220.024923 
+z
+" style="fill: #ffffff; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_31">
+     <text style="font: 10px 'Microsoft YaHei'; text-anchor: start" x="341.759808" y="234.784211" transform="rotate(-0 341.759808 234.784211)">2</text>
+    </g>
+    <g id="patch_33">
+     <path d="M 417.035765 244.035686 
+L 818.507534 244.035686 
+L 818.507534 220.024923 
+L 417.035765 220.024923 
+z
+" style="fill: #ffffff; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_32">
+     <text style="font: 10px 'Microsoft YaHei'; text-anchor: start" x="457.182942" y="234.784211" transform="rotate(-0 457.182942 234.784211)">动力学变化实验用可拆卸地面材料</text>
+    </g>
+   </g>
+   <g id="text_33">
+    <g id="patch_34">
+     <path d="M 23.92799 514.956383 
+L 749.395178 514.956383 
+Q 755.995178 514.956383 755.995178 508.356383 
+L 755.995178 397.915868 
+Q 755.995178 391.315868 749.395178 391.315868 
+L 23.92799 391.315868 
+Q 17.32799 391.315868 17.32799 397.915868 
+L 17.32799 508.356383 
+Q 17.32799 514.956383 23.92799 514.956383 
+z
+" style="fill: #fffbea; stroke: #c49a00; stroke-linejoin: miter"/>
+    </g>
+    <text style="font: 11px 'Microsoft YaHei'" transform="translate(23.92799 406.708993)">材料：墙板/底座 6 mm、八边形侧板 4 mm 不透明哑光浇铸 PMMA；外露边安装透明硅胶 U 形护边。</text>
+    <text style="font: 11px 'Microsoft YaHei'" transform="translate(23.92799 423.072868)"/>
+    <text style="font: 11px 'Microsoft YaHei'" transform="translate(23.92799 440.102758)">连接件：直连 12、90° 6、T 形 2。另购 50 mm 黑/黄哑光地贴、卷尺、激光测距仪、AprilTag/ArUco ID、防滑垫。</text>
+    <text style="font: 11px 'Microsoft YaHei'" transform="translate(23.92799 456.530227)"/>
+    <text style="font: 11px 'Microsoft YaHei'" transform="translate(23.92799 472.894102)">下单前强制复测：①车体最大外接轮廓；②雷达光束离地高度（当前兼容 100–250 mm）；③材料样片回波；④急停距离；⑤首件推力/倾倒稳定性。</text>
+    <text style="font: 11px 'Microsoft YaHei'" transform="translate(23.92799 489.257977)"/>
+    <text style="font: 11px 'Microsoft YaHei'" transform="translate(23.92799 505.621852)">供应商验收：尺寸公差、圆角倒钝、哑光不透明表面、粘接质量、护边、防滑、连接缝、无突出支脚。</text>
+   </g>
+   <g id="text_34">
+    <text style="font: 700 17px 'Microsoft YaHei'; text-anchor: middle" x="425.39976" y="20.789375" transform="rotate(-0 425.39976 20.789375)">建议一次性采购清单与验收项目</text>
+   </g>
+  </g>
+ </g>
+</svg>

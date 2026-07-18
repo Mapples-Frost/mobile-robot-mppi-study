@@ -1,0 +1,30 @@
+include: mujoco_high_dynamic_fixed_plant_l56.yaml
+
+experiment:
+  name: high_dynamic_chicane_l56
+  max_steps: 340
+
+task:
+  lookahead_distance: 0.55
+  points:
+    - [0.00, 0.00]
+    - [0.45, 0.00]
+    - [0.90, 0.08]
+    - [1.25, 0.34]
+    - [1.42, 0.72]
+    - [1.55, 1.10]
+    - [1.82, 1.38]
+    - [2.20, 1.48]
+    - [2.58, 1.36]
+    - [2.82, 1.06]
+    - [2.96, 0.68]
+    - [3.16, 0.34]
+    - [3.50, 0.14]
+    - [3.92, 0.10]
+    - [4.34, 0.24]
+    - [4.66, 0.52]
+    - [4.92, 0.86]
+
+scene:
+  name: high_dynamic_chicane_l56
+

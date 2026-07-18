@@ -1,0 +1,29 @@
+include: icode_cross_layer_gate_development_l54.yaml
+
+experiment:
+  name: icode_cross_layer_efficiency_confirmation_l55
+  output_dir: results/research_platform/rl/l55_icode_cross_layer_efficiency_confirmation_20260716_v1
+
+rl:
+  cross_layer_factorial:
+    design_id: l55_icode_cross_layer_efficiency_independent_confirmation_v1
+    confirmation_mode: true
+    schedule_seed: 2026071629
+    bootstrap_seed: 2026071630
+    bootstrap_replicates: 20000
+    development_episode_seeds: [21760731, 21760732, 21760733, 21760734, 21760735, 21760736, 21760737, 21760738, 21760739, 21760740]
+    sealed_confirmation_episode_seeds: [21760731, 21760732, 21760733, 21760734, 21760735, 21760736, 21760737, 21760738, 21760739, 21760740]
+    protected_config_paths:
+      - configs/rl/icode_cross_layer_gate_development_l54.yaml
+    efficiency_confirmation_gate:
+      minimum_positive_path_length_model_blocks: 3
+      minimum_positive_path_length_scenes: 3
+      minimum_path_length_reduction_ci95_lower_m: 0.0
+      minimum_cross_track_improvement_ci95_lower_m: -0.005
+      minimum_long_delay_mean_alpha: 0.50
+      maximum_matched_delay_mean_alpha: 0.01
+      minimum_net_success_gain: 0
+      maximum_net_collision_increase: 0
+      minimum_completion_ratio_difference: -0.01
+      maximum_candidate_mean_planner_compute_ms: 50.0
+

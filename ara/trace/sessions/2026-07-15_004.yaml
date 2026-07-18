@@ -1,0 +1,66 @@
+session:
+  id: "2026-07-15_004"
+  timestamp: "2026-07-15T12:42:44+08:00"
+  summary: "Implemented deterministic L21 counterfactual risk data; exact replay passed but one-step interventions yielded only neutral labels, blocking model training."
+
+events_logged:
+  - type: question
+    id: N16
+    provenance: ai-suggested
+    summary: "Test whether exact one-step counterfactual branches provide actor-independent risk labels."
+  - type: experiment
+    id: N17
+    provenance: ai-executed
+    summary: "Collected and audited 124 accepted branches from three checkpoints with zero replay drift."
+  - type: dead_end
+    id: N18
+    provenance: ai-executed
+    summary: "Rejected the isolated one-step intervention because every train and validation sample was neutral."
+  - type: claim
+    id: C10
+    provenance: ai-suggested
+    summary: "Same-seed frozen-BC action replay exactly restored the full control state."
+  - type: claim
+    id: C11
+    provenance: ai-suggested
+    summary: "Sufficient risk labels from a one-step correction intervention were refuted."
+  - type: heuristic
+    id: H07
+    provenance: ai-suggested
+    summary: "Counterfactual branches must restore plant, sensor, planner and history state by deterministic action replay."
+
+ai_actions:
+  - action: "Implemented deterministic reference/replay branching, leakage-free risk features, label contracts and a fail-closed dataset sufficiency selector."
+    provenance: ai-executed
+    files_changed:
+      - "src/mobile_robot_mppi/rl/sac.py"
+      - "src/mobile_robot_mppi/rl/risk_dataset.py"
+      - "experiments/rl/collect_correction_counterfactual_branches.py"
+      - "experiments/rl/audit_correction_counterfactual_dataset.py"
+      - "configs/rl/correction_counterfactual_branches_l21.yaml"
+      - "tests/rl/test_risk_dataset.py"
+  - action: "Preregistered the L21 intervention, episode-grouped split, label thresholds and sealed test seeds before collection."
+    provenance: ai-executed
+    files_changed:
+      - "docs/rl/22_l21_counterfactual_risk_dataset_prereg_2026-07-15.md"
+  - action: "Collected 124 accepted counterfactual samples, audited CSV/NPZ data, blocked model training and ran 299 repository tests."
+    provenance: ai-executed
+    files_changed:
+      - "docs/rl/23_l21_counterfactual_risk_dataset_results_2026-07-15.md"
+
+claims_touched:
+  - id: C10
+    action: created
+    provenance: ai-suggested
+  - id: C11
+    action: created
+    provenance: ai-suggested
+
+open_threads:
+  - "Preregister L22 correction-burst duration, follow-up horizon and new episode-grouped train/validation seeds."
+  - "Train an independent risk ensemble only if burst data passes both harmful and beneficial class-coverage gates."
+  - "Keep episode seeds 20281311--20281315 and 20281101--20281115 sealed."
+
+ai_suggestions_pending:
+  - "Do not relabel L21 by lowering thresholds after observing the continuous target range."
+  - "Use L21 to validate replay engineering, not as evidence that a risk model works."

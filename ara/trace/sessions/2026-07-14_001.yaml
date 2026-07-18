@@ -1,0 +1,68 @@
+session:
+  id: "2026-07-14_001"
+  timestamp: "2026-07-14T22:30:00+08:00"
+  summary: "Implemented fail-closed L17, found two reproducibility defects, reran corrected v3, and recorded a safe negative RL result."
+
+events_logged:
+  - type: question
+    id: N01
+    provenance: ai-suggested
+    summary: "Whether bounded SAC correction can improve frozen BC without paired regression."
+  - type: experiment
+    id: N02
+    provenance: ai-executed
+    summary: "L17 v1 exposed a planner-seed validation defect."
+  - type: dead_end
+    id: N03
+    provenance: ai-executed
+    summary: "Episode seed did not reach MPPI RNG."
+  - type: experiment
+    id: N04
+    provenance: ai-executed
+    summary: "L17 v2 exposed an initial-state validation mismatch."
+  - type: dead_end
+    id: N05
+    provenance: ai-executed
+    summary: "Training jitter leaked into validation."
+  - type: experiment
+    id: N06
+    provenance: ai-executed
+    summary: "L17 v3 selected step zero for all seeds and matched BC on the sealed final set."
+  - type: claim
+    id: C02
+    provenance: ai-suggested
+    summary: "Current SAC correction improves BC was refuted."
+
+ai_actions:
+  - action: "Implemented correction regularization and auditable paired checkpoint selection."
+    provenance: ai-executed
+    files_changed: ["src/mobile_robot_mppi/rl/sac.py", "src/mobile_robot_mppi/rl/trainer.py"]
+  - action: "Propagated episode seeds into MPPI reset and separated validation start noise."
+    provenance: ai-executed
+    files_changed: ["src/mobile_robot_mppi/planning/mppi.py", "src/mobile_robot_mppi/rl/environment.py", "src/mobile_robot_mppi/rl/trainer.py"]
+  - action: "Ran three-seed v1, v2 and v3 MuJoCo experiments and a new sealed final test."
+    provenance: ai-executed
+    files_changed: ["docs/rl/13_conservative_correction_preregistered_gate_2026-07-14.md", "docs/rl/14_validation_seed_audit_and_l17_v2_prereg_2026-07-14.md", "docs/rl/15_l17_v3_conservative_correction_results_2026-07-14.md"]
+
+claims_touched:
+  - id: C01
+    action: confirmed
+    provenance: ai-suggested
+  - id: C02
+    action: weakened
+    provenance: ai-suggested
+  - id: C03
+    action: confirmed
+    provenance: ai-suggested
+  - id: C04
+    action: confirmed
+    provenance: ai-suggested
+
+open_threads:
+  - "Test whether critic overestimation drives harmful corrections before adding OOD or ICODE."
+  - "Design an advantage-filtered or trust-region correction as an isolated L18 gate."
+
+ai_suggestions_pending:
+  - "Freeze L17 as a safe negative control and do not claim RL improvement."
+  - "Keep ICODE, memory and dynamic obstacles disabled during the next RL mechanism test."
+

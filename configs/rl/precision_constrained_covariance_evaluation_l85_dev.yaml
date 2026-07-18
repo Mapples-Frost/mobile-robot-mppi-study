@@ -1,0 +1,26 @@
+schema_version: 1
+design_id: l85_precision_constrained_covariance_development_v1
+primary_comparator: fixed_speed_explore
+cross_track_noninferiority_margin: 0.002
+require_time_superiority: true
+# These seeds are disjoint from the L84 confirmation matrix.  This is still a
+# one-training-block development check, not the L85 confirmation experiment.
+episode_seeds: [20269101, 20269102, 20269103, 20269104, 20269105]
+scenes:
+  - configs/research/mujoco_high_dynamic_accel_turn_l56.yaml
+  - configs/research/mujoco_high_dynamic_chicane_l56.yaml
+  - configs/research/mujoco_high_dynamic_hairpin_unseen_l56.yaml
+  - configs/research/mujoco_high_dynamic_reverse_s_unseen_l56.yaml
+conditions:
+  - name: learned_covariance
+    kind: learned
+  - name: fixed_speed_explore
+    kind: fixed
+    scale: [1.75, 0.75]
+  - name: fixed_baseline
+    kind: fixed
+    scale: [1.0, 1.0]
+blocks:
+  - name: development_block_0
+    config: configs/rl/sac_mppi_precision_constrained_covariance_l85.yaml
+    checkpoint: results/research_platform/rl/l85_precision_constrained_seed20268811_v1/checkpoints/best.pt

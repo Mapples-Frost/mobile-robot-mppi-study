@@ -1,0 +1,49 @@
+session:
+  id: "2026-07-16_020"
+  timestamp: "2026-07-16T21:35:55+08:00"
+  summary: "L66-L68 method-blindly calibrated observation shifts, sealed-confirmed a 10.15% ICODE advantage under bounded latency/noise, and refuted residual-only correction of raw wheel-odometry drift."
+
+events_logged:
+  - {type: experiment, id: N86, provenance: ai-executed, summary: "L66 retained failed noise-resolution attempts, then froze identifiable latency/combined domains and a non-gating raw-odometry stress."}
+  - {type: experiment, id: N87, provenance: ai-executed, summary: "L67 passed every primary observation-domain development gate across 216 episodes."}
+  - {type: experiment, id: N88, provenance: ai-executed, summary: "L68 reproduced the primary ICODE advantage on 360 sealed episodes but reversed the exploratory raw-odometry success ordering."}
+  - {type: claim, id: C58, provenance: ai-suggested, summary: "Bounded latency/noise control-affine ICODE superiority over parameter-matched MLP is supported."}
+  - {type: claim, id: C59, provenance: ai-suggested, summary: "Residual-only robust correction of raw wheel-odometry drift is refuted."}
+  - {type: heuristic, id: H43, provenance: ai-suggested, summary: "Separate identifiable observation perturbations from localization drift and calibrate them method-blindly."}
+
+ai_actions:
+  - action: "Extended the factorial runner with backward-compatible per-domain sensor overrides and regression tests."
+    provenance: ai-executed
+    files_changed: ["experiments/rl/run_cross_layer_factorial.py", "tests/rl/test_cross_layer_factorial.py"]
+  - action: "Implemented and ran two capped nominal-only observation-domain calibration attempts over 84 episodes."
+    provenance: ai-executed
+    files_changed: ["configs/rl/observation_domain_nominal_calibration_l66.yaml", "configs/rl/observation_domain_nominal_calibration_l66_v2.yaml", "experiments/rl/summarize_observation_domain_calibration.py"]
+  - action: "Implemented and ran the 216-episode L67 development and 360-episode L68 sealed nominal/MLP/ICODE observation-domain factorials."
+    provenance: ai-executed
+    files_changed: ["configs/rl/residual_structure_observation_domains_l67.yaml", "configs/rl/residual_structure_observation_confirmation_l68.yaml", "experiments/rl/summarize_residual_structure_observation.py"]
+  - action: "Generated, visually audited and exported the observation-robustness publication figure and raw-odometry stress table."
+    provenance: ai-executed
+    files_changed: ["experiments/rl/plot_residual_structure_observation.py", "docs/rl/99_l66_l68_observation_robustness_results_2026-07-16.md"]
+  - action: "Compiled changed scripts, ran all 503 repository tests and completed whitespace/artifact validation successfully."
+    provenance: ai-executed
+    files_changed: ["tests/rl/test_observation_domain_calibration.py", "tests/rl/test_residual_structure_observation.py"]
+
+claims_touched:
+  - {id: C58, action: created, provenance: ai-suggested}
+  - {id: C59, action: created, provenance: ai-suggested}
+
+open_threads:
+  - "Return to the bounded RL sampling-prior comparison with residual checkpoints and primary plant/observation factors frozen."
+  - "Treat raw wheel odometry as a localization/state-estimation problem rather than another residual-tuning target."
+  - "Add obstacle/perception and real-robot shadow-mode validation only after the RL factor is identified."
+
+ai_suggestions_pending:
+  - "Do not claim arbitrary OOD robustness; L68 covers frozen bounded latency/noise domains and explicitly excludes raw-odometry drift."
+  - "Do not attribute L66--L68 effects to RL because RL and memory were disabled."
+
+provenance_summary:
+  user_confirmed: 0
+  ai_suggested: 3
+  ai_executed: 9
+  user_revised: 0
+  confirmation_rate: 0.0

@@ -1,0 +1,31 @@
+include: icode_iterative_path_h36_l49.yaml
+
+experiment:
+  name: icode_high_dynamic_h36_l57
+
+seed: 20261201
+
+action_space:
+  names: [v_cmd, omega_cmd]
+  lower: [0.0, -1.25]
+  upper: [0.65, 1.25]
+
+training:
+  epochs: 120
+  batch_size: 512
+  early_stopping_patience: 20
+
+offline_gate:
+  required_training_seeds: [20261201, 20261202, 20261203]
+  required_horizons: [1, 5, 10, 20, 36]
+  minimum_positive_model_blocks: 2
+  minimum_active_derivative_reduction: 0.0
+  minimum_mean_test_h36_rollout_reduction: 0.10
+  minimum_mean_unseen_h36_rollout_reduction: 0.10
+  minimum_mean_test_h36_position_reduction: 0.05
+  minimum_mean_unseen_h36_position_reduction: 0.05
+  expected_dataset_sha256:
+    train: 5583b183bd60e4db51b49fcef225b6b8fb1e22a0291bd338bc3c027aaff2159c
+    validation: c2bc6b75a259782cff0659c8f03dcb8bcee9a753306861820ec7f5d346b54d7d
+    test: 100dea8847e6e8178a551b84b484cb29cc57ff2780d581542554e4a6bab92c96
+    unseen: aeede24d5765920fc9de1c573fb79368f2d92d057d245b0d97932438efb325fc

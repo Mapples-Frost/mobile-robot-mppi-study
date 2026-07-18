@@ -1,0 +1,26 @@
+include: sac_mppi_covariance_only_l84.yaml
+
+experiment:
+  name: sac_mppi_precision_constrained_covariance_l85
+  output_dir: results/research_platform/rl/l85_precision_constrained_seed20268811_v1
+
+rl:
+  policy_id: sac_mppi_precision_constrained_covariance_l85
+
+  # Cross-track precision is handled by the dual variable below.  Keeping the
+  # static term at zero avoids counting the same physical error twice.
+  reward:
+    cross_track_penalty_weight: 0.0
+
+  training:
+    seed: 20268811
+    validation_seed_base: 22468811
+    precision_constraint:
+      enabled: true
+      target_cross_track_rmse_m: 0.040
+      dual_lr: 250.0
+      initial_multiplier: 0.0
+      maximum_multiplier: 100.0
+    checkpoint_selection:
+      mode: precision_constrained
+      maximum_mean_cross_track_rmse: 0.040

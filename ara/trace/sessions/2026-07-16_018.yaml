@@ -1,0 +1,50 @@
+session:
+  id: "2026-07-16_018"
+  timestamp: "2026-07-16T19:20:00+08:00"
+  summary: "L60-L62 completed the parameter-matched MLP ablation, refuted offline-RMSE ordering as a control proxy, and independently confirmed a 10.17% ICODE closed-loop advantage over MLP."
+
+events_logged:
+  - {type: experiment, id: N80, provenance: ai-executed, summary: "L60 found that parameter-matched MLP slightly beat ICODE in offline H=36 RMSE while both passed nominal-relative eligibility."}
+  - {type: experiment, id: N81, provenance: ai-executed, summary: "L61 development data showed ICODE beat MLP in closed-loop tracking despite the inverse offline ranking."}
+  - {type: experiment, id: N82, provenance: ai-executed, summary: "L62 sealed seeds independently confirmed a 10.17% ICODE advantage over MLP with zero safety/task regression."}
+  - {type: claim, id: C55, provenance: ai-suggested, summary: "Offline rollout-RMSE ordering as a closed-loop controller ordering was refuted."}
+  - {type: claim, id: C56, provenance: ai-suggested, summary: "Fixed-plant control-affine ICODE superiority over a parameter-matched MLP is supported."}
+  - {type: heuristic, id: H40, provenance: ai-suggested, summary: "Match residual parameter count and all training contracts for structural ablations."}
+  - {type: heuristic, id: H41, provenance: ai-suggested, summary: "Evaluate residual structures through the downstream MPPI optimizer, not offline RMSE alone."}
+
+ai_actions:
+  - action: "Added a fail-closed traditional MLP residual condition to the general factorial runner without changing nominal or ICODE behavior."
+    provenance: ai-executed
+    files_changed: ["experiments/rl/run_cross_layer_factorial.py", "tests/rl/test_cross_layer_factorial.py"]
+  - action: "Trained three parameter-matched MLP residuals on immutable L56 dataset hashes and evaluated all test/unseen windows at H=1,5,10,20,36."
+    provenance: ai-executed
+    files_changed: ["configs/research/mlp_high_dynamic_h36_l60.yaml", "experiments/rl/summarize_residual_structure_offline.py"]
+  - action: "Ran the 180-episode L61 development ablation and the 360-episode L62 sealed confirmation across nominal, MLP and ICODE."
+    provenance: ai-executed
+    files_changed: ["configs/rl/residual_structure_closed_loop_l61.yaml", "configs/rl/residual_structure_confirmation_l62.yaml", "experiments/rl/summarize_residual_structure_closed_loop.py"]
+  - action: "Generated and visually verified a reproducible vector/raster publication figure and compact CSV evidence table."
+    provenance: ai-executed
+    files_changed: ["experiments/rl/plot_residual_structure_ablation.py", "docs/rl/90_l62_residual_structure_confirmation_results_2026-07-16.md"]
+  - action: "Compiled all changed Python files, ran all 483 repository tests and completed whitespace validation successfully."
+    provenance: ai-executed
+    files_changed: ["tests/learning/test_residual_structure_ablation.py", "tests/rl/test_residual_structure_closed_loop.py"]
+
+claims_touched:
+  - {id: C55, action: created, provenance: ai-suggested}
+  - {id: C56, action: created, provenance: ai-suggested}
+
+open_threads:
+  - "Freeze a method-blind cross-plant mass/friction/torque/delay factorial and test nominal, MLP and ICODE without retraining."
+  - "After cross-plant qualification, add wheel odometry, sensor noise and latency as separate blocked factors."
+  - "Only after residual external-validity gates should obstacle perception and bounded-RL sampling-prior composition be reopened."
+
+ai_suggestions_pending:
+  - "Do not claim that L62 proves why control-affine structure helps; it establishes the empirical downstream effect only."
+  - "Do not call L62 cross-plant, obstacle, RL-composed or real-robot evidence."
+
+provenance_summary:
+  user_confirmed: 0
+  ai_suggested: 5
+  ai_executed: 8
+  user_revised: 0
+  confirmation_rate: 0.0

@@ -1,0 +1,13 @@
+include: sac_mppi_static_group_robust_l80.yaml
+
+experiment:
+  name: sac_mppi_static_group_robust_l80_seed20260777
+  output_dir: results/research_platform/rl/l80_static_group_robust_seed20260777_30k_20260717_v1
+
+planner:
+  checkpoint: results/research_platform/l57_icode_high_dynamic_h36_seed20261201_v1/best.pt
+
+rl:
+  training:
+    seed: 20260777
+

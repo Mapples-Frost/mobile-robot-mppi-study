@@ -42,6 +42,7 @@ class MppiConfig:
     horizon: int = 25
     num_samples: int = 400
     dt: float = 0.1
+    command_delay_s: float = 0.0
     temperature: float = 4.0
     noise_sigma: Tuple[float, ...] = (0.12, 0.35)
     integrator: str = "rk4"
@@ -50,6 +51,10 @@ class MppiConfig:
     heading_weight: float = 0.2
     terminal_velocity_weight: float = 0.0
     terminal_yaw_rate_weight: float = 0.0
+    terminal_bearing_weight: float = 0.0
+    terminal_translation_speed_limit: Optional[float] = None
+    terminal_translation_heading_gate_rad: Optional[float] = None
+    terminal_alignment_yaw_gain: Optional[float] = None
     control_weight: float = 0.05
     control_rate_weight: float = 0.08
     obstacle_weight: float = 30.0
@@ -59,6 +64,7 @@ class MppiConfig:
     importance_sampling_correction: bool = False
     previous_sequence_blend: float = 0.5
     safety_recovery_prefix_steps: int = 0
+    profile_components: bool = False
     seed: int = 0
 
     @classmethod
@@ -70,6 +76,7 @@ class MppiConfig:
             horizon=int(values.get("horizon", 25)),
             num_samples=int(values.get("num_samples", 400)),
             dt=float(values.get("dt", values.get("control_dt", 0.1))),
+            command_delay_s=float(values.get("command_delay_s", 0.0)),
             temperature=float(values.get("temperature", 4.0)),
             noise_sigma=tuple(float(v) for v in sigma),
             integrator=str(values.get("integrator", "rk4")),
@@ -78,6 +85,22 @@ class MppiConfig:
             heading_weight=float(values.get("heading_weight", 0.2)),
             terminal_velocity_weight=float(values.get("terminal_velocity_weight", 0.0)),
             terminal_yaw_rate_weight=float(values.get("terminal_yaw_rate_weight", 0.0)),
+            terminal_bearing_weight=float(values.get("terminal_bearing_weight", 0.0)),
+            terminal_translation_speed_limit=(
+                None
+                if values.get("terminal_translation_speed_limit") is None
+                else float(values["terminal_translation_speed_limit"])
+            ),
+            terminal_translation_heading_gate_rad=(
+                None
+                if values.get("terminal_translation_heading_gate_rad") is None
+                else float(values["terminal_translation_heading_gate_rad"])
+            ),
+            terminal_alignment_yaw_gain=(
+                None
+                if values.get("terminal_alignment_yaw_gain") is None
+                else float(values["terminal_alignment_yaw_gain"])
+            ),
             control_weight=float(values.get("control_weight", 0.05)),
             control_rate_weight=float(values.get("control_rate_weight", 0.08)),
             obstacle_weight=float(values.get("obstacle_weight", 30.0)),
@@ -91,12 +114,23 @@ class MppiConfig:
             safety_recovery_prefix_steps=int(
                 values.get("safety_recovery_prefix_steps", 0)
             ),
+            profile_components=bool(
+                values.get("profile_components", False)
+            ),
             seed=int(values.get("seed", 0)),
         )
 
     def validate(self, action_dim: int) -> None:
         if self.horizon <= 0 or self.num_samples <= 0 or self.dt <= 0.0:
             raise ValueError("MPPI horizon, samples, and dt must be positive")
+        if (
+            not np.isfinite(self.command_delay_s)
+            or self.command_delay_s < 0.0
+            or self.command_delay_s > self.dt + 1e-12
+        ):
+            raise ValueError(
+                "command_delay_s must be finite and within one control interval"
+            )
         if self.temperature <= 0.0:
             raise ValueError("MPPI temperature must be positive")
         if len(self.noise_sigma) != action_dim or any(value <= 0.0 for value in self.noise_sigma):
@@ -107,6 +141,7 @@ class MppiConfig:
             self.heading_weight,
             self.terminal_velocity_weight,
             self.terminal_yaw_rate_weight,
+            self.terminal_bearing_weight,
             self.control_weight,
             self.control_rate_weight,
             self.obstacle_weight,
@@ -120,8 +155,51 @@ class MppiConfig:
             raise ValueError("MPPI integrator must be 'euler' or 'rk4'")
         if not 0.0 <= self.previous_sequence_blend <= 1.0:
             raise ValueError("previous_sequence_blend must be between zero and one")
+        if self.terminal_translation_speed_limit is not None and (
+            not np.isfinite(self.terminal_translation_speed_limit)
+            or self.terminal_translation_speed_limit <= 0.0
+        ):
+            raise ValueError(
+                "terminal_translation_speed_limit must be finite and positive"
+            )
+        if self.terminal_translation_heading_gate_rad is not None and (
+            not np.isfinite(self.terminal_translation_heading_gate_rad)
+            or not 0.0 < self.terminal_translation_heading_gate_rad <= np.pi
+        ):
+            raise ValueError(
+                "terminal_translation_heading_gate_rad must be in (0, pi]"
+            )
+        if self.terminal_alignment_yaw_gain is not None and (
+            not np.isfinite(self.terminal_alignment_yaw_gain)
+            or self.terminal_alignment_yaw_gain <= 0.0
+        ):
+            raise ValueError(
+                "terminal_alignment_yaw_gain must be finite and positive"
+            )
         if not 0 <= self.safety_recovery_prefix_steps <= self.horizon:
             raise ValueError("safety_recovery_prefix_steps must be within the horizon")
+
+
+@dataclass(frozen=True)
+class SequenceEvaluation:
+    """Predicted trajectories and base costs for fixed control sequences.
+
+    This public result contract is deliberately independent of MPPI sampling
+    weights.  It supports paired model diagnostics where nominal, learned and
+    physical rollouts must score the exact same commanded sequences.
+    """
+
+    trajectories: np.ndarray
+    costs: np.ndarray
+
+
+@dataclass(frozen=True)
+class SequenceWeights:
+    """Importance-adjusted costs and normalized MPPI sequence weights."""
+
+    adjusted_costs: np.ndarray
+    weights: np.ndarray
+    effective_sample_size: float
 
 
 class MppiController:
@@ -149,12 +227,33 @@ class MppiController:
         self.previous_sequence = None
         self.previous_action = np.zeros(action_spec.dimension, dtype=np.float64)
         self._safety_blocked = False
+        self._reliability_previous_state = None
+        self._reliability_pending_control = None
+        self._delay_preceding_action = self.previous_action.copy()
 
-    def reset(self):
-        self.rng = np.random.RandomState(self.config.seed)
+    def reset(self, seed=None):
+        """Reset receding-horizon state and optionally reseed sampling.
+
+        The optional episode seed is essential for paired experiments: plant,
+        sensors and MPPI perturbations must all belong to the same replicate.
+        Existing runtime callers that omit it preserve the configured seed.
+        """
+
+        resolved_seed = self.config.seed if seed is None else int(seed)
+        if not 0 <= resolved_seed <= 2 ** 32 - 1:
+            raise ValueError("MPPI reset seed must be in [0, 2**32 - 1]")
+        self.rng = np.random.RandomState(resolved_seed)
         self.previous_sequence = None
         self.previous_action = np.zeros(self.action_spec.dimension, dtype=np.float64)
         self._safety_blocked = False
+        self._reliability_previous_state = None
+        self._reliability_pending_control = None
+        self._delay_preceding_action = self.previous_action.copy()
+        residual_reset = getattr(
+            getattr(self.dynamics, "residual", None), "reset", None
+        )
+        if callable(residual_reset):
+            residual_reset()
         reset = getattr(self.sampling_prior, "reset", None)
         if callable(reset):
             reset()
@@ -225,6 +324,11 @@ class MppiController:
             or not np.isfinite(proposed).all()
         ):
             raise ValueError("safety feedback actions must be finite and match action dimension")
+        delay_fraction = float(self.config.command_delay_s / self.config.dt)
+        self._reliability_pending_control = (
+            delay_fraction * self._delay_preceding_action
+            + (1.0 - delay_fraction) * executed
+        )
         self.previous_action = executed.copy()
         blocked = False
         if "v_cmd" in self.action_spec.names:
@@ -241,14 +345,59 @@ class MppiController:
         if callable(prior_observer):
             prior_observer(decision)
 
-    def _sample(self, prior: PriorOutput) -> np.ndarray:
+    def _observe_residual_reliability(self, current_state):
+        residual = getattr(self.dynamics, "residual", None)
+        observer = getattr(residual, "observe_prediction_errors", None)
+        ungated = getattr(residual, "ungated_derivative", None)
+        nominal = getattr(self.dynamics, "nominal", None)
+        if not callable(observer) or not callable(ungated) or nominal is None:
+            return
+        if (
+            self._reliability_previous_state is None
+            or self._reliability_pending_control is None
+        ):
+            return
+
+        class _UngatedCombined:
+            state_dim = int(self.dynamics.state_dim)
+            control_dim = int(self.dynamics.control_dim)
+
+            def derivative(inner_self, state, control, time=None):
+                return np.asarray(
+                    nominal.derivative(state, control, time), dtype=np.float64
+                ) + np.asarray(ungated(state, control, time), dtype=np.float64)
+
+        previous = self._reliability_previous_state
+        control = self._reliability_pending_control
+        nominal_prediction = integrate_batch(
+            nominal, previous, control, self.config.dt,
+            self.state_spec, self.config.integrator,
+        )
+        residual_prediction = integrate_batch(
+            _UngatedCombined(), previous, control, self.config.dt,
+            self.state_spec, self.config.integrator,
+        )
+        nominal_error = nominal_prediction - current_state
+        residual_error = residual_prediction - current_state
+        for index in self.state_spec.periodic_indices:
+            nominal_error[index] = np.arctan2(
+                np.sin(nominal_error[index]), np.cos(nominal_error[index])
+            )
+            residual_error[index] = np.arctan2(
+                np.sin(residual_error[index]), np.cos(residual_error[index])
+            )
+        observer(nominal_error, residual_error)
+        self._reliability_pending_control = None
+
+    def _sample(self, prior: PriorOutput, rng=None) -> np.ndarray:
+        rng = self.rng if rng is None else rng
         shape = (self.config.num_samples, self.config.horizon, self.action_spec.dimension)
         if prior.covariance is None:
-            noise = self.rng.normal(size=shape) * np.asarray(self.config.noise_sigma)[None, None, :]
+            noise = rng.normal(size=shape) * np.asarray(self.config.noise_sigma)[None, None, :]
         else:
             covariance = np.asarray(prior.covariance, dtype=np.float64)
             if covariance.shape == (self.action_spec.dimension, self.action_spec.dimension):
-                noise = self.rng.multivariate_normal(
+                noise = rng.multivariate_normal(
                     np.zeros(self.action_spec.dimension), covariance,
                     size=(self.config.num_samples, self.config.horizon),
                 )
@@ -298,9 +447,21 @@ class MppiController:
         )
 
     def rollout(self, initial_state: np.ndarray, controls: np.ndarray) -> np.ndarray:
+        initial_state = self.state_spec.validate(
+            np.asarray(initial_state, dtype=np.float64).reshape(-1)
+        )
         controls = np.asarray(controls, dtype=np.float64)
         if controls.ndim == 2:
             controls = controls[None, ...]
+        expected_tail = (self.config.horizon, self.action_spec.dimension)
+        if controls.ndim != 3 or controls.shape[1:] != expected_tail:
+            raise ValueError(
+                "rollout controls must have shape [K,%d,%d]"
+                % expected_tail
+            )
+        if controls.shape[0] < 1 or not np.isfinite(controls).all():
+            raise ValueError("rollout controls must contain a finite batch")
+        prediction_controls = self._prediction_controls(controls)
         batch = controls.shape[0]
         trajectory = np.empty((batch, self.config.horizon + 1, self.state_spec.dimension), dtype=np.float64)
         trajectory[:, 0, :] = np.repeat(initial_state[None, :], batch, axis=0)
@@ -308,12 +469,143 @@ class MppiController:
             trajectory[:, step + 1, :] = integrate_batch(
                 self.dynamics,
                 trajectory[:, step, :],
-                controls[:, step, :],
+                prediction_controls[:, step, :],
                 self.config.dt,
                 self.state_spec,
                 self.config.integrator,
             )
         return trajectory
+
+    def evaluate_control_sequences(
+        self,
+        initial_state: np.ndarray,
+        controls: np.ndarray,
+        target,
+        obstacles: Iterable[Sequence[float]] = (),
+    ) -> SequenceEvaluation:
+        """Roll out and score a fixed, bounded batch without sampling it.
+
+        The method is intended for counterfactual and model-ranking studies.
+        It neither mutates receding-horizon state nor adds the proposal-density
+        importance correction used internally by MPPI.
+        """
+
+        values = self._validate_evaluation_controls(controls)
+        trajectories = self.rollout(initial_state, values)
+        costs = self.cost_trajectories(trajectories, values, target, obstacles)
+        return SequenceEvaluation(trajectories=trajectories, costs=costs)
+
+    def cost_trajectories(
+        self,
+        trajectories: np.ndarray,
+        controls: np.ndarray,
+        target,
+        obstacles: Iterable[Sequence[float]] = (),
+    ) -> np.ndarray:
+        """Apply the controller's base cost contract to fixed trajectories."""
+
+        values = self._validate_evaluation_controls(controls)
+        paths = np.asarray(trajectories, dtype=np.float64)
+        expected = (
+            values.shape[0],
+            self.config.horizon + 1,
+            self.state_spec.dimension,
+        )
+        if paths.shape != expected:
+            raise ValueError(
+                "evaluation trajectories must have shape [K,%d,%d]"
+                % (self.config.horizon + 1, self.state_spec.dimension)
+            )
+        if not np.isfinite(paths).all():
+            raise ValueError("evaluation trajectories must be finite")
+        costs = np.asarray(
+            self._cost(paths, values, target, tuple(obstacles)),
+            dtype=np.float64,
+        )
+        if costs.shape != (values.shape[0],) or not np.isfinite(costs).all():
+            raise FloatingPointError("trajectory cost produced NaN, Inf, or invalid shape")
+        return costs
+
+    def _validate_evaluation_controls(self, controls: np.ndarray) -> np.ndarray:
+        values = np.asarray(controls, dtype=np.float64)
+        if values.ndim == 2:
+            values = values[None, ...]
+        expected_tail = (self.config.horizon, self.action_spec.dimension)
+        if values.ndim != 3 or values.shape[1:] != expected_tail:
+            raise ValueError(
+                "evaluation controls must have shape [K,%d,%d]"
+                % expected_tail
+            )
+        if values.shape[0] < 1 or not np.isfinite(values).all():
+            raise ValueError("evaluation controls must contain a finite batch")
+        tolerance = 1e-12
+        if (
+            np.any(values < self.action_spec.lower[None, None, :] - tolerance)
+            or np.any(values > self.action_spec.upper[None, None, :] + tolerance)
+        ):
+            raise ValueError("evaluation controls exceed action bounds")
+        return values
+
+    def importance_weights(
+        self,
+        nominal: np.ndarray,
+        candidates: np.ndarray,
+        base_costs: np.ndarray,
+        covariance: Optional[np.ndarray] = None,
+    ) -> SequenceWeights:
+        """Reweight an externally fixed proposal batch using MPPI semantics."""
+
+        values = self._validate_evaluation_controls(candidates)
+        nominal = np.asarray(nominal, dtype=np.float64)
+        expected_nominal = (self.config.horizon, self.action_spec.dimension)
+        if nominal.shape != expected_nominal or not np.isfinite(nominal).all():
+            raise ValueError("nominal sequence has invalid shape or values")
+        if (
+            np.any(nominal < self.action_spec.lower[None, :] - 1e-12)
+            or np.any(nominal > self.action_spec.upper[None, :] + 1e-12)
+        ):
+            raise ValueError("nominal sequence exceeds action bounds")
+        costs = np.asarray(base_costs, dtype=np.float64).reshape(-1)
+        if costs.shape != (values.shape[0],) or not np.isfinite(costs).all():
+            raise ValueError("base costs must be one finite value per candidate")
+        covariance = self._sampling_covariance(
+            PriorOutput(nominal, covariance, {})
+        )
+        correction = self._importance_sampling_cost(
+            nominal, values - nominal[None, :, :], covariance
+        )
+        adjusted = costs + correction
+        beta = float(np.min(adjusted))
+        exponent = np.clip(
+            -(adjusted - beta) / self.config.temperature, -700.0, 0.0
+        )
+        weights = np.exp(exponent)
+        weights /= max(float(np.sum(weights)), 1e-12)
+        effective_sample_size = float(1.0 / np.sum(weights ** 2))
+        if not np.isfinite(weights).all() or not np.isfinite(effective_sample_size):
+            raise FloatingPointError("MPPI importance weights are not finite")
+        return SequenceWeights(adjusted, weights, effective_sample_size)
+
+    def _prediction_controls(self, controls: np.ndarray) -> np.ndarray:
+        """Map commanded sequences to interval-average delayed commands.
+
+        MuJoCo schedules each zero-order-held command after a known delay. For
+        delays no longer than one controller interval, the interval average is
+        exactly the convex combination of the preceding and current command.
+        The preceding value for the first rollout step is the last command that
+        passed safety arbitration.
+        """
+
+        values = np.asarray(controls, dtype=np.float64)
+        if values.ndim != 3 or values.shape[-1] != self.action_spec.dimension:
+            raise ValueError("prediction controls must have shape [K,H,action_dim]")
+        fraction = float(self.config.command_delay_s / self.config.dt)
+        if fraction <= 1e-12:
+            return values
+        preceding = np.empty_like(values)
+        preceding[:, 0, :] = self.previous_action
+        preceding[:, 1:, :] = values[:, :-1, :]
+        return fraction * preceding + (1.0 - fraction) * values
 
     def _cost(self, trajectories, controls, target, obstacles):
         xy_indices = self.state_spec.position_indices
@@ -332,6 +624,24 @@ class MppiController:
         if "omega" in self.state_spec.names:
             terminal_omega = trajectories[:, -1, self.state_spec.index("omega")]
             costs += self.config.terminal_yaw_rate_weight * terminal_omega ** 2
+        if (
+            self.config.terminal_bearing_weight > 0.0
+            and target.phase in ("terminal_approach", "terminal")
+            and "theta" in self.state_spec.names
+        ):
+            final_dx = target_xy[0] - xy[:, -1, 0]
+            final_dy = target_xy[1] - xy[:, -1, 1]
+            final_distance = np.hypot(final_dx, final_dy)
+            desired_heading = np.arctan2(final_dy, final_dx)
+            final_theta = trajectories[:, -1, self.state_spec.index("theta")]
+            bearing_error = np.arctan2(
+                np.sin(final_theta - desired_heading),
+                np.cos(final_theta - desired_heading),
+            )
+            # At the exact target the bearing is undefined; position success
+            # should not impose an arbitrary world-frame orientation.
+            bearing_error = np.where(final_distance > 1e-12, bearing_error, 0.0)
+            costs += self.config.terminal_bearing_weight * bearing_error ** 2
         costs += self.config.control_weight * np.sum(controls ** 2, axis=(1, 2))
         previous = np.broadcast_to(
             self.previous_action[None, None, :],
@@ -353,19 +663,81 @@ class MppiController:
                 costs[index] += float(self.memory_cost(trajectories[index], controls[index]))
         return costs
 
-    def plan(self, observation: RobotObservation, reference) -> PlanResult:
-        started = time.perf_counter()
-        state = self.state_from_observation(observation)
-        target = reference.target_at(observation.timestamp, state)
-        prior = self._prior(observation, reference)
-        samples = self._sample(prior)
+    def _solve_plan(self, state, prior, target, obstacles, rng):
+        profiling = self.config.profile_components
+        solve_started = time.perf_counter() if profiling else None
+        stage_started = solve_started
+        profile = {}
+
+        def mark(name):
+            nonlocal stage_started
+            if not profiling:
+                return
+            now = time.perf_counter()
+            profile["profile_mppi_%s_ms" % name] = 1000.0 * (
+                now - stage_started
+            )
+            stage_started = now
+
+        samples = self._sample(prior, rng=rng)
+        terminal_heading_gate_active = bool(
+            self.config.terminal_translation_heading_gate_rad is not None
+            and target.phase in ("terminal_approach", "terminal")
+            and "v_cmd" in self.action_spec.names
+            and "theta" in self.state_spec.names
+        )
+        terminal_bearing_error = 0.0
+        terminal_translation_scale = 1.0
+        if terminal_heading_gate_active:
+            theta = float(state[self.state_spec.index("theta")])
+            dx = float(target.pose.x - state[self.state_spec.position_indices[0]])
+            dy = float(target.pose.y - state[self.state_spec.position_indices[1]])
+            if np.hypot(dx, dy) > 1e-12:
+                desired_heading = float(np.arctan2(dy, dx))
+                terminal_bearing_error = float(np.arctan2(
+                    np.sin(desired_heading - theta),
+                    np.cos(desired_heading - theta),
+                ))
+                gate = float(self.config.terminal_translation_heading_gate_rad)
+                gate_cosine = float(np.cos(gate))
+                if abs(terminal_bearing_error) >= gate:
+                    terminal_translation_scale = 0.0
+                else:
+                    # Smooth recovery avoids a stop/go discontinuity as the
+                    # body aligns with the terminal target bearing.
+                    terminal_translation_scale = max(
+                        0.0,
+                        (float(np.cos(terminal_bearing_error)) - gate_cosine)
+                        / max(1.0 - gate_cosine, 1e-12),
+                    )
+        terminal_speed_limit_active = bool(
+            self.config.terminal_translation_speed_limit is not None
+            and target.phase in ("terminal_approach", "terminal")
+            and "v_cmd" in self.action_spec.names
+        )
+        if terminal_speed_limit_active:
+            v_index = self.action_spec.index("v_cmd")
+            samples[..., v_index] = np.minimum(
+                samples[..., v_index],
+                self.config.terminal_translation_speed_limit,
+            )
+        if terminal_heading_gate_active:
+            v_index = self.action_spec.index("v_cmd")
+            # The bearing gate is a current-step feasibility constraint.  The
+            # remaining horizon stays free so MPPI can plan translation after
+            # the predicted in-place alignment rather than becoming blind to
+            # the value of turning.
+            samples[:, 0, v_index] *= terminal_translation_scale
         # Effective perturbations include actuator-bound clipping.  Expressing
         # the update this way makes the MPPI control law explicit while
         # remaining numerically equivalent to the historical weighted average.
         perturbations = samples - prior.mean[None, :, :]
         covariance = self._sampling_covariance(prior)
+        mark("sampling")
         trajectories = self.rollout(state, samples)
-        costs = self._cost(trajectories, samples, target, observation.local_obstacles)
+        mark("batch_rollout")
+        costs = self._cost(trajectories, samples, target, obstacles)
+        mark("cost")
         correction = self._importance_sampling_cost(prior.mean, perturbations, covariance)
         costs = costs + correction
         beta = float(np.min(costs))
@@ -375,38 +747,240 @@ class MppiController:
         weighted_perturbation = np.sum(weights[:, None, None] * perturbations, axis=0)
         sequence = prior.mean + weighted_perturbation
         sequence = np.clip(sequence, self.action_spec.lower, self.action_spec.upper)
+        if terminal_speed_limit_active:
+            sequence[:, v_index] = np.minimum(
+                sequence[:, v_index],
+                self.config.terminal_translation_speed_limit,
+            )
+        if terminal_heading_gate_active:
+            sequence[0, v_index] *= terminal_translation_scale
+        terminal_alignment_active = bool(
+            terminal_heading_gate_active
+            and self.config.terminal_alignment_yaw_gain is not None
+            and "omega_cmd" in self.action_spec.names
+        )
+        terminal_alignment_omega = 0.0
+        if terminal_alignment_active:
+            omega_index = self.action_spec.index("omega_cmd")
+            terminal_alignment_omega = (
+                float(self.config.terminal_alignment_yaw_gain)
+                * terminal_bearing_error
+            )
+            # Keep the local bearing controller authoritative throughout the
+            # terminal phase.  Blending back to unconstrained MPPI at small
+            # errors caused a limit cycle because position-only rollout costs
+            # do not make the instantaneous turn direction identifiable.
+            sequence[0, omega_index] = terminal_alignment_omega
         action = self.action_spec.clip(
             sequence[0], self.previous_action, self.config.dt
         )
+        if terminal_speed_limit_active:
+            action[v_index] = min(
+                action[v_index], self.config.terminal_translation_speed_limit
+            )
+        if terminal_heading_gate_active:
+            # Like an emergency translation stop, terminal alignment may need
+            # to decelerate faster than the nominal command slew limit.  It
+            # never changes angular control and therefore preserves the
+            # rotate-in-place degree of freedom.
+            action[v_index] *= terminal_translation_scale
         sequence[0] = action
+        mark("weighting_update")
         updated_trajectory = self.rollout(state, sequence)[0]
+        mark("final_rollout")
+        diagnostics = {
+            "cost_min": float(costs.min()),
+            "cost_mean": float(costs.mean()),
+            "cost_std": float(costs.std()),
+            "cost_q10": float(np.quantile(costs, 0.10)),
+            "cost_q50": float(np.quantile(costs, 0.50)),
+            "cost_q90": float(np.quantile(costs, 0.90)),
+            "effective_sample_size": float(1.0 / np.sum(weights ** 2)),
+            "effective_sample_fraction": float(
+                (1.0 / np.sum(weights ** 2)) / self.config.num_samples
+            ),
+            "importance_sampling_correction": bool(
+                self.config.importance_sampling_correction
+            ),
+            "importance_cost_mean": float(correction.mean()),
+            "weighted_perturbation_norm": float(
+                np.linalg.norm(weighted_perturbation)
+            ),
+            "sample_saturation_fraction": float(
+                np.mean(
+                    (samples <= self.action_spec.lower[None, None, :])
+                    | (samples >= self.action_spec.upper[None, None, :])
+                )
+            ),
+            "reference_id": target.reference_id,
+            "target_x": float(target.pose.x),
+            "target_y": float(target.pose.y),
+            "target_theta": float(target.pose.theta),
+            "target_is_terminal": bool(target.is_terminal),
+            "target_phase": str(target.phase),
+            "terminal_speed_limit_active": terminal_speed_limit_active,
+            "terminal_translation_speed_limit": (
+                0.0
+                if self.config.terminal_translation_speed_limit is None
+                else float(self.config.terminal_translation_speed_limit)
+            ),
+            "terminal_heading_gate_active": terminal_heading_gate_active,
+            "terminal_translation_heading_gate_rad": (
+                0.0
+                if self.config.terminal_translation_heading_gate_rad is None
+                else float(self.config.terminal_translation_heading_gate_rad)
+            ),
+            "terminal_bearing_error": terminal_bearing_error,
+            "terminal_translation_scale": terminal_translation_scale,
+            "terminal_alignment_active": terminal_alignment_active,
+            "terminal_alignment_yaw_gain": (
+                0.0
+                if self.config.terminal_alignment_yaw_gain is None
+                else float(self.config.terminal_alignment_yaw_gain)
+            ),
+            "terminal_alignment_omega": terminal_alignment_omega,
+            "prior": dict(prior.metadata),
+        }
+        residual = getattr(self.dynamics, "residual", None)
+        confidence = getattr(residual, "confidence", None)
+        if callable(confidence):
+            support_controls = self._prediction_controls(
+                sequence[None, :, :]
+            )[0]
+            support = np.asarray(
+                confidence(updated_trajectory[:-1], support_controls), dtype=np.float64
+            ).reshape(-1)
+            diagnostics.update({
+                "residual_support_confidence_mean": float(np.mean(support)),
+                "residual_support_confidence_min": float(np.min(support)),
+                "residual_support_reduced_fraction": float(np.mean(support < 1.0 - 1e-12)),
+                "residual_support_disabled_fraction": float(np.mean(support <= 1e-12)),
+            })
+        else:
+            diagnostics.update({
+                "residual_support_confidence_mean": 1.0,
+                "residual_support_confidence_min": 1.0,
+                "residual_support_reduced_fraction": 0.0,
+                "residual_support_disabled_fraction": 0.0,
+            })
+        reliability = getattr(residual, "diagnostics", None)
+        if callable(reliability):
+            diagnostics.update(reliability())
+        else:
+            diagnostics.update({
+                "residual_reliability_enabled": False,
+                "residual_reliability_alpha": 1.0 if residual is not None else 0.0,
+                "residual_reliability_evidence_alpha": 1.0 if residual is not None else 0.0,
+                "residual_reliability_context_alpha": 1.0,
+                "residual_reliability_context_value": 0.0,
+                "residual_reliability_samples": 0,
+                "residual_reliability_mean_improvement": 0.0,
+                "residual_reliability_lcb": 0.0,
+                "residual_reliability_last_relative_improvement": 0.0,
+                "residual_reliability_nominal_error": 0.0,
+                "residual_reliability_residual_error": 0.0,
+            })
+        if profiling:
+            profile["profile_mppi_solve_total_ms"] = 1000.0 * (
+                time.perf_counter() - solve_started
+            )
+            diagnostics.update(profile)
+        return action, sequence, updated_trajectory, diagnostics
+
+    def preview_plan(self, observation: RobotObservation, reference) -> PlanResult:
+        """Evaluate the next MPPI plan without advancing controller state.
+
+        A cloned RNG supplies common random numbers for paired candidate-prior
+        comparisons.  The real controller RNG, receding-horizon sequence and
+        previous action are not changed.  Stateful prior/reference restoration
+        is handled by the offline environment wrapper that owns those objects.
+        """
+
+        started = time.perf_counter()
+        state = self.state_from_observation(observation)
+        target = reference.target_at(observation.timestamp, state)
+        state_reference_finished = (
+            time.perf_counter()
+            if self.config.profile_components else None
+        )
+        prior = self._prior(observation, reference)
+        prior_finished = (
+            time.perf_counter()
+            if self.config.profile_components else None
+        )
+        preview_rng = np.random.RandomState()
+        preview_rng.set_state(self.rng.get_state())
+        action, sequence, trajectory, diagnostics = self._solve_plan(
+            state,
+            prior,
+            target,
+            observation.local_obstacles,
+            preview_rng,
+        )
+        diagnostics["compute_ms"] = 1000.0 * (
+            time.perf_counter() - started
+        )
+        if self.config.profile_components:
+            diagnostics.update({
+                "profile_planner_state_reference_ms": 1000.0 * (
+                    state_reference_finished - started
+                ),
+                "profile_planner_prior_ms": 1000.0 * (
+                    prior_finished - state_reference_finished
+                ),
+            })
+        diagnostics["preview"] = True
+        return PlanResult(
+            proposed_control=ControlCommand(action, observation.timestamp, "mppi_preview"),
+            control_sequence=sequence,
+            predicted_trajectory=trajectory,
+            diagnostics=diagnostics,
+        )
+
+    def plan(self, observation: RobotObservation, reference) -> PlanResult:
+        started = time.perf_counter()
+        state = self.state_from_observation(observation)
+        self._observe_residual_reliability(state)
+        self._reliability_previous_state = state.copy()
+        target = reference.target_at(observation.timestamp, state)
+        state_reference_finished = (
+            time.perf_counter()
+            if self.config.profile_components else None
+        )
+        prior = self._prior(observation, reference)
+        prior_finished = (
+            time.perf_counter()
+            if self.config.profile_components else None
+        )
+        action, sequence, updated_trajectory, diagnostics = self._solve_plan(
+            state,
+            prior,
+            target,
+            observation.local_obstacles,
+            self.rng,
+        )
         self.previous_sequence = sequence.copy()
+        self._delay_preceding_action = self.previous_action.copy()
         self.previous_action = action.copy()
         setter = getattr(self.sampling_prior, "set_previous", None)
         if callable(setter):
             setter(sequence)
-        elapsed_ms = 1000.0 * (time.perf_counter() - started)
+        diagnostics["compute_ms"] = 1000.0 * (
+            time.perf_counter() - started
+        )
+        if self.config.profile_components:
+            diagnostics.update({
+                "profile_planner_state_reference_ms": 1000.0 * (
+                    state_reference_finished - started
+                ),
+                "profile_planner_prior_ms": 1000.0 * (
+                    prior_finished - state_reference_finished
+                ),
+            })
+        diagnostics["preview"] = False
         return PlanResult(
             proposed_control=ControlCommand(action, observation.timestamp, "mppi"),
             control_sequence=sequence,
             predicted_trajectory=updated_trajectory,
-            diagnostics={
-                "compute_ms": elapsed_ms,
-                "cost_min": float(costs.min()),
-                "cost_mean": float(costs.mean()),
-                "effective_sample_size": float(1.0 / np.sum(weights ** 2)),
-                "importance_sampling_correction": bool(
-                    self.config.importance_sampling_correction
-                ),
-                "importance_cost_mean": float(correction.mean()),
-                "weighted_perturbation_norm": float(np.linalg.norm(weighted_perturbation)),
-                "sample_saturation_fraction": float(
-                    np.mean(
-                        (samples <= self.action_spec.lower[None, None, :])
-                        | (samples >= self.action_spec.upper[None, None, :])
-                    )
-                ),
-                "reference_id": target.reference_id,
-                "prior": dict(prior.metadata),
-            },
+            diagnostics=diagnostics,
         )

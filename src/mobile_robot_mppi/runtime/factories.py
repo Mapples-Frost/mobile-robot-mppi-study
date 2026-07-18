@@ -90,7 +90,12 @@ def make_components(config, project_root, rl_policy=None):
             checkpoint_path = Path(project_root) / checkpoint_path
         device = str(planner_cfg.get("device", "cpu"))
         try:
-            from mobile_robot_mppi.learning.models import PlatformResidualDynamics
+            from mobile_robot_mppi.learning.models import (
+                InnovationGatedResidualDynamics,
+                NormalizedSupportGatedResidualDynamics,
+                PlatformResidualDynamics,
+                ResidualComponentMaskedDynamics,
+            )
             residual = PlatformResidualDynamics.from_checkpoint(
                 checkpoint_path,
                 device=device,
@@ -100,6 +105,74 @@ def make_components(config, project_root, rl_policy=None):
                 raise ValueError(
                     "checkpoint model type %s does not match %s"
                     % (residual.model.model_type, prediction_mode)
+                )
+            component_mask = planner_cfg.get("residual_component_mask")
+            if component_mask is not None:
+                residual = ResidualComponentMaskedDynamics(
+                    residual, component_mask
+                )
+            support_gate = dict(planner_cfg.get("residual_support_gate", {}))
+            if bool(support_gate.get("enabled", False)):
+                residual = NormalizedSupportGatedResidualDynamics(
+                    residual,
+                    soft_z=float(support_gate.get("soft_z", 3.0)),
+                    hard_z=float(support_gate.get("hard_z", 5.0)),
+                )
+            reliability_gate = dict(
+                planner_cfg.get("residual_reliability_gate", {})
+            )
+            if bool(reliability_gate.get("enabled", False)):
+                state_names = tuple(
+                    reliability_gate.get("state_names", ("v", "omega"))
+                )
+                unknown = [name for name in state_names if name not in state_spec.names]
+                if unknown:
+                    raise ValueError(
+                        "residual reliability state names are unavailable: %s"
+                        % unknown
+                    )
+                state_indices = [state_spec.index(name) for name in state_names]
+                state_scales = reliability_gate.get("state_scales", (0.25, 0.6))
+                delay_context = dict(
+                    reliability_gate.get("actuation_delay_context", {})
+                )
+                context_value = None
+                if bool(delay_context.get("enabled", False)):
+                    context_value = float(
+                        planner_cfg.get("command_delay_s", 0.0)
+                    ) / float(
+                        planner_cfg.get(
+                            "dt", config["experiment"]["control_dt"]
+                        )
+                    )
+                residual = InnovationGatedResidualDynamics(
+                    residual,
+                    state_indices=state_indices,
+                    state_scales=state_scales,
+                    forgetting_factor=float(
+                        reliability_gate.get("forgetting_factor", 0.95)
+                    ),
+                    minimum_samples=int(
+                        reliability_gate.get("minimum_samples", 8)
+                    ),
+                    confidence_z=float(
+                        reliability_gate.get("confidence_z", 1.0)
+                    ),
+                    off_threshold=float(
+                        reliability_gate.get("off_threshold", 0.0)
+                    ),
+                    on_threshold=float(
+                        reliability_gate.get("on_threshold", 0.15)
+                    ),
+                    rise_rate=float(reliability_gate.get("rise_rate", 0.25)),
+                    fall_rate=float(reliability_gate.get("fall_rate", 0.5)),
+                    context_value=context_value,
+                    context_off_threshold=float(
+                        delay_context.get("off_threshold", 0.5)
+                    ),
+                    context_on_threshold=float(
+                        delay_context.get("on_threshold", 0.8)
+                    ),
                 )
             dynamics = ResidualPrediction(dynamics, residual)
         except ValueError as platform_error:
@@ -129,6 +202,57 @@ def make_components(config, project_root, rl_policy=None):
             planner_cfg.get("prior_yaw_gain", 1.2),
             planner_cfg.get("prior_translation_heading_gate_rad"),
             planner_cfg.get("prior_translation_heading_gate_terminal_only", False),
+            planner_cfg.get("prior_terminal_max_speed"),
+        )
+    elif prior_kind == "fixed_covariance":
+        from mobile_robot_mppi.policies.priors import FixedCovariancePrior
+
+        fallback = GoalWarmStartPrior(
+            planner_cfg.get("prior_v_gain", 0.8),
+            planner_cfg.get("prior_yaw_gain", 1.2),
+            planner_cfg.get("prior_translation_heading_gate_rad"),
+            planner_cfg.get(
+                "prior_translation_heading_gate_terminal_only", False
+            ),
+            planner_cfg.get("prior_terminal_max_speed"),
+        )
+        prior = FixedCovariancePrior(
+            fallback,
+            mppi_config.noise_sigma,
+            planner_cfg.get(
+                "fixed_covariance_scale",
+                [1.0] * action_spec.dimension,
+            ),
+        )
+    elif prior_kind == "contextual_bandit_covariance":
+        rl_cfg = dict(config.get("rl", {}))
+        if not bool(rl_cfg.get("enabled", False)):
+            raise ValueError(
+                "sampling_prior=contextual_bandit_covariance requires rl.enabled=true"
+            )
+        checkpoint = rl_cfg.get("checkpoint")
+        if not checkpoint:
+            raise ValueError("contextual bandit inference requires rl.checkpoint")
+        checkpoint_path = Path(checkpoint)
+        if not checkpoint_path.is_absolute():
+            checkpoint_path = Path(project_root) / checkpoint_path
+        fallback = GoalWarmStartPrior(
+            planner_cfg.get("prior_v_gain", 0.8),
+            planner_cfg.get("prior_yaw_gain", 1.2),
+            planner_cfg.get("prior_translation_heading_gate_rad"),
+            planner_cfg.get(
+                "prior_translation_heading_gate_terminal_only", False
+            ),
+            planner_cfg.get("prior_terminal_max_speed"),
+        )
+        from mobile_robot_mppi.rl.contextual_bandit import (
+            ContextualBanditCovariancePrior,
+        )
+
+        prior = ContextualBanditCovariancePrior.from_checkpoint(
+            checkpoint_path,
+            fallback,
+            mppi_config.noise_sigma,
         )
     elif prior_kind == "rl":
         rl_cfg = dict(config.get("rl", {}))
@@ -160,6 +284,7 @@ def make_components(config, project_root, rl_policy=None):
                 planner_cfg.get(
                     "prior_translation_heading_gate_terminal_only", False
                 ),
+                planner_cfg.get("prior_terminal_max_speed"),
             )
             from mobile_robot_mppi.rl.prior import TorchSACPrior
 

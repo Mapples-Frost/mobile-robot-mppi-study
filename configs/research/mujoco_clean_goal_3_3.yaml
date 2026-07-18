@@ -1,0 +1,8 @@
+include: mujoco_strong_mppi_baseline.yaml
+
+experiment:
+  name: mujoco_clean_goal_3_3
+
+scene:
+  name: clean_goal_3_3
+  obstacles: []

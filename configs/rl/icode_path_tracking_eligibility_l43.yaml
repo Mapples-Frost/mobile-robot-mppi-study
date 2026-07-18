@@ -1,0 +1,35 @@
+include: icode_closed_loop_eligibility_l41.yaml
+
+experiment:
+  name: icode_path_tracking_eligibility_l43
+  output_dir: results/research_platform/rl/l43_icode_path_tracking_20260716_v1
+
+rl:
+  cross_layer_factorial:
+    design_id: l43_icode_path_tracking_v1
+    schedule_seed: 2026071611
+    conditions: [traditional_nominal, traditional_icode]
+    scenes:
+      - {role: gentle_s, path: configs/research/mujoco_path_gentle_s_l43.yaml}
+      - {role: double_turn, path: configs/research/mujoco_path_double_turn_l43.yaml}
+      - {role: slalom, path: configs/research/mujoco_path_slalom_l43.yaml}
+    development_episode_seeds: [21060731, 21060732, 21060733, 21060734, 21060735]
+    sealed_confirmation_episode_seeds: [21060736, 21060737, 21060738, 21060739, 21060740, 21060741, 21060742, 21060743, 21060744, 21060745]
+    protected_config_paths:
+      - configs/rl/l34_independent_confirmation_l35.yaml
+      - configs/rl/dynamic_benchmark_calibration_l36.yaml
+      - configs/rl/bounded_rl_icode_factorial_l37.yaml
+      - configs/rl/icode_delay_identifiability_l38.yaml
+      - configs/rl/icode_closed_loop_eligibility_l41.yaml
+      - configs/rl/icode_support_gate_l42.yaml
+    bootstrap_seed: 2026071612
+    bootstrap_replicates: 10000
+    eligibility_gate:
+      minimum_positive_tracking_model_blocks: 2
+      minimum_relative_cross_track_rmse_reduction: 0.10
+      minimum_cross_track_improvement_ci95_lower_m: 0.0
+      minimum_net_success_gain: 0
+      maximum_net_collision_increase: 0
+      minimum_completion_ratio_difference: -0.01
+      maximum_icode_mean_planner_compute_ms: 50.0
+

@@ -1,0 +1,79 @@
+include: static_risk_balanced_sealed_confirmation_l74.yaml
+
+experiment:
+  name: correction_support_gate_l76
+  output_dir: results/research_platform/rl/l76_correction_support_gate_20260717_v1
+
+rl:
+  policy_id: correction_support_gate_l76
+  gate:
+    correction_support_gate_enabled: false
+    correction_support_soft_threshold: 3.0
+    correction_support_hard_threshold: 7.0
+  cross_layer_factorial:
+    study_label: L76
+    artifact_prefix: l76
+    design_id: l76_correction_support_gate_v1
+    confirmation_mode: false
+    schedule_seed: 2026071776
+    conditions:
+      - complexity_bc_icode
+      - gated_lcb_icode
+      - support_gated_lcb_icode
+    model_blocks:
+      - rl_seed: 20260751
+        icode_seed: 20261201
+        icode_checkpoint: results/research_platform/l57_icode_high_dynamic_h36_seed20261201_v1/best.pt
+        condition_checkpoints:
+          complexity_bc_icode: results/research_platform/rl/l72_static_risk_balanced_seed20260751_30k_20260717_v2/checkpoints/initial.pt
+          gated_lcb_icode: results/research_platform/rl/l72_static_risk_balanced_seed20260751_30k_20260717_v2/checkpoints/step_000030000.pt
+          support_gated_lcb_icode: results/research_platform/rl/l72_static_risk_balanced_seed20260751_30k_20260717_v2/checkpoints/step_000030000.pt
+      - rl_seed: 20260752
+        icode_seed: 20261202
+        icode_checkpoint: results/research_platform/l57_icode_high_dynamic_h36_seed20261202_v1/best.pt
+        condition_checkpoints:
+          complexity_bc_icode: results/research_platform/rl/l72_static_risk_balanced_seed20260752_30k_20260717_v2/checkpoints/initial.pt
+          gated_lcb_icode: results/research_platform/rl/l72_static_risk_balanced_seed20260752_30k_20260717_v2/checkpoints/step_000030000.pt
+          support_gated_lcb_icode: results/research_platform/rl/l72_static_risk_balanced_seed20260752_30k_20260717_v2/checkpoints/step_000030000.pt
+      - rl_seed: 20260753
+        icode_seed: 20261203
+        icode_checkpoint: results/research_platform/l57_icode_high_dynamic_h36_seed20261203_v1/best.pt
+        condition_checkpoints:
+          complexity_bc_icode: results/research_platform/rl/l72_static_risk_balanced_seed20260753_30k_20260717_v2/checkpoints/initial.pt
+          gated_lcb_icode: results/research_platform/rl/l72_static_risk_balanced_seed20260753_30k_20260717_v2/checkpoints/step_000030000.pt
+          support_gated_lcb_icode: results/research_platform/rl/l72_static_risk_balanced_seed20260753_30k_20260717_v2/checkpoints/step_000030000.pt
+    development_episode_seeds:
+      [22200901, 22200902, 22200903, 22200904, 22200905]
+    sealed_confirmation_episode_seeds:
+      [22200911, 22200912, 22200913, 22200914, 22200915]
+    protected_config_paths:
+      - configs/rl/static_rl_contribution_l69.yaml
+      - configs/rl/static_multigeometry_deployment_selection_l71.yaml
+      - configs/rl/static_risk_balanced_deployment_selection_l73.yaml
+      - configs/rl/static_risk_balanced_sealed_confirmation_l74.yaml
+      - configs/rl/progress_competence_activation_l75.yaml
+    correction_support_gate:
+      base_condition: complexity_bc_icode
+      always_condition: gated_lcb_icode
+      support_condition: support_gated_lcb_icode
+      minimum_nonnegative_net_success_blocks: 2
+      minimum_total_success_gains: 2
+      maximum_total_success_losses: 2
+      minimum_total_net_success_gain: 1
+      maximum_u_trap_success_losses: 0
+      minimum_corridor_net_success_gain: 2
+      maximum_collision_regressions: 0
+      minimum_mean_goal_distance_improvement_m: 0.0
+      maximum_losses_relative_to_always: 0
+      minimum_gain_retention_relative_to_always: -1
+      minimum_effective_correction_reduction_vs_always: 0.15
+      minimum_mean_support_confidence: 0.15
+      maximum_mean_support_confidence: 0.90
+      maximum_frozen_base_correction_gate_alpha: 0.0
+    interpretation_guard: >-
+      L76 is a preregistered development test of observation-support
+      attenuation applied only to the SAC correction around the frozen BC
+      action. The support score is not a calibrated probability. L74 and L75
+      seeds are protected; L76 sealed seeds cannot be used for tuning. The
+      3.0/7.0 step-scale thresholds were frozen by preregistration amendment
+      110 before any L76 development episode was run.

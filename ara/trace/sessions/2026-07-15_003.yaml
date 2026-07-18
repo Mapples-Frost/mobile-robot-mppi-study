@@ -1,0 +1,66 @@
+session:
+  id: "2026-07-15_003"
+  timestamp: "2026-07-15T12:05:35+08:00"
+  summary: "Implemented L20 scale-invariant twin-critic consensus gating; beta 2 was a strong near-miss but failed zero-regression selection."
+
+events_logged:
+  - type: question
+    id: N13
+    provenance: ai-suggested
+    summary: "Test whether a dimensionless disagreement-penalized target-critic score can safely gate correction."
+  - type: experiment
+    id: N14
+    provenance: ai-executed
+    summary: "Ran BC and six LCB betas over 3 training seeds x 12 paired calibration seeds."
+  - type: dead_end
+    id: N15
+    provenance: ai-executed
+    summary: "Rejected self-gating with the actor's existing twin critics after one paired BC-success regression remained."
+  - type: claim
+    id: C08
+    provenance: ai-suggested
+    summary: "Safe gating by existing twin-critic consensus alone was refuted."
+  - type: claim
+    id: C09
+    provenance: ai-suggested
+    summary: "Beta 2 retained a strong but unsafe correction signal: 31/36 success with five gains and one loss."
+  - type: heuristic
+    id: H06
+    provenance: ai-suggested
+    summary: "Use mean advantage minus beta times half-disagreement for a scale-invariant consensus diagnostic."
+
+ai_actions:
+  - action: "Implemented the opt-in LCB inference gate, standard evaluator metrics, beta selector, config and CLI support without changing default MPPI behavior."
+    provenance: ai-executed
+    files_changed:
+      - "src/mobile_robot_mppi/rl/sac.py"
+      - "src/mobile_robot_mppi/rl/prior.py"
+      - "src/mobile_robot_mppi/rl/calibration.py"
+      - "src/mobile_robot_mppi/evaluation/metrics.py"
+      - "experiments/rl/evaluate_rl_sampling_prior.py"
+      - "experiments/rl/run_correction_advantage_lcb_grid.py"
+      - "experiments/rl/select_correction_advantage_lcb.py"
+  - action: "Preregistered L20 before collection and generated a result/data-quality report after selection."
+    provenance: ai-executed
+    files_changed:
+      - "docs/rl/20_l20_twin_critic_consensus_lcb_prereg_2026-07-15.md"
+      - "docs/rl/21_l20_twin_critic_consensus_lcb_results_2026-07-15.md"
+  - action: "Executed 252 calibration episodes, audited 70,081 step rows and ran 288 repository tests."
+    provenance: ai-executed
+    files_changed: []
+
+claims_touched:
+  - id: C08
+    action: created
+    provenance: ai-suggested
+  - id: C09
+    action: created
+    provenance: ai-suggested
+
+open_threads:
+  - "Design L21 around an actor-independent risk estimator or independently trained critic ensemble."
+  - "Keep episode seeds 20281101--20281115 sealed until a future calibration method passes zero-regression eligibility."
+
+ai_suggestions_pending:
+  - "Use L20 failure/gain episodes only for L21 design or training, never as L21 final validation."
+  - "Keep ICODE, Memory, OOD and dynamic obstacles disabled until seen-scene correction non-inferiority passes."

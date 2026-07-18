@@ -1,0 +1,22 @@
+include: mujoco_strong_mppi_baseline.yaml
+
+experiment:
+  name: dynamic_calibrated_hard_l37
+
+scene:
+  name: dynamic_calibrated_hard_l37
+  obstacles:
+    - type: cylinder
+      position: [0.55, 2.20]
+      radius: 0.20
+      height: 0.50
+      motion:
+        type: linear_ping_pong
+        start: [0.55, 2.20]
+        end: [2.45, 0.80]
+        period_s: 16.0
+        phase_s: 4.0
+        phase_jitter_s: 8.0
+        period_scale_range: [0.85, 1.15]
+        endpoint_jitter_m: 0.05
+

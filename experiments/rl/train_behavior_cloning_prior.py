@@ -40,11 +40,21 @@ def main(argv=None):
     parser.add_argument("--dataset-dir", required=True)
     parser.add_argument("--output-dir", required=True)
     parser.add_argument("--resume-bc")
+    parser.add_argument(
+        "--allow-legacy-resume",
+        action="store_true",
+        help=(
+            "explicitly permit an older BC checkpoint without the full "
+            "resume contract/best-actor snapshot"
+        ),
+    )
     parser.add_argument("--epochs", type=int)
     parser.add_argument("--seed", type=int)
     parser.add_argument("--device", choices=("auto", "cpu", "cuda"))
     parser.add_argument("--smoke", action="store_true")
     args = parser.parse_args(argv)
+    if args.allow_legacy_resume and not args.resume_bc:
+        parser.error("--allow-legacy-resume requires --resume-bc")
     config = load_yaml(_resolve(args.config))
     bc = config.setdefault("rl", {}).setdefault("behavior_cloning", {})
     if args.epochs is not None:
@@ -67,7 +77,10 @@ def main(argv=None):
         _resolve(args.output_dir),
     )
     if args.resume_bc:
-        trainer.resume(_resolve(args.resume_bc))
+        trainer.resume(
+            _resolve(args.resume_bc),
+            allow_legacy=bool(args.allow_legacy_resume),
+        )
     result = trainer.run()
     print(json.dumps(result, indent=2, sort_keys=True))
     return 0

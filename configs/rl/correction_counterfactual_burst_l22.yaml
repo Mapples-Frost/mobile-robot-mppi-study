@@ -1,0 +1,14 @@
+include: correction_counterfactual_branches_l21.yaml
+
+experiment:
+  name: correction_counterfactual_burst_l22
+  output_dir: results/research_platform/rl/correction_counterfactual_burst_l22_20260715
+
+rl:
+  policy_id: correction_counterfactual_burst_l22
+  risk_dataset:
+    intervention_type: gated_correction_burst
+    intervention_steps: 10
+    branch_horizon: 40
+    sealed_test_episode_seeds: [20281311, 20281312, 20281313, 20281314, 20281315]
+

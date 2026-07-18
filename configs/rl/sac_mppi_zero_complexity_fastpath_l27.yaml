@@ -1,0 +1,21 @@
+include: sac_mppi_sample_efficiency_l26.yaml
+
+experiment:
+  name: sac_mppi_zero_complexity_fastpath_l27
+  output_dir: results/research_platform/rl/zero_complexity_fastpath_l27_20260715
+
+rl:
+  policy_id: sac_mppi_zero_complexity_fastpath_l27
+  zero_complexity_fastpath_ablation:
+    schedule_seed: 20260771
+    conditions: [standard_complexity, zero_complexity_fastpath]
+    num_samples: 100
+    development_episode_seeds: [20281901, 20281902, 20281903, 20281904, 20281905, 20281906, 20281907, 20281908, 20281909, 20281910]
+    sealed_test_episode_seeds: [20281911, 20281912, 20281913, 20281914, 20281915, 20281916, 20281917, 20281918, 20281919, 20281920, 20281921, 20281922, 20281923, 20281924, 20281925, 20281926, 20281927, 20281928, 20281929, 20281930]
+    maximum_behavior_mismatch_steps: 0
+    maximum_success_mismatches: 0
+    maximum_collision_mismatches: 0
+    minimum_control_skip_fraction: 0.99
+    minimum_blocking_skip_fraction: 0.10
+    minimum_control_time_reduction_fraction: 0.15
+    minimum_blocking_time_reduction_fraction: 0.05

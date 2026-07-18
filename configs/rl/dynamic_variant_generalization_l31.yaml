@@ -1,0 +1,48 @@
+include: cross_layer_factorial_l29.yaml
+
+experiment:
+  name: dynamic_variant_generalization_l31
+  output_dir: results/research_platform/rl/dynamic_variant_generalization_l31_20260715
+
+rl:
+  policy_id: dynamic_variant_generalization_l31
+  gate:
+    # These thresholds are frozen from L30.  L31 does not tune them on the new
+    # motion variants or episode seeds.
+    temporal_closing_enabled: false
+    temporal_closing_soft_mps: 0.05
+    temporal_closing_hard_mps: 0.20
+    temporal_closing_max_clearance_m: 1.50
+    temporal_closing_hold_s: 0.60
+
+  cross_layer_factorial:
+    schedule_seed: 20260794
+    protected_config_paths:
+      - configs/rl/cross_layer_factorial_l29.yaml
+      - configs/rl/cross_layer_temporal_gate_l30.yaml
+    conditions:
+      - traditional_icode
+      - lcb_icode
+      - gated_lcb_icode
+      - temporal_gated_lcb_nominal
+      - temporal_gated_lcb_icode
+
+    scenes:
+      - {role: anchor_standard, path: configs/research/mujoco_dynamic_crossing.yaml}
+      - {role: reverse_standard, path: configs/research/mujoco_dynamic_crossing_reverse.yaml}
+      - {role: fast_crossing, path: configs/research/mujoco_dynamic_crossing_fast.yaml}
+      - {role: large_early, path: configs/research/mujoco_dynamic_crossing_large_early.yaml}
+
+    development_episode_seeds: [20283101, 20283102, 20283103, 20283104, 20283105]
+    sealed_confirmation_episode_seeds: [20283106, 20283107, 20283108, 20283109, 20283110, 20283111, 20283112, 20283113, 20283114, 20283115, 20283116, 20283117, 20283118, 20283119, 20283120]
+
+    # Primary deployment candidate: temporal_gated_lcb_icode.  The nominal
+    # temporal method is a diagnostic ablation and cannot veto primary safety.
+    maximum_primary_collisions: 0
+    minimum_primary_successes: 108
+    minimum_primary_successes_per_stratum: 12
+    minimum_primary_best_or_tied_strata: 6
+    minimum_primary_net_success_gain_vs_spatial: 24
+    minimum_icode_net_success_gain_vs_temporal_nominal: 0
+    maximum_icode_net_collision_gain_vs_temporal_nominal: 0
+    minimum_efficacy_checks_required: 3

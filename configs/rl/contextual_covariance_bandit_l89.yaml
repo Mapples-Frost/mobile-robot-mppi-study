@@ -1,0 +1,58 @@
+schema_version: 1
+design_id: l89_offline_contextual_covariance_bandit_v1
+seed: 20269711
+
+action_scales:
+  narrow: [0.5, 0.5]
+  speed: [1.75, 0.75]
+
+# Scalar utility is used only to train the contextual reward critic.  Final
+# acceptance remains the preregistered lexicographic safety/precision/time
+# gate, so a scalar reward cannot declare success by itself.
+reward:
+  cross_track_weight_s_per_m: 1500.0
+  failure_penalty_s: 500.0
+  collision_penalty_s: 500.0
+  scale_s: 100.0
+
+bandit:
+  ridge_candidates: [0.001, 0.01, 0.05, 0.2, 1.0, 5.0]
+  exploration_alpha: 1.0
+
+data_sources:
+  - path: results/research_platform/rl/l87_covariance_context_oracle_20260718_v1/episodes.csv
+    train_split: selection
+    validation_split: evaluation
+    train_scenes:
+      - high_dynamic_accel_turn_l56
+      - high_dynamic_chicane_l56
+    validation_scenes:
+      - high_dynamic_accel_turn_l56
+      - high_dynamic_chicane_l56
+  - path: results/research_platform/rl/l88_covariance_context_train_expansion_20260718_v1/episodes.csv
+    train_split: selection
+    validation_split: evaluation
+    train_scenes:
+      - high_dynamic_accel_straight_l56
+      - high_dynamic_sweep_l56
+    validation_scenes:
+      - high_dynamic_accel_straight_l56
+      - high_dynamic_sweep_l56
+
+scene_configs:
+  - configs/research/mujoco_high_dynamic_accel_straight_l56.yaml
+  - configs/research/mujoco_high_dynamic_sweep_l56.yaml
+  - configs/research/mujoco_high_dynamic_accel_turn_l56.yaml
+  - configs/research/mujoco_high_dynamic_chicane_l56.yaml
+  - configs/research/mujoco_high_dynamic_hairpin_unseen_l56.yaml
+  - configs/research/mujoco_high_dynamic_reverse_s_unseen_l56.yaml
+
+heldout_policy_test:
+  source: results/research_platform/rl/l87_covariance_context_oracle_20260718_v1/episodes.csv
+  split: evaluation
+  scenes:
+    - high_dynamic_hairpin_unseen_l56
+    - high_dynamic_reverse_s_unseen_l56
+  comparator: speed
+  cross_track_noninferiority_margin_m: 0.002
+  require_time_superiority: true

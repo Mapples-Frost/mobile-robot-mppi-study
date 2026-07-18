@@ -1,0 +1,20 @@
+include: mujoco_strong_mppi_baseline.yaml
+
+experiment:
+  name: mujoco_dynamic_crossing_large_early
+
+# A larger obstacle with a different, earlier encounter phase.  Its radius and
+# timing are frozen here before any L31 outcome is observed.
+scene:
+  name: dynamic_crossing_large_early
+  obstacles:
+    - type: cylinder
+      position: [2.10, 0.90]
+      radius: 0.28
+      height: 0.50
+      motion:
+        type: linear_ping_pong
+        start: [2.10, 0.90]
+        end: [0.90, 2.10]
+        period_s: 20.0
+        phase_s: 11.0

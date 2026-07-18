@@ -1,0 +1,31 @@
+schema_version: 1
+design_id: l84_covariance_policy_evaluation_v1
+primary_comparator: fixed_broad
+episode_seeds: [20269001, 20269002, 20269003, 20269004, 20269005]
+scenes:
+  - configs/research/mujoco_high_dynamic_accel_turn_l56.yaml
+  - configs/research/mujoco_high_dynamic_chicane_l56.yaml
+  - configs/research/mujoco_high_dynamic_hairpin_unseen_l56.yaml
+  - configs/research/mujoco_high_dynamic_reverse_s_unseen_l56.yaml
+conditions:
+  - name: learned_covariance
+    kind: learned
+  - name: fixed_baseline
+    kind: fixed
+    scale: [1.0, 1.0]
+  - name: fixed_speed_explore
+    kind: fixed
+    scale: [1.75, 0.75]
+  - name: fixed_broad
+    kind: fixed
+    scale: [1.75, 1.75]
+blocks:
+  - name: block_0
+    config: configs/rl/sac_mppi_covariance_only_l84.yaml
+    checkpoint: results/research_platform/rl/l84_covariance_only_seed20268801_v1/checkpoints/best.pt
+  - name: block_1
+    config: configs/rl/sac_mppi_covariance_only_l84_seed20268802.yaml
+    checkpoint: results/research_platform/rl/l84_covariance_only_seed20268802_v1/checkpoints/best.pt
+  - name: block_2
+    config: configs/rl/sac_mppi_covariance_only_l84_seed20268803.yaml
+    checkpoint: results/research_platform/rl/l84_covariance_only_seed20268803_v1/checkpoints/best.pt

@@ -1,0 +1,38 @@
+include: sac_mppi_zero_complexity_fastpath_l27.yaml
+
+experiment:
+  name: sac_mppi_inference_profile_l28
+  output_dir: results/research_platform/rl/inference_profile_l28_20260715
+
+rl:
+  policy_id: sac_mppi_inference_profile_l28
+  gate:
+    profile_inference: true
+    skip_zero_complexity_inference: true
+
+  inference_profile_ablation:
+    schedule_seed: 20260781
+    conditions:
+      - reference_full_diagnostics
+      - selected_critic_only
+      - selected_critic_base_reuse
+    num_samples: 100
+    development_episode_seeds: [20282001, 20282002, 20282003, 20282004, 20282005, 20282006, 20282007, 20282008, 20282009, 20282010]
+    sealed_test_episode_seeds: [20282011, 20282012, 20282013, 20282014, 20282015, 20282016, 20282017, 20282018, 20282019, 20282020, 20282021, 20282022, 20282023, 20282024, 20282025, 20282026, 20282027, 20282028, 20282029, 20282030]
+
+    # Any changed closed-loop behavior invalidates the optimization.
+    maximum_behavior_mismatch_steps: 0
+    maximum_success_mismatches: 0
+    maximum_collision_mismatches: 0
+    maximum_selected_gate_mismatches: 0
+
+    # Timing gates are evaluated on the three blocking scenes, paired within
+    # checkpoint-scene-episode.  Clean scenes are retained as exact fallback
+    # controls but are not expected to benefit beyond L27's existing fast path.
+    minimum_selected_only_prior_reduction_fraction: 0.15
+    minimum_combined_prior_reduction_fraction: 0.20
+    minimum_combined_blocking_planner_reduction_fraction: 0.05
+    minimum_combined_reduction_ci95_low: 0.0
+
+planner:
+  profile_components: true

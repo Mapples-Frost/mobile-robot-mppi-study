@@ -1,0 +1,29 @@
+include: mujoco_strong_mppi_baseline.yaml
+
+experiment:
+  name: path_gentle_s_l43
+  max_steps: 360
+  initial_state: [0.0, 0.0, 0.0, 0.0, 0.0]
+
+task:
+  type: polyline
+  position_tolerance: 0.25
+  lookahead_distance: 0.45
+  terminal_approach_distance: 0.90
+  points:
+    - [0.00, 0.00]
+    - [0.30, 0.02]
+    - [0.60, 0.10]
+    - [0.90, 0.25]
+    - [1.20, 0.45]
+    - [1.50, 0.62]
+    - [1.80, 0.70]
+    - [2.10, 0.65]
+    - [2.40, 0.50]
+    - [2.70, 0.30]
+    - [3.00, 0.15]
+
+scene:
+  name: path_gentle_s_l43
+  obstacles: []
+

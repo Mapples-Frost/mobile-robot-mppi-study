@@ -40,6 +40,9 @@ class ExperimentRunner:
         memory = self.components["memory"]
         truth = plant.reset(seed, initial)
         observation = self.components["sensors"].reset(truth, seed)
+        perception_reset = getattr(self.components["perception"], "reset", None)
+        if callable(perception_reset):
+            perception_reset()
         reference_reset = getattr(reference, "reset", None)
         if callable(reference_reset):
             reference_reset()
@@ -58,11 +61,19 @@ class ExperimentRunner:
             target = type(truth.pose)(final_values[0], final_values[1], final_values[2])
         else:
             target = reference.target_at(0.0, initial).pose
+        reference_points = None
+        for attribute in ("waypoints", "points", "poses"):
+            if hasattr(reference, attribute):
+                reference_points = np.asarray(
+                    getattr(reference, attribute), dtype=np.float64
+                )[:, :2]
+                break
         metrics = EpisodeMetrics(
             target.x,
             target.y,
             float(self.config["task"].get("position_tolerance", 0.2)),
             control_dt=dt,
+            reference_points=reference_points,
         )
         writer = ArtifactWriter(self.output_dir, self.config, self.project_root)
         viewer = MujocoViewer(plant, enabled=not self.headless)

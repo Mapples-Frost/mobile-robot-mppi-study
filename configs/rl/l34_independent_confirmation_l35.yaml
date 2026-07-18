@@ -1,0 +1,41 @@
+include: sac_mppi_dynamic_history_bounded_l34.yaml
+
+experiment:
+  name: l34_independent_confirmation_l35
+  output_dir: results/research_platform/rl/l35_l34_independent_confirmation_20260716_v1
+
+rl:
+  confirmation:
+    design_id: l35_l34_independent_confirmation_v1
+    schedule_seed: 20260716
+    base_config: configs/rl/sac_mppi_dynamic_history_bounded_l34.yaml
+    fixed_alpha: 0.25
+    prediction_mode: nominal
+    physics_domain_config: configs/research/mujoco_physics_domains.yaml
+    physics_domain: combined_unseen
+    scenes:
+      - configs/research/mujoco_dynamic_validation_diagonal_l33.yaml
+      - configs/research/mujoco_dynamic_validation_offset_l33.yaml
+    # These episode seeds were not used for training, checkpoint selection, or
+    # L33/L34 development validation. They are frozen before L35 execution.
+    episode_seeds: [20460731, 20460732, 20460733, 20460734, 20460735]
+    forbidden_episode_seeds: [20360731, 20360732, 20360733]
+    training_runs:
+      - training_seed: 20260731
+        best_step: 30000
+        path: results/research_platform/rl/dynamic_history_bounded_l34_seed20260731_30k_20260716_v1
+      - training_seed: 20260732
+        best_step: 30000
+        path: results/research_platform/rl/dynamic_history_bounded_l34_seed20260732_30k_20260716_v1
+      - training_seed: 20260733
+        best_step: 15000
+        path: results/research_platform/rl/dynamic_history_bounded_l34_seed20260733_30k_20260716_v1
+    bootstrap_seed: 2026071601
+    bootstrap_replicates: 10000
+    gate:
+      minimum_positive_success_training_seeds: 2
+      minimum_collision_noninferior_training_seeds: 2
+      minimum_pooled_net_success_gain: 3
+      maximum_pooled_net_collision_increase: 0
+      minimum_mean_goal_distance_improvement_m: 0.10
+

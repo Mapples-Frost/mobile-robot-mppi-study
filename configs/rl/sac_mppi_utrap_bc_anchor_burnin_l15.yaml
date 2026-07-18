@@ -1,0 +1,16 @@
+include: sac_mppi_utrap_bc_anchor_l14.yaml
+
+experiment:
+  name: sac_mppi_utrap_bc_anchor_burnin_l15
+  output_dir: results/research_platform/rl/utrap_bc_anchor_burnin_l15_20260714
+
+# L14's BC penalty slowed but did not prevent degradation.  L15 changes one
+# factor for diagnosis: critics receive a 10k-transition burn-in while actor
+# weights and entropy temperature stay exactly frozen.  This isolates the
+# onset of actor updates; it does not by itself prove which critic/distribution
+# mechanism caused the later non-monotonic behavior change.
+rl:
+  policy_id: sac_mppi_utrap_bc_anchor_burnin_l15_v1
+
+  training:
+    actor_update_after: 10001

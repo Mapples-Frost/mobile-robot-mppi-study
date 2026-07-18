@@ -1,0 +1,13 @@
+include: sac_mppi_static_risk_balanced_l72.yaml
+
+experiment:
+  name: sac_mppi_static_risk_balanced_l72_seed20260752
+  output_dir: results/research_platform/rl/l72_static_risk_balanced_seed20260752_30k_20260716_v1
+
+planner:
+  checkpoint: results/research_platform/l57_icode_high_dynamic_h36_seed20261202_v1/best.pt
+
+rl:
+  training:
+    seed: 20260752
+

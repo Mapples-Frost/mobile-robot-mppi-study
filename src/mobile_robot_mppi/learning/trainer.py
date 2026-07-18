@@ -1,5 +1,6 @@
 import copy
 import csv
+import hashlib
 import json
 import math
 import random
@@ -51,20 +52,73 @@ def integrate(model, state, control, dt, dynamics_config, method="rk4"):
     return torch.cat((result[..., :2], wrapped, result[..., 3:]), dim=-1)
 
 
-def state_mse(predicted, target):
+def state_mse(predicted, target, component_weights=None):
     error = predicted - target
     wrapped = torch.atan2(torch.sin(error[..., 2:3]), torch.cos(error[..., 2:3]))
     periodic_error = torch.cat((error[..., :2], wrapped, error[..., 3:]), dim=-1)
-    return torch.mean(periodic_error ** 2)
+    squared = periodic_error ** 2
+    if component_weights is not None:
+        weights = torch.as_tensor(
+            component_weights, dtype=squared.dtype, device=squared.device
+        ).reshape(-1)
+        if weights.shape != (squared.shape[-1],):
+            raise ValueError("state_loss_weights must match state dimension")
+        if not torch.isfinite(weights).all() or torch.any(weights <= 0.0):
+            raise ValueError("state_loss_weights must be finite and positive")
+        squared = squared * weights / torch.mean(weights)
+    return torch.mean(squared)
 
 
-def load_split(directory, name):
+def _split_path(directory, name):
     candidates = (Path(directory) / (name + ".npz"), Path(directory) / ("dataset_" + name + ".npz"))
     path = next((value for value in candidates if value.exists()), None)
     if path is None:
         raise FileNotFoundError("missing %s dataset split" % name)
+    return path
+
+
+def load_split(directory, name):
+    path = _split_path(directory, name)
     with np.load(path, allow_pickle=False) as archive:
         return {key: archive[key] for key in archive.files}
+
+
+def _sha256_file(path):
+    digest = hashlib.sha256()
+    with Path(path).open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def dataset_provenance(directory):
+    """Return immutable identifiers for every split visible to a run."""
+
+    root = Path(directory).resolve()
+    splits = {}
+    for name in ("train", "validation", "test", "unseen"):
+        try:
+            path = _split_path(root, name).resolve()
+        except FileNotFoundError:
+            continue
+        with np.load(path, allow_pickle=False) as archive:
+            transitions = int(archive["state_t"].shape[0])
+            episodes = int(np.unique(archive["episode_id"]).size)
+        splits[name] = {
+            "path": str(path),
+            "sha256": _sha256_file(path),
+            "transition_count": transitions,
+            "episode_count": episodes,
+        }
+    manifest = root / "dataset_manifest.json"
+    return {
+        "directory": str(root),
+        "splits": splits,
+        "manifest": (
+            {"path": str(manifest), "sha256": _sha256_file(manifest)}
+            if manifest.exists() else None
+        ),
+    }
 
 
 def statistics(train, angle_indices):
@@ -95,25 +149,61 @@ def contiguous_windows(dataset, horizon):
     return np.asarray(starts, dtype=np.int64)
 
 
-def rollout_loss(model, dataset, starts, horizon, dynamics_config, device, max_windows=128):
+def rollout_loss(
+    model, dataset, starts, horizon, dynamics_config, device,
+    max_windows=128, component_weights=None, step_weights=None,
+):
     if starts.size == 0:
         return torch.zeros((), device=device)
-    selected = starts[:max_windows]
+    selected = starts if max_windows is None else starts[:max_windows]
     state = torch.as_tensor(dataset["state_t"][selected], dtype=torch.float32, device=device)
     loss = torch.zeros((), device=device)
+    if step_weights is None:
+        resolved_step_weights = np.ones(horizon, dtype=np.float64)
+    else:
+        resolved_step_weights = np.asarray(step_weights, dtype=np.float64).reshape(-1)
+        if resolved_step_weights.shape != (horizon,):
+            raise ValueError("rollout step weights must match rollout_horizon")
+        if not np.isfinite(resolved_step_weights).all() or np.any(resolved_step_weights <= 0.0):
+            raise ValueError("rollout step weights must be finite and positive")
+    resolved_step_weights /= float(np.sum(resolved_step_weights))
     for offset in range(horizon):
         control = torch.as_tensor(dataset["control_t"][selected + offset], dtype=torch.float32, device=device)
         dt = torch.as_tensor(dataset["dt"][selected + offset], dtype=torch.float32, device=device).unsqueeze(-1)
         state = integrate(model, state, control, dt, dynamics_config, dynamics_config.get("integrator", "rk4"))
         target = torch.as_tensor(dataset["state_t_plus_1"][selected + offset], dtype=torch.float32, device=device)
-        loss = loss + state_mse(state, target)
-    return loss / float(horizon)
+        loss = loss + float(resolved_step_weights[offset]) * state_mse(
+            state, target, component_weights
+        )
+    return loss
+
+
+def rollout_step_weights(training, horizon):
+    explicit = training.get("rollout_step_weights")
+    if explicit is not None:
+        values = np.asarray(explicit, dtype=np.float64).reshape(-1)
+    else:
+        mode = str(training.get("rollout_step_weighting", "uniform"))
+        terminal = float(training.get("rollout_terminal_weight", 1.0))
+        if not math.isfinite(terminal) or terminal <= 0.0:
+            raise ValueError("rollout_terminal_weight must be finite and positive")
+        if mode == "uniform":
+            values = np.ones(horizon, dtype=np.float64)
+        elif mode == "linear":
+            values = np.linspace(1.0, terminal, horizon, dtype=np.float64)
+        elif mode == "exponential":
+            values = np.geomspace(1.0, terminal, horizon, dtype=np.float64)
+        else:
+            raise ValueError("unknown rollout_step_weighting: %s" % mode)
+    if values.shape != (horizon,) or not np.isfinite(values).all() or np.any(values <= 0.0):
+        raise ValueError("rollout step weights must be positive and match horizon")
+    return values
 
 
 def rollout_endpoint_error(model, dataset, starts, horizon, dynamics_config, device, max_windows=512):
     if starts.size == 0:
         return torch.empty((0, dataset["state_t"].shape[1]), device=device)
-    selected = starts[:max_windows]
+    selected = starts if max_windows is None else starts[:max_windows]
     state = torch.as_tensor(dataset["state_t"][selected], dtype=torch.float32, device=device)
     target = None
     for offset in range(horizon):
@@ -146,6 +236,7 @@ def train_residual(config: Mapping[str, object], dataset_dir, output_dir, device
     torch.use_deterministic_algorithms(True)
     train = load_split(dataset_dir, "train")
     validation = load_split(dataset_dir, "validation")
+    data_provenance = dataset_provenance(dataset_dir)
     if len(train["state_t"]) == 0 or len(validation["state_t"]) == 0:
         raise ValueError("training and validation splits must both be non-empty")
     assert_residual_dataset_quality(train, angle_indices=(2,))
@@ -166,6 +257,14 @@ def train_residual(config: Mapping[str, object], dataset_dir, output_dir, device
     if total_epochs <= 0:
         raise ValueError("epochs must be positive")
     horizon = int(training.get("rollout_horizon", 10))
+    component_weights = training.get("state_loss_weights")
+    if component_weights is not None:
+        component_weights = np.asarray(component_weights, dtype=np.float64).reshape(-1)
+        if component_weights.shape != (state_dim,):
+            raise ValueError("state_loss_weights must match state dimension")
+        if not np.isfinite(component_weights).all() or np.any(component_weights <= 0.0):
+            raise ValueError("state_loss_weights must be finite and positive")
+    step_weights = rollout_step_weights(training, horizon)
     train_windows = contiguous_windows(train, horizon)
     validation_windows = contiguous_windows(validation, horizon)
     if train_windows.size == 0 or validation_windows.size == 0:
@@ -194,9 +293,13 @@ def train_residual(config: Mapping[str, object], dataset_dir, output_dir, device
             target_residual = torch.as_tensor(train["residual_target"][indices], dtype=torch.float32, device=device)
             next_state = torch.as_tensor(train["state_t_plus_1"][indices], dtype=torch.float32, device=device)
             dt = torch.as_tensor(train["dt"][indices], dtype=torch.float32, device=device).unsqueeze(-1)
-            derivative_loss = torch.mean((model(state, control) - target_residual) ** 2)
+            derivative_squared = (model(state, control) - target_residual) ** 2
+            derivative_mask = model.residual_output_mask.reshape(1, -1)
+            derivative_loss = torch.sum(derivative_squared * derivative_mask) / (
+                derivative_squared.shape[0] * torch.sum(derivative_mask)
+            )
             predicted_next = integrate(model, state, control, dt, config["dynamics"], config["dynamics"].get("integrator", "rk4"))
-            one_step_loss = state_mse(predicted_next, next_state)
+            one_step_loss = state_mse(predicted_next, next_state, component_weights)
             loss = derivative_weight * derivative_loss + one_step_weight * one_step_loss
             optimizer.zero_grad()
             loss.backward()
@@ -206,7 +309,10 @@ def train_residual(config: Mapping[str, object], dataset_dir, output_dir, device
         model.train()
         optimizer.zero_grad()
         window_order = np.random.RandomState(seed + 100000 + epoch).permutation(train_windows)
-        multi = rollout_loss(model, train, window_order, horizon, config["dynamics"], device)
+        multi = rollout_loss(
+            model, train, window_order, horizon, config["dynamics"], device,
+            component_weights=component_weights, step_weights=step_weights,
+        )
         if multi.requires_grad and multistep_weight > 0.0:
             (multistep_weight * multi).backward()
             torch.nn.utils.clip_grad_norm_(model.parameters(), float(training.get("gradient_clip_norm", 1.0)))
@@ -214,7 +320,8 @@ def train_residual(config: Mapping[str, object], dataset_dir, output_dir, device
         model.eval()
         with torch.no_grad():
             validation_multi = float(rollout_loss(
-                model, validation, validation_windows, horizon, config["dynamics"], device
+                model, validation, validation_windows, horizon, config["dynamics"], device,
+                component_weights=component_weights, step_weights=step_weights,
             ).cpu())
         scheduler.step(validation_multi)
         record = {
@@ -238,6 +345,7 @@ def train_residual(config: Mapping[str, object], dataset_dir, output_dir, device
             "parameter_count": model.parameter_count(),
             "state_dim": state_dim,
             "control_dim": control_dim,
+            "dataset_provenance": data_provenance,
         }
         torch.save(payload, output / "last.pt")
         if record["validation_multistep_rmse"] < best:
@@ -254,6 +362,15 @@ def train_residual(config: Mapping[str, object], dataset_dir, output_dir, device
         writer = csv.DictWriter(handle, fieldnames=list(history[0].keys()))
         writer.writeheader()
         writer.writerows(history)
+    with (output / "training_provenance.json").open("w", encoding="utf-8") as handle:
+        json.dump({
+            "dataset": data_provenance,
+            "git_sha": git_sha(Path(__file__).resolve().parents[3]),
+            "seed": seed,
+            "state_dim": state_dim,
+            "control_dim": control_dim,
+            "model_type": model.model_type,
+        }, handle, indent=2, sort_keys=True)
     return {
         "model": model,
         "history": history,

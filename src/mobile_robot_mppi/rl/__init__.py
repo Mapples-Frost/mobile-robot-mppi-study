@@ -4,6 +4,16 @@ from .intrinsic import EpisodicPoseCountBonus, EpisodicPoseCountConfig
 from .observation import ObservationEncoder, ObservationEncoderConfig, RunningNormalizer
 from .parameterization import PriorParameterization, PriorParameterizationConfig
 from .replay import ReplayBuffer
+from .scene_complexity import (
+    SceneComplexity,
+    SceneComplexityConfig,
+    score_scene_complexity,
+)
+from .competence import (
+    ProgressCompetence,
+    ProgressCompetenceConfig,
+    ProgressCompetenceGate,
+)
 
 __all__ = [
     "EpisodicPoseCountBonus",
@@ -14,4 +24,10 @@ __all__ = [
     "PriorParameterizationConfig",
     "ReplayBuffer",
     "RunningNormalizer",
+    "SceneComplexity",
+    "SceneComplexityConfig",
+    "score_scene_complexity",
+    "ProgressCompetence",
+    "ProgressCompetenceConfig",
+    "ProgressCompetenceGate",
 ]

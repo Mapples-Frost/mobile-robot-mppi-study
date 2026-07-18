@@ -46,7 +46,14 @@ def main(argv=None):
     parser.add_argument("--device", default="cpu")
     parser.add_argument("--horizons", default="1,5,10,20")
     parser.add_argument("--split", choices=("validation", "test", "unseen"), default="test")
+    parser.add_argument(
+        "--max-windows", type=int, default=0,
+        help="maximum contiguous windows per horizon; 0 evaluates all windows",
+    )
     args = parser.parse_args(argv)
+    if args.max_windows < 0:
+        parser.error("--max-windows must be non-negative")
+    max_windows = None if args.max_windows == 0 else int(args.max_windows)
     model, payload = load_platform_checkpoint(args.checkpoint, args.device)
     dataset = load_split(args.dataset_dir, args.split)
     if len(dataset["state_t"]) == 0:
@@ -57,31 +64,51 @@ def main(argv=None):
     with torch.no_grad():
         derivative_rmse = float(torch.sqrt(torch.mean((model(state, control) - target) ** 2)).cpu())
         nominal_derivative_rmse = float(torch.sqrt(torch.mean(target ** 2)).cpu())
+        active_mask = model.residual_output_mask.reshape(1, -1)
+        active_derivative_rmse = float(torch.sqrt(
+            torch.sum(((model(state, control) - target) ** 2) * active_mask)
+            / (state.shape[0] * torch.sum(active_mask))
+        ).cpu())
+        active_nominal_derivative_rmse = float(torch.sqrt(
+            torch.sum((target ** 2) * active_mask)
+            / (state.shape[0] * torch.sum(active_mask))
+        ).cpu())
     dynamics_config = payload["training_config"]["dynamics"]
     metrics = {
         "residual_derivative_rmse": derivative_rmse,
         "nominal_residual_derivative_rmse": nominal_derivative_rmse,
+        "active_residual_derivative_rmse": active_derivative_rmse,
+        "active_nominal_residual_derivative_rmse": active_nominal_derivative_rmse,
+        "residual_output_mask": [
+            float(value) for value in model.residual_output_mask.cpu()
+        ],
         "checkpoint": str(Path(args.checkpoint).resolve()),
         "model_type": model.model_type,
         "split": args.split,
         "parameter_count": model.parameter_count(),
+        "window_selection": "all" if max_windows is None else "prefix",
+        "max_windows": max_windows,
     }
     model.eval()
     nominal_model = ZeroResidual().to(args.device).eval()
     for horizon in (int(value) for value in args.horizons.split(",")):
         starts = contiguous_windows(dataset, horizon)
         with torch.no_grad():
-            mse = rollout_loss(model, dataset, starts, horizon, dynamics_config, args.device, max_windows=512)
+            mse = rollout_loss(
+                model, dataset, starts, horizon, dynamics_config, args.device,
+                max_windows=max_windows,
+            )
             nominal_mse = rollout_loss(
                 nominal_model, dataset, starts, horizon, dynamics_config, args.device,
-                max_windows=512,
+                max_windows=max_windows,
             )
             learned_endpoint = rollout_endpoint_error(
-                model, dataset, starts, horizon, dynamics_config, args.device, max_windows=512
+                model, dataset, starts, horizon, dynamics_config, args.device,
+                max_windows=max_windows,
             )
             nominal_endpoint = rollout_endpoint_error(
                 nominal_model, dataset, starts, horizon, dynamics_config, args.device,
-                max_windows=512,
+                max_windows=max_windows,
             )
         metrics["rollout_rmse_h%d" % horizon] = float(torch.sqrt(mse).cpu())
         metrics["nominal_rollout_rmse_h%d" % horizon] = float(torch.sqrt(nominal_mse).cpu())

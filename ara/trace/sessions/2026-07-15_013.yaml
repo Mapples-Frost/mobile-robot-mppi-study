@@ -1,0 +1,92 @@
+session:
+  id: "2026-07-15_013"
+  timestamp: "2026-07-15T22:15:00+08:00"
+  summary: "Preregistered and completed the 600-episode L31 dynamic-motion stress test; the temporal ICODE gate failed safety and exposed a necessary separation between hazard observability and RL competence."
+
+events_logged:
+  - type: experiment
+    id: N49
+    provenance: ai-executed
+    summary: "L31 completed all 600 planned episodes with valid provenance but only 64/120 primary successes and 56/120 primary collisions."
+  - type: dead_end
+    id: N50
+    provenance: ai-executed
+    summary: "Scalar sector closing risk directly activating a static-scene RL prior failed reverse and fast dynamic crossings."
+  - type: pivot
+    id: N51
+    provenance: ai-suggested
+    summary: "Separate robust temporal hazard observability from learned-policy competence and shared safety."
+  - type: claim
+    id: C35
+    provenance: ai-suggested
+    summary: "General dynamic-motion robustness of the frozen L30 temporal-gate + ICODE candidate was refuted."
+  - type: claim
+    id: C36
+    provenance: ai-suggested
+    summary: "Sector-minimum differencing was refuted as a physical closing-speed estimator."
+  - type: claim
+    id: C37
+    provenance: ai-suggested
+    summary: "High temporal hazard was refuted as sufficient evidence of high RL-prior competence."
+  - type: heuristic
+    id: H26
+    provenance: ai-suggested
+    summary: "Log and calibrate hazard intensity and policy competence as distinct signals."
+  - type: heuristic
+    id: H27
+    provenance: ai-suggested
+    summary: "Dynamic direction requires robust temporal observations rather than one-frame sector minima."
+
+ai_actions:
+  - action: "Added three physical dynamic-obstacle variants, a fresh L31 factorial config and programmatic protection of prior development and sealed seeds."
+    provenance: ai-executed
+    files_changed:
+      - "configs/research/mujoco_dynamic_crossing_reverse.yaml"
+      - "configs/research/mujoco_dynamic_crossing_fast.yaml"
+      - "configs/research/mujoco_dynamic_crossing_large_early.yaml"
+      - "configs/rl/dynamic_variant_generalization_l31.yaml"
+      - "experiments/rl/run_cross_layer_factorial.py"
+  - action: "Preregistered the randomized complete-block design before outcomes and ran a 40-episode smoke plus 600 formal development episodes over three independent checkpoint pairs."
+    provenance: ai-executed
+    files_changed:
+      - "docs/rl/42_l31_dynamic_variant_generalization_prereg_2026-07-15.md"
+      - "tests/rl/test_cross_layer_factorial.py"
+  - action: "Implemented complete-matrix audit, paired/two-stage bootstrap summaries, fixed development gate and post-outcome collision diagnostics."
+    provenance: ai-executed
+    files_changed:
+      - "experiments/rl/summarize_dynamic_variant_generalization.py"
+      - "experiments/rl/analyze_dynamic_variant_failures.py"
+  - action: "Generated publication PDF/PNG heatmaps, documented the negative result and passed 376 repository tests, py_compile and git diff checks."
+    provenance: ai-executed
+    files_changed:
+      - "experiments/rl/plot_dynamic_variant_generalization.py"
+      - "docs/rl/43_l31_dynamic_variant_generalization_results_2026-07-15.md"
+      - "README.md"
+
+claims_touched:
+  - id: C35
+    action: created
+    provenance: ai-suggested
+  - id: C36
+    action: created
+    provenance: ai-suggested
+  - id: C37
+    action: created
+    provenance: ai-suggested
+
+open_threads:
+  - "Do not open L31 confirmation seeds because the preregistered development safety gate failed."
+  - "Design L32 with scan history or robust scan-flow features and dynamic-domain RL training on new development variants and seeds."
+  - "Separate hazard estimation, learned-policy competence confidence and any shared dynamic safety shield in both code and ablation tables."
+  - "Keep L31 data for failure analysis only; do not tune on it and relabel the same results as validation."
+
+ai_suggestions_pending:
+  - "Preregister L32 only after selecting the minimal temporal observation and shared-safety interface."
+  - "Treat dynamic obstacle prediction or TTC shielding as a common engineering baseline across all compared methods, not as an unpaired advantage for the proposed method."
+
+provenance_summary:
+  user_confirmed: 0
+  ai_suggested: 5
+  ai_executed: 7
+  user_revised: 0
+  confirmation_rate: 0.0

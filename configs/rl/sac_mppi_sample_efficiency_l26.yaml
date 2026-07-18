@@ -1,0 +1,37 @@
+include: sac_mppi_scene_complexity_l25.yaml
+
+experiment:
+  name: sac_mppi_sample_efficiency_l26
+  output_dir: results/research_platform/rl/sample_efficiency_l26_20260715
+
+# L26 freezes every L25 gate/policy parameter. Only the MPPI sample budget K is
+# varied. The single-obstacle scene is prospectively classified as locally
+# blocking here; no L25 row or label is changed retrospectively.
+rl:
+  policy_id: sac_mppi_sample_efficiency_l26
+  sample_efficiency_ablation:
+    schedule_seed: 20260761
+    conditions: [traditional_mppi, complexity_lcb]
+    sample_counts: [50, 100, 200, 400]
+    control_scenes:
+      - configs/research/mujoco_clean_dynamics.yaml
+    blocking_scenes:
+      - configs/research/mujoco_strong_mppi_baseline.yaml
+      - configs/research/mujoco_narrow_corridor.yaml
+      - configs/research/mujoco_u_trap_long_board.yaml
+    development_episode_seeds: [20281801, 20281802, 20281803, 20281804, 20281805, 20281806, 20281807, 20281808, 20281809, 20281810]
+    sealed_test_episode_seeds: [20281811, 20281812, 20281813, 20281814, 20281815, 20281816, 20281817, 20281818, 20281819, 20281820, 20281821, 20281822, 20281823, 20281824, 20281825, 20281826, 20281827, 20281828, 20281829, 20281830]
+
+    # Confirmatory development gate. With three independent checkpoints and ten
+    # episode seeds, each scene/method/K cell contains 30 episodes.
+    low_budget_sample_counts: [50, 100]
+    comparison_low_sample_count: 100
+    comparison_high_sample_count: 400
+    maximum_collision_regressions: 0
+    minimum_low_budget_blocking_net_success_gain: 18
+    maximum_low_vs_high_success_rate_shortfall: 0.05
+    minimum_blocking_scenes_matching_high_budget_traditional: 2
+    maximum_low_vs_high_planner_time_ratio: 0.60
+
+    # L25 sealed seeds must remain closed irrespective of L26 outcome.
+    forbidden_l25_seeds: [20281711, 20281712, 20281713, 20281714, 20281715, 20281716, 20281717, 20281718, 20281719, 20281720, 20281721, 20281722, 20281723, 20281724, 20281725, 20281726, 20281727, 20281728, 20281729, 20281730]

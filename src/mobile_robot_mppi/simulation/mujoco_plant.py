@@ -5,7 +5,9 @@ working MuJoCo installation is an experiment configuration error.
 """
 
 import math
+from copy import deepcopy
 from collections import deque
+from dataclasses import dataclass
 from typing import Mapping
 
 import numpy as np
@@ -17,6 +19,26 @@ from .model_factory import build_diff_drive_mjcf, model_hash
 def _yaw_from_quaternion(quaternion):
     w, x, y, z = (float(v) for v in quaternion)
     return math.atan2(2.0 * (w * z + x * y), 1.0 - 2.0 * (y * y + z * z))
+
+
+@dataclass(frozen=True)
+class MujocoPlantSnapshot:
+    """Complete continuation state for deterministic counterfactual branches.
+
+    MuJoCo's integration state captures the simulator quantities required to
+    continue a trajectory.  The remaining fields capture this plant wrapper's
+    PI actuator, delayed-command queue and seeded obstacle episode state.
+    """
+
+    model_hash: str
+    time: float
+    integration_state: np.ndarray
+    integral: np.ndarray
+    last_torque: np.ndarray
+    last_control: ControlCommand
+    delay_queue: tuple
+    seed: int
+    episode_dynamic_obstacles: tuple
 
 
 class MujocoDiffDrivePlant:
@@ -59,10 +81,13 @@ class MujocoDiffDrivePlant:
         self._last_control = ControlCommand(np.zeros(2), 0.0, "reset")
         self._delay_queue = deque()
         self._seed = 0
-        self._obstacle_geom_ids = {
-            index for index in range(self.model.ngeom)
-            if (self.mujoco.mj_id2name(self.model, self.mujoco.mjtObj.mjOBJ_GEOM, index) or "").startswith("obstacle_")
+        self._obstacle_geom_by_index = {
+            index: self._id(mujoco.mjtObj.mjOBJ_GEOM, "obstacle_%d" % index)
+            for index, _ in enumerate(self.scene.get("obstacles", ()))
         }
+        self._obstacle_geom_ids = set(self._obstacle_geom_by_index.values())
+        self._dynamic_obstacles = self._resolve_dynamic_obstacles()
+        self._episode_dynamic_obstacles = self._dynamic_obstacles
         self._robot_geom_ids = {
             self._id(mujoco.mjtObj.mjOBJ_GEOM, name)
             for name in ("chassis", "left_wheel_geom", "right_wheel_geom", "front_caster", "rear_caster")
@@ -74,9 +99,246 @@ class MujocoDiffDrivePlant:
             raise RuntimeError("MuJoCo object not found: %s" % name)
         return value
 
+    @staticmethod
+    def _finite_pair(value, name):
+        array = np.asarray(value, dtype=np.float64).reshape(-1)
+        if array.shape != (2,) or not np.isfinite(array).all():
+            raise ValueError("%s must contain two finite values" % name)
+        return array
+
+    def _resolve_dynamic_obstacles(self):
+        resolved = []
+        for index, obstacle in enumerate(self.scene.get("obstacles", ())):
+            motion = obstacle.get("motion")
+            if motion is None:
+                continue
+            if not isinstance(motion, Mapping):
+                raise TypeError("obstacle motion must be a mapping")
+            motion_type = str(motion.get("type", "linear_ping_pong"))
+            if motion_type != "linear_ping_pong":
+                raise ValueError("unknown obstacle motion type: %s" % motion_type)
+            start = self._finite_pair(
+                motion.get("start", obstacle.get("position", (0.0, 0.0))),
+                "dynamic obstacle start",
+            )
+            end = self._finite_pair(motion.get("end"), "dynamic obstacle end")
+            period = float(motion.get("period_s", 0.0))
+            phase = float(motion.get("phase_s", 0.0))
+            phase_jitter = float(motion.get("phase_jitter_s", 0.0))
+            period_scale = np.asarray(
+                motion.get("period_scale_range", (1.0, 1.0)),
+                dtype=np.float64,
+            ).reshape(-1)
+            endpoint_jitter = float(motion.get("endpoint_jitter_m", 0.0))
+            yaw = float(obstacle.get("yaw", 0.0))
+            if not math.isfinite(period) or period <= 0.0:
+                raise ValueError("dynamic obstacle period_s must be positive")
+            if not math.isfinite(phase) or not math.isfinite(yaw):
+                raise ValueError("dynamic obstacle phase and yaw must be finite")
+            if not math.isfinite(phase_jitter) or phase_jitter < 0.0:
+                raise ValueError("dynamic obstacle phase_jitter_s must be non-negative")
+            if (
+                period_scale.shape != (2,)
+                or not np.isfinite(period_scale).all()
+                or np.any(period_scale <= 0.0)
+                or period_scale[1] < period_scale[0]
+            ):
+                raise ValueError(
+                    "dynamic obstacle period_scale_range must be two ordered "
+                    "positive values"
+                )
+            if not math.isfinite(endpoint_jitter) or endpoint_jitter < 0.0:
+                raise ValueError(
+                    "dynamic obstacle endpoint_jitter_m must be non-negative"
+                )
+            body_id = self._id(
+                self.mujoco.mjtObj.mjOBJ_BODY, "dynamic_obstacle_%d" % index
+            )
+            mocap_id = int(self.model.body_mocapid[body_id])
+            if mocap_id < 0:
+                raise RuntimeError("dynamic obstacle body is not a mocap body")
+            resolved.append({
+                "index": index,
+                "mocap_id": mocap_id,
+                "start": start,
+                "end": end,
+                "period_s": period,
+                "phase_s": phase,
+                "phase_jitter_s": phase_jitter,
+                "period_scale_range": period_scale,
+                "endpoint_jitter_m": endpoint_jitter,
+                "yaw": yaw,
+            })
+        return tuple(resolved)
+
+    def _sample_dynamic_obstacles(self, seed):
+        """Resolve reproducible training-domain randomization at reset.
+
+        Randomized motion remains part of the true plant only.  The planner
+        observes its consequences through LaserScan and never receives these
+        sampled parameters.
+        """
+
+        rng = np.random.RandomState((int(seed) ^ 0x5EEDC0DE) & 0xFFFFFFFF)
+        sampled = []
+        for base in self._dynamic_obstacles:
+            item = dict(base)
+            phase_jitter = float(base["phase_jitter_s"])
+            item["phase_s"] = float(base["phase_s"]) + (
+                rng.uniform(-phase_jitter, phase_jitter)
+                if phase_jitter > 0.0 else 0.0
+            )
+            scale_low, scale_high = base["period_scale_range"]
+            scale = (
+                rng.uniform(scale_low, scale_high)
+                if scale_high > scale_low else float(scale_low)
+            )
+            item["period_s"] = float(base["period_s"]) * float(scale)
+            endpoint_jitter = float(base["endpoint_jitter_m"])
+            if endpoint_jitter > 0.0:
+                item["start"] = base["start"] + rng.uniform(
+                    -endpoint_jitter, endpoint_jitter, size=2
+                )
+                item["end"] = base["end"] + rng.uniform(
+                    -endpoint_jitter, endpoint_jitter, size=2
+                )
+            else:
+                item["start"] = base["start"].copy()
+                item["end"] = base["end"].copy()
+            sampled.append(item)
+        return tuple(sampled)
+
+    @staticmethod
+    def _ping_pong_fraction(time_value, period, phase):
+        cycle = (float(time_value) + float(phase)) % float(period)
+        half = 0.5 * float(period)
+        return cycle / half if cycle <= half else (float(period) - cycle) / half
+
+    def _set_dynamic_obstacles(self, time_value):
+        for item in self._episode_dynamic_obstacles:
+            fraction = self._ping_pong_fraction(
+                time_value, item["period_s"], item["phase_s"]
+            )
+            position = item["start"] + fraction * (item["end"] - item["start"])
+            mocap_id = item["mocap_id"]
+            self.data.mocap_pos[mocap_id] = (position[0], position[1], 0.0)
+            half_yaw = 0.5 * item["yaw"]
+            self.data.mocap_quat[mocap_id] = (
+                math.cos(half_yaw), 0.0, 0.0, math.sin(half_yaw)
+            )
+
+    def dynamic_obstacle_states(self):
+        """Return current prescribed obstacle poses for metrics and auditing."""
+
+        output = []
+        for item in self._episode_dynamic_obstacles:
+            geom_id = self._obstacle_geom_by_index[item["index"]]
+            position = self.data.geom_xpos[geom_id]
+            output.append({
+                "index": int(item["index"]),
+                "x": float(position[0]),
+                "y": float(position[1]),
+                "motion_type": "linear_ping_pong",
+                "period_s": float(item["period_s"]),
+                "phase_s": float(item["phase_s"]),
+                "start": [float(value) for value in item["start"]],
+                "end": [float(value) for value in item["end"]],
+            })
+        return output
+
     @property
     def time(self):
         return float(self.data.time)
+
+    def snapshot(self) -> MujocoPlantSnapshot:
+        """Capture an exact, model-bound state for offline branch rollouts."""
+
+        state_spec = self.mujoco.mjtState.mjSTATE_INTEGRATION
+        state = np.empty(
+            self.mujoco.mj_stateSize(self.model, state_spec), dtype=np.float64
+        )
+        self.mujoco.mj_getState(self.model, self.data, state, state_spec)
+        queue = tuple(
+            (
+                float(activation_time),
+                ControlCommand(
+                    command.values.copy(),
+                    float(command.timestamp),
+                    str(command.source),
+                ),
+            )
+            for activation_time, command in self._delay_queue
+        )
+        return MujocoPlantSnapshot(
+            model_hash=self.xml_hash,
+            time=self.time,
+            integration_state=state.copy(),
+            integral=self._integral.copy(),
+            last_torque=self._last_torque.copy(),
+            last_control=ControlCommand(
+                self._last_control.values.copy(),
+                float(self._last_control.timestamp),
+                str(self._last_control.source),
+            ),
+            delay_queue=queue,
+            seed=int(self._seed),
+            episode_dynamic_obstacles=deepcopy(
+                tuple(self._episode_dynamic_obstacles)
+            ),
+        )
+
+    def restore(self, snapshot: MujocoPlantSnapshot) -> GroundTruth:
+        """Restore a snapshot and return the reconstructed ground truth.
+
+        Snapshots cannot be moved between different MJCF models.  This strict
+        check prevents an apparently valid but scientifically invalid branch
+        when plant parameters or scene geometry differ.
+        """
+
+        if not isinstance(snapshot, MujocoPlantSnapshot):
+            raise TypeError("snapshot must be a MujocoPlantSnapshot")
+        if snapshot.model_hash != self.xml_hash:
+            raise ValueError("snapshot belongs to a different MuJoCo model")
+        state_spec = self.mujoco.mjtState.mjSTATE_INTEGRATION
+        expected_size = self.mujoco.mj_stateSize(self.model, state_spec)
+        state = np.asarray(snapshot.integration_state, dtype=np.float64).reshape(-1)
+        if state.shape != (expected_size,) or not np.isfinite(state).all():
+            raise ValueError("snapshot integration state is invalid")
+        integral = np.asarray(snapshot.integral, dtype=np.float64).reshape(-1)
+        torque = np.asarray(snapshot.last_torque, dtype=np.float64).reshape(-1)
+        if (
+            integral.shape != (2,)
+            or torque.shape != (2,)
+            or not np.isfinite(integral).all()
+            or not np.isfinite(torque).all()
+        ):
+            raise ValueError("snapshot actuator state is invalid")
+
+        self.mujoco.mj_setState(self.model, self.data, state, state_spec)
+        self._integral[:] = integral
+        self._last_torque[:] = torque
+        self._last_control = ControlCommand(
+            snapshot.last_control.values.copy(),
+            float(snapshot.last_control.timestamp),
+            str(snapshot.last_control.source),
+        )
+        self._delay_queue = deque(
+            (
+                float(activation_time),
+                ControlCommand(
+                    command.values.copy(),
+                    float(command.timestamp),
+                    str(command.source),
+                ),
+            )
+            for activation_time, command in snapshot.delay_queue
+        )
+        self._seed = int(snapshot.seed)
+        self._episode_dynamic_obstacles = deepcopy(
+            tuple(snapshot.episode_dynamic_obstacles)
+        )
+        self.mujoco.mj_forward(self.model, self.data)
+        return self.ground_truth()
 
     def reset(self, seed: int, initial_state: np.ndarray) -> GroundTruth:
         state = np.asarray(initial_state, dtype=np.float64).reshape(-1)
@@ -92,6 +354,8 @@ class MujocoDiffDrivePlant:
         self._last_control = ControlCommand(np.zeros(2), 0.0, "reset")
         self._delay_queue.clear()
         self._seed = int(seed)
+        self._episode_dynamic_obstacles = self._sample_dynamic_obstacles(seed)
+        self._set_dynamic_obstacles(0.0)
         self.mujoco.mj_forward(self.model, self.data)
         return self.ground_truth()
 
@@ -148,11 +412,13 @@ class MujocoDiffDrivePlant:
     def _minimum_clearance(self, pose):
         values = []
         robot_radius = float(self.config.get("robot", {}).get("collision_radius", 0.25))
-        for obstacle in self.scene.get("obstacles", ()):
-            position = obstacle.get("position", (0.0, 0.0))
+        for index, obstacle in enumerate(self.scene.get("obstacles", ())):
+            geom_id = self._obstacle_geom_by_index[index]
+            position = self.data.geom_xpos[geom_id]
             if str(obstacle.get("type", "cylinder")) == "box":
                 size = obstacle.get("size", (0.25, 0.25))
-                yaw = float(obstacle.get("yaw", 0.0))
+                rotation = self.data.geom_xmat[geom_id].reshape(3, 3)
+                yaw = math.atan2(float(rotation[1, 0]), float(rotation[0, 0]))
                 world_dx = pose.x - float(position[0])
                 world_dy = pose.y - float(position[1])
                 local_x = math.cos(yaw) * world_dx + math.sin(yaw) * world_dy
@@ -191,6 +457,14 @@ class MujocoDiffDrivePlant:
             float(self.data.actuator_force[self.right_actuator_id]),
         )
         clearance = self._minimum_clearance(pose)
+        dynamic_states = self.dynamic_obstacle_states()
+        nearest_dynamic_center = min(
+            (
+                math.hypot(pose.x - item["x"], pose.y - item["y"])
+                for item in dynamic_states
+            ),
+            default=float("inf"),
+        )
         return GroundTruth(
             timestamp=self.time,
             pose=pose,
@@ -206,6 +480,13 @@ class MujocoDiffDrivePlant:
                 "model_hash": self.xml_hash,
                 "actuator_profile": self.profile,
                 "seed": self._seed,
+                "dynamic_obstacle_count": len(dynamic_states),
+                "dynamic_obstacles": dynamic_states,
+                "nearest_dynamic_obstacle_center_distance": (
+                    float(nearest_dynamic_center)
+                    if math.isfinite(nearest_dynamic_center)
+                    else None
+                ),
             },
         )
 
@@ -226,6 +507,7 @@ class MujocoDiffDrivePlant:
             applied_values.append(delayed.values.copy())
             targets = self.wheel_targets(delayed)
             self._apply_actuator(targets, physics_dt)
+            self._set_dynamic_obstacles(self.time + physics_dt)
             self.mujoco.mj_step(self.model, self.data)
         return PlantStep(
             self.ground_truth(),

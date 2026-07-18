@@ -1,0 +1,16 @@
+include: sac_mppi_static_multigeometry_l70.yaml
+
+experiment:
+  name: sac_mppi_static_risk_balanced_l72
+  output_dir: results/research_platform/rl/l72_static_risk_balanced_training
+
+rl:
+  policy_id: sac_mppi_static_risk_balanced_l72
+  training:
+    # L72 changes exactly one training factor from L70: minibatches are
+    # balanced across scenes and, within each scene, across completed success
+    # and failure episodes. All networks, rewards, bounds and dynamics stay fixed.
+    replay_sampling: scene_outcome_balanced
+    replay_success_fraction: 0.50
+    validation_seed_base: 22060801
+

@@ -1,7 +1,7 @@
 # L13：特权教师蒸馏与 BC→SAC 启动门
 
 日期：2026-07-14  
-状态：代码与受控实验进行中；本文档中的“计划”不得当作实验结果引用。
+状态：L13 BC-only 受控实验已完成；SAC 微调反例与后续门见文档 11。
 
 ## 1. 为什么进入这一关
 
@@ -43,6 +43,12 @@ LaserScan -> local_obstacle_layer -> MPPI -> scan_guard -> MuJoCo
 actor 不接收路线进度、waypoint、真值位姿、全局障碍物或教师的 cross-track
 error。正式在线 MPPI 的障碍仍只能来自 LaserScan 和 local obstacle layer。
 
+新采集数据使用 manifest schema v2，顶层完整记录 observation encoder 与
+local-subgoal parameterization；训练前会逐字段核对，不能只凭“维度相同”混用数据。
+三个 shard 的实际 `episode_id` 也必须两两不相交。历史 v1 数据只在其全部
+`audit/resolved_configs` 完整且语义一致时只读兼容，原 manifest 与 fingerprint
+保持不变；缺少审计证据时直接拒绝加载。
+
 ## 3. BC 到底监督什么
 
 教师标签不是电机命令，也不是最终的 \((v,\omega)\)。它和 SAC actor 的动作
@@ -71,7 +77,9 @@ a_E = [a_d,a_\beta]\in[-1,1]^2,
 ## 4. 两种 checkpoint 操作必须分开
 
 `--resume-bc` 用于精确继续中断的 BC，恢复 actor optimizer、epoch、RNG 和
-训练集 normalizer。
+训练集 normalizer，并校验数据集、网络、损失和 action contract。新 checkpoint
+还携带 best-actor snapshot；旧格式只有显式加入 `--allow-legacy-resume` 才能继续，
+且必须在实验记录中标为 legacy continuation。
 
 `--initialize-actor-from` 用于 BC→SAC，只复制 actor 权重和 normalizer。以下
 状态必须重新初始化：
@@ -124,28 +132,29 @@ safety interventions、trajectory length、control jerk、planner compute time�
 
 ```bash
 # 1) 采集成功教师 episode；失败 episode 只进入 audit
-python3 experiments/rl/collect_scripted_subgoal_demonstrations.py \
+.venv/bin/python experiments/rl/collect_scripted_subgoal_demonstrations.py \
   --rl-config configs/rl/sac_mppi_utrap_bc_l13.yaml \
   --configs configs/research/mujoco_u_trap_long_board.yaml \
   --seeds 41,42,43,44,45,46,47,48,49,50,51,52,53,54,55 \
   --output-dir results/research_platform/rl/bc_datasets/utrap_l13
 
 # 2) BC
-python3 experiments/rl/train_behavior_cloning_prior.py \
+.venv/bin/python experiments/rl/train_behavior_cloning_prior.py \
   --config configs/rl/sac_mppi_utrap_bc_l13.yaml \
   --dataset-dir results/research_platform/rl/bc_datasets/utrap_l13 \
   --output-dir results/research_platform/rl/bc_l13_seed20260721
 
 # 3) BC-only 闭环；仍由 MPPI 和 scan_guard 输出最终控制
-python3 experiments/rl/evaluate_rl_sampling_prior.py \
+.venv/bin/python experiments/rl/evaluate_rl_sampling_prior.py \
   --config configs/rl/sac_mppi_utrap_bc_l13.yaml \
   --scene-config configs/research/mujoco_u_trap_long_board.yaml \
   --checkpoint results/research_platform/rl/bc_l13_seed20260721/checkpoints/best.pt \
   --seeds 101,102,103,104,105,106,107,108,109,110 \
+  --pose-source ground_truth --twist-source ground_truth \
   --output-dir results/research_platform/rl/bc_l13_heldout
 
 # 4) 只把 actor + normalizer 交给一场全新的 SAC
-python3 experiments/rl/train_rl_sampling_prior.py \
+.venv/bin/python experiments/rl/train_rl_sampling_prior.py \
   --config configs/rl/sac_mppi_utrap_bc_l13.yaml \
   --initialize-actor-from \
     results/research_platform/rl/bc_l13_seed20260721/checkpoints/best.pt \
@@ -159,3 +168,19 @@ python3 experiments/rl/train_rl_sampling_prior.py \
 - 不得把 controlled localization 结果称为 wheel-odometry robustness；
 - 不得在三训练种子复现前把单次成功称为稳定改进；
 - 不得把本关与 ICODE 或 Memory 的效果混为一谈。
+
+## 9. L13 实际结果摘要
+
+15 个 scripted teacher episode 中 14 个成功、零碰撞；seed 45 以 0.305 m
+结束，略高于 0.30 m 成功阈值，按预注册规则只进入 audit、不进入训练 shard。
+最终 train/validation/test 分别包含 8/3/3 个完整成功 episode 和
+2059/737/891 个 transition。
+
+三个独立 BC 初始化种子在同一 held-out seeds 101--110、U-trap、K=100、
+ground-truth pose/twist 条件下得到 9/10、10/10、10/10，总计 29/30，零碰撞。
+聚合 success rate 为 96.7%，训练种子间样本标准差为 5.8 个百分点。相同
+held-out 条件下的纯 SAC uniform 对照为 16/30（53.3%）。这说明 BC 是稳定
+启动底座；并不说明 privileged teacher 是可部署输入，也不说明 SAC 微调有效。
+
+wheel-odometry 单模型边界检查只有 2/10 成功、零碰撞。因此本结果仍属于
+controlled-localization 算法条件，不能外推为实车定位鲁棒性。

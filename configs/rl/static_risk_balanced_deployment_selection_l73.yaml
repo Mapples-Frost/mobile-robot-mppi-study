@@ -1,0 +1,36 @@
+include: static_multigeometry_deployment_selection_l71.yaml
+
+experiment:
+  name: static_risk_balanced_deployment_selection_l73
+  output_dir: results/research_platform/rl/l73_static_risk_balanced_deployment_selection_20260717_v1
+
+rl:
+  policy_id: static_risk_balanced_deployment_selection_l73
+  cross_layer_factorial:
+    study_label: L73
+    artifact_prefix: l73
+    design_id: l73_risk_balanced_deployment_selection_v1
+    confirmation_mode: false
+    schedule_seed: 2026071773
+    model_blocks:
+      - rl_seed: 20260751
+        icode_seed: 20261201
+        icode_checkpoint: results/research_platform/l57_icode_high_dynamic_h36_seed20261201_v1/best.pt
+      - rl_seed: 20260752
+        icode_seed: 20261202
+        icode_checkpoint: results/research_platform/l57_icode_high_dynamic_h36_seed20261202_v1/best.pt
+      - rl_seed: 20260753
+        icode_seed: 20261203
+        icode_checkpoint: results/research_platform/l57_icode_high_dynamic_h36_seed20261203_v1/best.pt
+    development_episode_seeds: [22170801, 22170802, 22170803]
+    sealed_confirmation_episode_seeds:
+      [22170811, 22170812, 22170813, 22170814, 22170815]
+    protected_config_paths:
+      - configs/rl/static_rl_contribution_l69.yaml
+      - configs/rl/static_multigeometry_deployment_selection_l71.yaml
+    deployment_checkpoint_selection:
+      run_directory_template: results/research_platform/rl/l72_static_risk_balanced_seed{rl_seed}_30k_20260717_v2
+    interpretation_guard: >-
+      L73 uses fresh development seeds to select deployment-aligned checkpoints
+      from the preregistered L72 risk-balanced training runs. It is development
+      model-selection evidence; sealed confirmation seeds remain unopened.

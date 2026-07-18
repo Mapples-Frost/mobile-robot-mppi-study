@@ -1,0 +1,28 @@
+include: static_risk_balanced_deployment_selection_l73.yaml
+
+experiment:
+  name: static_risk_balanced_sealed_confirmation_l74
+  output_dir: results/research_platform/rl/l74_static_risk_balanced_sealed_confirmation_20260717_v1
+
+rl:
+  policy_id: static_risk_balanced_sealed_confirmation_l74
+  cross_layer_factorial:
+    study_label: L74
+    artifact_prefix: l74
+    design_id: l74_risk_balanced_sealed_confirmation_v1
+    confirmation_mode: true
+    schedule_seed: 2026071774
+    development_episode_seeds:
+      [22170811, 22170812, 22170813, 22170814, 22170815]
+    sealed_confirmation_episode_seeds:
+      [22170811, 22170812, 22170813, 22170814, 22170815]
+    protected_config_paths:
+      - configs/rl/static_rl_contribution_l69.yaml
+      - configs/rl/static_multigeometry_deployment_selection_l71.yaml
+      - configs/rl/static_risk_balanced_deployment_selection_l73.yaml
+    deployment_checkpoint_selection:
+      candidate_steps: [30000]
+    interpretation_guard: >-
+      L74 is the first use of the five preregistered sealed seeds. It compares
+      only frozen BC against the L73-selected 30k SAC checkpoint in each model
+      block. No checkpoint reselection or threshold modification is permitted.

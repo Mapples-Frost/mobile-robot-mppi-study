@@ -54,6 +54,7 @@ class GoalWarmStartPrior:
         yaw_gain=1.2,
         translation_heading_gate_rad=None,
         translation_heading_gate_terminal_only=False,
+        terminal_max_speed=None,
     ):
         self.v_gain = float(v_gain)
         self.yaw_gain = float(yaw_gain)
@@ -70,6 +71,14 @@ class GoalWarmStartPrior:
         self.translation_heading_gate_terminal_only = bool(
             translation_heading_gate_terminal_only
         )
+        self.terminal_max_speed = (
+            None if terminal_max_speed is None else float(terminal_max_speed)
+        )
+        if self.terminal_max_speed is not None and (
+            not np.isfinite(self.terminal_max_speed)
+            or self.terminal_max_speed <= 0.0
+        ):
+            raise ValueError("terminal_max_speed must be finite and positive")
 
     def propose(self, observation: RobotObservation, reference, horizon, action_spec):
         state = observation.pose.as_array()
@@ -106,7 +115,13 @@ class GoalWarmStartPrior:
                         (float(np.cos(yaw_error)) - gate_cosine)
                         / max(1.0 - gate_cosine, 1e-12),
                     )
-            action[action_spec.index("v_cmd")] = self.v_gain * distance * alignment
+            v_value = self.v_gain * distance * alignment
+            if (
+                self.terminal_max_speed is not None
+                and target.phase in ("terminal_approach", "terminal")
+            ):
+                v_value = min(v_value, self.terminal_max_speed)
+            action[action_spec.index("v_cmd")] = v_value
         if "omega_cmd" in action_spec.names:
             action[action_spec.index("omega_cmd")] = self.yaw_gain * yaw_error
         action = action_spec.clip(action)
@@ -120,8 +135,58 @@ class GoalWarmStartPrior:
                 "translation_heading_gate_active": gate_active,
                 "target_is_terminal": target.is_terminal,
                 "target_phase": target.phase,
+                "terminal_max_speed": self.terminal_max_speed,
+                "terminal_speed_cap_active": bool(
+                    self.terminal_max_speed is not None
+                    and target.phase in ("terminal_approach", "terminal")
+                ),
             },
         )
+
+
+class FixedCovariancePrior:
+    """Apply fixed MPPI sampling scales without changing a baseline mean.
+
+    ``scale`` multiplies standard deviation, not variance.  This prior is the
+    non-learning comparator for adaptive-covariance policies.
+    """
+
+    def __init__(self, baseline_prior, noise_sigma, scale):
+        self.baseline_prior = baseline_prior
+        sigma = np.asarray(noise_sigma, dtype=np.float64).reshape(-1)
+        value = np.asarray(scale, dtype=np.float64).reshape(-1)
+        if sigma.size == 0 or value.shape != sigma.shape:
+            raise ValueError("fixed covariance scale must match noise_sigma")
+        if (
+            not np.isfinite(sigma).all()
+            or not np.isfinite(value).all()
+            or np.any(sigma <= 0.0)
+            or np.any(value <= 0.0)
+        ):
+            raise ValueError("fixed covariance sigma and scale must be positive")
+        self.noise_sigma = sigma
+        self.scale = value
+
+    def reset(self):
+        reset = getattr(self.baseline_prior, "reset", None)
+        if callable(reset):
+            reset()
+
+    def propose(self, observation, reference, horizon, action_spec):
+        baseline = self.baseline_prior.propose(
+            observation, reference, horizon, action_spec
+        )
+        if self.scale.shape != (action_spec.dimension,):
+            raise ValueError("fixed covariance does not match the action space")
+        standard_deviation = self.noise_sigma * self.scale
+        covariance = np.diag(np.square(standard_deviation))
+        metadata = dict(baseline.metadata)
+        metadata.update({
+            "type": "fixed_covariance",
+            "covariance_scale": self.scale.tolist(),
+            "covariance_standard_deviation": standard_deviation.tolist(),
+        })
+        return PriorOutput(baseline.mean, covariance, metadata)
 
 
 class RLPolicyPrior:

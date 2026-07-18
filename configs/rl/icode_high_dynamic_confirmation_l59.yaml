@@ -1,0 +1,19 @@
+include: icode_high_dynamic_closed_loop_l58.yaml
+
+experiment:
+  name: icode_high_dynamic_confirmation_l59
+  output_dir: results/research_platform/rl/l59_icode_high_dynamic_confirmation_20260716_v1
+
+rl:
+  cross_layer_factorial:
+    design_id: l59_icode_fixed_plant_high_dynamic_sealed_confirmation_v1
+    confirmation_mode: true
+    schedule_seed: 2026071635
+    bootstrap_seed: 2026071636
+    bootstrap_replicates: 20000
+    development_episode_seeds: [21860771, 21860772, 21860773, 21860774, 21860775, 21860776, 21860777, 21860778, 21860779, 21860780]
+    sealed_confirmation_episode_seeds: [21860771, 21860772, 21860773, 21860774, 21860775, 21860776, 21860777, 21860778, 21860779, 21860780]
+    protected_config_paths:
+      - configs/rl/icode_high_dynamic_data_l56.yaml
+      - configs/research/icode_high_dynamic_h36_l57.yaml
+      - configs/rl/icode_high_dynamic_closed_loop_l58.yaml

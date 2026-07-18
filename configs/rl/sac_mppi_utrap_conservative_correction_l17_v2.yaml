@@ -1,0 +1,12 @@
+include: sac_mppi_utrap_conservative_correction_l17.yaml
+
+experiment:
+  name: sac_mppi_utrap_conservative_correction_l17_v2_seeded_reset
+  output_dir: results/research_platform/rl/utrap_conservative_correction_l17_v2_20260714
+
+# No method, loss, threshold or curriculum changed from L17 v1.  V2 exists so
+# artifacts cannot be confused with the quarantined run whose environment
+# reset did not propagate the episode seed into MPPI's sampling RNG.
+rl:
+  policy_id: sac_mppi_utrap_conservative_correction_l17_v2
+

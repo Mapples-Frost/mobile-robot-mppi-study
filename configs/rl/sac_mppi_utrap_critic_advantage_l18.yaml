@@ -1,0 +1,17 @@
+include: sac_mppi_utrap_conservative_correction_l17_v3.yaml
+
+experiment:
+  name: sac_mppi_utrap_critic_advantage_l18
+  output_dir: results/research_platform/rl/utrap_critic_advantage_l18_20260715
+
+# L18 reuses the frozen L17 checkpoints.  It does not train a new actor.  The
+# default condition records online and target twin-critic advantages while
+# preserving the exact L17 action.  CLI overrides select the pre-registered
+# online_hard and target_hard zero-threshold diagnostic ablations.
+rl:
+  policy_id: sac_mppi_utrap_critic_advantage_l18
+  gate:
+    mode: none
+    correction_advantage_gate_mode: none
+    correction_advantage_critic_source: online
+    correction_advantage_threshold: 0.0

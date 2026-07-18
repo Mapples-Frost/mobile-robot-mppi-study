@@ -1,4 +1,5 @@
 import csv
+import hashlib
 import json
 from itertools import combinations
 
@@ -12,6 +13,7 @@ from src.learning.residual_dataset import (
     split_by_episode,
     wrapped_finite_difference,
 )
+from mobile_robot_mppi.learning.trainer import dataset_provenance
 
 
 EXPECTED_REQUIRED_FIELDS = (
@@ -196,6 +198,26 @@ def test_npz_json_csv_roundtrip_uses_no_pickle(tmp_path):
     _assert_same_dataset(restored, original)
     assert restored.metadata["schema_version"] == 1
     assert restored.metadata["purpose"] == "roundtrip-test"
+
+
+def test_training_dataset_provenance_hashes_all_available_splits(tmp_path):
+    dataset = ResidualDataset.from_mapping(_small_mapping())
+    for name in ("train", "validation", "test", "unseen"):
+        dataset.save(tmp_path / name)
+    manifest = tmp_path / "dataset_manifest.json"
+    manifest.write_text('{"version": 1}\n', encoding="utf-8")
+
+    provenance = dataset_provenance(tmp_path)
+
+    assert set(provenance["splits"]) == {"train", "validation", "test", "unseen"}
+    for name, record in provenance["splits"].items():
+        path = tmp_path / (name + ".npz")
+        assert record["sha256"] == hashlib.sha256(path.read_bytes()).hexdigest()
+        assert record["transition_count"] == len(dataset)
+        assert record["episode_count"] == 2
+    assert provenance["manifest"]["sha256"] == hashlib.sha256(
+        manifest.read_bytes()
+    ).hexdigest()
 
 
 def test_episode_group_split_is_deterministic_leak_free_and_separates_unseen():

@@ -1,0 +1,56 @@
+include: static_rl_contribution_l69.yaml
+
+experiment:
+  name: static_multigeometry_deployment_selection_l71
+  output_dir: results/research_platform/rl/l71_static_multigeometry_deployment_selection_20260716_v1
+
+rl:
+  policy_id: static_multigeometry_deployment_selection_l71
+  cross_layer_factorial:
+    design_id: l71_deployment_aligned_checkpoint_selection_v1
+    confirmation_mode: false
+    schedule_seed: 2026071671
+    conditions: [complexity_bc_icode, gated_lcb_icode]
+    model_blocks:
+      - rl_seed: 20260741
+        icode_seed: 20261201
+        icode_checkpoint: results/research_platform/l57_icode_high_dynamic_h36_seed20261201_v1/best.pt
+      - rl_seed: 20260742
+        icode_seed: 20261202
+        icode_checkpoint: results/research_platform/l57_icode_high_dynamic_h36_seed20261202_v1/best.pt
+      - rl_seed: 20260743
+        icode_seed: 20261203
+        icode_checkpoint: results/research_platform/l57_icode_high_dynamic_h36_seed20261203_v1/best.pt
+    scenes:
+      - {role: blocking_unseen, path: configs/research/mujoco_static_single_high_dynamic_l70.yaml}
+      - {role: blocking_unseen, path: configs/research/mujoco_static_corridor_high_dynamic_l70.yaml}
+      - {role: blocking_training_geometry, path: configs/research/mujoco_static_utrap_high_dynamic_l70.yaml}
+    physics_domains:
+      - name: embedded_high_dynamic_plant
+        role: fixed_plant
+        plant_override: {}
+        sensor_override:
+          pose_source: ground_truth
+          twist_source: ground_truth
+          odom_noise_std: [0.0, 0.0, 0.0]
+          twist_noise_std: [0.0, 0.0]
+          latency: 0.0
+    development_episode_seeds: [21970801, 21970802, 21970803]
+    sealed_confirmation_episode_seeds: [21970811, 21970812, 21970813, 21970814, 21970815]
+    protected_config_paths:
+      - configs/rl/static_rl_contribution_l69.yaml
+      - configs/rl/sac_mppi_static_multigeometry_l70_seed20260741.yaml
+      - configs/rl/sac_mppi_static_multigeometry_l70_seed20260742.yaml
+      - configs/rl/sac_mppi_static_multigeometry_l70_seed20260743.yaml
+    planner_known_command_delay: true
+    deployment_checkpoint_selection:
+      candidate_steps: [5000, 10000, 15000, 20000, 25000, 30000]
+      run_directory_template: results/research_platform/rl/l70_static_multigeometry_seed{rl_seed}_30k_20260716_v1
+      maximum_success_losses: 0
+      maximum_collision_regressions: 0
+      maximum_mean_goal_distance_increase_m: 0.0
+      minimum_success_gains: 1
+      minimum_mean_goal_distance_improvement_m: 0.005
+      minimum_nonzero_selected_blocks: 2
+      minimum_selected_correction_gate_alpha_mean: 0.01
+

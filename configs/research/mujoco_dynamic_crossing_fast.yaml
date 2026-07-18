@@ -1,0 +1,21 @@
+include: mujoco_strong_mppi_baseline.yaml
+
+experiment:
+  name: mujoco_dynamic_crossing_fast
+
+# A faster crossing (approximately 0.34 m/s versus 0.21 m/s in the anchor).
+# Phase is fixed before evaluation so that the encounter timing changes without
+# using any outcome-dependent scene tuning.
+scene:
+  name: dynamic_crossing_fast
+  obstacles:
+    - type: cylinder
+      position: [2.10, 0.90]
+      radius: 0.20
+      height: 0.50
+      motion:
+        type: linear_ping_pong
+        start: [2.10, 0.90]
+        end: [0.90, 2.10]
+        period_s: 10.0
+        phase_s: 1.5

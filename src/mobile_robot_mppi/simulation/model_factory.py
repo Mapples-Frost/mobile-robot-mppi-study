@@ -9,9 +9,9 @@ def _f(value):
     return "%.9g" % float(value)
 
 
-def _geom_for_obstacle(index, obstacle):
+def _geom_for_obstacle(index, obstacle, local=False):
     kind = str(obstacle.get("type", "cylinder"))
-    position = obstacle.get("position", (0.0, 0.0))
+    position = (0.0, 0.0) if local else obstacle.get("position", (0.0, 0.0))
     height = float(obstacle.get("height", 0.5))
     if kind == "box":
         size = obstacle.get("size", (0.25, 0.25))
@@ -28,6 +28,38 @@ def _geom_for_obstacle(index, obstacle):
         'size="%s %s" rgba="0.65 0.32 0.28 1" group="1"/>'
         % (index, _f(position[0]), _f(position[1]), _f(height / 2.0),
            _f(radius), _f(height / 2.0))
+    )
+
+
+def _obstacle_element(index, obstacle):
+    """Render a static world geom or a prescribed mocap obstacle body.
+
+    Dynamic obstacles remain ordinary MuJoCo collision/raycast geometry.  A
+    mocap body only supplies their deterministic world pose; the planner still
+    receives them exclusively through the simulated LaserScan.
+    """
+
+    motion = obstacle.get("motion")
+    if motion is None:
+        return _geom_for_obstacle(index, obstacle)
+    if not isinstance(motion, Mapping):
+        raise TypeError("obstacle motion must be a mapping")
+    motion_type = str(motion.get("type", "linear_ping_pong"))
+    if motion_type != "linear_ping_pong":
+        raise ValueError("unknown obstacle motion type: %s" % motion_type)
+    position = motion.get("start", obstacle.get("position", (0.0, 0.0)))
+    if len(position) != 2:
+        raise ValueError("dynamic obstacle start must contain x and y")
+    return (
+        '<body name="dynamic_obstacle_%d" mocap="true" pos="%s %s 0">\n'
+        '      %s\n'
+        '    </body>'
+        % (
+            index,
+            _f(position[0]),
+            _f(position[1]),
+            _geom_for_obstacle(index, obstacle, local=True),
+        )
     )
 
 
@@ -58,7 +90,7 @@ def build_diff_drive_mjcf(config: Mapping[str, object], scene: Mapping[str, obje
     torque_limit = float(actuator.get("torque_limit", 2.2))
     velocity_gain = float(actuator.get("velocity_gain", 8.0))
     obstacles = "\n".join(
-        "    " + _geom_for_obstacle(index, value)
+        "    " + _obstacle_element(index, value)
         for index, value in enumerate(scene.get("obstacles", ()))
     )
     if profile == "ideal_velocity":

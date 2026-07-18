@@ -1,0 +1,109 @@
+include: residual_structure_cross_plant_l64.yaml
+
+experiment:
+  name: observation_domain_nominal_calibration_l66
+  output_dir: results/research_platform/rl/l66_observation_domain_nominal_calibration_20260716_v1
+
+rl:
+  enabled: false
+  checkpoint: null
+  cross_layer_factorial:
+    design_id: l66_nominal_only_observation_domain_calibration_v1
+    confirmation_mode: false
+    schedule_seed: 2026071653
+    bootstrap_seed: 2026071654
+    conditions: [traditional_nominal]
+    scenes:
+      - {role: seen_chicane, path: configs/research/mujoco_high_dynamic_chicane_l56.yaml}
+      - {role: unseen_reverse_s, path: configs/research/mujoco_high_dynamic_reverse_s_unseen_l56.yaml}
+    # The existing runner retains the historical `physics_domains` field name;
+    # every plant_override is empty here, so only state observation changes.
+    physics_domains:
+      - {name: clean_ground_truth, role: observation_anchor, plant_override: {}, sensor_override: {}}
+      - name: noise_low
+        role: noise_candidate
+        plant_override: {}
+        sensor_override:
+          pose_source: ground_truth
+          twist_source: ground_truth
+          odom_noise_std: [0.003, 0.003, 0.006]
+          twist_noise_std: [0.006, 0.012]
+          latency: 0.0
+      - name: noise_medium
+        role: noise_candidate
+        plant_override: {}
+        sensor_override:
+          pose_source: ground_truth
+          twist_source: ground_truth
+          odom_noise_std: [0.010, 0.010, 0.020]
+          twist_noise_std: [0.020, 0.040]
+          latency: 0.0
+      - name: latency_50ms
+        role: latency_candidate
+        plant_override: {}
+        sensor_override:
+          pose_source: ground_truth
+          twist_source: ground_truth
+          odom_noise_std: [0.0, 0.0, 0.0]
+          twist_noise_std: [0.0, 0.0]
+          latency: 0.05
+      - name: latency_100ms
+        role: latency_candidate
+        plant_override: {}
+        sensor_override:
+          pose_source: ground_truth
+          twist_source: ground_truth
+          odom_noise_std: [0.0, 0.0, 0.0]
+          twist_noise_std: [0.0, 0.0]
+          latency: 0.10
+      - name: combined_low_50ms
+        role: combined_candidate
+        plant_override: {}
+        sensor_override:
+          pose_source: ground_truth
+          twist_source: ground_truth
+          odom_noise_std: [0.003, 0.003, 0.006]
+          twist_noise_std: [0.006, 0.012]
+          latency: 0.05
+      - name: combined_medium_100ms
+        role: combined_candidate
+        plant_override: {}
+        sensor_override:
+          pose_source: ground_truth
+          twist_source: ground_truth
+          odom_noise_std: [0.010, 0.010, 0.020]
+          twist_noise_std: [0.020, 0.040]
+          latency: 0.10
+      - name: raw_wheel_odometry
+        role: exploratory_odometry_stress
+        plant_override: {}
+        sensor_override:
+          pose_source: wheel_odometry
+          twist_source: wheel_odometry
+          odom_noise_std: [0.0, 0.0, 0.0]
+          twist_noise_std: [0.0, 0.0]
+          latency: 0.0
+    development_episode_seeds: [21860841, 21860842, 21860843]
+    sealed_confirmation_episode_seeds: [21860861, 21860862, 21860863, 21860864, 21860865]
+    protected_config_paths:
+      - configs/rl/residual_structure_cross_plant_confirmation_l65.yaml
+    planner_known_command_delay: true
+    model_blocks:
+      - rl_seed: 20260731
+        mlp_seed: 20261201
+        icode_seed: 20261201
+        rl_checkpoint: results/research_platform/rl/subgoal_history_l6_20260713/checkpoints/best.pt
+        mlp_checkpoint: results/research_platform/l60_mlp_high_dynamic_h36_seed20261201_v1/best.pt
+        icode_checkpoint: results/research_platform/l57_icode_high_dynamic_h36_seed20261201_v1/best.pt
+
+observation_domain_calibration:
+  anchor_domain: clean_ground_truth
+  groups:
+    noise: [noise_low, noise_medium]
+    latency: [latency_50ms, latency_100ms]
+    combined: [combined_low_50ms, combined_medium_100ms]
+  minimum_success_rate: 0.80
+  maximum_collision_rate: 0.0
+  minimum_mean_completion_ratio: 0.95
+  minimum_relative_cross_track_shift: 0.03
+

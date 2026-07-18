@@ -1,0 +1,53 @@
+include: sac_mppi_utrap_consensus_lcb_l20.yaml
+
+experiment:
+  name: sac_mppi_scene_complexity_l25
+  output_dir: results/research_platform/rl/scene_complexity_l25_20260715
+
+# L25 does not train another policy. It freezes the three L17 correction
+# checkpoints and tests an observable, LaserScan-only outer gate around the
+# previously fixed target-twin-consensus beta=2 correction.
+rl:
+  policy_id: sac_mppi_scene_complexity_l25
+  gate:
+    mode: complexity
+    correction_advantage_gate_mode: lcb
+    correction_advantage_critic_source: target
+    correction_advantage_threshold: 0.0
+    correction_advantage_uncertainty_multiplier: 2.0
+    complexity:
+      front_half_angle_deg: 40.0
+      side_outer_angle_deg: 125.0
+      near_distance_m: 0.45
+      far_distance_m: 1.30
+      density_distance_m: 1.25
+      density_full_fraction: 0.30
+      soft_threshold: 0.35
+      hard_threshold: 0.70
+
+  scene_complexity_ablation:
+    schedule_seed: 20260751
+    conditions:
+      - traditional_mppi
+      - frozen_bc_prior
+      - lcb_always
+      - complexity_lcb
+    simple_scenes:
+      - configs/research/mujoco_clean_dynamics.yaml
+      - configs/research/mujoco_strong_mppi_baseline.yaml
+    complex_scenes:
+      - configs/research/mujoco_narrow_corridor.yaml
+      - configs/research/mujoco_u_trap_long_board.yaml
+    development_episode_seeds: [20281701, 20281702, 20281703, 20281704, 20281705, 20281706, 20281707, 20281708, 20281709, 20281710]
+    sealed_test_episode_seeds: [20281711, 20281712, 20281713, 20281714, 20281715, 20281716, 20281717, 20281718, 20281719, 20281720, 20281721, 20281722, 20281723, 20281724, 20281725, 20281726, 20281727, 20281728, 20281729, 20281730]
+    activation_epsilon: 0.05
+    maximum_simple_mean_gate_alpha: 0.15
+    maximum_simple_active_fraction: 0.25
+    minimum_complex_mean_gate_alpha: 0.10
+    minimum_complex_active_fraction: 0.15
+    maximum_complex_active_fraction: 0.85
+    minimum_alpha_reduction_vs_always: 0.50
+    maximum_simple_success_losses_vs_traditional: 0
+    maximum_collision_regressions_vs_traditional: 0
+    minimum_complex_net_success_gain_vs_traditional: 1
+    minimum_complex_mean_distance_improvement_m: 0.01

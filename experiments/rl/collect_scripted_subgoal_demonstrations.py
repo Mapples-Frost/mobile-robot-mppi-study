@@ -266,6 +266,7 @@ def main(argv=None):
     episode_summaries = []
     observation_dim = None
     observation_config = None
+    prior_config = None
     sensor_conditions = {}
     seen_scene_names = set()
     episode_id = 0
@@ -332,15 +333,20 @@ def main(argv=None):
                     "use --allow-non-ground-truth-localization for an explicit robustness dataset"
                 )
             current_observation_config = environment.encoder.config.to_dict()
+            current_prior_config = environment.parameterization.config.to_dict()
             if observation_dim is None:
                 observation_dim = int(environment.observation_dim)
                 observation_config = current_observation_config
+                prior_config = current_prior_config
             elif (
                 observation_dim != int(environment.observation_dim)
                 or observation_config != current_observation_config
+                or prior_config != current_prior_config
             ):
                 environment.close()
-                raise ValueError("all demonstration scenes must share one observation contract")
+                raise ValueError(
+                    "all demonstration scenes must share one observation/prior contract"
+                )
             sensor_conditions[scene_name] = {
                 "pose_source": pose_source,
                 "twist_source": twist_source,
@@ -448,11 +454,12 @@ def main(argv=None):
             "split_seed": int(args.split_seed),
             "validation_fraction": float(args.validation_fraction),
             "test_fraction": float(args.test_fraction),
-            "observation_encoder": observation_config,
             "sensor_conditions": sensor_conditions,
         },
         "observation_dim": int(observation_dim),
         "action_dim": 2,
+        "observation_encoder": observation_config,
+        "prior_parameterization": prior_config,
         "teacher": {
             "class": "ScriptedPolylineSubgoal",
             "action_space": "normalized_local_subgoal_distance_bearing",

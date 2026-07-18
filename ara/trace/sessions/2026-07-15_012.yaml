@@ -1,0 +1,104 @@
+session:
+  id: "2026-07-15_012"
+  timestamp: "2026-07-15T21:25:00+08:00"
+  summary: "Built and audited the L29/L30 dynamic cross-layer factorial; scan-temporal gating plus ICODE was perfect on development blocking cells, but a strict nominal-ablation safety gate kept confirmation sealed."
+
+events_logged:
+  - type: pivot
+    id: N44
+    provenance: ai-suggested
+    summary: "Moved the scientific program from static/compute studies to direct ICODE--RL--Gate attribution under moving obstacles and unseen physics."
+  - type: experiment
+    id: N45
+    provenance: ai-executed
+    summary: "L29 completed 540 episodes; all integrity and clean-fallback checks passed, but the spatial gate failed lateral dynamic crossing."
+  - type: dead_end
+    id: N46
+    provenance: ai-executed
+    summary: "Spatial complexity alone was insufficient for a sparse one-sided moving obstacle."
+  - type: experiment
+    id: N47
+    provenance: ai-executed
+    summary: "L30 completed 180 new episodes; temporal-gate + ICODE reached 60/60 blocking successes and zero collisions, while the overall strict gate failed on one nominal-ablation collision."
+  - type: question
+    id: N48
+    provenance: ai-suggested
+    summary: "Test the primary combined method across fresh dynamic-obstacle variants before any new confirmation set is opened."
+  - type: claim
+    id: C31
+    provenance: ai-suggested
+    summary: "Both cross-layer gates exactly recover traditional MPPI in clean geometry."
+  - type: claim
+    id: C32
+    provenance: ai-suggested
+    summary: "Spatial complexity alone is refuted as a sufficient lateral dynamic-crossing gate."
+  - type: claim
+    id: C33
+    provenance: ai-suggested
+    summary: "Temporal-gate + ICODE is supported across all tested L30 development blocking cells."
+  - type: claim
+    id: C34
+    provenance: ai-suggested
+    summary: "L30 confirmation eligibility is refuted under the frozen all-residual safety rule."
+  - type: heuristic
+    id: H24
+    provenance: ai-suggested
+    summary: "Fuse spatial complexity with scan-temporal closing risk for moving sparse hazards."
+  - type: heuristic
+    id: H25
+    provenance: ai-suggested
+    summary: "Use one moving geometry for contact, sensing and viewer while keeping planner inputs LaserScan-only."
+
+ai_actions:
+  - action: "Implemented deterministic collidable MuJoCo dynamic obstacles with common contact, clearance, ray-cast and visualization geometry."
+    provenance: ai-executed
+    files_changed:
+      - "src/mobile_robot_mppi/simulation/model_factory.py"
+      - "src/mobile_robot_mppi/simulation/mujoco_plant.py"
+      - "configs/research/mujoco_dynamic_crossing.yaml"
+      - "tests/platform/test_mujoco_physics.py"
+  - action: "Preregistered, ran and audited the 540-episode L29 blocked factorial over three paired model-training blocks."
+    provenance: ai-executed
+    files_changed:
+      - "configs/rl/cross_layer_factorial_l29.yaml"
+      - "experiments/rl/run_cross_layer_factorial.py"
+      - "experiments/rl/summarize_cross_layer_factorial.py"
+      - "docs/rl/39_l29_cross_layer_factorial_prereg_2026-07-15.md"
+  - action: "Implemented the scan-temporal closing-risk gate, preregistered and ran 180 L30 remediation episodes, and preserved exact clean fallback."
+    provenance: ai-executed
+    files_changed:
+      - "src/mobile_robot_mppi/rl/prior.py"
+      - "src/mobile_robot_mppi/evaluation/metrics.py"
+      - "configs/rl/cross_layer_temporal_gate_l30.yaml"
+      - "experiments/rl/summarize_temporal_gate_remediation.py"
+      - "docs/rl/40_l30_temporal_closing_gate_prereg_2026-07-15.md"
+  - action: "Generated auditable PDF/PNG interaction figures, documented both positive and failed-gate evidence, compiled changed Python files and passed all 368 repository tests."
+    provenance: ai-executed
+    files_changed:
+      - "experiments/rl/plot_temporal_gate_remediation.py"
+      - "docs/rl/41_l29_l30_cross_layer_results_2026-07-15.md"
+      - "README.md"
+
+claims_touched:
+  - id: C31
+    action: created
+    provenance: ai-suggested
+  - id: C32
+    action: created
+    provenance: ai-suggested
+  - id: C33
+    action: created
+    provenance: ai-suggested
+  - id: C34
+    action: created
+    provenance: ai-suggested
+
+open_threads:
+  - "Do not open L29/L30 sealed confirmation seeds because both fixed development gates failed."
+  - "Freeze temporal-gate + ICODE as the candidate before adding crossing direction, phase, speed and size variants on new development seeds."
+  - "Keep temporal-gate nominal as a diagnostic ablation unless a future protocol explicitly safety-qualifies it."
+  - "Repeat the primary method in real-robot shadow mode only after fresh simulation development and confirmation gates pass."
+
+ai_suggestions_pending:
+  - "Preregister a new primary-method-focused dynamic-variant study with new development and confirmation seeds."
+  - "Do not retune the four temporal closing thresholds on L29/L30 development seeds."

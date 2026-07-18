@@ -1,0 +1,96 @@
+include: sac_mppi_scene_complexity_l25.yaml
+
+experiment:
+  name: static_rl_contribution_l69
+  output_dir: results/research_platform/rl/l69_static_rl_contribution_20260716_v1
+
+planner:
+  # K=100 is the prospectively frozen low-sample regime in which a learned
+  # prior is meant to add value.  ICODE is fixed in every condition.
+  num_samples: 100
+  residual_torch_num_threads: 1
+  residual_torchscript: true
+
+memory:
+  enable: false
+
+rl:
+  policy_id: static_rl_contribution_l69
+  gate:
+    skip_zero_complexity_inference: true
+    compute_unselected_critic_diagnostics: false
+    reuse_policy_base_action: true
+  cross_layer_factorial:
+    design_id: l69_static_rl_causal_contribution_v1
+    confirmation_mode: false
+    schedule_seed: 2026071661
+    bootstrap_seed: 2026071662
+    bootstrap_replicates: 20000
+    conditions:
+      - traditional_icode
+      - frozen_bc_icode
+      - complexity_bc_icode
+      - gated_lcb_icode
+    model_blocks:
+      - rl_seed: 20260721
+        icode_seed: 20261201
+        rl_checkpoint: results/research_platform/rl/conservative_correction_l17_v3_seed20260721_20k_continuous_20260714_v1/checkpoints/step_000020000.pt
+        icode_checkpoint: results/research_platform/l57_icode_high_dynamic_h36_seed20261201_v1/best.pt
+      - rl_seed: 20260722
+        icode_seed: 20261202
+        rl_checkpoint: results/research_platform/rl/conservative_correction_l17_v3_seed20260722_20k_continuous_20260714_v1/checkpoints/step_000020000.pt
+        icode_checkpoint: results/research_platform/l57_icode_high_dynamic_h36_seed20261202_v1/best.pt
+      - rl_seed: 20260723
+        icode_seed: 20261203
+        rl_checkpoint: results/research_platform/rl/conservative_correction_l17_v3_seed20260723_20k_continuous_20260714_v1/checkpoints/step_000020000.pt
+        icode_checkpoint: results/research_platform/l57_icode_high_dynamic_h36_seed20261203_v1/best.pt
+    scenes:
+      - {role: clean_control, path: configs/research/mujoco_clean_dynamics.yaml}
+      - {role: blocking_unseen, path: configs/research/mujoco_strong_mppi_baseline.yaml}
+      - {role: blocking_unseen, path: configs/research/mujoco_narrow_corridor.yaml}
+      - {role: blocking_training_geometry, path: configs/research/mujoco_u_trap_long_board.yaml}
+    physics_domains:
+      - name: frozen_high_dynamic_anchor
+        role: fixed_plant
+        plant_override:
+          robot:
+            chassis_mass: 13.0
+            chassis_inertia: [0.13, 0.19, 0.27]
+            wheel_mass: 0.38
+          actuator:
+            profile: torque_pi
+            torque_limit: 1.55
+            kp: 0.38
+            ki: 1.20
+            integral_limit: 2.50
+            command_delay: 0.04
+            torque_slew_rate: 25.0
+          contact:
+            wheel_friction: [0.62, 0.005, 0.0008]
+            floor_friction: [0.55, 0.0025, 0.00025]
+        sensor_override:
+          pose_source: ground_truth
+          twist_source: ground_truth
+          odom_noise_std: [0.0, 0.0, 0.0]
+          twist_noise_std: [0.0, 0.0]
+          latency: 0.0
+    development_episode_seeds: [21860871, 21860872, 21860873, 21860874, 21860875]
+    sealed_confirmation_episode_seeds: [21860881, 21860882, 21860883, 21860884, 21860885, 21860886, 21860887, 21860888, 21860889, 21860890]
+    protected_config_paths:
+      - configs/rl/sac_mppi_sample_efficiency_l26.yaml
+      - configs/rl/residual_structure_observation_confirmation_l68.yaml
+    planner_known_command_delay: true
+    static_rl_contribution_gate:
+      clean_scene: clean_dynamics
+      blocking_scenes: [clean_single_obstacle, narrow_corridor, u_trap_long_board]
+      minimum_rl_vs_gated_bc_net_success_gain: 3
+      minimum_positive_rl_vs_gated_bc_model_blocks: 2
+      minimum_positive_rl_vs_gated_bc_scenes: 2
+      maximum_rl_vs_gated_bc_net_collision_increase: 0
+      minimum_rl_vs_traditional_net_success_gain: 12
+      maximum_rl_vs_traditional_net_collision_increase: 0
+      minimum_rl_correction_acceptance_fraction: 0.05
+      maximum_clean_step_absolute_difference: 0.0
+      maximum_frozen_base_gate_alpha: 0.0
+      maximum_mean_planner_compute_ms: 50.0
+

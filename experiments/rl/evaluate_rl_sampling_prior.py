@@ -32,9 +32,65 @@ def _apply_scene_config(base, scene_path):
         "planner": copy.deepcopy(base["planner"]),
         "rl": copy.deepcopy(base.get("rl", {})),
     }
+    perception_overrides = dict(
+        base.get("rl", {}).get("training", {}).get(
+            "perception_overrides", {}
+        )
+    )
+    if perception_overrides:
+        overlay["perception"] = deep_merge(
+            scene.get("perception", {}), perception_overrides
+        )
     if "memory" in base:
         overlay["memory"] = copy.deepcopy(base["memory"])
     return deep_merge(scene, overlay)
+
+
+def _apply_physics_domain(base, specification_path, domain_name):
+    if specification_path is None and domain_name is None:
+        return base
+    if specification_path is None or domain_name is None:
+        raise ValueError(
+            "--physics-domain-config and --physics-domain must be provided together"
+        )
+    specification = load_yaml(specification_path)
+    matches = [
+        item for item in specification.get("physics_domains", {}).get("domains", ())
+        if str(item.get("name")) == str(domain_name)
+    ]
+    if len(matches) != 1:
+        raise ValueError("physics domain must match exactly one configured domain")
+    domain = matches[0]
+    result = deep_merge(base, {"plant": domain.get("plant_override", {})})
+    scene_name = str(result.get("scene", {}).get("name", "scene"))
+    result.setdefault("scene", {})["name"] = "%s__%s" % (
+        scene_name, domain_name
+    )
+    result.setdefault("experiment", {})["physics_domain"] = str(domain_name)
+    result["experiment"]["physics_domain_role"] = str(
+        domain.get("role", "unknown")
+    )
+    return result
+
+
+def _require_explicit_scene_for_training_config(
+    base, scene_path, allow_embedded_scene=False
+):
+    rl_config = base.get("rl", {})
+    training = rl_config.get("training", {})
+    training_markers = any(
+        training.get(name)
+        for name in (
+            "scene_configs",
+            "validation_scene_configs",
+            "physics_domain_config",
+        )
+    ) or bool(rl_config.get("behavior_cloning"))
+    if scene_path is None and training_markers and not allow_embedded_scene:
+        raise ValueError(
+            "RL training configs require explicit --scene-config for evaluation; "
+            "use --allow-embedded-scene only for a documented legacy condition"
+        )
 
 
 def main(argv=None):
@@ -47,11 +103,36 @@ def main(argv=None):
             "continue to come from --config"
         ),
     )
-    parser.add_argument("--checkpoint", required=True)
+    parser.add_argument(
+        "--allow-embedded-scene",
+        action="store_true",
+        help="explicitly evaluate the scene embedded in --config",
+    )
+    parser.add_argument("--physics-domain-config")
+    parser.add_argument("--physics-domain")
+    parser.add_argument("--checkpoint")
+    parser.add_argument(
+        "--fixed-covariance-scale",
+        nargs=2,
+        type=float,
+        metavar=("V_SCALE", "OMEGA_SCALE"),
+        help=(
+            "evaluate the non-learning covariance comparator instead of a "
+            "checkpoint; values multiply MPPI sampling standard deviations"
+        ),
+    )
     parser.add_argument("--output-dir", required=True)
     parser.add_argument("--seeds", default="11,12,13,14,15")
     parser.add_argument(
-        "--gate-mode", choices=("none", "fixed", "ood", "exploration")
+        "--gate-mode",
+        choices=(
+            "none",
+            "fixed",
+            "ood",
+            "exploration",
+            "complexity",
+            "complexity_confidence",
+        ),
     )
     parser.add_argument("--fixed-alpha", type=float)
     parser.add_argument("--ood-soft-threshold", type=float)
@@ -59,6 +140,17 @@ def main(argv=None):
     parser.add_argument("--use-critic-disagreement", action="store_true")
     parser.add_argument("--critic-soft-threshold", type=float)
     parser.add_argument("--critic-hard-threshold", type=float)
+    parser.add_argument(
+        "--correction-advantage-gate-mode",
+        choices=("none", "hard", "lcb"),
+    )
+    parser.add_argument(
+        "--correction-advantage-critic-source", choices=("online", "target")
+    )
+    parser.add_argument("--correction-advantage-threshold", type=float)
+    parser.add_argument(
+        "--correction-advantage-uncertainty-multiplier", type=float
+    )
     parser.add_argument(
         "--exploration-signal", choices=("ood", "critic_disagreement")
     )
@@ -83,9 +175,31 @@ def main(argv=None):
     )
     parser.add_argument("--view", action="store_true")
     args = parser.parse_args(argv)
-    base = _apply_scene_config(load_yaml(args.config), args.scene_config)
+    base = load_yaml(args.config)
+    _require_explicit_scene_for_training_config(
+        base, args.scene_config, args.allow_embedded_scene
+    )
+    base = _apply_scene_config(base, args.scene_config)
+    base = _apply_physics_domain(
+        base, args.physics_domain_config, args.physics_domain
+    )
+    if (args.checkpoint is None) == (args.fixed_covariance_scale is None):
+        raise ValueError(
+            "provide exactly one of --checkpoint or --fixed-covariance-scale"
+        )
     base.setdefault("rl", {})
-    base["rl"].update({"enabled": True, "checkpoint": str(Path(args.checkpoint).resolve())})
+    # Training-time localization overrides are part of the resolved
+    # experimental condition.  Apply them explicitly here; command-line
+    # overrides below remain the final authority and summary.json records the
+    # resulting sources.
+    sensor_overrides = dict(base["rl"].get("sensor_overrides", {}))
+    if sensor_overrides:
+        base.setdefault("sensors", {}).update(sensor_overrides)
+    if args.checkpoint is not None:
+        base["rl"].update({
+            "enabled": True,
+            "checkpoint": str(Path(args.checkpoint).resolve()),
+        })
     if args.gate_mode:
         base["rl"].setdefault("gate", {})["mode"] = args.gate_mode
     if args.fixed_alpha is not None:
@@ -110,6 +224,22 @@ def main(argv=None):
         base["rl"].setdefault("gate", {})[
             "critic_hard_threshold"
         ] = args.critic_hard_threshold
+    if args.correction_advantage_gate_mode is not None:
+        base["rl"].setdefault("gate", {})[
+            "correction_advantage_gate_mode"
+        ] = args.correction_advantage_gate_mode
+    if args.correction_advantage_critic_source is not None:
+        base["rl"].setdefault("gate", {})[
+            "correction_advantage_critic_source"
+        ] = args.correction_advantage_critic_source
+    if args.correction_advantage_threshold is not None:
+        base["rl"].setdefault("gate", {})[
+            "correction_advantage_threshold"
+        ] = args.correction_advantage_threshold
+    if args.correction_advantage_uncertainty_multiplier is not None:
+        base["rl"].setdefault("gate", {})[
+            "correction_advantage_uncertainty_multiplier"
+        ] = args.correction_advantage_uncertainty_multiplier
     if args.exploration_signal is not None:
         base["rl"].setdefault("gate", {})[
             "exploration_signal"
@@ -134,7 +264,17 @@ def main(argv=None):
             "near_goal_full_fallback_distance": args.near_goal_full_fallback_distance,
             "near_goal_full_rl_distance": args.near_goal_full_rl_distance,
         })
-    base["planner"]["sampling_prior"] = "rl"
+    if args.fixed_covariance_scale is None:
+        base["planner"]["sampling_prior"] = "rl"
+    else:
+        if any(value <= 0.0 for value in args.fixed_covariance_scale):
+            raise ValueError("fixed covariance scales must be positive")
+        base["planner"]["sampling_prior"] = "fixed_covariance"
+        base["planner"]["fixed_covariance_scale"] = list(
+            args.fixed_covariance_scale
+        )
+        base["rl"]["enabled"] = False
+        base["rl"].pop("checkpoint", None)
     if args.pose_source is not None:
         base.setdefault("sensors", {})["pose_source"] = args.pose_source
     if args.twist_source is not None:
@@ -150,10 +290,41 @@ def main(argv=None):
     if base["planner"].get("prediction_mode") in ("mlp_residual", "icode_residual") and not base["planner"].get("checkpoint"):
         raise ValueError("learned residual prediction requires --residual-checkpoint")
     output = Path(args.output_dir).resolve()
-    rows = []
+    output.mkdir(parents=True, exist_ok=True)
     selected_seeds = _seeds(args.seeds)
+    if not selected_seeds:
+        raise ValueError("--seeds must contain at least one integer seed")
     if args.view and len(selected_seeds) != 1:
         raise ValueError("--view requires exactly one seed")
+    snapshot = {
+        "schema_version": 1,
+        "source_config": str(Path(args.config).resolve()),
+        "scene_config": (
+            None if args.scene_config is None
+            else str(Path(args.scene_config).resolve())
+        ),
+        "physics_domain_config": (
+            None if args.physics_domain_config is None
+            else str(Path(args.physics_domain_config).resolve())
+        ),
+        "physics_domain": args.physics_domain,
+        "checkpoint": (
+            None if args.checkpoint is None
+            else str(Path(args.checkpoint).resolve())
+        ),
+        "fixed_covariance_scale": args.fixed_covariance_scale,
+        "episode_seeds": selected_seeds,
+        "max_steps_override": args.max_steps,
+        "num_samples_override": args.num_samples,
+        "headless": not bool(args.view),
+        "resolved_config": base,
+    }
+    with (output / "evaluation_config_snapshot.json").open(
+        "w", encoding="utf-8"
+    ) as handle:
+        json.dump(snapshot, handle, indent=2, sort_keys=True)
+        handle.write("\n")
+    rows = []
     for seed in selected_seeds:
         config = copy.deepcopy(base)
         config["experiment"]["seed"] = seed
@@ -174,15 +345,44 @@ def main(argv=None):
     numeric = (
         "final_goal_distance",
         "trajectory_length",
+        "cross_track_rmse",
+        "cross_track_mean",
+        "cross_track_max",
         "minimum_clearance",
         "control_jerk",
         "planner_compute_ms_mean",
         "rl_gate_alpha_mean",
         "rl_ood_score_mean",
+        "rl_scene_complexity_score_mean",
+        "rl_scene_complexity_score_max",
+        "rl_gate_active_fraction",
         "rl_critic_disagreement_mean",
         "rl_exploration_activation_mean",
         "rl_exploration_latch_alpha_mean",
+        "rl_correction_gate_alpha_mean",
+        "rl_base_action_abs_mean",
+        "rl_unit_correction_abs_mean",
+        "rl_applied_correction_abs_mean",
+        "rl_applied_correction_abs_max",
+        "rl_raw_applied_correction_abs_mean",
+        "rl_correction_advantage_gate_alpha_mean",
+        "rl_selected_consensus_lcb_mean",
+        "rl_online_conservative_advantage_mean",
+        "rl_online_conservative_advantage_min",
+        "rl_online_conservative_advantage_max",
+        "rl_online_positive_advantage_fraction",
+        "rl_target_conservative_advantage_mean",
+        "rl_target_conservative_advantage_min",
+        "rl_target_conservative_advantage_max",
+        "rl_target_positive_advantage_fraction",
     )
+    correction_scale = base.get("rl", {}).get("sac", {}).get(
+        "correction_scale", (0.20,)
+    )
+    if np.isscalar(correction_scale):
+        correction_scale = [float(correction_scale)]
+    else:
+        correction_scale = [float(value) for value in correction_scale]
     summary = {
         "seeds": len(rows),
         "scene": str(base.get("scene", {}).get("name", "unknown")),
@@ -197,6 +397,27 @@ def main(argv=None):
         "gate_mode": str(base.get("rl", {}).get("gate", {}).get(
             "mode", "none"
         )),
+        "policy_mode": str(base.get("rl", {}).get("sac", {}).get(
+            "policy_mode", "direct"
+        )),
+        "correction_scale": correction_scale,
+        "correction_gate_alpha": float(base.get("rl", {}).get(
+            "sac", {}
+        ).get("correction_gate_alpha", 1.0)),
+        "correction_advantage_gate_mode": str(base.get("rl", {}).get(
+            "gate", {}
+        ).get("correction_advantage_gate_mode", "none")),
+        "correction_advantage_critic_source": str(base.get("rl", {}).get(
+            "gate", {}
+        ).get("correction_advantage_critic_source", "online")),
+        "correction_advantage_threshold": float(base.get("rl", {}).get(
+            "gate", {}
+        ).get("correction_advantage_threshold", 0.0)),
+        "correction_advantage_uncertainty_multiplier": float(
+            base.get("rl", {}).get("gate", {}).get(
+                "correction_advantage_uncertainty_multiplier", 1.0
+            )
+        ),
         "ood_soft_threshold": float(base.get("rl", {}).get("gate", {}).get(
             "ood_soft_threshold", 3.0
         )),

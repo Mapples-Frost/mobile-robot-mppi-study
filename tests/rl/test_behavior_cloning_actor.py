@@ -94,6 +94,67 @@ def test_behavior_cloning_state_roundtrip_and_legacy_default():
     assert restored.bc_update_steps == 0
 
 
+def test_sac_update_can_apply_behavior_anchor_and_records_it():
+    torch.set_num_threads(1)
+    agent = SACAgent(
+        3, 2, SACConfig(hidden_sizes=(8, 8)), device="cpu", seed=5
+    )
+    batch = {
+        "observations": np.zeros((8, 3), dtype=np.float32),
+        "actions": np.zeros((8, 2), dtype=np.float32),
+        "rewards": np.zeros((8, 1), dtype=np.float32),
+        "next_observations": np.zeros((8, 3), dtype=np.float32),
+        "dones": np.zeros((8, 1), dtype=np.float32),
+    }
+    behavior = {
+        "observations": np.ones((4, 3), dtype=np.float32),
+        "actions": np.asarray([[0.5, -0.5]] * 4, dtype=np.float32),
+    }
+
+    metrics = agent.update(
+        batch,
+        behavior_batch=behavior,
+        behavior_cloning_weight=5.0,
+        behavior_log_std_weight=1e-3,
+        behavior_target_log_std=-2.0,
+    )
+
+    assert metrics["bc_anchor_mean_mse"] > 0.0
+    assert metrics["bc_anchor_log_std_loss"] >= 0.0
+    assert agent.bc_anchor_update_steps == 1
+    state = agent.state_dict()
+    assert state["bc_anchor_update_steps"] == 1
+    with pytest.raises(ValueError, match="require behavior_batch"):
+        agent.update(batch, behavior_cloning_weight=1.0)
+
+
+def test_critic_burn_in_keeps_actor_and_entropy_temperature_frozen():
+    agent = SACAgent(
+        3, 2, SACConfig(hidden_sizes=(8, 8)), device="cpu", seed=10
+    )
+    actor = _snapshot(agent.actor)
+    critic = _snapshot(agent.critic1)
+    alpha = agent.log_alpha.detach().cpu().clone()
+    batch = {
+        "observations": np.zeros((8, 3), dtype=np.float32),
+        "actions": np.zeros((8, 2), dtype=np.float32),
+        "rewards": np.ones((8, 1), dtype=np.float32),
+        "next_observations": np.zeros((8, 3), dtype=np.float32),
+        "dones": np.zeros((8, 1), dtype=np.float32),
+    }
+
+    metrics = agent.update(batch, update_actor=False)
+
+    _assert_unchanged(agent.actor, actor)
+    torch.testing.assert_close(agent.log_alpha.detach().cpu(), alpha)
+    assert any(
+        not torch.equal(value.detach().cpu(), critic[name])
+        for name, value in agent.critic1.state_dict().items()
+    )
+    assert metrics["actor_update_applied"] == 0.0
+    assert metrics["actor_gradient_norm"] == 0.0
+
+
 def test_local_subgoal_action_roundtrip_boundaries_and_angle_wrap():
     config = PriorParameterizationConfig(
         kind="local_subgoal",

@@ -36,6 +36,12 @@ def main(argv=None):
         "observation_dim": agent["observation_dim"],
         "policy_action_dim": agent["action_dim"],
         "sac_config": agent["config"],
+        "policy_state": {
+            "base_actor_initialized": bool(
+                agent.get("base_actor_initialized", False)
+            ),
+            "base_actor_sha256": agent.get("base_actor_sha256"),
+        },
         "encoder_config": payload["encoder_config"],
         "parameterization_config": payload["parameterization_config"],
         "action_spec": {

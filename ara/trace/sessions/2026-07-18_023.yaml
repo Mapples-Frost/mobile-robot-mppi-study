@@ -1,0 +1,63 @@
+session:
+  id: "2026-07-18_023"
+  timestamp: "2026-07-18T18:10:00+08:00"
+  summary: "L90-L93 bounded unsupported fine-timescale and dynamic-obstacle covariance claims; L94/L95 then established and independently confirmed contextual ICODE-MPPI performance at half the fixed-policy sample budget."
+
+events_logged:
+  - {type: dead_end, id: N97, provenance: ai-executed, summary: "L90 found no material route-local covariance-switching headroom."}
+  - {type: experiment, id: N98, provenance: ai-executed, summary: "L91 produced an exploratory dynamic-scene safety pattern but failed its elapsed-time gate."}
+  - {type: dead_end, id: N99, provenance: ai-executed, summary: "L92 did not independently confirm dynamic-scene covariance safety."}
+  - {type: dead_end, id: N100, provenance: ai-executed, summary: "L93 showed covariance selection cannot replace missing dynamic-obstacle motion prediction."}
+  - {type: experiment, id: N101, provenance: ai-executed, summary: "L94 passed all preregistered contextual half-budget performance gates."}
+  - {type: experiment, id: N102, provenance: ai-executed, summary: "L95 single-process confirmation reproduced time and compute gains with precision noninferiority."}
+  - {type: claim, id: C65, provenance: ai-suggested, summary: "Route-local high-frequency covariance headroom is refuted in the tested domain."}
+  - {type: claim, id: C66, provenance: ai-suggested, summary: "Scene-label covariance safety generalization is refuted."}
+  - {type: claim, id: C67, provenance: ai-suggested, summary: "Covariance adaptation alone cannot resolve the tested route-crossing failures."}
+  - {type: claim, id: C68, provenance: ai-suggested, summary: "Contextual K=50 preserves performance and reduces time/compute versus fixed K=100."}
+  - {type: claim, id: C69, provenance: ai-suggested, summary: "The confirmed efficiency result carries a measurable jerk cost."}
+  - {type: heuristic, id: H47, provenance: ai-suggested, summary: "Test oracle headroom at the intended policy timescale."}
+  - {type: heuristic, id: H48, provenance: ai-suggested, summary: "Separate dynamic-obstacle prediction from covariance adaptation."}
+  - {type: heuristic, id: H49, provenance: ai-suggested, summary: "Confirm wall-clock gains in one process with balanced arm order."}
+  - {type: heuristic, id: H50, provenance: ai-suggested, summary: "Use both equal-budget and half-budget sampling-policy comparisons."}
+
+ai_actions:
+  - action: "Implemented route-progress geometry utilities and a preregistered local covariance oracle with regression tests."
+    provenance: ai-executed
+    files_changed: ["src/mobile_robot_mppi/rl/contextual_bandit.py", "experiments/rl/run_local_covariance_context_oracle.py", "tests/rl/test_local_covariance_context_oracle.py"]
+  - action: "Executed L90-L93 and retained all failed gates as explicit negative results rather than relabeling them."
+    provenance: ai-executed
+    files_changed: ["docs/rl/137_l90_local_covariance_context_oracle_results_2026-07-18.md", "docs/rl/140_l92_dynamic_covariance_safety_confirmation_results_2026-07-18.md", "docs/rl/142_l93_route_dynamic_headroom_results_2026-07-18.md"]
+  - action: "Implemented and executed the 320-episode L94 K-scaling and half-budget sample-efficiency evaluation."
+    provenance: ai-executed
+    files_changed: ["experiments/rl/run_contextual_covariance_sample_efficiency.py", "configs/rl/contextual_covariance_sample_efficiency_l94.yaml", "tests/rl/test_contextual_covariance_sample_efficiency.py"]
+  - action: "Implemented and executed the L95 single-process, alternating-order independent confirmation on untouched seeds."
+    provenance: ai-executed
+    files_changed: ["experiments/rl/run_contextual_covariance_half_budget_confirmation.py", "configs/rl/contextual_covariance_half_budget_confirmation_l95.yaml", "tests/rl/test_contextual_covariance_half_budget_confirmation.py"]
+  - action: "Generated and visually inspected publication-oriented PNG/PDF/SVG sample-efficiency figures."
+    provenance: ai-executed
+    files_changed: ["experiments/rl/plot_contextual_covariance_sample_efficiency.py", "tests/rl/test_plot_contextual_covariance_sample_efficiency.py"]
+  - action: "Compiled all new Python files, passed 13 focused RL tests and passed the full 594-test repository suite."
+    provenance: ai-executed
+
+claims_touched:
+  - {id: C65, action: created, provenance: ai-suggested}
+  - {id: C66, action: created, provenance: ai-suggested}
+  - {id: C67, action: created, provenance: ai-suggested}
+  - {id: C68, action: created, provenance: ai-suggested}
+  - {id: C69, action: created, provenance: ai-suggested}
+
+open_threads:
+  - "Confirm L94/L95 on the physical robot with the same fixed-versus-contextual half-budget contract after offline and shadow-mode gates."
+  - "Add explicit future dynamic-obstacle motion prediction before reopening dynamic-scene covariance or RL safety claims."
+  - "Reduce the confirmed jerk cost without sacrificing the time, compute and precision gates."
+  - "Keep the route-level contextual bandit as the primary RL contribution and local switching as a negative ablation."
+
+ai_suggestions_pending:
+  - "Treat the L94/L95 half-budget result as the primary RL mechanism and the L90-L93 failures as scope-defining ablations."
+
+provenance_summary:
+  user_confirmed: 0
+  ai_suggested: 10
+  ai_executed: 12
+  user_revised: 0
+  confirmation_rate: 0.0

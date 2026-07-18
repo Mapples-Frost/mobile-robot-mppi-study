@@ -1,0 +1,56 @@
+session:
+  id: "2026-07-16_016"
+  timestamp: "2026-07-16T15:25:00+08:00"
+  summary: "L38-L50 repaired horizon-matched ICODE prediction and independently confirmed mismatch-stratified smoothness, while two global closed-loop gates remained failed."
+
+events_logged:
+  - {type: experiment, id: N64, provenance: ai-executed, summary: "Structure, applied-control semantics and known-delay rollout repaired H=36 ICODE qualification."}
+  - {type: experiment, id: N65, provenance: ai-executed, summary: "L47 failed path-tracking accuracy but exposed exploratory efficiency endpoints."}
+  - {type: experiment, id: N66, provenance: ai-executed, summary: "L48 independently confirmed both jerk endpoints but failed its joint efficiency gate."}
+  - {type: experiment, id: N67, provenance: ai-executed, summary: "L49 task-specific retraining passed the frozen offline gate for all three model seeds and both splits."}
+  - {type: experiment, id: N68, provenance: ai-executed, summary: "L50 failed globally but showed significant issued and applied jerk reduction in the stronger-delay stratum with no task/safety loss."}
+  - {type: pivot, id: N69, provenance: ai-suggested, summary: "Replace always-on residual authority with a causal past-innovation reliability gate."}
+  - {type: claim, id: C46, provenance: ai-suggested, summary: "Structure- and delay-aligned ICODE improves H=36 on-policy prediction."}
+  - {type: claim, id: C47, provenance: ai-suggested, summary: "Global path-tracking improvement was refuted."}
+  - {type: claim, id: C48, provenance: ai-suggested, summary: "Mismatch-stratified smoothness is supported by current evidence."}
+  - {type: claim, id: C49, provenance: ai-suggested, summary: "Task-specific retraining did not close the global joint gate."}
+  - {type: heuristic, id: H33, provenance: ai-suggested, summary: "Match residual structure and control labels to the physical interface."}
+  - {type: heuristic, id: H34, provenance: ai-suggested, summary: "Offline prediction grants eligibility but is not a control result."}
+  - {type: heuristic, id: H35, provenance: ai-suggested, summary: "Gate residuals from causal observed innovations, not simulator domain labels."}
+
+ai_actions:
+  - action: "Implemented structured residual outputs, applied-control dataset semantics, known command-delay MPPI rollouts, support diagnostics and corresponding regression tests."
+    provenance: ai-executed
+    files_changed: ["src/mobile_robot_mppi/learning/models.py", "src/mobile_robot_mppi/learning/trainer.py", "src/mobile_robot_mppi/planning/mppi.py", "src/mobile_robot_mppi/runtime/factories.py", "experiments/rl/build_l38_onpolicy_residual_dataset.py"]
+  - action: "Trained and evaluated three L49 task-specific ICODE checkpoints, then ran and audited the 360-episode L50 independent confirmation."
+    provenance: ai-executed
+    files_changed: ["configs/research/icode_iterative_path_h36_l49.yaml", "configs/rl/icode_iterative_path_confirmation_l50.yaml", "experiments/rl/summarize_l49_offline_gate.py", "experiments/rl/summarize_icode_efficiency_confirmation.py"]
+  - action: "Generated a reproducible vector/raster evidence figure and consolidated result report."
+    provenance: ai-executed
+    files_changed: ["experiments/rl/plot_l49_l50_results.py", "docs/rl/74_l49_l50_iterative_path_results_2026-07-16.md"]
+  - action: "Ran all 445 repository tests, final focused tests, Python compilation and whitespace validation successfully."
+    provenance: ai-executed
+    files_changed: ["tests/rl/test_l49_offline_gate.py"]
+
+claims_touched:
+  - {id: C46, action: created, provenance: ai-suggested}
+  - {id: C47, action: created, provenance: ai-suggested}
+  - {id: C48, action: created, provenance: ai-suggested}
+  - {id: C49, action: created, provenance: ai-suggested}
+
+open_threads:
+  - "Implement an online residual-reliability gate using only past transition innovation, with cold start, forgetting and fail-closed behavior."
+  - "Run an oracle-domain upper-bound ablation before spending new seeds on the online gate."
+  - "Confirm the mismatch-stratified jerk result on unused seeds and additional mismatch types."
+  - "Reopen bounded-RL interaction only after residual-only gating passes its closed-loop gate."
+
+ai_suggestions_pending:
+  - "Treat long-delay smoothness as a scoped empirical result, not a universal ICODE claim."
+  - "Do not tune path selection or acceptance thresholds from L50 outcomes."
+
+provenance_summary:
+  user_confirmed: 0
+  ai_suggested: 8
+  ai_executed: 9
+  user_revised: 0
+  confirmation_rate: 0.0

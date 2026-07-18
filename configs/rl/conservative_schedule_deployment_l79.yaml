@@ -1,0 +1,79 @@
+include: training_internal_checkpoint_rule_l77.yaml
+
+experiment:
+  name: conservative_schedule_deployment_l79
+  output_dir: results/research_platform/rl/l79_conservative_schedule_deployment_20260717_v1
+
+rl:
+  policy_id: conservative_schedule_deployment_l79
+  cross_layer_factorial:
+    study_label: L79
+    artifact_prefix: l79
+    design_id: l79_conservative_schedule_deployment_v1
+    confirmation_mode: false
+    schedule_seed: 2026071779
+    conditions:
+      - complexity_bc_icode
+      - gated_lcb_icode
+    model_blocks:
+      - rl_seed: 20260774
+        icode_seed: 20261201
+        selected_step: 25000
+        selection_source: l78_training_internal_preregistered_gate
+        icode_checkpoint: results/research_platform/l57_icode_high_dynamic_h36_seed20261201_v1/best.pt
+        condition_checkpoints:
+          complexity_bc_icode: results/research_platform/rl/l78_static_conservative_seed20260774_30k_20260717_v1/checkpoints/initial.pt
+          gated_lcb_icode: results/research_platform/rl/l78_static_conservative_seed20260774_30k_20260717_v1/checkpoints/step_000025000.pt
+      - rl_seed: 20260775
+        icode_seed: 20261202
+        selected_step: 0
+        selection_source: l78_training_internal_preregistered_gate
+        icode_checkpoint: results/research_platform/l57_icode_high_dynamic_h36_seed20261202_v1/best.pt
+        condition_checkpoints:
+          complexity_bc_icode: results/research_platform/rl/l78_static_conservative_seed20260775_30k_20260717_v1/checkpoints/initial.pt
+          gated_lcb_icode: results/research_platform/rl/l78_static_conservative_seed20260775_30k_20260717_v1/checkpoints/initial.pt
+      - rl_seed: 20260776
+        icode_seed: 20261203
+        selected_step: 25000
+        selection_source: l78_training_internal_preregistered_gate
+        icode_checkpoint: results/research_platform/l57_icode_high_dynamic_h36_seed20261203_v1/best.pt
+        condition_checkpoints:
+          complexity_bc_icode: results/research_platform/rl/l78_static_conservative_seed20260776_30k_20260717_v1/checkpoints/initial.pt
+          gated_lcb_icode: results/research_platform/rl/l78_static_conservative_seed20260776_30k_20260717_v1/checkpoints/step_000025000.pt
+    development_episode_seeds:
+      [22201101, 22201102, 22201103, 22201104, 22201105]
+    sealed_confirmation_episode_seeds:
+      [22201111, 22201112, 22201113, 22201114, 22201115]
+    protected_config_paths:
+      - configs/rl/static_rl_contribution_l69.yaml
+      - configs/rl/static_multigeometry_deployment_selection_l71.yaml
+      - configs/rl/static_risk_balanced_deployment_selection_l73.yaml
+      - configs/rl/static_risk_balanced_sealed_confirmation_l74.yaml
+      - configs/rl/progress_competence_activation_l75.yaml
+      - configs/rl/correction_support_gate_l76.yaml
+      - configs/rl/training_internal_checkpoint_rule_l77.yaml
+    checkpoint_rule_gate:
+      base_condition: complexity_bc_icode
+      candidate_condition: gated_lcb_icode
+      minimum_eligible_model_blocks: 2
+      maximum_block_success_losses: 0
+      maximum_block_collision_regressions: 0
+      minimum_block_mean_goal_distance_improvement_m: 0.0
+      minimum_block_correction_gate_alpha: 0.01
+      minimum_block_success_gains_or_distance_improvement_m: 0.005
+      minimum_total_success_gains: 3
+      maximum_total_success_losses: 1
+      minimum_total_net_success_gain: 2
+      maximum_total_collision_regressions: 0
+      minimum_total_mean_goal_distance_improvement_m: 0.0
+      minimum_corridor_net_success_gain: 2
+      maximum_clean_success_losses: 0
+      maximum_u_trap_success_losses: 0
+      maximum_frozen_base_correction_gate_alpha: 0.0
+    interpretation_guard: >-
+      L79 is a fresh-seed deployment validation of the checkpoints selected by
+      the preregistered L78 training-internal gate. Block 1 selected step zero
+      and is therefore retained as an explicit no-op learned-correction block,
+      rather than being dropped after observing its training result. No L79
+      checkpoint, gate threshold, scene weight, cost, or seed may be reselected.
+

@@ -1,0 +1,562 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" width="850.79952pt" height="605.99952pt" viewBox="0 0 850.79952 605.99952" xmlns="http://www.w3.org/2000/svg" version="1.1">
+ <metadata>
+  <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+   <cc:Work>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:date>2026-07-16T10:35:48.106022</dc:date>
+    <dc:format>image/svg+xml</dc:format>
+    <dc:creator>
+     <cc:Agent>
+      <dc:title>Matplotlib v3.7.5, https://matplotlib.org/</dc:title>
+     </cc:Agent>
+    </dc:creator>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <defs>
+  <style type="text/css">*{stroke-linejoin: round; stroke-linecap: butt}</style>
+ </defs>
+ <g id="figure_1">
+  <g id="patch_1">
+   <path d="M 0 605.99952 
+L 850.79952 605.99952 
+L 850.79952 0 
+L 0 0 
+z
+" style="fill: #ffffff"/>
+  </g>
+  <g id="axes_1">
+   <g id="patch_2">
+    <path d="M 56.224866 273.356606 
+L 383.057308 273.356606 
+L 383.057308 85.972673 
+L 56.224866 85.972673 
+z
+" clip-path="url(#p507b856681)" style="fill: #f2a477; stroke: #7a3100; stroke-width: 1.5; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_3">
+    <path d="M 59.342714 288.608787 
+Q 219.642249 288.608787 379.941784 288.608787 
+" style="fill: none; stroke: #333333; stroke-linecap: round"/>
+    <path d="M 62.942714 290.408787 
+L 59.342714 288.608787 
+L 62.942714 286.808787 
+" style="fill: none; stroke: #333333; stroke-linecap: round"/>
+    <path d="M 376.341784 286.808787 
+L 379.941784 288.608787 
+L 376.341784 290.408787 
+" style="fill: none; stroke: #333333; stroke-linecap: round"/>
+   </g>
+   <g id="text_1">
+    <text style="fill: #333333; font: 9px 'Microsoft YaHei'; text-anchor: middle" x="219.641087" y="286.371443" transform="rotate(-0 219.641087 286.371443)">600</text>
+   </g>
+   <g id="patch_4">
+    <path d="M 37.159641 270.239955 
+Q 37.159641 179.665296 37.159641 89.090637 
+" style="fill: none; stroke: #333333; stroke-linecap: round"/>
+    <path d="M 38.959641 266.639955 
+L 37.159641 270.239955 
+L 35.359641 266.639955 
+" style="fill: none; stroke: #333333; stroke-linecap: round"/>
+    <path d="M 35.359641 92.690637 
+L 37.159641 89.090637 
+L 38.959641 92.690637 
+" style="fill: none; stroke: #333333; stroke-linecap: round"/>
+   </g>
+   <g id="text_2">
+    <text style="fill: #333333; font: 9px 'Microsoft YaHei'; text-anchor: middle" x="37.159641" y="177.427296" transform="rotate(-0 37.159641 177.427296)">344</text>
+   </g>
+   <g id="text_3">
+    <text style="font: 700 15px 'Microsoft YaHei'; text-anchor: middle" x="219.641087" y="183.795499" transform="rotate(-0 219.641087 183.795499)">A  主墙板</text>
+   </g>
+   <g id="patch_5">
+    <path d="M 94.130863 68.706466 
+Q 76.088266 76.924881 59.063123 84.679845 
+" style="fill: none; stroke: #333333; stroke-linecap: round"/>
+    <path d="M 63.085404 84.825631 
+L 59.063123 84.679845 
+L 61.59312 81.549492 
+" style="fill: none; stroke: #333333; stroke-linecap: round"/>
+   </g>
+   <g id="text_4">
+    <text style="font: 9px 'Microsoft YaHei'; text-anchor: middle" x="110.69694" y="63.639123" transform="rotate(-0 110.69694 63.639123)">上角 R20（2处）</text>
+   </g>
+   <g id="text_5">
+    <text style="font: 8.5px 'Microsoft YaHei'; text-anchor: middle" x="219.641087" y="301.682085" transform="rotate(-0 219.641087 301.682085)">厚 6；下角 R5；全部外露边倒钝并装透明硅胶 U 形护边</text>
+   </g>
+   <g id="text_6">
+    <text style="font: 700 13px 'Microsoft YaHei'; text-anchor: middle" x="214.19388" y="41.297501" transform="rotate(-0 214.19388 41.297501)">A  主墙板下料图（W600）</text>
+   </g>
+  </g>
+  <g id="axes_2">
+   <g id="patch_6">
+    <path d="M 473.189419 222.969938 
+L 800.021861 222.969938 
+L 800.021861 135.81462 
+L 473.189419 135.81462 
+z
+" clip-path="url(#p06f40190cf)" style="fill: #f6d5c1; stroke: #7a3100; stroke-width: 1.5; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_7">
+    <path d="M 473.189419 181.026441 
+L 800.021861 181.026441 
+L 800.021861 177.758117 
+L 473.189419 177.758117 
+z
+" clip-path="url(#p06f40190cf)" style="fill: #d55e00; stroke: #7a3100; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_8">
+    <path d="M 504.238501 219.156893 
+L 507.506825 219.156893 
+L 507.506825 181.026441 
+L 504.238501 181.026441 
+z
+" clip-path="url(#p06f40190cf)" style="fill: #ffd2b8; stroke: #7a3100; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_9">
+    <path d="M 504.238501 177.758117 
+L 507.506825 177.758117 
+L 507.506825 139.627665 
+L 504.238501 139.627665 
+z
+" clip-path="url(#p06f40190cf)" style="fill: #ffd2b8; stroke: #7a3100; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_10">
+    <path d="M 634.971478 219.156893 
+L 638.239802 219.156893 
+L 638.239802 181.026441 
+L 634.971478 181.026441 
+z
+" clip-path="url(#p06f40190cf)" style="fill: #ffd2b8; stroke: #7a3100; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_11">
+    <path d="M 634.971478 177.758117 
+L 638.239802 177.758117 
+L 638.239802 139.627665 
+L 634.971478 139.627665 
+z
+" clip-path="url(#p06f40190cf)" style="fill: #ffd2b8; stroke: #7a3100; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_12">
+    <path d="M 765.704455 219.156893 
+L 768.972779 219.156893 
+L 768.972779 181.026441 
+L 765.704455 181.026441 
+z
+" clip-path="url(#p06f40190cf)" style="fill: #ffd2b8; stroke: #7a3100; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_13">
+    <path d="M 765.704455 177.758117 
+L 768.972779 177.758117 
+L 768.972779 139.627665 
+L 765.704455 139.627665 
+z
+" clip-path="url(#p06f40190cf)" style="fill: #ffd2b8; stroke: #7a3100; stroke-linejoin: miter"/>
+   </g>
+   <g id="text_7">
+    <text style="font: 8px 'Microsoft YaHei'; text-anchor: middle" x="505.872663" y="124.920206" transform="rotate(-0 505.872663 124.920206)">X=60</text>
+   </g>
+   <g id="text_8">
+    <text style="font: 8px 'Microsoft YaHei'; text-anchor: middle" x="636.60564" y="124.920206" transform="rotate(-0 636.60564 124.920206)">X=300</text>
+   </g>
+   <g id="text_9">
+    <text style="font: 8px 'Microsoft YaHei'; text-anchor: middle" x="767.338617" y="124.920206" transform="rotate(-0 767.338617 124.920206)">X=540</text>
+   </g>
+   <g id="patch_14">
+    <path d="M 476.307267 240.401002 
+Q 636.606802 240.401002 796.906336 240.401002 
+" style="fill: none; stroke: #333333; stroke-linecap: round"/>
+    <path d="M 479.907267 242.201002 
+L 476.307267 240.401002 
+L 479.907267 238.601002 
+" style="fill: none; stroke: #333333; stroke-linecap: round"/>
+    <path d="M 793.306336 238.601002 
+L 796.906336 240.401002 
+L 793.306336 242.201002 
+" style="fill: none; stroke: #333333; stroke-linecap: round"/>
+   </g>
+   <g id="text_10">
+    <text style="fill: #333333; font: 9px 'Microsoft YaHei'; text-anchor: middle" x="636.60564" y="238.163658" transform="rotate(-0 636.60564 238.163658)">600</text>
+   </g>
+   <g id="patch_15">
+    <path d="M 452.490031 219.854418 
+Q 452.490031 179.392779 452.490031 138.93114 
+" style="fill: none; stroke: #333333; stroke-linecap: round"/>
+    <path d="M 454.290031 216.254418 
+L 452.490031 219.854418 
+L 450.690031 216.254418 
+" style="fill: none; stroke: #333333; stroke-linecap: round"/>
+    <path d="M 450.690031 142.53114 
+L 452.490031 138.93114 
+L 454.290031 142.53114 
+" style="fill: none; stroke: #333333; stroke-linecap: round"/>
+   </g>
+   <g id="text_11">
+    <text style="fill: #333333; font: 9px 'Microsoft YaHei'; text-anchor: middle" x="452.490031" y="177.154936" transform="rotate(-0 452.490031 177.154936)">160</text>
+   </g>
+   <g id="text_12">
+    <text style="font: 9px 'Microsoft YaHei'; text-anchor: middle" x="636.60564" y="105.85498" transform="rotate(-0 636.60564 105.85498)">棕色中线 = A 主墙板；浅色短条 = C 加强肋的顶视投影</text>
+   </g>
+   <g id="text_13">
+    <text style="font: 700 8.5px 'Microsoft YaHei'; text-anchor: middle" x="636.60564" y="258.376786" transform="rotate(-0 636.60564 258.376786)">B  底板厚 6；不开通长槽；加强肋中心 X=60 / 300 / 540</text>
+   </g>
+   <g id="text_14">
+    <text style="font: 700 13px 'Microsoft YaHei'; text-anchor: middle" x="636.60564" y="80.789754" transform="rotate(-0 636.60564 80.789754)">B  底板顶视定位图（W600）</text>
+   </g>
+  </g>
+  <g id="axes_3">
+   <g id="patch_16">
+    <path d="M 172.9271 567.493687 
+L 263.998615 567.493687 
+L 263.998615 564.078505 
+L 172.9271 564.078505 
+z
+" clip-path="url(#pdab86f15f9)" style="fill: #f6d5c1; stroke: #7a3100; stroke-width: 1.3; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_17">
+    <path d="M 216.755266 564.078505 
+L 220.170448 564.078505 
+L 220.170448 368.274748 
+L 216.755266 368.274748 
+z
+" clip-path="url(#pdab86f15f9)" style="fill: #f2a477; stroke: #7a3100; stroke-width: 1.3; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_18">
+    <path d="M 220.170448 564.078505 
+L 260.014236 564.078505 
+L 220.170448 507.158808 
+z
+" clip-path="url(#pdab86f15f9)" style="fill: #ffd2b8; stroke: #7a3100; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_19">
+    <path d="M 216.755266 564.078505 
+L 176.911479 564.078505 
+L 216.755266 507.158808 
+z
+" clip-path="url(#pdab86f15f9)" style="fill: #ffd2b8; stroke: #7a3100; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_20">
+    <path d="M 176.043438 582.862005 
+Q 218.463034 582.862005 260.882631 582.862005 
+" style="fill: none; stroke: #333333; stroke-linecap: round"/>
+    <path d="M 179.643438 584.662005 
+L 176.043438 582.862005 
+L 179.643438 581.062005 
+" style="fill: none; stroke: #333333; stroke-linecap: round"/>
+    <path d="M 257.282631 581.062005 
+L 260.882631 582.862005 
+L 257.282631 584.662005 
+" style="fill: none; stroke: #333333; stroke-linecap: round"/>
+   </g>
+   <g id="text_15">
+    <text style="fill: #333333; font: 9px 'Microsoft YaHei'; text-anchor: middle" x="218.462857" y="580.624661" transform="rotate(-0 218.462857 580.624661)">160</text>
+   </g>
+   <g id="patch_21">
+    <path d="M 153.005206 564.378478 
+Q 153.005206 467.886244 153.005206 371.39401 
+" style="fill: none; stroke: #333333; stroke-linecap: round"/>
+    <path d="M 154.805206 560.778478 
+L 153.005206 564.378478 
+L 151.205206 560.778478 
+" style="fill: none; stroke: #333333; stroke-linecap: round"/>
+    <path d="M 151.205206 374.99401 
+L 153.005206 371.39401 
+L 154.805206 374.99401 
+" style="fill: none; stroke: #333333; stroke-linecap: round"/>
+   </g>
+   <g id="text_16">
+    <text style="fill: #333333; font: 9px 'Microsoft YaHei'; text-anchor: middle" x="153.005206" y="465.646873" transform="rotate(-0 153.005206 465.646873)">350</text>
+   </g>
+   <g id="patch_22">
+    <path d="M 276.520948 560.962862 
+Q 276.520948 535.620477 276.520948 510.278092 
+" style="fill: none; stroke: #333333; stroke-linecap: round"/>
+    <path d="M 278.320948 557.362862 
+L 276.520948 560.962862 
+L 274.720948 557.362862 
+" style="fill: none; stroke: #333333; stroke-linecap: round"/>
+    <path d="M 274.720948 513.878092 
+L 276.520948 510.278092 
+L 278.320948 513.878092 
+" style="fill: none; stroke: #333333; stroke-linecap: round"/>
+   </g>
+   <g id="text_17">
+    <text style="fill: #333333; font: 9px 'Microsoft YaHei'; text-anchor: middle" x="276.520948" y="533.381313" transform="rotate(-0 276.520948 533.381313)">100</text>
+   </g>
+   <g id="patch_23">
+    <path d="M 223.287481 498.051657 
+Q 240.091671 498.051657 256.895861 498.051657 
+" style="fill: none; stroke: #333333; stroke-linecap: round"/>
+    <path d="M 226.887481 499.851657 
+L 223.287481 498.051657 
+L 226.887481 496.251657 
+" style="fill: none; stroke: #333333; stroke-linecap: round"/>
+    <path d="M 253.295861 496.251657 
+L 256.895861 498.051657 
+L 253.295861 499.851657 
+" style="fill: none; stroke: #333333; stroke-linecap: round"/>
+   </g>
+   <g id="text_18">
+    <text style="fill: #333333; font: 9px 'Microsoft YaHei'; text-anchor: middle" x="240.092342" y="495.814313" transform="rotate(-0 240.092342 495.814313)">70</text>
+   </g>
+   <g id="text_19">
+    <text style="font: 700 9.5px 'Microsoft YaHei'; text-anchor: middle" x="218.462857" y="352.906429" transform="rotate(-0 218.462857 352.906429)">侧视装配剖面：A 居中，C 前后各 1 件</text>
+   </g>
+   <g id="text_20">
+    <text style="font: 8.5px 'Microsoft YaHei'; text-anchor: middle" x="218.462857" y="594.245944" transform="rotate(-0 218.462857 594.245944)">底板左右各 80；A 与 B 为 90°</text>
+   </g>
+   <g id="text_21">
+    <text style="font: 700 13px 'Microsoft YaHei'; text-anchor: middle" x="214.19388" y="328.12293" transform="rotate(-0 214.19388 328.12293)">成品侧视图（最关键装配关系）</text>
+   </g>
+  </g>
+  <g id="axes_4">
+   <g id="table_1">
+    <g id="patch_24">
+     <path d="M 469.859388 545.864202 
+L 509.878488 545.864202 
+L 509.878488 522.043309 
+L 469.859388 522.043309 
+z
+" style="fill: #f6d5c1; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_22">
+     <text style="font: 700 8.2px 'Microsoft YaHei'; text-anchor: middle" x="489.868938" y="536.211958" transform="rotate(-0 489.868938 536.211958)">模块</text>
+    </g>
+    <g id="patch_25">
+     <path d="M 509.878488 545.864202 
+L 583.246839 545.864202 
+L 583.246839 522.043309 
+L 509.878488 522.043309 
+z
+" style="fill: #f6d5c1; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_23">
+     <text style="font: 700 8.2px 'Microsoft YaHei'; text-anchor: middle" x="546.562664" y="536.211958" transform="rotate(-0 546.562664 536.211958)">主墙板</text>
+    </g>
+    <g id="patch_26">
+     <path d="M 583.246839 545.864202 
+L 656.61519 545.864202 
+L 656.61519 522.043309 
+L 583.246839 522.043309 
+z
+" style="fill: #f6d5c1; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_24">
+     <text style="font: 700 8.2px 'Microsoft YaHei'; text-anchor: middle" x="619.931015" y="536.211958" transform="rotate(-0 619.931015 536.211958)">底板</text>
+    </g>
+    <g id="patch_27">
+     <path d="M 656.61519 545.864202 
+L 746.658166 545.864202 
+L 746.658166 522.043309 
+L 656.61519 522.043309 
+z
+" style="fill: #f6d5c1; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_25">
+     <text style="font: 700 8.2px 'Microsoft YaHei'; text-anchor: middle" x="701.636678" y="536.211958" transform="rotate(-0 701.636678 536.211958)">加强肋中心位置</text>
+    </g>
+    <g id="patch_28">
+     <path d="M 746.658166 545.864202 
+L 803.351892 545.864202 
+L 803.351892 522.043309 
+L 746.658166 522.043309 
+z
+" style="fill: #f6d5c1; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_26">
+     <text style="font: 700 8.2px 'Microsoft YaHei'; text-anchor: middle" x="775.005029" y="536.211958" transform="rotate(-0 775.005029 536.211958)">加强肋数量</text>
+    </g>
+    <g id="patch_29">
+     <path d="M 469.859388 569.685095 
+L 509.878488 569.685095 
+L 509.878488 545.864202 
+L 469.859388 545.864202 
+z
+" style="fill: #ffffff; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_27">
+     <text style="font: 8.2px 'Microsoft YaHei'; text-anchor: middle" x="489.868938" y="560.032852" transform="rotate(-0 489.868938 560.032852)">W600</text>
+    </g>
+    <g id="patch_30">
+     <path d="M 509.878488 569.685095 
+L 583.246839 569.685095 
+L 583.246839 545.864202 
+L 509.878488 545.864202 
+z
+" style="fill: #ffffff; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_28">
+     <text style="font: 8.2px 'Microsoft YaHei'; text-anchor: middle" x="546.562664" y="560.032852" transform="rotate(-0 546.562664 560.032852)">A 600×344×6</text>
+    </g>
+    <g id="patch_31">
+     <path d="M 583.246839 569.685095 
+L 656.61519 569.685095 
+L 656.61519 545.864202 
+L 583.246839 545.864202 
+z
+" style="fill: #ffffff; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_29">
+     <text style="font: 8.2px 'Microsoft YaHei'; text-anchor: middle" x="619.931015" y="560.032852" transform="rotate(-0 619.931015 560.032852)">B 600×160×6</text>
+    </g>
+    <g id="patch_32">
+     <path d="M 656.61519 569.685095 
+L 746.658166 569.685095 
+L 746.658166 545.864202 
+L 656.61519 545.864202 
+z
+" style="fill: #ffffff; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_30">
+     <text style="font: 8.2px 'Microsoft YaHei'; text-anchor: middle" x="701.636678" y="560.032852" transform="rotate(-0 701.636678 560.032852)">X=60/300/540</text>
+    </g>
+    <g id="patch_33">
+     <path d="M 746.658166 569.685095 
+L 803.351892 569.685095 
+L 803.351892 545.864202 
+L 746.658166 545.864202 
+z
+" style="fill: #ffffff; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_31">
+     <text style="font: 8.2px 'Microsoft YaHei'; text-anchor: middle" x="775.005029" y="560.032852" transform="rotate(-0 775.005029 560.032852)">C×6（3对）</text>
+    </g>
+    <g id="patch_34">
+     <path d="M 469.859388 593.505988 
+L 509.878488 593.505988 
+L 509.878488 569.685095 
+L 469.859388 569.685095 
+z
+" style="fill: #ffffff; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_32">
+     <text style="font: 8.2px 'Microsoft YaHei'; text-anchor: middle" x="489.868938" y="583.853745" transform="rotate(-0 489.868938 583.853745)">W300</text>
+    </g>
+    <g id="patch_35">
+     <path d="M 509.878488 593.505988 
+L 583.246839 593.505988 
+L 583.246839 569.685095 
+L 509.878488 569.685095 
+z
+" style="fill: #ffffff; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_33">
+     <text style="font: 8.2px 'Microsoft YaHei'; text-anchor: middle" x="546.562664" y="583.853745" transform="rotate(-0 546.562664 583.853745)">A 300×344×6</text>
+    </g>
+    <g id="patch_36">
+     <path d="M 583.246839 593.505988 
+L 656.61519 593.505988 
+L 656.61519 569.685095 
+L 583.246839 569.685095 
+z
+" style="fill: #ffffff; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_34">
+     <text style="font: 8.2px 'Microsoft YaHei'; text-anchor: middle" x="619.931015" y="583.853745" transform="rotate(-0 619.931015 583.853745)">B 300×160×6</text>
+    </g>
+    <g id="patch_37">
+     <path d="M 656.61519 593.505988 
+L 746.658166 593.505988 
+L 746.658166 569.685095 
+L 656.61519 569.685095 
+z
+" style="fill: #ffffff; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_35">
+     <text style="font: 8.2px 'Microsoft YaHei'; text-anchor: middle" x="701.636678" y="583.853745" transform="rotate(-0 701.636678 583.853745)">X=60/240</text>
+    </g>
+    <g id="patch_38">
+     <path d="M 746.658166 593.505988 
+L 803.351892 593.505988 
+L 803.351892 569.685095 
+L 746.658166 569.685095 
+z
+" style="fill: #ffffff; stroke: #000000; stroke-linejoin: miter"/>
+    </g>
+    <g id="text_36">
+     <text style="font: 8.2px 'Microsoft YaHei'; text-anchor: middle" x="775.005029" y="583.853745" transform="rotate(-0 775.005029 583.853745)">C×4（2对）</text>
+    </g>
+   </g>
+   <g id="patch_39">
+    <path d="M 537.351919 466.461225 
+L 595.249923 466.461225 
+L 537.351919 383.74979 
+z
+" clip-path="url(#p1417016a7f)" style="fill: #ffd2b8; stroke: #7a3100; stroke-width: 1.5; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_40">
+    <path d="M 540.466557 484.65774 
+Q 566.297816 484.65774 592.129074 484.65774 
+" style="fill: none; stroke: #333333; stroke-linecap: round"/>
+    <path d="M 544.066557 486.45774 
+L 540.466557 484.65774 
+L 544.066557 482.85774 
+" style="fill: none; stroke: #333333; stroke-linecap: round"/>
+    <path d="M 588.529074 482.85774 
+L 592.129074 484.65774 
+L 588.529074 486.45774 
+" style="fill: none; stroke: #333333; stroke-linecap: round"/>
+   </g>
+   <g id="text_37">
+    <text style="fill: #333333; font: 9px 'Microsoft YaHei'; text-anchor: middle" x="566.300921" y="482.420397" transform="rotate(-0 566.300921 482.420397)">70</text>
+   </g>
+   <g id="patch_41">
+    <path d="M 512.538488 463.341538 
+Q 512.538488 425.102223 512.538488 386.862909 
+" style="fill: none; stroke: #333333; stroke-linecap: round"/>
+    <path d="M 514.338488 459.741538 
+L 512.538488 463.341538 
+L 510.738488 459.741538 
+" style="fill: none; stroke: #333333; stroke-linecap: round"/>
+    <path d="M 510.738488 390.462909 
+L 512.538488 386.862909 
+L 514.338488 390.462909 
+" style="fill: none; stroke: #333333; stroke-linecap: round"/>
+   </g>
+   <g id="text_38">
+    <text style="fill: #333333; font: 9px 'Microsoft YaHei'; text-anchor: middle" x="512.538488" y="422.868164" transform="rotate(-0 512.538488 422.868164)">100</text>
+   </g>
+   <g id="text_39">
+    <text style="font: 700 11px 'Microsoft YaHei'; text-anchor: middle" x="566.300921" y="357.282131" transform="rotate(-0 566.300921 357.282131)">C  三角加强肋（厚 6）</text>
+   </g>
+   <g id="patch_42">
+    <path d="M 656.952759 444.892056 
+Q 627.044735 455.346863 598.192119 465.432735 
+" style="fill: none; stroke: #333333; stroke-linecap: round"/>
+    <path d="M 602.184442 465.943965 
+L 598.192119 465.432735 
+L 600.996496 462.545615 
+" style="fill: none; stroke: #333333; stroke-linecap: round"/>
+   </g>
+   <g id="text_40">
+    <text style="font: 9px 'Microsoft YaHei'; text-anchor: start" x="653.147927" y="439.993566" transform="rotate(-0 653.147927 439.993566)">外露尖角 R5</text>
+   </g>
+   <g id="text_41">
+    <text style="font: 8.5px 'Microsoft YaHei'; text-anchor: start" x="469.859388" y="511.456245" transform="rotate(-0 469.859388 511.456245)">通用材料：不透明哑光浇铸 PMMA；尺寸公差 ±3；胶缝不得有贯穿气泡。</text>
+   </g>
+   <g id="text_42">
+    <text style="font: 700 13px 'Microsoft YaHei'; text-anchor: middle" x="636.60564" y="328.12293" transform="rotate(-0 636.60564 328.12293)">C  加强肋下料图 + 两种模块差异表</text>
+   </g>
+  </g>
+  <g id="text_43">
+   <text style="font: 700 17px 'Microsoft YaHei'; text-anchor: middle" x="425.39976" y="20.789375" transform="rotate(-0 425.39976 20.789375)">低矮亚克力墙体——零件图与定位尺寸（单位：mm）</text>
+  </g>
+ </g>
+ <defs>
+  <clipPath id="p507b856681">
+   <rect x="7.2" y="47.297501" width="413.98776" height="264.189557"/>
+  </clipPath>
+  <clipPath id="p06f40190cf">
+   <rect x="429.61176" y="86.789754" width="413.98776" height="185.205051"/>
+  </clipPath>
+  <clipPath id="pdab86f15f9">
+   <rect x="121.699373" y="334.12293" width="184.989015" height="264.67659"/>
+  </clipPath>
+  <clipPath id="p1417016a7f">
+   <rect x="462.911628" y="334.12293" width="347.388025" height="264.67659"/>
+  </clipPath>
+ </defs>
+</svg>

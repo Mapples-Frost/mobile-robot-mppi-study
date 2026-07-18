@@ -1,0 +1,129 @@
+session:
+  id: "2026-07-16_015"
+  timestamp: "2026-07-16T10:56:00+08:00"
+  summary: "L35 failed to confirm L34, L36 produced method-blind identifiable dynamic benchmarks, and L37 rejected the current direct bounded-RL plus ICODE composition."
+
+events_logged:
+  - type: experiment
+    id: N57
+    provenance: ai-executed
+    summary: "L35 completed 60 independently seeded episodes; the L34 bounded-RL effect did not reproduce and the confirmation gate failed."
+  - type: dead_end
+    id: N58
+    provenance: ai-executed
+    summary: "L34 checkpoint-selection gains cannot be treated as independent evidence, and its two paths were outcome-saturated."
+  - type: experiment
+    id: N59
+    provenance: ai-executed
+    summary: "L36 used traditional MPPI only to select three dynamic scenes with within-scene variation and a 0.375 collision-rate span."
+  - type: question
+    id: N60
+    provenance: ai-suggested
+    summary: "Test bounded-RL and ICODE main effects plus interaction on calibrated paired scenes."
+  - type: experiment
+    id: N61
+    provenance: ai-executed
+    summary: "L37 completed all 180 paired factorial episodes; both main effects were adverse and the combined controller failed despite a positive interaction."
+  - type: dead_end
+    id: N62
+    provenance: ai-executed
+    summary: "Direct composition of current L34 RL and offline-accurate ICODE checkpoints is not closed-loop eligible."
+  - type: pivot
+    id: N63
+    provenance: ai-suggested
+    summary: "Qualify ICODE with on-policy, horizon-matched and cost-ranking tests before reopening cross-layer composition."
+  - type: claim
+    id: C42
+    provenance: ai-suggested
+    summary: "Independent generalization of the L34 bounded-RL gains was refuted."
+  - type: claim
+    id: C43
+    provenance: ai-suggested
+    summary: "Traditional-only calibration produced identifiable dynamic benchmark strata."
+  - type: claim
+    id: C44
+    provenance: ai-suggested
+    summary: "Closed-loop benefit of the current bounded-RL and ICODE combination was refuted."
+  - type: claim
+    id: C45
+    provenance: ai-suggested
+    summary: "A positive L37 success interaction coexisted with worse absolute combined performance."
+  - type: heuristic
+    id: H31
+    provenance: ai-suggested
+    summary: "Calibrate scene difficulty with a frozen baseline and no learned-method outcome inspection."
+  - type: heuristic
+    id: H32
+    provenance: ai-suggested
+    summary: "Require horizon-matched cost-ranking and residual-only closed-loop eligibility before cross-layer composition."
+
+ai_actions:
+  - action: "Implemented, preregistered, ran and audited the L35 independent confirmation with paired exact tests and hierarchical bootstrap intervals."
+    provenance: ai-executed
+    files_changed:
+      - "configs/rl/l34_independent_confirmation_l35.yaml"
+      - "experiments/rl/run_l34_independent_confirmation.py"
+      - "experiments/rl/summarize_l34_independent_confirmation.py"
+      - "experiments/rl/analyze_l35_confirmation_failures.py"
+      - "docs/rl/50_l35_l34_independent_confirmation_prereg_2026-07-16.md"
+      - "docs/rl/51_l35_independent_confirmation_results_2026-07-16.md"
+  - action: "Implemented and ran method-blind L36 calibration over eight candidate dynamic geometries, then froze three difficulty strata."
+    provenance: ai-executed
+    files_changed:
+      - "configs/rl/dynamic_benchmark_calibration_l36.yaml"
+      - "experiments/rl/run_dynamic_benchmark_calibration.py"
+      - "experiments/rl/summarize_dynamic_benchmark_calibration.py"
+      - "docs/rl/52_l36_dynamic_benchmark_calibration_prereg_2026-07-16.md"
+      - "docs/rl/53_l36_dynamic_benchmark_calibration_results_2026-07-16.md"
+  - action: "Implemented calibrated scenes and the L37 paired two-by-two bounded-RL by ICODE factorial with protected-seed auditing, shared safety and publication figures."
+    provenance: ai-executed
+    files_changed:
+      - "configs/rl/bounded_rl_icode_factorial_l37.yaml"
+      - "configs/research/mujoco_dynamic_calibrated_easy_l37.yaml"
+      - "configs/research/mujoco_dynamic_calibrated_moderate_l37.yaml"
+      - "configs/research/mujoco_dynamic_calibrated_hard_l37.yaml"
+      - "experiments/rl/run_cross_layer_factorial.py"
+      - "experiments/rl/run_bounded_rl_icode_factorial.py"
+      - "experiments/rl/summarize_bounded_rl_icode_factorial.py"
+      - "docs/rl/54_l37_bounded_rl_icode_factorial_prereg_2026-07-16.md"
+      - "docs/rl/55_l37_bounded_rl_icode_factorial_results_2026-07-16.md"
+  - action: "Compiled all L35-L37 Python changes and passed all 411 repository tests; diff check reported no whitespace errors."
+    provenance: ai-executed
+    files_changed:
+      - "tests/rl/test_l34_independent_confirmation.py"
+      - "tests/rl/test_dynamic_benchmark_calibration.py"
+      - "tests/rl/test_bounded_rl_icode_factorial.py"
+
+claims_touched:
+  - id: C41
+    action: weakened
+    provenance: ai-suggested
+  - id: C42
+    action: created
+    provenance: ai-suggested
+  - id: C43
+    action: created
+    provenance: ai-suggested
+  - id: C44
+    action: created
+    provenance: ai-suggested
+  - id: C45
+    action: created
+    provenance: ai-suggested
+
+open_threads:
+  - "Collect residual transitions from the actual MPPI state-action distribution in calibrated dynamic scenes."
+  - "Evaluate nominal, oracle, MLP and ICODE rollouts at H=1,5,10,20,36 and quantify MPPI candidate-cost ranking preservation."
+  - "Run a traditional-MPPI nominal-versus-ICODE closed-loop eligibility gate before any renewed RL interaction experiment."
+  - "Keep L37 sealed confirmation seeds 20660736--20660745 unopened."
+
+ai_suggestions_pending:
+  - "Treat L34 as an optimistic development result and L35 as the current independent estimate."
+  - "Suspend additional RL tuning until the residual-only closed-loop failure is understood."
+
+provenance_summary:
+  user_confirmed: 0
+  ai_suggested: 10
+  ai_executed: 10
+  user_revised: 0
+  confirmation_rate: 0.0

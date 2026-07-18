@@ -1,0 +1,47 @@
+design_id: l82_control_sequence_ranking_v1
+
+model_blocks:
+  - block: 0
+    seed: 20268201
+    icode_checkpoint: results/research_platform/l57_icode_high_dynamic_h36_seed20261201_v1/best.pt
+    mlp_checkpoint: results/research_platform/l60_mlp_high_dynamic_h36_seed20261201_v1/best.pt
+  - block: 1
+    seed: 20268301
+    icode_checkpoint: results/research_platform/l57_icode_high_dynamic_h36_seed20261202_v1/best.pt
+    mlp_checkpoint: results/research_platform/l60_mlp_high_dynamic_h36_seed20261202_v1/best.pt
+  - block: 2
+    seed: 20268401
+    icode_checkpoint: results/research_platform/l57_icode_high_dynamic_h36_seed20261203_v1/best.pt
+    mlp_checkpoint: results/research_platform/l60_mlp_high_dynamic_h36_seed20261203_v1/best.pt
+
+scenes:
+  accel_straight:
+    config: configs/research/mujoco_high_dynamic_accel_straight_l56.yaml
+    unseen: false
+  accel_turn:
+    config: configs/research/mujoco_high_dynamic_accel_turn_l56.yaml
+    unseen: false
+  chicane:
+    config: configs/research/mujoco_high_dynamic_chicane_l56.yaml
+    unseen: false
+  sweep:
+    config: configs/research/mujoco_high_dynamic_sweep_l56.yaml
+    unseen: false
+  hairpin_unseen:
+    config: configs/research/mujoco_high_dynamic_hairpin_unseen_l56.yaml
+    unseen: true
+  reverse_s_unseen:
+    config: configs/research/mujoco_high_dynamic_reverse_s_unseen_l56.yaml
+    unseen: true
+
+phases:
+  pilot:
+    candidate_count: 64
+    candidate_noise_scale: 1.0
+    anchor_steps: [20, 50, 80, 110]
+    scenes: [accel_turn, chicane, hairpin_unseen, reverse_s_unseen]
+  formal:
+    candidate_count: 128
+    candidate_noise_scale: 1.0
+    anchor_steps: [10, 30, 50, 70, 90, 110, 130, 150]
+    scenes: [accel_straight, accel_turn, chicane, sweep, hairpin_unseen, reverse_s_unseen]

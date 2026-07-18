@@ -1,0 +1,38 @@
+include: icode_path_tracking_eligibility_l43.yaml
+
+experiment:
+  name: icode_structure_preserving_l44
+  output_dir: results/research_platform/rl/l44_icode_structure_preserving_20260716_v1
+
+rl:
+  cross_layer_factorial:
+    design_id: l44_icode_structure_preserving_v1
+    schedule_seed: 2026071613
+    conditions:
+      - traditional_nominal
+      - traditional_icode_dynamic_mask
+      - traditional_icode_dynamic_mask_support_gate
+    residual_component_mask: [0.0, 0.0, 0.0, 1.0, 1.0]
+    support_gate: {soft_z: 3.0, hard_z: 5.0}
+    development_episode_seeds: [21160731, 21160732, 21160733, 21160734, 21160735]
+    sealed_confirmation_episode_seeds: [21160736, 21160737, 21160738, 21160739, 21160740, 21160741, 21160742, 21160743, 21160744, 21160745]
+    protected_config_paths:
+      - configs/rl/l34_independent_confirmation_l35.yaml
+      - configs/rl/dynamic_benchmark_calibration_l36.yaml
+      - configs/rl/bounded_rl_icode_factorial_l37.yaml
+      - configs/rl/icode_delay_identifiability_l38.yaml
+      - configs/rl/icode_closed_loop_eligibility_l41.yaml
+      - configs/rl/icode_support_gate_l42.yaml
+      - configs/rl/icode_path_tracking_eligibility_l43.yaml
+    bootstrap_seed: 2026071614
+    bootstrap_replicates: 10000
+    eligibility_gate:
+      minimum_positive_tracking_model_blocks: 2
+      minimum_relative_cross_track_rmse_reduction: 0.10
+      minimum_cross_track_improvement_ci95_lower_m: 0.0
+      minimum_net_success_gain: 0
+      maximum_net_collision_increase: 0
+      minimum_completion_ratio_difference: -0.01
+      maximum_candidate_mean_planner_compute_ms: 50.0
+      maximum_support_gated_minus_masked_cross_track_rmse_m: 0.0
+

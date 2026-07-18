@@ -26,6 +26,11 @@ experiments/logs/*.tmp
 # Experiment outputs
 results/
 
+# Local scratch, render previews, and intermediate diagnostics
+/tmp/
+/output/
+/outputs/
+
 # ICODE research artifacts (datasets, checkpoints, logs, figures, tables)
 results/icode/
 experiments/results/icode/

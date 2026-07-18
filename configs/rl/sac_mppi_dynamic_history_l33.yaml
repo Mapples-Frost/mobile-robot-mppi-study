@@ -1,0 +1,87 @@
+include: sac_mppi_subgoal_history_l6.yaml
+
+experiment:
+  name: sac_mppi_dynamic_history_l33
+  output_dir: results/research_platform/rl/dynamic_history_l33_20260715
+
+perception:
+  temporal_scan_guard:
+    enabled: true
+    safety_enabled: true
+    field_of_view_deg: 270.0
+    window_beams: 7
+    minimum_support_beams: 4
+    minimum_positive_rate_mps: 0.02
+    maximum_absolute_rate_mps: 1.50
+    maximum_dt_s: 0.40
+    maximum_clearance_m: 1.50
+    rate_soft_mps: 0.05
+    rate_hard_mps: 0.25
+    ttc_hard_s: 1.00
+    ttc_soft_s: 3.00
+    safety_hard_stop_ttc_s: 0.80
+    safety_slow_ttc_s: 2.00
+    safety_slow_scale: 0.25
+    hold_s: 0.40
+
+rl:
+  policy_id: sac_mppi_dynamic_history_l33
+
+  reward:
+    collision_penalty: 50.0
+    clearance_margin: 0.55
+    clearance_penalty_weight: 0.50
+    safety_override_penalty: 0.50
+    stuck_penalty: 0.02
+
+  training:
+    total_steps: 30000
+    warmup_steps: 1000
+    update_after: 1000
+    batch_size: 256
+    replay_capacity: 150000
+    evaluation_interval: 5000
+    evaluation_episodes: 3
+    checkpoint_interval: 5000
+    evaluate_initial_policy: true
+    seed: 20260731
+    validation_seed_base: 20360731
+    validation_initial_state_noise: [0.0, 0.0, 0.0, 0.0, 0.0]
+    # Training scene files continue to own their ordinary scan parameters.
+    # Only this explicitly declared overlay is applied by the training CLI.
+    perception_overrides:
+      temporal_scan_guard:
+        enabled: true
+        safety_enabled: true
+        field_of_view_deg: 270.0
+        window_beams: 7
+        minimum_support_beams: 4
+        minimum_positive_rate_mps: 0.02
+        maximum_absolute_rate_mps: 1.50
+        maximum_dt_s: 0.40
+        maximum_clearance_m: 1.50
+        rate_soft_mps: 0.05
+        rate_hard_mps: 0.25
+        ttc_hard_s: 1.00
+        ttc_soft_s: 3.00
+        safety_hard_stop_ttc_s: 0.80
+        safety_slow_ttc_s: 2.00
+        safety_slow_scale: 0.25
+        hold_s: 0.40
+    initial_state_noise: [0.03, 0.03, 0.08, 0.0, 0.0]
+
+    scene_configs:
+      - configs/research/mujoco_dynamic_training_anchor_l33.yaml
+      - configs/research/mujoco_dynamic_training_reverse_l33.yaml
+      - configs/research/mujoco_dynamic_training_fast_l33.yaml
+      - configs/research/mujoco_dynamic_training_large_l33.yaml
+    validation_scene_configs:
+      - configs/research/mujoco_dynamic_validation_diagonal_l33.yaml
+      - configs/research/mujoco_dynamic_validation_offset_l33.yaml
+    physics_domain_config: configs/research/mujoco_physics_domains.yaml
+    training_domain_roles: [seen]
+    validation_domain_roles: [unseen]
+    curriculum:
+      enabled: false
+    initial_state_curriculum:
+      enabled: false

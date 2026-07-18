@@ -1,0 +1,22 @@
+include: mujoco_strong_mppi_baseline.yaml
+
+experiment:
+  name: dynamic_training_reverse_l33
+
+scene:
+  name: dynamic_training_reverse_l33
+  obstacles:
+    - type: cylinder
+      position: [0.90, 2.10]
+      radius: 0.20
+      height: 0.50
+      motion:
+        type: linear_ping_pong
+        start: [0.90, 2.10]
+        end: [2.10, 0.90]
+        period_s: 16.0
+        phase_s: 6.0
+        phase_jitter_s: 8.0
+        period_scale_range: [0.75, 1.25]
+        endpoint_jitter_m: 0.12
+

@@ -1,0 +1,23 @@
+include: sac_mppi_static_risk_balanced_l72.yaml
+
+experiment:
+  name: sac_mppi_static_conservative_schedule_l78
+  output_dir: results/research_platform/rl/l78_static_conservative_schedule
+
+rl:
+  policy_id: sac_mppi_static_conservative_schedule_l78
+
+  sac:
+    # L78 treats SAC as a bounded correction to the frozen BC prior.  The
+    # stronger normalized correction penalty discourages a critic error from
+    # moving the proposal distribution far from the verified BC scaffold.
+    actor_lr: 0.00005
+    correction_penalty_weight: 1.00
+
+  training:
+    # Give the two critics 10k environment steps before the residual actor can
+    # respond to them.  Replay composition, rewards, dynamics and MPPI remain
+    # exactly as in L72.
+    actor_update_after: 10000
+    validation_seed_base: 22300801
+

@@ -1,0 +1,21 @@
+include: cross_layer_factorial_l29.yaml
+
+experiment:
+  name: cross_layer_temporal_gate_l30
+  output_dir: results/research_platform/rl/cross_layer_temporal_gate_l30_20260715
+
+rl:
+  policy_id: cross_layer_temporal_gate_l30
+  gate:
+    mode: complexity
+    temporal_closing_enabled: true
+    temporal_closing_soft_mps: 0.05
+    temporal_closing_hard_mps: 0.20
+    temporal_closing_max_clearance_m: 1.50
+    temporal_closing_hold_s: 0.60
+
+  cross_layer_factorial:
+    schedule_seed: 20260793
+    conditions:
+      - gated_lcb_nominal
+      - gated_lcb_icode

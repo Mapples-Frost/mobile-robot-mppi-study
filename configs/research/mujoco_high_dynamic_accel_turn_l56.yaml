@@ -1,0 +1,28 @@
+include: mujoco_high_dynamic_fixed_plant_l56.yaml
+
+experiment:
+  name: high_dynamic_accel_turn_l56
+  max_steps: 320
+
+task:
+  lookahead_distance: 0.68
+  points:
+    - [0.00, 0.00]
+    - [0.55, 0.00]
+    - [1.10, 0.00]
+    - [1.65, 0.02]
+    - [2.20, 0.10]
+    - [2.62, 0.34]
+    - [2.86, 0.72]
+    - [2.98, 1.16]
+    - [3.10, 1.60]
+    - [3.36, 1.96]
+    - [3.76, 2.18]
+    - [4.24, 2.24]
+    - [4.72, 2.18]
+    - [5.14, 2.02]
+    - [5.48, 1.82]
+    - [5.82, 1.68]
+
+scene:
+  name: high_dynamic_accel_turn_l56

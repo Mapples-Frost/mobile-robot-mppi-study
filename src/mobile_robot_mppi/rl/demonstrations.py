@@ -7,15 +7,19 @@ in a physically separate ``audit/`` tree and are intentionally absent from
 the shards accepted by this loader.
 """
 
+import copy
 import hashlib
 import json
 from pathlib import Path
 
 import numpy as np
 
+from .observation import ObservationEncoderConfig
+from .parameterization import PriorParameterizationConfig
+
 
 DEMONSTRATION_SCHEMA = "mobile_robot_mppi.scripted_subgoal_demonstrations"
-DEMONSTRATION_SCHEMA_VERSION = 1
+DEMONSTRATION_SCHEMA_VERSION = 2
 DEMONSTRATION_SPLITS = ("train", "validation", "test")
 SHARD_FIELDS = frozenset((
     "observation",
@@ -23,6 +27,31 @@ SHARD_FIELDS = frozenset((
     "episode_id",
     "step",
 ))
+
+
+class _LoadedDemonstrationManifest(dict):
+    """Dictionary view with a private immutable fingerprint source.
+
+    Legacy v1 manifests are augmented only in memory.  Their checkpoint
+    fingerprint must continue to describe the exact historical JSON object,
+    not the recovered v2 semantic-contract view.
+    """
+
+    def __init__(self, values, fingerprint_source=None):
+        super().__init__(values)
+        self._fingerprint_source = (
+            self if fingerprint_source is None else fingerprint_source
+        )
+
+
+def demonstration_manifest_fingerprint(manifest):
+    """Return a deterministic digest for provenance and exact resume checks."""
+
+    source = getattr(manifest, "_fingerprint_source", manifest)
+    encoded = json.dumps(
+        source, sort_keys=True, separators=(",", ":"), allow_nan=False
+    ).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
 
 
 def sha256_file(path, chunk_size=1024 * 1024):
@@ -211,9 +240,22 @@ def _safe_dataset_path(dataset_dir, relative_path):
     return candidate
 
 
-def _validate_manifest(manifest):
+def _validate_manifest(manifest, allow_legacy_v1=False):
     if not isinstance(manifest, dict):
         raise ValueError("demonstration manifest must be a JSON object")
+    if manifest.get("schema") != DEMONSTRATION_SCHEMA:
+        raise ValueError("unsupported demonstration schema")
+    try:
+        schema_version = int(manifest.get("schema_version"))
+    except (TypeError, ValueError):
+        raise ValueError("unsupported demonstration schema version")
+    allowed_versions = (
+        (1, DEMONSTRATION_SCHEMA_VERSION)
+        if allow_legacy_v1
+        else (DEMONSTRATION_SCHEMA_VERSION,)
+    )
+    if schema_version not in allowed_versions:
+        raise ValueError("unsupported demonstration schema version")
     required = {
         "schema",
         "schema_version",
@@ -222,6 +264,8 @@ def _validate_manifest(manifest):
         "config",
         "observation_dim",
         "action_dim",
+        "observation_encoder",
+        "prior_parameterization",
         "teacher",
         "split_plan",
         "splits",
@@ -231,14 +275,40 @@ def _validate_manifest(manifest):
     missing = sorted(required - set(manifest))
     if missing:
         raise ValueError("demonstration manifest is missing keys: %s" % missing)
-    if manifest["schema"] != DEMONSTRATION_SCHEMA:
-        raise ValueError("unsupported demonstration schema")
-    if int(manifest["schema_version"]) != DEMONSTRATION_SCHEMA_VERSION:
-        raise ValueError("unsupported demonstration schema version")
     observation_dim = int(manifest["observation_dim"])
     action_dim = int(manifest["action_dim"])
     if observation_dim <= 0 or action_dim != 2:
         raise ValueError("demonstration dimensions must be observation_dim>0/action_dim=2")
+    observation_encoder = manifest["observation_encoder"]
+    if not isinstance(observation_encoder, dict):
+        raise ValueError("demonstration observation_encoder must be an object")
+    canonical_encoder = ObservationEncoderConfig.from_mapping(
+        observation_encoder
+    )
+    canonical_encoder.validate()
+    if observation_encoder != canonical_encoder.to_dict():
+        raise ValueError(
+            "demonstration observation_encoder must store the complete canonical config"
+        )
+    if canonical_encoder.include_absolute_pose:
+        raise ValueError(
+            "demonstration student observations cannot include absolute pose"
+        )
+    prior_parameterization = manifest["prior_parameterization"]
+    if not isinstance(prior_parameterization, dict):
+        raise ValueError("demonstration prior_parameterization must be an object")
+    canonical_prior = PriorParameterizationConfig.from_mapping(
+        prior_parameterization
+    )
+    canonical_prior.validate()
+    if prior_parameterization != canonical_prior.to_dict():
+        raise ValueError(
+            "demonstration prior_parameterization must store the complete canonical config"
+        )
+    if canonical_prior.kind != "local_subgoal" or canonical_prior.learn_covariance:
+        raise ValueError(
+            "demonstration prior must be local_subgoal with learn_covariance=false"
+        )
     teacher = manifest["teacher"]
     if not isinstance(teacher, dict):
         raise ValueError("demonstration teacher metadata must be an object")
@@ -259,6 +329,8 @@ def _validate_manifest(manifest):
     if set(splits) != set(DEMONSTRATION_SPLITS):
         raise ValueError("demonstration splits must contain train/validation/test")
     planned_sets = []
+    descriptor_episode_total = 0
+    descriptor_sample_total = 0
     for name in DEMONSTRATION_SPLITS:
         planned = [int(value) for value in split_plan[name]]
         if len(planned) != len(set(planned)):
@@ -280,12 +352,33 @@ def _validate_manifest(manifest):
         if int(descriptor["samples"]) < 0 or int(descriptor["episodes"]) < 0:
             raise ValueError("demonstration split counts must be non-negative")
         successful_seeds = [int(value) for value in descriptor["seeds"]]
+        if len(successful_seeds) != len(set(successful_seeds)):
+            raise ValueError("demonstration split descriptor contains duplicate seeds")
         if not set(successful_seeds).issubset(set(planned)):
             raise ValueError("successful split seeds are outside split_plan")
+        if len(successful_seeds) != int(descriptor["episodes"]):
+            raise ValueError(
+                "demonstration split seed count must match episode count"
+            )
+        descriptor_episode_total += int(descriptor["episodes"])
+        descriptor_sample_total += int(descriptor["samples"])
     for index, first in enumerate(planned_sets):
         for second in planned_sets[index + 1:]:
             if first.intersection(second):
                 raise ValueError("episode seeds leak across demonstration splits")
+    counts = manifest["counts"]
+    if "requested_episodes" in counts and int(counts["requested_episodes"]) != sum(
+        len(values) for values in planned_sets
+    ):
+        raise ValueError("requested episode count disagrees with split_plan")
+    if "successful_episodes" in counts and int(
+        counts["successful_episodes"]
+    ) != descriptor_episode_total:
+        raise ValueError("successful episode count disagrees with split descriptors")
+    if "training_samples" in counts and int(
+        counts["training_samples"]
+    ) != descriptor_sample_total:
+        raise ValueError("training sample count disagrees with split descriptors")
     audit = manifest["audit"]
     if not isinstance(audit, dict) or audit.get("directory") != "audit":
         raise ValueError("privileged audit data must be physically separated in audit/")
@@ -306,13 +399,119 @@ def write_demonstration_manifest(dataset_dir, manifest):
     return path
 
 
+def _canonical_legacy_encoder(values, source):
+    if not isinstance(values, dict):
+        raise ValueError("legacy v1 %s observation encoder is missing" % source)
+    canonical = ObservationEncoderConfig.from_mapping(values)
+    canonical.validate()
+    result = canonical.to_dict()
+    if values != result:
+        raise ValueError(
+            "legacy v1 %s observation encoder is not complete/canonical" % source
+        )
+    if canonical.include_absolute_pose:
+        raise ValueError("legacy v1 student observations cannot include absolute pose")
+    return result
+
+
+def _canonical_legacy_prior(values, source):
+    if not isinstance(values, dict):
+        raise ValueError("legacy v1 %s prior parameterization is missing" % source)
+    canonical = PriorParameterizationConfig.from_mapping(values)
+    canonical.validate()
+    result = canonical.to_dict()
+    if values != result:
+        raise ValueError(
+            "legacy v1 %s prior parameterization is not complete/canonical" % source
+        )
+    if canonical.kind != "local_subgoal" or canonical.learn_covariance:
+        raise ValueError(
+            "legacy v1 prior must be local_subgoal with learn_covariance=false"
+        )
+    return result
+
+
+def _recover_legacy_v1_manifest(dataset_dir, original):
+    """Recover v1 semantic contracts from immutable historical audit files."""
+
+    if not isinstance(original.get("config"), dict):
+        raise ValueError("legacy v1 demonstration config is missing")
+    manifest_encoder = _canonical_legacy_encoder(
+        original["config"].get("observation_encoder"), "manifest"
+    )
+    root = Path(dataset_dir).resolve()
+    resolved_dir = _safe_dataset_path(root, "audit/resolved_configs")
+    if not resolved_dir.is_dir():
+        raise ValueError(
+            "legacy v1 demonstration requires audit/resolved_configs"
+        )
+    resolved_paths = sorted(resolved_dir.glob("*.json"))
+    if not resolved_paths:
+        raise ValueError(
+            "legacy v1 demonstration requires resolved-config audit JSON files"
+        )
+    requested = original.get("counts", {}).get("requested_episodes")
+    if requested is not None and len(resolved_paths) != int(requested):
+        raise ValueError(
+            "legacy v1 resolved-config audit count does not match requested episodes"
+        )
+    recovered_prior = None
+    for path in resolved_paths:
+        safe_path = _safe_dataset_path(root, path.relative_to(root))
+        try:
+            with safe_path.open("r", encoding="utf-8") as handle:
+                resolved = json.load(handle)
+        except (OSError, ValueError) as error:
+            raise ValueError(
+                "failed to read legacy v1 resolved config %s: %s"
+                % (safe_path.name, error)
+            )
+        rl_config = resolved.get("rl") if isinstance(resolved, dict) else None
+        if not isinstance(rl_config, dict):
+            raise ValueError(
+                "legacy v1 resolved config %s is missing rl" % safe_path.name
+            )
+        encoder = _canonical_legacy_encoder(
+            rl_config.get("observation"), safe_path.name
+        )
+        if encoder != manifest_encoder:
+            raise ValueError(
+                "legacy v1 observation encoder differs across resolved configs"
+            )
+        prior = _canonical_legacy_prior(
+            rl_config.get("prior"), safe_path.name
+        )
+        if recovered_prior is None:
+            recovered_prior = prior
+        elif prior != recovered_prior:
+            raise ValueError(
+                "legacy v1 prior parameterization differs across resolved configs"
+            )
+    augmented = copy.deepcopy(original)
+    augmented["observation_encoder"] = manifest_encoder
+    augmented["prior_parameterization"] = recovered_prior
+    result = _LoadedDemonstrationManifest(
+        augmented, fingerprint_source=copy.deepcopy(original)
+    )
+    return _validate_manifest(result, allow_legacy_v1=True)
+
+
 def load_demonstration_manifest(dataset_dir):
     """Load and validate the public manifest (never an audit-sidecar file)."""
 
-    path = Path(dataset_dir).resolve() / "manifest.json"
+    root = Path(dataset_dir).resolve()
+    path = root / "manifest.json"
     with path.open("r", encoding="utf-8") as handle:
         manifest = json.load(handle)
-    return _validate_manifest(manifest)
+    if not isinstance(manifest, dict):
+        raise ValueError("demonstration manifest must be a JSON object")
+    try:
+        version = int(manifest.get("schema_version"))
+    except (TypeError, ValueError):
+        raise ValueError("unsupported demonstration schema version")
+    if version == 1:
+        return _recover_legacy_v1_manifest(root, manifest)
+    return _validate_manifest(_LoadedDemonstrationManifest(manifest))
 
 
 def load_demonstration_split(dataset_dir, split):
@@ -333,6 +532,8 @@ def load_demonstration_split(dataset_dir, split):
         raise FileNotFoundError("demonstration shard is missing: %s" % path)
     if sha256_file(path) != descriptor["sha256"]:
         raise ValueError("demonstration shard checksum mismatch: %s" % split)
+    if int(path.stat().st_size) != int(descriptor["bytes"]):
+        raise ValueError("demonstration shard byte count disagrees with manifest")
     try:
         with np.load(str(path), allow_pickle=False) as loaded:
             if set(loaded.files) != SHARD_FIELDS:
@@ -363,3 +564,41 @@ def load_demonstration_split(dataset_dir, split):
         "episode_ids": arrays["episode_id"].astype(np.int64, copy=False),
         "steps": arrays["step"].astype(np.int64, copy=False),
     }
+
+
+def validate_demonstration_split_partition(split_arrays):
+    """Fail closed when one collected episode appears in multiple splits."""
+
+    if set(split_arrays) != set(DEMONSTRATION_SPLITS):
+        raise ValueError(
+            "demonstration partition must contain train/validation/test"
+        )
+    identifiers = {}
+    for split in DEMONSTRATION_SPLITS:
+        arrays = split_arrays[split]
+        if not isinstance(arrays, dict) or "episode_ids" not in arrays:
+            raise ValueError("demonstration split is missing episode_ids")
+        values = np.asarray(arrays["episode_ids"])
+        if values.ndim != 1 or not np.issubdtype(values.dtype, np.integer):
+            raise ValueError("demonstration episode_ids must be an integer vector")
+        identifiers[split] = set(int(value) for value in np.unique(values))
+    for index, first_name in enumerate(DEMONSTRATION_SPLITS):
+        for second_name in DEMONSTRATION_SPLITS[index + 1:]:
+            overlap = identifiers[first_name].intersection(identifiers[second_name])
+            if overlap:
+                preview = sorted(overlap)[:5]
+                raise ValueError(
+                    "demonstration episode_id leakage between %s and %s: %s"
+                    % (first_name, second_name, preview)
+                )
+    return split_arrays
+
+
+def load_demonstration_splits(dataset_dir):
+    """Load all splits and verify the actual episode partition before training."""
+
+    result = {
+        split: load_demonstration_split(dataset_dir, split)
+        for split in DEMONSTRATION_SPLITS
+    }
+    return validate_demonstration_split_partition(result)

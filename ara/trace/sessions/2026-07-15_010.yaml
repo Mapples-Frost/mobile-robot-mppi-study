@@ -1,0 +1,97 @@
+session:
+  id: "2026-07-15_010"
+  timestamp: "2026-07-15T17:09:00+08:00"
+  summary: "Completed the L26 MPPI sample-efficiency factorial and L27 behavior-preserving inference fast path, separating strong sample-quality evidence from incomplete end-to-end compute efficiency."
+
+events_logged:
+  - type: experiment
+    id: N37
+    provenance: ai-executed
+    summary: "L26 completed all 960 episodes and showed gated K=100 outperformed traditional K=400 in every blocking scene, but failed the preregistered compute ratio."
+  - type: dead_end
+    id: N38
+    provenance: ai-executed
+    summary: "A fourfold K reduction did not produce proportional wall-clock acceleration because learned inference was a fixed per-step cost."
+  - type: question
+    id: N39
+    provenance: ai-suggested
+    summary: "Test whether learned inference can be skipped exactly when all learned outputs are provably inactive."
+  - type: experiment
+    id: N40
+    provenance: ai-executed
+    summary: "L27 matched 26208 paired control steps exactly and reduced planner time by 23.6% in clean and 9.4% in blocking scenes."
+  - type: claim
+    id: C26
+    provenance: ai-suggested
+    summary: "Complexity-gated RL improves MPPI sample efficiency in the tested static blocking scenes."
+  - type: claim
+    id: C27
+    provenance: ai-suggested
+    summary: "Lower K does not by itself imply proportional compute efficiency."
+  - type: claim
+    id: C28
+    provenance: ai-suggested
+    summary: "Provably zero-contribution learned inference can be skipped without changing paired behavior."
+  - type: heuristic
+    id: H21
+    provenance: ai-suggested
+    summary: "Measure sampling efficiency and wall-clock efficiency as separate outcomes."
+  - type: heuristic
+    id: H22
+    provenance: ai-suggested
+    summary: "Short-circuit inference only when mean and covariance contributions are both provably irrelevant."
+
+ai_actions:
+  - action: "Implemented and ran the blocked L26 K=50,100,200,400 factorial with exact fallback, paired inference and publication figures."
+    provenance: ai-executed
+    files_changed:
+      - "configs/rl/sac_mppi_sample_efficiency_l26.yaml"
+      - "experiments/rl/run_scene_complexity_sample_efficiency.py"
+      - "experiments/rl/summarize_scene_complexity_sample_efficiency.py"
+      - "experiments/rl/analyze_sample_efficiency_results.py"
+      - "docs/rl/33_l26_sample_efficiency_prereg_2026-07-15.md"
+      - "docs/rl/34_l26_sample_efficiency_results_2026-07-15.md"
+  - action: "Implemented the optional zero-complexity inference fast path and exposed skip diagnostics without changing the default behavior."
+    provenance: ai-executed
+    files_changed:
+      - "src/mobile_robot_mppi/rl/prior.py"
+      - "src/mobile_robot_mppi/evaluation/metrics.py"
+      - "experiments/rl/run_scene_complexity_gate_ablation.py"
+  - action: "Preregistered, ran and analyzed L27 with hierarchical bootstrap and a publication-quality timing figure."
+    provenance: ai-executed
+    files_changed:
+      - "configs/rl/sac_mppi_zero_complexity_fastpath_l27.yaml"
+      - "experiments/rl/run_zero_complexity_fastpath_ablation.py"
+      - "experiments/rl/summarize_zero_complexity_fastpath_ablation.py"
+      - "experiments/rl/analyze_zero_complexity_fastpath_results.py"
+      - "docs/rl/35_l27_zero_complexity_fastpath_prereg_2026-07-15.md"
+      - "docs/rl/36_l27_zero_complexity_fastpath_results_2026-07-15.md"
+  - action: "Added focused statistical and behavior-regression tests, then passed 339/339 repository tests."
+    provenance: ai-executed
+    files_changed:
+      - "tests/rl/test_sample_efficiency_ablation.py"
+      - "tests/rl/test_sample_efficiency_analysis.py"
+      - "tests/rl/test_scene_complexity.py"
+      - "tests/rl/test_zero_complexity_fastpath_ablation.py"
+
+claims_touched:
+  - id: C26
+    action: created
+    provenance: ai-suggested
+  - id: C27
+    action: created
+    provenance: ai-suggested
+  - id: C28
+    action: created
+    provenance: ai-suggested
+
+open_threads:
+  - "Profile the actor, target twin critics and decoder on active-gate steps before selecting the next compute optimization."
+  - "Preregister a behavior-equivalent TorchScript, graph or critic-reuse experiment if profiling identifies a stable bottleneck."
+  - "Do not reopen or reinterpret the failed L26 compute gate; any cross-K compute claim requires a new fixed experiment."
+  - "Keep L25/L26/L27 sealed test episode seeds closed until the method and confirmation contract are frozen."
+  - "Eventually repeat latency and jitter measurements on the intended real-robot compute platform."
+
+ai_suggestions_pending:
+  - "Treat K=100 as the leading sample-efficient operating point for the next development study, but do not call it final until sealed confirmation."
+  - "Optimize only behavior-preserving inference paths before considering any new gate threshold or policy retraining."

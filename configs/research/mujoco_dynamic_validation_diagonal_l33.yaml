@@ -1,0 +1,22 @@
+include: mujoco_strong_mppi_baseline.yaml
+
+experiment:
+  name: dynamic_validation_diagonal_l33
+
+scene:
+  name: dynamic_validation_diagonal_l33
+  obstacles:
+    - type: cylinder
+      position: [0.65, 2.35]
+      radius: 0.22
+      height: 0.50
+      motion:
+        type: linear_ping_pong
+        start: [0.65, 2.35]
+        end: [2.35, 0.65]
+        period_s: 14.0
+        phase_s: 4.0
+        phase_jitter_s: 7.0
+        period_scale_range: [0.85, 1.15]
+        endpoint_jitter_m: 0.08
+

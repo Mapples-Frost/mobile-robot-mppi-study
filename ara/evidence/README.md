@@ -1,0 +1,149 @@
+# Evidence Index
+
+- L17 preregistration: `docs/rl/13_conservative_correction_preregistered_gate_2026-07-14.md`
+- Seed-contract audit: `docs/rl/14_validation_seed_audit_and_l17_v2_prereg_2026-07-14.md`
+- Corrected v3 result: `docs/rl/15_l17_v3_conservative_correction_results_2026-07-14.md`
+- Final aggregate: `results/research_platform/rl/bc_vs_l17_v3_conservative_correction_finaltest_20260714_v1/aggregate.json`
+- Unit/regression result: 254 tests passed on 2026-07-14.
+- L18 preregistration: `docs/rl/16_critic_advantage_diagnostic_prereg_2026-07-15.md`
+- L18 result and quality report: `docs/rl/17_l18_critic_advantage_diagnostic_results_2026-07-15.md`
+- L18 aggregate: `results/research_platform/rl/l18_advantage_validation_multiseed_20260715_v1/aggregate.json`
+- L18 unit/regression result: 262 tests passed on 2026-07-15.
+- L19 preregistration: `docs/rl/18_l19_advantage_margin_calibration_prereg_2026-07-15.md`
+- L19 calibration result and data-quality report: `docs/rl/19_l19_advantage_margin_calibration_results_2026-07-15.md`
+- L19 fail-closed selection record: `results/research_platform/rl/l19_margin_calibration_multiseed_20260715_v1/selection.json`
+- L19 unit/regression result: 272 tests passed on 2026-07-15.
+- L20 preregistration: `docs/rl/20_l20_twin_critic_consensus_lcb_prereg_2026-07-15.md`
+- L20 result and CSV quality report: `docs/rl/21_l20_twin_critic_consensus_lcb_results_2026-07-15.md`
+- L20 fail-closed selection record: `results/research_platform/rl/l20_lcb_calibration_multiseed_20260715_v1/selection.json`
+- L20 unit/regression result: 288 tests passed on 2026-07-15.
+- L21 preregistration: `docs/rl/22_l21_counterfactual_risk_dataset_prereg_2026-07-15.md`
+- L21 result and data-sufficiency report: `docs/rl/23_l21_counterfactual_risk_dataset_results_2026-07-15.md`
+- L21 merged audit: `results/research_platform/rl/l21_counterfactual_multiseed_20260715_v1/audit.json`
+- L21 unit/regression result: 299 tests passed on 2026-07-15.
+- L22 preregistration: `docs/rl/24_l22_counterfactual_burst_prereg_2026-07-15.md`
+- L22 result and exploratory data report: `docs/rl/25_l22_counterfactual_burst_results_2026-07-15.md`
+- L22 merged audit: `results/research_platform/rl/l22_burst_multiseed_20260715_v1/audit.json`
+- L22 CSV/NPZ EDA: `results/research_platform/rl/l22_burst_multiseed_20260715_v1/samples_all_training_seeds_eda_report.md`
+- L22 unit/regression result: 300 tests passed on 2026-07-15.
+- L23 preregistration and power justification: `docs/rl/26_l23_continuous_utility_prereg_2026-07-15.md`
+- L23 zero-variance scaling correction record: `docs/rl/27_l23_zero_variance_scaling_correction_2026-07-15.md`
+- L23 result and development-gate report: `docs/rl/28_l23_continuous_utility_results_2026-07-15.md`
+- L23 merged data audit: `results/research_platform/rl/l23_utility_data_multiseed_20260715_v1/audit.json`
+- L23 CSV/NPZ EDA: `results/research_platform/rl/l23_utility_data_multiseed_20260715_v1/samples_all_training_seeds_eda_report.md`
+- L23 valid model metrics: `results/research_platform/rl/l23_utility_ensemble_development_20260715_v2/development_metrics.json`
+- L23 valid model checkpoint SHA256: `4e38db5d11f3f4d9f7a908b366daaac8b053c98abce5d6396ccafb417a55f53b`
+- L23 unit/regression result: 309 tests passed on 2026-07-15.
+- L24 preregistration, representation ablation and power justification: `docs/rl/29_l24_trajectory_utility_prereg_2026-07-15.md`
+- L24 result and scientific pivot record: `docs/rl/30_l24_trajectory_utility_results_2026-07-15.md`
+- L24 merged data audit: `results/research_platform/rl/l24_trajectory_utility_data_multiseed_20260715_v1/audit.json`
+- L24 trajectory-feature EDA: `results/research_platform/rl/l24_trajectory_utility_data_multiseed_20260715_v1/trajectory_eda.md`
+- L24 development metrics: `results/research_platform/rl/l24_trajectory_utility_ensemble_development_20260715_v1/development_metrics.json`
+- L24 checkpoint SHA256: `68974e89b6d6f23f8092ca11945b587cfc6fafd886cae7ab832485bb3fa1e850` (development-ineligible; fail-closed loader rejects deployment).
+- L24 side-effect regression: all non-feature fields exactly matched between `results/research_platform/rl/l24_trajectory_utility_smoke_20260715_v1/` and `results/research_platform/rl/l24_preview_regression_no_preview_20260715_v1/`.
+- L24 repository validation: 314 tests passed, compileall passed and `git diff --check` reported no whitespace errors on 2026-07-15.
+- L25 preregistration, blocked design and power rationale: `docs/rl/31_l25_scene_complexity_gate_prereg_2026-07-15.md`
+- L25 development result and interpretation guard: `docs/rl/32_l25_scene_complexity_gate_results_2026-07-15.md`
+- L25 exact coverage and provenance audit: `results/research_platform/rl/l25_scene_complexity_development_multiseed_20260715_v1/audit.json`
+- L25 fixed development-gate decision: `results/research_platform/rl/l25_scene_complexity_development_multiseed_20260715_v1/development_gate.json`
+- L25 post-gate EDA and exact fallback audit: `results/research_platform/rl/l25_scene_complexity_development_multiseed_20260715_v1/eda.md`
+- L25 formal development evidence: 480 episodes, 124334 control steps, three independent training checkpoints, ten paired episode seeds, four scenes and four methods at K=200; all 480 episodes had zero collisions.
+- L25 repository validation: all changed Python files compiled and 326 tests passed on 2026-07-15.
+- L26 preregistration and blocked factorial: `docs/rl/33_l26_sample_efficiency_prereg_2026-07-15.md`
+- L26 development result and interpretation boundary: `docs/rl/34_l26_sample_efficiency_results_2026-07-15.md`
+- L26 complete audit and fixed gate: `results/research_platform/rl/l26_sample_efficiency_development_multiseed_20260715_v1/audit.json`, `results/research_platform/rl/l26_sample_efficiency_development_multiseed_20260715_v1/development_gate.json`
+- L26 hierarchical analysis and exact paired inference: `results/research_platform/rl/l26_sample_efficiency_development_multiseed_20260715_v1/analysis.json`, `results/research_platform/rl/l26_sample_efficiency_development_multiseed_20260715_v1/paired_inference.csv`
+- L26 formal development evidence: 960 episodes, 250676 control steps, three independent checkpoints, ten paired episode seeds, four scenes, two methods and four MPPI sample counts; zero collisions; overall gate failed on compute ratio 0.945.
+- L27 preregistration: `docs/rl/35_l27_zero_complexity_fastpath_prereg_2026-07-15.md`
+- L27 result and interpretation boundary: `docs/rl/36_l27_zero_complexity_fastpath_results_2026-07-15.md`
+- L27 exact behavior and fixed development gate: `results/research_platform/rl/l27_zero_complexity_fastpath_development_multiseed_20260715_v1/development_gate.json`
+- L27 timing analysis: `results/research_platform/rl/l27_zero_complexity_fastpath_development_multiseed_20260715_v1/timing_analysis.json`
+- L27 repository validation: changed Python files compiled, 19 focused tests and 339 complete repository tests passed on 2026-07-15; `git diff --check` reported no whitespace errors.
+- L28 preregistration and exact-behavior timing contract: `docs/rl/37_l28_inference_profile_prereg_2026-07-15.md`
+- L28 result and interpretation boundary: `docs/rl/38_l28_inference_profile_results_2026-07-15.md`
+- L28 fixed development-gate decision: `results/research_platform/rl/l28_inference_profile_development_multiseed_20260715_v1/development_gate.json`
+- L28 component and checkpoint profiles: `results/research_platform/rl/l28_inference_profile_development_multiseed_20260715_v1/component_summary.csv`, `results/research_platform/rl/l28_inference_profile_development_multiseed_20260715_v1/checkpoint_timing.csv`
+- L28 formal development evidence: 360 episodes, 79734 observed steps, three independent checkpoints, ten paired episode seeds and seven scenes; both candidates matched 26578 paired steps exactly. The combined optimization reduced active-prior time by 14.89% and blocking planner time by 4.07% (95% hierarchical-bootstrap CI 1.94--6.05%) but failed the preregistered 20% and 5% magnitude gates.
+- L28 repository validation: changed Python files compiled, 344 complete repository tests passed and `git diff --check` reported no whitespace errors on 2026-07-15.
+- L29 preregistration and blocked cross-layer factorial: `docs/rl/39_l29_cross_layer_factorial_prereg_2026-07-15.md`
+- L29 complete audit and fixed development failure: `results/research_platform/rl/l29_cross_layer_development_multiblock_20260715_v1/audit.json`, `results/research_platform/rl/l29_cross_layer_development_multiblock_20260715_v1/development_gate.json`
+- L30 temporal-risk remediation preregistration: `docs/rl/40_l30_temporal_closing_gate_prereg_2026-07-15.md`
+- L29/L30 results and interpretation guard: `docs/rl/41_l29_l30_cross_layer_results_2026-07-15.md`
+- L30 complete audit and fixed development failure: `results/research_platform/rl/l30_temporal_gate_development_multiblock_20260715_v1/audit.json`, `results/research_platform/rl/l30_temporal_gate_development_multiblock_20260715_v1/development_gate.json`
+- L29/L30 formal development evidence: 720 total method episodes over three independent RL/ICODE training blocks and five matched episode seeds; temporal-gate + ICODE achieved 60/60 blocking successes and 0/60 collisions, but L30 remained failed because the nominal ablation had one seen-dynamic collision above always-on RL.
+- L29/L30 publication artifacts: `results/research_platform/rl/l30_temporal_gate_development_multiblock_20260715_v1/fig_l29_l30_cross_layer_development.pdf`, `results/research_platform/rl/l30_temporal_gate_development_multiblock_20260715_v1/fig_l29_l30_cross_layer_development.png`
+- L29/L30 repository validation: changed Python files compiled, all 368 repository tests passed and `git diff --check` reported no whitespace errors on 2026-07-15.
+- L31 preregistration: `docs/rl/42_l31_dynamic_variant_generalization_prereg_2026-07-15.md`
+- L31 negative result and mechanism analysis: `docs/rl/43_l31_dynamic_variant_generalization_results_2026-07-15.md`
+- L31 complete audit and failed development gate: `results/research_platform/rl/l31_dynamic_variant_development_multiblock_20260715_v1/audit.json`, `results/research_platform/rl/l31_dynamic_variant_development_multiblock_20260715_v1/development_gate.json`
+- L31 evidence table and figure bindings: `ara/evidence/tables/table01_l31_dynamic_variant.md`, `ara/evidence/figures/fig01_l31_dynamic_variant.md`
+- L31 formal development evidence: 600/600 unique valid episodes over three independent model blocks, five fresh episode seeds, four dynamic variants, two physics domains and five methods; primary temporal-gate + ICODE achieved 64/120 successes with 56/120 collisions and failed the zero-collision gate; all confirmation seeds remained sealed.
+- L31 mechanism evidence: all 56 primary collisions occurred at gate alpha one; reverse-direction collision windows showed nonphysical 29--32 m/s sector-minimum closing spikes; fast-crossing windows showed plausible 0.38--0.40 m/s closing but insufficient policy competence.
+- L31 repository validation: changed Python files compiled, all 376 repository tests passed and `git diff --check` reported no whitespace errors on 2026-07-15.
+- L49/L50 consolidated result and interpretation boundary: `docs/rl/74_l49_l50_iterative_path_results_2026-07-16.md`
+- L49 offline H=36 audit: `results/research_platform/l49_icode_iterative_path_offline_gate_v1/summary.json`
+- L50 complete independent closed-loop summary: `results/research_platform/rl/l50_icode_iterative_path_confirmation_20260716_v1/efficiency_confirmation_summary.json`
+- L50 paired effects and publication figure: `results/research_platform/rl/l50_icode_iterative_path_confirmation_20260716_v1/efficiency_paired_effects.csv`, `results/research_platform/rl/l50_icode_iterative_path_confirmation_20260716_v1/figures/l49_l50_prediction_and_control.pdf`
+- L49/L50 evidence bindings: `ara/evidence/tables/table06_l49_l50.md`, `ara/evidence/figures/fig06_l49_l50.md`
+- L49/L50 repository validation: all 445 repository tests passed; final focused tests 2/2 passed, changed Python files compiled and `git diff --check` reported no whitespace errors on 2026-07-16.
+- L32 preregistration and robust temporal remediation design: `docs/rl/44_l32_temporal_safety_remediation_prereg_2026-07-15.md`
+- L32 result and interpretation boundary: `docs/rl/46_l32_temporal_safety_remediation_results_2026-07-16.md`
+- L32 complete audit and failed development gate: `results/research_platform/rl/l32_temporal_safety_remediation_development_20260715_v1/audit.json`, `results/research_platform/rl/l32_temporal_safety_remediation_development_20260715_v1/development_gate.json`
+- L32 formal development evidence: 720/720 unique valid episodes over three model blocks, four motion variants, two physics domains, five seeds and six conditions. Robust scan-flow stayed below 0.892 m/s. Shared temporal safety improved traditional ICODE from 32 to 76 successes and reduced collisions from 88 to 44, but the competence-gated learned method had 57 successes and 63 collisions; the gate failed and sealed seeds remained unopened.
+- L33 dynamic-history training preregistration: `docs/rl/45_l33_dynamic_history_training_prereg_2026-07-15.md`
+- L33/L34 bounded-correction result: `docs/rl/49_l33_l34_dynamic_bounded_correction_results_2026-07-16.md`
+- L34 single-seed and multiseed preregistrations: `docs/rl/47_l34_bounded_dynamic_correction_prereg_2026-07-16.md`, `docs/rl/48_l34_bounded_dynamic_correction_multiseed_prereg_2026-07-16.md`
+- L34 multiseed audit and fixed development gate: `results/research_platform/rl/l34_bounded_dynamic_multiseed_development_20260716_v1/multiseed_summary.json`
+- L34 evidence table and figure bindings: `ara/evidence/tables/table02_l34_dynamic_multiseed.md`, `ara/evidence/figures/fig02_l34_dynamic_multiseed.md`
+- L34 formal development evidence: three independent 30k training seeds, 126 validation episodes across seven checkpoints per seed, and 18 paired initial-versus-best held-out cells. Success rose from 4/18 to 10/18, collisions fell from 12/18 to 7/18, six success gains had zero losses, five collision improvements had zero regressions, and mean final distance improved by 0.547 m. New confirmation episode seeds have not been opened.
+- L32--L34 repository validation: 88 changed/untracked Python files compiled and all 400 repository tests passed on 2026-07-16.
+- L35 preregistration and independent confirmation: `docs/rl/50_l35_l34_independent_confirmation_prereg_2026-07-16.md`, `docs/rl/51_l35_independent_confirmation_results_2026-07-16.md`
+- L35 complete audit and failed gate: `results/research_platform/rl/l35_l34_independent_confirmation_20260716_v1/confirmation_summary.json`
+- L35 formal evidence: 60/60 complete episodes and 30 paired initial-versus-best cells over three training seeds and five new episode seeds per path. Success changed from 13/30 to 12/30, collision stayed 15/30 and the mean final-distance improvement was 0.005 m; the independent confirmation gate failed.
+- L36 traditional-only benchmark calibration: `docs/rl/52_l36_dynamic_benchmark_calibration_prereg_2026-07-16.md`, `docs/rl/53_l36_dynamic_benchmark_calibration_results_2026-07-16.md`
+- L36 complete audit and passed calibration gate: `results/research_platform/rl/l36_dynamic_benchmark_calibration_20260716_v1/calibration_summary.json`
+- L36 formal evidence: 64/64 complete episodes over eight candidate dynamic geometries and eight new seeds. Five candidates had both successes and collisions; easy, moderate and hard selections spanned 0.375 collision rate without observing RL or ICODE results.
+- L37 preregistration and factorial result: `docs/rl/54_l37_bounded_rl_icode_factorial_prereg_2026-07-16.md`, `docs/rl/55_l37_bounded_rl_icode_factorial_results_2026-07-16.md`
+- L37 complete audit and failed gate: `results/research_platform/rl/l37_bounded_rl_icode_factorial_20260716_v1/factorial_summary.json`
+- L37 formal evidence: 180/180 complete episodes over three paired model blocks, three calibrated scenes, five fresh seeds and four factorial conditions. The combined controller lost seven successes, added thirteen collisions and worsened mean final distance by 0.542 m relative to traditional nominal; no protected or sealed seed was used.
+- L35--L37 evidence bindings: `ara/evidence/tables/table03_l35_independent_confirmation.md`, `ara/evidence/tables/table04_l36_dynamic_calibration.md`, `ara/evidence/tables/table05_l37_factorial.md`, `ara/evidence/figures/fig03_l35_independent_confirmation.md`, `ara/evidence/figures/fig04_l36_dynamic_calibration.md`, `ara/evidence/figures/fig05_l37_factorial.md`
+- L35--L37 repository validation: all new and modified Python files compiled, all 411 repository tests passed, and `git diff --check` reported no whitespace errors on 2026-07-16.
+- L51 oracle conditional-authority upper bound: `results/research_platform/rl/l51_icode_oracle_domain_gate_20260716_v1/oracle_gate_summary.json`
+- L52 failed innovation-only gate and L53 causal cross-layer calibration: `results/research_platform/rl/l52_icode_online_reliability_calibration_20260716_v1/reliability_calibration_summary.json`, `results/research_platform/rl/l53_icode_cross_layer_reliability_calibration_20260716_v1/reliability_calibration_summary.json`
+- L54/L55 independent gate failures and practical-effect decision: `docs/rl/78_l54_causal_reliability_gate_results_2026-07-16.md`, `docs/rl/79_l55_path_efficiency_confirmation_results_2026-07-16.md`, `docs/rl/80_l55_practical_effect_analysis_2026-07-16.md`
+- L56 fixed high-dynamic data gate: `results/research_platform/rl/l56_icode_high_dynamic_data_20260716_v1/high_dynamic_data_gate_summary.json`; 48/48 successful episodes, 12,074 transitions, four path families and immutable split hashes.
+- L57 all-window offline qualification: `results/research_platform/l57_icode_high_dynamic_offline_gate_20260716_v1.json`; three ICODE seeds reduced H=36 rollout RMSE by 36.28% on test and 41.77% on unseen transitions.
+- L58 new-seed development gate: `results/research_platform/rl/l58_icode_high_dynamic_closed_loop_20260716_v1/high_dynamic_closed_loop_summary.json`; cross-track RMSE fell 26.62% with 60/60 success per method and zero collisions.
+- L59 sealed independent confirmation: `results/research_platform/rl/l59_icode_high_dynamic_confirmation_20260716_v1/high_dynamic_closed_loop_summary.json`; cross-track RMSE fell 27.06%, all blocks/scenes were positive, both methods were 120/120 successful with zero collisions, and the 50 ms compute gate passed.
+- L56--L59 interpretation boundary: `docs/rl/85_l59_high_dynamic_confirmation_results_2026-07-16.md`; evidence is fixed-plant, clean-state and residual-only, not cross-plant, odometry, obstacle, RL-composed or real-robot evidence.
+- L59 repository validation: changed Python files compiled and all 473 repository tests passed on 2026-07-16.
+- L60 parameter-matched offline structure audit: `results/research_platform/l60_residual_structure_offline_20260716_v1/summary.json`; direct MLP had 10,049 parameters versus ICODE's 10,191 and slightly lower mean test/unseen H=36 RMSE, so the offline structure-superiority gate failed while MLP closed-loop eligibility passed.
+- L61 three-way closed-loop development result: `results/research_platform/rl/l61_residual_structure_closed_loop_20260716_v1/residual_structure_closed_loop_summary.json`; ICODE beat MLP by 9.85% cross-track RMSE with interval [0.00330, 0.00583] m over 180 complete episodes.
+- L62 sealed confirmation: `results/research_platform/rl/l62_residual_structure_confirmation_20260716_v1/residual_structure_closed_loop_summary.json`; ICODE beat MLP by 10.17% with interval [0.00355, 0.00564] m overall and a positive unseen-path interval, while all methods achieved 120/120 successes and zero collisions.
+- L60--L62 publication artifacts: `results/research_platform/rl/l62_residual_structure_confirmation_20260716_v1/figures/fig_l60_l62_residual_structure_ablation.pdf`, `results/research_platform/rl/l62_residual_structure_confirmation_20260716_v1/figures/table_l60_l62_residual_structure.csv`, `docs/rl/90_l62_residual_structure_confirmation_results_2026-07-16.md`.
+- L62 repository validation: changed Python files compiled, all 483 repository tests passed and `git diff --check` reported no errors on 2026-07-16.
+- L63 method-blind plant calibration: `results/research_platform/rl/l63_cross_plant_nominal_calibration_20260716_v3/cross_plant_calibration_summary.json`; the passing frozen domains were anchor, light mass, high friction, weak actuator, 100 ms delay and a moderate combined shift, with 100% nominal success and zero collisions.
+- L64 cross-plant development: `results/research_platform/rl/l64_residual_structure_cross_plant_20260716_v1/residual_structure_cross_plant_summary.json`; 324/324 episodes completed and the shifted-plant ICODE-versus-MLP estimate was 0.004754 m with 95% lower bound 0.004000 m.
+- L65 sealed cross-plant confirmation: `results/research_platform/rl/l65_residual_structure_cross_plant_confirmation_20260716_v1/residual_structure_cross_plant_summary.json`; 540/540 episodes completed, shifted-plant ICODE-versus-MLP improvement was 0.004956 m (9.23%) with interval [0.003993, 0.005885] m, and all methods were 180/180 successful with zero collisions.
+- L63--L65 evidence bindings: `ara/evidence/tables/table07_l63_l65_cross_plant.md`, `ara/evidence/figures/fig07_l64_l65_cross_plant.md`, `docs/rl/95_l63_l65_cross_plant_residual_structure_results_2026-07-16.md`.
+- L65 repository validation: changed Python files compiled, all 493 repository tests passed, figure PDF/PNG were visually audited and `git diff --check` reported no errors on 2026-07-16.
+- L66 nominal-only observation calibration: `configs/rl/observation_domain_nominal_calibration_l66.yaml`, `configs/rl/observation_domain_nominal_calibration_l66_v2.yaml`; latency and combined domains were safe and identifiable, pure noise remained below the frozen 3% resolution threshold, and raw wheel odometry was retained only as stress.
+- L67 observation-domain development: `results/research_platform/rl/l67_residual_structure_observation_20260716_v1/residual_structure_observation_summary.json`; 216/216 episodes completed and the primary ICODE-versus-MLP effect was 0.005226 m (9.50%) with positive lower bound 0.004038 m.
+- L68 sealed observation-domain confirmation: `results/research_platform/rl/l68_residual_structure_observation_confirmation_20260716_v1/residual_structure_observation_summary.json`; 360/360 artifacts completed, the primary ICODE-versus-MLP effect was 0.005487 m (10.15%) with interval [0.004243, 0.006799] m, and all primary method cells were 90/90 successful with zero collisions.
+- L68 raw wheel-odometry stress: `results/research_platform/rl/l68_residual_structure_observation_confirmation_20260716_v1/figures/table_l68_wheel_odometry_stress.csv`; the development success ordering did not replicate (sealed nominal 18/30, MLP 13/30, ICODE 12/30), bounding the result to identifiable observation perturbations rather than localization drift.
+- L66--L68 evidence bindings: `ara/evidence/tables/table08_l66_l68_observation.md`, `ara/evidence/figures/fig08_l67_l68_observation.md`, `docs/rl/99_l66_l68_observation_robustness_results_2026-07-16.md`.
+- L68 repository validation: changed Python files compiled, all 503 repository tests passed, figure PDF/PNG were visually audited and `git diff --check` reported no errors on 2026-07-16.
+- L90 route-local covariance oracle: `results/research_platform/rl/l90_local_covariance_context_oracle_20260718_v1/summary.json`; 240/240 branches completed, 11/12 contexts selected speed and both heterogeneity and practical-progress gates failed.
+- L91/L92 dynamic covariance evaluation: `results/research_platform/rl/l91_dynamic_covariance_context_oracle_20260718_v1/summary.json`, `results/research_platform/rl/l92_dynamic_covariance_safety_confirmation_20260718_v1/summary.json`; the exploratory development safety effect did not reproduce on six independent motion geometries.
+- L93 route-crossing headroom: `results/research_platform/rl/l93_route_dynamic_covariance_headroom_20260718_v1/summary.json`; 120/120 episodes completed, no oracle advantage was observed and high-risk crossings exposed missing future-motion information.
+- L94 sample-efficiency gate: `results/research_platform/rl/l94_contextual_covariance_sample_efficiency_20260718_v1/summary.json`; 320/320 unique episodes completed and contextual K=50 beat fixed K=100 on RMSE, time and planner compute with unchanged success/collision outcomes, while increasing jerk.
+- L95 controlled confirmation: `results/research_platform/rl/l95_contextual_covariance_half_budget_confirmation_20260718_v1/summary.json`; 40 single-process, alternating-order pairs independently reproduced precision noninferiority and time/compute superiority at half budget, with 80/80 success and zero collisions.
+- L90--L95 evidence bindings: `ara/evidence/tables/table09_l90_l95_covariance_adaptation.md`, `ara/evidence/figures/fig09_l94_l95_sample_efficiency.md`, `docs/rl/145_l94_contextual_covariance_sample_efficiency_results_2026-07-18.md`, `docs/rl/146_l95_half_budget_controlled_confirmation_results_2026-07-18.md`.
+- L95 repository validation: all new Python files compiled, 13 focused RL tests passed, all 594 repository tests passed, and the L94 PNG/PDF/SVG figure was visually audited on 2026-07-18.
+- L96 blocked 2x2 jerk screen: `results/research_platform/rl/l96_contextual_covariance_jerk_screening_20260718_v1/summary.json`; 96/96 episodes and 24/24 blocks completed, all methods succeeded without collision, the hard yaw-slew factor reduced issued/applied jerk, and rate-cost alone failed both jerk gates.
+- L97 single-process three-arm confirmation: `results/research_platform/rl/l97_contextual_covariance_jerk_confirmation_20260718_v1/summary.json`; 144/144 episodes and 48/48 blocks completed with 144 successes and zero collisions.
+- L97 raw contextual replication: contextual K50 versus fixed K100 changed RMSE by -1.034 mm, time by -1.683 s and compute by -8.902 ms/step, with all preregistered half-budget gates passing and both jerk metrics increasing.
+- L97 smoothing mechanism: smoothed versus raw contextual K50 reduced issued jerk by 0.01078 and applied jerk by 0.00705 with intervals below zero and no task regression.
+- L97 strict final-package boundary: smoothed contextual K50 retained precision, time and compute advantages versus fixed K100, but both jerk intervals crossed zero; the preregistered overall Gate failed.
+- L96/L97 evidence bindings: `ara/evidence/tables/table10_l96_l97_jerk_remediation.md`, `ara/evidence/figures/fig10_l96_l97_jerk_remediation.md`, `docs/rl/149_l97_contextual_covariance_jerk_confirmation_results_2026-07-18.md`.
+- L97 repository validation: new Python files compiled, five focused tests passed, all 599 repository tests passed, and PNG/PDF/SVG figures were visually audited on 2026-07-18.

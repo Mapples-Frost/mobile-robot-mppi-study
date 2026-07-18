@@ -68,7 +68,15 @@ def method_config(
         config, {"plant": domain.get("plant_override", {})}
     )
     config.setdefault("experiment", {})["seed"] = int(seed)
-    config["experiment"]["name"] = "%s_seed%d" % (method, int(seed))
+    scene_name = str(
+        config.get("scene", {}).get("name", "embedded")
+    )
+    config["experiment"]["name"] = "%s__%s__%s__seed%d" % (
+        method,
+        scene_name,
+        str(domain["name"]),
+        int(seed),
+    )
     planner = config.setdefault("planner", {})
     planner["prediction_mode"] = (
         "icode_residual" if use_icode else "nominal"

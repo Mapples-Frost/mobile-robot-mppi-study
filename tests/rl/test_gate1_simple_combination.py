@@ -113,6 +113,10 @@ def test_gate1_method_applies_domain_without_changing_factorial_cell():
     assert result["plant"]["actuator"]["command_delay"] == 0.1
     assert result["experiment"]["physics_domain"] == "unseen_delay"
     assert result["experiment"]["physics_domain_role"] == "unseen"
+    assert (
+        result["experiment"]["name"]
+        == "simple_combination__embedded__unseen_delay__seed7"
+    )
     assert result["planner"]["prediction_mode"] == "icode_residual"
 
 

@@ -251,6 +251,39 @@ class EpisodeMetrics:
             "paper_guided_reuses": int(
                 planner_diagnostics.get("paper_guided_reuses", 0)
             ),
+            "reliability_hss_enabled": float(
+                planner_diagnostics.get("reliability_hss_enabled", False)
+            ),
+            "reliability_level": str(
+                planner_diagnostics.get("reliability_level", "disabled")
+            ),
+            "reliability_authority": float(
+                planner_diagnostics.get("reliability_authority", 1.0)
+            ),
+            "reliability_dynamics_confidence": float(
+                planner_diagnostics.get("dynamics_confidence", 1.0)
+            ),
+            "reliability_actor_confidence": float(
+                planner_diagnostics.get("actor_confidence", 1.0)
+            ),
+            "reliability_ensemble_disagreement_max": float(
+                planner_diagnostics.get(
+                    "ensemble_disagreement_max", 0.0
+                )
+            ),
+            "reliability_innovation_error_ema": float(
+                planner_diagnostics.get("innovation_error_ema", 0.0)
+            ),
+            "reliability_guided_fraction_applied": float(
+                planner_diagnostics.get(
+                    "reliability_guided_fraction_applied", 0.30
+                )
+            ),
+            "reliability_guided_fraction_next": float(
+                planner_diagnostics.get(
+                    "reliability_guided_fraction_next", 0.30
+                )
+            ),
             "paper_guided_elite_count": int(
                 planner_diagnostics.get("paper_guided_elite_count", 0)
             ),
@@ -693,6 +726,42 @@ class EpisodeMetrics:
             "paper_guided_reuses_total": int(sum(
                 row.get("paper_guided_reuses", 0) for row in values
             )),
+            "reliability_hss_enabled_fraction": float(np.mean([
+                row.get("reliability_hss_enabled", 0.0)
+                for row in values
+            ])),
+            "reliability_authority_mean": float(np.mean([
+                row.get("reliability_authority", 1.0)
+                for row in values
+            ])),
+            "reliability_authority_min": float(np.min([
+                row.get("reliability_authority", 1.0)
+                for row in values
+            ])),
+            "reliability_authority_max": float(np.max([
+                row.get("reliability_authority", 1.0)
+                for row in values
+            ])),
+            "reliability_low_fraction": float(np.mean([
+                row.get("reliability_level", "disabled") == "low"
+                for row in values
+            ])),
+            "reliability_medium_fraction": float(np.mean([
+                row.get("reliability_level", "disabled") == "medium"
+                for row in values
+            ])),
+            "reliability_high_fraction": float(np.mean([
+                row.get("reliability_level", "disabled") == "high"
+                for row in values
+            ])),
+            "reliability_guided_fraction_applied_mean": float(np.mean([
+                row.get("reliability_guided_fraction_applied", 0.30)
+                for row in values
+            ])),
+            "reliability_guided_fraction_next_mean": float(np.mean([
+                row.get("reliability_guided_fraction_next", 0.30)
+                for row in values
+            ])),
             "paper_guided_elite_count_total": int(sum(
                 row.get("paper_guided_elite_count", 0)
                 for row in values

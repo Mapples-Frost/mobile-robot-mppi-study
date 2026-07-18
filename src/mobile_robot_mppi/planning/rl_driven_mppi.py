@@ -670,6 +670,7 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
             (self.config.horizon, self.state_spec.dimension),
             dtype=np.float64,
         )
+        reliability_controls = np.empty_like(means)
         actor_ood_scores = np.zeros(
             self.config.horizon, dtype=np.float64
         )
@@ -705,6 +706,7 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
                     )[0]
                 )
             applied = self._delayed_control(command, previous)
+            reliability_controls[step] = applied[0]
             states = integrate_batch(
                 self.dynamics,
                 states,
@@ -718,7 +720,7 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
             raise FloatingPointError("Actor mean rollout produced NaN or Inf")
         return means, variances, {
             "states": rollout_states,
-            "controls": means.copy(),
+            "controls": reliability_controls,
             "actor_ood_scores": actor_ood_scores,
         }
 
@@ -805,6 +807,7 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
             (self.config.horizon, self.state_spec.dimension),
             dtype=np.float64,
         )
+        reliability_controls = np.empty_like(means)
         actor_ood_scores = np.zeros(
             self.config.horizon, dtype=np.float64
         )
@@ -861,6 +864,7 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
             if count:
                 guided[:, step, :] = command[1:]
             applied = self._delayed_control(command, previous)
+            reliability_controls[step] = applied[0]
             states = integrate_batch(
                 self.dynamics,
                 states,
@@ -879,7 +883,7 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
             )
         return means, variances, guided, {
             "states": rollout_states,
-            "controls": means.copy(),
+            "controls": reliability_controls,
             "actor_ood_scores": actor_ood_scores,
         }
 

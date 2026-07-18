@@ -98,3 +98,26 @@ def test_episode_metrics_reports_polyline_cross_track_error():
     assert result["cross_track_rmse"] == pytest.approx(1.0)
     assert result["cross_track_mean"] == pytest.approx(1.0)
     assert result["cross_track_max"] == pytest.approx(1.0)
+
+
+def test_episode_metrics_summarizes_hss_reliability_levels():
+    metrics = EpisodeMetrics(1.0, 0.0, 0.2, control_dt=0.1)
+    for index, level in enumerate(("low", "high")):
+        metrics.update(
+            _truth(0.1 * (index + 1), 0.2 * (index + 1)),
+            _decision(),
+            {
+                "reliability_hss_enabled": True,
+                "reliability_level": level,
+                "reliability_authority": 0.2 + 0.6 * index,
+                "reliability_guided_fraction_applied": 0.3 * index,
+                "reliability_guided_fraction_next": 0.6 * index,
+            },
+        )
+
+    result = metrics.summary()
+
+    assert result["reliability_hss_enabled_fraction"] == 1.0
+    assert result["reliability_low_fraction"] == 0.5
+    assert result["reliability_high_fraction"] == 0.5
+    assert result["reliability_guided_fraction_applied_mean"] == 0.15

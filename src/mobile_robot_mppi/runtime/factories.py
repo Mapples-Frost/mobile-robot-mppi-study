@@ -149,6 +149,12 @@ def make_components(config, project_root, rl_policy=None):
                         "state_scales",
                         [1.0] * state_spec.dimension,
                     ),
+                    disagreement_scales=ensemble.get(
+                        "disagreement_scales"
+                    ),
+                    innovation_scales=ensemble.get(
+                        "innovation_scales"
+                    ),
                     support_soft_z=float(
                         ensemble.get("support_soft_z", 3.0)
                     ),

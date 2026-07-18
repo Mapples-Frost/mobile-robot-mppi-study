@@ -63,6 +63,25 @@ def test_residual_ensemble_innovation_uses_completed_residual_error():
     assert ensemble.diagnostics()["residual_ensemble_innovation_samples"] == 2
 
 
+def test_residual_ensemble_keeps_derivative_and_state_error_scales_separate():
+    ensemble = PlatformResidualEnsemble(
+        [_Member(0.0, 1.0), _Member(2.0, 1.0)],
+        disagreement_scales=(1.0, 2.0, 4.0),
+        innovation_scales=(2.0, 2.0, 2.0),
+        innovation_decay=0.0,
+    )
+
+    expected_disagreement = np.sqrt(
+        np.mean(np.asarray((1.0, 0.5, 0.25)) ** 2)
+    )
+    assert ensemble.disagreement(np.zeros(3), np.zeros(2)) == pytest.approx(
+        expected_disagreement
+    )
+    assert ensemble.observe_prediction_errors(
+        np.zeros(3), np.asarray((2.0, 2.0, 2.0))
+    ) == pytest.approx(1.0)
+
+
 def test_residual_ensemble_rejects_misaligned_members():
     class _Wrong(_Member):
         state_dim = 4

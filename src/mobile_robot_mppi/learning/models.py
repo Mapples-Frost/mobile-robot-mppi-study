@@ -258,6 +258,8 @@ class PlatformResidualEnsemble:
         self,
         members,
         state_scales=None,
+        disagreement_scales=None,
+        innovation_scales=None,
         support_soft_z=3.0,
         support_hard_z=7.0,
         innovation_decay=0.9,
@@ -275,22 +277,30 @@ class PlatformResidualEnsemble:
         ):
             raise ValueError("residual ensemble member dimensions differ")
         self.model = getattr(self.members[0], "model", None)
-        self.state_scales = np.asarray(
+        legacy_scales = (
+            np.ones(self.state_dim, dtype=np.float64)
+            if state_scales is None
+            else state_scales
+        )
+        self.disagreement_scales = self._validated_scales(
             (
-                np.ones(self.state_dim, dtype=np.float64)
-                if state_scales is None
-                else state_scales
+                legacy_scales
+                if disagreement_scales is None
+                else disagreement_scales
             ),
-            dtype=np.float64,
-        ).reshape(-1)
-        if (
-            self.state_scales.shape != (self.state_dim,)
-            or not np.isfinite(self.state_scales).all()
-            or np.any(self.state_scales <= 0.0)
-        ):
-            raise ValueError(
-                "residual ensemble state_scales must be finite and positive"
-            )
+            "disagreement_scales",
+        )
+        self.innovation_scales = self._validated_scales(
+            (
+                legacy_scales
+                if innovation_scales is None
+                else innovation_scales
+            ),
+            "innovation_scales",
+        )
+        # Backwards-compatible diagnostic alias. New configurations must use
+        # the dimensionally explicit scales above.
+        self.state_scales = self.innovation_scales
         self.support_soft_z = float(support_soft_z)
         self.support_hard_z = float(support_hard_z)
         if (
@@ -314,6 +324,18 @@ class PlatformResidualEnsemble:
         self.innovation_error_ema = 0.0
         self.innovation_samples = 0
         self.last_innovation_error = 0.0
+
+    def _validated_scales(self, values, name):
+        result = np.asarray(values, dtype=np.float64).reshape(-1)
+        if (
+            result.shape != (self.state_dim,)
+            or not np.isfinite(result).all()
+            or np.any(result <= 0.0)
+        ):
+            raise ValueError(
+                "residual ensemble %s must be finite and positive" % name
+            )
+        return result
 
     def reset(self):
         self.innovation_error_ema = 0.0
@@ -351,7 +373,7 @@ class PlatformResidualEnsemble:
         standard_deviation = np.std(
             self.member_derivatives(state, control, time), axis=0
         )
-        normalized = standard_deviation / self.state_scales
+        normalized = standard_deviation / self.disagreement_scales
         score = np.sqrt(np.mean(normalized ** 2, axis=-1))
         if not np.isfinite(score).all():
             raise FloatingPointError(
@@ -447,7 +469,7 @@ class PlatformResidualEnsemble:
                 "ensemble innovation error must match the state dimension"
             )
         value = float(np.sqrt(np.mean(
-            (error / self.state_scales) ** 2
+            (error / self.innovation_scales) ** 2
         )))
         if self.innovation_samples == 0:
             self.innovation_error_ema = value

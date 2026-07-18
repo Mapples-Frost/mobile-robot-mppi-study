@@ -10,7 +10,7 @@ from typing import Any, Mapping
 
 import numpy as np
 
-from mobile_robot_mppi.planning.mppi import MppiController
+from mobile_robot_mppi.planning.mppi import MppiController, integrate_batch
 
 
 @dataclass(frozen=True)
@@ -536,3 +536,420 @@ class RLDrivenMppiController(MppiController):
         if callable(reliability):
             diagnostics.update(reliability())
         return action, sequence, updated_trajectory, diagnostics
+
+
+@dataclass(frozen=True)
+class PaperRLDrivenMppiConfig:
+    """Algorithm-level settings for the paper-faithful Gate 1 baseline."""
+
+    iterations: int = 2
+    guided_fraction: float = 0.30
+    elite_fraction: float = 0.20
+    covariance_smoothing: float = 0.50
+    covariance_min_scale: float = 0.25
+    covariance_max_scale: float = 2.00
+    terminal_value_weight: float = 1.0
+    terminal_critic_source: str = "target"
+
+    @classmethod
+    def from_mapping(cls, values: Mapping[str, Any]):
+        values = dict(values or {})
+        return cls(**{
+            name: values.get(name, field.default)
+            for name, field in cls.__dataclass_fields__.items()
+        })
+
+    def validate(self, samples):
+        values = np.asarray((
+            self.guided_fraction,
+            self.elite_fraction,
+            self.covariance_smoothing,
+            self.covariance_min_scale,
+            self.covariance_max_scale,
+            self.terminal_value_weight,
+        ), dtype=np.float64)
+        if not np.isfinite(values).all():
+            raise ValueError("paper RL-Driven MPPI settings must be finite")
+        if self.iterations <= 0:
+            raise ValueError("paper RL-Driven MPPI iterations must be positive")
+        if not 0.0 <= self.guided_fraction < 1.0:
+            raise ValueError("guided_fraction must lie in [0, 1)")
+        if not 0.0 < self.elite_fraction <= 1.0:
+            raise ValueError("elite_fraction must lie in (0, 1]")
+        if not 0.0 <= self.covariance_smoothing < 1.0:
+            raise ValueError("covariance_smoothing must lie in [0, 1)")
+        if (
+            self.covariance_min_scale <= 0.0
+            or self.covariance_max_scale < self.covariance_min_scale
+        ):
+            raise ValueError("paper covariance scale limits are invalid")
+        if self.terminal_value_weight < 0.0:
+            raise ValueError("terminal_value_weight must be non-negative")
+        if self.terminal_critic_source not in ("online", "target"):
+            raise ValueError("terminal_critic_source must be online or target")
+        guided = int(round(float(samples) * self.guided_fraction))
+        if guided >= int(samples):
+            raise ValueError("at least one current-Gaussian sample is required")
+
+
+class PaperRLDrivenMppiController(RLDrivenMppiController):
+    """Faithful low-level Actor/critic integration used by Gate 1.
+
+    The Actor is rolled out autoregressively through the controller's declared
+    prediction dynamics. Its mean and stochastic spread initialize MPPI.
+    Stochastic Actor sequences are generated exactly once per control decision
+    and then reused in every refinement iteration, matching the persistent
+    guided set in RL-Driven MPPI. The final command still comes from MPPI and
+    remains subject to the unchanged external safety chain.
+    """
+
+    def __init__(self, *args, paper_rl_driven_config=None, **kwargs):
+        MppiController.__init__(self, *args, **kwargs)
+        self.paper_rl_driven_config = (
+            paper_rl_driven_config
+            if isinstance(
+                paper_rl_driven_config, PaperRLDrivenMppiConfig
+            )
+            else PaperRLDrivenMppiConfig.from_mapping(
+                paper_rl_driven_config or {}
+            )
+        )
+        self.paper_rl_driven_config.validate(self.config.num_samples)
+        # Reuse the strictly tested terminal-constraint helper without
+        # inheriting the legacy mixture-proposal initialization contract.
+        self.rl_driven_config = self.paper_rl_driven_config
+        required = (
+            "action_distribution",
+            "sample_actions",
+            "terminal_value",
+        )
+        missing = [
+            name
+            for name in required
+            if not callable(getattr(self.sampling_prior, name, None))
+        ]
+        if missing:
+            raise ValueError(
+                "paper RL-Driven MPPI policy is missing: %s"
+                % ", ".join(missing)
+            )
+        if self.config.importance_sampling_correction:
+            raise ValueError(
+                "paper hybrid sampling does not use the single-proposal "
+                "importance correction"
+            )
+
+    def _delayed_control(self, current, preceding):
+        fraction = float(self.config.command_delay_s / self.config.dt)
+        return fraction * preceding + (1.0 - fraction) * current
+
+    def _actor_mean_rollout(self, state, observation, reference):
+        states = np.asarray(state, dtype=np.float64).reshape(1, -1)
+        previous = self.previous_action.reshape(1, -1).copy()
+        means = np.empty(
+            (self.config.horizon, self.action_spec.dimension),
+            dtype=np.float64,
+        )
+        variances = np.empty_like(means)
+        for step in range(self.config.horizon):
+            distribution = self.sampling_prior.action_distribution(
+                states,
+                previous,
+                observation,
+                reference,
+                self.state_spec,
+                step * self.config.dt,
+            )
+            command = self.action_spec.clip(
+                distribution["physical_mean"],
+                previous=previous,
+                dt=self.config.dt,
+            )
+            means[step] = command[0]
+            variances[step] = distribution["physical_std"][0] ** 2
+            applied = self._delayed_control(command, previous)
+            states = integrate_batch(
+                self.dynamics,
+                states,
+                applied,
+                self.config.dt,
+                self.state_spec,
+                self.config.integrator,
+            )
+            previous = command
+        if not np.isfinite(means).all() or not np.isfinite(variances).all():
+            raise FloatingPointError("Actor mean rollout produced NaN or Inf")
+        return means, variances
+
+    def _guided_rollouts(
+        self, state, observation, reference, count, rng
+    ):
+        if count <= 0:
+            return np.empty(
+                (0, self.config.horizon, self.action_spec.dimension),
+                dtype=np.float64,
+            )
+        states = np.repeat(
+            np.asarray(state, dtype=np.float64).reshape(1, -1),
+            int(count),
+            axis=0,
+        )
+        previous = np.repeat(
+            self.previous_action.reshape(1, -1), int(count), axis=0
+        )
+        sequences = np.empty(
+            (int(count), self.config.horizon, self.action_spec.dimension),
+            dtype=np.float64,
+        )
+        for step in range(self.config.horizon):
+            command, _ = self.sampling_prior.sample_actions(
+                states,
+                previous,
+                observation,
+                reference,
+                self.state_spec,
+                step * self.config.dt,
+                rng,
+            )
+            command = self.action_spec.clip(
+                command, previous=previous, dt=self.config.dt
+            )
+            sequences[:, step, :] = command
+            applied = self._delayed_control(command, previous)
+            states = integrate_batch(
+                self.dynamics,
+                states,
+                applied,
+                self.config.dt,
+                self.state_spec,
+                self.config.integrator,
+            )
+            previous = command
+        if not np.isfinite(sequences).all():
+            raise FloatingPointError("guided Actor rollout produced NaN or Inf")
+        return sequences
+
+    def _gaussian_samples(self, mean, variance, count, rng):
+        samples = mean[None, :, :] + rng.normal(
+            size=(int(count),) + mean.shape
+        ) * np.sqrt(variance)[None, :, :]
+        samples = np.clip(
+            samples, self.action_spec.lower, self.action_spec.upper
+        )
+        if count > 0:
+            samples[0] = mean
+        previous = np.repeat(
+            self.previous_action.reshape(1, -1), int(count), axis=0
+        )
+        for step in range(self.config.horizon):
+            samples[:, step, :] = self.action_spec.clip(
+                samples[:, step, :],
+                previous=previous,
+                dt=self.config.dt,
+            )
+            previous = samples[:, step, :]
+        return samples
+
+    def _paper_terminal_cost(
+        self, trajectories, controls, observation, reference
+    ):
+        cfg = self.paper_rl_driven_config
+        if cfg.terminal_value_weight <= 0.0:
+            return np.zeros(controls.shape[0], dtype=np.float64), {
+                "terminal_value_enabled": False,
+                "terminal_value_weight": 0.0,
+            }
+        returns, diagnostics = self.sampling_prior.terminal_value(
+            trajectories[:, -1, :],
+            controls[:, -1, :],
+            observation,
+            reference,
+            self.state_spec,
+            self.config.horizon * self.config.dt,
+            critic_source=cfg.terminal_critic_source,
+        )
+        # SAC maximizes return; MPPI minimizes cost. This sign conversion is
+        # explicit and regression tested.
+        cost = -cfg.terminal_value_weight * np.asarray(
+            returns, dtype=np.float64
+        )
+        if cost.shape != (controls.shape[0],) or not np.isfinite(cost).all():
+            raise FloatingPointError("paper terminal critic cost is invalid")
+        result = dict(diagnostics)
+        result.update({
+            "terminal_value_enabled": True,
+            "terminal_value_weight": float(cfg.terminal_value_weight),
+            "terminal_value_cost_mean": float(np.mean(cost)),
+            "terminal_value_cost_std": float(np.std(cost)),
+            "terminal_value_sign": "cost=-weight*return",
+        })
+        return cost, result
+
+    def _solve_plan(
+        self,
+        state,
+        prior,
+        target,
+        obstacles,
+        rng,
+        observation=None,
+        reference=None,
+    ):
+        if observation is None or reference is None:
+            raise ValueError(
+                "paper RL-Driven MPPI requires observation and reference"
+            )
+        cfg = self.paper_rl_driven_config
+        mean, actor_variance = self._actor_mean_rollout(
+            state, observation, reference
+        )
+        base_variance = np.broadcast_to(
+            np.asarray(self.config.noise_sigma, dtype=np.float64)[None, :] ** 2,
+            mean.shape,
+        ).copy()
+        variance = np.clip(
+            actor_variance,
+            base_variance * cfg.covariance_min_scale ** 2,
+            base_variance * cfg.covariance_max_scale ** 2,
+        )
+        guided_count = int(round(
+            self.config.num_samples * cfg.guided_fraction
+        ))
+        gaussian_count = self.config.num_samples - guided_count
+        # Critical fidelity property: generated once, reused unchanged.
+        guided = self._guided_rollouts(
+            state, observation, reference, guided_count, rng
+        )
+        minimum_variance = (
+            base_variance * cfg.covariance_min_scale ** 2
+        )
+        maximum_variance = (
+            base_variance * cfg.covariance_max_scale ** 2
+        )
+
+        total_guided_elites = 0
+        total_gaussian_elites = 0
+        costs_by_iteration = []
+        terminal_diagnostics = {}
+        constraints = None
+        final_weights = None
+        for _ in range(cfg.iterations):
+            gaussian = self._gaussian_samples(
+                mean, variance, gaussian_count, rng
+            )
+            samples = np.concatenate((guided, gaussian), axis=0)
+            labels = np.concatenate((
+                np.ones(guided_count, dtype=np.int8),
+                np.zeros(gaussian_count, dtype=np.int8),
+            ))
+            samples, constraints = self._terminal_constraints(
+                state, target, samples
+            )
+            trajectories = self.rollout(state, samples)
+            running = self._cost(
+                trajectories, samples, target, obstacles
+            )
+            terminal, terminal_diagnostics = self._paper_terminal_cost(
+                trajectories, samples, observation, reference
+            )
+            costs = np.asarray(running, dtype=np.float64) + terminal
+            if not np.isfinite(costs).all():
+                raise FloatingPointError(
+                    "paper RL-Driven MPPI cost contains NaN or Inf"
+                )
+            elite_count = max(
+                2,
+                min(
+                    self.config.num_samples,
+                    int(np.ceil(
+                        cfg.elite_fraction * self.config.num_samples
+                    )),
+                ),
+            )
+            elite_indices = np.argsort(costs, kind="stable")[:elite_count]
+            elite_costs = costs[elite_indices]
+            beta = float(np.min(elite_costs))
+            exponent = np.clip(
+                -(elite_costs - beta) / self.config.temperature,
+                -700.0,
+                0.0,
+            )
+            final_weights = np.exp(exponent)
+            final_weights /= max(float(np.sum(final_weights)), 1e-12)
+            elites = samples[elite_indices]
+            mean = np.sum(
+                final_weights[:, None, None] * elites, axis=0
+            )
+            centered = elites - mean[None, :, :]
+            estimate = np.sum(
+                final_weights[:, None, None] * centered ** 2, axis=0
+            )
+            variance = np.clip(
+                cfg.covariance_smoothing * variance
+                + (1.0 - cfg.covariance_smoothing) * estimate,
+                minimum_variance,
+                maximum_variance,
+            )
+            total_guided_elites += int(
+                np.sum(labels[elite_indices] == 1)
+            )
+            total_gaussian_elites += int(
+                np.sum(labels[elite_indices] == 0)
+            )
+            costs_by_iteration.append(costs)
+
+        sequence = np.clip(
+            mean, self.action_spec.lower, self.action_spec.upper
+        )
+        sequence, constraints = self._terminal_constraints(
+            state, target, sequence[None, :, :]
+        )
+        sequence = sequence[0]
+        action = self.action_spec.clip(
+            sequence[0], self.previous_action, self.config.dt
+        )
+        sequence[0] = action
+        trajectory = self.rollout(state, sequence)[0]
+        all_costs = np.concatenate(costs_by_iteration)
+        effective_sample_size = float(
+            1.0 / np.sum(np.asarray(final_weights) ** 2)
+        )
+        diagnostics = {
+            "optimizer": "paper_rl_driven",
+            "paper_faithful_gate1": True,
+            "paper_iterations": int(cfg.iterations),
+            "paper_candidates_per_iteration": int(
+                self.config.num_samples
+            ),
+            "paper_total_rollouts": int(
+                self.config.num_samples * cfg.iterations
+            ),
+            "paper_guided_unique_sequences": int(guided_count),
+            "paper_guided_reuses": int(guided_count * cfg.iterations),
+            "paper_guided_generation_calls": 1,
+            "paper_gaussian_samples_per_iteration": int(gaussian_count),
+            "paper_guided_elite_count": int(total_guided_elites),
+            "paper_gaussian_elite_count": int(total_gaussian_elites),
+            "paper_actor_mean_initialization": True,
+            "paper_actor_covariance_initialization": True,
+            "paper_actor_rollout_dynamics": type(self.dynamics).__name__,
+            "paper_candidate_rollout_dynamics": type(self.dynamics).__name__,
+            "paper_guided_set_persistent": True,
+            "paper_action_semantics": "physical_low_level_control",
+            "cost_min": float(np.min(all_costs)),
+            "cost_mean": float(np.mean(all_costs)),
+            "cost_std": float(np.std(all_costs)),
+            "effective_sample_size": effective_sample_size,
+            "covariance_scale_mean": float(
+                np.mean(np.sqrt(variance / base_variance))
+            ),
+            "terminal_speed_limit_active": bool(
+                constraints["terminal_speed_limit_active"]
+            ),
+            "terminal_heading_gate_active": bool(
+                constraints["terminal_heading_gate_active"]
+            ),
+            "prior": dict(prior.metadata),
+        }
+        diagnostics.update(terminal_diagnostics)
+        return action, sequence, trajectory, diagnostics

@@ -1,0 +1,395 @@
+"""Paper-faithful low-level Actor and distributional-Critic inference.
+
+This module is intentionally separate from the legacy high-level MPPI-prior
+policy.  The Actor action is normalized internally for SAC, but represents the
+physical command ``[v_cmd, omega_cmd]`` after an affine bounds transform.
+"""
+
+from pathlib import Path
+
+import numpy as np
+
+from mobile_robot_mppi.core.types import Pose2D, RobotObservation, Twist2D
+from mobile_robot_mppi.policies.priors import GoalWarmStartPrior
+
+from .checkpointing import load_sac_checkpoint
+from .observation import (
+    ObservationEncoder,
+    ObservationEncoderConfig,
+    RunningNormalizer,
+)
+from .sac import SACAgent, SACConfig
+
+
+class PaperDirectControlPolicy:
+    """Frozen physical-control policy/value interface for RL-Driven MPPI."""
+
+    def __init__(
+        self,
+        agent,
+        encoder,
+        normalizer,
+        action_spec,
+        fallback_prior=None,
+        checkpoint_path=None,
+    ):
+        if int(agent.action_dim) != int(action_spec.dimension):
+            raise ValueError(
+                "direct Actor action dimension must match physical action space"
+            )
+        if bool(getattr(agent, "is_correction_policy", False)):
+            raise ValueError("paper-faithful policy must use direct SAC mode")
+        self.agent = agent
+        self.agent.eval()
+        self.encoder = encoder
+        self.normalizer = normalizer
+        self.action_spec = action_spec
+        self.fallback_prior = fallback_prior or GoalWarmStartPrior()
+        self.checkpoint_path = (
+            None
+            if checkpoint_path is None
+            else str(Path(checkpoint_path).resolve())
+        )
+        self.previous_action = np.zeros(
+            self.action_spec.dimension, dtype=np.float64
+        )
+        self.safety_override = False
+        if int(self.encoder.config.history_frames) != 1:
+            raise ValueError(
+                "Gate 1 autoregressive policy currently requires "
+                "observation.history_frames=1"
+            )
+
+    @property
+    def action_center(self):
+        return 0.5 * (self.action_spec.lower + self.action_spec.upper)
+
+    @property
+    def action_half_range(self):
+        return 0.5 * (self.action_spec.upper - self.action_spec.lower)
+
+    def reset(self):
+        self.previous_action.fill(0.0)
+        self.safety_override = False
+        self.encoder.reset()
+
+    def set_previous(self, sequence):
+        values = np.asarray(sequence, dtype=np.float64)
+        if (
+            values.ndim != 2
+            or values.shape[1] != self.action_spec.dimension
+            or values.shape[0] <= 0
+            or not np.isfinite(values).all()
+        ):
+            raise ValueError("previous direct-control sequence is invalid")
+        self.previous_action = values[0].copy()
+
+    def observe_safety_decision(self, decision):
+        values = np.asarray(
+            decision.executed_control.values, dtype=np.float64
+        ).reshape(-1)
+        if (
+            values.shape != (self.action_spec.dimension,)
+            or not np.isfinite(values).all()
+        ):
+            raise ValueError("executed control does not match policy action space")
+        self.previous_action = values.copy()
+        self.safety_override = bool(decision.overridden)
+
+    def propose(self, observation, reference, horizon, action_spec):
+        """Supply a valid placeholder prior for the common controller API.
+
+        The paper-faithful controller replaces this mean with an autoregressive
+        Actor rollout before sampling.  Keeping ``propose`` side-effect free
+        preserves the standard MPPI planner contract and provides a trusted
+        fallback for diagnostics.
+        """
+
+        if tuple(action_spec.names) != tuple(self.action_spec.names):
+            raise ValueError("planner and direct Actor action spaces differ")
+        output = self.fallback_prior.propose(
+            observation, reference, horizon, action_spec
+        )
+        raw = self.encoder.encode(
+            observation,
+            reference,
+            previous_action=self.previous_action,
+            safety_override=self.safety_override,
+        )
+        metadata = dict(output.metadata)
+        metadata.update({
+            "type": "paper_direct_control",
+            "checkpoint": self.checkpoint_path,
+            "actor_action_semantics": "physical_low_level_control",
+            "actor_support_ood_score": float(
+                self.normalizer.ood_score(raw)
+            ),
+            "hypothetical_scan_assumption": "latest_observed_scan",
+        })
+        return type(output)(
+            output.mean, output.covariance, metadata, output.proposals
+        )
+
+    def normalized_to_physical(self, action):
+        values = np.asarray(action, dtype=np.float64)
+        expected_tail = (self.action_spec.dimension,)
+        if values.shape[-1:] != expected_tail or not np.isfinite(values).all():
+            raise ValueError("normalized direct action has an invalid shape")
+        return np.clip(
+            self.action_center + self.action_half_range * values,
+            self.action_spec.lower,
+            self.action_spec.upper,
+        )
+
+    def _hypothetical_observation(
+        self, state, observation, state_spec, time_offset
+    ):
+        x_index = state_spec.index("x")
+        y_index = state_spec.index("y")
+        theta_index = state_spec.index("theta")
+        v = (
+            observation.twist.v
+            if "v" not in state_spec.names
+            else state[state_spec.index("v")]
+        )
+        omega = (
+            observation.twist.omega
+            if "omega" not in state_spec.names
+            else state[state_spec.index("omega")]
+        )
+        return RobotObservation(
+            timestamp=float(observation.timestamp) + float(time_offset),
+            pose=Pose2D(
+                float(state[x_index]),
+                float(state[y_index]),
+                float(state[theta_index]),
+            ),
+            twist=Twist2D(float(v), float(omega)),
+            scan=observation.scan,
+            local_obstacles=observation.local_obstacles,
+            auxiliary=dict(observation.auxiliary),
+        )
+
+    def _encoded_batch(
+        self,
+        states,
+        previous_controls,
+        observation,
+        reference,
+        state_spec,
+        time_offset,
+    ):
+        states = np.asarray(states, dtype=np.float64)
+        previous_controls = np.asarray(previous_controls, dtype=np.float64)
+        if (
+            states.ndim != 2
+            or states.shape[1] != state_spec.dimension
+            or states.shape[0] <= 0
+            or not np.isfinite(states).all()
+        ):
+            raise ValueError("policy rollout states must be finite [B,state_dim]")
+        if (
+            previous_controls.shape
+            != (states.shape[0], self.action_spec.dimension)
+            or not np.isfinite(previous_controls).all()
+        ):
+            raise ValueError(
+                "previous controls must be finite [B,action_dim]"
+            )
+        offsets = np.asarray(time_offset, dtype=np.float64)
+        if offsets.ndim == 0:
+            offsets = np.full(states.shape[0], float(offsets))
+        offsets = offsets.reshape(-1)
+        if offsets.shape != (states.shape[0],) or not np.isfinite(offsets).all():
+            raise ValueError("policy rollout time offsets are invalid")
+        rows = []
+        for state, previous, offset in zip(
+            states, previous_controls, offsets
+        ):
+            hypothetical = self._hypothetical_observation(
+                state, observation, state_spec, offset
+            )
+            target = reference.target_at(
+                hypothetical.timestamp, hypothetical.pose.as_array()
+            )
+            rows.append(
+                self.encoder.encode_to_target(
+                    hypothetical,
+                    target,
+                    previous_action=previous,
+                    safety_override=False,
+                    update_history=False,
+                )
+            )
+        raw = np.stack(rows).astype(np.float32, copy=False)
+        normalized = np.stack(
+            [self.normalizer.normalize(row) for row in raw]
+        ).astype(np.float32, copy=False)
+        return raw, normalized
+
+    def action_distribution(
+        self,
+        states,
+        previous_controls,
+        observation,
+        reference,
+        state_spec,
+        time_offset,
+    ):
+        """Return the exact pre-tanh Actor Gaussian and physical mean."""
+
+        raw, normalized = self._encoded_batch(
+            states,
+            previous_controls,
+            observation,
+            reference,
+            state_spec,
+            time_offset,
+        )
+        pre_tanh_mean, log_std = self.agent.policy_gaussian_parameters_batch(
+            normalized
+        )
+        normalized_mean = np.tanh(pre_tanh_mean)
+        physical_mean = self.normalized_to_physical(normalized_mean)
+        # Delta-method variance is used only to initialize MPPI covariance.
+        normalized_std = (
+            (1.0 - normalized_mean ** 2) * np.exp(log_std)
+        )
+        physical_std = np.maximum(
+            np.abs(self.action_half_range) * normalized_std, 1e-6
+        )
+        return {
+            "raw_observation": raw,
+            "normalized_observation": normalized,
+            "pre_tanh_mean": pre_tanh_mean,
+            "log_std": log_std,
+            "physical_mean": physical_mean,
+            "physical_std": physical_std,
+        }
+
+    def sample_actions(
+        self,
+        states,
+        previous_controls,
+        observation,
+        reference,
+        state_spec,
+        time_offset,
+        rng,
+    ):
+        distribution = self.action_distribution(
+            states,
+            previous_controls,
+            observation,
+            reference,
+            state_spec,
+            time_offset,
+        )
+        noise = rng.normal(size=distribution["pre_tanh_mean"].shape)
+        normalized = np.tanh(
+            distribution["pre_tanh_mean"]
+            + np.exp(distribution["log_std"]) * noise
+        )
+        return self.normalized_to_physical(normalized), distribution
+
+    def terminal_value(
+        self,
+        terminal_states,
+        terminal_controls,
+        observation,
+        reference,
+        state_spec,
+        horizon_dt,
+        critic_source="target",
+    ):
+        """Evaluate physical terminal states with Actor actions and twin Q."""
+
+        states = np.asarray(terminal_states, dtype=np.float64)
+        controls = np.asarray(terminal_controls, dtype=np.float64)
+        _, normalized_observation = self._encoded_batch(
+            states,
+            controls,
+            observation,
+            reference,
+            state_spec,
+            horizon_dt,
+        )
+        normalized_actions = self.agent.select_action_batch(
+            normalized_observation, deterministic=True
+        )
+        values = self.agent.expected_twin_q(
+            normalized_observation,
+            normalized_actions,
+            critic_source=critic_source,
+        )
+        conservative = np.asarray(values["minimum"], dtype=np.float64)
+        if not np.isfinite(conservative).all():
+            raise FloatingPointError("terminal critic returned NaN or Inf")
+        return conservative, {
+            "terminal_q_mean": float(np.mean(conservative)),
+            "terminal_q_min": float(np.min(conservative)),
+            "terminal_q_max": float(np.max(conservative)),
+            "terminal_q_disagreement_mean": float(
+                np.mean(values["disagreement"])
+            ),
+            "terminal_critic_source": str(values["critic_source"]),
+            "terminal_action_semantics": "normalized_physical_control",
+            "terminal_scan_assumption": "latest_observed_scan",
+        }
+
+    @classmethod
+    def from_checkpoint(
+        cls,
+        checkpoint_path,
+        action_spec,
+        device="cpu",
+        fallback_prior=None,
+    ):
+        payload = load_sac_checkpoint(checkpoint_path, map_location=device)
+        action_mode = str(
+            payload.get(
+                "action_mode",
+                dict(payload.get("resolved_config", {}).get("rl", {}))
+                .get("training", {})
+                .get("action_mode", "mppi_prior"),
+            )
+        )
+        if action_mode != "direct_control":
+            raise ValueError(
+                "paper-faithful policy requires a direct_control checkpoint"
+            )
+        saved_action = payload["action_spec"]
+        if tuple(saved_action["names"]) != tuple(action_spec.names):
+            raise ValueError("checkpoint physical action names do not match")
+        if (
+            not np.allclose(saved_action["lower"], action_spec.lower)
+            or not np.allclose(saved_action["upper"], action_spec.upper)
+        ):
+            raise ValueError("checkpoint physical action bounds do not match")
+        encoder_config = ObservationEncoderConfig.from_mapping(
+            payload["encoder_config"]
+        )
+        encoder = ObservationEncoder(encoder_config, action_spec)
+        agent_state = payload["agent"]
+        agent = SACAgent(
+            agent_state["observation_dim"],
+            agent_state["action_dim"],
+            SACConfig.from_mapping(agent_state["config"]),
+            device=device,
+        )
+        if encoder.dimension != agent.observation_dim:
+            raise ValueError("checkpoint encoder and Actor dimensions differ")
+        if agent.action_dim != action_spec.dimension:
+            raise ValueError(
+                "checkpoint Actor action is not low-level physical control"
+            )
+        agent.load_state_dict(agent_state, load_optimizers=False)
+        normalizer = RunningNormalizer.from_state_dict(payload["normalizer"])
+        return cls(
+            agent,
+            encoder,
+            normalizer,
+            action_spec,
+            fallback_prior=fallback_prior,
+            checkpoint_path=checkpoint_path,
+        )

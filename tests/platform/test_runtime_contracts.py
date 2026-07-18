@@ -7,6 +7,9 @@ from mobile_robot_mppi.core.config import load_yaml
 from mobile_robot_mppi.integration.gymnasium_adapter import GymnasiumAdapter
 from mobile_robot_mppi.runtime.experiment_runner import ExperimentRunner
 from mobile_robot_mppi.runtime.factories import make_components
+from mobile_robot_mppi.planning.rl_driven_mppi import (
+    PaperRLDrivenMppiController,
+)
 from mobile_robot_mppi.safety.arbiter import ScanGuardArbiter
 from mobile_robot_mppi.core.spaces import body_velocity_action
 from mobile_robot_mppi.core.types import ControlCommand
@@ -109,3 +112,39 @@ def test_strong_mujoco_guard_envelope_exceeds_collision_radius():
     assert float(guard["hard_stop_distance"]) > radius
     assert float(guard["side_stop_distance"]) > radius
     assert float(guard["near_body_stop_radius"]) > radius
+
+
+def test_paper_rl_driven_factory_is_explicit_and_opt_in():
+    config = small_legacy_config()
+    config["planner"].update({
+        "optimizer": "paper_rl_driven",
+        "sampling_prior": "paper_direct_rl",
+        "importance_sampling_correction": False,
+        "paper_rl_driven": {
+            "iterations": 2,
+            "guided_fraction": 0.25,
+            "terminal_value_weight": 0.0,
+        },
+    })
+    config["rl"] = {"enabled": True}
+
+    class DirectPolicy:
+        def propose(self, *args, **kwargs):
+            raise AssertionError("factory construction must not run policy")
+
+        def action_distribution(self, *args, **kwargs):
+            raise AssertionError("factory construction must not run policy")
+
+        def sample_actions(self, *args, **kwargs):
+            raise AssertionError("factory construction must not run policy")
+
+        def terminal_value(self, *args, **kwargs):
+            raise AssertionError("factory construction must not run policy")
+
+    components = make_components(config, ROOT, rl_policy=DirectPolicy())
+    try:
+        assert isinstance(
+            components["controller"], PaperRLDrivenMppiController
+        )
+    finally:
+        components["plant"].close()

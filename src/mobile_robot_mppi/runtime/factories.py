@@ -324,6 +324,52 @@ def make_components(config, project_root, rl_policy=None):
                 fallback_prior=fallback,
                 policy_id=str(rl_cfg.get("policy_id", "sac_mppi_prior")),
             )
+    elif prior_kind == "paper_direct_rl":
+        rl_cfg = dict(config.get("rl", {}))
+        if not bool(rl_cfg.get("enabled", False)):
+            raise ValueError(
+                "sampling_prior=paper_direct_rl requires rl.enabled=true"
+            )
+        fallback = GoalWarmStartPrior(
+            planner_cfg.get("prior_v_gain", 0.8),
+            planner_cfg.get("prior_yaw_gain", 1.2),
+            planner_cfg.get("prior_translation_heading_gate_rad"),
+            planner_cfg.get(
+                "prior_translation_heading_gate_terminal_only", False
+            ),
+            planner_cfg.get("prior_terminal_max_speed"),
+        )
+        if rl_policy is not None:
+            prior = rl_policy
+        else:
+            checkpoint = rl_cfg.get("checkpoint")
+            if not checkpoint:
+                raise ValueError(
+                    "paper direct RL inference requires rl.checkpoint"
+                )
+            checkpoint_path = Path(checkpoint)
+            if not checkpoint_path.is_absolute():
+                checkpoint_path = Path(project_root) / checkpoint_path
+            rl_device = str(rl_cfg.get("device", "cpu"))
+            if rl_device == "auto":
+                import torch
+                rl_device = "cuda" if torch.cuda.is_available() else "cpu"
+            if rl_device == "cpu":
+                import torch
+                thread_count = int(rl_cfg.get("torch_num_threads", 1))
+                if thread_count <= 0:
+                    raise ValueError("rl.torch_num_threads must be positive")
+                torch.set_num_threads(thread_count)
+            from mobile_robot_mppi.rl.paper_policy import (
+                PaperDirectControlPolicy,
+            )
+
+            prior = PaperDirectControlPolicy.from_checkpoint(
+                checkpoint_path,
+                action_spec,
+                device=rl_device,
+                fallback_prior=fallback,
+            )
     else:
         raise ValueError("unknown built-in sampling prior: %s" % prior_kind)
     memory_cfg = dict(config.get("memory", {}))
@@ -348,6 +394,20 @@ def make_components(config, project_root, rl_policy=None):
         controller_type = RLDrivenMppiController
         controller_kwargs["rl_driven_config"] = planner_cfg.get(
             "rl_driven", {}
+        )
+    elif optimizer == "paper_rl_driven":
+        if prior_kind != "paper_direct_rl":
+            raise ValueError(
+                "planner.optimizer=paper_rl_driven requires "
+                "sampling_prior=paper_direct_rl"
+            )
+        from mobile_robot_mppi.planning.rl_driven_mppi import (
+            PaperRLDrivenMppiController,
+        )
+
+        controller_type = PaperRLDrivenMppiController
+        controller_kwargs["paper_rl_driven_config"] = planner_cfg.get(
+            "paper_rl_driven", {}
         )
     elif optimizer == "anytime_bandit":
         if prior_kind not in (

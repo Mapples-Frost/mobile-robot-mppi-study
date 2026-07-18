@@ -26,6 +26,11 @@ def save_sac_checkpoint(
 ):
     destination = Path(path).resolve()
     destination.parent.mkdir(parents=True, exist_ok=True)
+    action_mode = str(
+        dict(resolved_config.get("rl", {}))
+        .get("training", {})
+        .get("action_mode", "mppi_prior")
+    )
     payload = {
         "format": CHECKPOINT_FORMAT,
         "created_utc": datetime.now(timezone.utc).isoformat(),
@@ -34,6 +39,7 @@ def save_sac_checkpoint(
         "normalizer": normalizer.state_dict(),
         "encoder_config": encoder_config.to_dict(),
         "parameterization_config": parameterization_config.to_dict(),
+        "action_mode": action_mode,
         "action_spec": {
             "names": tuple(action_spec.names),
             "lower": action_spec.lower.copy(),

@@ -235,6 +235,28 @@ class EpisodeMetrics:
             "rl_driven_total_rollouts": int(
                 planner_diagnostics.get("rl_driven_total_rollouts", 0)
             ),
+            "paper_total_rollouts": int(
+                planner_diagnostics.get("paper_total_rollouts", 0)
+            ),
+            "paper_candidates_per_iteration": int(
+                planner_diagnostics.get(
+                    "paper_candidates_per_iteration", 0
+                )
+            ),
+            "paper_guided_unique_sequences": int(
+                planner_diagnostics.get(
+                    "paper_guided_unique_sequences", 0
+                )
+            ),
+            "paper_guided_reuses": int(
+                planner_diagnostics.get("paper_guided_reuses", 0)
+            ),
+            "paper_guided_elite_count": int(
+                planner_diagnostics.get("paper_guided_elite_count", 0)
+            ),
+            "paper_gaussian_elite_count": int(
+                planner_diagnostics.get("paper_gaussian_elite_count", 0)
+            ),
             "rl_source_samples": int(
                 planner_diagnostics.get("rl_source_samples", 0)
             ),
@@ -657,6 +679,28 @@ class EpisodeMetrics:
             "rl_driven_total_rollouts_mean": float(np.mean([
                 row.get("rl_driven_total_rollouts", 0) for row in values
             ])),
+            "paper_total_rollouts_mean": float(np.mean([
+                row.get("paper_total_rollouts", 0) for row in values
+            ])),
+            "paper_candidates_per_iteration_mean": float(np.mean([
+                row.get("paper_candidates_per_iteration", 0)
+                for row in values
+            ])),
+            "paper_guided_unique_sequences_mean": float(np.mean([
+                row.get("paper_guided_unique_sequences", 0)
+                for row in values
+            ])),
+            "paper_guided_reuses_total": int(sum(
+                row.get("paper_guided_reuses", 0) for row in values
+            )),
+            "paper_guided_elite_count_total": int(sum(
+                row.get("paper_guided_elite_count", 0)
+                for row in values
+            )),
+            "paper_gaussian_elite_count_total": int(sum(
+                row.get("paper_gaussian_elite_count", 0)
+                for row in values
+            )),
             "rl_elite_fraction_mean": float(np.mean([
                 row.get("rl_elite_fraction", 0.0) for row in values
             ])),

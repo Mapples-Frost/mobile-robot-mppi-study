@@ -8,6 +8,7 @@ from typing import Any, Mapping, Optional
 import numpy as np
 
 from mobile_robot_mppi.core.spaces import action_spec_from_config
+from mobile_robot_mppi.core.types import ControlCommand
 from mobile_robot_mppi.policies.priors import GoalWarmStartPrior
 from mobile_robot_mppi.runtime.factories import make_components
 from .intrinsic import EpisodicPoseCountBonus
@@ -232,6 +233,7 @@ class MppiPriorEnv:
         self.previous_distance = None
         self.previous_control = np.zeros(self.action_spec.dimension, dtype=np.float64)
         self.last_safety_override = False
+        self.action_mode = "mppi_prior"
 
     @property
     def observation_dim(self):
@@ -384,17 +386,33 @@ class MppiPriorEnv:
                 reference.__dict__.clear()
                 reference.__dict__.update(reference_state)
 
-    def step(self, policy_action):
+    def _advance_control(
+        self,
+        proposed_control,
+        planner_compute_ms=0.0,
+        prior_diagnostics=None,
+        notify_controller=False,
+    ):
+        """Apply one proposed command through safety and the true plant.
+
+        This shared execution path is deliberately below both policy action
+        modes. The legacy mode obtains ``proposed_control`` from MPPI; the
+        paper-faithful offline Actor mode obtains it directly from the policy.
+        Both retain the same scan guard, safety arbitration, MuJoCo plant,
+        sensor, perception, memory, reward, and termination semantics.
+        """
+
         if self.perceived is None:
             raise RuntimeError("RL environment must be reset before step")
-        self.external_prior.set_parameters(policy_action)
+        if not isinstance(proposed_control, ControlCommand):
+            raise TypeError("proposed_control must be a ControlCommand")
         controller = self.components["controller"]
         reference = self.components["reference"]
-        plan = controller.plan(self.perceived.observation, reference)
         decision = self.components["safety"].arbitrate(
-            plan.proposed_control, self.perceived.guard
+            proposed_control, self.perceived.guard
         )
-        controller.observe_safety_decision(decision)
+        if notify_controller:
+            controller.observe_safety_decision(decision)
         plant_step = self.components["plant"].step(
             decision.executed_control,
             float(self.config["experiment"]["control_dt"]),
@@ -449,7 +467,6 @@ class MppiPriorEnv:
         self.previous_control = decision.executed_control.values.copy()
         self.last_safety_override = bool(decision.overridden)
         next_observation = self._encoded_observation()
-        prior_diagnostics = dict(plan.diagnostics.get("prior", {}))
         info = {
             "success": success,
             "collision": bool(self.truth.collision),
@@ -457,19 +474,104 @@ class MppiPriorEnv:
             "minimum_clearance": float(self.truth.minimum_clearance),
             "safety_override": bool(decision.overridden),
             "safety_reason": decision.reason,
-            "proposed_control": plan.proposed_control.values.copy(),
+            "proposed_control": proposed_control.values.copy(),
             "executed_control": decision.executed_control.values.copy(),
             "applied_control": applied,
-            "planner_compute_ms": float(plan.diagnostics.get("compute_ms", 0.0)),
+            "planner_compute_ms": float(planner_compute_ms),
             "cross_track_error": _cross_track_error(
                 reference, self.truth.pose
             ),
-            "prior": prior_diagnostics,
+            "prior": dict(prior_diagnostics or {}),
+            "action_mode": self.action_mode,
             "reward_terms": reward_terms,
             "intrinsic_exploration": intrinsic_diagnostics,
             "scene": self.config.get("scene", {}).get("name", "unknown"),
         }
         return next_observation, reward, terminated, truncated, info
 
+    def step(self, policy_action):
+        if self.perceived is None:
+            raise RuntimeError("RL environment must be reset before step")
+        self.external_prior.set_parameters(policy_action)
+        controller = self.components["controller"]
+        reference = self.components["reference"]
+        plan = controller.plan(self.perceived.observation, reference)
+        return self._advance_control(
+            plan.proposed_control,
+            planner_compute_ms=float(plan.diagnostics.get("compute_ms", 0.0)),
+            prior_diagnostics=plan.diagnostics.get("prior", {}),
+            notify_controller=True,
+        )
+
     def close(self):
         self.components["plant"].close()
+
+
+class DirectControlEnv(MppiPriorEnv):
+    """Offline low-level Actor environment for paper-faithful RL-Driven MPPI.
+
+    The SAC action remains normalized to ``[-1, 1]`` internally. It is mapped
+    bijectively to the configured physical action space and rate-limited before
+    the unchanged safety arbiter and true plant. The Actor is trained here;
+    during online evaluation it only proposes sequences to MPPI and never
+    bypasses MPPI or safety.
+    """
+
+    def __init__(self, config, project_root, seed=None):
+        super().__init__(config, project_root, seed=seed)
+        self.action_mode = "direct_control"
+        self.config.setdefault("rl", {}).setdefault("training", {})[
+            "action_mode"
+        ] = self.action_mode
+
+    @property
+    def policy_action_dim(self):
+        return self.action_spec.dimension
+
+    def normalized_to_physical_action(self, policy_action):
+        values = np.asarray(policy_action, dtype=np.float64).reshape(-1)
+        if (
+            values.shape != (self.action_spec.dimension,)
+            or not np.isfinite(values).all()
+        ):
+            raise ValueError(
+                "direct-control policy action must be finite with shape (%d,)"
+                % self.action_spec.dimension
+            )
+        if np.any(values < -1.000001) or np.any(values > 1.000001):
+            raise ValueError("direct-control policy action must lie in [-1, 1]")
+        values = np.clip(values, -1.0, 1.0)
+        center = 0.5 * (self.action_spec.lower + self.action_spec.upper)
+        half_range = 0.5 * (self.action_spec.upper - self.action_spec.lower)
+        physical = center + half_range * values
+        return self.action_spec.clip(
+            physical,
+            previous=self.previous_control,
+            dt=float(self.config["experiment"]["control_dt"]),
+        )
+
+    def preview_policy_action(self, policy_action):
+        raise RuntimeError(
+            "direct-control Actor actions do not invoke MPPI during offline training"
+        )
+
+    def step(self, policy_action):
+        if self.perceived is None:
+            raise RuntimeError("RL environment must be reset before step")
+        physical = self.normalized_to_physical_action(policy_action)
+        proposed = ControlCommand(
+            physical,
+            timestamp=float(self.perceived.observation.timestamp),
+            source="offline_rl_actor",
+        )
+        return self._advance_control(
+            proposed,
+            planner_compute_ms=0.0,
+            prior_diagnostics={
+                "kind": "direct_control",
+                "normalized_action": np.asarray(
+                    policy_action, dtype=np.float64
+                ).reshape(-1).copy(),
+            },
+            notify_controller=False,
+        )

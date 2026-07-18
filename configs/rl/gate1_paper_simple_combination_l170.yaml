@@ -1,0 +1,36 @@
+include: ../research/mujoco_strong_mppi_baseline.yaml
+
+experiment:
+  name: gate1_paper_simple_combination_l170
+  output_dir: results/research_platform/rl/gate1_paper_simple_combination_l170
+
+planner:
+  prediction_mode: icode_residual
+  checkpoint: results/research_platform/l57_icode_high_dynamic_h36_seed20261201_v1/best.pt
+  residual_torch_num_threads: 1
+  residual_torchscript: true
+  integrator: rk4
+  optimizer: paper_rl_driven
+  sampling_prior: paper_direct_rl
+  importance_sampling_correction: false
+  command_delay_s: 0.04
+  paper_rl_driven:
+    iterations: 2
+    guided_fraction: 0.30
+    elite_fraction: 0.20
+    covariance_smoothing: 0.50
+    covariance_min_scale: 0.25
+    covariance_max_scale: 2.00
+    terminal_value_weight: 1.0
+    terminal_critic_source: target
+
+memory:
+  enable: false
+
+rl:
+  enabled: true
+  integration: paper_direct_control
+  policy_id: gate1_direct_control_quantile_sac_l169
+  checkpoint: results/research_platform/rl/gate1_direct_control_quantile_sac_l169/checkpoints/best.pt
+  device: auto
+  torch_num_threads: 1

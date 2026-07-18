@@ -1,0 +1,17 @@
+include: gate1_paper_simple_combination_l170.yaml
+
+experiment:
+  name: gate1_paper_simple_combination_smoke_l170
+  output_dir: results/research_platform/rl/gate1_paper_simple_combination_smoke_l170
+  max_steps: 8
+
+planner:
+  horizon: 8
+  num_samples: 16
+  paper_rl_driven:
+    iterations: 2
+    guided_fraction: 0.25
+    elite_fraction: 0.25
+
+rl:
+  checkpoint: results/research_platform/rl/gate1_direct_control_quantile_sac_l169_smoke/checkpoints/best.pt

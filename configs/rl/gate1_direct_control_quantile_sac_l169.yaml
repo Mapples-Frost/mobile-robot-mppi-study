@@ -1,0 +1,94 @@
+include: sac_mppi_prior.yaml
+
+experiment:
+  name: gate1_direct_control_quantile_sac_l169
+  output_dir: results/research_platform/rl/gate1_direct_control_quantile_sac_l169
+  max_steps: 360
+
+# MPPI is not used to execute actions while the offline Actor is trained.
+# These settings remain present because the shared platform configuration is
+# also used by later online Gate 1 evaluation.
+memory:
+  enable: false
+
+rl:
+  enabled: true
+  integration: paper_direct_control
+  policy_id: gate1_direct_control_quantile_sac_l169
+
+  sac:
+    hidden_sizes: [256, 256]
+    activation: relu
+    policy_mode: direct
+    critic_distribution: quantile
+    critic_num_quantiles: 25
+    critic_quantile_huber_kappa: 1.0
+    actor_cvar_fraction: 1.0
+    gamma: 0.99
+    tau: 0.005
+    actor_lr: 0.0003
+    critic_lr: 0.0003
+    alpha_lr: 0.0003
+    initial_alpha: 0.2
+    automatic_entropy_tuning: true
+    log_std_min: -5.0
+    log_std_max: 0.5
+    gradient_clip_norm: 10.0
+
+  reward:
+    progress_mode: distance_delta
+    potential_progress_weight: 8.0
+    distance_penalty_weight: 0.02
+    path_length_penalty_weight: 0.02
+    cross_track_penalty_weight: 0.0
+    step_penalty: 0.02
+    goal_bonus: 100.0
+    collision_penalty: 100.0
+    clearance_margin: 0.45
+    clearance_penalty_weight: 1.5
+    safety_override_penalty: 0.15
+    control_effort_weight: 0.02
+    control_rate_weight: 0.04
+    stuck_penalty: 0.03
+
+  training:
+    action_mode: direct_control
+    total_steps: 200000
+    warmup_steps: 5000
+    warmup_policy: random
+    update_after: 1000
+    actor_update_after: 0
+    batch_size: 256
+    replay_capacity: 500000
+    replay_sampling: uniform
+    replay_require_all_scenes: false
+    updates_per_step: 1
+    evaluation_interval: 10000
+    evaluation_episodes: 5
+    checkpoint_interval: 10000
+    evaluate_initial_policy: false
+    normalizer_update: online
+    save_replay_buffer: true
+    seed: 20260718
+    validation_seed_base: 22320718
+    device: auto
+    bc_anchor:
+      enabled: false
+      dataset_dir: null
+    checkpoint_selection:
+      mode: scalar
+    curriculum:
+      enabled: false
+    initial_state_curriculum:
+      enabled: false
+    scene_configs:
+      - configs/research/mujoco_strong_mppi_baseline.yaml
+      - configs/research/mujoco_lab_complex.yaml
+      - configs/research/mujoco_narrow_corridor.yaml
+      - configs/research/mujoco_u_trap_long_board.yaml
+    validation_scene_configs:
+      - configs/research/mujoco_strong_mppi_baseline.yaml
+      - configs/research/mujoco_narrow_corridor.yaml
+    physics_domain_config: configs/research/mujoco_physics_domains.yaml
+    training_domain_roles: [seen]
+    validation_domain_roles: [seen, unseen]

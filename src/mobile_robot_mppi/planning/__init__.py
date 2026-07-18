@@ -1,7 +1,12 @@
 from .dynamics import DynamicUnicyclePrediction, LegacyUnicyclePrediction
 from .anytime_mppi import AnytimeMppiConfig, AnytimeMppiController
 from .mppi import MppiConfig, MppiController
-from .rl_driven_mppi import RLDrivenMppiConfig, RLDrivenMppiController
+from .rl_driven_mppi import (
+    PaperRLDrivenMppiConfig,
+    PaperRLDrivenMppiController,
+    RLDrivenMppiConfig,
+    RLDrivenMppiController,
+)
 
 __all__ = [
     "DynamicUnicyclePrediction",
@@ -12,4 +17,6 @@ __all__ = [
     "AnytimeMppiController",
     "RLDrivenMppiConfig",
     "RLDrivenMppiController",
+    "PaperRLDrivenMppiConfig",
+    "PaperRLDrivenMppiController",
 ]

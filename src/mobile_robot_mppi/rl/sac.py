@@ -627,6 +627,44 @@ class SACAgent:
             raise FloatingPointError("SAC batched policy produced NaN or Inf")
         return selected.cpu().numpy().astype(np.float32)
 
+    def policy_gaussian_parameters_batch(self, observations):
+        """Return the direct Actor's pre-tanh Gaussian parameters.
+
+        RL-Driven MPPI needs both the policy mean and its stochastic spread to
+        initialize a control-sequence distribution.  Returning the exact
+        pre-tanh parameters lets the caller use its own seeded generator while
+        preserving the SAC actor's bounded-action transform.  Correction
+        policies are intentionally rejected because Gate 1 requires a
+        physical low-level Actor, not a residual latent-action policy.
+        """
+
+        if self.is_correction_policy:
+            raise ValueError(
+                "paper-faithful low-level rollout requires a direct SAC actor"
+            )
+        data = np.asarray(observations, dtype=np.float32)
+        if (
+            data.ndim != 2
+            or data.shape[1:] != (self.observation_dim,)
+            or data.shape[0] <= 0
+            or not np.isfinite(data).all()
+        ):
+            raise ValueError(
+                "SAC observation batch must be finite with shape [B,%d]"
+                % self.observation_dim
+            )
+        with torch.no_grad():
+            tensor = torch.as_tensor(data, device=self.device)
+            mean, log_std = self.actor.distribution(tensor)
+        if not bool(torch.isfinite(mean).all() and torch.isfinite(log_std).all()):
+            raise FloatingPointError(
+                "SAC policy Gaussian parameters contain NaN or Inf"
+            )
+        return (
+            mean.cpu().numpy().astype(np.float64),
+            log_std.cpu().numpy().astype(np.float64),
+        )
+
     def expected_twin_q(self, observations, actions, critic_source="online"):
         """Return expected twin-Q values for scalar or quantile critics.
 

@@ -18,7 +18,7 @@ from .demonstrations import (
     load_demonstration_manifest,
     load_demonstration_split,
 )
-from .environment import MppiPriorEnv
+from .environment import DirectControlEnv, MppiPriorEnv
 from .observation import RunningNormalizer
 from .parameterization import PriorParameterizationConfig
 from .replay import ReplayBuffer
@@ -29,6 +29,23 @@ _RESUME_OVERRIDE_FIELDS = frozenset((
     "total_steps",
     "checkpoint_interval",
 ))
+
+
+def environment_class_from_config(config):
+    """Resolve the RL action semantics without changing legacy defaults."""
+
+    mode = str(
+        dict(config.get("rl", {}))
+        .get("training", {})
+        .get("action_mode", "mppi_prior")
+    )
+    if mode == "mppi_prior":
+        return MppiPriorEnv
+    if mode == "direct_control":
+        return DirectControlEnv
+    raise ValueError(
+        "rl.training.action_mode must be mppi_prior or direct_control"
+    )
 
 
 def _json_compatible(value):
@@ -906,7 +923,10 @@ class EnvironmentPool:
 
     def _get(self, index):
         if index not in self.environments:
-            self.environments[index] = MppiPriorEnv(
+            environment_class = environment_class_from_config(
+                self.configs[index]
+            )
+            self.environments[index] = environment_class(
                 self.configs[index], self.project_root, seed=int(self.rng.randint(0, 2 ** 31 - 1))
             )
         return self.environments[index]
@@ -1038,7 +1058,10 @@ class SACTrainer:
             )
         )
         self.validation_configs = list(validation_configs or training_configs[:1])
-        probe = MppiPriorEnv(training_configs[0], self.project_root, self.training_config.seed)
+        probe_class = environment_class_from_config(training_configs[0])
+        probe = probe_class(
+            training_configs[0], self.project_root, self.training_config.seed
+        )
         try:
             observation_dim = probe.observation_dim
             action_dim = probe.policy_action_dim
@@ -1048,6 +1071,7 @@ class SACTrainer:
                 probe.intrinsic_exploration.config
             )
             self.action_spec = probe.action_spec
+            self.action_mode = probe.action_mode
         finally:
             probe.close()
         sac_config = SACConfig.from_mapping(rl_config.get("sac", {}))
@@ -1124,6 +1148,9 @@ class SACTrainer:
             "sac": self.agent.config.to_dict(),
             "resolved_device": str(self.agent.device),
             "encoder": self.encoder_config.to_dict(),
+            "action_mode": getattr(
+                self, "action_mode", "mppi_prior"
+            ),
             "parameterization": self.parameterization_config.to_dict(),
             "action_spec": {
                 "names": tuple(self.action_spec.names),
@@ -1159,6 +1186,9 @@ class SACTrainer:
             "policy_action_dim": self.agent.action_dim,
             "sac": self.agent.config.to_dict(),
             "policy_mode": self.agent.config.policy_mode,
+            "action_mode": getattr(
+                self, "action_mode", "mppi_prior"
+            ),
             "encoder": self.encoder_config.to_dict(),
             "parameterization": self.parameterization_config.to_dict(),
             "intrinsic_exploration": self.intrinsic_exploration_config.to_dict(),
@@ -1251,6 +1281,9 @@ class SACTrainer:
                     if self.agent.device.type == "cuda" else None
                 ),
                 "resume_provenance": self.resume_provenance,
+                "action_mode": getattr(
+                    self, "action_mode", "mppi_prior"
+                ),
             },
             replay_buffer=self.replay,
             include_replay=replay_data_included,
@@ -1521,7 +1554,8 @@ class SACTrainer:
             )["initial_state_noise"] = list(
                 self.training_config.validation_initial_state_noise
             )
-        environment = MppiPriorEnv(
+        environment_class = environment_class_from_config(validation_config)
+        environment = environment_class(
             validation_config, self.project_root, seed=seed
         )
         observation, _ = environment.reset(seed=seed)

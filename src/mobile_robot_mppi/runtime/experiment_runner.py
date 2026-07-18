@@ -146,6 +146,11 @@ class ExperimentRunner:
             "planner_rl_driven": dict(
                 self.config.get("planner", {}).get("rl_driven", {})
             ),
+            "planner_paper_rl_driven": dict(
+                self.config.get("planner", {}).get(
+                    "paper_rl_driven", {}
+                )
+            ),
             "planner_anytime_bandit": dict(
                 self.config.get("planner", {}).get("anytime_bandit", {})
             ),

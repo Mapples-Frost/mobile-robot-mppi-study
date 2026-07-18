@@ -1,0 +1,31 @@
+include: gate1_direct_control_quantile_sac_l169.yaml
+
+experiment:
+  name: gate1_direct_control_learnability_screen_l171
+  output_dir: results/research_platform/rl/gate1_direct_control_learnability_screen_l171
+  max_steps: 250
+
+# This is a learnability screen, not the formal multi-domain Stage A run. It
+# asks whether the direct physical-control Actor can learn the clean task
+# before spending the full cross-domain budget.
+rl:
+  policy_id: gate1_direct_control_learnability_screen_l171
+  training:
+    total_steps: 15000
+    warmup_steps: 1000
+    update_after: 1000
+    batch_size: 256
+    replay_capacity: 100000
+    evaluation_interval: 3000
+    evaluation_episodes: 3
+    checkpoint_interval: 3000
+    save_replay_buffer: true
+    seed: 20260718
+    validation_seed_base: 22320718
+    scene_configs:
+      - configs/research/mujoco_strong_mppi_baseline.yaml
+    validation_scene_configs:
+      - configs/research/mujoco_strong_mppi_baseline.yaml
+    physics_domain_config: null
+    training_domain_roles: [seen]
+    validation_domain_roles: [seen]

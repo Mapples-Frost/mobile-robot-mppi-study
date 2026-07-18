@@ -347,9 +347,32 @@ class PaperDirectControlPolicy:
     ):
         """Evaluate physical terminal states with Actor actions and twin Q."""
 
+        details = self.terminal_value_details(
+            terminal_states,
+            terminal_controls,
+            observation,
+            reference,
+            state_spec,
+            horizon_dt,
+            critic_source=critic_source,
+        )
+        return details["returns"], details["diagnostics"]
+
+    def terminal_value_details(
+        self,
+        terminal_states,
+        terminal_controls,
+        observation,
+        reference,
+        state_spec,
+        horizon_dt,
+        critic_source="target",
+    ):
+        """Return per-candidate critic/support signals for conservative use."""
+
         states = np.asarray(terminal_states, dtype=np.float64)
         controls = np.asarray(terminal_controls, dtype=np.float64)
-        _, normalized_observation = self._encoded_batch(
+        raw_observation, normalized_observation = self._encoded_batch(
             states,
             controls,
             observation,
@@ -366,18 +389,34 @@ class PaperDirectControlPolicy:
             critic_source=critic_source,
         )
         conservative = np.asarray(values["minimum"], dtype=np.float64)
-        if not np.isfinite(conservative).all():
+        disagreement = np.asarray(
+            values["disagreement"], dtype=np.float64
+        )
+        ood_scores = self.support_ood_scores(raw_observation)
+        if not all(
+            np.isfinite(item).all()
+            for item in (conservative, disagreement, ood_scores)
+        ):
             raise FloatingPointError("terminal critic returned NaN or Inf")
-        return conservative, {
+        diagnostics = {
             "terminal_q_mean": float(np.mean(conservative)),
             "terminal_q_min": float(np.min(conservative)),
             "terminal_q_max": float(np.max(conservative)),
             "terminal_q_disagreement_mean": float(
-                np.mean(values["disagreement"])
+                np.mean(disagreement)
             ),
+            "terminal_q_disagreement_max": float(np.max(disagreement)),
+            "terminal_critic_ood_mean": float(np.mean(ood_scores)),
+            "terminal_critic_ood_max": float(np.max(ood_scores)),
             "terminal_critic_source": str(values["critic_source"]),
             "terminal_action_semantics": "normalized_physical_control",
             "terminal_scan_assumption": "latest_observed_scan",
+        }
+        return {
+            "returns": conservative,
+            "critic_disagreement": disagreement,
+            "critic_ood_scores": ood_scores,
+            "diagnostics": diagnostics,
         }
 
     @classmethod

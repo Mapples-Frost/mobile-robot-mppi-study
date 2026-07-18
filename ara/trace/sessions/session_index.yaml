@@ -86,3 +86,6 @@ sessions:
   - id: "2026-07-18_028"
     path: "trace/sessions/2026-07-18_028.yaml"
     summary: "Gate 3 retained a failed severe-only calibration, validated graded cross-layer reliability, and independently confirmed fixed-budget adaptive hybrid-sampling progress and smoothness gains."
+  - id: "2026-07-19_029"
+    path: "trace/sessions/2026-07-19_029.yaml"
+    summary: "Gate 4 retained failed critic-confidence calibration, a non-replicating positive terminal-gate development result, and a sealed negative confirmation that pruned terminal authority from the main method."

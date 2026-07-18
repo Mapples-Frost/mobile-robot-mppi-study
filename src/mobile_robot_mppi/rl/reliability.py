@@ -252,3 +252,245 @@ class HybridSamplingReliability:
             "actor_ood_score_mean": float(np.mean(actor_ood_scores)),
             "guided_fraction": float(guided_fraction),
         }
+
+
+@dataclass(frozen=True)
+class ConservativeTerminalReliabilityConfig:
+    """Candidate-level confidence for the incremental SAC terminal cost.
+
+    These values are bounded engineering scores rather than calibrated
+    probabilities.  When disabled, the paper controller preserves the fixed
+    terminal-value behavior byte-for-byte.
+    """
+
+    enabled: bool = False
+    ensemble_disagreement_soft: float = 0.02
+    ensemble_disagreement_hard: float = 0.10
+    innovation_error_soft: float = 0.10
+    innovation_error_hard: float = 0.40
+    innovation_minimum_samples: int = 3
+    critic_ood_soft: float = 3.0
+    critic_ood_hard: float = 7.0
+    critic_disagreement_soft: float = 0.5
+    critic_disagreement_hard: float = 2.0
+    use_critic_support: bool = True
+    use_critic_disagreement: bool = True
+    uncertainty_penalty_weight: float = 0.0
+
+    @classmethod
+    def from_mapping(cls, values: Mapping[str, Any]):
+        values = dict(values or {})
+        result = cls(**{
+            name: values.get(name, field.default)
+            for name, field in cls.__dataclass_fields__.items()
+        })
+        result.validate()
+        return result
+
+    def validate(self):
+        pairs = (
+            (
+                self.ensemble_disagreement_soft,
+                self.ensemble_disagreement_hard,
+                "ensemble disagreement",
+            ),
+            (
+                self.innovation_error_soft,
+                self.innovation_error_hard,
+                "innovation error",
+            ),
+            (
+                self.critic_ood_soft,
+                self.critic_ood_hard,
+                "critic OOD",
+            ),
+            (
+                self.critic_disagreement_soft,
+                self.critic_disagreement_hard,
+                "critic disagreement",
+            ),
+        )
+        for soft, hard, name in pairs:
+            if (
+                not np.isfinite((soft, hard)).all()
+                or float(soft) < 0.0
+                or float(hard) <= float(soft)
+            ):
+                raise ValueError(
+                    "%s thresholds require 0 <= soft < hard" % name
+                )
+        if int(self.innovation_minimum_samples) < 0:
+            raise ValueError(
+                "innovation_minimum_samples must be non-negative"
+            )
+        if (
+            not np.isfinite(self.uncertainty_penalty_weight)
+            or float(self.uncertainty_penalty_weight) < 0.0
+        ):
+            raise ValueError(
+                "uncertainty_penalty_weight must be finite and non-negative"
+            )
+
+
+class ConservativeTerminalReliability:
+    """Evaluate terminal candidates without simulator truth or future data."""
+
+    def __init__(self, config=None):
+        self.config = (
+            config
+            if isinstance(config, ConservativeTerminalReliabilityConfig)
+            else ConservativeTerminalReliabilityConfig.from_mapping(
+                config or {}
+            )
+        )
+
+    def evaluate(
+        self,
+        residual,
+        states,
+        controls,
+        critic_ood_scores,
+        critic_disagreement,
+    ):
+        if not self.config.enabled:
+            raise RuntimeError(
+                "disabled conservative terminal evaluator must not be queried"
+            )
+        disagreement = getattr(residual, "disagreement", None)
+        support = getattr(residual, "support_confidence", None)
+        if not callable(disagreement) or not callable(support):
+            raise TypeError(
+                "conservative terminal requires an ensemble residual"
+            )
+        states = np.asarray(states, dtype=np.float64)
+        controls = np.asarray(controls, dtype=np.float64)
+        critic_ood_scores = np.asarray(
+            critic_ood_scores, dtype=np.float64
+        ).reshape(-1)
+        critic_disagreement = np.asarray(
+            critic_disagreement, dtype=np.float64
+        ).reshape(-1)
+        count = states.shape[0] if states.ndim == 2 else 0
+        if (
+            count <= 0
+            or controls.ndim != 2
+            or controls.shape[0] != count
+            or critic_ood_scores.shape != (count,)
+            or critic_disagreement.shape != (count,)
+            or not np.isfinite(states).all()
+            or not np.isfinite(controls).all()
+            or not np.isfinite(critic_ood_scores).all()
+            or not np.isfinite(critic_disagreement).all()
+        ):
+            raise ValueError(
+                "terminal reliability arrays must share a finite batch"
+            )
+        dynamics_disagreement = np.asarray(
+            disagreement(states, controls), dtype=np.float64
+        ).reshape(-1)
+        dynamics_support = np.asarray(
+            support(states, controls), dtype=np.float64
+        ).reshape(-1)
+        if (
+            dynamics_disagreement.shape != (count,)
+            or dynamics_support.shape != (count,)
+            or not np.isfinite(dynamics_disagreement).all()
+            or not np.isfinite(dynamics_support).all()
+        ):
+            raise FloatingPointError(
+                "terminal ICODE reliability signals are invalid"
+            )
+        disagreement_confidence = decreasing_linear_confidence(
+            dynamics_disagreement,
+            self.config.ensemble_disagreement_soft,
+            self.config.ensemble_disagreement_hard,
+        )
+        innovation_samples = int(
+            getattr(residual, "innovation_samples", 0)
+        )
+        innovation_error = float(
+            getattr(residual, "innovation_error_ema", 0.0)
+        )
+        innovation_ready = bool(
+            innovation_samples
+            >= int(self.config.innovation_minimum_samples)
+        )
+        innovation_confidence = (
+            float(
+                decreasing_linear_confidence(
+                    innovation_error,
+                    self.config.innovation_error_soft,
+                    self.config.innovation_error_hard,
+                )
+            )
+            if innovation_ready
+            else 1.0
+        )
+        dynamics_confidence = np.minimum(
+            disagreement_confidence,
+            np.clip(dynamics_support, 0.0, 1.0),
+        )
+        dynamics_confidence = np.minimum(
+            dynamics_confidence, innovation_confidence
+        )
+        critic_support_confidence = (
+            decreasing_linear_confidence(
+                critic_ood_scores,
+                self.config.critic_ood_soft,
+                self.config.critic_ood_hard,
+            )
+            if self.config.use_critic_support
+            else np.ones(count, dtype=np.float64)
+        )
+        critic_agreement_confidence = (
+            decreasing_linear_confidence(
+                critic_disagreement,
+                self.config.critic_disagreement_soft,
+                self.config.critic_disagreement_hard,
+            )
+            if self.config.use_critic_disagreement
+            else np.ones(count, dtype=np.float64)
+        )
+        critic_confidence = np.minimum(
+            critic_support_confidence, critic_agreement_confidence
+        )
+        authority = np.clip(
+            dynamics_confidence * critic_confidence, 0.0, 1.0
+        )
+        uncertainty = np.clip(
+            (
+                dynamics_disagreement
+                - self.config.ensemble_disagreement_soft
+            )
+            / (
+                self.config.ensemble_disagreement_hard
+                - self.config.ensemble_disagreement_soft
+            ),
+            0.0,
+            1.0,
+        )
+        if not all(
+            np.isfinite(values).all()
+            for values in (
+                authority,
+                dynamics_confidence,
+                critic_confidence,
+                uncertainty,
+            )
+        ):
+            raise FloatingPointError(
+                "terminal reliability produced NaN or Inf"
+            )
+        return {
+            "authority": authority,
+            "dynamics_confidence": dynamics_confidence,
+            "critic_confidence": critic_confidence,
+            "critic_support_confidence": critic_support_confidence,
+            "critic_agreement_confidence": critic_agreement_confidence,
+            "dynamics_disagreement": dynamics_disagreement,
+            "dynamics_support_confidence": dynamics_support,
+            "dynamics_uncertainty": uncertainty,
+            "innovation_error": innovation_error,
+            "innovation_samples": innovation_samples,
+            "innovation_ready": innovation_ready,
+        }

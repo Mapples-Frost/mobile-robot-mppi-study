@@ -1178,3 +1178,46 @@ tree:
                         result: >
                           Thirty paired cells on untouched seeds 35-39 confirmed a 6.82% final-distance reduction with favorable seed-cluster interval [0.0639, 0.2578] m, 1.97% lower jerk, 4.23% lower serial planner time and zero collisions at equal K. Both arms had zero successes, and the complex-scene distance effect was approximately neutral, bounding the claim.
                         evidence: [C84, C85, H64, "results/research_platform/rl/gate3_hss_confirmation_l196/paired_comparison.json", "results/research_platform/rl/gate3_hss_combined_l197/gate3_hss_analysis.json", "ara/evidence/tables/table13_gate3_reliability_hss.md"]
+  - id: N123
+    type: question
+    title: "Can cross-layer reliability safely calibrate terminal critic authority?"
+    provenance: ai-suggested
+    timestamp: "2026-07-19T01:20:00+08:00"
+    description: >
+      Gate 4 tested whether candidate-level ICODE and critic confidence can attenuate the frozen SAC terminal value while preserving the existing geometric MPPI terminal as a safe fallback.
+    also_depends_on: [N122]
+    children:
+      - id: N124
+        type: dead_end
+        title: "Twin-disagreement and support critic-confidence calibration"
+        provenance: ai-executed
+        timestamp: "2026-07-19T01:55:00+08:00"
+        hypothesis: >
+          Twin-critic disagreement and input support distance rank episode-level Monte Carlo critic error in the required positive direction.
+        failure_mode: >
+          Across ten frozen-policy MuJoCo validation episodes, disagreement/error and support/error associations were -0.942 and -0.235. The original 18-cell product-confidence terminal mapping then worsened final distance by 3.58% and jerk by 1.09%.
+        lesson: >
+          Critic agreement is not epistemic confidence and must not be sign-flipped or threshold-tuned against downstream outcomes after a directional calibration failure.
+        evidence: [C86, H65, "docs/rl/178_gate4a_critic_calibration_result_2026-07-19.md"]
+        children:
+          - id: N125
+            type: experiment
+            title: "Dynamics-only terminal-authority development"
+            provenance: ai-executed
+            timestamp: "2026-07-19T02:20:00+08:00"
+            result: >
+              With failed critic scores disabled, nine clean-task paired cells on seeds 40-42 reduced final distance by 18.94% with seed-cluster interval [0.0039, 0.4715] m and zero collisions, justifying sealed confirmation without further mapping changes.
+            evidence: [C87, H66, "docs/rl/179_gate4_conservative_terminal_results_2026-07-19.md"]
+            children:
+              - id: N126
+                type: dead_end
+                title: "Dynamics-only terminal-authority sealed confirmation"
+                provenance: ai-executed
+                timestamp: "2026-07-19T02:45:00+08:00"
+                hypothesis: >
+                  The development gain from candidate-level ICODE dynamics weighting reproduces on five untouched seeds across three physics domains.
+                failure_mode: >
+                  Fifteen sealed paired cells worsened final distance by 7.19% with interval crossing zero and worsened jerk by 4.29% with strictly adverse interval [-0.00657, -0.00236], despite zero collisions and equal K.
+                lesson: >
+                  Reliability validated for sampling allocation cannot be reused as terminal-value authority; the optional mechanism remains default-off and fixed critic terminal stays in the mainline.
+                evidence: [C87, C88, H65, "results/research_platform/rl/gate4_dyn_terminal_confirmation_l202/paired_comparison.json", "docs/rl/179_gate4_conservative_terminal_results_2026-07-19.md"]

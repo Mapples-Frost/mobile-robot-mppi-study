@@ -111,9 +111,10 @@ class JointBatchedDirectPolicy(AuditableDirectPolicy):
 
 
 class ReliabilityDirectPolicy(JointBatchedDirectPolicy):
-    def __init__(self, ood_score):
+    def __init__(self, ood_score, critic_disagreement=0.0):
         super().__init__()
         self.ood_score = float(ood_score)
+        self.critic_disagreement = float(critic_disagreement)
 
     def action_distribution(self, *args, **kwargs):
         result = super().action_distribution(*args, **kwargs)
@@ -123,6 +124,19 @@ class ReliabilityDirectPolicy(JointBatchedDirectPolicy):
 
     def support_ood_scores(self, raw_observations):
         return np.full(len(raw_observations), self.ood_score)
+
+    def terminal_value_details(self, *args, **kwargs):
+        returns, diagnostics = self.terminal_value(*args, **kwargs)
+        return {
+            "returns": returns,
+            "critic_disagreement": np.full(
+                len(returns), self.critic_disagreement
+            ),
+            "critic_ood_scores": np.full(
+                len(returns), self.ood_score
+            ),
+            "diagnostics": diagnostics,
+        }
 
 
 class ReliabilityResidual:
@@ -174,7 +188,7 @@ def _controller(policy):
     )
 
 
-def _reliable_controller(policy):
+def _reliable_controller(policy, conservative_terminal=False):
     from mobile_robot_mppi.planning.dynamics import ResidualPrediction
 
     return PaperRLDrivenMppiController(
@@ -195,7 +209,9 @@ def _reliable_controller(policy):
             "iterations": 2,
             "guided_fraction": 0.3,
             "elite_fraction": 0.25,
-            "terminal_value_weight": 0.0,
+            "terminal_value_weight": (
+                0.5 if conservative_terminal else 0.0
+            ),
             "reliability": {
                 "enabled": True,
                 "ensemble_disagreement_soft": 0.02,
@@ -209,6 +225,18 @@ def _reliable_controller(policy):
                 "low_guided_fraction": 0.0,
                 "medium_guided_fraction": 0.3,
                 "high_guided_fraction": 0.6,
+            },
+            "conservative_terminal": {
+                "enabled": bool(conservative_terminal),
+                "ensemble_disagreement_soft": 0.02,
+                "ensemble_disagreement_hard": 0.10,
+                "innovation_error_soft": 0.1,
+                "innovation_error_hard": 0.4,
+                "critic_ood_soft": 3.0,
+                "critic_ood_hard": 7.0,
+                "critic_disagreement_soft": 0.5,
+                "critic_disagreement_hard": 2.0,
+                "uncertainty_penalty_weight": 2.0,
             },
         },
     )
@@ -306,3 +334,26 @@ def test_reliability_hss_applies_authority_on_next_control_cycle():
     suppressed = low.plan(_observation(), PointGoal(1.0, 0.0))
     assert suppressed.diagnostics["paper_guided_unique_sequences"] == 0
     assert suppressed.diagnostics["reliability_guided_fraction_applied"] == 0.0
+
+
+def test_conservative_terminal_uses_candidate_confidence_and_safe_fallback():
+    trusted = _reliable_controller(
+        ReliabilityDirectPolicy(0.0, critic_disagreement=0.0),
+        conservative_terminal=True,
+    ).plan(_observation(), PointGoal(1.0, 0.0))
+    untrusted = _reliable_controller(
+        ReliabilityDirectPolicy(8.0, critic_disagreement=3.0),
+        conservative_terminal=True,
+    ).plan(_observation(), PointGoal(1.0, 0.0))
+
+    assert trusted.diagnostics["terminal_value_conservative_enabled"]
+    assert trusted.diagnostics["terminal_value_authority_mean"] == 1.0
+    assert trusted.diagnostics["terminal_value_cost_mean"] < 0.0
+    assert untrusted.diagnostics["terminal_value_authority_mean"] == 0.0
+    # The incremental critic contribution disappears. The unchanged MPPI
+    # geometric terminal remains the safe fallback in the base cost.
+    assert untrusted.diagnostics["terminal_value_cost_mean"] == 0.0
+    assert (
+        untrusted.diagnostics["terminal_value_safe_fallback"]
+        == "existing_mppi_geometric_terminal"
+    )

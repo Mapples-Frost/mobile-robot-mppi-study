@@ -384,3 +384,15 @@
 - **Provenance**: ai-suggested
 - **Sensitivity**: high
 - **Code ref**: [`src/mobile_robot_mppi/learning/models.py`, `src/mobile_robot_mppi/rl/reliability.py`, `src/mobile_robot_mppi/planning/rl_driven_mppi.py`, `docs/rl/174_gate3_reliability_hss_prereg_2026-07-18.md`]
+
+## H65: Calibrate each authority against its own downstream error target
+- **Rationale**: ICODE rollout reliability can rank model error and improve sampling allocation while still being unsuitable for attenuating a frozen critic. Sampling authority should be calibrated against proposal utility; terminal-value authority requires critic-return or candidate-ranking calibration. Do not reuse a confidence mapping merely because both consumers sit inside MPPI.
+- **Provenance**: ai-suggested
+- **Sensitivity**: high
+- **Code ref**: [`src/mobile_robot_mppi/rl/reliability.py`, `docs/rl/178_gate4a_critic_calibration_result_2026-07-19.md`, `docs/rl/179_gate4_conservative_terminal_results_2026-07-19.md`]
+
+## H66: Preserve an explicit geometric fallback when attenuating learned terminal cost
+- **Rationale**: Multiplying a learned terminal cost by low confidence can otherwise make an unknown candidate artificially cheap. Keep the ordinary MPPI geometric terminal in the base cost, attenuate only the incremental learned value and make any uncertainty penalty non-negative. Even a safe algebraic construction still requires independent outcome confirmation.
+- **Provenance**: ai-suggested
+- **Sensitivity**: high
+- **Code ref**: [`src/mobile_robot_mppi/planning/rl_driven_mppi.py`, `tests/planners/test_paper_rl_driven_mppi.py`, `docs/rl/177_gate4_conservative_terminal_prereg_2026-07-19.md`]

@@ -320,6 +320,46 @@ class EpisodeMetrics:
             "terminal_value_weight": float(
                 planner_diagnostics.get("terminal_value_weight", 0.0)
             ),
+            "terminal_value_conservative_enabled": float(
+                planner_diagnostics.get(
+                    "terminal_value_conservative_enabled", False
+                )
+            ),
+            "terminal_value_authority_mean": float(
+                planner_diagnostics.get(
+                    "terminal_value_authority_mean", 1.0
+                )
+            ),
+            "terminal_value_authority_min": float(
+                planner_diagnostics.get(
+                    "terminal_value_authority_min", 1.0
+                )
+            ),
+            "terminal_value_authority_max": float(
+                planner_diagnostics.get(
+                    "terminal_value_authority_max", 1.0
+                )
+            ),
+            "terminal_value_dynamics_confidence_mean": float(
+                planner_diagnostics.get(
+                    "terminal_value_dynamics_confidence_mean", 1.0
+                )
+            ),
+            "terminal_value_critic_confidence_mean": float(
+                planner_diagnostics.get(
+                    "terminal_value_critic_confidence_mean", 1.0
+                )
+            ),
+            "terminal_value_uncertainty_mean": float(
+                planner_diagnostics.get(
+                    "terminal_value_uncertainty_mean", 0.0
+                )
+            ),
+            "terminal_value_uncertainty_cost_mean": float(
+                planner_diagnostics.get(
+                    "terminal_value_uncertainty_cost_mean", 0.0
+                )
+            ),
             "terminal_q_mean": float(
                 planner_diagnostics.get("terminal_q_mean", 0.0)
             ),
@@ -787,6 +827,46 @@ class EpisodeMetrics:
             ])),
             "terminal_value_enabled_fraction": float(np.mean([
                 row.get("terminal_value_enabled", 0.0) for row in values
+            ])),
+            "terminal_value_conservative_enabled_fraction": float(
+                np.mean([
+                    row.get(
+                        "terminal_value_conservative_enabled", 0.0
+                    )
+                    for row in values
+                ])
+            ),
+            "terminal_value_authority_mean": float(np.mean([
+                row.get("terminal_value_authority_mean", 1.0)
+                for row in values
+            ])),
+            "terminal_value_authority_min": float(np.min([
+                row.get("terminal_value_authority_min", 1.0)
+                for row in values
+            ])),
+            "terminal_value_authority_max": float(np.max([
+                row.get("terminal_value_authority_max", 1.0)
+                for row in values
+            ])),
+            "terminal_value_dynamics_confidence_mean": float(np.mean([
+                row.get(
+                    "terminal_value_dynamics_confidence_mean", 1.0
+                )
+                for row in values
+            ])),
+            "terminal_value_critic_confidence_mean": float(np.mean([
+                row.get(
+                    "terminal_value_critic_confidence_mean", 1.0
+                )
+                for row in values
+            ])),
+            "terminal_value_uncertainty_mean": float(np.mean([
+                row.get("terminal_value_uncertainty_mean", 0.0)
+                for row in values
+            ])),
+            "terminal_value_uncertainty_cost_mean": float(np.mean([
+                row.get("terminal_value_uncertainty_cost_mean", 0.0)
+                for row in values
             ])),
             "terminal_q_mean": float(np.mean([
                 row.get("terminal_q_mean", 0.0) for row in values

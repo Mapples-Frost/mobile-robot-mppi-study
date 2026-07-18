@@ -1,0 +1,69 @@
+session:
+  id: "2026-07-19_029"
+  timestamp: "2026-07-19T02:50:00+08:00"
+  summary: "Gate 4 conservatively implemented terminal authority, retained two failed mappings, and pruned the mechanism after sealed confirmation."
+
+events_logged:
+  - type: claim
+    id: C86
+    provenance: ai-suggested
+    summary: "Twin disagreement and support distance failed to calibrate critic error."
+  - type: claim
+    id: C87
+    provenance: ai-suggested
+    summary: "Candidate ICODE terminal weighting failed sealed control confirmation."
+  - type: claim
+    id: C88
+    provenance: ai-suggested
+    summary: "Sampling and terminal authority require distinct calibration targets."
+  - type: dead_end
+    id: N124
+    provenance: ai-executed
+    summary: "Product-confidence terminal mapping failed calibration and development."
+  - type: experiment
+    id: N125
+    provenance: ai-executed
+    summary: "Restricted dynamics-only mapping improved clean-task development."
+  - type: dead_end
+    id: N126
+    provenance: ai-executed
+    summary: "The development improvement failed five-seed independent confirmation."
+  - type: heuristic
+    id: H65
+    provenance: ai-suggested
+    summary: "Calibrate each authority against its downstream target."
+  - type: heuristic
+    id: H66
+    provenance: ai-suggested
+    summary: "Preserve geometric fallback when attenuating learned terminal cost."
+
+ai_actions:
+  - action: "Implemented candidate-level conservative terminal reliability and default-off configuration."
+    provenance: ai-executed
+    files_changed:
+      - "src/mobile_robot_mppi/rl/reliability.py"
+      - "src/mobile_robot_mppi/planning/rl_driven_mppi.py"
+      - "src/mobile_robot_mppi/rl/paper_policy.py"
+  - action: "Ran critic calibration, development and five-seed sealed confirmation."
+    provenance: ai-executed
+    files_changed:
+      - "docs/rl/177_gate4_conservative_terminal_prereg_2026-07-19.md"
+      - "docs/rl/178_gate4a_critic_calibration_result_2026-07-19.md"
+      - "docs/rl/179_gate4_conservative_terminal_results_2026-07-19.md"
+
+claims_touched:
+  - id: C86
+    action: created
+    provenance: ai-suggested
+  - id: C87
+    action: created
+    provenance: ai-suggested
+  - id: C88
+    action: created
+    provenance: ai-suggested
+
+open_threads:
+  - "Use the confirmed Gate 2 plus Gate 3 package with fixed critic terminal for the next full factorial."
+  - "Design tasks with nonzero completion resolution before claiming success-rate improvement."
+
+ai_suggestions_pending: []

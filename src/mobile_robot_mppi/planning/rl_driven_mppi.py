@@ -11,7 +11,10 @@ from typing import Any, Mapping
 import numpy as np
 
 from mobile_robot_mppi.planning.mppi import MppiController, integrate_batch
-from mobile_robot_mppi.rl.reliability import HybridSamplingReliability
+from mobile_robot_mppi.rl.reliability import (
+    ConservativeTerminalReliability,
+    HybridSamplingReliability,
+)
 
 
 @dataclass(frozen=True)
@@ -552,6 +555,7 @@ class PaperRLDrivenMppiConfig:
     terminal_value_weight: float = 1.0
     terminal_critic_source: str = "target"
     reliability: Any = None
+    conservative_terminal: Any = None
 
     @classmethod
     def from_mapping(cls, values: Mapping[str, Any]):
@@ -590,6 +594,7 @@ class PaperRLDrivenMppiConfig:
         if self.terminal_critic_source not in ("online", "target"):
             raise ValueError("terminal_critic_source must be online or target")
         HybridSamplingReliability(self.reliability or {})
+        ConservativeTerminalReliability(self.conservative_terminal or {})
         guided = int(round(float(samples) * self.guided_fraction))
         if guided >= int(samples):
             raise ValueError("at least one current-Gaussian sample is required")
@@ -623,6 +628,11 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
         self.rl_driven_config = self.paper_rl_driven_config
         self.hybrid_sampling_reliability = HybridSamplingReliability(
             self.paper_rl_driven_config.reliability or {}
+        )
+        self.conservative_terminal_reliability = (
+            ConservativeTerminalReliability(
+                self.paper_rl_driven_config.conservative_terminal or {}
+            )
         )
         self._applied_guided_fraction = float(
             self.paper_rl_driven_config.guided_fraction
@@ -934,9 +944,94 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
                 "terminal_value_enabled": False,
                 "terminal_value_weight": 0.0,
             }
+        terminal_states = trajectories[:, -1, :]
+        terminal_controls = controls[:, -1, :]
+        terminal_cfg = self.conservative_terminal_reliability.config
+        if terminal_cfg.enabled:
+            evaluator = getattr(
+                self.sampling_prior, "terminal_value_details", None
+            )
+            if not callable(evaluator):
+                raise TypeError(
+                    "conservative terminal requires "
+                    "terminal_value_details"
+                )
+            details = evaluator(
+                terminal_states,
+                terminal_controls,
+                observation,
+                reference,
+                self.state_spec,
+                self.config.horizon * self.config.dt,
+                critic_source=cfg.terminal_critic_source,
+            )
+            returns = np.asarray(details["returns"], dtype=np.float64)
+            diagnostics = dict(details["diagnostics"])
+            confidence = self.conservative_terminal_reliability.evaluate(
+                self._residual_for_reliability(),
+                terminal_states,
+                terminal_controls,
+                details["critic_ood_scores"],
+                details["critic_disagreement"],
+            )
+            authority = confidence["authority"]
+            uncertainty_cost = (
+                terminal_cfg.uncertainty_penalty_weight
+                * confidence["dynamics_uncertainty"]
+            )
+            cost = (
+                -cfg.terminal_value_weight * authority * returns
+                + uncertainty_cost
+            )
+            diagnostics.update({
+                "terminal_value_enabled": True,
+                "terminal_value_weight": float(
+                    cfg.terminal_value_weight
+                ),
+                "terminal_value_conservative_enabled": True,
+                "terminal_value_authority_mean": float(
+                    np.mean(authority)
+                ),
+                "terminal_value_authority_min": float(
+                    np.min(authority)
+                ),
+                "terminal_value_authority_max": float(
+                    np.max(authority)
+                ),
+                "terminal_value_dynamics_confidence_mean": float(
+                    np.mean(confidence["dynamics_confidence"])
+                ),
+                "terminal_value_critic_confidence_mean": float(
+                    np.mean(confidence["critic_confidence"])
+                ),
+                "terminal_value_uncertainty_mean": float(
+                    np.mean(confidence["dynamics_uncertainty"])
+                ),
+                "terminal_value_uncertainty_cost_mean": float(
+                    np.mean(uncertainty_cost)
+                ),
+                "terminal_value_uncertainty_penalty_weight": float(
+                    terminal_cfg.uncertainty_penalty_weight
+                ),
+                "terminal_value_cost_mean": float(np.mean(cost)),
+                "terminal_value_cost_std": float(np.std(cost)),
+                "terminal_value_sign": (
+                    "cost=-weight*authority*return+uncertainty"
+                ),
+                "terminal_value_safe_fallback": (
+                    "existing_mppi_geometric_terminal"
+                ),
+            })
+            if cost.shape != (controls.shape[0],) or not np.isfinite(
+                cost
+            ).all():
+                raise FloatingPointError(
+                    "conservative terminal critic cost is invalid"
+                )
+            return cost, diagnostics
         returns, diagnostics = self.sampling_prior.terminal_value(
-            trajectories[:, -1, :],
-            controls[:, -1, :],
+            terminal_states,
+            terminal_controls,
             observation,
             reference,
             self.state_spec,
@@ -954,6 +1049,7 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
         result.update({
             "terminal_value_enabled": True,
             "terminal_value_weight": float(cfg.terminal_value_weight),
+            "terminal_value_conservative_enabled": False,
             "terminal_value_cost_mean": float(np.mean(cost)),
             "terminal_value_cost_std": float(np.std(cost)),
             "terminal_value_sign": "cost=-weight*return",

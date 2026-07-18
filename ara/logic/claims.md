@@ -765,3 +765,30 @@
 - **Proof**: [`results/research_platform/rl/gate3_hss_combined_l197/stratified_effects.csv`, `docs/rl/176_gate3_reliability_hss_results_2026-07-18.md`]
 - **Dependencies**: [C84]
 - **Tags**: RL, ICODE, MPPI, scope-boundary, refuted
+
+## C86: Twin-critic disagreement calibrates terminal critic error
+- **Statement**: Larger frozen twin-critic disagreement or Actor-input support distance identifies larger episode-level Monte Carlo critic error and can safely attenuate terminal value authority.
+- **Status**: refuted
+- **Provenance**: ai-suggested
+- **Falsification criteria**: The preregistered direction fails if either score has a null or negative episode-level association with absolute critic/return error.
+- **Proof**: [`docs/rl/178_gate4a_critic_calibration_result_2026-07-19.md`, `docs/rl/179_gate4_conservative_terminal_results_2026-07-19.md`]
+- **Dependencies**: [C77, C84]
+- **Tags**: SAC-critic, disagreement, support, calibration, negative-result
+
+## C87: Candidate-level ICODE reliability should attenuate terminal critic authority
+- **Statement**: Multiplying the fixed SAC terminal value by candidate-level ICODE dynamics confidence improves equal-budget MPPI control relative to the same fixed terminal weight.
+- **Status**: refuted
+- **Provenance**: ai-suggested
+- **Falsification criteria**: Sealed confirmation fails to improve final goal distance or produces a strictly adverse interval for a key secondary endpoint.
+- **Proof**: [`results/research_platform/rl/gate4_dyn_terminal_confirmation_l202/paired_comparison.json`, `docs/rl/179_gate4_conservative_terminal_results_2026-07-19.md`]
+- **Dependencies**: [C84, C86]
+- **Tags**: ICODE, SAC-critic, terminal-value, reliability, negative-result
+
+## C88: Sampling authority and terminal-value authority share one reliability mapping
+- **Statement**: A reliability score validated for allocating persistent Actor samples can be reused to calibrate candidate-wise SAC terminal value authority.
+- **Status**: refuted
+- **Provenance**: ai-suggested
+- **Falsification criteria**: The mapping independently improves fixed-budget HSS but fails or regresses sealed terminal-value confirmation.
+- **Proof**: [`docs/rl/176_gate3_reliability_hss_results_2026-07-18.md`, `docs/rl/179_gate4_conservative_terminal_results_2026-07-19.md`]
+- **Dependencies**: [C84, C87]
+- **Tags**: cross-layer-reliability, calibration-target, scope-boundary

@@ -9,6 +9,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+import numpy as np
 import yaml
 
 
@@ -102,6 +103,26 @@ def main(argv=None):
     parser.add_argument("--scene-configs", required=True)
     parser.add_argument("--physics-domains", required=True)
     parser.add_argument("--max-steps", type=int)
+    parser.add_argument(
+        "--comparison-kind",
+        choices=("hss", "terminal"),
+        default="hss",
+    )
+    parser.add_argument(
+        "--critic-disagreement-soft", type=float, default=0.033
+    )
+    parser.add_argument(
+        "--critic-disagreement-hard", type=float, default=0.366
+    )
+    parser.add_argument(
+        "--uncertainty-penalty-weight", type=float, default=0.0
+    )
+    parser.add_argument(
+        "--use-critic-support", action="store_true"
+    )
+    parser.add_argument(
+        "--use-critic-disagreement", action="store_true"
+    )
     args = parser.parse_args(argv)
 
     base = load_yaml(args.config)
@@ -149,6 +170,12 @@ def main(argv=None):
     rows = []
     for job_index, job in enumerate(schedule):
         arm = job["arm"]
+        if args.comparison_kind == "terminal":
+            arm = (
+                "fixed_terminal"
+                if arm == "fixed"
+                else "conservative_terminal"
+            )
         config = method_config(
             scene_by_name[job["scene"]]["config"],
             "gate3_hss",
@@ -181,7 +208,7 @@ def main(argv=None):
                 ensemble_config["support_hard_z"]
             ),
         }
-        if arm == "adaptive":
+        if args.comparison_kind == "terminal" or arm == "adaptive":
             planner["paper_rl_driven"]["reliability"] = dict(
                 reliability_config
             )
@@ -189,6 +216,47 @@ def main(argv=None):
             fixed = dict(reliability_config)
             fixed["enabled"] = False
             planner["paper_rl_driven"]["reliability"] = fixed
+        if args.comparison_kind == "terminal":
+            terminal_config = {
+                "enabled": arm == "conservative_terminal",
+                "ensemble_disagreement_soft": float(
+                    reliability_config["ensemble_disagreement_soft"]
+                ),
+                "ensemble_disagreement_hard": float(
+                    reliability_config["ensemble_disagreement_hard"]
+                ),
+                "innovation_error_soft": float(
+                    reliability_config["innovation_error_soft"]
+                ),
+                "innovation_error_hard": float(
+                    reliability_config["innovation_error_hard"]
+                ),
+                "innovation_minimum_samples": int(
+                    reliability_config["innovation_minimum_samples"]
+                ),
+                "critic_ood_soft": float(
+                    reliability_config["actor_ood_soft"]
+                ),
+                "critic_ood_hard": float(
+                    reliability_config["actor_ood_hard"]
+                ),
+                "critic_disagreement_soft": float(
+                    args.critic_disagreement_soft
+                ),
+                "critic_disagreement_hard": float(
+                    args.critic_disagreement_hard
+                ),
+                "use_critic_support": bool(args.use_critic_support),
+                "use_critic_disagreement": bool(
+                    args.use_critic_disagreement
+                ),
+                "uncertainty_penalty_weight": float(
+                    args.uncertainty_penalty_weight
+                ),
+            }
+            planner["paper_rl_driven"][
+                "conservative_terminal"
+            ] = terminal_config
         if args.max_steps is not None:
             config["experiment"]["max_steps"] = int(args.max_steps)
         run_dir = (
@@ -225,9 +293,19 @@ def main(argv=None):
         rows.append(row)
         _write_csv(output / "progress.csv", rows)
 
-    fixed_rows = [row for row in rows if row["hss_arm"] == "fixed"]
+    fixed_label = (
+        "fixed" if args.comparison_kind == "hss" else "fixed_terminal"
+    )
+    adaptive_label = (
+        "adaptive"
+        if args.comparison_kind == "hss"
+        else "conservative_terminal"
+    )
+    fixed_rows = [
+        row for row in rows if row["hss_arm"] == fixed_label
+    ]
     adaptive_rows = [
-        row for row in rows if row["hss_arm"] == "adaptive"
+        row for row in rows if row["hss_arm"] == adaptive_label
     ]
     _write_csv(output / "fixed_episodes.csv", fixed_rows)
     _write_csv(output / "adaptive_episodes.csv", adaptive_rows)
@@ -239,9 +317,29 @@ def main(argv=None):
         bootstrap_samples=args.bootstrap_samples,
         seed=args.schedule_seed,
     )
-    comparison["gate"] = gate3_development_decision(
-        comparison, adaptive_rows
-    )
+    if args.comparison_kind == "hss":
+        comparison["gate"] = gate3_development_decision(
+            comparison, adaptive_rows
+        )
+    else:
+        authority = np.asarray([
+            float(row.get("terminal_value_authority_mean", 1.0))
+            for row in adaptive_rows
+        ])
+        comparison["gate"] = {
+            "name": "Gate 4B conservative terminal",
+            "regime_exercised": bool(
+                authority.size
+                and np.min(authority) < 0.33
+                and np.max(authority) > 0.67
+            ),
+            "authority_min": (
+                float(np.min(authority)) if authority.size else None
+            ),
+            "authority_max": (
+                float(np.max(authority)) if authority.size else None
+            ),
+        }
     provenance = {
         "git_sha": _git_sha(),
         "actor_checkpoint": str(Path(args.actor_checkpoint).resolve()),
@@ -267,6 +365,20 @@ def main(argv=None):
         "physics_domains": domains,
         "total_rollouts": int(args.total_rollouts),
         "iterations": int(args.iterations),
+        "comparison_kind": str(args.comparison_kind),
+        "critic_disagreement_soft": float(
+            args.critic_disagreement_soft
+        ),
+        "critic_disagreement_hard": float(
+            args.critic_disagreement_hard
+        ),
+        "uncertainty_penalty_weight": float(
+            args.uncertainty_penalty_weight
+        ),
+        "use_critic_support": bool(args.use_critic_support),
+        "use_critic_disagreement": bool(
+            args.use_critic_disagreement
+        ),
     }
     (output / "paired_comparison.json").write_text(
         json.dumps(comparison, indent=2, sort_keys=True) + "\n",
@@ -290,4 +402,3 @@ def main(argv=None):
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

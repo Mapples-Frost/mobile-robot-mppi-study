@@ -1,0 +1,19 @@
+output_dir: results/research_platform/datasets/gate3_reliability_stress_l194
+actor_run_dir: results/research_platform/rl/gate1_direct_control_multidomain_screen_l175
+actor_checkpoint: results/research_platform/rl/gate1_direct_control_multidomain_screen_l175/checkpoints/best.pt
+seed: 20260720
+
+action_noise_std: 0.03
+random_action_probability: 0.05
+
+# A new, mixed-severity evaluation set. It is not used for training or
+# threshold selection. Each of the 10 scene-domain environments receives three
+# independent episodes, including the combined-unseen domain.
+splits:
+  stress_confirmation:
+    source: validation
+    roles: [seen, unseen]
+    episodes_per_environment: 3
+    max_steps: 120
+    seed_base: 22835000
+

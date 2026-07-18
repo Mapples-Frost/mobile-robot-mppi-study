@@ -4,7 +4,7 @@
 - Target venue: ICRA 2027
 - Submission target: 2026-09-15
 - Repository: `mobile-robot-mppi-study`
-- Current evidence stage: sealed parameter-matched evidence that control-affine ICODE improves MPPI tracking across frozen plant and bounded observation shifts; L87 established path-dependent covariance headroom, and L89 independently confirmed that a reward-trained contextual bandit improves both time and tracking precision over the strongest fixed covariance on held-out route geometries with no detectable compute or safety regression
+- Current evidence stage: sealed parameter-matched evidence that control-affine ICODE improves MPPI tracking across frozen plant and bounded observation shifts; route-context covariance and half-budget efficiency have independent support; L103 now confirms that a constrained contextual bandit can allocate nested K50-to-K100 compute non-randomly at held-out ICODE-MPPI states, while whole-episode and ICODE-interaction claims remain open
 
 ## Layers
 

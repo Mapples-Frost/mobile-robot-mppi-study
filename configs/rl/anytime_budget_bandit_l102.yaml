@@ -1,0 +1,64 @@
+schema_version: 1
+design_id: l102_primal_dual_budget_bandit_development_v1
+phase: development
+base_config: configs/rl/sac_mppi_covariance_only_l84.yaml
+icode_checkpoint: results/research_platform/l57_icode_high_dynamic_h36_seed20261201_v1/best.pt
+bandit_checkpoint: results/research_platform/rl/l89_contextual_covariance_bandit_20260718_v1/checkpoint.json
+schedule_seed: 2026071822
+bootstrap_seed: 2026071823
+
+discovery_seeds: [20271401, 20271402, 20271403]
+evaluation_seeds: [20271411, 20271412, 20271413]
+
+scenes:
+  - configs/research/mujoco_high_dynamic_hairpin_unseen_l56.yaml
+  - configs/research/mujoco_high_dynamic_reverse_s_unseen_l56.yaml
+
+physics_domains:
+  - name: train_anchor
+    plant_override: {}
+  - name: friction_high
+    plant_override:
+      contact:
+        wheel_friction: [0.90, 0.007, 0.0011]
+        floor_friction: [0.80, 0.004, 0.0004]
+  - name: delay_long
+    plant_override:
+      actuator:
+        command_delay: 0.10
+  - name: combined_moderate
+    plant_override:
+      robot:
+        chassis_mass: 15.0
+        chassis_inertia: [0.15, 0.219, 0.311]
+        wheel_mass: 0.40
+      actuator:
+        torque_limit: 1.20
+        kp: 0.32
+        ki: 1.00
+        command_delay: 0.08
+        torque_slew_rate: 20.0
+      contact:
+        wheel_friction: [0.78, 0.0062, 0.0010]
+        floor_friction: [0.70, 0.0035, 0.00035]
+
+shared_override:
+  action_space:
+    rate_limits: [1.10, 2.50]
+  planner:
+    control_rate_weight: 0.16
+    profile_components: true
+
+base_budget: 50
+maximum_budget: 100
+anchor_progress_fractions: [0.08, 0.18, 0.30, 0.42, 0.54, 0.66, 0.78, 0.88]
+local_route_window_m: 1.25
+minimum_relative_true_cost_gain: 0.01
+ridge_penalty: 1.0
+ridge_target_add_fraction: 0.50
+primary_gate:
+  minimum_oracle_add_fraction: 0.10
+  maximum_oracle_add_fraction: 0.75
+  minimum_oracle_relative_gain: 0.01
+  maximum_learned_mean_budget: 80.0
+  minimum_learned_oracle_gain_fraction: 0.30

@@ -147,3 +147,8 @@
 - L97 strict final-package boundary: smoothed contextual K50 retained precision, time and compute advantages versus fixed K100, but both jerk intervals crossed zero; the preregistered overall Gate failed.
 - L96/L97 evidence bindings: `ara/evidence/tables/table10_l96_l97_jerk_remediation.md`, `ara/evidence/figures/fig10_l96_l97_jerk_remediation.md`, `docs/rl/149_l97_contextual_covariance_jerk_confirmation_results_2026-07-18.md`.
 - L97 repository validation: new Python files compiled, five focused tests passed, all 599 repository tests passed, and PNG/PDF/SVG figures were visually audited on 2026-07-18.
+- L100/L101 anytime-budget development: exact nested K50/K100 prefix and restored-snapshot protocol established selective predictable sample value; L100 failed mean compute and L101 passed its supervised constrained Gate.
+- L102 retained failure: the uncalibrated contextual bandit improved K50 but retained only 22.29% of Oracle gain, below the frozen 30% threshold.
+- L103 confirmation: 384/384 anchors from 48 new MuJoCo episodes passed integrity; calibrated contextual bandit used mean K=77.86, improved true branch cost by 2.400% with episode-bootstrap interval [-0.523, -0.114], and retained 58.06% of Oracle gain.
+- L100--L103 evidence binding: `ara/evidence/tables/table11_l100_l103_anytime_budget.md`, `docs/rl/156_l103_calibrated_budget_bandit_confirmation_results_2026-07-18.md`.
+- L103 repository validation: changed Python compiled, all 416 RL tests and all 618 repository tests passed, and `git diff --check` reported no whitespace errors on 2026-07-18.

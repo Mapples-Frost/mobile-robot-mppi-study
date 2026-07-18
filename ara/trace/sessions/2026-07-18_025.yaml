@@ -1,0 +1,52 @@
+session:
+  id: "2026-07-18_025"
+  timestamp: "2026-07-18T16:30:00+08:00"
+  summary: "L100-L103 established selective anytime-budget value, retained two failed Gates, and independently confirmed a calibrated constrained contextual bandit at sampled ICODE-MPPI states."
+
+events_logged:
+  - {type: experiment, id: N106, provenance: ai-executed, summary: "L98 motivated a statewise anytime K50-to-K100 budget decision."}
+  - {type: dead_end, id: N107, provenance: ai-executed, summary: "L100 found predictable headroom but failed the mean-compute Gate."}
+  - {type: experiment, id: N108, provenance: ai-executed, summary: "L101 confirmed a constrained supervised predictor as a learnability baseline."}
+  - {type: dead_end, id: N109, provenance: ai-executed, summary: "L102's uncalibrated deployment dual under-spent and failed Oracle retention."}
+  - {type: experiment, id: N110, provenance: ai-executed, summary: "L103 calibrated bandit passed all frozen sampled-state Gates on new episodes."}
+  - {type: claim, id: C73, provenance: ai-suggested, summary: "Additional MPPI samples have selectively predictable physical value."}
+  - {type: claim, id: C74, provenance: ai-suggested, summary: "Uncalibrated terminal dual transport was refuted."}
+  - {type: claim, id: C75, provenance: ai-suggested, summary: "Calibrated partial-feedback bandit learns non-random compute allocation."}
+  - {type: claim, id: C76, provenance: ai-suggested, summary: "Closed-loop and ICODE-interaction implications remain untested."}
+  - {type: heuristic, id: H54, provenance: ai-suggested, summary: "Use exact nested candidates and restored snapshots."}
+  - {type: heuristic, id: H55, provenance: ai-suggested, summary: "Separate exploration price from deployment calibration."}
+  - {type: heuristic, id: H56, provenance: ai-suggested, summary: "Treat counterfactual state evidence as an online eligibility Gate."}
+
+ai_actions:
+  - action: "Implemented nested K50/K100 snapshot branches, first-batch diagnostics and episode-level hierarchical inference."
+    provenance: ai-executed
+    files_changed: ["experiments/rl/run_anytime_budget_oracle.py", "tests/rl/test_anytime_budget_oracle.py"]
+  - action: "Implemented and tested a constrained primal-dual contextual bandit with discovery-only deployment calibration."
+    provenance: ai-executed
+    files_changed: ["src/mobile_robot_mppi/rl/budget_bandit.py", "experiments/rl/evaluate_anytime_budget_bandit.py", "tests/rl/test_budget_bandit.py"]
+  - action: "Executed L100-L103, retained L100 and L102 failures, and documented the passed L103 confirmation and scope boundary."
+    provenance: ai-executed
+    files_changed: ["docs/rl/152_l100_nested_anytime_budget_oracle_prereg_2026-07-18.md", "docs/rl/153_l100_results_l101_budget_constraint_prereg_2026-07-18.md", "docs/rl/154_l102_primal_dual_budget_bandit_prereg_2026-07-18.md", "docs/rl/155_l102_failure_l103_calibrated_bandit_prereg_2026-07-18.md", "docs/rl/156_l103_calibrated_budget_bandit_confirmation_results_2026-07-18.md"]
+  - action: "Compiled changed Python, passed 416 RL tests and all 618 repository tests."
+    provenance: ai-executed
+
+claims_touched:
+  - {id: C73, action: created, provenance: ai-suggested}
+  - {id: C74, action: created, provenance: ai-suggested}
+  - {id: C75, action: created, provenance: ai-suggested}
+  - {id: C76, action: created, provenance: ai-suggested}
+
+open_threads:
+  - "Implement incremental online K50-to-K100 sampling while preserving exact disabled-path regression."
+  - "Run nominal/ICODE x fixed/adaptive closed-loop factorial before claiming ICODE-specific interaction."
+  - "Keep sim-trained counterfactual reward distinct from real-robot online reward availability."
+
+ai_suggestions_pending:
+  - "Use L103 as a sampled-state mechanism confirmation, not yet as the final whole-episode paper result."
+
+provenance_summary:
+  user_confirmed: 0
+  ai_suggested: 7
+  ai_executed: 9
+  user_revised: 0
+  confirmation_rate: 0.0

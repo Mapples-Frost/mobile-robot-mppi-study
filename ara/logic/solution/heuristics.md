@@ -318,3 +318,21 @@
 - **Provenance**: user
 - **Sensitivity**: medium
 - **Code ref**: [`src/mobile_robot_mppi/planning/mppi.py`, `configs/rl/contextual_covariance_jerk_confirmation_l97.yaml`]
+
+## H54: Use exact nested samples and restored physical snapshots for budget causality
+- **Rationale**: Comparing independent K50 and K100 draws confounds budget with Monte Carlo luck. Generate one K100 pool, require a byte-identical K50 prefix, reweight each complete pool, and execute both weighted sequences from the same full MuJoCo snapshot. Average repeated anchors within episode before inference.
+- **Provenance**: ai-suggested
+- **Sensitivity**: high
+- **Code ref**: [`experiments/rl/run_anytime_budget_oracle.py`, `tests/rl/test_anytime_budget_oracle.py`, `docs/rl/152_l100_nested_anytime_budget_oracle_prereg_2026-07-18.md`]
+
+## H55: Separate exploration price from deployment-budget calibration
+- **Rationale**: A primal-dual price controls partial-feedback exploration but its terminal value can depend on episode order and fail under context shift. Freeze the learned reward model, calibrate a deterministic deployment price from discovery prediction quantiles only, and evaluate the resulting compute envelope on disjoint episodes.
+- **Provenance**: ai-suggested
+- **Sensitivity**: high
+- **Code ref**: [`src/mobile_robot_mppi/rl/budget_bandit.py`, `experiments/rl/evaluate_anytime_budget_bandit.py`, `docs/rl/155_l102_failure_l103_calibrated_bandit_prereg_2026-07-18.md`]
+
+## H56: Treat sampled-state counterfactual success as an online-controller eligibility Gate
+- **Rationale**: Snapshot branches identify whether added rollouts have useful state-dependent value, but they do not include recurrent state visitation, safety interventions or accumulated timing effects. Require an incremental online implementation and a nominal/ICODE x fixed/adaptive factorial before claiming closed-loop or cross-layer interaction benefit.
+- **Provenance**: ai-suggested
+- **Sensitivity**: high
+- **Code ref**: [`docs/rl/156_l103_calibrated_budget_bandit_confirmation_results_2026-07-18.md`]

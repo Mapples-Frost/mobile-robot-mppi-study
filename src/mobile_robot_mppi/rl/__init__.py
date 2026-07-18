@@ -14,6 +14,7 @@ from .competence import (
     ProgressCompetenceConfig,
     ProgressCompetenceGate,
 )
+from .budget_bandit import BudgetDecision, PrimalDualBudgetBandit
 
 __all__ = [
     "EpisodicPoseCountBonus",
@@ -30,4 +31,6 @@ __all__ = [
     "ProgressCompetence",
     "ProgressCompetenceConfig",
     "ProgressCompetenceGate",
+    "BudgetDecision",
+    "PrimalDualBudgetBandit",
 ]

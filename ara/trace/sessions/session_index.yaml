@@ -74,3 +74,6 @@ sessions:
   - id: "2026-07-18_024"
     path: "trace/sessions/2026-07-18_024.yaml"
     summary: "L96 identified an actuator-facing jerk remedy; L97 confirmed the mechanism and half-budget efficiency while failing strict final-package jerk dominance."
+  - id: "2026-07-18_025"
+    path: "trace/sessions/2026-07-18_025.yaml"
+    summary: "L100-L103 established selective anytime-budget value, retained two failed Gates, and independently confirmed a calibrated constrained contextual bandit at sampled ICODE-MPPI states."

@@ -648,3 +648,39 @@
 - **Proof**: [`results/research_platform/rl/l97_contextual_covariance_jerk_confirmation_20260718_v1/summary.json`, `docs/rl/149_l97_contextual_covariance_jerk_confirmation_results_2026-07-18.md`, `ara/evidence/figures/fig10_l96_l97_jerk_remediation.md`]
 - **Dependencies**: [C70, C71]
 - **Tags**: jerk, strict-gate, negative-result, scope-boundary
+
+## C73: Additional MPPI samples have selectively predictable physical value
+- **Statement**: Under one frozen ICODE dynamics model, proposal mean and covariance, the physical value of extending a nested K50 pool to K100 varies across sampled route states and can be predicted from information available after the first 50 rollouts under an explicit compute constraint.
+- **Status**: supported
+- **Provenance**: ai-suggested
+- **Falsification criteria**: Exact-prefix or snapshot integrity fails, Oracle ADD collapses outside `[0.10, 0.75]`, Oracle relative gain falls below 1%, or both constrained L101 and L103 policies fail to improve K50 while retaining at least 30% of Oracle gain under mean K no greater than 80.
+- **Proof**: [`results/research_platform/rl/l101_budget_constrained_ridge_20260718_v1/summary.json`, `results/research_platform/rl/l103_calibrated_budget_bandit_20260718_v1/bandit_summary.json`, `docs/rl/156_l103_calibrated_budget_bandit_confirmation_results_2026-07-18.md`]
+- **Dependencies**: [C53, C68]
+- **Tags**: ICODE, MPPI, sample-efficiency, anytime-compute, common-random-numbers
+
+## C74: A terminal online dual price transports the discovery compute envelope to deployment
+- **Statement**: The final primal-dual price reached during contextual-bandit exploration is sufficient without calibration to preserve the intended ADD rate and Oracle-utility retention on held-out contexts.
+- **Status**: refuted
+- **Provenance**: ai-suggested
+- **Falsification criteria**: Held-out ADD remains within the intended envelope, mean K remains no greater than 80, and Oracle-gain retention is at least 30% without post-training calibration.
+- **Proof**: [`results/research_platform/rl/l102_primal_dual_budget_bandit_20260718_v1/bandit_summary.json`, `docs/rl/155_l102_failure_l103_calibrated_bandit_prereg_2026-07-18.md`]
+- **Dependencies**: [C73]
+- **Tags**: contextual-bandit, primal-dual, deployment-calibration, negative-result
+
+## C75: A calibrated contextual bandit learns non-random ICODE-MPPI compute allocation at sampled states
+- **Statement**: A partial-feedback contextual bandit trained only on selected ADD50 rewards and calibrated only on discovery predictions improves held-out true branch cost over fixed K50 under mean K no greater than 80, retains at least 30% of hindsight-Oracle gain, and allocates compute better than matched random selection across the same route and physics strata.
+- **Status**: supported
+- **Provenance**: ai-suggested
+- **Falsification criteria**: The L103 integrity audit fails; its K50 cost-delta interval includes zero; mean K exceeds 80; Oracle retention is below 30%; or a matched-budget randomization reanalysis places the learned statistic inside the random 95% interval.
+- **Proof**: [`results/research_platform/rl/l103_calibrated_budget_bandit_20260718_v1/bandit_summary.json`, `docs/rl/156_l103_calibrated_budget_bandit_confirmation_results_2026-07-18.md`, `ara/evidence/tables/table11_l100_l103_anytime_budget.md`]
+- **Dependencies**: [C73, C74]
+- **Tags**: contextual-bandit, ICODE, MPPI, constrained-RL, sample-efficiency, confirmation
+
+## C76: L103 establishes whole-episode closed-loop and ICODE-specific interaction benefit
+- **Statement**: The sampled-state L103 counterfactual result by itself proves that adaptive budgeting improves complete closed-loop episodes and that its benefit statistically interacts with ICODE rather than nominal rollout dynamics.
+- **Status**: untested
+- **Provenance**: ai-suggested
+- **Falsification criteria**: A nominal/ICODE x fixed/adaptive closed-loop factorial yields no adaptive-budget episode benefit or no identifiable dynamics-by-budget interaction.
+- **Proof**: [`docs/rl/156_l103_calibrated_budget_bandit_confirmation_results_2026-07-18.md`]
+- **Dependencies**: [C75]
+- **Tags**: scope-boundary, closed-loop, factorial, ICODE-interaction, untested

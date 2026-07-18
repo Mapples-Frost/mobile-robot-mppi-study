@@ -24,6 +24,20 @@ question is a causal anytime `K=50 -> K=100` stop/continue policy, not a change
 of the ICODE + RL research direction. See
 `docs/rl/151_l98_cross_layer_factorial_results_and_anytime_pivot_2026-07-18.md`.
 
+L100--L103 resolve that question with nested common-random-number rollouts and
+a compute-constrained contextual bandit. L102 is retained as a failed frozen
+trial: its terminal online dual price under-used the held-out compute budget.
+L103 separates exploration pricing from discovery-only deployment calibration
+and passes every preregistered confirmation Gate on 48 new MuJoCo episodes. At
+held-out physical states the bandit uses a mean `K=77.86`, improves true branch
+cost by `2.400%` over fixed `K=50` (episode-level 95% CI for the raw delta
+`[-0.523, -0.114]`), and retains `58.1%` of hindsight-Oracle gain. A secondary
+stratified matched-budget randomization test gives `p=0.00020`, indicating that
+the learned allocation matters beyond merely spending the same average budget.
+This is sampled-state evidence; online closed-loop and ICODE-specific
+interaction tests remain the next claim boundary. See
+`docs/rl/156_l103_calibrated_budget_bandit_confirmation_results_2026-07-18.md`.
+
 本仓库是一套面向科研实验的移动机器人控制平台，主线包括：
 
 - 可变目标、路径与轨迹参考；

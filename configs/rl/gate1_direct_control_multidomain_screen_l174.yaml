@@ -1,0 +1,24 @@
+include: gate1_direct_control_quantile_sac_l169.yaml
+
+experiment:
+  name: gate1_direct_control_multidomain_screen_l174
+  output_dir: results/research_platform/rl/gate1_direct_control_multidomain_screen_l174
+
+# Intermediate evidence gate before the frozen 200k Stage-A run. Unlike the
+# earlier single-scene learnability screen, this run exercises every declared
+# seen scene/physics domain and validates on both seen and combined-unseen
+# dynamics. It is not labelled a formal paper result.
+rl:
+  policy_id: gate1_direct_control_multidomain_screen_l174
+  training:
+    total_steps: 60000
+    warmup_steps: 5000
+    update_after: 1000
+    batch_size: 256
+    replay_capacity: 250000
+    evaluation_interval: 10000
+    evaluation_episodes: 3
+    checkpoint_interval: 10000
+    save_replay_buffer: false
+    seed: 20260718
+    validation_seed_base: 22320718

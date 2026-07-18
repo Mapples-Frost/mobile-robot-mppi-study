@@ -1,0 +1,11 @@
+include: gate1_direct_control_multidomain_screen_l174.yaml
+
+experiment:
+  name: gate1_direct_control_multidomain_screen_l175
+  output_dir: results/research_platform/rl/gate1_direct_control_multidomain_screen_l175
+
+# Clean-SHA rerun. L174 was intentionally interrupted at 10k after detecting
+# that its new configuration had not yet been committed; L174 is development
+# provenance only and must not be used as paper evidence.
+rl:
+  policy_id: gate1_direct_control_multidomain_screen_l175

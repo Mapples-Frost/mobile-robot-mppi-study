@@ -202,29 +202,45 @@ class PaperDirectControlPolicy:
         offsets = offsets.reshape(-1)
         if offsets.shape != (states.shape[0],) or not np.isfinite(offsets).all():
             raise ValueError("policy rollout time offsets are invalid")
-        rows = []
-        for state, previous, offset in zip(
-            states, previous_controls, offsets
-        ):
-            hypothetical = self._hypothetical_observation(
-                state, observation, state_spec, offset
-            )
+        # Every hypothetical state in this batch is conditioned on the same
+        # latest real LaserScan. Sectorization is therefore invariant across
+        # candidates and must be computed once, rather than once per state.
+        # This preserves the paper-level observation semantics while avoiding
+        # an O(batch_size * scan_rays) Python hot path.
+        scan_encoding = self.encoder._scan_features(observation.scan)
+        x_index = state_spec.index("x")
+        y_index = state_spec.index("y")
+        theta_index = state_spec.index("theta")
+        poses = states[:, (x_index, y_index, theta_index)]
+        twists = np.empty((states.shape[0], 2), dtype=np.float64)
+        twists[:, 0] = (
+            states[:, state_spec.index("v")]
+            if "v" in state_spec.names
+            else float(observation.twist.v)
+        )
+        twists[:, 1] = (
+            states[:, state_spec.index("omega")]
+            if "omega" in state_spec.names
+            else float(observation.twist.omega)
+        )
+        targets = np.empty((states.shape[0], 2), dtype=np.float64)
+        for index, (state, offset) in enumerate(zip(states, offsets)):
             target = reference.target_at(
-                hypothetical.timestamp, hypothetical.pose.as_array()
+                float(observation.timestamp) + float(offset),
+                state[[x_index, y_index, theta_index]],
             )
-            rows.append(
-                self.encoder.encode_to_target(
-                    hypothetical,
-                    target,
-                    previous_action=previous,
-                    safety_override=False,
-                    update_history=False,
-                )
-            )
-        raw = np.stack(rows).astype(np.float32, copy=False)
-        normalized = np.stack(
-            [self.normalizer.normalize(row) for row in raw]
-        ).astype(np.float32, copy=False)
+            targets[index] = (target.pose.x, target.pose.y)
+        raw = self.encoder.encode_kinematic_batch(
+            poses,
+            twists,
+            targets,
+            previous_controls,
+            scan_encoding,
+            safety_override=False,
+        )
+        normalized = self.normalizer.normalize(raw).astype(
+            np.float32, copy=False
+        )
         return raw, normalized
 
     def action_distribution(
@@ -285,12 +301,17 @@ class PaperDirectControlPolicy:
             state_spec,
             time_offset,
         )
+        return self.sample_from_distribution(distribution, rng), distribution
+
+    def sample_from_distribution(self, distribution, rng):
+        """Draw physical commands from a previously evaluated Actor batch."""
+
         noise = rng.normal(size=distribution["pre_tanh_mean"].shape)
         normalized = np.tanh(
             distribution["pre_tanh_mean"]
             + np.exp(distribution["log_std"]) * noise
         )
-        return self.normalized_to_physical(normalized), distribution
+        return self.normalized_to_physical(normalized)
 
     def terminal_value(
         self,

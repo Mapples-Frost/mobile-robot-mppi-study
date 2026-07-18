@@ -74,6 +74,68 @@ def test_missing_scan_is_explicit_not_nan():
     assert encoded[-1] == 0.0
 
 
+def test_cached_scan_encoding_is_numerically_identical():
+    action_spec = body_velocity_action((0.0, 0.4), 1.0)
+    encoder = ObservationEncoder({"lidar_sectors": 5}, action_spec)
+    observation = _observation()
+    target = PointGoal(0.0, 2.0).target_at(
+        observation.timestamp, observation.pose.as_array()
+    )
+    previous = np.asarray((0.2, -0.1))
+
+    uncached = encoder.encode_to_target(
+        observation,
+        target,
+        previous_action=previous,
+        update_history=False,
+    )
+    cached = encoder.encode_to_target(
+        observation,
+        target,
+        previous_action=previous,
+        update_history=False,
+        scan_encoding=encoder._scan_features(observation.scan),
+    )
+
+    np.testing.assert_array_equal(cached, uncached)
+
+
+def test_batched_kinematic_encoding_matches_scalar_encoder():
+    action_spec = body_velocity_action((0.0, 0.4), 1.0)
+    encoder = ObservationEncoder(
+        {
+            "lidar_sectors": 5,
+            "include_absolute_pose": True,
+            "history_frames": 1,
+        },
+        action_spec,
+    )
+    observation = _observation()
+    target = PointGoal(0.0, 2.0).target_at(
+        observation.timestamp, observation.pose.as_array()
+    )
+    previous = np.asarray((0.2, -0.1))
+    scan_encoding = encoder._scan_features(observation.scan)
+    scalar = encoder.encode_to_target(
+        observation,
+        target,
+        previous_action=previous,
+        safety_override=True,
+        update_history=False,
+        scan_encoding=scan_encoding,
+    )
+    batched = encoder.encode_kinematic_batch(
+        np.asarray((observation.pose.as_array(),)),
+        np.asarray(((observation.twist.v, observation.twist.omega),)),
+        np.asarray(((target.pose.x, target.pose.y),)),
+        previous[None, :],
+        scan_encoding,
+        safety_override=np.asarray((True,)),
+    )
+
+    np.testing.assert_allclose(batched[0], scalar, rtol=0.0, atol=1e-7)
+
+
 def test_observation_history_stacks_oldest_to_newest_and_resets():
     action_spec = body_velocity_action((0.0, 0.4), 1.0)
     encoder = ObservationEncoder(

@@ -101,6 +101,15 @@ class AuditableDirectPolicy:
         }
 
 
+class JointBatchedDirectPolicy(AuditableDirectPolicy):
+    def sample_from_distribution(self, distribution, rng):
+        return (
+            distribution["physical_mean"]
+            + rng.normal(size=distribution["physical_mean"].shape)
+            * distribution["physical_std"]
+        )
+
+
 def _observation():
     return RobotObservation(
         timestamp=0.0,
@@ -149,6 +158,35 @@ def test_paper_guided_set_is_generated_once_and_reused_each_iteration():
     assert policy.terminal_calls == 3
     assert result.control_sequence.shape == (5, 2)
     assert result.predicted_trajectory.shape == (6, 5)
+
+
+def test_actor_mean_and_guided_rollouts_share_one_batched_query_per_step():
+    policy = JointBatchedDirectPolicy()
+    result = _controller(policy).plan(
+        _observation(), PointGoal(1.0, 0.0)
+    )
+
+    assert result.diagnostics["paper_actor_joint_batched"]
+    assert policy.distribution_calls == 5
+    assert policy.sample_calls == 0
+    assert result.diagnostics["paper_guided_generation_calls"] == 1
+    assert result.diagnostics["paper_guided_reuses"] == 15
+
+
+def test_joint_actor_batch_preserves_unbatched_sampling_result():
+    fallback = _controller(AuditableDirectPolicy()).plan(
+        _observation(), PointGoal(1.0, 0.0)
+    )
+    batched = _controller(JointBatchedDirectPolicy()).plan(
+        _observation(), PointGoal(1.0, 0.0)
+    )
+
+    np.testing.assert_array_equal(
+        batched.control_sequence, fallback.control_sequence
+    )
+    np.testing.assert_array_equal(
+        batched.predicted_trajectory, fallback.predicted_trajectory
+    )
 
 
 def test_paper_terminal_return_is_explicitly_converted_to_mppi_cost():

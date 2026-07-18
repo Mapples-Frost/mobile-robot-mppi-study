@@ -1,0 +1,143 @@
+"""Blocked 2x2 factorial contrasts for ICODE-by-RL experiments."""
+
+from collections import defaultdict
+
+import numpy as np
+
+
+CELL_METHODS = {
+    (0, 0): "traditional_mppi",
+    (1, 0): "icode_mppi",
+    (0, 1): "rl_driven_mppi",
+    (1, 1): "simple_combination",
+}
+
+
+def _finite_float(value, metric, block):
+    try:
+        result = float(value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(
+            "%s is not numeric in block %s" % (metric, block)
+        ) from exc
+    if not np.isfinite(result):
+        raise ValueError(
+            "%s is not finite in block %s" % (metric, block)
+        )
+    return result
+
+
+def complete_factorial_blocks(rows, metric):
+    """Return one four-cell response vector per randomized complete block."""
+
+    grouped = defaultdict(dict)
+    for row in rows:
+        block = str(row["block"])
+        method = str(row["method"])
+        if method in grouped[block]:
+            raise ValueError(
+                "duplicated method %s in block %s" % (method, block)
+            )
+        grouped[block][method] = _finite_float(
+            row[metric], metric, block
+        )
+    expected = set(CELL_METHODS.values())
+    incomplete = {
+        block: sorted(expected - set(cells))
+        for block, cells in grouped.items()
+        if set(cells) != expected
+    }
+    if incomplete:
+        raise ValueError(
+            "factorial blocks are incomplete: %s" % incomplete
+        )
+    if not grouped:
+        raise ValueError("factorial analysis requires at least one block")
+    names = sorted(grouped)
+    values = np.asarray([
+        [
+            grouped[block][CELL_METHODS[(0, 0)]],
+            grouped[block][CELL_METHODS[(1, 0)]],
+            grouped[block][CELL_METHODS[(0, 1)]],
+            grouped[block][CELL_METHODS[(1, 1)]],
+        ]
+        for block in names
+    ], dtype=np.float64)
+    return names, values
+
+
+def _contrasts(values):
+    traditional, icode, rl, combination = values.T
+    return {
+        "icode_main_effect": 0.5 * (
+            (icode - traditional) + (combination - rl)
+        ),
+        "rl_main_effect": 0.5 * (
+            (rl - traditional) + (combination - icode)
+        ),
+        "icode_by_rl_interaction": (
+            combination - icode - rl + traditional
+        ),
+        "combination_vs_traditional": combination - traditional,
+        "combination_vs_icode": combination - icode,
+        "combination_vs_rl": combination - rl,
+    }
+
+
+def blocked_factorial_contrasts(
+    rows,
+    metric,
+    higher_is_better=False,
+    bootstrap_samples=5000,
+    seed=20260718,
+):
+    """Estimate paired effects and resample independent blocks.
+
+    Controller timesteps never enter this calculation.  The resampling unit is
+    the declared scene-by-physics-domain-by-seed block.
+    """
+
+    blocks, values = complete_factorial_blocks(rows, metric)
+    effects = _contrasts(values)
+    sample_count = int(bootstrap_samples)
+    if sample_count < 0:
+        raise ValueError("bootstrap_samples must be non-negative")
+    bootstrap = {name: [] for name in effects}
+    if sample_count and len(blocks) >= 2:
+        rng = np.random.RandomState(int(seed))
+        for _ in range(sample_count):
+            indices = rng.randint(0, len(blocks), size=len(blocks))
+            resampled = _contrasts(values[indices])
+            for name, effect in resampled.items():
+                bootstrap[name].append(float(np.mean(effect)))
+    result = {
+        "metric": str(metric),
+        "higher_is_better": bool(higher_is_better),
+        "independent_unit": "scene x physics_domain x seed block",
+        "blocks": len(blocks),
+        "bootstrap_samples": sample_count,
+        "bootstrap_seed": int(seed),
+        "effects": {},
+    }
+    for name, per_block in effects.items():
+        estimate = float(np.mean(per_block))
+        samples = np.asarray(bootstrap[name], dtype=np.float64)
+        result["effects"][name] = {
+            "estimate": estimate,
+            "favorable_direction": (
+                "positive" if higher_is_better else "negative"
+            ),
+            "favorable": bool(
+                estimate > 0.0 if higher_is_better else estimate < 0.0
+            ),
+            "ci95": (
+                None
+                if samples.size == 0
+                else [
+                    float(np.percentile(samples, 2.5)),
+                    float(np.percentile(samples, 97.5)),
+                ]
+            ),
+            "per_block": [float(value) for value in per_block],
+        }
+    return result

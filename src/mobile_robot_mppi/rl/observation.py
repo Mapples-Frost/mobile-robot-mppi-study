@@ -126,6 +126,7 @@ class ObservationEncoder:
         target,
         previous_action=None,
         safety_override=False,
+        scan_encoding=None,
     ):
         pose = observation.pose
         dx = float(target.pose.x - pose.x)
@@ -155,7 +156,18 @@ class ObservationEncoder:
             features.extend(self._normalized_action(previous_action).tolist())
         if self.config.include_safety_state:
             features.append(float(bool(safety_override)))
-        scan_features, scan_valid = self._scan_features(observation.scan)
+        if scan_encoding is None:
+            scan_features, scan_valid = self._scan_features(observation.scan)
+        else:
+            scan_features, scan_valid = scan_encoding
+            scan_features = np.asarray(scan_features, dtype=np.float32)
+            if scan_features.shape != (self.config.lidar_sectors,):
+                raise ValueError("cached scan features have an invalid shape")
+            if (
+                not np.isfinite(scan_features).all()
+                or not np.isfinite(float(scan_valid))
+            ):
+                raise ValueError("cached scan features must be finite")
         features.extend(scan_features.tolist())
         features.append(scan_valid)
         frame = np.asarray(features, dtype=np.float32)
@@ -170,6 +182,7 @@ class ObservationEncoder:
         previous_action=None,
         safety_override=False,
         update_history=True,
+        scan_encoding=None,
     ):
         """Encode against an explicit target, optionally without state mutation.
 
@@ -183,6 +196,7 @@ class ObservationEncoder:
             target,
             previous_action=previous_action,
             safety_override=safety_override,
+            scan_encoding=scan_encoding,
         )
         history_frames = self.config.history_frames
         if update_history:
@@ -201,6 +215,115 @@ class ObservationEncoder:
         encoded = np.concatenate(history).astype(np.float32, copy=False)
         if encoded.shape != (self.dimension,) or not np.isfinite(encoded).all():
             raise FloatingPointError("RL observation history produced invalid features")
+        return encoded
+
+    def encode_kinematic_batch(
+        self,
+        poses,
+        twists,
+        target_positions,
+        previous_actions,
+        scan_encoding,
+        safety_override=False,
+    ):
+        """Vectorize history-free hypothetical policy observations.
+
+        MPPI evaluates many candidate states against one latest LaserScan.
+        Reconstructing a ``RobotObservation`` and sectorizing that same scan
+        for every candidate is mathematically redundant.  This method emits
+        the exact single-frame feature layout used by :meth:`encode_to_target`
+        while making the shared-sensor assumption explicit and auditable.
+        """
+
+        if self.config.history_frames != 1:
+            raise ValueError(
+                "batched kinematic encoding requires history_frames=1"
+            )
+        poses = np.asarray(poses, dtype=np.float64)
+        twists = np.asarray(twists, dtype=np.float64)
+        targets = np.asarray(target_positions, dtype=np.float64)
+        previous = np.asarray(previous_actions, dtype=np.float64)
+        batch = poses.shape[0] if poses.ndim == 2 else 0
+        if (
+            batch <= 0
+            or poses.shape != (batch, 3)
+            or twists.shape != (batch, 2)
+            or targets.shape != (batch, 2)
+            or previous.shape != (batch, self.action_spec.dimension)
+        ):
+            raise ValueError("batched kinematic observation shapes are invalid")
+        if not all(
+            np.isfinite(values).all()
+            for values in (poses, twists, targets, previous)
+        ):
+            raise ValueError("batched kinematic observations must be finite")
+
+        scan_features, scan_valid = scan_encoding
+        scan_features = np.asarray(scan_features, dtype=np.float64)
+        if (
+            scan_features.shape != (self.config.lidar_sectors,)
+            or not np.isfinite(scan_features).all()
+            or not np.isfinite(float(scan_valid))
+        ):
+            raise ValueError("cached scan features are invalid")
+
+        x, y, theta = poses.T
+        dx = targets[:, 0] - x
+        dy = targets[:, 1] - y
+        cosine = np.cos(theta)
+        sine = np.sin(theta)
+        body_dx = cosine * dx + sine * dy
+        body_dy = -sine * dx + cosine * dy
+        scale = float(self.config.goal_distance_scale)
+        columns = [
+            np.clip(body_dx / scale, -1.0, 1.0),
+            np.clip(body_dy / scale, -1.0, 1.0),
+            np.clip(np.hypot(dx, dy) / scale, 0.0, 1.0),
+            np.arctan2(body_dy, body_dx) / np.pi,
+            np.clip(
+                twists[:, 0] / self.config.velocity_scale, -2.0, 2.0
+            ),
+            np.clip(
+                twists[:, 1] / self.config.yaw_rate_scale, -2.0, 2.0
+            ),
+            sine,
+            cosine,
+        ]
+        blocks = [np.column_stack(columns)]
+        if self.config.include_absolute_pose:
+            blocks.append(np.column_stack((x / scale, y / scale)))
+        if self.config.include_previous_action:
+            center = 0.5 * (
+                self.action_spec.upper + self.action_spec.lower
+            )
+            half_range = 0.5 * (
+                self.action_spec.upper - self.action_spec.lower
+            )
+            blocks.append(np.clip(
+                (previous - center) / half_range, -1.0, 1.0
+            ))
+        if self.config.include_safety_state:
+            flag = np.asarray(safety_override, dtype=np.float64)
+            if flag.ndim == 0:
+                flag = np.full(batch, float(bool(flag)))
+            flag = flag.reshape(-1)
+            if flag.shape != (batch,) or not np.isfinite(flag).all():
+                raise ValueError("batched safety state is invalid")
+            blocks.append(flag[:, None])
+        blocks.extend((
+            np.broadcast_to(scan_features[None, :], (batch, scan_features.size)),
+            np.full((batch, 1), float(scan_valid), dtype=np.float64),
+        ))
+        encoded = np.concatenate(blocks, axis=1).astype(
+            np.float32, copy=False
+        )
+        if (
+            encoded.shape != (batch, self.dimension)
+            or not np.isfinite(encoded).all()
+        ):
+            raise FloatingPointError(
+                "batched RL observation encoder produced invalid features"
+            )
         return encoded
 
     def encode(

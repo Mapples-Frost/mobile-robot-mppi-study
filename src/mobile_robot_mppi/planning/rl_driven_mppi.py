@@ -729,6 +729,93 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
             raise FloatingPointError("guided Actor rollout produced NaN or Inf")
         return sequences
 
+    def _joint_actor_rollouts(
+        self, state, observation, reference, guided_count, rng
+    ):
+        """Batch deterministic and stochastic Actor trajectories together.
+
+        The first trajectory is the deterministic Actor mean used to
+        initialize MPPI. Remaining trajectories are the persistent stochastic
+        guided set. They share the same autoregressive dynamics calls, but
+        stochastic noise is drawn only for the guided rows so fixed-seed
+        sampling semantics remain unchanged.
+        """
+
+        count = int(guided_count)
+        batch = count + 1
+        states = np.repeat(
+            np.asarray(state, dtype=np.float64).reshape(1, -1),
+            batch,
+            axis=0,
+        )
+        previous = np.repeat(
+            self.previous_action.reshape(1, -1), batch, axis=0
+        )
+        means = np.empty(
+            (self.config.horizon, self.action_spec.dimension),
+            dtype=np.float64,
+        )
+        variances = np.empty_like(means)
+        guided = np.empty(
+            (count, self.config.horizon, self.action_spec.dimension),
+            dtype=np.float64,
+        )
+        for step in range(self.config.horizon):
+            distribution = self.sampling_prior.action_distribution(
+                states,
+                previous,
+                observation,
+                reference,
+                self.state_spec,
+                step * self.config.dt,
+            )
+            command = np.asarray(
+                distribution["physical_mean"], dtype=np.float64
+            ).copy()
+            means[step] = command[0]
+            variances[step] = (
+                np.asarray(distribution["physical_std"])[0] ** 2
+            )
+            if count:
+                guided_distribution = {
+                    key: (
+                        np.asarray(value)[1:]
+                        if isinstance(value, np.ndarray)
+                        and value.shape[:1] == (batch,)
+                        else value
+                    )
+                    for key, value in distribution.items()
+                }
+                command[1:] = (
+                    self.sampling_prior.sample_from_distribution(
+                        guided_distribution, rng
+                    )
+                )
+            command = self.action_spec.clip(
+                command, previous=previous, dt=self.config.dt
+            )
+            means[step] = command[0]
+            if count:
+                guided[:, step, :] = command[1:]
+            applied = self._delayed_control(command, previous)
+            states = integrate_batch(
+                self.dynamics,
+                states,
+                applied,
+                self.config.dt,
+                self.state_spec,
+                self.config.integrator,
+            )
+            previous = command
+        if not all(
+            np.isfinite(values).all()
+            for values in (means, variances, guided)
+        ):
+            raise FloatingPointError(
+                "joint Actor rollout produced NaN or Inf"
+            )
+        return means, variances, guided
+
     def _gaussian_samples(self, mean, variance, count, rng):
         samples = mean[None, :, :] + rng.normal(
             size=(int(count),) + mean.shape
@@ -800,9 +887,31 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
                 "paper RL-Driven MPPI requires observation and reference"
             )
         cfg = self.paper_rl_driven_config
-        mean, actor_variance = self._actor_mean_rollout(
-            state, observation, reference
+        guided_count = int(round(
+            self.config.num_samples * cfg.guided_fraction
+        ))
+        joint_actor_batch = callable(
+            getattr(
+                self.sampling_prior,
+                "sample_from_distribution",
+                None,
+            )
         )
+        if joint_actor_batch:
+            mean, actor_variance, guided = self._joint_actor_rollouts(
+                state,
+                observation,
+                reference,
+                guided_count,
+                rng,
+            )
+        else:
+            mean, actor_variance = self._actor_mean_rollout(
+                state, observation, reference
+            )
+            guided = self._guided_rollouts(
+                state, observation, reference, guided_count, rng
+            )
         base_variance = np.broadcast_to(
             np.asarray(self.config.noise_sigma, dtype=np.float64)[None, :] ** 2,
             mean.shape,
@@ -812,14 +921,8 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
             base_variance * cfg.covariance_min_scale ** 2,
             base_variance * cfg.covariance_max_scale ** 2,
         )
-        guided_count = int(round(
-            self.config.num_samples * cfg.guided_fraction
-        ))
         gaussian_count = self.config.num_samples - guided_count
         # Critical fidelity property: generated once, reused unchanged.
-        guided = self._guided_rollouts(
-            state, observation, reference, guided_count, rng
-        )
         minimum_variance = (
             base_variance * cfg.covariance_min_scale ** 2
         )
@@ -932,6 +1035,7 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
             "paper_gaussian_elite_count": int(total_gaussian_elites),
             "paper_actor_mean_initialization": True,
             "paper_actor_covariance_initialization": True,
+            "paper_actor_joint_batched": bool(joint_actor_batch),
             "paper_actor_rollout_dynamics": type(self.dynamics).__name__,
             "paper_candidate_rollout_dynamics": type(self.dynamics).__name__,
             "paper_guided_set_persistent": True,

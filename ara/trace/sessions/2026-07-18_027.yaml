@@ -1,0 +1,54 @@
+session:
+  id: "2026-07-18_027"
+  timestamp: "2026-07-18T23:44:00+08:00"
+  summary: "Gate 2 retained a failed unconditional critic-alignment run, introduced training-outcome competence gating, and independently confirmed large progress and completion gains with a negligible unresolved jerk tradeoff."
+
+events_logged:
+  - {type: dead_end, id: N114, provenance: ai-executed, summary: "L188 rejected unconditional critic-value ICODE alignment after negative closed-loop transfer."}
+  - {type: experiment, id: N115, provenance: ai-executed, summary: "L189-L190 established the competence-gated remediation offline and on three development seeds."}
+  - {type: experiment, id: N116, provenance: ai-executed, summary: "L191 independently confirmed progress, success and stuck-step gains on five untouched seeds."}
+  - {type: claim, id: C80, provenance: ai-suggested, summary: "Support and critic agreement alone are insufficient safeguards against negative transfer."}
+  - {type: claim, id: C81, provenance: ai-suggested, summary: "Competence-gated RL value alignment improves ICODE in solvable mismatch tasks."}
+  - {type: claim, id: C82, provenance: ai-suggested, summary: "Universal no-regression and narrow-corridor improvement were refuted."}
+  - {type: heuristic, id: H59, provenance: ai-suggested, summary: "Separate critic task competence from support and twin agreement."}
+  - {type: heuristic, id: H60, provenance: ai-suggested, summary: "Validate immutable provenance and disjoint seeds before merging parallel shards."}
+  - {type: heuristic, id: H61, provenance: ai-suggested, summary: "Pre-register physically meaningful equivalence margins for secondary endpoints."}
+
+ai_actions:
+  - action: "Implemented frozen SAC critic alignment, task-specific Actor data collection, multi-step value loss, checkpoint provenance and offline evaluation."
+    provenance: ai-executed
+    files_changed: ["src/mobile_robot_mppi/learning/value_alignment.py", "src/mobile_robot_mppi/learning/residual_trainer.py", "experiments/icode/collect_factorial_onpolicy_data.py", "experiments/icode/train_residual_model.py", "experiments/icode/evaluate_residual_model.py"]
+  - action: "Implemented auditable paired checkpoint execution, randomized treatment scheduling and seed-clustered Gate 2 analysis."
+    provenance: ai-executed
+    files_changed: ["src/mobile_robot_mppi/evaluation/paired_checkpoint.py", "experiments/rl/run_gate2_paired_checkpoints.py", "experiments/icode/analyze_value_alignment_gate.py"]
+  - action: "Added training-outcome-calibrated critic competence and retrained the L189 ICODE checkpoint."
+    provenance: ai-executed
+    files_changed: ["src/mobile_robot_mppi/learning/value_alignment.py", "src/mobile_robot_mppi/learning/residual_trainer.py", "configs/icode/gate2_competence_gated_icode_l189.yaml"]
+  - action: "Executed L188, L190 and L191 paired MuJoCo studies and merged the disjoint L191 shards after immutable-provenance validation."
+    provenance: ai-executed
+    files_changed: ["experiments/rl/merge_paired_checkpoint_runs.py", "tests/evaluation/test_paired_checkpoint.py"]
+  - action: "Documented the complete positive and negative evidence chain without treating the strict jerk Gate as passed."
+    provenance: ai-executed
+    files_changed: ["docs/rl/172_gate2_competence_gated_remediation_prereg_2026-07-18.md", "docs/rl/173_gate2_competence_gated_value_alignment_results_2026-07-18.md", "ara/evidence/tables/table12_l188_l191_value_alignment.md"]
+
+claims_touched:
+  - {id: C80, action: created, provenance: ai-suggested}
+  - {id: C81, action: created, provenance: ai-suggested}
+  - {id: C82, action: created, provenance: ai-suggested}
+
+open_threads:
+  - "Prospectively define a physically justified jerk-equivalence margin before the 10-20 seed paper confirmation."
+  - "Run final Gate 2 confirmation serially for valid compute profiling and across additional independent Actor/ICODE training blocks."
+  - "Resolve the narrow-corridor planning floor through residual-conditioned RL guidance rather than attributing it to dynamics learning."
+  - "Proceed to Gate 3 residual-conditioned Actor and reliability-weighted terminal value only after freezing the Gate 2 paper protocol."
+
+ai_suggestions_pending:
+  - "Use a prospectively justified 1% jerk-equivalence margin for the larger paper experiment, subject to physical-rate analysis."
+  - "Bound the Gate 2 claim to solvable dynamics-mismatch tasks and retain narrow-corridor failure as a planning limitation."
+
+provenance_summary:
+  user_confirmed: 0
+  ai_suggested: 7
+  ai_executed: 8
+  user_revised: 0
+  confirmation_rate: 0.0

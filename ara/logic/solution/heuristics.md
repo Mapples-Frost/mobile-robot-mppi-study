@@ -348,3 +348,21 @@
 - **Provenance**: ai-suggested
 - **Sensitivity**: high
 - **Code ref**: [`src/mobile_robot_mppi/rl/observation.py`, `src/mobile_robot_mppi/rl/direct_control.py`, `src/mobile_robot_mppi/rl/paper_direct_control.py`, `tests/rl/test_paper_rl_mppi.py`]
+
+## H59: Separate critic task competence from support and twin agreement
+- **Rationale**: Two critics can agree confidently on values in a state region where the frozen policy still has poor task outcomes. Multiply support and consensus confidence by a competence term calibrated only from successful versus failed training episodes before allowing value gradients to shape the residual model.
+- **Provenance**: ai-suggested
+- **Sensitivity**: high
+- **Code ref**: [`src/mobile_robot_mppi/learning/value_alignment.py`, `src/mobile_robot_mppi/learning/residual_trainer.py`, `configs/icode/gate2_competence_gated_icode_l189.yaml`, `tests/learning/test_value_alignment.py`]
+
+## H60: Merge parallel confirmation shards only after immutable-provenance validation
+- **Rationale**: Independent result directories can reduce wall time without compromising treatment trajectories, but only when source revision, checkpoint hashes, rollout budget and optimizer iterations match and seed sets are disjoint. Recompute paired effects from merged episode rows rather than averaging shard summaries.
+- **Provenance**: ai-suggested
+- **Sensitivity**: high
+- **Code ref**: [`src/mobile_robot_mppi/evaluation/paired_checkpoint.py`, `experiments/rl/merge_paired_checkpoint_runs.py`, `tests/evaluation/test_paired_checkpoint.py`]
+
+## H61: Pre-register practical equivalence margins for secondary controller endpoints
+- **Rationale**: An exact zero-regression rule turns a negligible 0.066% jerk point estimate into a formal failure despite an interval spanning both directions and large progress gains. Engineering noninferiority margins must be chosen prospectively from physical relevance before the final experiment, never retrofitted to make an observed run pass.
+- **Provenance**: ai-suggested
+- **Sensitivity**: high
+- **Code ref**: [`src/mobile_robot_mppi/evaluation/paired_checkpoint.py`, `docs/rl/173_gate2_competence_gated_value_alignment_results_2026-07-18.md`]

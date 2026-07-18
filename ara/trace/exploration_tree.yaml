@@ -1090,3 +1090,34 @@ tree:
             result: >
               All 72 randomized scene-domain-seed episodes completed with zero collisions. RL guidance produced the dominant closed-loop main effect. The ICODE plus RL simple combination improved success by one episode, reduced mean final distance by 0.0601 m and reduced control jerk by 0.00246 relative to RL alone, with the final-distance and jerk contrasts favorable in every one of the three independent seed clusters. The combination added about 45.7 ms mean planner time, all narrow-corridor cells still failed success, and the one-model-block, three-seed design remains developmental rather than confirmatory.
             evidence: [C77, C78, C79, H57, H58, "results/research_platform/rl/gate1_multidomain_factorial_l176/summary.csv", "results/research_platform/rl/gate1_multidomain_factorial_l176/factorial_contrasts_seed_clustered.json", "docs/rl/170_gate1_multidomain_factorial_results_2026-07-18.md"]
+            children:
+              - id: N114
+                type: dead_end
+                title: "L188 unconditional critic-value ICODE alignment"
+                provenance: ai-executed
+                timestamp: "2026-07-18T22:45:00+08:00"
+                hypothesis: >
+                  Frozen-critic terminal-value consistency, protected by observation support and twin-critic agreement, improves task-specific ICODE fine-tuning without harming closed-loop completion.
+                failure_mode: >
+                  Across 18 paired cells, unconditional alignment reduced jerk by 1.72% but worsened final goal distance by 11.29% and success by 5.56 percentage points. Both checkpoints remained 0/9 successful in the narrow corridor.
+                lesson: >
+                  Critic agreement and dataset support do not establish that the critic is competent for the current control task; critic training-outcome competence must independently limit gradient authority.
+                evidence: [C80, H59, "results/research_platform/rl/gate2_value_alignment_paired_l188/paired_comparison.json", "docs/rl/173_gate2_competence_gated_value_alignment_results_2026-07-18.md"]
+                children:
+                  - id: N115
+                    type: experiment
+                    title: "L189-L190 competence-gated value-alignment remediation"
+                    provenance: ai-executed
+                    timestamp: "2026-07-18T23:05:00+08:00"
+                    result: >
+                      Training-only success and failure outcomes calibrated critic-competence thresholds. L189 improved terminal value RMSE by 1.92% on test and 2.94% on unseen data while keeping H=10 rollout degradation below 3%. On three new development seeds, L190 reduced final distance by 25.22%, improved success by 5.56 percentage points and retained zero collisions.
+                    evidence: [C81, H59, "results/research_platform/gate2_competence_gated_icode_l189/training_summary.json", "results/research_platform/rl/gate2_competence_gated_paired_l190/paired_comparison.json", "docs/rl/172_gate2_competence_gated_remediation_prereg_2026-07-18.md"]
+                    children:
+                      - id: N116
+                        type: experiment
+                        title: "L191 independent competence-gated Gate 2 confirmation"
+                        provenance: ai-executed
+                        timestamp: "2026-07-18T23:35:00+08:00"
+                        result: >
+                          Thirty paired cells across five untouched seeds passed source, checkpoint and disjoint-seed provenance validation. Competence-gated ICODE reduced final goal distance by 19.86% with favorable seed-cluster interval [0.0325, 0.2201] m, increased success from 40% to 50%, reduced stuck steps by 26.70% and retained zero collisions. Jerk was 0.066% worse with a near-zero interval spanning both directions, so the frozen exact-zero secondary Gate formally failed. Clean-scene success rose from 80% to 100%, while narrow-corridor success remained 0%.
+                        evidence: [C81, C82, H60, H61, "results/research_platform/rl/gate2_competence_confirmation_l191/gate2_full_analysis.json", "docs/rl/173_gate2_competence_gated_value_alignment_results_2026-07-18.md", "ara/evidence/tables/table12_l188_l191_value_alignment.md"]

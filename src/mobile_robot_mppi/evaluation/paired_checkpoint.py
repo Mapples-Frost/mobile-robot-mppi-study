@@ -17,6 +17,52 @@ DEFAULT_METRICS = {
 }
 
 
+def validate_paired_run_provenance(manifests):
+    """Validate that split paired runs differ only in disjoint seed sets."""
+
+    manifests = [dict(item) for item in manifests]
+    if not manifests:
+        raise ValueError("at least one paired-run manifest is required")
+    immutable = (
+        "git_sha",
+        "actor_checkpoint_sha256",
+        "control_icode_checkpoint_sha256",
+        "aligned_icode_checkpoint_sha256",
+        "total_rollouts",
+        "iterations",
+    )
+    reference = manifests[0]
+    for index, manifest in enumerate(manifests[1:], start=1):
+        changed = [
+            key
+            for key in immutable
+            if manifest.get(key) != reference.get(key)
+        ]
+        if changed:
+            raise ValueError(
+                "paired-run manifest %d differs in %s"
+                % (index, ", ".join(changed))
+            )
+    seen = set()
+    combined = []
+    for manifest in manifests:
+        seeds = [int(value) for value in manifest.get("seeds", ())]
+        overlap = seen.intersection(seeds)
+        if overlap:
+            raise ValueError(
+                "paired-run seed sets overlap: %s" % sorted(overlap)
+            )
+        seen.update(seeds)
+        combined.extend(seeds)
+    return {
+        "run_count": len(manifests),
+        "seeds": sorted(combined),
+        "immutable": {
+            key: reference.get(key) for key in immutable
+        },
+    }
+
+
 def paired_checkpoint_schedule(seeds, domains, scenes, schedule_seed):
     """Randomize control/aligned order within every repeated-measures block."""
 

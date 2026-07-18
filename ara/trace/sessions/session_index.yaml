@@ -80,3 +80,6 @@ sessions:
   - id: "2026-07-18_026"
     path: "trace/sessions/2026-07-18_026.yaml"
     summary: "L174-L176 established a clean-provenance multi-domain SAC prior and a randomized Gate 1 factorial with a small consistent ICODE-plus-RL endpoint benefit, while retaining strict development-only scope."
+  - id: "2026-07-18_027"
+    path: "trace/sessions/2026-07-18_027.yaml"
+    summary: "Gate 2 retained a failed unconditional critic-alignment run, introduced training-outcome competence gating, and independently confirmed large progress and completion gains with a negligible unresolved jerk tradeoff."

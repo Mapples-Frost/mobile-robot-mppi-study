@@ -3,6 +3,7 @@ import pytest
 from mobile_robot_mppi.evaluation.paired_checkpoint import (
     gate2_closed_loop_decision,
     paired_checkpoint_effects,
+    validate_paired_run_provenance,
 )
 
 
@@ -72,3 +73,28 @@ def test_gate_rejects_primary_tradeoff():
     assert decision["positive_primary_outcome"]
     assert not decision["control_jerk_not_worse"]
     assert not decision["closed_loop_development_passed"]
+
+
+def test_split_run_provenance_requires_equal_hashes_and_disjoint_seeds():
+    base = {
+        "git_sha": "abc",
+        "actor_checkpoint_sha256": "actor",
+        "control_icode_checkpoint_sha256": "control",
+        "aligned_icode_checkpoint_sha256": "aligned",
+        "total_rollouts": 100,
+        "iterations": 2,
+        "seeds": [27, 28],
+    }
+    second = dict(base, seeds=[29, 30, 31])
+
+    result = validate_paired_run_provenance([base, second])
+
+    assert result["seeds"] == [27, 28, 29, 30, 31]
+    with pytest.raises(ValueError, match="overlap"):
+        validate_paired_run_provenance(
+            [base, dict(second, seeds=[28, 29])]
+        )
+    with pytest.raises(ValueError, match="differs"):
+        validate_paired_run_provenance(
+            [base, dict(second, actor_checkpoint_sha256="other")]
+        )

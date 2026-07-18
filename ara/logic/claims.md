@@ -711,3 +711,30 @@
 - **Proof**: [`docs/rl/170_gate1_multidomain_factorial_results_2026-07-18.md`]
 - **Dependencies**: [C78]
 - **Tags**: scope-boundary, interaction, synergy, confirmation-needed
+
+## C80: Unconditional critic consistency is insufficient for task-relevant ICODE fine-tuning
+- **Statement**: Applying the frozen SAC critic value-consistency loss without a task-competence gate can improve smoothness while degrading completion performance, so observation support and twin-critic agreement alone are insufficient safeguards against negative transfer.
+- **Status**: supported
+- **Provenance**: ai-suggested
+- **Falsification criteria**: Reanalysis of the clean-provenance L188 paired cells shows that unconditional value alignment does not worsen final goal distance or success relative to ordinary task fine-tuning.
+- **Proof**: [`results/research_platform/rl/gate2_value_alignment_paired_l188/paired_comparison.json`, `docs/rl/173_gate2_competence_gated_value_alignment_results_2026-07-18.md`, `ara/evidence/tables/table12_l188_l191_value_alignment.md`]
+- **Dependencies**: [C77, C78]
+- **Tags**: ICODE, SAC-critic, value-consistency, negative-transfer, negative-result
+
+## C81: Competence-gated RL value alignment improves ICODE in solvable dynamics-mismatch tasks
+- **Statement**: When critic gradients are gated by observation support, twin-critic agreement and competence thresholds calibrated only from training-episode outcomes, value-aligned ICODE improves terminal value prediction and independently improves final goal distance, success and stuck steps relative to ordinary ICODE fine-tuning in solvable MuJoCo dynamics-mismatch tasks while retaining zero collisions.
+- **Status**: supported
+- **Provenance**: ai-suggested
+- **Falsification criteria**: Provenance validation fails, the L189 offline value-error improvement exceeds the frozen rollout-regression allowance, or independent L191 seed-cluster intervals for final distance, success or stuck steps include zero in the unfavorable direction.
+- **Proof**: [`results/research_platform/gate2_competence_gated_icode_l189/training_summary.json`, `results/research_platform/rl/gate2_competence_confirmation_l191/gate2_full_analysis.json`, `docs/rl/172_gate2_competence_gated_remediation_prereg_2026-07-18.md`, `docs/rl/173_gate2_competence_gated_value_alignment_results_2026-07-18.md`, `ara/evidence/tables/table12_l188_l191_value_alignment.md`]
+- **Dependencies**: [C77, C80]
+- **Tags**: ICODE, SAC-critic, competence-gating, value-alignment, independent-confirmation
+
+## C82: Gate 2 establishes a universal no-regression control improvement
+- **Statement**: Competence-gated value-aligned ICODE strictly improves every closed-loop endpoint, including jerk and clearance, and resolves geometrically difficult narrow-corridor planning.
+- **Status**: refuted
+- **Provenance**: ai-suggested
+- **Falsification criteria**: Any preregistered endpoint has an adverse point estimate, or the narrow-corridor success rate remains unchanged.
+- **Proof**: [`results/research_platform/rl/gate2_competence_confirmation_l191/gate2_full_analysis.json`, `docs/rl/173_gate2_competence_gated_value_alignment_results_2026-07-18.md`]
+- **Dependencies**: [C81]
+- **Tags**: scope-boundary, jerk, clearance, narrow-corridor, negative-result

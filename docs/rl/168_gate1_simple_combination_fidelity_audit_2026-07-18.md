@@ -110,20 +110,23 @@ Gate 1 is considered integrated correctly only when all of the following hold:
 
 ## Experimental unit and run order
 
-The independent replicate is a simulation seed within a declared physics
-domain, not an individual controller timestep. All four controller treatments
-form a randomized complete block within each seed/domain:
+The independent replicate is a simulation seed cluster, not an individual
+controller timestep. Scene and physics-domain conditions are repeated strata
+within each seed. All four controller treatments form a randomized complete
+block within each scene/seed/domain:
 
 ```text
-block = seed x physics domain
+block = scene x seed x physics domain
 treatments = Traditional / ICODE / RL-Driven / Simple Combination
 ```
 
 Method execution order is permuted inside every block with a recorded schedule
 seed. This prevents wall-clock order, CPU temperature, or simulator warm-up
 from being confounded with a method's latency. Controller outcomes use paired
-comparisons within the same block. Timestep-level observations remain nested
-within an episode and are not counted as independent replicates.
+comparisons within the same block. Inference resamples seed clusters so that
+reusing common random numbers across scene/domain strata does not create
+pseudoreplication. Timestep-level observations remain nested within an episode
+and are never counted as independent replicates.
 
 The 15k-step single-scene Actor run is explicitly a learnability screen. It may
 select architecture and optimization settings, but it is not part of the

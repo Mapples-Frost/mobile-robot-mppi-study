@@ -1060,3 +1060,33 @@ tree:
                     result: >
                       All 384 anchors from 48 new MuJoCo episodes passed exact-prefix, finite-feature and zero-collision audits. On 24 held-out evaluation episodes the bandit used mean K=77.86, improved true branch cost by 2.400% over K50 with episode-bootstrap interval [-0.523, -0.114], retained 58.06% of Oracle gain and passed every frozen Gate. A post-hoc 10,000-draw stratified matched-budget randomization diagnostic gave one-sided p=0.00020.
                     evidence: [C73, C75, H54, H55, H56, "results/research_platform/rl/l103_calibrated_budget_bandit_20260718_v1/bandit_summary.json", "docs/rl/156_l103_calibrated_budget_bandit_confirmation_results_2026-07-18.md", "ara/evidence/tables/table11_l100_l103_anytime_budget.md"]
+  - id: N111
+    type: dead_end
+    title: "L174 dirty-worktree multi-domain Actor training"
+    provenance: ai-executed
+    timestamp: "2026-07-18T18:05:00+08:00"
+    hypothesis: >
+      A direct-control SAC Actor trained across scenes and bounded MuJoCo physics domains can provide a paper-faithful MPPI prior.
+    failure_mode: >
+      The run was started before the performance changes were committed, so its provenance metadata named an older source revision. Training was intentionally interrupted at 10,000 steps and the artifact was excluded from evidence.
+    lesson: >
+      Long research runs must begin from a committed source state whose SHA is recorded in the artifact; a numerically usable checkpoint is not admissible evidence when code provenance is ambiguous.
+    evidence: [H58, "docs/rl/170_gate1_multidomain_factorial_results_2026-07-18.md"]
+    children:
+      - id: N112
+        type: experiment
+        title: "L175 multi-domain direct-control SAC Actor training"
+        provenance: ai-executed
+        timestamp: "2026-07-18T19:25:00+08:00"
+        result: >
+          A clean-SHA 60,000-step SAC run trained across four scenes and four bounded physics domains. The 40,000-step checkpoint was selected on a 30-episode validation matrix and achieved 29/30 success with zero collisions; its validation curve improved from 1/30 at 10,000 steps, demonstrating nontrivial learning rather than a fixed handcrafted controller.
+        evidence: [C77, H58, "results/research_platform/rl/gate1_direct_control_multidomain_screen_l175/checkpoints/best.pt", "docs/rl/170_gate1_multidomain_factorial_results_2026-07-18.md"]
+        children:
+          - id: N113
+            type: experiment
+            title: "L176 randomized multi-domain Gate 1 factorial"
+            provenance: ai-executed
+            timestamp: "2026-07-18T21:15:00+08:00"
+            result: >
+              All 72 randomized scene-domain-seed episodes completed with zero collisions. RL guidance produced the dominant closed-loop main effect. The ICODE plus RL simple combination improved success by one episode, reduced mean final distance by 0.0601 m and reduced control jerk by 0.00246 relative to RL alone, with the final-distance and jerk contrasts favorable in every one of the three independent seed clusters. The combination added about 45.7 ms mean planner time, all narrow-corridor cells still failed success, and the one-model-block, three-seed design remains developmental rather than confirmatory.
+            evidence: [C77, C78, C79, H57, H58, "results/research_platform/rl/gate1_multidomain_factorial_l176/summary.csv", "results/research_platform/rl/gate1_multidomain_factorial_l176/factorial_contrasts_seed_clustered.json", "docs/rl/170_gate1_multidomain_factorial_results_2026-07-18.md"]

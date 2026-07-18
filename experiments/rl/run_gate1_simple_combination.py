@@ -436,6 +436,7 @@ def main(argv=None):
             higher_is_better=higher_is_better,
             bootstrap_samples=args.bootstrap_samples,
             seed=args.schedule_seed + offset,
+            cluster_key="seed",
         )
         for offset, (metric, higher_is_better) in enumerate((
             ("success", True),

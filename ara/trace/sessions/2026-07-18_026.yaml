@@ -1,0 +1,50 @@
+session:
+  id: "2026-07-18_026"
+  timestamp: "2026-07-18T22:10:00+08:00"
+  summary: "L174-L176 established a clean-provenance multi-domain SAC prior and a randomized Gate 1 factorial with a small consistent ICODE-plus-RL endpoint benefit, while retaining strict development-only scope."
+
+events_logged:
+  - {type: dead_end, id: N111, provenance: ai-executed, summary: "L174 was excluded because training began from a dirty source state."}
+  - {type: experiment, id: N112, provenance: ai-executed, summary: "L175 trained and selected a useful multi-domain direct-control SAC Actor."}
+  - {type: experiment, id: N113, provenance: ai-executed, summary: "L176 completed the randomized multi-domain Gate 1 factorial."}
+  - {type: claim, id: C77, provenance: ai-suggested, summary: "The direct-control SAC Actor provides useful MPPI guidance."}
+  - {type: claim, id: C78, provenance: ai-suggested, summary: "The simple combination has a small consistent endpoint and jerk benefit over RL alone."}
+  - {type: claim, id: C79, provenance: ai-suggested, summary: "Universal cross-layer synergy remains untested."}
+  - {type: heuristic, id: H57, provenance: ai-suggested, summary: "Bootstrap the independent seed clusters, not repeated scene-domain rows."}
+  - {type: heuristic, id: H58, provenance: ai-suggested, summary: "Batch Actor candidate inference and cache invariant scan features."}
+
+ai_actions:
+  - action: "Vectorized kinematic observation encoding, normalization and joint Actor rollout inference while retaining exact proposal regression."
+    provenance: ai-executed
+    files_changed: ["src/mobile_robot_mppi/rl/observation.py", "src/mobile_robot_mppi/rl/direct_control.py", "src/mobile_robot_mppi/rl/paper_direct_control.py", "tests/rl/test_paper_rl_mppi.py"]
+  - action: "Trained the clean-SHA L175 multi-domain Actor and selected its 40,000-step checkpoint from the frozen validation matrix."
+    provenance: ai-executed
+    files_changed: ["configs/rl/gate1_direct_control_multidomain_screen_l175.yaml"]
+  - action: "Executed all 72 L176 MuJoCo episodes under randomized treatment order and analyzed the 2x2 dynamics-by-RL factorial."
+    provenance: ai-executed
+    files_changed: ["experiments/rl/run_gate1_simple_combination.py", "src/mobile_robot_mppi/evaluation/factorial.py", "experiments/rl/analyze_gate1_factorial.py"]
+  - action: "Corrected factorial inference to resample independent seed clusters and documented the development-only Gate decision."
+    provenance: ai-executed
+    files_changed: ["src/mobile_robot_mppi/evaluation/factorial.py", "tests/evaluation/test_factorial.py", "docs/rl/168_gate1_simple_combination_fidelity_audit_2026-07-18.md", "docs/rl/170_gate1_multidomain_factorial_results_2026-07-18.md"]
+  - action: "Compiled all changed Python and passed all 651 repository tests."
+    provenance: ai-executed
+
+claims_touched:
+  - {id: C77, action: created, provenance: ai-suggested}
+  - {id: C78, action: created, provenance: ai-suggested}
+  - {id: C79, action: created, provenance: ai-suggested}
+
+open_threads:
+  - "Implement Gate 2 value-aligned ICODE loss under the frozen research plan."
+  - "Repeat Gate 1 across independent Actor and ICODE training blocks before a paper-level synergy claim."
+  - "Resolve the narrow-corridor completion failure and the worst-cell 100 ms compute overrun."
+
+ai_suggestions_pending:
+  - "Treat L176 as a Gate 1 development pass and move to value-aligned ICODE without claiming universal synergy."
+
+provenance_summary:
+  user_confirmed: 0
+  ai_suggested: 6
+  ai_executed: 8
+  user_revised: 0
+  confirmation_rate: 0.0

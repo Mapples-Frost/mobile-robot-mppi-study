@@ -336,3 +336,15 @@
 - **Provenance**: ai-suggested
 - **Sensitivity**: high
 - **Code ref**: [`docs/rl/156_l103_calibrated_budget_bandit_confirmation_results_2026-07-18.md`]
+
+## H57: Cluster repeated scene-domain measurements by independent seed
+- **Rationale**: A scene-by-domain-by-seed factorial produces many rows, but rows sharing one seed are repeated strata rather than independent replications. Aggregate treatment contrasts within seed before bootstrap inference; otherwise the nominal sample size is inflated and confidence intervals are too narrow.
+- **Provenance**: ai-suggested
+- **Sensitivity**: high
+- **Code ref**: [`src/mobile_robot_mppi/evaluation/factorial.py`, `experiments/rl/analyze_gate1_factorial.py`, `tests/evaluation/test_factorial.py`, `docs/rl/170_gate1_multidomain_factorial_results_2026-07-18.md`]
+
+## H58: Batch frozen Actor rollouts and cache step-invariant perception features
+- **Rationale**: Candidate Actor rollouts share the same latest LaserScan sector encoding within one planning step, while only kinematic state changes across candidates. Cache the scan feature once, vectorize kinematic encoding and normalizer operations, and evaluate deterministic and stochastic Actor branches jointly. Exact regression tests are required because a performance optimization that changes the proposal distribution invalidates the experiment.
+- **Provenance**: ai-suggested
+- **Sensitivity**: high
+- **Code ref**: [`src/mobile_robot_mppi/rl/observation.py`, `src/mobile_robot_mppi/rl/direct_control.py`, `src/mobile_robot_mppi/rl/paper_direct_control.py`, `tests/rl/test_paper_rl_mppi.py`]

@@ -77,3 +77,6 @@ sessions:
   - id: "2026-07-18_025"
     path: "trace/sessions/2026-07-18_025.yaml"
     summary: "L100-L103 established selective anytime-budget value, retained two failed Gates, and independently confirmed a calibrated constrained contextual bandit at sampled ICODE-MPPI states."
+  - id: "2026-07-18_026"
+    path: "trace/sessions/2026-07-18_026.yaml"
+    summary: "L174-L176 established a clean-provenance multi-domain SAC prior and a randomized Gate 1 factorial with a small consistent ICODE-plus-RL endpoint benefit, while retaining strict development-only scope."

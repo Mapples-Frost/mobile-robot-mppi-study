@@ -684,3 +684,30 @@
 - **Proof**: [`docs/rl/156_l103_calibrated_budget_bandit_confirmation_results_2026-07-18.md`]
 - **Dependencies**: [C75]
 - **Tags**: scope-boundary, closed-loop, factorial, ICODE-interaction, untested
+
+## C77: A multi-domain direct-control SAC Actor provides useful MPPI guidance
+- **Statement**: A deterministic Actor trained across four scenes and four bounded MuJoCo physics domains provides an MPPI sampling prior that materially improves closed-loop task completion, final goal distance, minimum clearance and control jerk relative to traditional MPPI across the L176 two-scene, three-domain development matrix.
+- **Status**: supported
+- **Provenance**: ai-suggested
+- **Falsification criteria**: Clean-SHA training provenance fails, the selected validation checkpoint does not outperform its early checkpoints, or seed-clustered L176 comparisons show no favorable RL main effect in success, final distance, clearance or jerk.
+- **Proof**: [`results/research_platform/rl/gate1_direct_control_multidomain_screen_l175/checkpoints/best.pt`, `results/research_platform/rl/gate1_multidomain_factorial_l176/summary.csv`, `results/research_platform/rl/gate1_multidomain_factorial_l176/factorial_contrasts_seed_clustered.json`, `docs/rl/170_gate1_multidomain_factorial_results_2026-07-18.md`]
+- **Dependencies**: [C57]
+- **Tags**: SAC, RL-driven-MPPI, sampling-prior, multi-domain, development-gate
+
+## C78: The Gate 1 ICODE plus RL simple combination has a small consistent endpoint benefit
+- **Statement**: In the L176 development block, adding the frozen ICODE rollout model to the same frozen RL prior reduces final goal distance and control jerk relative to RL-driven nominal MPPI in each of three independent seed clusters, while preserving zero collisions and adding one successful episode.
+- **Status**: supported
+- **Provenance**: ai-suggested
+- **Falsification criteria**: Reanalysis at the independent seed-cluster level reverses the final-distance or jerk contrast, collision count increases, or the result fails to reproduce across independent Actor and ICODE training blocks.
+- **Proof**: [`results/research_platform/rl/gate1_multidomain_factorial_l176/summary.csv`, `results/research_platform/rl/gate1_multidomain_factorial_l176/factorial_contrasts_seed_clustered.json`, `docs/rl/170_gate1_multidomain_factorial_results_2026-07-18.md`]
+- **Dependencies**: [C57, C77]
+- **Tags**: ICODE, RL-driven-MPPI, simple-combination, factorial, development-evidence
+
+## C79: Gate 1 proves universal ICODE-RL synergy
+- **Statement**: The L176 simple-combination result by itself establishes a universal positive ICODE by RL interaction across success, safety, smoothness, compute and unseen environments.
+- **Status**: untested
+- **Provenance**: ai-suggested
+- **Falsification criteria**: Independent model-block confirmation yields an interaction interval including zero or an unfavorable effect for any claimed primary endpoint, narrow-corridor failures persist, or hard real-time compute limits are violated.
+- **Proof**: [`docs/rl/170_gate1_multidomain_factorial_results_2026-07-18.md`]
+- **Dependencies**: [C78]
+- **Tags**: scope-boundary, interaction, synergy, confirmation-needed

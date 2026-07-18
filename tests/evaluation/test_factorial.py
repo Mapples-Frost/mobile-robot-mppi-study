@@ -32,6 +32,7 @@ def test_blocked_factorial_contrasts_recover_main_and_interaction_effects():
     )
 
     assert result["blocks"] == 2
+    assert result["independent_clusters"] == 2
     assert result["effects"]["icode_main_effect"]["estimate"] == -1.5
     assert result["effects"]["rl_main_effect"]["estimate"] == -2.5
     assert (
@@ -48,6 +49,45 @@ def test_blocked_factorial_contrasts_recover_main_and_interaction_effects():
     ]
 
 
+def test_factorial_bootstrap_clusters_repeated_strata_by_seed():
+    rows = []
+    for seed, values in (
+        (11, (10.0, 9.0, 8.0, 6.0)),
+        (12, (10.0, 9.0, 8.0, 8.0)),
+    ):
+        for scene in ("a", "b"):
+            block = "%s_seed%d" % (scene, seed)
+            for method, value in zip(
+                (
+                    "traditional_mppi",
+                    "icode_mppi",
+                    "rl_driven_mppi",
+                    "simple_combination",
+                ),
+                values,
+            ):
+                rows.append({
+                    "block": block,
+                    "seed": seed,
+                    "method": method,
+                    "loss": value,
+                })
+    result = blocked_factorial_contrasts(
+        rows,
+        "loss",
+        bootstrap_samples=100,
+        seed=7,
+        cluster_key="seed",
+    )
+
+    interaction = result["effects"]["icode_by_rl_interaction"]
+    assert result["blocks"] == 4
+    assert result["independent_clusters"] == 2
+    assert interaction["per_cluster"] == [-1.0, 1.0]
+    assert interaction["estimate"] == 0.0
+    assert interaction["ci95"] == [-1.0, 1.0]
+
+
 def test_factorial_analysis_rejects_incomplete_or_duplicated_blocks():
     incomplete = _rows()[:-1]
     with pytest.raises(ValueError, match="incomplete"):
@@ -56,3 +96,20 @@ def test_factorial_analysis_rejects_incomplete_or_duplicated_blocks():
     duplicated = _rows() + [_rows()[0]]
     with pytest.raises(ValueError, match="duplicated"):
         complete_factorial_blocks(duplicated, "loss")
+
+
+def test_factorial_analysis_accepts_csv_boolean_values():
+    rows = []
+    for method, value in (
+        ("traditional_mppi", "False"),
+        ("icode_mppi", "False"),
+        ("rl_driven_mppi", "True"),
+        ("simple_combination", "True"),
+    ):
+        rows.append({
+            "block": "a",
+            "method": method,
+            "success": value,
+        })
+    _, values = complete_factorial_blocks(rows, "success")
+    assert values.tolist() == [[0.0, 0.0, 1.0, 1.0]]

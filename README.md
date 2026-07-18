@@ -2,41 +2,26 @@
 
 ## Current validated research status (2026-07-18)
 
-The frozen control-affine ICODE residual model is integrated into MuJoCo MPPI
-rollouts.  The current primary RL mechanism is an interpretable route-context
-bandit that selects an MPPI covariance option rather than directly commanding
-the robot.  Independent L94, L95 and L97 evaluations show that contextual
-`K=50` preserves tracking precision and safety relative to the strongest fixed
-`K=100` sampler while reducing completion time and CPU planner compute.
+The retained controller combines a frozen control-affine ICODE residual model
+with a frozen route-context bandit that selects an MPPI covariance action. The
+bandit guides sampling; it never directly commands the robot, bypasses MPPI, or
+bypasses `scan_guard` and the final safety arbitration.
 
-L96/L97 also isolate a fixed yaw-command slew constraint that significantly
-reduces both issued and physically applied jerk relative to the raw contextual
-controller.  The strict final-package jerk confidence interval versus fixed
-`K=100` crosses zero, so the preregistered L97 overall Gate is recorded as
-failed; no jerk-superiority claim is made.  See
-`docs/rl/149_l97_contextual_covariance_jerk_confirmation_results_2026-07-18.md`.
+The equal-budget L108 independent confirmation completed 144/144 MuJoCo
+episodes with 100% success and zero collisions. At `K=100`, the complete method
+improved cross-track RMSE by 21.540 mm, elapsed time by 1.558 s, issued jerk by
+0.01223, and applied jerk by 0.00921 relative to traditional nominal MPPI; all
+paired 95% confidence intervals excluded zero. Against ICODE fixed `K=100`, the
+contextual RL policy improved elapsed time by 1.358 s and both jerk measures,
+with tracking parity (RMSE delta -0.265 mm, 95% CI [-1.088, +0.402] mm), no
+safety loss, and no material compute overhead.
 
-L98 then evaluated ICODE and contextual sampling in one blocked 2 x 3
-factorial. The ICODE contribution and complete-package Gates passed, but the
-contextual `K=50` arm did not meet the frozen +2 mm RMSE noninferiority margin
-against ICODE fixed `K=100`; consequently L99 remains sealed. The retained next
-question is a causal anytime `K=50 -> K=100` stop/continue policy, not a change
-of the ICODE + RL research direction. See
-`docs/rl/151_l98_cross_layer_factorial_results_and_anytime_pivot_2026-07-18.md`.
-
-L100--L103 resolve that question with nested common-random-number rollouts and
-a compute-constrained contextual bandit. L102 is retained as a failed frozen
-trial: its terminal online dual price under-used the held-out compute budget.
-L103 separates exploration pricing from discovery-only deployment calibration
-and passes every preregistered confirmation Gate on 48 new MuJoCo episodes. At
-held-out physical states the bandit uses a mean `K=77.86`, improves true branch
-cost by `2.400%` over fixed `K=50` (episode-level 95% CI for the raw delta
-`[-0.523, -0.114]`), and retains `58.1%` of hindsight-Oracle gain. A secondary
-stratified matched-budget randomization test gives `p=0.00020`, indicating that
-the learned allocation matters beyond merely spending the same average budget.
-This is sampled-state evidence; online closed-loop and ICODE-specific
-interaction tests remain the next claim boundary. See
-`docs/rl/156_l103_calibrated_budget_bandit_confirmation_results_2026-07-18.md`.
+The strict L108 overall JSON Gate remains false because its frozen policy clause
+required RMSE *superiority*, not parity. The package-versus-nominal and isolated
+ICODE contribution Gates passed. SAC actor/critic guidance and online anytime
+budget allocation remain reproducible opt-in ablations but are not retained as
+successful components. Full results and claim boundaries are documented in
+[`docs/rl/167_l107_l108_final_package_results_2026-07-18.md`](docs/rl/167_l107_l108_final_package_results_2026-07-18.md).
 
 本仓库是一套面向科研实验的移动机器人控制平台，主线包括：
 

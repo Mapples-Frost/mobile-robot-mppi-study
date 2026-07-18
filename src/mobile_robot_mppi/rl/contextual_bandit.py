@@ -13,7 +13,7 @@ from typing import Mapping, Sequence
 
 import numpy as np
 
-from mobile_robot_mppi.policies.priors import PriorOutput
+from mobile_robot_mppi.policies.priors import PriorOutput, ProposalDistribution
 
 
 REFERENCE_GEOMETRY_FEATURE_NAMES = (
@@ -314,6 +314,16 @@ class ContextualBanditCovariancePrior:
             baseline.mean,
             np.diag(np.square(standard_deviation)),
             metadata,
+            proposals=(
+                ProposalDistribution(
+                    "rl",
+                    baseline.mean,
+                    np.diag(np.square(standard_deviation)),
+                ),
+                ProposalDistribution(
+                    "base", baseline.mean, baseline.covariance
+                ),
+            ),
         )
 
     @classmethod

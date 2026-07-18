@@ -704,3 +704,35 @@ def test_correction_advantage_gate_config_fails_closed(mapping, match):
     config = GateConfig.from_mapping(mapping)
     with pytest.raises(ValueError, match=match):
         config.validate()
+
+
+def test_hypothetical_target_encoding_does_not_mutate_online_history():
+    action_spec = body_velocity_action((0.0, 0.5), 1.0)
+    encoder = ObservationEncoder(
+        ObservationEncoderConfig(lidar_sectors=4, history_frames=2),
+        action_spec,
+    )
+    reference = PointGoal(2.0, 0.0)
+    current = _observation()
+    encoder.encode(current, reference, previous_action=np.zeros(2))
+    history_before = [item.copy() for item in encoder._history]
+    hypothetical = RobotObservation(
+        current.timestamp + 0.5,
+        Pose2D(0.4, 0.1, 0.2),
+        Twist2D(0.2, 0.1),
+        scan=current.scan,
+    )
+    target = reference.target_at(
+        hypothetical.timestamp, hypothetical.pose.as_array()
+    )
+    encoded = encoder.encode_to_target(
+        hypothetical,
+        target,
+        previous_action=np.asarray((0.2, 0.1)),
+        update_history=False,
+    )
+
+    assert encoded.shape == (encoder.dimension,)
+    assert len(encoder._history) == len(history_before)
+    for actual, expected in zip(encoder._history, history_before):
+        np.testing.assert_array_equal(actual, expected)

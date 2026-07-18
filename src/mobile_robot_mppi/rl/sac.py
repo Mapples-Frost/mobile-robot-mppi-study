@@ -597,6 +597,92 @@ class SACAgent:
             )
         return selected[0].cpu().numpy().astype(np.float32), diagnostics
 
+    def select_action_batch(self, observations, deterministic=True):
+        """Evaluate the policy for a finite observation batch.
+
+        This inference-only API is used by RL-Driven MPPI to evaluate terminal
+        states without a Python loop.  It preserves correction-policy
+        composition and never updates actor, critic, or optimizer state.
+        """
+
+        data = np.asarray(observations, dtype=np.float32)
+        expected_tail = (self.observation_dim,)
+        if (
+            data.ndim != 2
+            or data.shape[1:] != expected_tail
+            or data.shape[0] <= 0
+            or not np.isfinite(data).all()
+        ):
+            raise ValueError(
+                "SAC observation batch must be finite with shape [B,%d]"
+                % self.observation_dim
+            )
+        with torch.no_grad():
+            tensor = torch.as_tensor(data, device=self.device)
+            action, _, mean_action, _, _ = self._sample_policy(
+                tensor, deterministic=deterministic
+            )
+            selected = mean_action if deterministic else action
+        if not bool(torch.isfinite(selected).all()):
+            raise FloatingPointError("SAC batched policy produced NaN or Inf")
+        return selected.cpu().numpy().astype(np.float32)
+
+    def expected_twin_q(self, observations, actions, critic_source="online"):
+        """Return expected twin-Q values for scalar or quantile critics.
+
+        Quantile critics are averaged over their return distribution here.
+        Risk-sensitive lower-tail aggregation is intentionally a separate
+        ablation rather than being silently mixed into the simple baseline.
+        """
+
+        observation = np.asarray(observations, dtype=np.float32)
+        action = np.asarray(actions, dtype=np.float32)
+        if (
+            observation.ndim != 2
+            or observation.shape[1:] != (self.observation_dim,)
+            or observation.shape[0] <= 0
+            or not np.isfinite(observation).all()
+        ):
+            raise ValueError("critic observations must have shape [B, observation_dim]")
+        if (
+            action.ndim != 2
+            or action.shape != (observation.shape[0], self.action_dim)
+            or not np.isfinite(action).all()
+        ):
+            raise ValueError("critic actions must have shape [B, action_dim]")
+        source = str(critic_source)
+        if source == "online":
+            critic1, critic2 = self.critic1, self.critic2
+        elif source == "target":
+            critic1, critic2 = self.target_critic1, self.target_critic2
+        else:
+            raise ValueError("critic_source must be 'online' or 'target'")
+        with torch.no_grad():
+            observation_tensor = torch.as_tensor(
+                observation, dtype=torch.float32, device=self.device
+            )
+            action_tensor = torch.as_tensor(
+                action, dtype=torch.float32, device=self.device
+            )
+            q1 = self._critic_expectation(
+                critic1(observation_tensor, action_tensor)
+            ).reshape(-1)
+            q2 = self._critic_expectation(
+                critic2(observation_tensor, action_tensor)
+            ).reshape(-1)
+        if not bool(torch.isfinite(q1).all() and torch.isfinite(q2).all()):
+            raise FloatingPointError("SAC critic produced NaN or Inf")
+        q1_array = q1.cpu().numpy().astype(np.float64)
+        q2_array = q2.cpu().numpy().astype(np.float64)
+        return {
+            "q1": q1_array,
+            "q2": q2_array,
+            "minimum": np.minimum(q1_array, q2_array),
+            "mean": 0.5 * (q1_array + q2_array),
+            "disagreement": np.abs(q1_array - q2_array),
+            "critic_source": source,
+        }
+
     def critic_disagreement(self, observation, action):
         observation = torch.as_tensor(observation, dtype=torch.float32, device=self.device)
         action = torch.as_tensor(action, dtype=torch.float32, device=self.device)

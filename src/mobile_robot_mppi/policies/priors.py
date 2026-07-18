@@ -1,7 +1,7 @@
 """Torch-free sampling priors, including the stable future RL policy port."""
 
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Callable, Dict, Optional, Tuple
 
 import numpy as np
 
@@ -10,10 +10,20 @@ from mobile_robot_mppi.core.types import RobotObservation
 
 
 @dataclass(frozen=True)
+class ProposalDistribution:
+    """One auditable candidate source for mixture-based MPPI optimizers."""
+
+    label: str
+    mean: np.ndarray
+    covariance: Optional[np.ndarray] = None
+
+
+@dataclass(frozen=True)
 class PriorOutput:
     mean: np.ndarray
     covariance: Optional[np.ndarray] = None
     metadata: Dict[str, Any] = field(default_factory=dict)
+    proposals: Tuple[ProposalDistribution, ...] = ()
 
 
 class ZeroPrior:
@@ -144,6 +154,43 @@ class GoalWarmStartPrior:
         )
 
 
+class HybridBaselinePrior:
+    """Non-learning control for hybrid mixture and elite-update effects.
+
+    Both named proposal ports contain the same conventional warm start. This
+    isolates any gain caused by the optimizer from a gain caused by the learned
+    RL proposal itself.
+    """
+
+    def __init__(self, baseline_prior=None):
+        self.baseline_prior = baseline_prior or GoalWarmStartPrior()
+
+    def reset(self):
+        reset = getattr(self.baseline_prior, "reset", None)
+        if callable(reset):
+            reset()
+
+    def propose(self, observation, reference, horizon, action_spec):
+        baseline = self.baseline_prior.propose(
+            observation, reference, horizon, action_spec
+        )
+        metadata = dict(baseline.metadata)
+        metadata["type"] = "hybrid_baseline_control"
+        return PriorOutput(
+            baseline.mean,
+            baseline.covariance,
+            metadata,
+            proposals=(
+                ProposalDistribution(
+                    "rl", baseline.mean, baseline.covariance
+                ),
+                ProposalDistribution(
+                    "base", baseline.mean, baseline.covariance
+                ),
+            ),
+        )
+
+
 class FixedCovariancePrior:
     """Apply fixed MPPI sampling scales without changing a baseline mean.
 
@@ -186,7 +233,17 @@ class FixedCovariancePrior:
             "covariance_scale": self.scale.tolist(),
             "covariance_standard_deviation": standard_deviation.tolist(),
         })
-        return PriorOutput(baseline.mean, covariance, metadata)
+        return PriorOutput(
+            baseline.mean,
+            covariance,
+            metadata,
+            proposals=(
+                ProposalDistribution("rl", baseline.mean, covariance),
+                ProposalDistribution(
+                    "base", baseline.mean, baseline.covariance
+                ),
+            ),
+        )
 
 
 class RLPolicyPrior:

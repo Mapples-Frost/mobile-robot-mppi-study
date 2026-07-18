@@ -1,0 +1,38 @@
+include: sac_mppi_static_quantile_cvar_l81.yaml
+
+experiment:
+  name: rl_driven_icode_gate1
+  output_dir: results/research_platform/rl/gate1_rl_driven_icode
+
+planner:
+  prediction_mode: icode_residual
+  sampling_prior: rl
+  optimizer: rl_driven
+  # A Gaussian likelihood-ratio term is not mathematically valid for a
+  # three-component proposal mixture. The standard controller keeps its
+  # historical setting; the opt-in hybrid optimizer uses elite reweighting.
+  importance_sampling_correction: false
+  rl_driven:
+    iterations: 2
+    rl_fraction: 0.30
+    shifted_fraction: 0.40
+    base_fraction: 0.30
+    elite_fraction: 0.20
+    covariance_smoothing: 0.50
+    covariance_min_scale: 0.25
+    covariance_max_scale: 2.00
+    terminal_value_weight: 0.02
+    terminal_critic_source: target
+
+memory:
+  enable: false
+
+rl:
+  enabled: true
+  policy_id: rl_driven_icode_gate1
+  gate:
+    # Hybrid sampling bounds RL authority through candidate allocation, so the
+    # actor itself is evaluated without the older outer complexity selector.
+    mode: none
+    fallback_after_safety_override: false
+    near_goal_fallback_enabled: false

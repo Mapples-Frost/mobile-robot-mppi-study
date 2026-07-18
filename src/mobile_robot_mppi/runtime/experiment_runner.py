@@ -140,6 +140,15 @@ class ExperimentRunner:
             "planner_importance_sampling_correction": bool(
                 controller.config.importance_sampling_correction
             ),
+            "planner_optimizer": str(
+                self.config.get("planner", {}).get("optimizer", "standard")
+            ),
+            "planner_rl_driven": dict(
+                self.config.get("planner", {}).get("rl_driven", {})
+            ),
+            "planner_anytime_bandit": dict(
+                self.config.get("planner", {}).get("anytime_bandit", {})
+            ),
             "sampling_prior": str(
                 self.config.get("planner", {}).get(
                     "sampling_prior", "goal_warm_start"

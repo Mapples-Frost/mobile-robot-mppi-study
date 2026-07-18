@@ -13,7 +13,13 @@ from mobile_robot_mppi.planning.dynamics import (
     ResidualPrediction,
 )
 from mobile_robot_mppi.planning.mppi import MppiConfig, MppiController
-from mobile_robot_mppi.policies.priors import GoalWarmStartPrior, PreviousSequencePrior, RLPolicyPrior, ZeroPrior
+from mobile_robot_mppi.policies.priors import (
+    GoalWarmStartPrior,
+    HybridBaselinePrior,
+    PreviousSequencePrior,
+    RLPolicyPrior,
+    ZeroPrior,
+)
 from mobile_robot_mppi.safety.arbiter import ScanGuardArbiter
 from mobile_robot_mppi.simulation.kinematic import KinematicPlant
 from mobile_robot_mppi.simulation.mujoco_plant import MujocoDiffDrivePlant
@@ -204,6 +210,16 @@ def make_components(config, project_root, rl_policy=None):
             planner_cfg.get("prior_translation_heading_gate_terminal_only", False),
             planner_cfg.get("prior_terminal_max_speed"),
         )
+    elif prior_kind == "hybrid_baseline":
+        prior = HybridBaselinePrior(GoalWarmStartPrior(
+            planner_cfg.get("prior_v_gain", 0.8),
+            planner_cfg.get("prior_yaw_gain", 1.2),
+            planner_cfg.get("prior_translation_heading_gate_rad"),
+            planner_cfg.get(
+                "prior_translation_heading_gate_terminal_only", False
+            ),
+            planner_cfg.get("prior_terminal_max_speed"),
+        ))
     elif prior_kind == "fixed_covariance":
         from mobile_robot_mppi.policies.priors import FixedCovariancePrior
 
@@ -312,13 +328,58 @@ def make_components(config, project_root, rl_policy=None):
         raise ValueError("unknown built-in sampling prior: %s" % prior_kind)
     memory_cfg = dict(config.get("memory", {}))
     memory = LegacyMemoryAdapter(project_root, memory_cfg) if memory_cfg.get("enable", False) else None
-    controller = MppiController(
+    optimizer = str(planner_cfg.get("optimizer", "standard"))
+    controller_type = MppiController
+    controller_kwargs = {}
+    if optimizer == "rl_driven":
+        if prior_kind not in (
+            "rl",
+            "hybrid_baseline",
+            "fixed_covariance",
+            "contextual_bandit_covariance",
+        ):
+            raise ValueError(
+                "planner.optimizer=rl_driven requires an explicit mixture prior"
+            )
+        from mobile_robot_mppi.planning.rl_driven_mppi import (
+            RLDrivenMppiController,
+        )
+
+        controller_type = RLDrivenMppiController
+        controller_kwargs["rl_driven_config"] = planner_cfg.get(
+            "rl_driven", {}
+        )
+    elif optimizer == "anytime_bandit":
+        if prior_kind not in (
+            "fixed_covariance", "contextual_bandit_covariance"
+        ):
+            raise ValueError(
+                "planner.optimizer=anytime_bandit requires a Gaussian "
+                "fixed or contextual covariance prior"
+            )
+        from mobile_robot_mppi.planning.anytime_mppi import (
+            AnytimeMppiController,
+        )
+
+        controller_type = AnytimeMppiController
+        anytime = dict(planner_cfg.get("anytime_bandit", {}))
+        checkpoint = anytime.get("checkpoint")
+        if checkpoint:
+            checkpoint_path = Path(checkpoint)
+            if not checkpoint_path.is_absolute():
+                checkpoint_path = Path(project_root) / checkpoint_path
+            anytime["checkpoint"] = str(checkpoint_path.resolve())
+        controller_kwargs["anytime_config"] = anytime
+    elif optimizer != "standard":
+        raise ValueError("unknown MPPI optimizer: %s" % optimizer)
+    controller = controller_type(
         dynamics=dynamics,
         state_spec=state_spec,
         action_spec=action_spec,
         config=mppi_config,
         sampling_prior=prior,
         memory_cost=(None if memory is None else memory.trajectory_cost),
+        **controller_kwargs
     )
     perception = LegacyScanPipeline(project_root, config.get("perception", {}))
     safety = ScanGuardArbiter(

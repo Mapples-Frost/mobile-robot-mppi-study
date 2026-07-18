@@ -1,0 +1,9 @@
+include: rl_driven_icode_gate1.yaml
+
+experiment:
+  name: rl_driven_icode_gate1_policy_only
+  output_dir: results/research_platform/rl/gate1_rl_driven_icode_policy_only
+
+planner:
+  rl_driven:
+    terminal_value_weight: 0.0

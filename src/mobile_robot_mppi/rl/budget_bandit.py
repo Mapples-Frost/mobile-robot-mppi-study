@@ -75,6 +75,12 @@ class PrimalDualBudgetBandit:
         self._a = self.ridge * np.eye(dimension, dtype=np.float64)
         self._a[0, 0] = max(self.ridge, 1e-6)
         self._b = np.zeros(dimension, dtype=np.float64)
+        # Frozen deployment predicts at every control step.  Cache the exact
+        # ridge inverse and coefficients; updates explicitly invalidate them.
+        # Besides removing redundant work, this avoids repeatedly activating
+        # a BLAS thread pool between two small ICODE rollout batches.
+        self._inverse_cache = None
+        self._theta_cache = None
         self.dual_price = 0.0
         self.decisions = 0
         self.add_decisions = 0
@@ -107,8 +113,13 @@ class PrimalDualBudgetBandit:
 
     def predict(self, features):
         vector = self._vector(features)
-        inverse = np.linalg.inv(self._a)
-        theta = inverse @ self._b
+        inverse = self._inverse_cache
+        theta = self._theta_cache
+        if inverse is None or theta is None:
+            inverse = np.linalg.inv(self._a)
+            theta = inverse @ self._b
+            self._inverse_cache = inverse
+            self._theta_cache = theta
         mean = float(vector @ theta)
         width = float(np.sqrt(max(0.0, vector @ inverse @ vector)))
         return mean, width
@@ -141,6 +152,8 @@ class PrimalDualBudgetBandit:
             vector = self._vector(features)
             self._a += np.outer(vector, vector)
             self._b += float(observed_advantage) * vector
+            self._inverse_cache = None
+            self._theta_cache = None
             self.observed_add_rewards += 1
         self.decisions += 1
         self.add_decisions += int(add)

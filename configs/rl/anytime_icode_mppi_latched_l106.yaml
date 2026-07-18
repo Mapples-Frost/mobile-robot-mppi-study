@@ -1,0 +1,12 @@
+include: anytime_icode_mppi_online_l104.yaml
+
+experiment:
+  name: anytime_icode_mppi_latched_l106
+  output_dir: results/research_platform/rl/l106_anytime_icode_mppi_latched
+
+planner:
+  anytime_bandit:
+    base_samples: 50
+    local_route_window_m: 1.25
+    checkpoint: results/research_platform/rl/l103_calibrated_budget_bandit_20260718_v1/bandit_summary.json
+    decision_interval_steps: 3

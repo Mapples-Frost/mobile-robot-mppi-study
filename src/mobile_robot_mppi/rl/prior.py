@@ -7,7 +7,12 @@ from typing import Any, Mapping, Optional
 
 import numpy as np
 
-from mobile_robot_mppi.policies.priors import GoalWarmStartPrior, PriorOutput
+from mobile_robot_mppi.core.types import Pose2D, RobotObservation, Twist2D
+from mobile_robot_mppi.policies.priors import (
+    GoalWarmStartPrior,
+    PriorOutput,
+    ProposalDistribution,
+)
 from .checkpointing import load_sac_checkpoint
 from .competence import (
     ProgressCompetence,
@@ -384,7 +389,17 @@ class ExternalActionPrior:
             "goal_distance": goal_distance,
             "covariance_gate_alpha": effective_alpha,
         })
-        return PriorOutput(mean, covariance, metadata)
+        return PriorOutput(
+            mean,
+            covariance,
+            metadata,
+            proposals=(
+                ProposalDistribution("rl", learned_mean, covariance),
+                ProposalDistribution(
+                    "base", baseline.mean, baseline.covariance
+                ),
+            ),
+        )
 
 
 class TorchSACPrior:
@@ -806,7 +821,16 @@ class TorchSACPrior:
                     ),
                 })
                 metadata.update(profile)
-            return PriorOutput(baseline.mean, baseline.covariance, metadata)
+            return PriorOutput(
+                baseline.mean,
+                baseline.covariance,
+                metadata,
+                proposals=(
+                    ProposalDistribution(
+                        "base", baseline.mean, baseline.covariance
+                    ),
+                ),
+            )
         if self.gate_config.reuse_policy_base_action:
             action, policy_diagnostics = self.agent.select_action(
                 normalized, deterministic=True, include_internal=True
@@ -989,7 +1013,116 @@ class TorchSACPrior:
                 time.perf_counter() - profile_started
             )
             metadata.update(profile)
-        return PriorOutput(mean, covariance, metadata)
+        return PriorOutput(
+            mean,
+            covariance,
+            metadata,
+            proposals=(
+                ProposalDistribution("rl", learned_mean, covariance),
+                ProposalDistribution(
+                    "base", baseline.mean, baseline.covariance
+                ),
+            ),
+        )
+
+    def terminal_value(
+        self,
+        terminal_states,
+        terminal_controls,
+        observation,
+        target,
+        state_spec,
+        horizon_dt,
+        critic_source="target",
+    ):
+        """Estimate long-horizon return for predicted MPPI terminal states.
+
+        The critic was trained on the same high-level prior action used by the
+        SAC environment.  Each hypothetical terminal observation is therefore
+        passed through the deterministic actor before twin-Q evaluation.  The
+        encoder history is never mutated.  LaserScan is held at the latest
+        real observation in this simple baseline; the limitation is exposed in
+        diagnostics rather than hidden.
+        """
+
+        states = np.asarray(terminal_states, dtype=np.float64)
+        controls = np.asarray(terminal_controls, dtype=np.float64)
+        if (
+            states.ndim != 2
+            or states.shape[1] != state_spec.dimension
+            or states.shape[0] <= 0
+            or not np.isfinite(states).all()
+        ):
+            raise ValueError("terminal states must be finite [B, state_dim]")
+        if (
+            controls.ndim != 2
+            or controls.shape
+            != (states.shape[0], self.parameterization.action_spec.dimension)
+            or not np.isfinite(controls).all()
+        ):
+            raise ValueError("terminal controls must be finite [B, action_dim]")
+
+        x_index = state_spec.index("x")
+        y_index = state_spec.index("y")
+        theta_index = state_spec.index("theta")
+        v_index = state_spec.index("v") if "v" in state_spec.names else None
+        omega_index = (
+            state_spec.index("omega") if "omega" in state_spec.names else None
+        )
+        raw_rows = []
+        for state, previous_control in zip(states, controls):
+            hypothetical = RobotObservation(
+                timestamp=float(observation.timestamp) + float(horizon_dt),
+                pose=Pose2D(
+                    float(state[x_index]),
+                    float(state[y_index]),
+                    float(state[theta_index]),
+                ),
+                twist=Twist2D(
+                    float(observation.twist.v if v_index is None else state[v_index]),
+                    float(
+                        observation.twist.omega
+                        if omega_index is None
+                        else state[omega_index]
+                    ),
+                ),
+                scan=observation.scan,
+                local_obstacles=observation.local_obstacles,
+                auxiliary=dict(observation.auxiliary),
+            )
+            raw_rows.append(
+                self.encoder.encode_to_target(
+                    hypothetical,
+                    target,
+                    previous_action=previous_control,
+                    safety_override=False,
+                    update_history=False,
+                )
+            )
+        raw_batch = np.stack(raw_rows).astype(np.float32, copy=False)
+        normalized = np.stack([
+            self.normalizer.normalize(row) for row in raw_batch
+        ]).astype(np.float32, copy=False)
+        latent_actions = self.agent.select_action_batch(
+            normalized, deterministic=True
+        )
+        values = self.agent.expected_twin_q(
+            normalized, latent_actions, critic_source=critic_source
+        )
+        result = np.asarray(values["minimum"], dtype=np.float64)
+        if result.shape != (states.shape[0],) or not np.isfinite(result).all():
+            raise FloatingPointError("terminal critic returned invalid values")
+        diagnostics = {
+            "terminal_q_mean": float(np.mean(result)),
+            "terminal_q_min": float(np.min(result)),
+            "terminal_q_max": float(np.max(result)),
+            "terminal_q_disagreement_mean": float(
+                np.mean(values["disagreement"])
+            ),
+            "terminal_critic_source": str(values["critic_source"]),
+            "terminal_scan_assumption": "latest_observed_scan",
+        }
+        return result, diagnostics
 
     @classmethod
     def from_checkpoint(

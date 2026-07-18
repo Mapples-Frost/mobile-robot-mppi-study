@@ -120,15 +120,14 @@ class ObservationEncoder:
         half_range = 0.5 * (self.action_spec.upper - self.action_spec.lower)
         return np.clip((value - center) / half_range, -1.0, 1.0)
 
-    def encode(
+    def _frame_for_target(
         self,
         observation,
-        reference,
+        target,
         previous_action=None,
         safety_override=False,
     ):
         pose = observation.pose
-        target = reference.target_at(observation.timestamp, pose.as_array())
         dx = float(target.pose.x - pose.x)
         dy = float(target.pose.y - pose.y)
         cosine = float(np.cos(pose.theta))
@@ -162,17 +161,65 @@ class ObservationEncoder:
         frame = np.asarray(features, dtype=np.float32)
         if frame.shape != (self.frame_dimension,) or not np.isfinite(frame).all():
             raise FloatingPointError("RL observation encoder produced invalid features")
-        if not self._history:
-            self._history = [
-                frame.copy() for _ in range(self.config.history_frames)
-            ]
+        return frame
+
+    def encode_to_target(
+        self,
+        observation,
+        target,
+        previous_action=None,
+        safety_override=False,
+        update_history=True,
+    ):
+        """Encode against an explicit target, optionally without state mutation.
+
+        Hypothetical MPPI terminal states must not advance the online history
+        buffer.  When ``update_history`` is false, the candidate frame is
+        appended to a temporary copy of the current history only.
+        """
+
+        frame = self._frame_for_target(
+            observation,
+            target,
+            previous_action=previous_action,
+            safety_override=safety_override,
+        )
+        history_frames = self.config.history_frames
+        if update_history:
+            if not self._history:
+                self._history = [frame.copy() for _ in range(history_frames)]
+            else:
+                self._history.append(frame.copy())
+                self._history = self._history[-history_frames:]
+            history = self._history
+        elif not self._history:
+            history = [frame.copy() for _ in range(history_frames)]
+        elif history_frames == 1:
+            history = [frame]
         else:
-            self._history.append(frame.copy())
-            self._history = self._history[-self.config.history_frames :]
-        encoded = np.concatenate(self._history).astype(np.float32, copy=False)
+            history = self._history[-(history_frames - 1):] + [frame]
+        encoded = np.concatenate(history).astype(np.float32, copy=False)
         if encoded.shape != (self.dimension,) or not np.isfinite(encoded).all():
             raise FloatingPointError("RL observation history produced invalid features")
         return encoded
+
+    def encode(
+        self,
+        observation,
+        reference,
+        previous_action=None,
+        safety_override=False,
+    ):
+        target = reference.target_at(
+            observation.timestamp, observation.pose.as_array()
+        )
+        return self.encode_to_target(
+            observation,
+            target,
+            previous_action=previous_action,
+            safety_override=safety_override,
+            update_history=True,
+        )
 
 
 class RunningNormalizer:

@@ -1,0 +1,38 @@
+schema_version: 1
+design_id: gate1c_hybrid_contextual_covariance_development_v1
+base_config: configs/rl/hybrid_contextual_covariance_gate1c_base.yaml
+checkpoint: results/research_platform/rl/l89_contextual_covariance_bandit_20260718_v1/checkpoint.json
+schedule_seed: 2026071841
+bootstrap_seed: 2026071842
+seeds: [22410301, 22410302, 22410303]
+cross_track_noninferiority_margin_m: 0.002
+
+scenes:
+  - configs/research/mujoco_high_dynamic_hairpin_unseen_l56.yaml
+  - configs/research/mujoco_high_dynamic_reverse_s_unseen_l56.yaml
+
+physics_domains:
+  - name: train_anchor
+    plant_override: {}
+  - name: combined_moderate
+    plant_override:
+      robot:
+        chassis_mass: 15.0
+        chassis_inertia: [0.15, 0.219, 0.311]
+        wheel_mass: 0.40
+      actuator:
+        torque_limit: 1.20
+        kp: 0.32
+        ki: 1.00
+        command_delay: 0.08
+        torque_slew_rate: 20.0
+      contact:
+        wheel_friction: [0.78, 0.0062, 0.0010]
+        floor_friction: [0.70, 0.0035, 0.00035]
+
+conditions:
+  - name: learned_contextual_bandit
+    kind: contextual_bandit
+  - name: strongest_global_fixed
+    kind: fixed
+    scale: [1.75, 0.75]

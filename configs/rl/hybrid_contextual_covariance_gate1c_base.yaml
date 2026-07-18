@@ -1,0 +1,22 @@
+include: sac_mppi_covariance_only_l84.yaml
+
+experiment:
+  name: hybrid_contextual_covariance_gate1c
+  output_dir: results/research_platform/rl/gate1c_hybrid_contextual_covariance
+
+planner:
+  optimizer: rl_driven
+  importance_sampling_correction: false
+  rl_driven:
+    iterations: 2
+    rl_fraction: 0.30
+    shifted_fraction: 0.40
+    base_fraction: 0.30
+    elite_fraction: 0.20
+    covariance_smoothing: 0.50
+    covariance_min_scale: 0.25
+    covariance_max_scale: 2.00
+    terminal_value_weight: 0.0
+
+memory:
+  enable: false

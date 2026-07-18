@@ -1164,3 +1164,28 @@ def test_selected_critic_only_and_base_reuse_preserve_target_gate_exactly():
     assert online2.calls == 0
     assert target1.calls == 2
     assert target2.calls == 2
+
+
+def test_batched_policy_and_expected_quantile_q_are_finite():
+    config = SACConfig(
+        hidden_sizes=(8,),
+        critic_distribution="quantile",
+        critic_num_quantiles=7,
+        actor_cvar_fraction=0.25,
+    )
+    agent = SACAgent(3, 2, config, device="cpu", seed=91)
+    observations = np.asarray(
+        ((0.0, 0.1, 0.2), (0.3, -0.2, 0.5), (-0.1, 0.4, 0.7)),
+        dtype=np.float32,
+    )
+    actions = agent.select_action_batch(observations, deterministic=True)
+    values = agent.expected_twin_q(
+        observations, actions, critic_source="target"
+    )
+
+    assert actions.shape == (3, 2)
+    for key in ("q1", "q2", "minimum", "mean", "disagreement"):
+        assert values[key].shape == (3,)
+        assert np.isfinite(values[key]).all()
+    assert np.all(values["minimum"] <= values["mean"] + 1e-12)
+    assert values["critic_source"] == "target"

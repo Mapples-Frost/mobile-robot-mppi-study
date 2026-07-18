@@ -1,0 +1,54 @@
+include: rl_driven_icode_gate1.yaml
+
+experiment:
+  name: gate1_rl_driven_icode_factorial
+  output_dir: results/research_platform/rl/gate1_rl_driven_icode_factorial_20260718
+
+rl:
+  gate1_factorial:
+    schedule_seed: 202607181
+    model_blocks:
+      - rl_seed: 20260784
+        icode_seed: 20261201
+        rl_checkpoint: results/research_platform/rl/l81_static_quantile_cvar_seed20260784_30k_20260717_v1/checkpoints/step_000030000.pt
+        icode_checkpoint: results/research_platform/l57_icode_high_dynamic_h36_seed20261201_v1/best.pt
+      - rl_seed: 20260785
+        icode_seed: 20261202
+        rl_checkpoint: results/research_platform/rl/l81_static_quantile_cvar_seed20260785_30k_20260717_v1/checkpoints/step_000030000.pt
+        icode_checkpoint: results/research_platform/l57_icode_high_dynamic_h36_seed20261202_v1/best.pt
+      - rl_seed: 20260786
+        icode_seed: 20261203
+        rl_checkpoint: results/research_platform/rl/l81_static_quantile_cvar_seed20260786_30k_20260717_v1/checkpoints/step_000030000.pt
+        icode_checkpoint: results/research_platform/l57_icode_high_dynamic_h36_seed20261203_v1/best.pt
+
+    conditions:
+      - icode_mppi
+      - direct_rl_icode
+      - hybrid_no_rl_icode
+      - hybrid_policy_icode
+      - rl_driven_icode
+
+    scene_config: configs/research/mujoco_static_single_high_dynamic_l70.yaml
+    physics_domain:
+      name: combined_unseen
+      role: unseen
+      plant_override:
+        robot:
+          chassis_mass: 12.0
+          chassis_inertia: [0.11, 0.16, 0.22]
+        actuator:
+          command_delay: 0.10
+          torque_limit: 1.8
+          kp: 0.48
+        contact:
+          wheel_friction: [0.72, 0.006, 0.001]
+          floor_friction: [0.60, 0.003, 0.0003]
+
+    development_episode_seeds: [22410101, 22410102, 22410103]
+    sealed_confirmation_episode_seeds: [22410111, 22410112, 22410113, 22410114, 22410115]
+
+    task_cost:
+      final_goal_distance_weight: 1.0
+      collision_penalty: 10.0
+      control_jerk_weight: 0.10
+      step_weight: 0.001

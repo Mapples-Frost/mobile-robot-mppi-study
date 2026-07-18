@@ -1,0 +1,33 @@
+include: sac_mppi_covariance_only_l84.yaml
+
+experiment:
+  name: anytime_icode_mppi_online_l104
+  output_dir: results/research_platform/rl/l104_anytime_icode_mppi_online
+  max_steps: 320
+
+# Keep the L99/L103 deployment contract: only the rollout budget decision is
+# new.  Dynamics, task cost, rate limits, safety, and contextual covariance are
+# held fixed to the previously validated ICODE-MPPI stack.
+action_space:
+  rate_limits: [1.10, 2.50]
+
+planner:
+  prediction_mode: icode_residual
+  checkpoint: results/research_platform/l57_icode_high_dynamic_h36_seed20261201_v1/best.pt
+  sampling_prior: contextual_bandit_covariance
+  optimizer: anytime_bandit
+  num_samples: 100
+  control_rate_weight: 0.16
+  profile_components: true
+  anytime_bandit:
+    base_samples: 50
+    local_route_window_m: 1.25
+    checkpoint: results/research_platform/rl/l103_calibrated_budget_bandit_20260718_v1/bandit_summary.json
+
+memory:
+  enable: false
+
+rl:
+  enabled: true
+  policy_id: primal_dual_budget_bandit_l103
+  checkpoint: results/research_platform/rl/l89_contextual_covariance_bandit_20260718_v1/checkpoint.json

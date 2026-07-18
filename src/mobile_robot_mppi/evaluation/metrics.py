@@ -231,6 +231,66 @@ class EpisodeMetrics:
             "residual_reliability_residual_error": float(
                 planner_diagnostics.get("residual_reliability_residual_error", 0.0)
             ),
+            "optimizer": str(planner_diagnostics.get("optimizer", "standard")),
+            "rl_driven_total_rollouts": int(
+                planner_diagnostics.get("rl_driven_total_rollouts", 0)
+            ),
+            "rl_source_samples": int(
+                planner_diagnostics.get("rl_source_samples", 0)
+            ),
+            "shifted_source_samples": int(
+                planner_diagnostics.get("shifted_source_samples", 0)
+            ),
+            "base_source_samples": int(
+                planner_diagnostics.get("base_source_samples", 0)
+            ),
+            "rl_elite_count": int(
+                planner_diagnostics.get("rl_elite_count", 0)
+            ),
+            "shifted_elite_count": int(
+                planner_diagnostics.get("shifted_elite_count", 0)
+            ),
+            "base_elite_count": int(
+                planner_diagnostics.get("base_elite_count", 0)
+            ),
+            "rl_elite_fraction": float(
+                planner_diagnostics.get("rl_elite_fraction", 0.0)
+            ),
+            "covariance_scale_mean": float(
+                planner_diagnostics.get("covariance_scale_mean", 1.0)
+            ),
+            "terminal_value_enabled": float(
+                planner_diagnostics.get("terminal_value_enabled", False)
+            ),
+            "terminal_value_weight": float(
+                planner_diagnostics.get("terminal_value_weight", 0.0)
+            ),
+            "terminal_q_mean": float(
+                planner_diagnostics.get("terminal_q_mean", 0.0)
+            ),
+            "terminal_q_disagreement_mean": float(
+                planner_diagnostics.get(
+                    "terminal_q_disagreement_mean", 0.0
+                )
+            ),
+            "anytime_selected_samples": int(
+                planner_diagnostics.get("anytime_selected_samples", 0)
+            ),
+            "anytime_add_samples": float(
+                planner_diagnostics.get("anytime_add_samples", False)
+            ),
+            "anytime_predicted_advantage": float(
+                planner_diagnostics.get("anytime_predicted_advantage", 0.0)
+            ),
+            "anytime_confidence_width": float(
+                planner_diagnostics.get("anytime_confidence_width", 0.0)
+            ),
+            "anytime_score": float(
+                planner_diagnostics.get("anytime_score", 0.0)
+            ),
+            "anytime_decision_refreshed": float(
+                planner_diagnostics.get("anytime_decision_refreshed", False)
+            ),
             "prior_type": str(prior.get("type", "unknown")),
             "rl_gate_mode": str(prior.get("gate_mode", "disabled")),
             "rl_gate_alpha": float(prior.get("gate_alpha", 0.0)),
@@ -593,6 +653,51 @@ class EpisodeMetrics:
             "sample_saturation_fraction_mean": float(
                 np.mean([row["sample_saturation_fraction"] for row in values])
             ),
+            "optimizer": str(values[-1].get("optimizer", "standard")),
+            "rl_driven_total_rollouts_mean": float(np.mean([
+                row.get("rl_driven_total_rollouts", 0) for row in values
+            ])),
+            "rl_elite_fraction_mean": float(np.mean([
+                row.get("rl_elite_fraction", 0.0) for row in values
+            ])),
+            "rl_elite_count_total": int(sum(
+                row.get("rl_elite_count", 0) for row in values
+            )),
+            "shifted_elite_count_total": int(sum(
+                row.get("shifted_elite_count", 0) for row in values
+            )),
+            "base_elite_count_total": int(sum(
+                row.get("base_elite_count", 0) for row in values
+            )),
+            "covariance_scale_mean": float(np.mean([
+                row.get("covariance_scale_mean", 1.0) for row in values
+            ])),
+            "terminal_value_enabled_fraction": float(np.mean([
+                row.get("terminal_value_enabled", 0.0) for row in values
+            ])),
+            "terminal_q_mean": float(np.mean([
+                row.get("terminal_q_mean", 0.0) for row in values
+            ])),
+            "terminal_q_disagreement_mean": float(np.mean([
+                row.get("terminal_q_disagreement_mean", 0.0)
+                for row in values
+            ])),
+            "anytime_mean_samples": float(np.mean([
+                row.get("anytime_selected_samples", 0) for row in values
+            ])),
+            "anytime_add_fraction": float(np.mean([
+                row.get("anytime_add_samples", 0.0) for row in values
+            ])),
+            "anytime_predicted_advantage_mean": float(np.mean([
+                row.get("anytime_predicted_advantage", 0.0)
+                for row in values
+            ])),
+            "anytime_confidence_width_mean": float(np.mean([
+                row.get("anytime_confidence_width", 0.0) for row in values
+            ])),
+            "anytime_decision_refresh_fraction": float(np.mean([
+                row.get("anytime_decision_refreshed", 0.0) for row in values
+            ])),
             "rl_gate_alpha_mean": float(
                 np.mean([row.get("rl_gate_alpha", 0.0) for row in values])
             ),

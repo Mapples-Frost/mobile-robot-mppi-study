@@ -305,6 +305,7 @@ class MppiController:
             np.clip(mean, self.action_spec.lower, self.action_spec.upper),
             output.covariance,
             metadata,
+            output.proposals,
         )
 
     def observe_safety_decision(self, decision) -> None:
@@ -663,7 +664,11 @@ class MppiController:
                 costs[index] += float(self.memory_cost(trajectories[index], controls[index]))
         return costs
 
-    def _solve_plan(self, state, prior, target, obstacles, rng):
+    def _solve_plan(
+        self, state, prior, target, obstacles, rng, observation=None,
+        reference=None,
+    ):
+        del observation, reference
         profiling = self.config.profile_components
         solve_started = time.perf_counter() if profiling else None
         stage_started = solve_started
@@ -916,6 +921,8 @@ class MppiController:
             target,
             observation.local_obstacles,
             preview_rng,
+            observation,
+            reference,
         )
         diagnostics["compute_ms"] = 1000.0 * (
             time.perf_counter() - started
@@ -958,6 +965,8 @@ class MppiController:
             target,
             observation.local_obstacles,
             self.rng,
+            observation,
+            reference,
         )
         self.previous_sequence = sequence.copy()
         self._delay_preceding_action = self.previous_action.copy()

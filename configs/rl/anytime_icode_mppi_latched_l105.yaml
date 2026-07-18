@@ -1,0 +1,15 @@
+include: anytime_icode_mppi_online_l104.yaml
+
+experiment:
+  name: anytime_icode_mppi_latched_l105
+  output_dir: results/research_platform/rl/l105_anytime_icode_mppi_latched
+
+planner:
+  anytime_bandit:
+    base_samples: 50
+    local_route_window_m: 1.25
+    checkpoint: results/research_platform/rl/l103_calibrated_budget_bandit_20260718_v1/bandit_summary.json
+    # Path geometry and rollout-degeneracy statistics vary more slowly than
+    # the 10 Hz actuator command.  Refresh the discrete budget option at 5 Hz;
+    # latched ADD steps evaluate K100 in one vectorized ICODE call.
+    decision_interval_steps: 2

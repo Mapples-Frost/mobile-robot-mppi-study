@@ -243,6 +243,239 @@ class PlatformResidualDynamics:
         return result
 
 
+class PlatformResidualEnsemble:
+    """Mean residual prediction with auditable epistemic diagnostics.
+
+    The ensemble never scales its residual output from uncertainty.  It keeps
+    model prediction and authority allocation separate: MPPI always receives
+    the ensemble mean, while higher-level sampling logic may consume
+    disagreement, training-support confidence, and completed-transition
+    innovation.  This avoids silently falling back to a potentially worse
+    nominal model when uncertainty rises.
+    """
+
+    def __init__(
+        self,
+        members,
+        state_scales=None,
+        support_soft_z=3.0,
+        support_hard_z=7.0,
+        innovation_decay=0.9,
+        member_paths=None,
+    ):
+        self.members = tuple(members)
+        if len(self.members) < 2:
+            raise ValueError("residual ensemble requires at least two members")
+        self.state_dim = int(self.members[0].state_dim)
+        self.control_dim = int(self.members[0].control_dim)
+        if any(
+            int(member.state_dim) != self.state_dim
+            or int(member.control_dim) != self.control_dim
+            for member in self.members
+        ):
+            raise ValueError("residual ensemble member dimensions differ")
+        self.model = getattr(self.members[0], "model", None)
+        self.state_scales = np.asarray(
+            (
+                np.ones(self.state_dim, dtype=np.float64)
+                if state_scales is None
+                else state_scales
+            ),
+            dtype=np.float64,
+        ).reshape(-1)
+        if (
+            self.state_scales.shape != (self.state_dim,)
+            or not np.isfinite(self.state_scales).all()
+            or np.any(self.state_scales <= 0.0)
+        ):
+            raise ValueError(
+                "residual ensemble state_scales must be finite and positive"
+            )
+        self.support_soft_z = float(support_soft_z)
+        self.support_hard_z = float(support_hard_z)
+        if (
+            not math.isfinite(self.support_soft_z)
+            or not math.isfinite(self.support_hard_z)
+            or self.support_soft_z < 0.0
+            or self.support_hard_z <= self.support_soft_z
+        ):
+            raise ValueError(
+                "residual ensemble requires 0 <= support_soft_z < support_hard_z"
+            )
+        self.innovation_decay = float(innovation_decay)
+        if not 0.0 <= self.innovation_decay < 1.0:
+            raise ValueError("innovation_decay must lie in [0,1)")
+        if member_paths is None:
+            self.member_paths = tuple(None for _ in self.members)
+        else:
+            self.member_paths = tuple(str(value) for value in member_paths)
+            if len(self.member_paths) != len(self.members):
+                raise ValueError("member_paths must align with ensemble members")
+        self.innovation_error_ema = 0.0
+        self.innovation_samples = 0
+        self.last_innovation_error = 0.0
+
+    def reset(self):
+        self.innovation_error_ema = 0.0
+        self.innovation_samples = 0
+        self.last_innovation_error = 0.0
+
+    def member_derivatives(self, state, control, time=None):
+        values = np.stack(
+            [
+                np.asarray(
+                    member.derivative(state, control, time),
+                    dtype=np.float64,
+                )
+                for member in self.members
+            ],
+            axis=0,
+        )
+        if values.shape[-1] != self.state_dim or not np.isfinite(values).all():
+            raise FloatingPointError(
+                "residual ensemble member inference is invalid"
+            )
+        return values
+
+    def derivative(self, state, control, time=None):
+        return np.mean(
+            self.member_derivatives(state, control, time), axis=0
+        )
+
+    def ungated_derivative(self, state, control, time=None):
+        return self.derivative(state, control, time)
+
+    def disagreement(self, state, control, time=None):
+        """Return normalized RMS ensemble standard deviation."""
+
+        standard_deviation = np.std(
+            self.member_derivatives(state, control, time), axis=0
+        )
+        normalized = standard_deviation / self.state_scales
+        score = np.sqrt(np.mean(normalized ** 2, axis=-1))
+        if not np.isfinite(score).all():
+            raise FloatingPointError(
+                "residual ensemble disagreement is not finite"
+            )
+        return score
+
+    @staticmethod
+    def _features(model, state):
+        angle_indices = set(
+            int(value) for value in getattr(model, "angle_indices", ())
+        )
+        values = []
+        for index in range(state.shape[-1]):
+            component = state[..., index:index + 1]
+            if index in angle_indices:
+                values.extend((np.sin(component), np.cos(component)))
+            else:
+                values.append(component)
+        return np.concatenate(values, axis=-1)
+
+    def _member_support_confidence(self, member, state, control):
+        evaluator = getattr(member, "support_confidence", None)
+        if callable(evaluator):
+            return np.asarray(evaluator(state, control), dtype=np.float64)
+        model = getattr(member, "model", None)
+        if model is None:
+            raise TypeError(
+                "ensemble member lacks model normalization statistics"
+            )
+        features = self._features(model, state)
+        feature_mean = model.feature_mean.detach().cpu().numpy()
+        feature_scale = model.feature_scale.detach().cpu().numpy()
+        control_mean = model.control_mean.detach().cpu().numpy()
+        control_scale = model.control_scale.detach().cpu().numpy()
+        feature_z = np.max(
+            np.abs((features - feature_mean) / feature_scale), axis=-1
+        )
+        control_z = np.max(
+            np.abs((control - control_mean) / control_scale), axis=-1
+        )
+        maximum_z = np.maximum(feature_z, control_z)
+        confidence = np.clip(
+            (self.support_hard_z - maximum_z)
+            / (self.support_hard_z - self.support_soft_z),
+            0.0,
+            1.0,
+        )
+        return np.where(maximum_z <= self.support_soft_z, 1.0, confidence)
+
+    def support_confidence(self, state, control):
+        state_value = np.asarray(state, dtype=np.float64)
+        control_value = np.asarray(control, dtype=np.float64)
+        if (
+            state_value.shape[-1] != self.state_dim
+            or control_value.shape
+            != state_value.shape[:-1] + (self.control_dim,)
+        ):
+            raise ValueError(
+                "ensemble support inputs have incompatible dimensions"
+            )
+        confidence = np.min(
+            np.stack(
+                [
+                    self._member_support_confidence(
+                        member, state_value, control_value
+                    )
+                    for member in self.members
+                ],
+                axis=0,
+            ),
+            axis=0,
+        )
+        if not np.isfinite(confidence).all():
+            raise FloatingPointError(
+                "residual ensemble support confidence is not finite"
+            )
+        return confidence
+
+    def observe_prediction_errors(self, nominal_error, residual_error):
+        """Update innovation using only the completed transition.
+
+        ``nominal_error`` is accepted to preserve the common reliability hook,
+        but does not affect ensemble authority.  Runtime confidence describes
+        how accurately the ensemble predicted the observed transition, not
+        whether it happened to beat nominal on that one transition.
+        """
+
+        del nominal_error
+        error = np.asarray(residual_error, dtype=np.float64).reshape(-1)
+        if error.shape != (self.state_dim,) or not np.isfinite(error).all():
+            raise ValueError(
+                "ensemble innovation error must match the state dimension"
+            )
+        value = float(np.sqrt(np.mean(
+            (error / self.state_scales) ** 2
+        )))
+        if self.innovation_samples == 0:
+            self.innovation_error_ema = value
+        else:
+            self.innovation_error_ema = (
+                self.innovation_decay * self.innovation_error_ema
+                + (1.0 - self.innovation_decay) * value
+            )
+        self.last_innovation_error = value
+        self.innovation_samples += 1
+        return self.innovation_error_ema
+
+    def diagnostics(self):
+        return {
+            "residual_ensemble_enabled": True,
+            "residual_ensemble_members": len(self.members),
+            "residual_ensemble_innovation_samples": int(
+                self.innovation_samples
+            ),
+            "residual_ensemble_innovation_error_ema": float(
+                self.innovation_error_ema
+            ),
+            "residual_ensemble_last_innovation_error": float(
+                self.last_innovation_error
+            ),
+        }
+
+
 class NormalizedSupportGatedResidualDynamics:
     """Fail toward nominal dynamics outside the residual training support.
 

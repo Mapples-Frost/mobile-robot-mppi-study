@@ -1,0 +1,45 @@
+output_dir: results/research_platform/gate3_value_aligned_ensemble_member1_l192
+dataset_dir: results/research_platform/datasets/gate2_value_alignment_l183
+base_icode_checkpoint: results/research_platform/l57_icode_high_dynamic_h36_seed20261201_v1/best.pt
+actor_checkpoint: results/research_platform/rl/gate1_direct_control_multidomain_screen_l175/checkpoints/best.pt
+seed: 20260731
+device: cpu
+
+critic_source: target
+support_soft_z: 3.0
+support_hard_z: 7.0
+disagreement_scale: 1.0
+value_scale: auto
+rollout_horizon: 10
+
+episode_bootstrap:
+  enabled: true
+  seed: 202607311
+
+value_competence:
+  enabled: true
+  failure_quantile: 0.5
+  success_quantile: 0.5
+
+loss_weights:
+  derivative: 0.25
+  one_step: 1.0
+  multistep: 4.0
+  value: 5.0
+  anchor: 1.0
+
+training:
+  epochs: 20
+  batch_size: 128
+  validation_batch_size: 256
+  maximum_train_windows_per_epoch: 1024
+  maximum_validation_windows: 1024
+  maximum_evaluation_windows: 1024
+  learning_rate: 0.00001
+  weight_decay: 0.0
+  gradient_clip_norm: 1.0
+  state_loss_weights: [4.0, 4.0, 2.0, 1.0, 1.0]
+  rollout_step_weighting: linear
+  rollout_terminal_weight: 4.0
+  maximum_rollout_degradation: 0.03
+  minimum_value_improvement: 0.0

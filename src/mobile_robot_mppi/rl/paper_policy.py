@@ -141,6 +141,28 @@ class PaperDirectControlPolicy:
             self.action_spec.upper,
         )
 
+    def support_ood_scores(self, raw_observations):
+        """Return per-observation standardized support distance.
+
+        The scalar ``RunningNormalizer.ood_score`` predates batched Actor
+        rollouts and reduces over every dimension.  Gate 3 needs one score per
+        horizon state, so this method preserves the same maximum-z semantics
+        while reducing only over the feature axis.
+        """
+
+        values = np.asarray(raw_observations, dtype=np.float32)
+        if (
+            values.ndim < 2
+            or values.shape[-1] != self.normalizer.dimension
+            or not np.isfinite(values).all()
+        ):
+            raise ValueError(
+                "Actor support observations require [...,feature_dim]"
+            )
+        return np.max(
+            np.abs(self.normalizer.normalize(values)), axis=-1
+        ).astype(np.float64, copy=False)
+
     def _hypothetical_observation(
         self, state, observation, state_spec, time_offset
     ):

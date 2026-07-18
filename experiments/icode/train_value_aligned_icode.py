@@ -190,6 +190,46 @@ def _episode_outcomes(dataset_dir, split):
     return result
 
 
+def _episode_bootstrap_windows(dataset, starts, seed):
+    """Sample independent training episodes with replacement.
+
+    Windows inside a selected episode remain correlated and are carried as one
+    bootstrap cluster.  Sampling individual timesteps would create false
+    independence and leak nearly identical trajectories across ensemble
+    members.
+    """
+
+    starts = np.asarray(starts, dtype=np.int64).reshape(-1)
+    if starts.size == 0:
+        raise ValueError("episode bootstrap requires rollout windows")
+    episode_at_start = np.asarray(dataset["episode_id"])[starts].astype(str)
+    episode_ids = np.asarray(sorted(set(episode_at_start.tolist())))
+    rng = np.random.RandomState(int(seed))
+    selected_ids = rng.choice(
+        episode_ids, size=len(episode_ids), replace=True
+    )
+    windows = np.concatenate([
+        starts[episode_at_start == episode_id]
+        for episode_id in selected_ids
+    ])
+    if windows.size == 0:
+        raise RuntimeError("episode bootstrap produced no windows")
+    counts = {
+        str(episode_id): int(np.sum(selected_ids == episode_id))
+        for episode_id in episode_ids
+    }
+    return windows.astype(np.int64, copy=False), {
+        "enabled": True,
+        "seed": int(seed),
+        "independent_unit": "episode",
+        "source_episode_count": int(len(episode_ids)),
+        "draw_count": int(len(selected_ids)),
+        "selected_episode_ids": selected_ids.tolist(),
+        "selection_counts": counts,
+        "window_count": int(len(windows)),
+    }
+
+
 def _calibrate_value_competence(
     value_model,
     dataset,
@@ -381,6 +421,22 @@ def main(argv=None):
     }
     if any(values.size == 0 for values in windows.values()):
         raise ValueError("every value-alignment split needs contiguous windows")
+    bootstrap_config = dict(config.get("episode_bootstrap", {}))
+    if bool(bootstrap_config.get("enabled", False)):
+        training_windows, bootstrap_manifest = (
+            _episode_bootstrap_windows(
+                train,
+                windows["train"],
+                int(bootstrap_config.get("seed", seed)),
+            )
+        )
+    else:
+        training_windows = windows["train"]
+        bootstrap_manifest = {
+            "enabled": False,
+            "independent_unit": "episode",
+            "window_count": int(len(training_windows)),
+        }
     batch_size = int(training.get("batch_size", 128))
     validation_batch_size = int(training.get("validation_batch_size", 256))
     maximum_train_windows = int(
@@ -438,13 +494,16 @@ def main(argv=None):
             "baseline_validation": baseline_validation,
             "selected_validation": metrics,
             "selected_epoch": int(epoch),
+            "episode_bootstrap": bootstrap_manifest,
         }
         torch.save(payload, path)
 
     save_checkpoint(output_dir / "best.pt", 0, baseline_validation)
     for epoch in range(1, epochs + 1):
         model.train()
-        order = np.random.RandomState(seed + epoch).permutation(windows["train"])
+        order = np.random.RandomState(seed + epoch).permutation(
+            training_windows
+        )
         order = order[:maximum_train_windows]
         accumulated = {}
         seen = 0
@@ -621,6 +680,7 @@ def main(argv=None):
         "dataset_manifest_sha256": _sha256(dataset_dir / "dataset_manifest.json"),
         "value_scale": calibrated_value_scale,
         "value_competence": competence_calibration,
+        "episode_bootstrap": bootstrap_manifest,
         "baseline_validation": baseline_validation,
         "best_epoch": int(best_epoch),
         "best_checkpoint": str(output_dir / "best.pt"),

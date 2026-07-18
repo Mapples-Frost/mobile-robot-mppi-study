@@ -3,6 +3,7 @@ import torch
 
 from experiments.icode.train_value_aligned_icode import (
     _calibrate_value_competence,
+    _episode_bootstrap_windows,
 )
 from mobile_robot_mppi.learning.models import ResidualNetwork
 from mobile_robot_mppi.learning.value_alignment import (
@@ -205,3 +206,22 @@ def test_competence_calibration_uses_episode_outcome_groups():
     assert result["on_value"] == 9.0
     assert result["success_episodes"] == 1
     assert result["failure_episodes"] == 1
+
+
+def test_episode_bootstrap_resamples_whole_episode_window_clusters():
+    dataset = {
+        "episode_id": np.asarray(
+            ["a", "a", "a", "b", "b", "c", "c", "c"]
+        )
+    }
+    starts = np.arange(8)
+
+    selected, manifest = _episode_bootstrap_windows(
+        dataset, starts, seed=17
+    )
+
+    assert manifest["independent_unit"] == "episode"
+    assert manifest["draw_count"] == 3
+    for episode_id, count in manifest["selection_counts"].items():
+        expected = int(np.sum(dataset["episode_id"] == episode_id)) * count
+        assert int(np.sum(dataset["episode_id"][selected] == episode_id)) == expected

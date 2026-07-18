@@ -11,6 +11,7 @@ from typing import Any, Mapping
 import numpy as np
 
 from mobile_robot_mppi.planning.mppi import MppiController, integrate_batch
+from mobile_robot_mppi.rl.reliability import HybridSamplingReliability
 
 
 @dataclass(frozen=True)
@@ -550,6 +551,7 @@ class PaperRLDrivenMppiConfig:
     covariance_max_scale: float = 2.00
     terminal_value_weight: float = 1.0
     terminal_critic_source: str = "target"
+    reliability: Any = None
 
     @classmethod
     def from_mapping(cls, values: Mapping[str, Any]):
@@ -587,6 +589,7 @@ class PaperRLDrivenMppiConfig:
             raise ValueError("terminal_value_weight must be non-negative")
         if self.terminal_critic_source not in ("online", "target"):
             raise ValueError("terminal_critic_source must be online or target")
+        HybridSamplingReliability(self.reliability or {})
         guided = int(round(float(samples) * self.guided_fraction))
         if guided >= int(samples):
             raise ValueError("at least one current-Gaussian sample is required")
@@ -618,6 +621,12 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
         # Reuse the strictly tested terminal-constraint helper without
         # inheriting the legacy mixture-proposal initialization contract.
         self.rl_driven_config = self.paper_rl_driven_config
+        self.hybrid_sampling_reliability = HybridSamplingReliability(
+            self.paper_rl_driven_config.reliability or {}
+        )
+        self._applied_guided_fraction = float(
+            self.paper_rl_driven_config.guided_fraction
+        )
         required = (
             "action_distribution",
             "sample_actions",
@@ -639,6 +648,12 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
                 "importance correction"
             )
 
+    def reset(self, seed=None):
+        super().reset(seed)
+        self._applied_guided_fraction = float(
+            self.paper_rl_driven_config.guided_fraction
+        )
+
     def _delayed_control(self, current, preceding):
         fraction = float(self.config.command_delay_s / self.config.dt)
         return fraction * preceding + (1.0 - fraction) * current
@@ -651,7 +666,18 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
             dtype=np.float64,
         )
         variances = np.empty_like(means)
+        rollout_states = np.empty(
+            (self.config.horizon, self.state_spec.dimension),
+            dtype=np.float64,
+        )
+        actor_ood_scores = np.zeros(
+            self.config.horizon, dtype=np.float64
+        )
+        support_evaluator = getattr(
+            self.sampling_prior, "support_ood_scores", None
+        )
         for step in range(self.config.horizon):
+            rollout_states[step] = states[0]
             distribution = self.sampling_prior.action_distribution(
                 states,
                 previous,
@@ -667,6 +693,17 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
             )
             means[step] = command[0]
             variances[step] = distribution["physical_std"][0] ** 2
+            if self.hybrid_sampling_reliability.config.enabled:
+                if not callable(support_evaluator):
+                    raise TypeError(
+                        "reliability-calibrated HSS requires Actor "
+                        "support_ood_scores"
+                    )
+                actor_ood_scores[step] = float(
+                    support_evaluator(
+                        distribution["raw_observation"][:1]
+                    )[0]
+                )
             applied = self._delayed_control(command, previous)
             states = integrate_batch(
                 self.dynamics,
@@ -679,7 +716,11 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
             previous = command
         if not np.isfinite(means).all() or not np.isfinite(variances).all():
             raise FloatingPointError("Actor mean rollout produced NaN or Inf")
-        return means, variances
+        return means, variances, {
+            "states": rollout_states,
+            "controls": means.copy(),
+            "actor_ood_scores": actor_ood_scores,
+        }
 
     def _guided_rollouts(
         self, state, observation, reference, count, rng
@@ -760,7 +801,18 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
             (count, self.config.horizon, self.action_spec.dimension),
             dtype=np.float64,
         )
+        rollout_states = np.empty(
+            (self.config.horizon, self.state_spec.dimension),
+            dtype=np.float64,
+        )
+        actor_ood_scores = np.zeros(
+            self.config.horizon, dtype=np.float64
+        )
+        support_evaluator = getattr(
+            self.sampling_prior, "support_ood_scores", None
+        )
         for step in range(self.config.horizon):
+            rollout_states[step] = states[0]
             distribution = self.sampling_prior.action_distribution(
                 states,
                 previous,
@@ -776,6 +828,17 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
             variances[step] = (
                 np.asarray(distribution["physical_std"])[0] ** 2
             )
+            if self.hybrid_sampling_reliability.config.enabled:
+                if not callable(support_evaluator):
+                    raise TypeError(
+                        "reliability-calibrated HSS requires Actor "
+                        "support_ood_scores"
+                    )
+                actor_ood_scores[step] = float(
+                    support_evaluator(
+                        distribution["raw_observation"][:1]
+                    )[0]
+                )
             if count:
                 guided_distribution = {
                     key: (
@@ -814,7 +877,28 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
             raise FloatingPointError(
                 "joint Actor rollout produced NaN or Inf"
             )
-        return means, variances, guided
+        return means, variances, guided, {
+            "states": rollout_states,
+            "controls": means.copy(),
+            "actor_ood_scores": actor_ood_scores,
+        }
+
+    def _residual_for_reliability(self):
+        residual = getattr(self.dynamics, "residual", None)
+        visited = set()
+        while residual is not None and id(residual) not in visited:
+            visited.add(id(residual))
+            if (
+                callable(getattr(residual, "disagreement", None))
+                and callable(
+                    getattr(residual, "support_confidence", None)
+                )
+            ):
+                return residual
+            residual = getattr(residual, "residual", None)
+        raise TypeError(
+            "reliability-calibrated HSS requires an ensemble residual"
+        )
 
     def _gaussian_samples(self, mean, variance, count, rng):
         samples = mean[None, :, :] + rng.normal(
@@ -887,8 +971,13 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
                 "paper RL-Driven MPPI requires observation and reference"
             )
         cfg = self.paper_rl_driven_config
+        applied_guided_fraction = (
+            self._applied_guided_fraction
+            if self.hybrid_sampling_reliability.config.enabled
+            else cfg.guided_fraction
+        )
         guided_count = int(round(
-            self.config.num_samples * cfg.guided_fraction
+            self.config.num_samples * applied_guided_fraction
         ))
         joint_actor_batch = callable(
             getattr(
@@ -898,20 +987,56 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
             )
         )
         if joint_actor_batch:
-            mean, actor_variance, guided = self._joint_actor_rollouts(
+            mean, actor_variance, guided, reliability_context = (
+                self._joint_actor_rollouts(
                 state,
                 observation,
                 reference,
                 guided_count,
                 rng,
             )
+            )
         else:
-            mean, actor_variance = self._actor_mean_rollout(
+            mean, actor_variance, reliability_context = self._actor_mean_rollout(
                 state, observation, reference
             )
             guided = self._guided_rollouts(
                 state, observation, reference, guided_count, rng
             )
+        reliability_diagnostics = {
+            "reliability_hss_enabled": False,
+            "reliability_guided_fraction_applied": float(
+                applied_guided_fraction
+            ),
+            "reliability_guided_fraction_next": float(
+                applied_guided_fraction
+            ),
+            "reliability_causal_lag_steps": 0,
+        }
+        if self.hybrid_sampling_reliability.config.enabled:
+            reliability_diagnostics = (
+                self.hybrid_sampling_reliability.evaluate(
+                    self._residual_for_reliability(),
+                    reliability_context["states"],
+                    reliability_context["controls"],
+                    reliability_context["actor_ood_scores"],
+                )
+            )
+            next_fraction = float(
+                reliability_diagnostics["guided_fraction"]
+            )
+            self._applied_guided_fraction = next_fraction
+            reliability_diagnostics.update({
+                "reliability_hss_enabled": True,
+                "reliability_guided_fraction_applied": float(
+                    applied_guided_fraction
+                ),
+                "reliability_guided_fraction_next": next_fraction,
+                # Authority estimated during the Actor mean rollout is applied
+                # on the next control cycle so stochastic guided trajectories
+                # remain jointly batched and no second Actor pass is added.
+                "reliability_causal_lag_steps": 1,
+            })
         base_variance = np.broadcast_to(
             np.asarray(self.config.noise_sigma, dtype=np.float64)[None, :] ** 2,
             mean.shape,
@@ -1056,4 +1181,5 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
             "prior": dict(prior.metadata),
         }
         diagnostics.update(terminal_diagnostics)
+        diagnostics.update(reliability_diagnostics)
         return action, sequence, trajectory, diagnostics

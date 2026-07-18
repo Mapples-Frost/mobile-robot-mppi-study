@@ -88,29 +88,77 @@ def make_components(config, project_root, rl_policy=None):
         root_text = str(Path(project_root).resolve())
         if root_text not in sys.path:
             sys.path.insert(0, root_text)
-        checkpoint = planner_cfg.get("checkpoint")
-        if not checkpoint:
-            raise ValueError("%s requires planner.checkpoint" % prediction_mode)
-        checkpoint_path = Path(checkpoint)
-        if not checkpoint_path.is_absolute():
-            checkpoint_path = Path(project_root) / checkpoint_path
+        checkpoint_values = planner_cfg.get("checkpoints")
+        if checkpoint_values is not None:
+            if (
+                not isinstance(checkpoint_values, (list, tuple))
+                or len(checkpoint_values) < 2
+            ):
+                raise ValueError(
+                    "planner.checkpoints requires at least two paths"
+                )
+            checkpoints = list(checkpoint_values)
+        else:
+            checkpoint = planner_cfg.get("checkpoint")
+            if not checkpoint:
+                raise ValueError(
+                    "%s requires planner.checkpoint" % prediction_mode
+                )
+            checkpoints = [checkpoint]
+        checkpoint_paths = []
+        for checkpoint in checkpoints:
+            checkpoint_path = Path(checkpoint)
+            if not checkpoint_path.is_absolute():
+                checkpoint_path = Path(project_root) / checkpoint_path
+            checkpoint_paths.append(checkpoint_path.resolve())
+        checkpoint_path = checkpoint_paths[0]
         device = str(planner_cfg.get("device", "cpu"))
         try:
             from mobile_robot_mppi.learning.models import (
                 InnovationGatedResidualDynamics,
                 NormalizedSupportGatedResidualDynamics,
                 PlatformResidualDynamics,
+                PlatformResidualEnsemble,
                 ResidualComponentMaskedDynamics,
             )
-            residual = PlatformResidualDynamics.from_checkpoint(
-                checkpoint_path,
-                device=device,
-                use_torchscript=bool(planner_cfg.get("residual_torchscript", False)),
-            )
-            if residual.model.model_type != prediction_mode:
-                raise ValueError(
-                    "checkpoint model type %s does not match %s"
-                    % (residual.model.model_type, prediction_mode)
+            residual_members = [
+                PlatformResidualDynamics.from_checkpoint(
+                    path,
+                    device=device,
+                    use_torchscript=bool(
+                        planner_cfg.get("residual_torchscript", False)
+                    ),
+                )
+                for path in checkpoint_paths
+            ]
+            for member in residual_members:
+                if member.model.model_type != prediction_mode:
+                    raise ValueError(
+                        "checkpoint model type %s does not match %s"
+                        % (member.model.model_type, prediction_mode)
+                    )
+            if len(residual_members) == 1:
+                residual = residual_members[0]
+            else:
+                ensemble = dict(
+                    planner_cfg.get("residual_ensemble", {})
+                )
+                residual = PlatformResidualEnsemble(
+                    residual_members,
+                    state_scales=ensemble.get(
+                        "state_scales",
+                        [1.0] * state_spec.dimension,
+                    ),
+                    support_soft_z=float(
+                        ensemble.get("support_soft_z", 3.0)
+                    ),
+                    support_hard_z=float(
+                        ensemble.get("support_hard_z", 7.0)
+                    ),
+                    innovation_decay=float(
+                        ensemble.get("innovation_decay", 0.9)
+                    ),
+                    member_paths=checkpoint_paths,
                 )
             component_mask = planner_cfg.get("residual_component_mask")
             if component_mask is not None:
@@ -184,6 +232,8 @@ def make_components(config, project_root, rl_policy=None):
         except ValueError as platform_error:
             from src.planners.mppi_dynamics_adapter import LearnedResidualDynamics
             try:
+                if len(checkpoint_paths) != 1:
+                    raise platform_error
                 residual = LearnedResidualDynamics.from_checkpoint(
                     checkpoint_path,
                     device=device,

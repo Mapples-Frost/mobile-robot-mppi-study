@@ -110,6 +110,40 @@ class JointBatchedDirectPolicy(AuditableDirectPolicy):
         )
 
 
+class ReliabilityDirectPolicy(JointBatchedDirectPolicy):
+    def __init__(self, ood_score):
+        super().__init__()
+        self.ood_score = float(ood_score)
+
+    def action_distribution(self, *args, **kwargs):
+        result = super().action_distribution(*args, **kwargs)
+        batch = result["physical_mean"].shape[0]
+        result["raw_observation"] = np.zeros((batch, 3))
+        return result
+
+    def support_ood_scores(self, raw_observations):
+        return np.full(len(raw_observations), self.ood_score)
+
+
+class ReliabilityResidual:
+    state_dim = 5
+    control_dim = 2
+    innovation_samples = 0
+    innovation_error_ema = 0.0
+
+    def derivative(self, state, control, time=None):
+        del control, time
+        return np.zeros_like(np.asarray(state, dtype=np.float64))
+
+    def disagreement(self, states, controls):
+        del controls
+        return np.zeros(len(states))
+
+    def support_confidence(self, states, controls):
+        del controls
+        return np.ones(len(states))
+
+
 def _observation():
     return RobotObservation(
         timestamp=0.0,
@@ -136,6 +170,46 @@ def _controller(policy):
             "guided_fraction": 0.25,
             "elite_fraction": 0.25,
             "terminal_value_weight": 0.5,
+        },
+    )
+
+
+def _reliable_controller(policy):
+    from mobile_robot_mppi.planning.dynamics import ResidualPrediction
+
+    return PaperRLDrivenMppiController(
+        ResidualPrediction(
+            DynamicUnicyclePrediction(), ReliabilityResidual()
+        ),
+        dynamic_unicycle_state(),
+        body_velocity_action((0.0, 0.5), 1.0),
+        MppiConfig(
+            horizon=5,
+            num_samples=20,
+            dt=0.1,
+            noise_sigma=(0.08, 0.20),
+            seed=20260718,
+        ),
+        sampling_prior=policy,
+        paper_rl_driven_config={
+            "iterations": 2,
+            "guided_fraction": 0.3,
+            "elite_fraction": 0.25,
+            "terminal_value_weight": 0.0,
+            "reliability": {
+                "enabled": True,
+                "ensemble_disagreement_soft": 0.02,
+                "ensemble_disagreement_hard": 0.10,
+                "innovation_error_soft": 0.1,
+                "innovation_error_hard": 0.4,
+                "actor_ood_soft": 3.0,
+                "actor_ood_hard": 7.0,
+                "medium_confidence": 0.33,
+                "high_confidence": 0.67,
+                "low_guided_fraction": 0.0,
+                "medium_guided_fraction": 0.3,
+                "high_guided_fraction": 0.6,
+            },
         },
     )
 
@@ -214,3 +288,21 @@ def test_paper_controller_is_deterministic_for_fixed_seed():
     np.testing.assert_array_equal(
         first.predicted_trajectory, second.predicted_trajectory
     )
+
+
+def test_reliability_hss_applies_authority_on_next_control_cycle():
+    high = _reliable_controller(ReliabilityDirectPolicy(0.0))
+    first = high.plan(_observation(), PointGoal(1.0, 0.0))
+    second = high.plan(_observation(), PointGoal(1.0, 0.0))
+
+    assert first.diagnostics["paper_guided_unique_sequences"] == 6
+    assert first.diagnostics["reliability_level"] == "high"
+    assert first.diagnostics["reliability_guided_fraction_next"] == 0.6
+    assert second.diagnostics["paper_guided_unique_sequences"] == 12
+    assert second.diagnostics["reliability_guided_fraction_applied"] == 0.6
+
+    low = _reliable_controller(ReliabilityDirectPolicy(8.0))
+    low.plan(_observation(), PointGoal(1.0, 0.0))
+    suppressed = low.plan(_observation(), PointGoal(1.0, 0.0))
+    assert suppressed.diagnostics["paper_guided_unique_sequences"] == 0
+    assert suppressed.diagnostics["reliability_guided_fraction_applied"] == 0.0

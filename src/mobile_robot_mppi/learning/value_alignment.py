@@ -276,6 +276,8 @@ class ValueAlignedResidualObjective(nn.Module):
         value_weight=0.05,
         anchor_weight=1.0,
         value_scale=1.0,
+        competence_off_value=None,
+        competence_on_value=None,
         state_weights=None,
         horizon_weights=None,
     ):
@@ -301,6 +303,24 @@ class ValueAlignedResidualObjective(nn.Module):
         self.value_scale = float(value_scale)
         if not math.isfinite(self.value_scale) or self.value_scale <= 0.0:
             raise ValueError("value_scale must be finite and positive")
+        if competence_off_value is None and competence_on_value is None:
+            self.competence_off_value = None
+            self.competence_on_value = None
+        elif competence_off_value is None or competence_on_value is None:
+            raise ValueError(
+                "critic competence requires both off and on values"
+            )
+        else:
+            self.competence_off_value = float(competence_off_value)
+            self.competence_on_value = float(competence_on_value)
+            if (
+                not math.isfinite(self.competence_off_value)
+                or not math.isfinite(self.competence_on_value)
+                or self.competence_on_value <= self.competence_off_value
+            ):
+                raise ValueError(
+                    "critic competence requires finite on > off"
+                )
         self.state_weights = (
             None
             if state_weights is None
@@ -421,6 +441,25 @@ class ValueAlignedResidualObjective(nn.Module):
         with torch.no_grad():
             true_values = self.value_model.value_from_raw(raw_true)
             confidence = self.value_model.confidence_from_raw(raw_true)
+            if self.competence_off_value is None:
+                competence = torch.ones_like(true_values)
+            else:
+                competence = torch.clamp(
+                    (
+                        true_values - self.competence_off_value
+                    ) / (
+                        self.competence_on_value
+                        - self.competence_off_value
+                    ),
+                    0.0,
+                    1.0,
+                )
+                # Smoothstep retains exact zero/one authority outside the
+                # calibrated band without introducing a hard discontinuity.
+                competence = competence.square() * (
+                    3.0 - 2.0 * competence
+                )
+            confidence = confidence * competence
         predicted_values = self.value_model.value_from_state(
             trajectory, raw_true, target_positions
         )
@@ -453,6 +492,7 @@ class ValueAlignedResidualObjective(nn.Module):
             "value_rmse": value_rmse,
             "anchor": anchor,
             "confidence_mean": confidence.mean(),
+            "competence_mean": competence.mean(),
             "predicted_trajectory": trajectory,
         }
 

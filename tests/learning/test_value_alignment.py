@@ -1,6 +1,9 @@
 import numpy as np
 import torch
 
+from experiments.icode.train_value_aligned_icode import (
+    _calibrate_value_competence,
+)
 from mobile_robot_mppi.learning.models import ResidualNetwork
 from mobile_robot_mppi.learning.value_alignment import (
     FrozenDirectSACValue,
@@ -144,3 +147,61 @@ def test_anchor_loss_is_zero_for_unchanged_checkpoint():
     }
     output = objective(model, batch)
     torch.testing.assert_close(output["anchor"], torch.zeros(()))
+
+
+def test_critic_competence_removes_low_value_sample_authority():
+    model = _residual_model()
+    value = _value_model()
+    objective = ValueAlignedResidualObjective(
+        model,
+        value,
+        {
+            "velocity_time_constant": 0.18,
+            "yaw_time_constant": 0.12,
+            "integrator": "rk4",
+        },
+        competence_off_value=1e6,
+        competence_on_value=1e6 + 1.0,
+    )
+    batch = {
+        "initial_state": torch.zeros((2, 5)),
+        "states_t": torch.zeros((2, 1, 5)),
+        "controls": torch.zeros((2, 1, 2)),
+        "dt": torch.full((2, 1), 0.1),
+        "target_states": torch.zeros((2, 1, 5)),
+        "residual_targets": torch.zeros((2, 1, 5)),
+        "raw_observations": torch.zeros((2, 1, 16)),
+        "target_positions": torch.ones((2, 1, 2)),
+    }
+
+    output = objective(model, batch)
+
+    torch.testing.assert_close(
+        output["competence_mean"], torch.zeros(())
+    )
+    torch.testing.assert_close(output["value"], torch.zeros(()))
+
+
+def test_competence_calibration_uses_episode_outcome_groups():
+    class _Value:
+        @staticmethod
+        def value_from_raw(raw):
+            return raw[:, 0]
+
+    dataset = {
+        "episode_id": np.asarray(["fail", "fail", "win", "win"]),
+        "raw_observation_t_plus_1": np.asarray(
+            [[1.0], [3.0], [7.0], [11.0]], dtype=np.float32
+        ),
+    }
+    result = _calibrate_value_competence(
+        _Value(),
+        dataset,
+        {"fail": False, "win": True},
+        torch.device("cpu"),
+    )
+
+    assert result["off_value"] == 2.0
+    assert result["on_value"] == 9.0
+    assert result["success_episodes"] == 1
+    assert result["failure_episodes"] == 1

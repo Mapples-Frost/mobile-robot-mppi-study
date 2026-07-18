@@ -119,6 +119,7 @@ def evaluate(model, objective, value_model, dataset, starts, horizon, device, ba
                 "value_rmse",
                 "anchor",
                 "confidence_mean",
+                "competence_mean",
             ):
                 sums[name] = sums.get(name, 0.0) + float(
                     values[name].cpu()
@@ -168,6 +169,92 @@ def _value_scale(value_model, dataset, device, batch_size=1024):
     result = np.concatenate(values)
     scale = float(np.std(result))
     return max(scale, 1.0)
+
+
+def _episode_outcomes(dataset_dir, split):
+    path = Path(dataset_dir) / "episodes.csv"
+    with path.open(newline="", encoding="utf-8") as handle:
+        rows = list(csv.DictReader(handle))
+    result = {}
+    for row in rows:
+        if str(row["split"]) != str(split):
+            continue
+        episode_id = str(row["episode_id"])
+        if episode_id in result:
+            raise ValueError(
+                "duplicate episode outcome for %s" % episode_id
+            )
+        result[episode_id] = bool(int(row["success"]))
+    if not result:
+        raise ValueError("no episode outcomes found for split %s" % split)
+    return result
+
+
+def _calibrate_value_competence(
+    value_model,
+    dataset,
+    outcomes,
+    device,
+    failure_quantile=0.5,
+    success_quantile=0.5,
+    batch_size=1024,
+):
+    """Calibrate critic authority from training-episode outcomes only."""
+
+    failure_quantile = float(failure_quantile)
+    success_quantile = float(success_quantile)
+    if (
+        not 0.0 <= failure_quantile <= 1.0
+        or not 0.0 <= success_quantile <= 1.0
+    ):
+        raise ValueError("competence quantiles must lie in [0,1]")
+    labels = np.asarray(
+        [outcomes[str(value)] for value in dataset["episode_id"]],
+        dtype=bool,
+    )
+    if not np.any(labels) or np.all(labels):
+        raise ValueError(
+            "competence calibration needs successful and failed episodes"
+        )
+    raw = dataset["raw_observation_t_plus_1"]
+    values = []
+    with torch.no_grad():
+        for begin in range(0, len(raw), batch_size):
+            tensor = torch.as_tensor(
+                raw[begin : begin + batch_size],
+                dtype=torch.float32,
+                device=device,
+            )
+            values.append(value_model.value_from_raw(tensor).cpu().numpy())
+    values = np.concatenate(values).astype(np.float64, copy=False)
+    off_value = float(np.quantile(values[~labels], failure_quantile))
+    on_value = float(np.quantile(values[labels], success_quantile))
+    if not math.isfinite(off_value) or not math.isfinite(on_value):
+        raise FloatingPointError(
+            "critic competence calibration is non-finite"
+        )
+    if on_value <= off_value:
+        raise ValueError(
+            "successful critic values do not exceed failed values at the "
+            "configured calibration quantiles"
+        )
+    return {
+        "enabled": True,
+        "source_split": "train",
+        "independent_unit": "episode outcome",
+        "failure_quantile": failure_quantile,
+        "success_quantile": success_quantile,
+        "off_value": off_value,
+        "on_value": on_value,
+        "success_transitions": int(np.sum(labels)),
+        "failure_transitions": int(np.sum(~labels)),
+        "success_episodes": int(sum(outcomes.values())),
+        "failure_episodes": int(
+            len(outcomes) - sum(outcomes.values())
+        ),
+        "success_value_mean": float(np.mean(values[labels])),
+        "failure_value_mean": float(np.mean(values[~labels])),
+    }
 
 
 def _write_json(path, value):
@@ -249,6 +336,22 @@ def main(argv=None):
         if config.get("value_scale", "auto") == "auto"
         else float(config["value_scale"])
     )
+    competence_config = dict(config.get("value_competence", {}))
+    if bool(competence_config.get("enabled", False)):
+        competence_calibration = _calibrate_value_competence(
+            value_model,
+            train,
+            _episode_outcomes(dataset_dir, "train"),
+            device,
+            failure_quantile=float(
+                competence_config.get("failure_quantile", 0.5)
+            ),
+            success_quantile=float(
+                competence_config.get("success_quantile", 0.5)
+            ),
+        )
+    else:
+        competence_calibration = {"enabled": False}
     weights = dict(config.get("loss_weights", {}))
     objective = ValueAlignedResidualObjective(
         anchor_model,
@@ -260,6 +363,8 @@ def main(argv=None):
         value_weight=float(weights.get("value", 0.05)),
         anchor_weight=float(weights.get("anchor", 1.0)),
         value_scale=calibrated_value_scale,
+        competence_off_value=competence_calibration.get("off_value"),
+        competence_on_value=competence_calibration.get("on_value"),
         state_weights=training.get(
             "state_loss_weights", (4.0, 4.0, 2.0, 1.0, 1.0)
         ),
@@ -329,6 +434,7 @@ def main(argv=None):
             ),
             "config": config,
             "value_scale": calibrated_value_scale,
+            "value_competence": competence_calibration,
             "baseline_validation": baseline_validation,
             "selected_validation": metrics,
             "selected_epoch": int(epoch),
@@ -365,6 +471,7 @@ def main(argv=None):
                 "value_rmse",
                 "anchor",
                 "confidence_mean",
+                "competence_mean",
             ):
                 accumulated[name] = accumulated.get(name, 0.0) + float(
                     values[name].detach().cpu()
@@ -413,10 +520,16 @@ def main(argv=None):
             "epoch": epoch,
             "train_total": train_metrics["total"],
             "train_value_rmse": train_metrics["value_rmse"],
+            "train_competence_mean": train_metrics[
+                "competence_mean"
+            ],
             "train_rollout_rmse": math.sqrt(
                 max(train_metrics["multistep"], 0.0)
             ),
             "validation_value_rmse": validation_metrics["terminal_value_rmse"],
+            "validation_competence_mean": validation_metrics[
+                "competence_mean"
+            ],
             "validation_value_rank_correlation": validation_metrics[
                 "terminal_value_rank_correlation"
             ],
@@ -507,6 +620,7 @@ def main(argv=None):
         "actor_checkpoint_sha256": _sha256(actor_checkpoint),
         "dataset_manifest_sha256": _sha256(dataset_dir / "dataset_manifest.json"),
         "value_scale": calibrated_value_scale,
+        "value_competence": competence_calibration,
         "baseline_validation": baseline_validation,
         "best_epoch": int(best_epoch),
         "best_checkpoint": str(output_dir / "best.pt"),

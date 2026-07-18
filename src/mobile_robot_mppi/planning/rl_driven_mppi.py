@@ -556,6 +556,8 @@ class PaperRLDrivenMppiConfig:
     terminal_critic_source: str = "target"
     reliability: Any = None
     conservative_terminal: Any = None
+    terminal_guidance_radius: float = 0.0
+    terminal_guided_fraction_floor: float = 0.0
 
     @classmethod
     def from_mapping(cls, values: Mapping[str, Any]):
@@ -573,6 +575,8 @@ class PaperRLDrivenMppiConfig:
             self.covariance_min_scale,
             self.covariance_max_scale,
             self.terminal_value_weight,
+            self.terminal_guidance_radius,
+            self.terminal_guided_fraction_floor,
         ), dtype=np.float64)
         if not np.isfinite(values).all():
             raise ValueError("paper RL-Driven MPPI settings must be finite")
@@ -591,6 +595,21 @@ class PaperRLDrivenMppiConfig:
             raise ValueError("paper covariance scale limits are invalid")
         if self.terminal_value_weight < 0.0:
             raise ValueError("terminal_value_weight must be non-negative")
+        if self.terminal_guidance_radius < 0.0:
+            raise ValueError(
+                "terminal_guidance_radius must be non-negative"
+            )
+        if not 0.0 <= self.terminal_guided_fraction_floor < 1.0:
+            raise ValueError(
+                "terminal_guided_fraction_floor must lie in [0, 1)"
+            )
+        if (
+            self.terminal_guided_fraction_floor > 0.0
+            and self.terminal_guidance_radius <= 0.0
+        ):
+            raise ValueError(
+                "a positive terminal guidance floor requires a positive radius"
+            )
         if self.terminal_critic_source not in ("online", "target"):
             raise ValueError("terminal_critic_source must be online or target")
         HybridSamplingReliability(self.reliability or {})
@@ -598,6 +617,13 @@ class PaperRLDrivenMppiConfig:
         guided = int(round(float(samples) * self.guided_fraction))
         if guided >= int(samples):
             raise ValueError("at least one current-Gaussian sample is required")
+        terminal_guided = int(round(
+            float(samples) * self.terminal_guided_fraction_floor
+        ))
+        if terminal_guided >= int(samples):
+            raise ValueError(
+                "terminal guidance floor must retain a Gaussian candidate"
+            )
 
 
 class PaperRLDrivenMppiController(RLDrivenMppiController):
@@ -667,6 +693,38 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
     def _delayed_control(self, current, preceding):
         fraction = float(self.config.command_delay_s / self.config.dt)
         return fraction * preceding + (1.0 - fraction) * current
+
+    def _completion_preserving_guidance(self, state, target):
+        """Return the causal terminal floor and its current-state diagnostics."""
+
+        cfg = self.paper_rl_driven_config
+        position = np.asarray(state, dtype=np.float64)[
+            list(self.state_spec.position_indices)
+        ]
+        target_xy = np.asarray(
+            (target.pose.x, target.pose.y), dtype=np.float64
+        )
+        distance = float(np.linalg.norm(target_xy - position))
+        enabled = bool(
+            self.hybrid_sampling_reliability.config.enabled
+            and cfg.terminal_guidance_radius > 0.0
+            and cfg.terminal_guided_fraction_floor > 0.0
+        )
+        active = bool(enabled and distance <= cfg.terminal_guidance_radius)
+        floor = (
+            float(cfg.terminal_guided_fraction_floor) if active else 0.0
+        )
+        return floor, {
+            "terminal_guidance_floor_enabled": enabled,
+            "terminal_guidance_floor_active": active,
+            "terminal_guidance_distance": distance,
+            "terminal_guidance_radius": float(
+                cfg.terminal_guidance_radius
+            ),
+            "terminal_guided_fraction_floor": float(
+                cfg.terminal_guided_fraction_floor
+            ),
+        }
 
     def _actor_mean_rollout(self, state, observation, reference):
         states = np.asarray(state, dtype=np.float64).reshape(1, -1)
@@ -1071,10 +1129,16 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
                 "paper RL-Driven MPPI requires observation and reference"
             )
         cfg = self.paper_rl_driven_config
-        applied_guided_fraction = (
+        raw_applied_guided_fraction = (
             self._applied_guided_fraction
             if self.hybrid_sampling_reliability.config.enabled
             else cfg.guided_fraction
+        )
+        terminal_floor, terminal_floor_diagnostics = (
+            self._completion_preserving_guidance(state, target)
+        )
+        applied_guided_fraction = max(
+            float(raw_applied_guided_fraction), terminal_floor
         )
         guided_count = int(round(
             self.config.num_samples * applied_guided_fraction
@@ -1112,6 +1176,10 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
                 applied_guided_fraction
             ),
             "reliability_causal_lag_steps": 0,
+            "reliability_guided_fraction_raw_applied": float(
+                raw_applied_guided_fraction
+            ),
+            **terminal_floor_diagnostics,
         }
         if self.hybrid_sampling_reliability.config.enabled:
             reliability_diagnostics = (
@@ -1122,9 +1190,10 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
                     reliability_context["actor_ood_scores"],
                 )
             )
-            next_fraction = float(
+            raw_next_fraction = float(
                 reliability_diagnostics["guided_fraction"]
             )
+            next_fraction = max(raw_next_fraction, terminal_floor)
             self._applied_guided_fraction = next_fraction
             reliability_diagnostics.update({
                 "reliability_hss_enabled": True,
@@ -1132,10 +1201,15 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
                     applied_guided_fraction
                 ),
                 "reliability_guided_fraction_next": next_fraction,
+                "reliability_guided_fraction_raw_next": raw_next_fraction,
+                "reliability_guided_fraction_raw_applied": float(
+                    raw_applied_guided_fraction
+                ),
                 # Authority estimated during the Actor mean rollout is applied
                 # on the next control cycle so stochastic guided trajectories
                 # remain jointly batched and no second Actor pass is added.
                 "reliability_causal_lag_steps": 1,
+                **terminal_floor_diagnostics,
             })
         base_variance = np.broadcast_to(
             np.asarray(self.config.noise_sigma, dtype=np.float64)[None, :] ** 2,

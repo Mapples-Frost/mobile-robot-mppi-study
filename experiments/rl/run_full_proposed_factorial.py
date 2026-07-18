@@ -197,6 +197,12 @@ def main(argv=None):
     parser.add_argument("--scene-configs", required=True)
     parser.add_argument("--physics-domains", required=True)
     parser.add_argument("--max-steps", type=int, default=300)
+    parser.add_argument(
+        "--terminal-guidance-radius", type=float, default=0.0
+    )
+    parser.add_argument(
+        "--terminal-guided-fraction-floor", type=float, default=0.0
+    )
     args = parser.parse_args(argv)
 
     base = load_yaml(args.config)
@@ -274,6 +280,16 @@ def main(argv=None):
         reliability = dict(calibration["runtime"])
         reliability["enabled"] = bool(adaptive)
         planner["paper_rl_driven"]["reliability"] = reliability
+        planner["paper_rl_driven"]["terminal_guidance_radius"] = (
+            float(args.terminal_guidance_radius) if adaptive else 0.0
+        )
+        planner["paper_rl_driven"][
+            "terminal_guided_fraction_floor"
+        ] = (
+            float(args.terminal_guided_fraction_floor)
+            if adaptive
+            else 0.0
+        )
         planner["paper_rl_driven"].pop(
             "conservative_terminal", None
         )
@@ -313,6 +329,14 @@ def main(argv=None):
             ],
             "rollout_budget_per_decision": int(args.total_rollouts),
             "paper_iterations": int(args.iterations),
+            "terminal_guidance_radius": (
+                float(args.terminal_guidance_radius) if adaptive else 0.0
+            ),
+            "terminal_guided_fraction_floor": (
+                float(args.terminal_guided_fraction_floor)
+                if adaptive
+                else 0.0
+            ),
         })
         rows.append(row)
         _write_csv(output / "progress.csv", rows)
@@ -322,6 +346,20 @@ def main(argv=None):
             output / ("%s_episodes.csv" % arm),
             [row for row in rows if row["factorial_arm"] == arm],
         )
+    unique_seeds = sorted({int(row["seed"]) for row in rows})
+    if len(unique_seeds) < 2:
+        (output / "shard_complete.json").write_text(
+            json.dumps({
+                "status": "complete_factorial_shard",
+                "seeds": unique_seeds,
+                "episodes": len(rows),
+                "analysis_deferred": (
+                    "seed-cluster inference requires at least two seeds"
+                ),
+            }, indent=2, sort_keys=True),
+            encoding="utf-8",
+        )
+        return 0
     paired = {
         "full_vs_simple": _paired(
             rows,

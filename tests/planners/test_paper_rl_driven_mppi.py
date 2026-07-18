@@ -188,7 +188,11 @@ def _controller(policy):
     )
 
 
-def _reliable_controller(policy, conservative_terminal=False):
+def _reliable_controller(
+    policy,
+    conservative_terminal=False,
+    terminal_guidance=False,
+):
     from mobile_robot_mppi.planning.dynamics import ResidualPrediction
 
     return PaperRLDrivenMppiController(
@@ -211,6 +215,12 @@ def _reliable_controller(policy, conservative_terminal=False):
             "elite_fraction": 0.25,
             "terminal_value_weight": (
                 0.5 if conservative_terminal else 0.0
+            ),
+            "terminal_guidance_radius": (
+                0.5 if terminal_guidance else 0.0
+            ),
+            "terminal_guided_fraction_floor": (
+                0.3 if terminal_guidance else 0.0
             ),
             "reliability": {
                 "enabled": True,
@@ -334,6 +344,31 @@ def test_reliability_hss_applies_authority_on_next_control_cycle():
     suppressed = low.plan(_observation(), PointGoal(1.0, 0.0))
     assert suppressed.diagnostics["paper_guided_unique_sequences"] == 0
     assert suppressed.diagnostics["reliability_guided_fraction_applied"] == 0.0
+
+
+def test_terminal_guidance_floor_preserves_completion_candidate_share():
+    low = _reliable_controller(
+        ReliabilityDirectPolicy(8.0),
+        terminal_guidance=True,
+    )
+    far_target = PointGoal(1.0, 0.0)
+    low.plan(_observation(), far_target)
+    far = low.plan(_observation(), far_target)
+    assert far.diagnostics["terminal_guidance_floor_enabled"]
+    assert not far.diagnostics["terminal_guidance_floor_active"]
+    assert far.diagnostics["reliability_guided_fraction_applied"] == 0.0
+    assert far.diagnostics["paper_guided_unique_sequences"] == 0
+
+    low.reset(seed=20260718)
+    near_target = PointGoal(0.4, 0.0)
+    low.plan(_observation(), near_target)
+    near = low.plan(_observation(), near_target)
+    assert near.diagnostics["terminal_guidance_floor_active"]
+    assert near.diagnostics["reliability_guided_fraction_raw_applied"] == 0.3
+    assert near.diagnostics["reliability_guided_fraction_raw_next"] == 0.0
+    assert near.diagnostics["reliability_guided_fraction_applied"] == 0.3
+    assert near.diagnostics["reliability_guided_fraction_next"] == 0.3
+    assert near.diagnostics["paper_guided_unique_sequences"] == 6
 
 
 def test_conservative_terminal_uses_candidate_confidence_and_safe_fallback():

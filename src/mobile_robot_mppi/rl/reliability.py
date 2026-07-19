@@ -92,6 +92,8 @@ class HybridSamplingReliabilityConfig:
     medium_guided_fraction: float = 0.30
     high_guided_fraction: float = 0.60
     dynamics_power: float = 1.0
+    dynamics_routing_mode: str = "trust_weighted"
+    policy_rescue_floor: float = 0.50
     fusion_mode: str = "conservative_min"
     source_competence_enabled: bool = False
     source_competence_initial: float = 0.50
@@ -166,6 +168,19 @@ class HybridSamplingReliabilityConfig:
             )
         if not np.isfinite(self.dynamics_power) or self.dynamics_power <= 0.0:
             raise ValueError("dynamics_power must be finite and positive")
+        if self.dynamics_routing_mode not in (
+            "trust_weighted",
+            "policy_rescue",
+        ):
+            raise ValueError(
+                "dynamics_routing_mode must be trust_weighted or "
+                "policy_rescue"
+            )
+        if (
+            not np.isfinite(self.policy_rescue_floor)
+            or not 0.0 <= float(self.policy_rescue_floor) <= 1.0
+        ):
+            raise ValueError("policy_rescue_floor must lie in [0,1]")
         if self.fusion_mode not in (
             "conservative_min",
             "innovation_anchor",
@@ -322,6 +337,44 @@ class HybridSamplingReliability:
             return "medium", float(self.config.medium_guided_fraction)
         return "low", float(self.config.low_guided_fraction)
 
+    def authority_from_components(
+        self, dynamics_confidence, actor_authority_factor
+    ):
+        """Fuse role-specific factors using the configured routing rule."""
+
+        values = np.asarray(
+            (dynamics_confidence, actor_authority_factor),
+            dtype=np.float64,
+        )
+        if (
+            not np.isfinite(values).all()
+            or np.any(values < 0.0)
+            or np.any(values > 1.0)
+        ):
+            raise ValueError(
+                "routing confidence factors must lie in [0,1]"
+            )
+        calibrated_dynamics = float(
+            float(dynamics_confidence) ** self.config.dynamics_power
+        )
+        if self.config.dynamics_routing_mode == "trust_weighted":
+            model_routing_factor = calibrated_dynamics
+        else:
+            # A model-free Actor and learned rollout model have different
+            # failure modes.  If the Actor is supported and competitive, low
+            # ICODE confidence allocates more Actor proposals; the configured
+            # floor retains a bounded allocation when ICODE is confident.
+            floor = float(self.config.policy_rescue_floor)
+            model_routing_factor = float(
+                floor + (1.0 - floor) * (1.0 - calibrated_dynamics)
+            )
+        authority = float(np.clip(
+            model_routing_factor * float(actor_authority_factor),
+            0.0,
+            1.0,
+        ))
+        return authority, model_routing_factor
+
     def evaluate(
         self,
         residual,
@@ -431,12 +484,9 @@ class HybridSamplingReliability:
             )
         actor_support_authority_factor = actor_authority_factor
         actor_authority_factor *= actor_competence_confidence
-        authority = float(np.clip(
-            dynamics_confidence ** self.config.dynamics_power
-            * actor_authority_factor,
-            0.0,
-            1.0,
-        ))
+        authority, model_routing_factor = self.authority_from_components(
+            dynamics_confidence, actor_authority_factor
+        )
         level, guided_fraction = self.allocation_from_authority(authority)
         return {
             "reliability_level": level,
@@ -450,6 +500,8 @@ class HybridSamplingReliability:
                 actor_competence_confidence
             ),
             "actor_authority_factor": actor_authority_factor,
+            "dynamics_routing_mode": self.config.dynamics_routing_mode,
+            "model_routing_factor": model_routing_factor,
             "fusion_mode": self.config.fusion_mode,
             "ensemble_disagreement_max": disagreement_max,
             "ensemble_disagreement_mean": float(

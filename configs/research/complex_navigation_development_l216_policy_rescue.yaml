@@ -1,0 +1,10 @@
+include: complex_navigation_development_l216_completion_only.yaml
+
+# Development candidate C2.  ICODE uncertainty routes samples toward an
+# in-support, causally competent model-free Actor instead of suppressing it.
+# The learned terminal-value path is not changed by this candidate.
+final_benchmark:
+  reliability_overrides:
+    dynamics_routing_mode: policy_rescue
+    policy_rescue_floor: 0.50
+

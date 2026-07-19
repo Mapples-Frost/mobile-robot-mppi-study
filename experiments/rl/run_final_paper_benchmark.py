@@ -14,7 +14,6 @@ from pathlib import Path
 
 import yaml
 
-
 ROOT = Path(__file__).resolve().parents[2]
 for path in (ROOT, ROOT / "src"):
     if str(path) not in sys.path:
@@ -36,7 +35,7 @@ from experiments.rl.run_gate1_simple_combination import (
     method_config,
     parse_ints,
 )
-from mobile_robot_mppi.core.config import load_yaml
+from mobile_robot_mppi.core.config import deep_merge, load_yaml
 from mobile_robot_mppi.evaluation.paired_checkpoint import (
     paired_checkpoint_effects,
 )
@@ -63,6 +62,31 @@ CORE_FACTORIAL_METHOD = {
     "ordinary_adaptive": "rl_driven_mppi",
     "full_proposed": "simple_combination",
 }
+
+
+def load_benchmark_manifest(path, _visited=None):
+    """Load composable benchmark manifests without experiment validation."""
+
+    path = Path(path).resolve()
+    visited = set() if _visited is None else set(_visited)
+    if path in visited:
+        raise ValueError("cyclic benchmark manifest include: %s" % path)
+    visited.add(path)
+    with path.open("r", encoding="utf-8") as handle:
+        data = yaml.safe_load(handle) or {}
+    if not isinstance(data, dict):
+        raise ValueError("benchmark manifest must be a mapping")
+    includes = data.pop("include", [])
+    if isinstance(includes, str):
+        includes = [includes]
+    merged = {}
+    for include in includes:
+        include_path = (path.parent / str(include)).resolve()
+        merged = deep_merge(
+            merged,
+            load_benchmark_manifest(include_path, visited),
+        )
+    return deep_merge(merged, data)
 
 
 def final_schedule(seeds, domains, scenes, schedule_seed, arms=ARMS):
@@ -129,6 +153,7 @@ def build_arm_config(
     completion_handover_full_rl_distance=0.0,
     planner_overrides=None,
     sensor_overrides=None,
+    reliability_overrides=None,
 ):
     """Build one frozen arm without allowing cross-arm parameter leakage."""
 
@@ -173,6 +198,8 @@ def build_arm_config(
     if flags["use_rl"]:
         reliability = dict(calibration["runtime"])
         reliability["enabled"] = bool(flags["adaptive_hss"])
+        if flags["adaptive_hss"]:
+            reliability.update(dict(reliability_overrides or {}))
         planner["paper_rl_driven"]["reliability"] = reliability
         planner["paper_rl_driven"]["terminal_guidance_radius"] = (
             float(terminal_guidance_radius)
@@ -338,8 +365,7 @@ def main(argv=None):
     args = parser.parse_args(argv)
 
     manifest_path = Path(args.manifest).resolve()
-    with manifest_path.open("r", encoding="utf-8") as handle:
-        manifest = yaml.safe_load(handle)
+    manifest = load_benchmark_manifest(manifest_path)
     if not isinstance(manifest, dict) or "final_benchmark" not in manifest:
         raise ValueError("manifest must define final_benchmark")
     frozen = dict(manifest["final_benchmark"])
@@ -440,6 +466,7 @@ def main(argv=None):
             )),
             frozen.get("planner_overrides", {}),
             frozen.get("sensor_overrides", {}),
+            frozen.get("reliability_overrides", {}),
         )
         arm = str(job["arm"])
         run_dir = output / "runs" / arm / config["experiment"]["name"]

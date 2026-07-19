@@ -1,0 +1,11 @@
+include: complex_navigation_development_l215.yaml
+
+# Development candidate C1.  Disable the completion handover that the complete
+# L215 matrix identified as a shared near-goal failure source.  Everything else
+# remains inherited from the committed L215 qualification manifest.
+final_benchmark:
+  status: development
+  preregistration: docs/rl/216_role_aware_hss_development_protocol_2026-07-20.md
+  completion_handover_full_fallback_distance: 0.0
+  completion_handover_full_rl_distance: 0.0
+

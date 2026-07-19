@@ -202,3 +202,60 @@ def test_actor_competence_multiplies_dynamics_authority():
     assert result["actor_authority_factor"] == 0.5
     assert result["reliability_authority"] == pytest.approx(5.0 / 12.0)
     assert result["guided_fraction"] == 0.3
+
+
+def test_policy_rescue_routes_in_support_actor_when_model_is_uncertain():
+    config = _config()
+    config.update({
+        "fusion_mode": "innovation_anchor",
+        "dynamics_routing_mode": "policy_rescue",
+        "policy_rescue_floor": 0.5,
+    })
+    evaluator = HybridSamplingReliability(config)
+    uncertain = _Residual()
+    uncertain.innovation_error_ema = 0.40
+    result = evaluator.evaluate(
+        uncertain,
+        np.zeros((5, 5)),
+        np.zeros((5, 2)),
+        np.full(5, 3.5),
+        actor_competence_confidence=1.0,
+    )
+
+    assert result["dynamics_confidence"] == 0.0
+    assert result["model_routing_factor"] == 1.0
+    assert result["reliability_authority"] == 1.0
+    assert result["guided_fraction"] == 0.6
+    assert result["dynamics_routing_mode"] == "policy_rescue"
+
+
+def test_policy_rescue_keeps_actor_ood_veto_and_confident_model_floor():
+    config = _config()
+    config.update({
+        "fusion_mode": "innovation_anchor",
+        "dynamics_routing_mode": "policy_rescue",
+        "policy_rescue_floor": 0.5,
+    })
+    evaluator = HybridSamplingReliability(config)
+
+    vetoed = evaluator.evaluate(
+        _Residual(),
+        np.zeros((5, 5)),
+        np.zeros((5, 2)),
+        np.full(5, 8.0),
+    )
+    assert vetoed["reliability_authority"] == 0.0
+    assert vetoed["guided_fraction"] == 0.0
+
+    confident = _Residual()
+    confident.innovation_error_ema = 0.10
+    result = evaluator.evaluate(
+        confident,
+        np.zeros((5, 5)),
+        np.zeros((5, 2)),
+        np.full(5, 3.5),
+    )
+    assert result["dynamics_confidence"] == 1.0
+    assert result["model_routing_factor"] == 0.5
+    assert result["reliability_authority"] == 0.5
+    assert result["guided_fraction"] == 0.3

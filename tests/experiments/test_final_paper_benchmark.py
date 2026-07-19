@@ -10,6 +10,7 @@ from experiments.rl.run_final_paper_benchmark import (
     _core_factorial_rows,
     build_arm_config,
     final_schedule,
+    load_benchmark_manifest,
     _load_reliability_with_gate,
     _comparison,
 )
@@ -154,6 +155,41 @@ def test_shared_planner_and_sensor_overrides_apply_to_every_arm():
         assert config["sensors"]["twist_source"] == "ground_truth"
 
 
+def test_reliability_override_is_confined_to_adaptive_arms():
+    override = {
+        "dynamics_routing_mode": "policy_rescue",
+        "policy_rescue_floor": 0.5,
+    }
+    configs = {}
+    for arm in ARMS:
+        configs[arm], _, _, _ = build_arm_config(
+            copy.deepcopy(_base()),
+            {"arm": arm, "seed": 7},
+            "actor.pt",
+            ["o1.pt", "o2.pt"],
+            ["v1.pt", "v2.pt"],
+            _calibration(),
+            _calibration(),
+            100,
+            2,
+            {"name": "nominal", "role": "seen", "plant_override": {}},
+            300,
+            0.0,
+            0.0,
+            reliability_overrides=override,
+        )
+    for arm in ("ordinary_adaptive", "full_proposed"):
+        reliability = configs[arm]["planner"]["paper_rl_driven"][
+            "reliability"
+        ]
+        assert reliability["dynamics_routing_mode"] == "policy_rescue"
+    for arm in ("rl_driven_mppi", "simple_combination", "value_fixed"):
+        reliability = configs[arm]["planner"]["paper_rl_driven"][
+            "reliability"
+        ]
+        assert "dynamics_routing_mode" not in reliability
+
+
 def test_core_factorial_rows_use_only_the_four_confirmatory_arms():
     rows = [
         {"benchmark_arm": arm, "method": arm, "block": "b"}
@@ -188,6 +224,24 @@ def test_frozen_manifest_is_a_manifest_not_an_experiment_config():
         with calibration_path.open("r", encoding="utf-8") as handle:
             calibration = yaml.safe_load(handle)
         assert "ensemble" in calibration
+
+
+def test_development_manifest_inheritance_is_recursive():
+    root = Path(__file__).resolve().parents[2]
+    completion = load_benchmark_manifest(
+        root / "configs/research/complex_navigation_development_l216_completion_only.yaml"
+    )["final_benchmark"]
+    rescue = load_benchmark_manifest(
+        root / "configs/research/complex_navigation_development_l216_policy_rescue.yaml"
+    )["final_benchmark"]
+
+    assert completion["scene_configs"]
+    assert completion["completion_handover_full_fallback_distance"] == 0.0
+    assert completion["sensor_overrides"]["pose_source"] == "ground_truth"
+    assert rescue["reliability_overrides"] == {
+        "dynamics_routing_mode": "policy_rescue",
+        "policy_rescue_floor": 0.5,
+    }
 
 
 def test_external_gate_evidence_must_bind_exact_calibration(

@@ -263,6 +263,14 @@ class EpisodeMetrics:
             "reliability_dynamics_confidence": float(
                 planner_diagnostics.get("dynamics_confidence", 1.0)
             ),
+            "reliability_dynamics_routing_mode": str(
+                planner_diagnostics.get(
+                    "dynamics_routing_mode", "trust_weighted"
+                )
+            ),
+            "reliability_model_routing_factor": float(
+                planner_diagnostics.get("model_routing_factor", 1.0)
+            ),
             "reliability_actor_confidence": float(
                 planner_diagnostics.get("actor_confidence", 1.0)
             ),
@@ -930,6 +938,24 @@ class EpisodeMetrics:
             ])),
             "reliability_dynamics_confidence_max": float(np.max([
                 row.get("reliability_dynamics_confidence", 1.0)
+                for row in values
+            ])),
+            "reliability_dynamics_routing_mode": str(
+                values[-1].get(
+                    "reliability_dynamics_routing_mode",
+                    "trust_weighted",
+                )
+            ),
+            "reliability_model_routing_factor_mean": float(np.mean([
+                row.get("reliability_model_routing_factor", 1.0)
+                for row in values
+            ])),
+            "reliability_model_routing_factor_min": float(np.min([
+                row.get("reliability_model_routing_factor", 1.0)
+                for row in values
+            ])),
+            "reliability_model_routing_factor_max": float(np.max([
+                row.get("reliability_model_routing_factor", 1.0)
                 for row in values
             ])),
             "reliability_actor_support_confidence_mean": float(

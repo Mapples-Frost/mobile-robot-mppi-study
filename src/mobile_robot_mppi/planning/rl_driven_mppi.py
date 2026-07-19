@@ -1544,13 +1544,13 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
                     "actor_support_authority_factor"
                 ]
             ) * float(source_competence["confidence"])
-            next_authority = float(np.clip(
-                reliability_diagnostics["dynamics_confidence"]
-                ** self.hybrid_sampling_reliability.config.dynamics_power
-                * actor_factor,
-                0.0,
-                1.0,
-            ))
+            next_authority, next_model_routing = (
+                self.hybrid_sampling_reliability
+                .authority_from_components(
+                    reliability_diagnostics["dynamics_confidence"],
+                    actor_factor,
+                )
+            )
             next_level, raw_next_fraction = (
                 self.hybrid_sampling_reliability
                 .allocation_from_authority(next_authority)
@@ -1560,6 +1560,7 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
             reliability_diagnostics.update({
                 "reliability_level": next_level,
                 "reliability_authority": next_authority,
+                "model_routing_factor": next_model_routing,
                 "actor_authority_factor": actor_factor,
                 "actor_competence_confidence": float(
                     source_competence["confidence"]

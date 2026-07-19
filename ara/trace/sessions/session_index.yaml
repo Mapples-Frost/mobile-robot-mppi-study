@@ -95,3 +95,6 @@ sessions:
   - id: "2026-07-19_031"
     path: "trace/sessions/2026-07-19_031.yaml"
     summary: "A preregistered path-transfer factorial confirmed adaptive-sampling cross-track and compute gains, while refuting reliable terminal completion and a positive value-aligned ICODE path main effect."
+  - id: "2026-07-19_032"
+    path: "trace/sessions/2026-07-19_032.yaml"
+    summary: "L196--L201 repaired Actor-source parity calibration, retained its failed sealed path confirmation, and rejected non-generalizing path-value ICODE fine-tuning."

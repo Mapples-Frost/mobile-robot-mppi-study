@@ -1,0 +1,59 @@
+session:
+  id: "2026-07-19_032"
+  timestamp: "2026-07-19T17:45:00+08:00"
+  summary: "L196--L201 repaired Actor-source parity calibration, retained its failed sealed path confirmation, and rejected non-generalizing path-value ICODE fine-tuning."
+
+events_logged:
+  - type: experiment
+    id: "N135"
+    provenance: ai-executed
+    summary: "L196 identity-mapped source competence failed."
+  - type: experiment
+    id: "N136"
+    provenance: ai-executed
+    summary: "L197 parity calibration passed its fresh multi-physics development Gate."
+  - type: experiment
+    id: "N137"
+    provenance: ai-executed
+    summary: "L198 sealed path-and-physics superiority confirmation failed narrowly."
+  - type: experiment
+    id: "N138"
+    provenance: ai-executed
+    summary: "L199/L201 path-value ICODE remediation failed held-out generalization Gates."
+  - type: claim
+    id: "C95"
+    provenance: ai-suggested
+    summary: "Parity calibration is retained only as development evidence."
+  - type: claim
+    id: "C96"
+    provenance: ai-suggested
+    summary: "Sealed path-tracking superiority of the L197 stack was refuted."
+  - type: claim
+    id: "C97"
+    provenance: ai-suggested
+    summary: "Current path-value-consistent ICODE generalization was refuted."
+
+ai_actions:
+  - action: "Added seed-cluster effect reporting and packaged compact experiment provenance, summaries, Gates and dataset metadata."
+    provenance: ai-executed
+    files_changed:
+      - "experiments/rl/analyze_sealed_reliability_confirmation.py"
+      - "experiments/rl/package_l196_l201_evidence.py"
+      - "research_artifacts/l196_l201_2026-07-19/"
+
+claims_touched:
+  - id: "C95"
+    action: created
+    provenance: ai-suggested
+  - id: "C96"
+    action: created
+    provenance: ai-suggested
+  - id: "C97"
+    action: created
+    provenance: ai-suggested
+
+open_threads:
+  - "Retain ordinary ICODE and the fixed RL value baseline until a new coupling mechanism passes fresh development and sealed confirmation."
+  - "Do not reuse L198 paths or seeds for tuning."
+
+ai_suggestions_pending: []

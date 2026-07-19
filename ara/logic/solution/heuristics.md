@@ -420,3 +420,15 @@
 - **Provenance**: ai-suggested
 - **Sensitivity**: high
 - **Code ref**: [`src/mobile_robot_mppi/planning/rl_driven_mppi.py`, `src/mobile_robot_mppi/evaluation/metrics.py`, `tests/planners/test_paper_rl_driven_mppi.py`, `docs/rl/183_full_proposed_path_tracking_prereg_2026-07-19.md`]
+
+## H71: Calibrate relative proposal yield around parity
+- **Rationale**: A guided/Gaussian elite-yield ratio is a relative source comparison, not an absolute confidence probability. Map a preregistered below-parity region to zero authority and parity to full competence before smoothing; then require independent confirmation because the mapping can remain path dependent.
+- **Provenance**: ai-suggested
+- **Sensitivity**: high
+- **Code ref**: [`src/mobile_robot_mppi/rl/reliability.py`, `configs/rl/source_relative_actor_competence_l197.yaml`, `tests/rl/test_reliability.py`]
+
+## H72: Require held-out value consistency before using critic gradients to fine-tune dynamics
+- **Rationale**: A value loss can be active and improve its training-route objective while worsening control-relevant generalization. Match the critic's observation encoding, split by route and physics, select by held-out rollout/value metrics, and reject the fine-tuned model if epoch zero remains optimal.
+- **Provenance**: ai-suggested
+- **Sensitivity**: high
+- **Code ref**: [`src/mobile_robot_mppi/learning/value_alignment.py`, `experiments/icode/train_value_aligned_icode.py`, `docs/rl/202_l196_l201_reliability_and_value_alignment_results_2026-07-19.md`]

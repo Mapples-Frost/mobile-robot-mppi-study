@@ -1,0 +1,1786 @@
+{
+  "artifact_scope": "L196--L201 compact research evidence",
+  "excludes": [
+    "raw NPZ datasets",
+    "model checkpoints",
+    "per-step trajectories"
+  ],
+  "files": [
+    {
+      "bytes": 27644,
+      "path": "path_aware_multiphysics_dev_l196/combined_unseen/factorial_contrasts.json",
+      "sha256": "74d7e57e1262b8f15ac18bd64af02e1b79ebf808caa4d82b2a62e9bd593d6a79"
+    },
+    {
+      "bytes": 12904,
+      "path": "path_aware_multiphysics_dev_l196/combined_unseen/full_proposed_episodes.csv",
+      "sha256": "2d78671db1fe74cb3f43cb84e7321ffafb2929ef2d5aec82a23cf98b43d4dc3a"
+    },
+    {
+      "bytes": 12916,
+      "path": "path_aware_multiphysics_dev_l196/combined_unseen/ordinary_adaptive_episodes.csv",
+      "sha256": "3b3ebae54c45dba8819f7d12288ba066e4ff4cdb117085ccf6c03cb3c63b0b0c"
+    },
+    {
+      "bytes": 11861,
+      "path": "path_aware_multiphysics_dev_l196/combined_unseen/ordinary_fixed_episodes.csv",
+      "sha256": "9d202d957e983ea3226ee55066fab03148082ad65766e304c046a66ec22aa240"
+    },
+    {
+      "bytes": 29774,
+      "path": "path_aware_multiphysics_dev_l196/combined_unseen/paired_comparisons.json",
+      "sha256": "7442912c2d3c70f26a4eac09b817abbab07af0d15f15f7417b84d32c7bfce8bc"
+    },
+    {
+      "bytes": 32686,
+      "path": "path_aware_multiphysics_dev_l196/combined_unseen/progress.csv",
+      "sha256": "2fed01c5bf29f0b7cf6fdf45dff56a245390f23a6bb2805b245ee1c0031dbfe3"
+    },
+    {
+      "bytes": 5947,
+      "path": "path_aware_multiphysics_dev_l196/combined_unseen/provenance.json",
+      "sha256": "f3579a3a10b9998cfa4e2425778bb789262ae80789e1266501927b165cf224f8"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l196/combined_unseen/runs/full_proposed/full_proposed__high_dynamic_reverse_s_terminal_dev_l187__combined_unseen__seed569/provenance.json",
+      "sha256": "53dad4b988ea98181e80e49096efe3fceed52c4944595edf74d256cdf47fa780"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l196/combined_unseen/runs/full_proposed/full_proposed__high_dynamic_reverse_s_terminal_dev_l187__combined_unseen__seed570/provenance.json",
+      "sha256": "96f5534743c3715ef85956e6c5d7a7358110256e5c1805acefad7650fdf53cca"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l196/combined_unseen/runs/full_proposed/full_proposed__high_dynamic_reverse_s_terminal_dev_l187__combined_unseen__seed571/provenance.json",
+      "sha256": "d54a157a9318efa47a118bd89b551e4dae0059599670f3cc97753b0efbcdda8f"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l196/combined_unseen/runs/ordinary_adaptive/ordinary_adaptive__high_dynamic_reverse_s_terminal_dev_l187__combined_unseen__seed569/provenance.json",
+      "sha256": "37029469364945696927c31e7f458ff92329dfc4b4dbd8e5f5c5d49253a078e3"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l196/combined_unseen/runs/ordinary_adaptive/ordinary_adaptive__high_dynamic_reverse_s_terminal_dev_l187__combined_unseen__seed570/provenance.json",
+      "sha256": "1edd362d259e8da44182fea687c21f1769dd0477ede2e16a6e91f26af437d409"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l196/combined_unseen/runs/ordinary_adaptive/ordinary_adaptive__high_dynamic_reverse_s_terminal_dev_l187__combined_unseen__seed571/provenance.json",
+      "sha256": "cc5c9f1c09c6b63cd3b0070dd52705bd376423bef97cb434e5101361b9c1f8ce"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l196/combined_unseen/runs/ordinary_fixed/ordinary_fixed__high_dynamic_reverse_s_terminal_dev_l187__combined_unseen__seed569/provenance.json",
+      "sha256": "656ee8eab7bda04033354bd4df3c65f91aee3b5e2e532d9b711bf276141464df"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l196/combined_unseen/runs/ordinary_fixed/ordinary_fixed__high_dynamic_reverse_s_terminal_dev_l187__combined_unseen__seed570/provenance.json",
+      "sha256": "25530b59bc8d9f7963cbb3b09bd6f6f9aa7d43c919c25546c9fc8be71e226559"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l196/combined_unseen/runs/ordinary_fixed/ordinary_fixed__high_dynamic_reverse_s_terminal_dev_l187__combined_unseen__seed571/provenance.json",
+      "sha256": "eef9f3a43c1cadda06c27e751aef4d3e6104535423244dfa1a191ead43157d32"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l196/combined_unseen/runs/value_fixed/value_fixed__high_dynamic_reverse_s_terminal_dev_l187__combined_unseen__seed569/provenance.json",
+      "sha256": "7a1b0888a717134a0023f916c40756393cf8f2a7dc5fcebd7cd89938f2d49a72"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l196/combined_unseen/runs/value_fixed/value_fixed__high_dynamic_reverse_s_terminal_dev_l187__combined_unseen__seed570/provenance.json",
+      "sha256": "b6ed5da56d77859de6c6783bf83db7484ab830e2ebfc91111f8855988ce9ef64"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l196/combined_unseen/runs/value_fixed/value_fixed__high_dynamic_reverse_s_terminal_dev_l187__combined_unseen__seed571/provenance.json",
+      "sha256": "79d42a971bc6f4a7b97f04c6fbf01b56c8ffa54034f21ad63f0e795b8e3538d1"
+    },
+    {
+      "bytes": 3542,
+      "path": "path_aware_multiphysics_dev_l196/combined_unseen/schedule.json",
+      "sha256": "c66e2a1f7046b07bfebc880b3c7b3cbd1be65f0ddbb3cd8ff27c2c0aaa29e1dc"
+    },
+    {
+      "bytes": 11943,
+      "path": "path_aware_multiphysics_dev_l196/combined_unseen/value_fixed_episodes.csv",
+      "sha256": "40f3e65f3b2c60dd0a1ac86f0ecfc6ad324dd1759cbc296703ef62a1c8c7537a"
+    },
+    {
+      "bytes": 27574,
+      "path": "path_aware_multiphysics_dev_l196/high_mass_seen/factorial_contrasts.json",
+      "sha256": "4232c0ed64b96b6a1700f75abeb8615f21f5f8e0d3273eae5728b9e85d993f40"
+    },
+    {
+      "bytes": 12881,
+      "path": "path_aware_multiphysics_dev_l196/high_mass_seen/full_proposed_episodes.csv",
+      "sha256": "5c1f370ded8246a8ef0533fb7ddafa40ea4ce151e02d324d580ce4475168a0ec"
+    },
+    {
+      "bytes": 12878,
+      "path": "path_aware_multiphysics_dev_l196/high_mass_seen/ordinary_adaptive_episodes.csv",
+      "sha256": "b54c7325296d02dd4e55bf4f7b3886bf82bf164a43c1a8fa25a20efeb1410c1a"
+    },
+    {
+      "bytes": 11975,
+      "path": "path_aware_multiphysics_dev_l196/high_mass_seen/ordinary_fixed_episodes.csv",
+      "sha256": "5b1c7f902755ef884b95131c5c455bc22fde2bfb6dbb529de790dcfb02ca7cf0"
+    },
+    {
+      "bytes": 29740,
+      "path": "path_aware_multiphysics_dev_l196/high_mass_seen/paired_comparisons.json",
+      "sha256": "873f1dbe630e9da44fae00395e372dadbb319a36dff4fae0378fe372764f6632"
+    },
+    {
+      "bytes": 32715,
+      "path": "path_aware_multiphysics_dev_l196/high_mass_seen/progress.csv",
+      "sha256": "01144fbfaa86c7b8903d0c98182f4808d798f12d0c8fec09970728925e03c8ea"
+    },
+    {
+      "bytes": 5598,
+      "path": "path_aware_multiphysics_dev_l196/high_mass_seen/provenance.json",
+      "sha256": "9d097d6865a74348df47e6ecdf4461601fd2649d84e40ea4d1466769a754c994"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l196/high_mass_seen/runs/full_proposed/full_proposed__high_dynamic_reverse_s_terminal_dev_l187__high_mass_seen__seed569/provenance.json",
+      "sha256": "bf90bcc69e026933469cfa3dace4b38eeb0ffdf287b6efc82fc4bd6bf69a52a8"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l196/high_mass_seen/runs/full_proposed/full_proposed__high_dynamic_reverse_s_terminal_dev_l187__high_mass_seen__seed570/provenance.json",
+      "sha256": "b4fb85f9ef479d2713855fdfed5bdfcd7c80be1574ec4b598f894d316bc5d9ee"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l196/high_mass_seen/runs/full_proposed/full_proposed__high_dynamic_reverse_s_terminal_dev_l187__high_mass_seen__seed571/provenance.json",
+      "sha256": "6858b220164c1d49b995fab311ef16ad4961e33a08cc48ef0a77daa00341c65d"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l196/high_mass_seen/runs/ordinary_adaptive/ordinary_adaptive__high_dynamic_reverse_s_terminal_dev_l187__high_mass_seen__seed569/provenance.json",
+      "sha256": "6b241cb8f2803fdb598ba466fff269bb2c774bc3f36c741e8e3f324c264a0b3b"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l196/high_mass_seen/runs/ordinary_adaptive/ordinary_adaptive__high_dynamic_reverse_s_terminal_dev_l187__high_mass_seen__seed570/provenance.json",
+      "sha256": "4100ae9cc8f9bfe7f67024465b7d7c1844d38296fd21a69acc1aed7cb48a9d54"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l196/high_mass_seen/runs/ordinary_adaptive/ordinary_adaptive__high_dynamic_reverse_s_terminal_dev_l187__high_mass_seen__seed571/provenance.json",
+      "sha256": "c82e33f541ebe62670912269245ff876ed2363155891812d7591d170ec24dbdd"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l196/high_mass_seen/runs/ordinary_fixed/ordinary_fixed__high_dynamic_reverse_s_terminal_dev_l187__high_mass_seen__seed569/provenance.json",
+      "sha256": "012a0666859719f111a86ded8dae09a4f54d0f268cb66dc5af20e1c5996f7c7d"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l196/high_mass_seen/runs/ordinary_fixed/ordinary_fixed__high_dynamic_reverse_s_terminal_dev_l187__high_mass_seen__seed570/provenance.json",
+      "sha256": "9e82d9c9d2d441b1edfebe73cd7dbe898c359f23bf58a6ef874fff8703c08ff9"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l196/high_mass_seen/runs/ordinary_fixed/ordinary_fixed__high_dynamic_reverse_s_terminal_dev_l187__high_mass_seen__seed571/provenance.json",
+      "sha256": "e9e853f42bd1258d5b91dc17a57f977ad1cf62585295fa5183edcb88dd78c1ef"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l196/high_mass_seen/runs/value_fixed/value_fixed__high_dynamic_reverse_s_terminal_dev_l187__high_mass_seen__seed569/provenance.json",
+      "sha256": "67a13588fd2a5b29e9696fce9d9be77395ca9d3c97de1f92eebb2eec795fcbb3"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l196/high_mass_seen/runs/value_fixed/value_fixed__high_dynamic_reverse_s_terminal_dev_l187__high_mass_seen__seed570/provenance.json",
+      "sha256": "aab6a33c2a8ab0053f94a46678b61b1e4763f7b7f56756768958711d896e94f2"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l196/high_mass_seen/runs/value_fixed/value_fixed__high_dynamic_reverse_s_terminal_dev_l187__high_mass_seen__seed571/provenance.json",
+      "sha256": "6658db685c056255cc484fb8d8af909945e73e0ee44673c7988d1dd11aea6e70"
+    },
+    {
+      "bytes": 3518,
+      "path": "path_aware_multiphysics_dev_l196/high_mass_seen/schedule.json",
+      "sha256": "42e7255a84eca4782bdccb9ccb62f28b5da08c1d5256b1f5316d309fbc138f3a"
+    },
+    {
+      "bytes": 11919,
+      "path": "path_aware_multiphysics_dev_l196/high_mass_seen/value_fixed_episodes.csv",
+      "sha256": "8ada4299878d2b92d691b18f18b11ce71838ab9f136cca20fd4fab815309e01c"
+    },
+    {
+      "bytes": 27610,
+      "path": "path_aware_multiphysics_dev_l196/long_delay_seen/factorial_contrasts.json",
+      "sha256": "bd2a0fc30f174bfab99d7f3089e8113b9c5d33e2f42326dc80c70b745721569b"
+    },
+    {
+      "bytes": 12792,
+      "path": "path_aware_multiphysics_dev_l196/long_delay_seen/full_proposed_episodes.csv",
+      "sha256": "1438983f6dfbfe9b5346944b504a0a315a21a7023a3b9c94e982c4235c1af297"
+    },
+    {
+      "bytes": 12870,
+      "path": "path_aware_multiphysics_dev_l196/long_delay_seen/ordinary_adaptive_episodes.csv",
+      "sha256": "8d11a3f03f5aedb52666f8e32b71f0e29a16df9bd350990ae13cc166b3012611"
+    },
+    {
+      "bytes": 11849,
+      "path": "path_aware_multiphysics_dev_l196/long_delay_seen/ordinary_fixed_episodes.csv",
+      "sha256": "4cef6e8a2779b17a66cbd33b44b33f594effcdc6527d5613677164ad790a7927"
+    },
+    {
+      "bytes": 29765,
+      "path": "path_aware_multiphysics_dev_l196/long_delay_seen/paired_comparisons.json",
+      "sha256": "3e28b6089d93577911d67478974fbdb2d513a5ae14f8cf26ab95cd066864efe2"
+    },
+    {
+      "bytes": 32507,
+      "path": "path_aware_multiphysics_dev_l196/long_delay_seen/progress.csv",
+      "sha256": "db17bf199d0a73063ee5a342dfe7ea16b890b0564faeb8cf1b7e74770ced2132"
+    },
+    {
+      "bytes": 5508,
+      "path": "path_aware_multiphysics_dev_l196/long_delay_seen/provenance.json",
+      "sha256": "78abb5530060aa4b146e040bfbe82ed00df26e9f57e81512b03a0295eda6bcb5"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l196/long_delay_seen/runs/full_proposed/full_proposed__high_dynamic_reverse_s_terminal_dev_l187__long_delay_seen__seed569/provenance.json",
+      "sha256": "7e87294f48691d314b1690c72b1fee8553d748dd0d492e32df4fbb23b8350eb9"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l196/long_delay_seen/runs/full_proposed/full_proposed__high_dynamic_reverse_s_terminal_dev_l187__long_delay_seen__seed570/provenance.json",
+      "sha256": "df06088431ab99556b7d5adae37d3d02c1c12374cb01d65560b0b125929b58d6"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l196/long_delay_seen/runs/full_proposed/full_proposed__high_dynamic_reverse_s_terminal_dev_l187__long_delay_seen__seed571/provenance.json",
+      "sha256": "4e76aab94201a4d1fa6bfa66401d53cce6af87899a6f30cc59009bbaff6e9d9b"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l196/long_delay_seen/runs/ordinary_adaptive/ordinary_adaptive__high_dynamic_reverse_s_terminal_dev_l187__long_delay_seen__seed569/provenance.json",
+      "sha256": "d14694be59b3bf3fcdb56145bb4073c748942a38e63482dfc36d6da9aa5ce165"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l196/long_delay_seen/runs/ordinary_adaptive/ordinary_adaptive__high_dynamic_reverse_s_terminal_dev_l187__long_delay_seen__seed570/provenance.json",
+      "sha256": "3451c9280e5f9d2819f6de21325a2f753bf727146f00bd4e9d2af29f7a7894cf"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l196/long_delay_seen/runs/ordinary_adaptive/ordinary_adaptive__high_dynamic_reverse_s_terminal_dev_l187__long_delay_seen__seed571/provenance.json",
+      "sha256": "26f8ca821fc62be83ca44b03744d799cdb9f0c047d3d295718a64628df746292"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l196/long_delay_seen/runs/ordinary_fixed/ordinary_fixed__high_dynamic_reverse_s_terminal_dev_l187__long_delay_seen__seed569/provenance.json",
+      "sha256": "76d97a0eb20d214c0f96fdaf2ba736625a6e70fc2a55f9560f8356256673c98b"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l196/long_delay_seen/runs/ordinary_fixed/ordinary_fixed__high_dynamic_reverse_s_terminal_dev_l187__long_delay_seen__seed570/provenance.json",
+      "sha256": "dcf55e4262909852f602e606d4c5144618462b50268f8052afbb4c61f5437c89"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l196/long_delay_seen/runs/ordinary_fixed/ordinary_fixed__high_dynamic_reverse_s_terminal_dev_l187__long_delay_seen__seed571/provenance.json",
+      "sha256": "c97df4b5cc9f3d8ba3c00aa95b3a482945d2c4406993a77937ac705dfdbf39d8"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l196/long_delay_seen/runs/value_fixed/value_fixed__high_dynamic_reverse_s_terminal_dev_l187__long_delay_seen__seed569/provenance.json",
+      "sha256": "df49743529cb8d875067c6295cc75d30afa18e4f29cad05c7d2ebe3c5100a48c"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l196/long_delay_seen/runs/value_fixed/value_fixed__high_dynamic_reverse_s_terminal_dev_l187__long_delay_seen__seed570/provenance.json",
+      "sha256": "412b7034e90ea2f8eb972db81c8d8b504e26b215dae6192c21cb7308fee83206"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l196/long_delay_seen/runs/value_fixed/value_fixed__high_dynamic_reverse_s_terminal_dev_l187__long_delay_seen__seed571/provenance.json",
+      "sha256": "e01d5fcbd6161d8a12a15c3c433b7933c420bf56d9645f560b5976ed54d96cb3"
+    },
+    {
+      "bytes": 3542,
+      "path": "path_aware_multiphysics_dev_l196/long_delay_seen/schedule.json",
+      "sha256": "2ccb2524d6436da514ef09c52a865cda100a825775aef0860792bb643219654d"
+    },
+    {
+      "bytes": 11934,
+      "path": "path_aware_multiphysics_dev_l196/long_delay_seen/value_fixed_episodes.csv",
+      "sha256": "9bcea1330ca6c99f2936002ba128c3a99f9a06b5390b7b879a5c76768fdc2154"
+    },
+    {
+      "bytes": 27580,
+      "path": "path_aware_multiphysics_dev_l196/low_friction_seen/factorial_contrasts.json",
+      "sha256": "eae813853c91a3cfcdedfd499bbf4b67c82e39a5fa84d98a23e9cb3661878990"
+    },
+    {
+      "bytes": 12835,
+      "path": "path_aware_multiphysics_dev_l196/low_friction_seen/full_proposed_episodes.csv",
+      "sha256": "27e574af53e348da27c8416fb5f2f76ff1cbd0d1ca1b7f35d03a92bdf28ff31e"
+    },
+    {
+      "bytes": 12924,
+      "path": "path_aware_multiphysics_dev_l196/low_friction_seen/ordinary_adaptive_episodes.csv",
+      "sha256": "4d9834666e2c3f9a1bec3d3678c6ac14b574a7f7a4aa7dd0fe89de5a68b6cdab"
+    },
+    {
+      "bytes": 12057,
+      "path": "path_aware_multiphysics_dev_l196/low_friction_seen/ordinary_fixed_episodes.csv",
+      "sha256": "090517a91f48b0e475ca5878f400b82b8dca4ed025db2c84ed5716202af1394d"
+    },
+    {
+      "bytes": 29718,
+      "path": "path_aware_multiphysics_dev_l196/low_friction_seen/paired_comparisons.json",
+      "sha256": "f773eb650da813a8dc3ddcc2cc36505eacc315769f2571bbc678ae9167e4ff02"
+    },
+    {
+      "bytes": 32886,
+      "path": "path_aware_multiphysics_dev_l196/low_friction_seen/progress.csv",
+      "sha256": "70377ccc4acf7b079ce2fed4e2b4bb200939f6696e17d9e8faef536f6f863965"
+    },
+    {
+      "bytes": 5674,
+      "path": "path_aware_multiphysics_dev_l196/low_friction_seen/provenance.json",
+      "sha256": "3bf592cd109f081b7b5fb3066fd9521cef7cf89c7010325ba014a7fa8d8585e3"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l196/low_friction_seen/runs/full_proposed/full_proposed__high_dynamic_reverse_s_terminal_dev_l187__low_friction_seen__seed569/provenance.json",
+      "sha256": "bcf5783cb78f75ff50f443dd95498999c361b67ce6b6d9fda57525a5ae9d9fef"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l196/low_friction_seen/runs/full_proposed/full_proposed__high_dynamic_reverse_s_terminal_dev_l187__low_friction_seen__seed570/provenance.json",
+      "sha256": "3c406ff1d918285d8cb6b41e5da7751c44866f65dc9b281b23a6ac81c3fff116"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l196/low_friction_seen/runs/full_proposed/full_proposed__high_dynamic_reverse_s_terminal_dev_l187__low_friction_seen__seed571/provenance.json",
+      "sha256": "9c25d9b67338c7553f4b33c093f6636e7675033229fe8f342b1dfd113a8bb8ae"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l196/low_friction_seen/runs/ordinary_adaptive/ordinary_adaptive__high_dynamic_reverse_s_terminal_dev_l187__low_friction_seen__seed569/provenance.json",
+      "sha256": "20a54982945da4a8ebf6f50e7d272e06612a01d696a3d03e5f108bc958f5d51e"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l196/low_friction_seen/runs/ordinary_adaptive/ordinary_adaptive__high_dynamic_reverse_s_terminal_dev_l187__low_friction_seen__seed570/provenance.json",
+      "sha256": "0807171040112657ef578f739bb338c6913796a8677ea93b5478d74b485c8794"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l196/low_friction_seen/runs/ordinary_adaptive/ordinary_adaptive__high_dynamic_reverse_s_terminal_dev_l187__low_friction_seen__seed571/provenance.json",
+      "sha256": "f63bf3ca8628c7db1882b4572325bd9796cbdea3b1587e7a3232647c93290841"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l196/low_friction_seen/runs/ordinary_fixed/ordinary_fixed__high_dynamic_reverse_s_terminal_dev_l187__low_friction_seen__seed569/provenance.json",
+      "sha256": "eb7c53522855f268bae3950a94636546bbfb42d99f422b03a5de7767202282c7"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l196/low_friction_seen/runs/ordinary_fixed/ordinary_fixed__high_dynamic_reverse_s_terminal_dev_l187__low_friction_seen__seed570/provenance.json",
+      "sha256": "b7c5d3a7a816ffeb81a2e2ded8b0d350958b9f14da83fb96de2fc70b598280e5"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l196/low_friction_seen/runs/ordinary_fixed/ordinary_fixed__high_dynamic_reverse_s_terminal_dev_l187__low_friction_seen__seed571/provenance.json",
+      "sha256": "5b2af026ce57584f39892dc53916b574d07c3801994a7495720ed3ac84b4db28"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l196/low_friction_seen/runs/value_fixed/value_fixed__high_dynamic_reverse_s_terminal_dev_l187__low_friction_seen__seed569/provenance.json",
+      "sha256": "32901b277fb673dda720d4293ce87ef86a46dcc5738c31321b9b4b4c3ff0de4d"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l196/low_friction_seen/runs/value_fixed/value_fixed__high_dynamic_reverse_s_terminal_dev_l187__low_friction_seen__seed570/provenance.json",
+      "sha256": "6694fb17d7433bc81d24a13cf550491cf3d4b081e6bc818dbcce8f02b1cfea6f"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l196/low_friction_seen/runs/value_fixed/value_fixed__high_dynamic_reverse_s_terminal_dev_l187__low_friction_seen__seed571/provenance.json",
+      "sha256": "66e4595b88b42a6130b6df8e7479fe591a06d114aedeaea086fc16ccd1c896c4"
+    },
+    {
+      "bytes": 3590,
+      "path": "path_aware_multiphysics_dev_l196/low_friction_seen/schedule.json",
+      "sha256": "0a67a4ba81222699eb70a9d46caa9e4c6bc4dc585102f42b4be28cf8c86a98a2"
+    },
+    {
+      "bytes": 12008,
+      "path": "path_aware_multiphysics_dev_l196/low_friction_seen/value_fixed_episodes.csv",
+      "sha256": "cd088a5195ffa35418597ef2aefd5bd7d2fc433485e6f4d4bec4a6d79bb3abcf"
+    },
+    {
+      "bytes": 11122,
+      "path": "path_aware_multiphysics_dev_l196/multidomain_gate.json",
+      "sha256": "dfc59d567bfd1fd5ac385de90829569e1c04bde6f0d0242045dd755408283976"
+    },
+    {
+      "bytes": 27656,
+      "path": "path_aware_multiphysics_dev_l197/combined_unseen/factorial_contrasts.json",
+      "sha256": "a093c190e211b960fce2e4d83a87a317ec4372ff444f93ac2e2cc1dbf8bc73ba"
+    },
+    {
+      "bytes": 13004,
+      "path": "path_aware_multiphysics_dev_l197/combined_unseen/full_proposed_episodes.csv",
+      "sha256": "53ca97dd668a126e81c9e55871bd40dcf184224fe239a1bc9a4078789ec8a647"
+    },
+    {
+      "bytes": 12953,
+      "path": "path_aware_multiphysics_dev_l197/combined_unseen/ordinary_adaptive_episodes.csv",
+      "sha256": "fd1c120468896c3560980ee521dba5c739ec352ac324ec785c6e03a9d625db48"
+    },
+    {
+      "bytes": 11978,
+      "path": "path_aware_multiphysics_dev_l197/combined_unseen/ordinary_fixed_episodes.csv",
+      "sha256": "a0dba145a9be2012e97b741b7302833018da28fbef35a2e2a178f452f10c443c"
+    },
+    {
+      "bytes": 29735,
+      "path": "path_aware_multiphysics_dev_l197/combined_unseen/paired_comparisons.json",
+      "sha256": "771d97370422beff17c968c8f79573e3561da52b7489057f56366f1d8f09d914"
+    },
+    {
+      "bytes": 32939,
+      "path": "path_aware_multiphysics_dev_l197/combined_unseen/progress.csv",
+      "sha256": "3c6c25f1086ad649bb98e40cb933c12c5013b85b4ce5ad86f21c2c15992f3df5"
+    },
+    {
+      "bytes": 6027,
+      "path": "path_aware_multiphysics_dev_l197/combined_unseen/provenance.json",
+      "sha256": "8bde8d61bf7323cba71b1d6637049c683767075eebebe54c86069dc9b881629f"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l197/combined_unseen/runs/full_proposed/full_proposed__high_dynamic_reverse_s_terminal_dev_l187__combined_unseen__seed572/provenance.json",
+      "sha256": "a54a55fd317ce05e901195ca40b158bff5ee5904b0fadda4ab33073c443acb4b"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l197/combined_unseen/runs/full_proposed/full_proposed__high_dynamic_reverse_s_terminal_dev_l187__combined_unseen__seed573/provenance.json",
+      "sha256": "22ddacb4cca6cd4b8b870961d94d60da667a0786b16b92755967fa6af985430e"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l197/combined_unseen/runs/full_proposed/full_proposed__high_dynamic_reverse_s_terminal_dev_l187__combined_unseen__seed574/provenance.json",
+      "sha256": "303e60c0c27f79cac23608dd742cc40e23da1da11602a05a964d74e823605923"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l197/combined_unseen/runs/ordinary_adaptive/ordinary_adaptive__high_dynamic_reverse_s_terminal_dev_l187__combined_unseen__seed572/provenance.json",
+      "sha256": "3beb22640d386116d2c6b26d58c34c1812f018d308072887428693bbceb88910"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l197/combined_unseen/runs/ordinary_adaptive/ordinary_adaptive__high_dynamic_reverse_s_terminal_dev_l187__combined_unseen__seed573/provenance.json",
+      "sha256": "5a0b8bc15641815e2527ce6a5e5ba7d9b80892a51fba6fef0ed6f9b115bf4717"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l197/combined_unseen/runs/ordinary_adaptive/ordinary_adaptive__high_dynamic_reverse_s_terminal_dev_l187__combined_unseen__seed574/provenance.json",
+      "sha256": "d196e933f2aac7cc76844882a520101c8397c5e022278cfcac80a44c48353068"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l197/combined_unseen/runs/ordinary_fixed/ordinary_fixed__high_dynamic_reverse_s_terminal_dev_l187__combined_unseen__seed572/provenance.json",
+      "sha256": "2a28fee29a4d62cabeb2da5fdf5f71174f3f8409756390f9825bf380543491fe"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l197/combined_unseen/runs/ordinary_fixed/ordinary_fixed__high_dynamic_reverse_s_terminal_dev_l187__combined_unseen__seed573/provenance.json",
+      "sha256": "d91ce2953107d05622aaaf161262d541dac10c9c9c08e209e414e836253a8cba"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l197/combined_unseen/runs/ordinary_fixed/ordinary_fixed__high_dynamic_reverse_s_terminal_dev_l187__combined_unseen__seed574/provenance.json",
+      "sha256": "7fa5d735ae453a564a32955fab6d97c638e493d1e2bba1ebf1030b5877a1c210"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l197/combined_unseen/runs/value_fixed/value_fixed__high_dynamic_reverse_s_terminal_dev_l187__combined_unseen__seed572/provenance.json",
+      "sha256": "dbe7382a0d52d138d898570e04e4310707ecdc891a2749b3094c92e681eac144"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l197/combined_unseen/runs/value_fixed/value_fixed__high_dynamic_reverse_s_terminal_dev_l187__combined_unseen__seed573/provenance.json",
+      "sha256": "5b9313e854ce23cab2e5216f7792f55d3c4519dc821fd2df801d7dc5397a166d"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l197/combined_unseen/runs/value_fixed/value_fixed__high_dynamic_reverse_s_terminal_dev_l187__combined_unseen__seed574/provenance.json",
+      "sha256": "cfa8bb8413b404f90689b8414cd4f4e854dfb00cdd159bd43b2ac35976d47034"
+    },
+    {
+      "bytes": 3542,
+      "path": "path_aware_multiphysics_dev_l197/combined_unseen/schedule.json",
+      "sha256": "27e481ea94c4857593a2d0c3e618eafc272ae8a5e49bd4aae79b668da1f4202d"
+    },
+    {
+      "bytes": 12065,
+      "path": "path_aware_multiphysics_dev_l197/combined_unseen/value_fixed_episodes.csv",
+      "sha256": "53ede777c1ad68ace2be2791eddea53686ce9fdbf7269ff7d43ae135f0430040"
+    },
+    {
+      "bytes": 27633,
+      "path": "path_aware_multiphysics_dev_l197/high_mass_seen/factorial_contrasts.json",
+      "sha256": "5049b3b5865f639e41a02eb93b2259b3dd3eedd2903f71e229c28ee23ba0b784"
+    },
+    {
+      "bytes": 12953,
+      "path": "path_aware_multiphysics_dev_l197/high_mass_seen/full_proposed_episodes.csv",
+      "sha256": "8a160ff4267681ef27b6484561ca6f24e177c0fddea72b575b6ef5d1129c78af"
+    },
+    {
+      "bytes": 12961,
+      "path": "path_aware_multiphysics_dev_l197/high_mass_seen/ordinary_adaptive_episodes.csv",
+      "sha256": "0d2c6cc1ce103d6bc57aaa661966352cb7e3baf6d222356b4367cf705e5cfc0a"
+    },
+    {
+      "bytes": 11962,
+      "path": "path_aware_multiphysics_dev_l197/high_mass_seen/ordinary_fixed_episodes.csv",
+      "sha256": "72c1750cbc6653f64c6fe63588cf506bf7f9d1dffde4525f9f486d724e69af54"
+    },
+    {
+      "bytes": 29654,
+      "path": "path_aware_multiphysics_dev_l197/high_mass_seen/paired_comparisons.json",
+      "sha256": "1ed8c410dccc72d2d9de28d196411ef0834a1ea46c05771717b977d8ec4f845d"
+    },
+    {
+      "bytes": 32808,
+      "path": "path_aware_multiphysics_dev_l197/high_mass_seen/progress.csv",
+      "sha256": "7f04e75a7b98ef277baeac7b1ce1fdfc6fe0c1a57f5bad55d59c0c4b72e21290"
+    },
+    {
+      "bytes": 5678,
+      "path": "path_aware_multiphysics_dev_l197/high_mass_seen/provenance.json",
+      "sha256": "a907937ce1ac7c9039726fb3cfc627d5d3d9f2898dfda3a7bf27fb9c15c2c75d"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l197/high_mass_seen/runs/full_proposed/full_proposed__high_dynamic_reverse_s_terminal_dev_l187__high_mass_seen__seed572/provenance.json",
+      "sha256": "6e73a446617a8d98ef68e185a8a6759d47212d185e403e431a1eab80b437b227"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l197/high_mass_seen/runs/full_proposed/full_proposed__high_dynamic_reverse_s_terminal_dev_l187__high_mass_seen__seed573/provenance.json",
+      "sha256": "41c548d40ae26f5a2693aefc650d162c432aa6b672eba75659351a0e892c8838"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l197/high_mass_seen/runs/full_proposed/full_proposed__high_dynamic_reverse_s_terminal_dev_l187__high_mass_seen__seed574/provenance.json",
+      "sha256": "c79a92a8a56ebc3c3fe9b67687e00120e6921171f3df8478426bb9dbcfc64918"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l197/high_mass_seen/runs/ordinary_adaptive/ordinary_adaptive__high_dynamic_reverse_s_terminal_dev_l187__high_mass_seen__seed572/provenance.json",
+      "sha256": "4d17f8d40a28f5f87a790003cdc345e2e61863b91fb7eade11c61e8faf8441c3"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l197/high_mass_seen/runs/ordinary_adaptive/ordinary_adaptive__high_dynamic_reverse_s_terminal_dev_l187__high_mass_seen__seed573/provenance.json",
+      "sha256": "e7fc22d059e5e297c1c2d988c2f3e5bee53cfd7a816595770742a5a91378047b"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l197/high_mass_seen/runs/ordinary_adaptive/ordinary_adaptive__high_dynamic_reverse_s_terminal_dev_l187__high_mass_seen__seed574/provenance.json",
+      "sha256": "5da949dbe40b6d1ea7dc6d9fbe7e23e681f9ad018f1bec9f438a215e1a52353d"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l197/high_mass_seen/runs/ordinary_fixed/ordinary_fixed__high_dynamic_reverse_s_terminal_dev_l187__high_mass_seen__seed572/provenance.json",
+      "sha256": "89253dfd0c79f7652b7214858dedfebbfa397c5fc610b0bf560c06690101f04a"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l197/high_mass_seen/runs/ordinary_fixed/ordinary_fixed__high_dynamic_reverse_s_terminal_dev_l187__high_mass_seen__seed573/provenance.json",
+      "sha256": "d69bd7c28b117da4083d5f19de8b07edb942722db0d6cac2347fb6a04b62b381"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l197/high_mass_seen/runs/ordinary_fixed/ordinary_fixed__high_dynamic_reverse_s_terminal_dev_l187__high_mass_seen__seed574/provenance.json",
+      "sha256": "acc3b15eb233fbce8369e12666d86b7c8a3ef49c46d9132ebb068a03e3e09c53"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l197/high_mass_seen/runs/value_fixed/value_fixed__high_dynamic_reverse_s_terminal_dev_l187__high_mass_seen__seed572/provenance.json",
+      "sha256": "94fdf70e151be33c98a6922f8f98c5ebd0924b367a2651f2024065b8a0d15e9d"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l197/high_mass_seen/runs/value_fixed/value_fixed__high_dynamic_reverse_s_terminal_dev_l187__high_mass_seen__seed573/provenance.json",
+      "sha256": "621bebd303a166d2b9206c8a5d27c3905a153bad6637d0566766913a970a74b4"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l197/high_mass_seen/runs/value_fixed/value_fixed__high_dynamic_reverse_s_terminal_dev_l187__high_mass_seen__seed574/provenance.json",
+      "sha256": "aad78d6d28872f64a7ffce8ff6ba529113adf9c7746f10b5b1684b536b7d4c78"
+    },
+    {
+      "bytes": 3518,
+      "path": "path_aware_multiphysics_dev_l197/high_mass_seen/schedule.json",
+      "sha256": "231f5f7958e6cadb93e7459ebc6624d23950892e63ba1f971f63400e54e3ec94"
+    },
+    {
+      "bytes": 11993,
+      "path": "path_aware_multiphysics_dev_l197/high_mass_seen/value_fixed_episodes.csv",
+      "sha256": "c1ec097f5eb930e5b16ffa12a6bd72b2f730cc4fe8c342a0818ac919637a906d"
+    },
+    {
+      "bytes": 27608,
+      "path": "path_aware_multiphysics_dev_l197/long_delay_seen/factorial_contrasts.json",
+      "sha256": "3e353d4f3547987768214b7b62be64c91a9d8eaf3980464d1b02f15d181c5e69"
+    },
+    {
+      "bytes": 12963,
+      "path": "path_aware_multiphysics_dev_l197/long_delay_seen/full_proposed_episodes.csv",
+      "sha256": "d0935adc9ee7d16bb9d9dac45c67e78e6f03f4f6be547e97368bb1419bda8a13"
+    },
+    {
+      "bytes": 12984,
+      "path": "path_aware_multiphysics_dev_l197/long_delay_seen/ordinary_adaptive_episodes.csv",
+      "sha256": "002644bd63ec90284841eb24a284dd7107dc5151cc5436cf57ae42c99bd6db64"
+    },
+    {
+      "bytes": 12032,
+      "path": "path_aware_multiphysics_dev_l197/long_delay_seen/ordinary_fixed_episodes.csv",
+      "sha256": "8e21e75277958bf81aa6c1e6a8f37bfb3f7207893dc55bd8fac8db2aadfc3fe5"
+    },
+    {
+      "bytes": 29738,
+      "path": "path_aware_multiphysics_dev_l197/long_delay_seen/paired_comparisons.json",
+      "sha256": "47ce87a68e597d6ce22c98644909bcc33b9de3bb3e4ad99f51773d8a0d62406d"
+    },
+    {
+      "bytes": 32970,
+      "path": "path_aware_multiphysics_dev_l197/long_delay_seen/progress.csv",
+      "sha256": "8cf40c4553d9a972f75e5eed8d50455c9b2f0f3bc4a1f37e51ad7632d460b86f"
+    },
+    {
+      "bytes": 5588,
+      "path": "path_aware_multiphysics_dev_l197/long_delay_seen/provenance.json",
+      "sha256": "69b1b6daeaec838a993e67b0146d9df4eb1952b960a5ebc6b6b194dfbbd61fdd"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l197/long_delay_seen/runs/full_proposed/full_proposed__high_dynamic_reverse_s_terminal_dev_l187__long_delay_seen__seed572/provenance.json",
+      "sha256": "5c123706151b17d3967d516b97acd07ca926c9a30da595d64a13113758d9aad1"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l197/long_delay_seen/runs/full_proposed/full_proposed__high_dynamic_reverse_s_terminal_dev_l187__long_delay_seen__seed573/provenance.json",
+      "sha256": "f0fda6148d208931f8fb48032e47823d5a7968f56034a93fb542ce8827523156"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l197/long_delay_seen/runs/full_proposed/full_proposed__high_dynamic_reverse_s_terminal_dev_l187__long_delay_seen__seed574/provenance.json",
+      "sha256": "c8bcd687243ed2b24292738f0319ea462862a184d50934ac004f981f1a81311a"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l197/long_delay_seen/runs/ordinary_adaptive/ordinary_adaptive__high_dynamic_reverse_s_terminal_dev_l187__long_delay_seen__seed572/provenance.json",
+      "sha256": "d3c056c6883c282bb8cb753dbe30a42c670de07537f583f181970a20a57fd171"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l197/long_delay_seen/runs/ordinary_adaptive/ordinary_adaptive__high_dynamic_reverse_s_terminal_dev_l187__long_delay_seen__seed573/provenance.json",
+      "sha256": "544194cb41f5c5f1dc7dc80e54afb04988f96eb398cc7c91e6cee2d43f9d286c"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l197/long_delay_seen/runs/ordinary_adaptive/ordinary_adaptive__high_dynamic_reverse_s_terminal_dev_l187__long_delay_seen__seed574/provenance.json",
+      "sha256": "4424d605e69eea729fb277b669cde99a0e1bc1b5281ae883df0f284045a4dedd"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l197/long_delay_seen/runs/ordinary_fixed/ordinary_fixed__high_dynamic_reverse_s_terminal_dev_l187__long_delay_seen__seed572/provenance.json",
+      "sha256": "16f72e3edc8f99997f3cea1b5baa1d69d43bba691afd39fbb268247c5057f2fc"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l197/long_delay_seen/runs/ordinary_fixed/ordinary_fixed__high_dynamic_reverse_s_terminal_dev_l187__long_delay_seen__seed573/provenance.json",
+      "sha256": "f53427e7712e36082318b12131ba1edb18cb8206b09e348fccdb8a86cfa6c4be"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l197/long_delay_seen/runs/ordinary_fixed/ordinary_fixed__high_dynamic_reverse_s_terminal_dev_l187__long_delay_seen__seed574/provenance.json",
+      "sha256": "13894326013855906d973a07670eec3f7c28b48d4e35c06004793fbcbabfcc7e"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l197/long_delay_seen/runs/value_fixed/value_fixed__high_dynamic_reverse_s_terminal_dev_l187__long_delay_seen__seed572/provenance.json",
+      "sha256": "d8045de1734f1a43afce2d3301d58efaf4d40c2e5275725cb0f35f552bf0c05c"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l197/long_delay_seen/runs/value_fixed/value_fixed__high_dynamic_reverse_s_terminal_dev_l187__long_delay_seen__seed573/provenance.json",
+      "sha256": "5fa64a9f6e9e7e2f6e9934a0858614d2764818c986c805c90a23e56b7b531284"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l197/long_delay_seen/runs/value_fixed/value_fixed__high_dynamic_reverse_s_terminal_dev_l187__long_delay_seen__seed574/provenance.json",
+      "sha256": "0aef46aca6e8323fa70241459acb04c30c543bea75fb600aae61300966f7c1c9"
+    },
+    {
+      "bytes": 3542,
+      "path": "path_aware_multiphysics_dev_l197/long_delay_seen/schedule.json",
+      "sha256": "67b0f018ccda75ea61d33bde5bb387938609154e7d84acff53b67efb36afef9f"
+    },
+    {
+      "bytes": 12052,
+      "path": "path_aware_multiphysics_dev_l197/long_delay_seen/value_fixed_episodes.csv",
+      "sha256": "e1ace8e38572b06bce2841deca8485fa92ff0fb4a05e2ef0b36451ff193874f2"
+    },
+    {
+      "bytes": 27594,
+      "path": "path_aware_multiphysics_dev_l197/low_friction_seen/factorial_contrasts.json",
+      "sha256": "96ae960bff34bd1f0e8fadcf1b2279742bcf67e44e61b3425ce90fa434fc7b08"
+    },
+    {
+      "bytes": 12920,
+      "path": "path_aware_multiphysics_dev_l197/low_friction_seen/full_proposed_episodes.csv",
+      "sha256": "bff070f54c65cd9c9cfd35643dd61a4436a69ba123de56b7afde62ce1ba17bb7"
+    },
+    {
+      "bytes": 13011,
+      "path": "path_aware_multiphysics_dev_l197/low_friction_seen/ordinary_adaptive_episodes.csv",
+      "sha256": "81d32c88c0da8365cb1f5e7101b087c85d43809d623d0e0602058f15e6b7236a"
+    },
+    {
+      "bytes": 12109,
+      "path": "path_aware_multiphysics_dev_l197/low_friction_seen/ordinary_fixed_episodes.csv",
+      "sha256": "46e23698a766af9b81e44af7b17377d2f89a9f479102cd38326257f41f407ac7"
+    },
+    {
+      "bytes": 29719,
+      "path": "path_aware_multiphysics_dev_l197/low_friction_seen/paired_comparisons.json",
+      "sha256": "4a10ac5ecd3c539cfb991377dd5a405bfcd9911baff86b635a665400f412f8b0"
+    },
+    {
+      "bytes": 33038,
+      "path": "path_aware_multiphysics_dev_l197/low_friction_seen/progress.csv",
+      "sha256": "345d07086260312d3f93894d07d860e28812adc061803b01197b4e6b6a4c59ef"
+    },
+    {
+      "bytes": 5754,
+      "path": "path_aware_multiphysics_dev_l197/low_friction_seen/provenance.json",
+      "sha256": "9a04f7d05d16431f06c7aedf72fc0232eea1c720f26513d567b6e9cb31381efe"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l197/low_friction_seen/runs/full_proposed/full_proposed__high_dynamic_reverse_s_terminal_dev_l187__low_friction_seen__seed572/provenance.json",
+      "sha256": "f7dd7bb5e1de00cd500b319341b90df92fa332ff5d2d0b68e66d0cd3a6d648a6"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l197/low_friction_seen/runs/full_proposed/full_proposed__high_dynamic_reverse_s_terminal_dev_l187__low_friction_seen__seed573/provenance.json",
+      "sha256": "291203a75fcec59611825d0fbf3874b876df278dc3840fef06bd2587bfa199f4"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l197/low_friction_seen/runs/full_proposed/full_proposed__high_dynamic_reverse_s_terminal_dev_l187__low_friction_seen__seed574/provenance.json",
+      "sha256": "7105b2d4c93ef9295d8e0d4b7a301bb64275217a3cc44508f685f5b492483844"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l197/low_friction_seen/runs/ordinary_adaptive/ordinary_adaptive__high_dynamic_reverse_s_terminal_dev_l187__low_friction_seen__seed572/provenance.json",
+      "sha256": "44536b1b212df519cad157afe44e0b2aafbc059c5d010825cbfcf58a406a9fe1"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l197/low_friction_seen/runs/ordinary_adaptive/ordinary_adaptive__high_dynamic_reverse_s_terminal_dev_l187__low_friction_seen__seed573/provenance.json",
+      "sha256": "b764619354cd254c7e14782e0da6de7763847eba670ebe68ceea38bddd47e6a0"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l197/low_friction_seen/runs/ordinary_adaptive/ordinary_adaptive__high_dynamic_reverse_s_terminal_dev_l187__low_friction_seen__seed574/provenance.json",
+      "sha256": "873b8a394343cc5a9877aadc0476275477a1c96e781d4029b87b202eeac40e2b"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l197/low_friction_seen/runs/ordinary_fixed/ordinary_fixed__high_dynamic_reverse_s_terminal_dev_l187__low_friction_seen__seed572/provenance.json",
+      "sha256": "a59eec71c5499118c5a1d28f2bcec237aee7bc856c1b156ff24d24496296689d"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l197/low_friction_seen/runs/ordinary_fixed/ordinary_fixed__high_dynamic_reverse_s_terminal_dev_l187__low_friction_seen__seed573/provenance.json",
+      "sha256": "e07724b40a139c25a56137214f465343abe9307ba7d54bf477b437ce53c9e63c"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l197/low_friction_seen/runs/ordinary_fixed/ordinary_fixed__high_dynamic_reverse_s_terminal_dev_l187__low_friction_seen__seed574/provenance.json",
+      "sha256": "64b3bc1e051344d3668b32554da480cdb275d093750695ee3caa456f3e853e7b"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l197/low_friction_seen/runs/value_fixed/value_fixed__high_dynamic_reverse_s_terminal_dev_l187__low_friction_seen__seed572/provenance.json",
+      "sha256": "6ad07d7467151ba452cc46b9cc598f9fe644c1d6317a5a6541486558f23f8fec"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l197/low_friction_seen/runs/value_fixed/value_fixed__high_dynamic_reverse_s_terminal_dev_l187__low_friction_seen__seed573/provenance.json",
+      "sha256": "5922965ba4dcec098c5e0bb92f78d188929797c3128b3c1d69de75ac57bb7b4f"
+    },
+    {
+      "bytes": 144,
+      "path": "path_aware_multiphysics_dev_l197/low_friction_seen/runs/value_fixed/value_fixed__high_dynamic_reverse_s_terminal_dev_l187__low_friction_seen__seed574/provenance.json",
+      "sha256": "9d29bc8e9ffa3523d61caa54b625050e268e5601b109db969bc38d327c5f400c"
+    },
+    {
+      "bytes": 3590,
+      "path": "path_aware_multiphysics_dev_l197/low_friction_seen/schedule.json",
+      "sha256": "e79efb868ffc281b1f2da3d536a80fbabd241dec0b6074f154253d0c3f9e5ab0"
+    },
+    {
+      "bytes": 12059,
+      "path": "path_aware_multiphysics_dev_l197/low_friction_seen/value_fixed_episodes.csv",
+      "sha256": "6e21fc848bcdebdc895ce2073d0aafa889d82556e1f1d45b12446c1520ba1583"
+    },
+    {
+      "bytes": 11125,
+      "path": "path_aware_multiphysics_dev_l197/multidomain_gate.json",
+      "sha256": "05f5ad7d3094a9e6fdd9e6b6da037efc129ecfbdbf61cc995ceed3fe3b74703f"
+    },
+    {
+      "bytes": 33372,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__combined_unseen/factorial_contrasts.json",
+      "sha256": "f5da31403afabbaab06787374ddfb3bab84cf9d095b36b90cf65edfb2d05fd15"
+    },
+    {
+      "bytes": 17725,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__combined_unseen/full_proposed_episodes.csv",
+      "sha256": "c38be0e68d1844b88325349e6a331eb58c33f7a9d41804b3ee39057d99733e2e"
+    },
+    {
+      "bytes": 17711,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__combined_unseen/ordinary_adaptive_episodes.csv",
+      "sha256": "de19cd593c331bd7cd3e983ed9a1af81e3528fd682a9cb743aafceb9e56845a6"
+    },
+    {
+      "bytes": 16236,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__combined_unseen/ordinary_fixed_episodes.csv",
+      "sha256": "fad26e1d3a0b824b4b2ed9f80fe85a6e9cb66c464bdb4dabc905560de8c02c20"
+    },
+    {
+      "bytes": 34473,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__combined_unseen/paired_comparisons.json",
+      "sha256": "17407f7198b3692a6afe92756a91c33af8aedfef3bc1a1dedb1952adc484ad7d"
+    },
+    {
+      "bytes": 50724,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__combined_unseen/progress.csv",
+      "sha256": "245eb66aca2305d4db238898b5c738affd32c99882696d2e7bb68603d5969263"
+    },
+    {
+      "bytes": 6037,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__combined_unseen/provenance.json",
+      "sha256": "839ab268d96989ae54affe6f2a9cb5503d578d6d6c0a6b28e1e3824211a31652"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__combined_unseen/runs/full_proposed/full_proposed__path_asymmetric_hairpin_holdout_l186__combined_unseen__seed561/provenance.json",
+      "sha256": "547536df2601471656ff6930ce0c0fe4f252429f73d5e2e949e07019a5be7ab6"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__combined_unseen/runs/full_proposed/full_proposed__path_asymmetric_hairpin_holdout_l186__combined_unseen__seed562/provenance.json",
+      "sha256": "2788378c5069aa7924a61068ff6325856cd3fe6aaa54610ffc1ee2213d8a0de8"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__combined_unseen/runs/full_proposed/full_proposed__path_asymmetric_hairpin_holdout_l186__combined_unseen__seed563/provenance.json",
+      "sha256": "4bffa826387385122dcaad8f1a35ed948a80b68bbe550063d34a485b518be300"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__combined_unseen/runs/full_proposed/full_proposed__path_asymmetric_hairpin_holdout_l186__combined_unseen__seed564/provenance.json",
+      "sha256": "4b70fb74d104d6646985c948d94668dd389dd02b4d084818bf1c47b25b20cb80"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__combined_unseen/runs/full_proposed/full_proposed__path_asymmetric_hairpin_holdout_l186__combined_unseen__seed565/provenance.json",
+      "sha256": "6c5f97ff589c0434b3169876bcbe5b0ef627700d1d7f88f84a690c1601c299ae"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__combined_unseen/runs/ordinary_adaptive/ordinary_adaptive__path_asymmetric_hairpin_holdout_l186__combined_unseen__seed561/provenance.json",
+      "sha256": "d572fc638863ac738b4863ca30951f0b72d1d71fee5af506063394990869a70a"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__combined_unseen/runs/ordinary_adaptive/ordinary_adaptive__path_asymmetric_hairpin_holdout_l186__combined_unseen__seed562/provenance.json",
+      "sha256": "74a0c8b8b1537ad304a23cc5f87f22be6c2c6a6c4d1e5f3a3f1e3252225c073c"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__combined_unseen/runs/ordinary_adaptive/ordinary_adaptive__path_asymmetric_hairpin_holdout_l186__combined_unseen__seed563/provenance.json",
+      "sha256": "096f04615bfc316580d79f74ccbd523fc7447ba1427761a195d125527d518e4e"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__combined_unseen/runs/ordinary_adaptive/ordinary_adaptive__path_asymmetric_hairpin_holdout_l186__combined_unseen__seed564/provenance.json",
+      "sha256": "ac73b8b018f582f2b1c91cb12dd3ef0505d8ecbcb1008f66a863ffed35e3beb8"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__combined_unseen/runs/ordinary_adaptive/ordinary_adaptive__path_asymmetric_hairpin_holdout_l186__combined_unseen__seed565/provenance.json",
+      "sha256": "e62921732e41c592f8f8e0d7603173ab36bfa98cd968b8b2ebe3371ee03bba21"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__combined_unseen/runs/ordinary_fixed/ordinary_fixed__path_asymmetric_hairpin_holdout_l186__combined_unseen__seed561/provenance.json",
+      "sha256": "a391727ab3c5ee9e15114c474f6c404567b7f4ea78b5aacf3af8aefb89034c2c"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__combined_unseen/runs/ordinary_fixed/ordinary_fixed__path_asymmetric_hairpin_holdout_l186__combined_unseen__seed562/provenance.json",
+      "sha256": "441afc5c4b161fe37f131b1d65f8c52bea667a3092c03667b14a715887aa2866"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__combined_unseen/runs/ordinary_fixed/ordinary_fixed__path_asymmetric_hairpin_holdout_l186__combined_unseen__seed563/provenance.json",
+      "sha256": "cb163f24085552f3e50806cf7431d256e647066966ea61f72060d9b0ee1e6dbf"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__combined_unseen/runs/ordinary_fixed/ordinary_fixed__path_asymmetric_hairpin_holdout_l186__combined_unseen__seed564/provenance.json",
+      "sha256": "c62748d0c1468024769453bf3a5182215eb01db105a973655af36e794074a1e5"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__combined_unseen/runs/ordinary_fixed/ordinary_fixed__path_asymmetric_hairpin_holdout_l186__combined_unseen__seed565/provenance.json",
+      "sha256": "859c4c3e4e656f35e03de2e57dc5d1e5b7e7688eaf436393789f3004f2de4fe0"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__combined_unseen/runs/value_fixed/value_fixed__path_asymmetric_hairpin_holdout_l186__combined_unseen__seed561/provenance.json",
+      "sha256": "490295c18dd788077138518adfe888fa9bdb84de4abbfbbf3c33c5a500fa6c9b"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__combined_unseen/runs/value_fixed/value_fixed__path_asymmetric_hairpin_holdout_l186__combined_unseen__seed562/provenance.json",
+      "sha256": "1fc124dd7e03f2a5838f1036b7dfb7db14e02dbd96decc2284018e3a4d483b11"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__combined_unseen/runs/value_fixed/value_fixed__path_asymmetric_hairpin_holdout_l186__combined_unseen__seed563/provenance.json",
+      "sha256": "2c9cc4ac7b72cede5f316c1a16652a06543659e5aba70f1c2025819fb01f46df"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__combined_unseen/runs/value_fixed/value_fixed__path_asymmetric_hairpin_holdout_l186__combined_unseen__seed564/provenance.json",
+      "sha256": "9a6c4d6bb534f34acf3bc0228d1f4a9f3af29f2b50d652a06c6888e803bf612a"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__combined_unseen/runs/value_fixed/value_fixed__path_asymmetric_hairpin_holdout_l186__combined_unseen__seed565/provenance.json",
+      "sha256": "c900c92c9277521ed3f2fee724fcaf2e9ac29ce141b049e27b5fe73f6c3142dc"
+    },
+    {
+      "bytes": 5748,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__combined_unseen/schedule.json",
+      "sha256": "7afd59d9f868fd3ecc39ad800080b8b3a2755939810d7be4e9549495dca4b910"
+    },
+    {
+      "bytes": 16113,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__combined_unseen/value_fixed_episodes.csv",
+      "sha256": "b543b8fbd5d2360d9183faab4e38919a1e70d6b7723de087d4b6c99e7b3a7fa6"
+    },
+    {
+      "bytes": 33305,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__long_delay_seen/factorial_contrasts.json",
+      "sha256": "ce9dd47f825ad3670d14976bc8a25a31e234bd9d3066b9c5f1d6188193e3f479"
+    },
+    {
+      "bytes": 17665,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__long_delay_seen/full_proposed_episodes.csv",
+      "sha256": "819d297431681cb43f8f2b9773856c889043bf21adeba1c2500a9c8846d1ec1b"
+    },
+    {
+      "bytes": 17624,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__long_delay_seen/ordinary_adaptive_episodes.csv",
+      "sha256": "34215e90508c438d9cd7ce242a48c497d4c02f919d832177c42f9adf9f30a8aa"
+    },
+    {
+      "bytes": 16111,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__long_delay_seen/ordinary_fixed_episodes.csv",
+      "sha256": "0211e4468eaf8f8502596c263069b674c0cbc7b1131dcf4f09379feaa02c0b63"
+    },
+    {
+      "bytes": 34550,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__long_delay_seen/paired_comparisons.json",
+      "sha256": "91375c4764bdaebff80de13b6be0e199114375104fddc9abbab708b31a809b7b"
+    },
+    {
+      "bytes": 50371,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__long_delay_seen/progress.csv",
+      "sha256": "ae30b9647bf1c411a991da171fcd6123ba5b03850100ab9eca03a1ea7c96bfe4"
+    },
+    {
+      "bytes": 5598,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__long_delay_seen/provenance.json",
+      "sha256": "162b9bc6d3fa1ddbdb30ae84cd1e0edc97b4c41a754475b113c8f84e2dbfaea5"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__long_delay_seen/runs/full_proposed/full_proposed__path_asymmetric_hairpin_holdout_l186__long_delay_seen__seed561/provenance.json",
+      "sha256": "9bf71fd540c6a68875128b281b79f0c66cde18b5113d7e614b1de20eede248c6"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__long_delay_seen/runs/full_proposed/full_proposed__path_asymmetric_hairpin_holdout_l186__long_delay_seen__seed562/provenance.json",
+      "sha256": "6d829d0902536db5971a59b579c620721ca49221c0aff91afda8bcae711c61ee"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__long_delay_seen/runs/full_proposed/full_proposed__path_asymmetric_hairpin_holdout_l186__long_delay_seen__seed563/provenance.json",
+      "sha256": "15b7d39c93ef82482444afe99a8490bd9af2cfd4548972806b2d2d7154cf0c45"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__long_delay_seen/runs/full_proposed/full_proposed__path_asymmetric_hairpin_holdout_l186__long_delay_seen__seed564/provenance.json",
+      "sha256": "807eb6459901d52d070026b013d338f3eefa7c060341a71213f4a59e4d85b8ed"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__long_delay_seen/runs/full_proposed/full_proposed__path_asymmetric_hairpin_holdout_l186__long_delay_seen__seed565/provenance.json",
+      "sha256": "da31e00067102ccc4838445107786dda565cf3c670c0982ff2e023c63557e3bb"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__long_delay_seen/runs/ordinary_adaptive/ordinary_adaptive__path_asymmetric_hairpin_holdout_l186__long_delay_seen__seed561/provenance.json",
+      "sha256": "8d20a14a78c9513c340fe5b281f21db24361c65ab3835f9b95d8b17ef4168485"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__long_delay_seen/runs/ordinary_adaptive/ordinary_adaptive__path_asymmetric_hairpin_holdout_l186__long_delay_seen__seed562/provenance.json",
+      "sha256": "f00227951cdffabcfa2d98a064c188755ec10bd3a6c0eab66000843b11420aca"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__long_delay_seen/runs/ordinary_adaptive/ordinary_adaptive__path_asymmetric_hairpin_holdout_l186__long_delay_seen__seed563/provenance.json",
+      "sha256": "437bbefa7ed8574e51c1ee5d1a849bf223e2b41846a06728d05828bcfb566ec4"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__long_delay_seen/runs/ordinary_adaptive/ordinary_adaptive__path_asymmetric_hairpin_holdout_l186__long_delay_seen__seed564/provenance.json",
+      "sha256": "bba2c42f39f3d5e6ac05fa49c93b5d9d2e8973916e34649bc09fe12b5e805c48"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__long_delay_seen/runs/ordinary_adaptive/ordinary_adaptive__path_asymmetric_hairpin_holdout_l186__long_delay_seen__seed565/provenance.json",
+      "sha256": "8b9b82a213a207d427b5ace8430a335cbceae19449f4ac9d205da930f4928556"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__long_delay_seen/runs/ordinary_fixed/ordinary_fixed__path_asymmetric_hairpin_holdout_l186__long_delay_seen__seed561/provenance.json",
+      "sha256": "cd978f5937182fb5bc33f82196025375a4d59530640b8e170833f03bb7d6f345"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__long_delay_seen/runs/ordinary_fixed/ordinary_fixed__path_asymmetric_hairpin_holdout_l186__long_delay_seen__seed562/provenance.json",
+      "sha256": "8c0e52c77e8f1ddabc3ea388de9fb0ea278b0e6a123858d509a7f22fb0207d38"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__long_delay_seen/runs/ordinary_fixed/ordinary_fixed__path_asymmetric_hairpin_holdout_l186__long_delay_seen__seed563/provenance.json",
+      "sha256": "9a889b10a8e20877f3002af530bf57be34ccecb3f7d605571a81546d917d5314"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__long_delay_seen/runs/ordinary_fixed/ordinary_fixed__path_asymmetric_hairpin_holdout_l186__long_delay_seen__seed564/provenance.json",
+      "sha256": "e8c3c67c13583e178b6dc3d2aa2d9c10df5ca1f3384ef910e0740309d92600a6"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__long_delay_seen/runs/ordinary_fixed/ordinary_fixed__path_asymmetric_hairpin_holdout_l186__long_delay_seen__seed565/provenance.json",
+      "sha256": "f12ba03ffa65df61842a22eae5defc14154009fcab6daa82d1c062fa046f47e5"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__long_delay_seen/runs/value_fixed/value_fixed__path_asymmetric_hairpin_holdout_l186__long_delay_seen__seed561/provenance.json",
+      "sha256": "1c5ca922a27b5acd41a5cddf4a99563076b964cea8c2a36abe5005f882183f38"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__long_delay_seen/runs/value_fixed/value_fixed__path_asymmetric_hairpin_holdout_l186__long_delay_seen__seed562/provenance.json",
+      "sha256": "5294e332894058e5d9d40f712702bb2a7791295db64be822279e1c7a1f7dccca"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__long_delay_seen/runs/value_fixed/value_fixed__path_asymmetric_hairpin_holdout_l186__long_delay_seen__seed563/provenance.json",
+      "sha256": "9e140dfe75cef5f3e05e92f3b8db4b0e1ef8ef1019756d6ee49770f45b7e104d"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__long_delay_seen/runs/value_fixed/value_fixed__path_asymmetric_hairpin_holdout_l186__long_delay_seen__seed564/provenance.json",
+      "sha256": "c8945579f8ca0a7dda41fd559994da46cb8c192e8b2c68b19b08d1cbf70217ad"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__long_delay_seen/runs/value_fixed/value_fixed__path_asymmetric_hairpin_holdout_l186__long_delay_seen__seed565/provenance.json",
+      "sha256": "47896c47e6b78072626740389eb53ed0d45cc40234d86efe72f7fa4954c10b6d"
+    },
+    {
+      "bytes": 5748,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__long_delay_seen/schedule.json",
+      "sha256": "a8ec92e740e7dbf6308a7d88beebb8691738012f7aeb4f342eb90fb9955f7a8b"
+    },
+    {
+      "bytes": 16032,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__long_delay_seen/value_fixed_episodes.csv",
+      "sha256": "9ad6030f06e0cfc0019cd611a081f37dcd0d9079b8f7578df0d122f22f7de88b"
+    },
+    {
+      "bytes": 33439,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__nominal_seen/factorial_contrasts.json",
+      "sha256": "cbf25533125128b224d0ed5f9813381ac4596328386ecafa2afa41d26669f280"
+    },
+    {
+      "bytes": 17596,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__nominal_seen/full_proposed_episodes.csv",
+      "sha256": "f73d557aa4bce5907dd234dfe8f1b46eae75733f1229d1e44851b3e525f90249"
+    },
+    {
+      "bytes": 17735,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__nominal_seen/ordinary_adaptive_episodes.csv",
+      "sha256": "a54f78b147d7e3d7d071b484ca7029723925b138771ee6fa9f811792798bf0d5"
+    },
+    {
+      "bytes": 16081,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__nominal_seen/ordinary_fixed_episodes.csv",
+      "sha256": "0d8d8f6b275aa6fcbb733c0e5a00ffefbdcad0e676b9b2e03cdbecc8dfc55663"
+    },
+    {
+      "bytes": 34558,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__nominal_seen/paired_comparisons.json",
+      "sha256": "ccbd854339202ebc50157200e58d0926fa650bc4fbcb0454ef3e01e7b64fe756"
+    },
+    {
+      "bytes": 50219,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__nominal_seen/progress.csv",
+      "sha256": "95361681564d1b5bd5e94286b180feb441cfae67d010d377c37a73b6ee7dc1e2"
+    },
+    {
+      "bytes": 5524,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__nominal_seen/provenance.json",
+      "sha256": "cbe4c67b86a9c17720cc27fa832de30533a4777e11a91893621cdd512b3e714a"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__nominal_seen/runs/full_proposed/full_proposed__path_asymmetric_hairpin_holdout_l186__nominal_seen__seed561/provenance.json",
+      "sha256": "a813887bfa2ab4e4a5956a4c2cc4623bfa9facd8f61da9160d56bdd8fe74eb27"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__nominal_seen/runs/full_proposed/full_proposed__path_asymmetric_hairpin_holdout_l186__nominal_seen__seed562/provenance.json",
+      "sha256": "d398ecb77230f7f110f7ee3ba82c6ae64af9cb0dbd04217b0b36dbbddbb79c80"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__nominal_seen/runs/full_proposed/full_proposed__path_asymmetric_hairpin_holdout_l186__nominal_seen__seed563/provenance.json",
+      "sha256": "59d9f5e67b30ee7a93f439f96191d5bc51c6ec48854f5667d8f63fbb6018bda9"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__nominal_seen/runs/full_proposed/full_proposed__path_asymmetric_hairpin_holdout_l186__nominal_seen__seed564/provenance.json",
+      "sha256": "c453146f9bfe303d56045c4cdde6322056459247a9c72bb0f2236b60d9f348a5"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__nominal_seen/runs/full_proposed/full_proposed__path_asymmetric_hairpin_holdout_l186__nominal_seen__seed565/provenance.json",
+      "sha256": "f42a8d9324c45e3a09d570316955f41882fbdf0de1aa25415fc839046051b564"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__nominal_seen/runs/ordinary_adaptive/ordinary_adaptive__path_asymmetric_hairpin_holdout_l186__nominal_seen__seed561/provenance.json",
+      "sha256": "8c05c668379ff36ad71fe46845bff758f05de1ce046304696813301316d3bcd9"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__nominal_seen/runs/ordinary_adaptive/ordinary_adaptive__path_asymmetric_hairpin_holdout_l186__nominal_seen__seed562/provenance.json",
+      "sha256": "c422f5ac2c450f43c0af458a145f7a5de393c7640ec0ac8e98e5abb68948967f"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__nominal_seen/runs/ordinary_adaptive/ordinary_adaptive__path_asymmetric_hairpin_holdout_l186__nominal_seen__seed563/provenance.json",
+      "sha256": "1545645b30f454aae329d68cecf340ffa054007801fdb08c93788b3c4b2cca2c"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__nominal_seen/runs/ordinary_adaptive/ordinary_adaptive__path_asymmetric_hairpin_holdout_l186__nominal_seen__seed564/provenance.json",
+      "sha256": "267072b7b92212c0adc7a3b8124449fc0d1fd34668c72ef930dfca3472cac798"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__nominal_seen/runs/ordinary_adaptive/ordinary_adaptive__path_asymmetric_hairpin_holdout_l186__nominal_seen__seed565/provenance.json",
+      "sha256": "f0edc0e3aae188844ef961b2dafbebd3d8bc4a58d782c6b14c448067aa058da5"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__nominal_seen/runs/ordinary_fixed/ordinary_fixed__path_asymmetric_hairpin_holdout_l186__nominal_seen__seed561/provenance.json",
+      "sha256": "55faf60c33efecc4326aa812fc11a67750009573c7f3591e86e2b707328f3fbf"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__nominal_seen/runs/ordinary_fixed/ordinary_fixed__path_asymmetric_hairpin_holdout_l186__nominal_seen__seed562/provenance.json",
+      "sha256": "6a219b0be27197c09ba9a2cb9e5790190bd6a27f1b7f9e2f7801876475878884"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__nominal_seen/runs/ordinary_fixed/ordinary_fixed__path_asymmetric_hairpin_holdout_l186__nominal_seen__seed563/provenance.json",
+      "sha256": "99ffc9be13d80310252fd2c868317269260692d12fb4660a1a68df54de9f48ee"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__nominal_seen/runs/ordinary_fixed/ordinary_fixed__path_asymmetric_hairpin_holdout_l186__nominal_seen__seed564/provenance.json",
+      "sha256": "b4f7d4f592de1cbace2a4ebf0501943260e0b11b3ad2e33a0d64884d7f61d328"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__nominal_seen/runs/ordinary_fixed/ordinary_fixed__path_asymmetric_hairpin_holdout_l186__nominal_seen__seed565/provenance.json",
+      "sha256": "80eb4035aa76352770ca5f75bd373914988d0dbcf0bd15aeca5ea22411001736"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__nominal_seen/runs/value_fixed/value_fixed__path_asymmetric_hairpin_holdout_l186__nominal_seen__seed561/provenance.json",
+      "sha256": "6f47a8e7f2bc515e8a7f3fded9b972e8f61008e5729717a6bbe31415c96355b7"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__nominal_seen/runs/value_fixed/value_fixed__path_asymmetric_hairpin_holdout_l186__nominal_seen__seed562/provenance.json",
+      "sha256": "7534e78b126575b6e171e5ad2a4604725fa45c394c0d34e47d321371ba02db2f"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__nominal_seen/runs/value_fixed/value_fixed__path_asymmetric_hairpin_holdout_l186__nominal_seen__seed563/provenance.json",
+      "sha256": "740017ef55b6fcc6ea4a7e86ff1742e758fd8189177b99ff0e3f1015f24860f9"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__nominal_seen/runs/value_fixed/value_fixed__path_asymmetric_hairpin_holdout_l186__nominal_seen__seed564/provenance.json",
+      "sha256": "6f973aa21273fd9e5628bfe0361a070270f68558a18af0e0cee6ebfbf16df28e"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__nominal_seen/runs/value_fixed/value_fixed__path_asymmetric_hairpin_holdout_l186__nominal_seen__seed565/provenance.json",
+      "sha256": "39dc748b9b383b9de9c9446c7ade8287c3e00eb42d112cc0d9ef897434fe3c22"
+    },
+    {
+      "bytes": 5628,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__nominal_seen/schedule.json",
+      "sha256": "781b9465ee7c916834b3ddac1780755fc57f2623a79a3d0dccc148131d0d038b"
+    },
+    {
+      "bytes": 15868,
+      "path": "sealed_path_physics_confirmation_l198/asymmetric_hairpin__nominal_seen/value_fixed_episodes.csv",
+      "sha256": "d6c12033311c32887a12c4c5666a32054a627568a7e990869bc3201f6b4098f0"
+    },
+    {
+      "bytes": 33454,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__combined_unseen/factorial_contrasts.json",
+      "sha256": "dc32bbb95d3644b252ab9984cd78fe92656146057fb95dce89ec663948f0a908"
+    },
+    {
+      "bytes": 17832,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__combined_unseen/full_proposed_episodes.csv",
+      "sha256": "79c2bf8036ffb7aa03b68a69af34181f9cfb43c7fcb642c87bde94df06098d8c"
+    },
+    {
+      "bytes": 17851,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__combined_unseen/ordinary_adaptive_episodes.csv",
+      "sha256": "818529617cb9e72b1b7a9643080ac9c546a4928a8a8708a37ce71ab2bad2facf"
+    },
+    {
+      "bytes": 16298,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__combined_unseen/ordinary_fixed_episodes.csv",
+      "sha256": "496a734e8061774b847e5e5c69c2185ed5cced0e03d877d688a7299b09617df5"
+    },
+    {
+      "bytes": 34448,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__combined_unseen/paired_comparisons.json",
+      "sha256": "4603930f9c2659d13e3bdacda692167e3c7a21fd60d54d8b11ae86c640c4531c"
+    },
+    {
+      "bytes": 51139,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__combined_unseen/progress.csv",
+      "sha256": "7bdc947bd59fd024affa1c63d8355de4472b1dbc381117b2ce5bb54a7deaea3e"
+    },
+    {
+      "bytes": 6035,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__combined_unseen/provenance.json",
+      "sha256": "f36e78f4e3bafe1c8a7a4ef6bfc8620c4fd600b396c52f7c6458fbeca63c55bf"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__combined_unseen/runs/full_proposed/full_proposed__path_offset_serpentine_holdout_l186__combined_unseen__seed561/provenance.json",
+      "sha256": "5a57a7c529de178c8f714a259d31f2813de4000881c71e805fed88d9acc3e875"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__combined_unseen/runs/full_proposed/full_proposed__path_offset_serpentine_holdout_l186__combined_unseen__seed562/provenance.json",
+      "sha256": "79cdecf186d781b61e38e69174be6a0f25bdd5f13e7624079923ad84aa6d6c79"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__combined_unseen/runs/full_proposed/full_proposed__path_offset_serpentine_holdout_l186__combined_unseen__seed563/provenance.json",
+      "sha256": "2e62e3d9ff583f3a69d329f3b59d0facd88b3bd67ef0378971afb3303a579960"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__combined_unseen/runs/full_proposed/full_proposed__path_offset_serpentine_holdout_l186__combined_unseen__seed564/provenance.json",
+      "sha256": "edffd79e9637183b649b78fca3fb07031f5e6d480bed15d6b2350cb06fad2cb9"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__combined_unseen/runs/full_proposed/full_proposed__path_offset_serpentine_holdout_l186__combined_unseen__seed565/provenance.json",
+      "sha256": "89db5ecb2c77f0a3c2567e6d833730efa4d6d9772728b12c9b5ba45be6b0e687"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__combined_unseen/runs/ordinary_adaptive/ordinary_adaptive__path_offset_serpentine_holdout_l186__combined_unseen__seed561/provenance.json",
+      "sha256": "f353717da47e912d7993d663e758de467277c0df495f058596c86ccfca50d63f"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__combined_unseen/runs/ordinary_adaptive/ordinary_adaptive__path_offset_serpentine_holdout_l186__combined_unseen__seed562/provenance.json",
+      "sha256": "876717c0e672d49efb2649a49291e2cf99a5065394284903355f848996471a69"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__combined_unseen/runs/ordinary_adaptive/ordinary_adaptive__path_offset_serpentine_holdout_l186__combined_unseen__seed563/provenance.json",
+      "sha256": "4568fc176f9e2ee60756fde150b7cc6e1f6d3afb036d58a22b8246d9db45868c"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__combined_unseen/runs/ordinary_adaptive/ordinary_adaptive__path_offset_serpentine_holdout_l186__combined_unseen__seed564/provenance.json",
+      "sha256": "5cca53ffb326bc7eb4b9a7c5f2ca3bcf76dd65804c3fd419a78f5e06291c6c0f"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__combined_unseen/runs/ordinary_adaptive/ordinary_adaptive__path_offset_serpentine_holdout_l186__combined_unseen__seed565/provenance.json",
+      "sha256": "24080e899663f7076be84e85b489ee796d23d5ab638a953f4507ebdb3d884caa"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__combined_unseen/runs/ordinary_fixed/ordinary_fixed__path_offset_serpentine_holdout_l186__combined_unseen__seed561/provenance.json",
+      "sha256": "1ecc13e5820fd800ad92036eee08dbb238acf1417b182d4b308d5e369cfab652"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__combined_unseen/runs/ordinary_fixed/ordinary_fixed__path_offset_serpentine_holdout_l186__combined_unseen__seed562/provenance.json",
+      "sha256": "9e3c64703747f77d87781447d6bb505a741b369aec6c36dbafca1a3d179bf840"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__combined_unseen/runs/ordinary_fixed/ordinary_fixed__path_offset_serpentine_holdout_l186__combined_unseen__seed563/provenance.json",
+      "sha256": "230defad659c2fa2bc9e9831094d06337af8b37fb915b8f718e49cee6c0a85eb"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__combined_unseen/runs/ordinary_fixed/ordinary_fixed__path_offset_serpentine_holdout_l186__combined_unseen__seed564/provenance.json",
+      "sha256": "75b1f659e51304cf47e1875f02bef1ed1d0f37cbd9f1aa4487f67878ba4dff13"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__combined_unseen/runs/ordinary_fixed/ordinary_fixed__path_offset_serpentine_holdout_l186__combined_unseen__seed565/provenance.json",
+      "sha256": "33b48cd42ce00b896fe1b5bedea73552f64bbb9d596b11504a8f2e3c90733cfd"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__combined_unseen/runs/value_fixed/value_fixed__path_offset_serpentine_holdout_l186__combined_unseen__seed561/provenance.json",
+      "sha256": "f7cba88bf6d5faef42e0691636c6168c4f872244ca87c9760d4391c04c41f95c"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__combined_unseen/runs/value_fixed/value_fixed__path_offset_serpentine_holdout_l186__combined_unseen__seed562/provenance.json",
+      "sha256": "93d16fb57a104126b2e4c719d782841c1013939d3bbff61a5b2a8bedc9c52c91"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__combined_unseen/runs/value_fixed/value_fixed__path_offset_serpentine_holdout_l186__combined_unseen__seed563/provenance.json",
+      "sha256": "a3761a68ab7b2555daa7f3575dec0cb661406c80ac6f9207d6ad415d35dbaa56"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__combined_unseen/runs/value_fixed/value_fixed__path_offset_serpentine_holdout_l186__combined_unseen__seed564/provenance.json",
+      "sha256": "f2f523c80de51d2881242aac1587f8acffa87091c533ed635701e5460e8d23da"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__combined_unseen/runs/value_fixed/value_fixed__path_offset_serpentine_holdout_l186__combined_unseen__seed565/provenance.json",
+      "sha256": "624f174a2cfb3716b244ebd18a42033e486f98a242e15dfd92d1012a287e5183"
+    },
+    {
+      "bytes": 5708,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__combined_unseen/schedule.json",
+      "sha256": "560f43a0877844eea8a8c7961e4129dffdc96547f7f0da49fb4ee8d95526fc94"
+    },
+    {
+      "bytes": 16219,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__combined_unseen/value_fixed_episodes.csv",
+      "sha256": "07ed2ababf41bc2ec92f3cfdb0851f68651e6074bc118ed4d858f59d4fad13ce"
+    },
+    {
+      "bytes": 33322,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__long_delay_seen/factorial_contrasts.json",
+      "sha256": "a2ad8c743c49d54fc1cdb6b57c6888a08a6a5643628b579c891273284fa58c00"
+    },
+    {
+      "bytes": 17799,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__long_delay_seen/full_proposed_episodes.csv",
+      "sha256": "6024398c2bc38d623171a022a2273757598ccada608fd79b176a5dc00601c5b1"
+    },
+    {
+      "bytes": 17805,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__long_delay_seen/ordinary_adaptive_episodes.csv",
+      "sha256": "f8b01dad8bf60ce971cf15fcce1864df7d7507feeff8ffccb23a799ceec3901d"
+    },
+    {
+      "bytes": 16157,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__long_delay_seen/ordinary_fixed_episodes.csv",
+      "sha256": "fdad437f4d6eb1b3900f35674b91fb6a0c6568e1cf563309362b53570e3482a6"
+    },
+    {
+      "bytes": 34543,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__long_delay_seen/paired_comparisons.json",
+      "sha256": "a200181fb107d3fcb0fbd1cb6e6e4df54f78e3eb4d932599167d9334c30c9b8a"
+    },
+    {
+      "bytes": 50846,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__long_delay_seen/progress.csv",
+      "sha256": "61440fb42c008776b5849a01592560e37129e78208df062da2ce8ea67ffce4f6"
+    },
+    {
+      "bytes": 5596,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__long_delay_seen/provenance.json",
+      "sha256": "1e6e8c39119f971cb918f35531e5c0f2d34769f9bb960a8b07cc77ae6ecd000b"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__long_delay_seen/runs/full_proposed/full_proposed__path_offset_serpentine_holdout_l186__long_delay_seen__seed561/provenance.json",
+      "sha256": "30edfc6eabebf2051d026f59956ece2ee08b443950000663bf967696108aa6d8"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__long_delay_seen/runs/full_proposed/full_proposed__path_offset_serpentine_holdout_l186__long_delay_seen__seed562/provenance.json",
+      "sha256": "2ffe3bac3a9de248fbbc3fb8491b4019010f0ac0211c256a8987d095d5110df2"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__long_delay_seen/runs/full_proposed/full_proposed__path_offset_serpentine_holdout_l186__long_delay_seen__seed563/provenance.json",
+      "sha256": "24e0bc4c1e70f9b67973e5fff7814153876c30074af3cc4d45d041eaf871a314"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__long_delay_seen/runs/full_proposed/full_proposed__path_offset_serpentine_holdout_l186__long_delay_seen__seed564/provenance.json",
+      "sha256": "76e044ea549d485cb96d9848572842b57e73520481908e9a1c06f18c0006ffe7"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__long_delay_seen/runs/full_proposed/full_proposed__path_offset_serpentine_holdout_l186__long_delay_seen__seed565/provenance.json",
+      "sha256": "ba3ee3642b06480261835175da6b69539530f14b7d8813bf53b57f8486fe5b8e"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__long_delay_seen/runs/ordinary_adaptive/ordinary_adaptive__path_offset_serpentine_holdout_l186__long_delay_seen__seed561/provenance.json",
+      "sha256": "f846efbfa0422b19f939dbc5d257187ae279d9580f5c13a47928e1b6bc2ae087"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__long_delay_seen/runs/ordinary_adaptive/ordinary_adaptive__path_offset_serpentine_holdout_l186__long_delay_seen__seed562/provenance.json",
+      "sha256": "6d9e09c149b3fd6f02e3309ac6ff1ca195ef43401bfc0045a2094135aa9bd489"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__long_delay_seen/runs/ordinary_adaptive/ordinary_adaptive__path_offset_serpentine_holdout_l186__long_delay_seen__seed563/provenance.json",
+      "sha256": "de6d1dbbade76b73336eafe09ae74f0427caa7b68fd05fb3b1ec2c50373fc504"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__long_delay_seen/runs/ordinary_adaptive/ordinary_adaptive__path_offset_serpentine_holdout_l186__long_delay_seen__seed564/provenance.json",
+      "sha256": "80ed11761a42bfbed9a46265a16e2dae314199b4d7f69a4c885769fa173dfd08"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__long_delay_seen/runs/ordinary_adaptive/ordinary_adaptive__path_offset_serpentine_holdout_l186__long_delay_seen__seed565/provenance.json",
+      "sha256": "28dcad63c87cf2e9c898a2c7dd64991127f16e467df05d6aa853ffb984b9ed89"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__long_delay_seen/runs/ordinary_fixed/ordinary_fixed__path_offset_serpentine_holdout_l186__long_delay_seen__seed561/provenance.json",
+      "sha256": "9ffa29ad79d8274adc124569bf16d70d273f3cbdfdca0a78606f83843f8f36cb"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__long_delay_seen/runs/ordinary_fixed/ordinary_fixed__path_offset_serpentine_holdout_l186__long_delay_seen__seed562/provenance.json",
+      "sha256": "5885cf9aae23314b1d8970607430cdfd6a83a4b6c78b98568623fec3292942bb"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__long_delay_seen/runs/ordinary_fixed/ordinary_fixed__path_offset_serpentine_holdout_l186__long_delay_seen__seed563/provenance.json",
+      "sha256": "71ec15572e6896e065e0a8c67ba4568efaad9b340c6d66f6cbc35ba02d720b78"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__long_delay_seen/runs/ordinary_fixed/ordinary_fixed__path_offset_serpentine_holdout_l186__long_delay_seen__seed564/provenance.json",
+      "sha256": "787809259470786e6bac6563d0a27868bce94b10b04fe9c9d0cebf52ecf6186a"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__long_delay_seen/runs/ordinary_fixed/ordinary_fixed__path_offset_serpentine_holdout_l186__long_delay_seen__seed565/provenance.json",
+      "sha256": "4d1faa4cfc9564ef2715b2c4f086882ea65ae1924acd9fc8b8c36445d44df001"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__long_delay_seen/runs/value_fixed/value_fixed__path_offset_serpentine_holdout_l186__long_delay_seen__seed561/provenance.json",
+      "sha256": "3beb99668fe0c1b913ed2bd078882f5b440542dc88a4b922ff6f84aea875bfd5"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__long_delay_seen/runs/value_fixed/value_fixed__path_offset_serpentine_holdout_l186__long_delay_seen__seed562/provenance.json",
+      "sha256": "6a2bf48b36af9434a364206831661f19d7978989df310a9c8272929b9d0fa0db"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__long_delay_seen/runs/value_fixed/value_fixed__path_offset_serpentine_holdout_l186__long_delay_seen__seed563/provenance.json",
+      "sha256": "cec582f370e18d05c6bfb7a60c76efe2f3af1c4dc052e0626873cc5547fd7ea1"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__long_delay_seen/runs/value_fixed/value_fixed__path_offset_serpentine_holdout_l186__long_delay_seen__seed564/provenance.json",
+      "sha256": "f1f959d0e784f2f482ad2adc507458b2b69b9991a1b4de9a2ed42c8d6b6fdd21"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__long_delay_seen/runs/value_fixed/value_fixed__path_offset_serpentine_holdout_l186__long_delay_seen__seed565/provenance.json",
+      "sha256": "c9fbf50acf38a80db63dcecbdc4291066185301f894686af6dcc3ac8871f7299"
+    },
+    {
+      "bytes": 5708,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__long_delay_seen/schedule.json",
+      "sha256": "f91b0b685f42a4ee4299a192db01a214063ab4dbe6fee5c67117763123b6081f"
+    },
+    {
+      "bytes": 16146,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__long_delay_seen/value_fixed_episodes.csv",
+      "sha256": "b0ab8a71162177b06eb9934fbad97f3e1e721cbfd5fcccac93552618aed52a09"
+    },
+    {
+      "bytes": 33442,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__nominal_seen/factorial_contrasts.json",
+      "sha256": "4d917d92f132285257d29b3a513c1aba165080e8590764f2f3322ebf215e955c"
+    },
+    {
+      "bytes": 17719,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__nominal_seen/full_proposed_episodes.csv",
+      "sha256": "e1a2e2f2339c2143530e2979a8ca20fcc639bf189fb6a1b4bb067a3850bc107a"
+    },
+    {
+      "bytes": 17716,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__nominal_seen/ordinary_adaptive_episodes.csv",
+      "sha256": "77eff273ed2854721d5d244a4473afb1cfe9d9d59e7dd0327ade6dce1e189682"
+    },
+    {
+      "bytes": 16258,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__nominal_seen/ordinary_fixed_episodes.csv",
+      "sha256": "5ec7575ea3bc510a00dbe6463d11951d4511d511612664f8778f9f069d8c9811"
+    },
+    {
+      "bytes": 34459,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__nominal_seen/paired_comparisons.json",
+      "sha256": "f9b2fc19b1a939399942f672022a6d191fd0963cbe1e93ed0821b1857f5d9220"
+    },
+    {
+      "bytes": 50747,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__nominal_seen/progress.csv",
+      "sha256": "f2cbfa5e6813b9456b23c8952138901bfb260ab1acaf859149e7e086090673c6"
+    },
+    {
+      "bytes": 5522,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__nominal_seen/provenance.json",
+      "sha256": "54e030f9dd9b1e1b09d8d47dfdbca0a7d6f20a9629d27de123d6b0c47dd6067b"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__nominal_seen/runs/full_proposed/full_proposed__path_offset_serpentine_holdout_l186__nominal_seen__seed561/provenance.json",
+      "sha256": "028e7b2f0cedee0b2333287654113086812c940451df7b432f14549cd52eb9ea"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__nominal_seen/runs/full_proposed/full_proposed__path_offset_serpentine_holdout_l186__nominal_seen__seed562/provenance.json",
+      "sha256": "eae2f35e70c26623fdf71737afa7b895a4c6628cca24c548b4807bbdca1c8a38"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__nominal_seen/runs/full_proposed/full_proposed__path_offset_serpentine_holdout_l186__nominal_seen__seed563/provenance.json",
+      "sha256": "1de8c50d9de7d0f10d43640f1ebf682b52e41f6ed1b593a883807605974addd2"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__nominal_seen/runs/full_proposed/full_proposed__path_offset_serpentine_holdout_l186__nominal_seen__seed564/provenance.json",
+      "sha256": "6d3d2ad5b95900ea80a65a96bcfd9c21e875b2abe5699e44ef6a877d42ff0617"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__nominal_seen/runs/full_proposed/full_proposed__path_offset_serpentine_holdout_l186__nominal_seen__seed565/provenance.json",
+      "sha256": "6e70ded8179451b3206b76d4df692497edece5beb904e5f6be3c9155b9d31971"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__nominal_seen/runs/ordinary_adaptive/ordinary_adaptive__path_offset_serpentine_holdout_l186__nominal_seen__seed561/provenance.json",
+      "sha256": "6cc6837adaa32cc98dfd52f79c7cd6ca8b0644de314aacc09315dbcd25ae5bfe"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__nominal_seen/runs/ordinary_adaptive/ordinary_adaptive__path_offset_serpentine_holdout_l186__nominal_seen__seed562/provenance.json",
+      "sha256": "dc1f71de376042a050d1c352c52c4d8a197afbbf9edbf82a9941415260d680f7"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__nominal_seen/runs/ordinary_adaptive/ordinary_adaptive__path_offset_serpentine_holdout_l186__nominal_seen__seed563/provenance.json",
+      "sha256": "055c19b0c42c7d8165f2a0f1527bc52c7a814b2afb3055f273c765f4a96eb932"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__nominal_seen/runs/ordinary_adaptive/ordinary_adaptive__path_offset_serpentine_holdout_l186__nominal_seen__seed564/provenance.json",
+      "sha256": "f3db3cf90dc67db0af41c96a440c9c3de88790bc500f1dba8c3858f24dd0a478"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__nominal_seen/runs/ordinary_adaptive/ordinary_adaptive__path_offset_serpentine_holdout_l186__nominal_seen__seed565/provenance.json",
+      "sha256": "d895db84527361371fb2777071c01bbd082f20fe28b8cc77ed0e35a68f45ec4a"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__nominal_seen/runs/ordinary_fixed/ordinary_fixed__path_offset_serpentine_holdout_l186__nominal_seen__seed561/provenance.json",
+      "sha256": "3ffd70543822122cad1a6648402d66bbd7ecde5fe5a6b532af670955cf76c370"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__nominal_seen/runs/ordinary_fixed/ordinary_fixed__path_offset_serpentine_holdout_l186__nominal_seen__seed562/provenance.json",
+      "sha256": "2cb55b4fb8c1f4bc7b1e9cc5d52d3876b3decc40edd2307ccfb14ef79221e177"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__nominal_seen/runs/ordinary_fixed/ordinary_fixed__path_offset_serpentine_holdout_l186__nominal_seen__seed563/provenance.json",
+      "sha256": "7dae09c9e3c538696b28731bac248abd2e45812f7c41a14c553b216aa2b6c7bb"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__nominal_seen/runs/ordinary_fixed/ordinary_fixed__path_offset_serpentine_holdout_l186__nominal_seen__seed564/provenance.json",
+      "sha256": "450873addaaa245805fd11959696c1603fc14843904df3b5456ea4ec8c14a465"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__nominal_seen/runs/ordinary_fixed/ordinary_fixed__path_offset_serpentine_holdout_l186__nominal_seen__seed565/provenance.json",
+      "sha256": "fac70ee22df25683e055498c7fa85daceab338af655a3949eb3786a19acc3cb7"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__nominal_seen/runs/value_fixed/value_fixed__path_offset_serpentine_holdout_l186__nominal_seen__seed561/provenance.json",
+      "sha256": "490590e5eb885ff5765e7c498a85268b4e3716e73b73cd705b4e62785d7d6b29"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__nominal_seen/runs/value_fixed/value_fixed__path_offset_serpentine_holdout_l186__nominal_seen__seed562/provenance.json",
+      "sha256": "a069717bbe4cf388c070ce871e7fd742545a2a03e83549cf0bb921124416d042"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__nominal_seen/runs/value_fixed/value_fixed__path_offset_serpentine_holdout_l186__nominal_seen__seed563/provenance.json",
+      "sha256": "dbc3e4bb458160c6ad169b5ff9cd584d6250c3a0e140888598375badb63dd71b"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__nominal_seen/runs/value_fixed/value_fixed__path_offset_serpentine_holdout_l186__nominal_seen__seed564/provenance.json",
+      "sha256": "ec373a5b9301e451e4aa973450e93e0f4af439f8750b3c08cb989249faeaff25"
+    },
+    {
+      "bytes": 144,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__nominal_seen/runs/value_fixed/value_fixed__path_offset_serpentine_holdout_l186__nominal_seen__seed565/provenance.json",
+      "sha256": "6922780cb2a6ae8bfbd7ac523cb2af5ee9946cf2056ec509d5c7b212bbc45978"
+    },
+    {
+      "bytes": 5588,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__nominal_seen/schedule.json",
+      "sha256": "ac6eab9a0b44ca425e540f58a0ad96a9081bc70dd4fbaf4e467fdd1f0299f367"
+    },
+    {
+      "bytes": 16115,
+      "path": "sealed_path_physics_confirmation_l198/offset_serpentine__nominal_seen/value_fixed_episodes.csv",
+      "sha256": "9ec358dedf4e4cf84cb06671f7ae81571812c3afae31c6c70df59b6f017bfbb4"
+    },
+    {
+      "bytes": 7327,
+      "path": "sealed_path_physics_confirmation_l198/sealed_gate.json",
+      "sha256": "413e43fc71aa7eef6a15e35a46f46369bbadac0e5a87c4c0edde9d6063ba113b"
+    },
+    {
+      "bytes": 8736,
+      "path": "path_policy_value_aligned_member1_l199/training_summary.json",
+      "sha256": "cdebccdc7a0c84102da198e6a8e3f14c5f078a66d18593b87ec7e325b738df07"
+    },
+    {
+      "bytes": 8724,
+      "path": "path_policy_value_aligned_member2_l199/training_summary.json",
+      "sha256": "f774023b552f63ef95f189f801e92c94905662e13a58eb225e79c84f8a8d9e95"
+    },
+    {
+      "bytes": 8733,
+      "path": "path_policy_value_aligned_member3_l199/training_summary.json",
+      "sha256": "2757335e5fcf817bdd6217d098e4118e43f32475a44af39f555547e5fd464fb0"
+    },
+    {
+      "bytes": 8978,
+      "path": "route_balanced_value_aligned_member1_l201/training_summary.json",
+      "sha256": "f6e189ed6fdc4651037d04c283861760d857c088761436edb98a477cbea9860c"
+    },
+    {
+      "bytes": 8973,
+      "path": "route_balanced_value_aligned_member2_l201/training_summary.json",
+      "sha256": "61fa3d77a2b2e73301d0c64d2d6c296ab22573c684a7e61ba58f280439abd20a"
+    },
+    {
+      "bytes": 8973,
+      "path": "route_balanced_value_aligned_member3_l201/training_summary.json",
+      "sha256": "3aceebef99ce17f49481162b18cb5783f39b0f313d4c485a1afd77bee38882bf"
+    },
+    {
+      "bytes": 6146,
+      "path": "path_policy_value_alignment_l199/dataset_manifest.json",
+      "sha256": "bf3d02cd23011c8687e958003c1a421e8d148b0ee6000fd3ad77ebde85ff5ee2"
+    },
+    {
+      "bytes": 2013,
+      "path": "path_policy_value_alignment_l199/episodes.csv",
+      "sha256": "b8aa5748a547df5d7efd42a54c305228bd014bfe5b726208cd074703eede33bd"
+    },
+    {
+      "bytes": 7301,
+      "path": "route_balanced_value_alignment_l201/dataset_manifest.json",
+      "sha256": "1a863dec98d3ba69d18ced8b999165a9db490944fc45a19ba706b043480dd918"
+    },
+    {
+      "bytes": 2885,
+      "path": "route_balanced_value_alignment_l201/episodes.csv",
+      "sha256": "a82c500a3af14119d1dee6abe38a75cba6b0f09151627ecda8fff54d2f1d0752"
+    }
+  ],
+  "schema_version": 1
+}

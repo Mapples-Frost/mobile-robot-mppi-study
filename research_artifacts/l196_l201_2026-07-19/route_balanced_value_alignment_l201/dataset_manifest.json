@@ -1,0 +1,216 @@
+{
+  "action_noise_std": 0.03,
+  "actor_checkpoint": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/rl/path_conditioned_l185_seed20261901_60k_v2/checkpoints/step_000050000.pt",
+  "actor_checkpoint_sha256": "211c88ab2d93fbc8d9bbf9f41c76c9c0814da44998194f9f60c5d62d7abc0ffc",
+  "actor_config_snapshot": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/rl/path_conditioned_l185_seed20261901_60k_v2/config_snapshot.json",
+  "actor_config_snapshot_sha256": "e5d14bd967a738df949a834099c5418b06b401cc84ddb41be6b2e0c65d45316f",
+  "artifacts": {
+    "test": {
+      "episodes": 4,
+      "path": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/datasets/route_balanced_value_alignment_l201/test.npz",
+      "sha256": "3198e4cb0c81bb385c285e6230c4f6770a79462ba4e6c297a89b0dc436ad8a6e",
+      "transitions": 720
+    },
+    "train": {
+      "episodes": 16,
+      "path": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/datasets/route_balanced_value_alignment_l201/train.npz",
+      "sha256": "a7a4a0d0cf1389caa02764d4cc224b172a212de40325faa3d86f919053533559",
+      "transitions": 1989
+    },
+    "unseen": {
+      "episodes": 2,
+      "path": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/datasets/route_balanced_value_alignment_l201/unseen.npz",
+      "sha256": "339777b092d544db4a9be5f52e38adf1e77801516fa47cfc8146b0021e7b2aa6",
+      "transitions": 294
+    },
+    "validation": {
+      "episodes": 4,
+      "path": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/datasets/route_balanced_value_alignment_l201/validation.npz",
+      "sha256": "1ac4d501416fc21ce0d63cf3a307de271866095fec9861aff4f88f8352fe0e7b",
+      "transitions": 451
+    }
+  },
+  "config": {
+    "action_noise_std": 0.03,
+    "actor_checkpoint": "results/research_platform/rl/path_conditioned_l185_seed20261901_60k_v2/checkpoints/step_000050000.pt",
+    "actor_run_dir": "results/research_platform/rl/path_conditioned_l185_seed20261901_60k_v2",
+    "output_dir": "results/research_platform/datasets/route_balanced_value_alignment_l201",
+    "random_action_probability": 0.05,
+    "require_disjoint_environments": true,
+    "seed": 20260750,
+    "splits": {
+      "test": {
+        "episodes_per_environment": 1,
+        "max_steps": 180,
+        "roles": [
+          "seen"
+        ],
+        "scene_prefixes": [
+          "high_dynamic_hairpin_unseen_l56"
+        ],
+        "seed_base": 22854000,
+        "source": "validation"
+      },
+      "train": {
+        "episodes_per_environment": 1,
+        "max_steps": 180,
+        "roles": [
+          "seen"
+        ],
+        "scene_prefixes": [
+          "high_dynamic_accel_straight_l56",
+          "high_dynamic_accel_turn_l56",
+          "high_dynamic_sweep_l56",
+          "high_dynamic_chicane_l56"
+        ],
+        "seed_base": 22852000,
+        "source": "training"
+      },
+      "unseen": {
+        "episodes_per_environment": 1,
+        "max_steps": 180,
+        "roles": [
+          "unseen"
+        ],
+        "scene_prefixes": [
+          "high_dynamic_reverse_s_unseen_l56",
+          "high_dynamic_hairpin_unseen_l56"
+        ],
+        "seed_base": 22855000,
+        "source": "validation"
+      },
+      "validation": {
+        "episodes_per_environment": 1,
+        "max_steps": 180,
+        "roles": [
+          "seen"
+        ],
+        "scene_prefixes": [
+          "high_dynamic_reverse_s_unseen_l56"
+        ],
+        "seed_base": 22853000,
+        "source": "validation"
+      }
+    }
+  },
+  "created_from_config": "/home/mapples/projects/mobile-robot-mppi-study/configs/icode/route_balanced_value_alignment_data_l201.yaml",
+  "git_sha": "24bc3a629ccb38fc0be3d5de9edaca64a5ed982a",
+  "random_action_probability": 0.05,
+  "require_disjoint_environments": true,
+  "schema_version": 1,
+  "seed": 20260750,
+  "split_environments": {
+    "test": [
+      {
+        "physics_domain": "nominal_seen",
+        "scene": "high_dynamic_hairpin_unseen_l56__nominal_seen"
+      },
+      {
+        "physics_domain": "high_mass_seen",
+        "scene": "high_dynamic_hairpin_unseen_l56__high_mass_seen"
+      },
+      {
+        "physics_domain": "low_friction_seen",
+        "scene": "high_dynamic_hairpin_unseen_l56__low_friction_seen"
+      },
+      {
+        "physics_domain": "long_delay_seen",
+        "scene": "high_dynamic_hairpin_unseen_l56__long_delay_seen"
+      }
+    ],
+    "train": [
+      {
+        "physics_domain": "nominal_seen",
+        "scene": "high_dynamic_accel_straight_l56__nominal_seen"
+      },
+      {
+        "physics_domain": "high_mass_seen",
+        "scene": "high_dynamic_accel_straight_l56__high_mass_seen"
+      },
+      {
+        "physics_domain": "low_friction_seen",
+        "scene": "high_dynamic_accel_straight_l56__low_friction_seen"
+      },
+      {
+        "physics_domain": "long_delay_seen",
+        "scene": "high_dynamic_accel_straight_l56__long_delay_seen"
+      },
+      {
+        "physics_domain": "nominal_seen",
+        "scene": "high_dynamic_accel_turn_l56__nominal_seen"
+      },
+      {
+        "physics_domain": "high_mass_seen",
+        "scene": "high_dynamic_accel_turn_l56__high_mass_seen"
+      },
+      {
+        "physics_domain": "low_friction_seen",
+        "scene": "high_dynamic_accel_turn_l56__low_friction_seen"
+      },
+      {
+        "physics_domain": "long_delay_seen",
+        "scene": "high_dynamic_accel_turn_l56__long_delay_seen"
+      },
+      {
+        "physics_domain": "nominal_seen",
+        "scene": "high_dynamic_sweep_l56__nominal_seen"
+      },
+      {
+        "physics_domain": "high_mass_seen",
+        "scene": "high_dynamic_sweep_l56__high_mass_seen"
+      },
+      {
+        "physics_domain": "low_friction_seen",
+        "scene": "high_dynamic_sweep_l56__low_friction_seen"
+      },
+      {
+        "physics_domain": "long_delay_seen",
+        "scene": "high_dynamic_sweep_l56__long_delay_seen"
+      },
+      {
+        "physics_domain": "nominal_seen",
+        "scene": "high_dynamic_chicane_l56__nominal_seen"
+      },
+      {
+        "physics_domain": "high_mass_seen",
+        "scene": "high_dynamic_chicane_l56__high_mass_seen"
+      },
+      {
+        "physics_domain": "low_friction_seen",
+        "scene": "high_dynamic_chicane_l56__low_friction_seen"
+      },
+      {
+        "physics_domain": "long_delay_seen",
+        "scene": "high_dynamic_chicane_l56__long_delay_seen"
+      }
+    ],
+    "unseen": [
+      {
+        "physics_domain": "combined_unseen",
+        "scene": "high_dynamic_reverse_s_unseen_l56__combined_unseen"
+      },
+      {
+        "physics_domain": "combined_unseen",
+        "scene": "high_dynamic_hairpin_unseen_l56__combined_unseen"
+      }
+    ],
+    "validation": [
+      {
+        "physics_domain": "nominal_seen",
+        "scene": "high_dynamic_reverse_s_unseen_l56__nominal_seen"
+      },
+      {
+        "physics_domain": "high_mass_seen",
+        "scene": "high_dynamic_reverse_s_unseen_l56__high_mass_seen"
+      },
+      {
+        "physics_domain": "low_friction_seen",
+        "scene": "high_dynamic_reverse_s_unseen_l56__low_friction_seen"
+      },
+      {
+        "physics_domain": "long_delay_seen",
+        "scene": "high_dynamic_reverse_s_unseen_l56__long_delay_seen"
+      }
+    ]
+  }
+}

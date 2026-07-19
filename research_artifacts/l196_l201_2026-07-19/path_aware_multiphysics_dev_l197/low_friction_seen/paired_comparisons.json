@@ -1,0 +1,1112 @@
+{
+  "full_vs_simple": {
+    "bootstrap_samples": 2000,
+    "bootstrap_seed": 20260734,
+    "cluster_field": "seed",
+    "independent_clusters": 3,
+    "key_fields": [
+      "scene",
+      "physics_domain",
+      "seed"
+    ],
+    "method": "full_vs_simple",
+    "metrics": {
+      "collision": {
+        "aligned_mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "control_mean": 0.0,
+        "favorable": false,
+        "favorable_effect": 0.0,
+        "higher_is_better": false,
+        "paired_cohen_dz": null,
+        "per_cell": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "per_cluster": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "relative_favorable_change": null
+      },
+      "control_jerk": {
+        "aligned_mean": 0.12256988339594706,
+        "ci95": [
+          -0.010518308612119151,
+          0.007650589591166476
+        ],
+        "control_mean": 0.11990790880749896,
+        "favorable": false,
+        "favorable_effect": -0.0026619745884480885,
+        "higher_is_better": false,
+        "paired_cohen_dz": -0.28530835527266235,
+        "per_cell": [
+          -0.005118204744391591,
+          0.007650589591166476,
+          -0.010518308612119151
+        ],
+        "per_cluster": [
+          -0.005118204744391591,
+          0.007650589591166476,
+          -0.010518308612119151
+        ],
+        "relative_favorable_change": -0.022200158562698663
+      },
+      "cross_track_max": {
+        "aligned_mean": 0.08558677344652459,
+        "ci95": [
+          -0.022999278900687384,
+          0.007849530511885458
+        ],
+        "control_mean": 0.07803594599254289,
+        "favorable": false,
+        "favorable_effect": -0.007550827453981691,
+        "higher_is_better": false,
+        "paired_cohen_dz": -0.48953590556572846,
+        "per_cell": [
+          -0.007502733973143147,
+          0.007849530511885458,
+          -0.022999278900687384
+        ],
+        "per_cluster": [
+          -0.007502733973143147,
+          0.007849530511885458,
+          -0.022999278900687384
+        ],
+        "relative_favorable_change": -0.09676088830528495
+      },
+      "cross_track_rmse": {
+        "aligned_mean": 0.03891068774940213,
+        "ci95": [
+          -0.008450610089601907,
+          0.0017261880043761904
+        ],
+        "control_mean": 0.03706227704293829,
+        "favorable": false,
+        "favorable_effect": -0.0018484107064638382,
+        "higher_is_better": false,
+        "paired_cohen_dz": -0.32291106223454036,
+        "per_cell": [
+          0.0011791899658342014,
+          0.0017261880043761904,
+          -0.008450610089601907
+        ],
+        "per_cluster": [
+          0.0011791899658342014,
+          0.0017261880043761904,
+          -0.008450610089601907
+        ],
+        "relative_favorable_change": -0.04987310154533604
+      },
+      "paper_total_rollouts_mean": {
+        "aligned_mean": 100.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "control_mean": 100.0,
+        "favorable": false,
+        "favorable_effect": 0.0,
+        "higher_is_better": false,
+        "paired_cohen_dz": null,
+        "per_cell": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "per_cluster": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "relative_favorable_change": 0.0
+      },
+      "path_completion_ratio": {
+        "aligned_mean": 0.958120694254267,
+        "ci95": [
+          0.00037810191783305136,
+          0.0012603539797158003
+        ],
+        "control_mean": 0.9574052397528111,
+        "favorable": true,
+        "favorable_effect": 0.0007154545014558996,
+        "higher_is_better": true,
+        "paired_cohen_dz": 1.5019855951954089,
+        "per_cell": [
+          0.0005079076068188471,
+          0.00037810191783305136,
+          0.0012603539797158003
+        ],
+        "per_cluster": [
+          0.0005079076068188471,
+          0.00037810191783305136,
+          0.0012603539797158003
+        ],
+        "relative_favorable_change": 0.000747284923613558
+      },
+      "planner_compute_ms_mean": {
+        "aligned_mean": 348.3410352510202,
+        "ci95": [
+          -6.348618456464351,
+          7.912220027268802
+        ],
+        "control_mean": 349.6354308547864,
+        "favorable": true,
+        "favorable_effect": 1.2943956037662474,
+        "higher_is_better": false,
+        "paired_cohen_dz": 0.18014042238378963,
+        "per_cell": [
+          7.912220027268802,
+          2.319585240494291,
+          -6.348618456464351
+        ],
+        "per_cluster": [
+          7.912220027268802,
+          2.319585240494291,
+          -6.348618456464351
+        ],
+        "relative_favorable_change": 0.0037021293883223376
+      },
+      "success": {
+        "aligned_mean": 1.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "control_mean": 1.0,
+        "favorable": false,
+        "favorable_effect": 0.0,
+        "higher_is_better": true,
+        "paired_cohen_dz": null,
+        "per_cell": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "per_cluster": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "relative_favorable_change": 0.0
+      },
+      "tangent_heading_rmse": {
+        "aligned_mean": 0.11108706185708099,
+        "ci95": [
+          -0.015249966502715318,
+          0.010691044749056633
+        ],
+        "control_mean": 0.10760758944381071,
+        "favorable": false,
+        "favorable_effect": -0.0034794724132702765,
+        "higher_is_better": false,
+        "paired_cohen_dz": -0.2648809693489094,
+        "per_cell": [
+          0.010691044749056633,
+          -0.015249966502715318,
+          -0.005879495486152145
+        ],
+        "per_cluster": [
+          0.010691044749056633,
+          -0.015249966502715318,
+          -0.005879495486152145
+        ],
+        "relative_favorable_change": -0.032334823512491624
+      }
+    },
+    "paired_cells": 3
+  },
+  "hss_at_ordinary": {
+    "bootstrap_samples": 2000,
+    "bootstrap_seed": 20260736,
+    "cluster_field": "seed",
+    "independent_clusters": 3,
+    "key_fields": [
+      "scene",
+      "physics_domain",
+      "seed"
+    ],
+    "method": "hss_at_ordinary",
+    "metrics": {
+      "collision": {
+        "aligned_mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "control_mean": 0.0,
+        "favorable": false,
+        "favorable_effect": 0.0,
+        "higher_is_better": false,
+        "paired_cohen_dz": null,
+        "per_cell": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "per_cluster": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "relative_favorable_change": null
+      },
+      "control_jerk": {
+        "aligned_mean": 0.11856182579134378,
+        "ci95": [
+          -0.0028093951073473594,
+          0.004545718767002271
+        ],
+        "control_mean": 0.11990790880749896,
+        "favorable": true,
+        "favorable_effect": 0.0013460830161552,
+        "higher_is_better": false,
+        "paired_cohen_dz": 0.3570920149129197,
+        "per_cell": [
+          0.0023019253888106883,
+          0.004545718767002271,
+          -0.0028093951073473594
+        ],
+        "per_cluster": [
+          0.0023019253888106883,
+          0.004545718767002271,
+          -0.0028093951073473594
+        ],
+        "relative_favorable_change": 0.011225973578742096
+      },
+      "cross_track_max": {
+        "aligned_mean": 0.07412313728050447,
+        "ci95": [
+          -0.004018257785149609,
+          0.015845618379320234
+        ],
+        "control_mean": 0.07803594599254289,
+        "favorable": true,
+        "favorable_effect": 0.003912808712038428,
+        "higher_is_better": false,
+        "paired_cohen_dz": 0.37196779627289256,
+        "per_cell": [
+          -0.004018257785149609,
+          0.015845618379320234,
+          -8.89344580553425e-05
+        ],
+        "per_cluster": [
+          -0.004018257785149609,
+          0.015845618379320234,
+          -8.89344580553425e-05
+        ],
+        "relative_favorable_change": 0.05014110692542044
+      },
+      "cross_track_rmse": {
+        "aligned_mean": 0.03583043404982241,
+        "ci95": [
+          -0.001771522136953349,
+          0.00614566344740701
+        ],
+        "control_mean": 0.03706227704293829,
+        "favorable": true,
+        "favorable_effect": 0.0012318429931158826,
+        "higher_is_better": false,
+        "paired_cohen_dz": 0.28711374420543073,
+        "per_cell": [
+          0.00614566344740701,
+          -0.001771522136953349,
+          -0.0006786123311060127
+        ],
+        "per_cluster": [
+          0.00614566344740701,
+          -0.001771522136953349,
+          -0.0006786123311060127
+        ],
+        "relative_favorable_change": 0.03323711038284933
+      },
+      "paper_total_rollouts_mean": {
+        "aligned_mean": 100.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "control_mean": 100.0,
+        "favorable": false,
+        "favorable_effect": 0.0,
+        "higher_is_better": false,
+        "paired_cohen_dz": null,
+        "per_cell": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "per_cluster": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "relative_favorable_change": 0.0
+      },
+      "path_completion_ratio": {
+        "aligned_mean": 0.957337610335869,
+        "ci95": [
+          -0.0005359121573113024,
+          0.0003282143129439419
+        ],
+        "control_mean": 0.9574052397528111,
+        "favorable": false,
+        "favorable_effect": -6.762941694223497e-05,
+        "higher_is_better": true,
+        "paired_cohen_dz": -0.15490235537124764,
+        "per_cell": [
+          -0.0005359121573113024,
+          4.809593540655577e-06,
+          0.0003282143129439419
+        ],
+        "per_cluster": [
+          -0.0005359121573113024,
+          4.809593540655577e-06,
+          0.0003282143129439419
+        ],
+        "relative_favorable_change": -7.06382356542105e-05
+      },
+      "planner_compute_ms_mean": {
+        "aligned_mean": 357.8322690044759,
+        "ci95": [
+          -61.60643900771771,
+          19.50265369736786
+        ],
+        "control_mean": 349.6354308547864,
+        "favorable": false,
+        "favorable_effect": -8.19683814968956,
+        "higher_is_better": false,
+        "paired_cohen_dz": -0.1771723707093989,
+        "per_cell": [
+          19.50265369736786,
+          -61.60643900771771,
+          17.51327086128117
+        ],
+        "per_cluster": [
+          19.50265369736786,
+          -61.60643900771771,
+          17.51327086128117
+        ],
+        "relative_favorable_change": -0.023443957409150392
+      },
+      "success": {
+        "aligned_mean": 1.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "control_mean": 1.0,
+        "favorable": false,
+        "favorable_effect": 0.0,
+        "higher_is_better": true,
+        "paired_cohen_dz": null,
+        "per_cell": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "per_cluster": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "relative_favorable_change": 0.0
+      },
+      "tangent_heading_rmse": {
+        "aligned_mean": 0.11366538145311617,
+        "ci95": [
+          -0.017252265960303187,
+          0.006328637918354363
+        ],
+        "control_mean": 0.10760758944381071,
+        "favorable": false,
+        "favorable_effect": -0.006057792009305456,
+        "higher_is_better": false,
+        "paired_cohen_dz": -0.5118300566681134,
+        "per_cell": [
+          0.006328637918354363,
+          -0.017252265960303187,
+          -0.0072497479859675446
+        ],
+        "per_cluster": [
+          0.006328637918354363,
+          -0.017252265960303187,
+          -0.0072497479859675446
+        ],
+        "relative_favorable_change": -0.056295211523799106
+      }
+    },
+    "paired_cells": 3
+  },
+  "hss_at_value": {
+    "bootstrap_samples": 2000,
+    "bootstrap_seed": 20260737,
+    "cluster_field": "seed",
+    "independent_clusters": 3,
+    "key_fields": [
+      "scene",
+      "physics_domain",
+      "seed"
+    ],
+    "method": "hss_at_value",
+    "metrics": {
+      "collision": {
+        "aligned_mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "control_mean": 0.0,
+        "favorable": false,
+        "favorable_effect": 0.0,
+        "higher_is_better": false,
+        "paired_cohen_dz": null,
+        "per_cell": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "per_cluster": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "relative_favorable_change": null
+      },
+      "control_jerk": {
+        "aligned_mean": 0.12256988339594706,
+        "ci95": [
+          -0.010551285990108433,
+          -5.784273797847239e-05
+        ],
+        "control_mean": 0.11702975698610102,
+        "favorable": false,
+        "favorable_effect": -0.005540126409846043,
+        "higher_is_better": false,
+        "paired_cohen_dz": -1.0527432579260403,
+        "per_cell": [
+          -0.010551285990108433,
+          -5.784273797847239e-05,
+          -0.0060112505014512235
+        ],
+        "per_cluster": [
+          -0.010551285990108433,
+          -5.784273797847239e-05,
+          -0.0060112505014512235
+        ],
+        "relative_favorable_change": -0.04733946777744752
+      },
+      "cross_track_max": {
+        "aligned_mean": 0.08558677344652459,
+        "ci95": [
+          -0.010971686949361903,
+          0.003484180469337128
+        ],
+        "control_mean": 0.08039297691571491,
+        "favorable": false,
+        "favorable_effect": -0.00519379653080967,
+        "higher_is_better": false,
+        "paired_cohen_dz": -0.678762961270617,
+        "per_cell": [
+          -0.010971686949361903,
+          0.003484180469337128,
+          -0.008093883112404235
+        ],
+        "per_cluster": [
+          -0.010971686949361903,
+          0.003484180469337128,
+          -0.008093883112404235
+        ],
+        "relative_favorable_change": -0.06460510271009018
+      },
+      "cross_track_rmse": {
+        "aligned_mean": 0.03891068774940213,
+        "ci95": [
+          -0.006811960139631583,
+          -0.001486719243131547
+        ],
+        "control_mean": 0.034605975540812704,
+        "favorable": false,
+        "favorable_effect": -0.00430471220858943,
+        "higher_is_better": false,
+        "paired_cohen_dz": -1.6085252702889925,
+        "per_cell": [
+          -0.004615457243005161,
+          -0.001486719243131547,
+          -0.006811960139631583
+        ],
+        "per_cluster": [
+          -0.004615457243005161,
+          -0.001486719243131547,
+          -0.006811960139631583
+        ],
+        "relative_favorable_change": -0.1243921646859124
+      },
+      "paper_total_rollouts_mean": {
+        "aligned_mean": 100.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "control_mean": 100.0,
+        "favorable": false,
+        "favorable_effect": 0.0,
+        "higher_is_better": false,
+        "paired_cohen_dz": null,
+        "per_cell": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "per_cluster": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "relative_favorable_change": 0.0
+      },
+      "path_completion_ratio": {
+        "aligned_mean": 0.958120694254267,
+        "ci95": [
+          -0.0003710057438283121,
+          0.0005624033814987106
+        ],
+        "control_mean": 0.9579451977551793,
+        "favorable": true,
+        "favorable_effect": 0.00017549649908791634,
+        "higher_is_better": true,
+        "paired_cohen_dz": 0.3605546629955554,
+        "per_cell": [
+          0.00033509185959335053,
+          -0.0003710057438283121,
+          0.0005624033814987106
+        ],
+        "per_cluster": [
+          0.00033509185959335053,
+          -0.0003710057438283121,
+          0.0005624033814987106
+        ],
+        "relative_favorable_change": 0.00018320098007607293
+      },
+      "planner_compute_ms_mean": {
+        "aligned_mean": 348.3410352510202,
+        "ci95": [
+          -3.347634197582238,
+          28.28368809058935
+        ],
+        "control_mean": 359.1716488110155,
+        "favorable": true,
+        "favorable_effect": 10.8306135599953,
+        "higher_is_better": false,
+        "paired_cohen_dz": 0.6740514066112085,
+        "per_cell": [
+          -3.347634197582238,
+          7.555786786978786,
+          28.28368809058935
+        ],
+        "per_cluster": [
+          -3.347634197582238,
+          7.555786786978786,
+          28.28368809058935
+        ],
+        "relative_favorable_change": 0.03015442225422981
+      },
+      "success": {
+        "aligned_mean": 1.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "control_mean": 1.0,
+        "favorable": false,
+        "favorable_effect": 0.0,
+        "higher_is_better": true,
+        "paired_cohen_dz": null,
+        "per_cell": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "per_cluster": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "relative_favorable_change": 0.0
+      },
+      "tangent_heading_rmse": {
+        "aligned_mean": 0.11108706185708099,
+        "ci95": [
+          -0.01546632422993402,
+          0.006145648629827499
+        ],
+        "control_mean": 0.10880674470399354,
+        "favorable": false,
+        "favorable_effect": -0.0022803171530874494,
+        "higher_is_better": false,
+        "paired_cohen_dz": -0.19716395333325715,
+        "per_cell": [
+          0.006145648629827499,
+          -0.01546632422993402,
+          0.0024797241408441723
+        ],
+        "per_cluster": [
+          0.006145648629827499,
+          -0.01546632422993402,
+          0.0024797241408441723
+        ],
+        "relative_favorable_change": -0.020957498170641943
+      }
+    },
+    "paired_cells": 3
+  },
+  "value_at_adaptive": {
+    "bootstrap_samples": 2000,
+    "bootstrap_seed": 20260738,
+    "cluster_field": "seed",
+    "independent_clusters": 3,
+    "key_fields": [
+      "scene",
+      "physics_domain",
+      "seed"
+    ],
+    "method": "value_at_adaptive",
+    "metrics": {
+      "collision": {
+        "aligned_mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "control_mean": 0.0,
+        "favorable": false,
+        "favorable_effect": 0.0,
+        "higher_is_better": false,
+        "paired_cohen_dz": null,
+        "per_cell": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "per_cluster": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "relative_favorable_change": null
+      },
+      "control_jerk": {
+        "aligned_mean": 0.12256988339594706,
+        "ci95": [
+          -0.007708913504771792,
+          0.003104870824164205
+        ],
+        "control_mean": 0.11856182579134378,
+        "favorable": false,
+        "favorable_effect": -0.004008057604603289,
+        "higher_is_better": false,
+        "paired_cohen_dz": -0.6504824831475454,
+        "per_cell": [
+          -0.0074201301332022795,
+          0.003104870824164205,
+          -0.007708913504771792
+        ],
+        "per_cluster": [
+          -0.0074201301332022795,
+          0.003104870824164205,
+          -0.007708913504771792
+        ],
+        "relative_favorable_change": -0.03380563328753932
+      },
+      "cross_track_max": {
+        "aligned_mean": 0.08558677344652459,
+        "ci95": [
+          -0.02291034444263204,
+          -0.0034844761879935376
+        ],
+        "control_mean": 0.07412313728050447,
+        "favorable": false,
+        "favorable_effect": -0.011463636166020119,
+        "higher_is_better": false,
+        "paired_cohen_dz": -1.1275822433554843,
+        "per_cell": [
+          -0.0034844761879935376,
+          -0.007996087867434776,
+          -0.02291034444263204
+        ],
+        "per_cluster": [
+          -0.0034844761879935376,
+          -0.007996087867434776,
+          -0.02291034444263204
+        ],
+        "relative_favorable_change": -0.15465665090022077
+      },
+      "cross_track_rmse": {
+        "aligned_mean": 0.03891068774940213,
+        "ci95": [
+          -0.007771997758495894,
+          0.0034977101413295394
+        ],
+        "control_mean": 0.03583043404982241,
+        "favorable": false,
+        "favorable_effect": -0.003080253699579721,
+        "higher_is_better": false,
+        "paired_cohen_dz": -0.5250266929061885,
+        "per_cell": [
+          -0.0049664734815728084,
+          0.0034977101413295394,
+          -0.007771997758495894
+        ],
+        "per_cluster": [
+          -0.0049664734815728084,
+          0.0034977101413295394,
+          -0.007771997758495894
+        ],
+        "relative_favorable_change": -0.0859675240131507
+      },
+      "paper_total_rollouts_mean": {
+        "aligned_mean": 100.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "control_mean": 100.0,
+        "favorable": false,
+        "favorable_effect": 0.0,
+        "higher_is_better": false,
+        "paired_cohen_dz": null,
+        "per_cell": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "per_cluster": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "relative_favorable_change": 0.0
+      },
+      "path_completion_ratio": {
+        "aligned_mean": 0.958120694254267,
+        "ci95": [
+          0.0003732923242923958,
+          0.0010438197641301494
+        ],
+        "control_mean": 0.957337610335869,
+        "favorable": true,
+        "favorable_effect": 0.0007830839183981345,
+        "higher_is_better": true,
+        "paired_cohen_dz": 2.1797370500811835,
+        "per_cell": [
+          0.0010438197641301494,
+          0.0003732923242923958,
+          0.0009321396667718584
+        ],
+        "per_cluster": [
+          0.0010438197641301494,
+          0.0003732923242923958,
+          0.0009321396667718584
+        ],
+        "relative_favorable_change": 0.0008179809399981685
+      },
+      "planner_compute_ms_mean": {
+        "aligned_mean": 348.3410352510202,
+        "ci95": [
+          -23.861889317745522,
+          63.926024248212
+        ],
+        "control_mean": 357.8322690044759,
+        "favorable": true,
+        "favorable_effect": 9.491233753455807,
+        "higher_is_better": false,
+        "paired_cohen_dz": 0.19964929474466783,
+        "per_cell": [
+          -11.59043367009906,
+          63.926024248212,
+          -23.861889317745522
+        ],
+        "per_cluster": [
+          -11.59043367009906,
+          63.926024248212,
+          -23.861889317745522
+        ],
+        "relative_favorable_change": 0.026524253332046718
+      },
+      "success": {
+        "aligned_mean": 1.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "control_mean": 1.0,
+        "favorable": false,
+        "favorable_effect": 0.0,
+        "higher_is_better": true,
+        "paired_cohen_dz": null,
+        "per_cell": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "per_cluster": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "relative_favorable_change": 0.0
+      },
+      "tangent_heading_rmse": {
+        "aligned_mean": 0.11108706185708099,
+        "ci95": [
+          0.0013702524998153998,
+          0.00436240683070227
+        ],
+        "control_mean": 0.11366538145311617,
+        "favorable": true,
+        "favorable_effect": 0.00257831959603518,
+        "higher_is_better": false,
+        "paired_cohen_dz": 1.6348971999011022,
+        "per_cell": [
+          0.00436240683070227,
+          0.0020022994575878694,
+          0.0013702524998153998
+        ],
+        "per_cluster": [
+          0.00436240683070227,
+          0.0020022994575878694,
+          0.0013702524998153998
+        ],
+        "relative_favorable_change": 0.02268342007983025
+      }
+    },
+    "paired_cells": 3
+  },
+  "value_at_fixed": {
+    "bootstrap_samples": 2000,
+    "bootstrap_seed": 20260735,
+    "cluster_field": "seed",
+    "independent_clusters": 3,
+    "key_fields": [
+      "scene",
+      "physics_domain",
+      "seed"
+    ],
+    "method": "value_at_fixed",
+    "metrics": {
+      "collision": {
+        "aligned_mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "control_mean": 0.0,
+        "favorable": false,
+        "favorable_effect": 0.0,
+        "higher_is_better": false,
+        "paired_cohen_dz": null,
+        "per_cell": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "per_cluster": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "relative_favorable_change": null
+      },
+      "control_jerk": {
+        "aligned_mean": 0.11702975698610102,
+        "ci95": [
+          -0.0045070581106679275,
+          0.007708432329144949
+        ],
+        "control_mean": 0.11990790880749896,
+        "favorable": true,
+        "favorable_effect": 0.0028781518213979542,
+        "higher_is_better": false,
+        "paired_cohen_dz": 0.4430532536007672,
+        "per_cell": [
+          0.005433081245716842,
+          0.007708432329144949,
+          -0.0045070581106679275
+        ],
+        "per_cluster": [
+          0.005433081245716842,
+          0.007708432329144949,
+          -0.0045070581106679275
+        ],
+        "relative_favorable_change": 0.02400301906706221
+      },
+      "cross_track_max": {
+        "aligned_mean": 0.08039297691571491,
+        "ci95": [
+          -0.014905395788283149,
+          0.00436535004254833
+        ],
+        "control_mean": 0.07803594599254289,
+        "favorable": false,
+        "favorable_effect": -0.002357030923172021,
+        "higher_is_better": false,
+        "paired_cohen_dz": -0.21670975244595625,
+        "per_cell": [
+          0.003468952976218756,
+          0.00436535004254833,
+          -0.014905395788283149
+        ],
+        "per_cluster": [
+          0.003468952976218756,
+          0.00436535004254833,
+          -0.014905395788283149
+        ],
+        "relative_favorable_change": -0.030204425578402787
+      },
+      "cross_track_rmse": {
+        "aligned_mean": 0.034605975540812704,
+        "ci95": [
+          -0.0016386499499703236,
+          0.0057946472088393625
+        ],
+        "control_mean": 0.03706227704293829,
+        "favorable": true,
+        "favorable_effect": 0.002456301502125592,
+        "higher_is_better": false,
+        "paired_cohen_dz": 0.650854248634002,
+        "per_cell": [
+          0.0057946472088393625,
+          0.0032129072475077375,
+          -0.0016386499499703236
+        ],
+        "per_cluster": [
+          0.0057946472088393625,
+          0.0032129072475077375,
+          -0.0016386499499703236
+        ],
+        "relative_favorable_change": 0.06627497547654339
+      },
+      "paper_total_rollouts_mean": {
+        "aligned_mean": 100.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "control_mean": 100.0,
+        "favorable": false,
+        "favorable_effect": 0.0,
+        "higher_is_better": false,
+        "paired_cohen_dz": null,
+        "per_cell": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "per_cluster": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "relative_favorable_change": 0.0
+      },
+      "path_completion_ratio": {
+        "aligned_mean": 0.9579451977551793,
+        "ci95": [
+          0.00017281574722549653,
+          0.0007491076616613634
+        ],
+        "control_mean": 0.9574052397528111,
+        "favorable": true,
+        "favorable_effect": 0.0005399580023679832,
+        "higher_is_better": true,
+        "paired_cohen_dz": 1.6927553145459364,
+        "per_cell": [
+          0.00017281574722549653,
+          0.0007491076616613634,
+          0.0006979505982170897
+        ],
+        "per_cluster": [
+          0.00017281574722549653,
+          0.0007491076616613634,
+          0.0006979505982170897
+        ],
+        "relative_favorable_change": 0.0005639806217348392
+      },
+      "planner_compute_ms_mean": {
+        "aligned_mean": 359.1716488110155,
+        "ci95": [
+          -34.6323065470537,
+          11.25985422485104
+        ],
+        "control_mean": 349.6354308547864,
+        "favorable": false,
+        "favorable_effect": -9.536217956229052,
+        "higher_is_better": false,
+        "paired_cohen_dz": -0.4102252911869479,
+        "per_cell": [
+          11.25985422485104,
+          -5.236201546484494,
+          -34.6323065470537
+        ],
+        "per_cluster": [
+          11.25985422485104,
+          -5.236201546484494,
+          -34.6323065470537
+        ],
+        "relative_favorable_change": -0.027274747107050818
+      },
+      "success": {
+        "aligned_mean": 1.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "control_mean": 1.0,
+        "favorable": false,
+        "favorable_effect": 0.0,
+        "higher_is_better": true,
+        "paired_cohen_dz": null,
+        "per_cell": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "per_cluster": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "relative_favorable_change": 0.0
+      },
+      "tangent_heading_rmse": {
+        "aligned_mean": 0.10880674470399354,
+        "ci95": [
+          -0.008359219626996317,
+          0.004545396119229134
+        ],
+        "control_mean": 0.10760758944381071,
+        "favorable": false,
+        "favorable_effect": -0.001199155260182827,
+        "higher_is_better": false,
+        "paired_cohen_dz": -0.18258300108531536,
+        "per_cell": [
+          0.004545396119229134,
+          0.00021635772721870228,
+          -0.008359219626996317
+        ],
+        "per_cluster": [
+          0.004545396119229134,
+          0.00021635772721870228,
+          -0.008359219626996317
+        ],
+        "relative_favorable_change": -0.011143779601242606
+      }
+    },
+    "paired_cells": 3
+  }
+}

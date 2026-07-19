@@ -1,0 +1,158 @@
+{
+  "accepted_failed_reliability_calibration": false,
+  "actor_checkpoint": {
+    "path": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/rl/path_conditioned_l185_seed20261901_60k_v2/checkpoints/step_000050000.pt",
+    "sha256": "211c88ab2d93fbc8d9bbf9f41c76c9c0814da44998194f9f60c5d62d7abc0ffc"
+  },
+  "git_sha": "570fcca19b8f4c84dfcd5972719904a20372f4d4",
+  "iterations": 2,
+  "max_steps": 360,
+  "metric_profile": "path_tracking",
+  "ordinary_calibration": {
+    "config_path": "/home/mapples/projects/mobile-robot-mppi-study/configs/rl/path_aware_ordinary_reliability_continuous_l192.yaml",
+    "ensemble": {
+      "disagreement_scales": [
+        0.0192860868,
+        0.0061503653,
+        0.0276655704,
+        0.2438328117,
+        0.6734842658
+      ],
+      "innovation_decay": 0.9,
+      "innovation_minimum_samples": 3,
+      "innovation_scales": [
+        0.25,
+        0.25,
+        0.35,
+        0.25,
+        0.6
+      ],
+      "support_hard_z": 7.0,
+      "support_soft_z": 3.0
+    },
+    "runtime": {
+      "actor_ood_hard": 7.0,
+      "actor_ood_soft": 3.0,
+      "dynamics_power": 1.0,
+      "enabled": true,
+      "ensemble_disagreement_hard": 0.04103667370069852,
+      "ensemble_disagreement_soft": 0.03688488950159177,
+      "fusion_mode": "innovation_anchor",
+      "high_confidence": 0.67,
+      "high_guided_fraction": 0.6,
+      "innovation_error_hard": 0.22372548244225754,
+      "innovation_error_soft": 0.1413514442160756,
+      "innovation_minimum_samples": 3,
+      "low_guided_fraction": 0.0,
+      "medium_confidence": 0.33,
+      "medium_guided_fraction": 0.3
+    },
+    "summary_path": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/rl/path_aware_ordinary_reliability_continuous_l192/calibration_summary.json"
+  },
+  "ordinary_checkpoints": [
+    {
+      "path": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/l57_icode_high_dynamic_h36_seed20261201_v1/best.pt",
+      "sha256": "a63891a2bcadd08c29d6207878510a9a5927c87b045597edc1b4c1119fd156ab"
+    },
+    {
+      "path": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/l57_icode_high_dynamic_h36_seed20261202_v1/best.pt",
+      "sha256": "a5c91ea951843c3a61bd7552b893e7cde655327d1629008ffe1cbbb4a97bf5aa"
+    },
+    {
+      "path": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/l57_icode_high_dynamic_h36_seed20261203_v1/best.pt",
+      "sha256": "4274f30614af38deb31f60484b7f79919083c7e8838511e10d6798550fd931f9"
+    }
+  ],
+  "physics_domains": [
+    {
+      "name": "high_mass_seen",
+      "plant_override": {
+        "robot": {
+          "chassis_inertia": [
+            0.1,
+            0.15,
+            0.2
+          ],
+          "chassis_mass": 11.0
+        }
+      },
+      "role": "seen"
+    }
+  ],
+  "scenes": [
+    {
+      "name": "high_dynamic_reverse_s_terminal_dev_l187",
+      "source": "/home/mapples/projects/mobile-robot-mppi-study/configs/research/mujoco_high_dynamic_reverse_s_terminal_dev_l187.yaml"
+    }
+  ],
+  "schedule_seed": 20260729,
+  "seeds": [
+    569,
+    570,
+    571
+  ],
+  "source_competence_config": "/home/mapples/projects/mobile-robot-mppi-study/configs/rl/source_relative_actor_competence_l194.yaml",
+  "source_competence_overlay": {
+    "source_competence_decay": 0.9,
+    "source_competence_enabled": true,
+    "source_competence_initial": 0.5,
+    "source_competence_prior_failure": 1.0,
+    "source_competence_prior_success": 1.0
+  },
+  "total_rollouts": 100,
+  "value_calibration": {
+    "config_path": "/home/mapples/projects/mobile-robot-mppi-study/configs/rl/path_aware_value_reliability_continuous_l192.yaml",
+    "ensemble": {
+      "disagreement_scales": [
+        0.0192860868,
+        0.0061503653,
+        0.0276655704,
+        0.2438328117,
+        0.6734842658
+      ],
+      "innovation_decay": 0.9,
+      "innovation_minimum_samples": 3,
+      "innovation_scales": [
+        0.25,
+        0.25,
+        0.35,
+        0.25,
+        0.6
+      ],
+      "support_hard_z": 7.0,
+      "support_soft_z": 3.0
+    },
+    "runtime": {
+      "actor_ood_hard": 7.0,
+      "actor_ood_soft": 3.0,
+      "dynamics_power": 1.0,
+      "enabled": true,
+      "ensemble_disagreement_hard": 0.07292244275340759,
+      "ensemble_disagreement_soft": 0.0505215090978347,
+      "fusion_mode": "innovation_anchor",
+      "high_confidence": 0.67,
+      "high_guided_fraction": 0.6,
+      "innovation_error_hard": 0.2231791245881652,
+      "innovation_error_soft": 0.14061266408405004,
+      "innovation_minimum_samples": 3,
+      "low_guided_fraction": 0.0,
+      "medium_confidence": 0.33,
+      "medium_guided_fraction": 0.3
+    },
+    "summary_path": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/rl/path_aware_value_reliability_continuous_l192/calibration_summary.json"
+  },
+  "value_checkpoints": [
+    {
+      "path": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/gate3_value_aligned_ensemble_member1_l192/best.pt",
+      "sha256": "c43af62cbd96d8b3ab9d2283175ff278df9b396a911609798a8dd7a41047c6f9"
+    },
+    {
+      "path": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/gate3_value_aligned_ensemble_member2_l192/best.pt",
+      "sha256": "e39065703214f5b3c8e9dfa2d16bb3c0be82e9340e54c017c40e5254c420acb8"
+    },
+    {
+      "path": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/gate3_value_aligned_ensemble_member3_l192/best.pt",
+      "sha256": "296159d7b7ae7780a6e7225f20d7e158c43acdd9bf0d4ab8254a07002b779e99"
+    }
+  ]
+}

@@ -1,0 +1,396 @@
+{
+  "arm_summary": {
+    "full_proposed": {
+      "collisions": 0,
+      "control_jerk_mean": 0.12046501074800624,
+      "cross_track_rmse_mean": 0.043641804494513665,
+      "episodes": 12,
+      "successes": 12
+    },
+    "ordinary_adaptive": {
+      "collisions": 0,
+      "control_jerk_mean": 0.12296126714353467,
+      "cross_track_rmse_mean": 0.04460755222433275,
+      "episodes": 12,
+      "successes": 12
+    },
+    "ordinary_fixed": {
+      "collisions": 0,
+      "control_jerk_mean": 0.11852146947312182,
+      "cross_track_rmse_mean": 0.040413875719348576,
+      "episodes": 12,
+      "successes": 12
+    },
+    "value_fixed": {
+      "collisions": 0,
+      "control_jerk_mean": 0.11926588674866402,
+      "cross_track_rmse_mean": 0.039955193140990386,
+      "episodes": 12,
+      "successes": 12
+    }
+  },
+  "checks": {
+    "adaptive_mechanism_exercised": true,
+    "equal_frozen_budget": true,
+    "full_success_all": true,
+    "full_zero_collision": true,
+    "pooled_jerk_within_tolerance": true,
+    "pooled_tracking_directional": false,
+    "three_of_four_domains_stable": false,
+    "unseen_dynamics_confidence_lower": true,
+    "unseen_tracking_directional": false
+  },
+  "comparisons": {
+    "domains_within_tracking_tolerance": 2,
+    "full_over_ordinary_cross_track_by_domain": {
+      "combined_unseen": 1.1331936069517061,
+      "high_mass_seen": 1.1190728689724943,
+      "long_delay_seen": 1.0239249832207626,
+      "low_friction_seen": 1.0374867386411275
+    },
+    "pooled_full_over_ordinary_cross_track": 1.079871794469336,
+    "pooled_full_over_ordinary_jerk": 1.0163982212127836,
+    "seen_dynamics_confidence_mean": 0.955768422473617,
+    "unseen_dynamics_confidence_mean": 0.9027470237167233
+  },
+  "domain_summary": {
+    "combined_unseen": {
+      "full_proposed": {
+        "actor_competence_mean": 0.6273988087295913,
+        "collisions": 0,
+        "control_jerk_mean": 0.12008439045700198,
+        "cross_track_rmse_mean": 0.04701450266997673,
+        "dynamics_confidence_mean": 0.9027470237167233,
+        "episodes": 3,
+        "raw_guided_fraction_mean": 0.3569041557104497,
+        "successes": 3
+      },
+      "ordinary_adaptive": {
+        "actor_competence_mean": 0.6395684555173479,
+        "collisions": 0,
+        "control_jerk_mean": 0.12004028209824259,
+        "cross_track_rmse_mean": 0.04874849603453781,
+        "dynamics_confidence_mean": 0.9372282051532047,
+        "episodes": 3,
+        "raw_guided_fraction_mean": 0.3849382267132178,
+        "successes": 3
+      },
+      "ordinary_fixed": {
+        "collisions": 0,
+        "control_jerk_mean": 0.11888946475196698,
+        "cross_track_rmse_mean": 0.04148849974228664,
+        "episodes": 3,
+        "successes": 3
+      },
+      "value_fixed": {
+        "collisions": 0,
+        "control_jerk_mean": 0.12343033772243006,
+        "cross_track_rmse_mean": 0.04127519463304539,
+        "episodes": 3,
+        "successes": 3
+      }
+    },
+    "high_mass_seen": {
+      "full_proposed": {
+        "actor_competence_mean": 0.5973956950411748,
+        "collisions": 0,
+        "control_jerk_mean": 0.1186556642919399,
+        "cross_track_rmse_mean": 0.04719883295812042,
+        "dynamics_confidence_mean": 0.994303883989815,
+        "episodes": 3,
+        "raw_guided_fraction_mean": 0.4082616624362354,
+        "successes": 3
+      },
+      "ordinary_adaptive": {
+        "actor_competence_mean": 0.6111807965969384,
+        "collisions": 0,
+        "control_jerk_mean": 0.12530984437369388,
+        "cross_track_rmse_mean": 0.043739876309970484,
+        "dynamics_confidence_mean": 0.9922825968251973,
+        "episodes": 3,
+        "raw_guided_fraction_mean": 0.4190852320135017,
+        "successes": 3
+      },
+      "ordinary_fixed": {
+        "collisions": 0,
+        "control_jerk_mean": 0.11608739395311977,
+        "cross_track_rmse_mean": 0.04217672885006787,
+        "episodes": 3,
+        "successes": 3
+      },
+      "value_fixed": {
+        "collisions": 0,
+        "control_jerk_mean": 0.11779403121084735,
+        "cross_track_rmse_mean": 0.04542804021115018,
+        "episodes": 3,
+        "successes": 3
+      }
+    },
+    "long_delay_seen": {
+      "full_proposed": {
+        "actor_competence_mean": 0.6114281826400503,
+        "collisions": 0,
+        "control_jerk_mean": 0.12237702190172457,
+        "cross_track_rmse_mean": 0.04227998280783119,
+        "dynamics_confidence_mean": 0.9953403451211135,
+        "episodes": 3,
+        "raw_guided_fraction_mean": 0.42050513765785547,
+        "successes": 3
+      },
+      "ordinary_adaptive": {
+        "actor_competence_mean": 0.6229643425018411,
+        "collisions": 0,
+        "control_jerk_mean": 0.12408019317450909,
+        "cross_track_rmse_mean": 0.04702744895724567,
+        "dynamics_confidence_mean": 0.9899612608112457,
+        "episodes": 3,
+        "raw_guided_fraction_mean": 0.4118577150250224,
+        "successes": 3
+      },
+      "ordinary_fixed": {
+        "collisions": 0,
+        "control_jerk_mean": 0.11851995172318053,
+        "cross_track_rmse_mean": 0.04129207070896857,
+        "episodes": 3,
+        "successes": 3
+      },
+      "value_fixed": {
+        "collisions": 0,
+        "control_jerk_mean": 0.11275151376564908,
+        "cross_track_rmse_mean": 0.040005216136322456,
+        "episodes": 3,
+        "successes": 3
+      }
+    },
+    "low_friction_seen": {
+      "full_proposed": {
+        "actor_competence_mean": 0.6356420711769373,
+        "collisions": 0,
+        "control_jerk_mean": 0.12074296634135841,
+        "cross_track_rmse_mean": 0.038073899542126345,
+        "dynamics_confidence_mean": 0.8776610383099229,
+        "episodes": 3,
+        "raw_guided_fraction_mean": 0.35489610769681,
+        "successes": 3
+      },
+      "ordinary_adaptive": {
+        "actor_competence_mean": 0.6293487775873645,
+        "collisions": 0,
+        "control_jerk_mean": 0.1224147489276931,
+        "cross_track_rmse_mean": 0.03891438759557702,
+        "dynamics_confidence_mean": 0.8539751897384192,
+        "episodes": 3,
+        "raw_guided_fraction_mean": 0.33756698984102135,
+        "successes": 3
+      },
+      "ordinary_fixed": {
+        "collisions": 0,
+        "control_jerk_mean": 0.12058906746422005,
+        "cross_track_rmse_mean": 0.03669820357607127,
+        "episodes": 3,
+        "successes": 3
+      },
+      "value_fixed": {
+        "collisions": 0,
+        "control_jerk_mean": 0.12308766429572969,
+        "cross_track_rmse_mean": 0.03311232158344352,
+        "episodes": 3,
+        "successes": 3
+      }
+    }
+  },
+  "episode_count": 48,
+  "evidence_class": "multidomain_development_gate",
+  "expected_domains": [
+    "combined_unseen",
+    "high_mass_seen",
+    "long_delay_seen",
+    "low_friction_seen"
+  ],
+  "expected_seeds": [
+    569,
+    570,
+    571
+  ],
+  "frozen_budget": {
+    "observed_iterations": [
+      2
+    ],
+    "observed_rollouts": [
+      100
+    ]
+  },
+  "gate_passed": false,
+  "mechanism_episodes": [
+    {
+      "allocation_changed": true,
+      "arm": "ordinary_adaptive",
+      "competence_nonconstant": true,
+      "domain": "high_mass_seen",
+      "seed": 569
+    },
+    {
+      "allocation_changed": true,
+      "arm": "ordinary_adaptive",
+      "competence_nonconstant": true,
+      "domain": "high_mass_seen",
+      "seed": 570
+    },
+    {
+      "allocation_changed": true,
+      "arm": "ordinary_adaptive",
+      "competence_nonconstant": true,
+      "domain": "high_mass_seen",
+      "seed": 571
+    },
+    {
+      "allocation_changed": true,
+      "arm": "ordinary_adaptive",
+      "competence_nonconstant": true,
+      "domain": "low_friction_seen",
+      "seed": 569
+    },
+    {
+      "allocation_changed": true,
+      "arm": "ordinary_adaptive",
+      "competence_nonconstant": true,
+      "domain": "low_friction_seen",
+      "seed": 570
+    },
+    {
+      "allocation_changed": true,
+      "arm": "ordinary_adaptive",
+      "competence_nonconstant": true,
+      "domain": "low_friction_seen",
+      "seed": 571
+    },
+    {
+      "allocation_changed": true,
+      "arm": "ordinary_adaptive",
+      "competence_nonconstant": true,
+      "domain": "long_delay_seen",
+      "seed": 569
+    },
+    {
+      "allocation_changed": true,
+      "arm": "ordinary_adaptive",
+      "competence_nonconstant": true,
+      "domain": "long_delay_seen",
+      "seed": 570
+    },
+    {
+      "allocation_changed": true,
+      "arm": "ordinary_adaptive",
+      "competence_nonconstant": true,
+      "domain": "long_delay_seen",
+      "seed": 571
+    },
+    {
+      "allocation_changed": true,
+      "arm": "ordinary_adaptive",
+      "competence_nonconstant": true,
+      "domain": "combined_unseen",
+      "seed": 569
+    },
+    {
+      "allocation_changed": true,
+      "arm": "ordinary_adaptive",
+      "competence_nonconstant": true,
+      "domain": "combined_unseen",
+      "seed": 570
+    },
+    {
+      "allocation_changed": true,
+      "arm": "ordinary_adaptive",
+      "competence_nonconstant": true,
+      "domain": "combined_unseen",
+      "seed": 571
+    },
+    {
+      "allocation_changed": true,
+      "arm": "full_proposed",
+      "competence_nonconstant": true,
+      "domain": "high_mass_seen",
+      "seed": 569
+    },
+    {
+      "allocation_changed": true,
+      "arm": "full_proposed",
+      "competence_nonconstant": true,
+      "domain": "high_mass_seen",
+      "seed": 570
+    },
+    {
+      "allocation_changed": true,
+      "arm": "full_proposed",
+      "competence_nonconstant": true,
+      "domain": "high_mass_seen",
+      "seed": 571
+    },
+    {
+      "allocation_changed": true,
+      "arm": "full_proposed",
+      "competence_nonconstant": true,
+      "domain": "low_friction_seen",
+      "seed": 569
+    },
+    {
+      "allocation_changed": true,
+      "arm": "full_proposed",
+      "competence_nonconstant": true,
+      "domain": "low_friction_seen",
+      "seed": 570
+    },
+    {
+      "allocation_changed": true,
+      "arm": "full_proposed",
+      "competence_nonconstant": true,
+      "domain": "low_friction_seen",
+      "seed": 571
+    },
+    {
+      "allocation_changed": true,
+      "arm": "full_proposed",
+      "competence_nonconstant": true,
+      "domain": "long_delay_seen",
+      "seed": 569
+    },
+    {
+      "allocation_changed": true,
+      "arm": "full_proposed",
+      "competence_nonconstant": true,
+      "domain": "long_delay_seen",
+      "seed": 570
+    },
+    {
+      "allocation_changed": true,
+      "arm": "full_proposed",
+      "competence_nonconstant": true,
+      "domain": "long_delay_seen",
+      "seed": 571
+    },
+    {
+      "allocation_changed": true,
+      "arm": "full_proposed",
+      "competence_nonconstant": true,
+      "domain": "combined_unseen",
+      "seed": 569
+    },
+    {
+      "allocation_changed": true,
+      "arm": "full_proposed",
+      "competence_nonconstant": true,
+      "domain": "combined_unseen",
+      "seed": 570
+    },
+    {
+      "allocation_changed": true,
+      "arm": "full_proposed",
+      "competence_nonconstant": true,
+      "domain": "combined_unseen",
+      "seed": 571
+    }
+  ],
+  "schema_version": 1,
+  "unseen_domain": "combined_unseen"
+}

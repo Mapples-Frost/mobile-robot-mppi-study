@@ -8,6 +8,8 @@ import math
 from collections import defaultdict
 from pathlib import Path
 
+import numpy as np
+
 
 ARMS = (
     "ordinary_fixed",
@@ -41,6 +43,59 @@ def _ratio(numerator, denominator):
     if denominator == 0.0:
         return 1.0 if numerator == 0.0 else float("inf")
     return numerator / denominator
+
+
+def _seed_cluster_effect(rows, treatment, reference, seed=20260756):
+    indexed = {
+        (
+            str(row["scene"]),
+            str(row["physics_domain"]),
+            int(row["seed"]),
+            str(row["factorial_arm"]),
+        ): row
+        for row in rows
+    }
+    seeds = sorted({key[2] for key in indexed})
+    cells = sorted({key[:2] for key in indexed})
+    effects = []
+    for episode_seed in seeds:
+        differences = []
+        for scene, domain in cells:
+            differences.append(
+                _finite(
+                    indexed[(scene, domain, episode_seed, treatment)],
+                    "cross_track_rmse",
+                )
+                - _finite(
+                    indexed[(scene, domain, episode_seed, reference)],
+                    "cross_track_rmse",
+                )
+            )
+        effects.append(float(np.mean(differences)))
+    values = np.asarray(effects, dtype=np.float64)
+    rng = np.random.RandomState(int(seed))
+    draws = np.mean(
+        values[rng.randint(0, len(values), size=(10000, len(values)))],
+        axis=1,
+    )
+    standard_deviation = float(np.std(values, ddof=1))
+    return {
+        "treatment": treatment,
+        "reference": reference,
+        "independent_unit": "seed",
+        "clusters": len(values),
+        "per_seed_mean_difference": effects,
+        "mean_difference": float(np.mean(values)),
+        "bootstrap_ci95": [
+            float(np.quantile(draws, 0.025)),
+            float(np.quantile(draws, 0.975)),
+        ],
+        "paired_cohen_dz": (
+            float(np.mean(values) / standard_deviation)
+            if standard_deviation > 0.0
+            else None
+        ),
+    }
 
 
 def analyze(
@@ -196,6 +251,14 @@ def analyze(
             and iteration_values == [int(expected_iterations)]
         ),
     }
+    paired_seed_effects = {
+        "full_vs_ordinary": _seed_cluster_effect(
+            rows, "full_proposed", "ordinary_fixed", seed=20260756
+        ),
+        "full_vs_simple_combination": _seed_cluster_effect(
+            rows, "full_proposed", "value_fixed", seed=20260757
+        ),
+    }
     return {
         "schema_version": 1,
         "evidence_class": "sealed_path_physics_confirmation",
@@ -218,6 +281,7 @@ def analyze(
             "observed_iterations": iteration_values,
         },
         "checks": checks,
+        "paired_seed_effects": paired_seed_effects,
         "gate_passed": all(checks.values()),
     }
 

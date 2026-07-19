@@ -1295,3 +1295,44 @@ tree:
         result: >
           Across 180 episodes on seeds 403--407, Full Proposed reduced cross-track RMSE by 0.1550 m (8.17%, CI [0.1201, 0.1899]), jerk by 2.54% and planner time by 16.8% versus ordinary fixed, with zero collisions. Improvements were directionally consistent across all three paths and physics domains. However all four cells had 0/45 successes, and value-aligned ICODE had an adverse 0.0204 m main effect with CI [0.0010, 0.0434]; the supported result is adaptive-sampling error reduction, not reliable path completion or ICODE-RL synergy.
         evidence: [C93, C94, H70, "results/research_platform/rl/full_proposed_path_transfer_confirm_l183_analysis/paired_comparisons.json", "results/research_platform/rl/full_proposed_path_transfer_confirm_l183_analysis/factorial_contrasts.json", "ara/evidence/tables/table15_full_proposed_path_transfer.md"]
+        children:
+          - id: N135
+            type: dead_end
+            title: "Identity-mapped Actor source competence"
+            provenance: ai-executed
+            timestamp: "2026-07-19T15:00:00+08:00"
+            failure_mode: >
+              L196 treated a guided/Gaussian elite-yield ratio below parity as direct confidence. Full Proposed then increased pooled cross-track RMSE by 7.99% and combined-unseen RMSE by 13.32% despite 48/48 successes and zero collisions.
+            lesson: >
+              Relative proposal competence must be calibrated around source parity rather than interpreted as an absolute probability.
+            evidence: [C95, H71, "docs/rl/202_l196_l201_reliability_and_value_alignment_results_2026-07-19.md"]
+            children:
+              - id: N136
+                type: experiment
+                title: "Parity-calibrated source competence development"
+                provenance: ai-executed
+                timestamp: "2026-07-19T15:40:00+08:00"
+                result: >
+                  L197 passed every frozen development check on 48 episodes: Full Proposed reduced pooled cross-track RMSE by 4.26% and combined-unseen RMSE by 12.19% versus ordinary fixed sampling, with 12/12 successes, zero collisions and a 0.48% jerk increase.
+                evidence: [C95, H71, "results/research_platform/rl/path_aware_multiphysics_dev_l197/multidomain_gate.json"]
+                children:
+                  - id: N137
+                    type: dead_end
+                    title: "Sealed path-and-physics superiority confirmation"
+                    provenance: ai-executed
+                    timestamp: "2026-07-19T16:30:00+08:00"
+                    failure_mode: >
+                      L198 retained 30/30 Full Proposed successes, zero collisions, 3.68% lower jerk and 0.38% lower combined-unseen RMSE, but pooled cross-track RMSE was 1.07% worse than ordinary fixed and the seed-cluster interval crossed zero.
+                    lesson: >
+                      The parity repair is a useful development mechanism but does not support a confirmed universal path-tracking superiority claim.
+                    evidence: [C95, C96, "results/research_platform/rl/sealed_path_physics_confirmation_l198/sealed_gate.json", "ara/evidence/tables/table16_l196_l201_reliability_value_alignment.md"]
+                  - id: N138
+                    type: dead_end
+                    title: "Path-policy value-consistent ICODE remediation"
+                    provenance: ai-executed
+                    timestamp: "2026-07-19T17:20:00+08:00"
+                    failure_mode: >
+                      L199 activated the intended path-conditioned value gradient but worsened held-out value RMSE by 6.8--18.7%; route-balanced L201 selected epoch zero for all three members. No checkpoint passed the offline Gate.
+                    lesson: >
+                      Do not force critic gradients into ICODE when held-out value consistency fails; retain ordinary ICODE and require separately validated online value coupling.
+                    evidence: [C97, H72, "docs/rl/202_l196_l201_reliability_and_value_alignment_results_2026-07-19.md", "ara/evidence/tables/table16_l196_l201_reliability_value_alignment.md"]

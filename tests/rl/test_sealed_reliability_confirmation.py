@@ -45,6 +45,10 @@ def test_sealed_confirmation_gate_passes_complete_positive_design():
     assert result["episode_count"] == 48
     assert result["gate_passed"] is True
     assert result["comparisons"]["stable_cells"] == 6
+    effect = result["paired_seed_effects"]["full_vs_ordinary"]
+    assert effect["clusters"] == 2
+    assert effect["mean_difference"] == pytest.approx(-0.1)
+    assert effect["bootstrap_ci95"][1] < 0.0
 
 
 def test_sealed_confirmation_rejects_simple_combination_regression():

@@ -846,3 +846,30 @@
 - **Proof**: [`results/research_platform/rl/full_proposed_path_transfer_confirm_l183_analysis/factorial_contrasts.json`, `docs/rl/184_full_proposed_path_tracking_confirmation_results_2026-07-19.md`]
 - **Dependencies**: [C90, C93]
 - **Tags**: ICODE, value-alignment, path-tracking, negative-result
+
+## C95: Parity-calibrated Actor competence improves the multi-physics development set
+- **Statement**: Mapping Actor/Gaussian elite-yield ratios relative to parity, rather than directly to authority, improves equal-budget path tracking on the fresh L197 development set.
+- **Status**: weakened
+- **Provenance**: ai-suggested
+- **Falsification criteria**: The frozen mapping fails independent path-and-physics confirmation or its seed-cluster interval includes material adverse effects.
+- **Proof**: [`results/research_platform/rl/path_aware_multiphysics_dev_l197/multidomain_gate.json`, `results/research_platform/rl/sealed_path_physics_confirmation_l198/sealed_gate.json`, `docs/rl/202_l196_l201_reliability_and_value_alignment_results_2026-07-19.md`]
+- **Dependencies**: [C93]
+- **Tags**: source-competence, parity-calibration, adaptive-HSS, development-only
+
+## C96: The L197 frozen stack confirms path-tracking superiority over ordinary ICODE
+- **Statement**: Parity-calibrated Full Proposed has no greater pooled cross-track RMSE than ordinary fixed sampling on sealed paths, physics domains and seeds.
+- **Status**: refuted
+- **Provenance**: ai-suggested
+- **Falsification criteria**: Pooled Full Proposed cross-track RMSE exceeds ordinary fixed or the preregistered sealed Gate fails.
+- **Proof**: [`results/research_platform/rl/sealed_path_physics_confirmation_l198/sealed_gate.json`, `docs/rl/202_l196_l201_reliability_and_value_alignment_results_2026-07-19.md`]
+- **Dependencies**: [C95]
+- **Tags**: path-tracking, sealed-confirmation, negative-result
+
+## C97: Path-policy value-consistent ICODE generalizes beyond its training routes
+- **Statement**: A path-conditioned SAC value-consistency loss improves ICODE rollout and value errors on held-out and unseen routes sufficiently to qualify a fine-tuned checkpoint for closed-loop evaluation.
+- **Status**: refuted
+- **Provenance**: ai-suggested
+- **Falsification criteria**: Held-out value error worsens, the validation selector retains epoch zero, or no ensemble member passes the frozen offline Gate.
+- **Proof**: [`docs/rl/202_l196_l201_reliability_and_value_alignment_results_2026-07-19.md`, `research_artifacts/l196_l201_2026-07-19/manifest.json`]
+- **Dependencies**: [C94]
+- **Tags**: value-consistency, ICODE, path-policy, generalization, negative-result

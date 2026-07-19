@@ -1,0 +1,263 @@
+{
+  "actor_checkpoint": {
+    "path": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/rl/path_conditioned_l185_seed20261901_60k_v2/checkpoints/step_000050000.pt",
+    "sha256": "211c88ab2d93fbc8d9bbf9f41c76c9c0814da44998194f9f60c5d62d7abc0ffc"
+  },
+  "actor_ood_offline_proxy": "recorded post-transition Actor observations; runtime uses hypothetical Actor-mean-rollout observations",
+  "candidate_count": 81,
+  "config": {
+    "actor_checkpoint": "results/research_platform/rl/path_conditioned_l185_seed20261901_60k_v2/checkpoints/step_000050000.pt",
+    "actor_ood_hard": 7.0,
+    "actor_ood_soft": 3.0,
+    "calibration_grid": {
+      "bootstrap_samples": 5000,
+      "bootstrap_seed": 20260725,
+      "gate_mode": "continuous_rank",
+      "hard_quantiles": [
+        0.65,
+        0.8,
+        0.9
+      ],
+      "maximum_rank_ci_upper": 0.0,
+      "maximum_rank_correlation": -0.5,
+      "minimum_episode_count": 24,
+      "minimum_relative_tail_separation": 0.2,
+      "minimum_tail_episodes": 3,
+      "soft_quantiles": [
+        0.2,
+        0.35,
+        0.5
+      ],
+      "tail_fraction": 0.25
+    },
+    "dataset_dir": "results/research_platform/datasets/path_aware_reliability_continuous_l192",
+    "dynamics_power": 1.0,
+    "ensemble": {
+      "disagreement_scales": [
+        0.0192860868,
+        0.0061503653,
+        0.0276655704,
+        0.2438328117,
+        0.6734842658
+      ],
+      "innovation_decay": 0.9,
+      "innovation_minimum_samples": 3,
+      "innovation_scales": [
+        0.25,
+        0.25,
+        0.35,
+        0.25,
+        0.6
+      ],
+      "support_hard_z": 7.0,
+      "support_soft_z": 3.0
+    },
+    "ensemble_checkpoints": [
+      "results/research_platform/gate3_value_aligned_ensemble_member1_l192/best.pt",
+      "results/research_platform/gate3_value_aligned_ensemble_member2_l192/best.pt",
+      "results/research_platform/gate3_value_aligned_ensemble_member3_l192/best.pt"
+    ],
+    "fusion_mode": "innovation_anchor",
+    "high_confidence": 0.67,
+    "integrator": "rk4",
+    "medium_confidence": 0.33,
+    "nominal_dynamics": {
+      "velocity_time_constant": 0.18,
+      "yaw_time_constant": 0.12
+    },
+    "output_dir": "results/research_platform/rl/path_aware_value_reliability_continuous_l192",
+    "require_path_context": true,
+    "rollout_error_scales": [
+      0.25,
+      0.25,
+      0.35,
+      0.25,
+      0.6
+    ],
+    "rollout_horizon": 10,
+    "seed": 20260725
+  },
+  "config_path": "/home/mapples/projects/mobile-robot-mppi-study/configs/rl/path_aware_value_reliability_continuous_l192.yaml",
+  "dataset_manifest": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/datasets/path_aware_reliability_continuous_l192/dataset_manifest.json",
+  "dataset_manifest_sha256": "60d5c2a650202aff5831019ba3562bb0b8f126770eb033e2cdc535738afe30e5",
+  "ensemble_checkpoints": [
+    {
+      "path": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/gate3_value_aligned_ensemble_member1_l192/best.pt",
+      "sha256": "c43af62cbd96d8b3ab9d2283175ff278df9b396a911609798a8dd7a41047c6f9"
+    },
+    {
+      "path": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/gate3_value_aligned_ensemble_member2_l192/best.pt",
+      "sha256": "e39065703214f5b3c8e9dfa2d16bb3c0be82e9340e54c017c40e5254c420acb8"
+    },
+    {
+      "path": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/gate3_value_aligned_ensemble_member3_l192/best.pt",
+      "sha256": "296159d7b7ae7780a6e7225f20d7e158c43acdd9bf0d4ab8254a07002b779e99"
+    }
+  ],
+  "evaluation": {
+    "test": {
+      "authority_error_rank_correlation": -0.9110676449338172,
+      "authority_error_rank_correlation_ci95": [
+        -0.9710909866039475,
+        -0.7578920810142954
+      ],
+      "bootstrap_samples": 5000,
+      "bootstrap_seed": 20260725,
+      "episode_count": 24,
+      "error_separation": 0.09608397245382101,
+      "gate_mode": "continuous_rank",
+      "high_authority_tail_error_mean": 0.11370419304138517,
+      "low_authority_tail_error_mean": 0.20978816549520618,
+      "maximum_rank_ci_upper": 0.0,
+      "maximum_rank_correlation": -0.5,
+      "minimum_episode_count": 24,
+      "minimum_relative_tail_separation": 0.2,
+      "passed": true,
+      "relative_tail_error_separation": 0.4580047317112204,
+      "tail_episode_count": 6,
+      "tail_fraction": 0.25
+    },
+    "unseen": {
+      "authority_error_rank_correlation": -0.8974381281821197,
+      "authority_error_rank_correlation_ci95": [
+        -0.9551406689393872,
+        -0.7581293048200602
+      ],
+      "bootstrap_samples": 5000,
+      "bootstrap_seed": 20260725,
+      "episode_count": 30,
+      "error_separation": 0.09975011740773318,
+      "gate_mode": "continuous_rank",
+      "high_authority_tail_error_mean": 0.11442694908936649,
+      "low_authority_tail_error_mean": 0.21417706649709967,
+      "maximum_rank_ci_upper": 0.0,
+      "maximum_rank_correlation": -0.5,
+      "minimum_episode_count": 24,
+      "minimum_relative_tail_separation": 0.2,
+      "passed": true,
+      "relative_tail_error_separation": 0.4657366871213729,
+      "tail_episode_count": 8,
+      "tail_fraction": 0.25
+    }
+  },
+  "gate": "Gate 3A reliability calibration",
+  "gate_passed": true,
+  "git_sha": "bb26ba5f06f41185b891684f666e6b969d3e189e",
+  "independent_unit": "episode",
+  "representation_audit": {
+    "test": {
+      "actor_observation_dimension": 54,
+      "path_context_present": true,
+      "path_context_required": true,
+      "path_curvature_range": [
+        -0.7540412545204163,
+        0.6430893540382385
+      ],
+      "path_remaining_range": [
+        0.02693994715809822,
+        0.9481866955757141
+      ],
+      "path_signed_cross_track_range": [
+        -0.23352093994617462,
+        0.34324049949645996
+      ],
+      "path_valid_fraction": 1.0,
+      "samples": 2865
+    },
+    "unseen": {
+      "actor_observation_dimension": 54,
+      "path_context_present": true,
+      "path_context_required": true,
+      "path_curvature_range": [
+        -1.0,
+        0.8395971059799194
+      ],
+      "path_remaining_range": [
+        0.024938486516475677,
+        1.0
+      ],
+      "path_signed_cross_track_range": [
+        -0.08748631924390793,
+        0.46522557735443115
+      ],
+      "path_valid_fraction": 1.0,
+      "samples": 4381
+    },
+    "validation": {
+      "actor_observation_dimension": 54,
+      "path_context_present": true,
+      "path_context_required": true,
+      "path_curvature_range": [
+        -0.49131426215171814,
+        0.5233011841773987
+      ],
+      "path_remaining_range": [
+        0.02622903324663639,
+        1.0
+      ],
+      "path_signed_cross_track_range": [
+        -0.2668139338493347,
+        0.15515796840190887
+      ],
+      "path_valid_fraction": 1.0,
+      "samples": 3108
+    }
+  },
+  "runtime_reliability_config": {
+    "actor_ood_hard": 7.0,
+    "actor_ood_soft": 3.0,
+    "dynamics_power": 1.0,
+    "enabled": true,
+    "ensemble_disagreement_hard": 0.07292244275340759,
+    "ensemble_disagreement_soft": 0.0505215090978347,
+    "fusion_mode": "innovation_anchor",
+    "high_confidence": 0.67,
+    "high_guided_fraction": 0.6,
+    "innovation_error_hard": 0.2231791245881652,
+    "innovation_error_soft": 0.14061266408405004,
+    "innovation_minimum_samples": 3,
+    "low_guided_fraction": 0.0,
+    "medium_confidence": 0.33,
+    "medium_guided_fraction": 0.3
+  },
+  "schema_version": 1,
+  "selected_candidate": {
+    "candidate_id": 80,
+    "ensemble_disagreement_hard": 0.07292244275340759,
+    "ensemble_disagreement_hard_quantile": 0.9,
+    "ensemble_disagreement_soft": 0.0505215090978347,
+    "ensemble_disagreement_soft_quantile": 0.5,
+    "innovation_error_hard": 0.2231791245881652,
+    "innovation_error_hard_quantile": 0.9,
+    "innovation_error_soft": 0.14061266408405004,
+    "innovation_error_soft_quantile": 0.5,
+    "validation_gate": {
+      "authority_error_rank_correlation": -0.9434782608695651,
+      "authority_error_rank_correlation_ci95": [
+        -0.9842243645924627,
+        -0.8175398549050416
+      ],
+      "bootstrap_samples": 5000,
+      "bootstrap_seed": 20260725,
+      "episode_count": 24,
+      "error_separation": 0.1443905543875281,
+      "gate_mode": "continuous_rank",
+      "high_authority_tail_error_mean": 0.12591891369307842,
+      "low_authority_tail_error_mean": 0.2703094680806065,
+      "maximum_rank_ci_upper": 0.0,
+      "maximum_rank_correlation": -0.5,
+      "minimum_episode_count": 24,
+      "minimum_relative_tail_separation": 0.2,
+      "passed": true,
+      "relative_tail_error_separation": 0.5341675798957612,
+      "tail_episode_count": 6,
+      "tail_fraction": 0.25
+    }
+  },
+  "selection_split": "validation",
+  "split_sha256": {
+    "test": "2074d230934e8a9c508c2d06c7b2fb8fb6d6baec832fb5d51fb8d0c14d0b9695",
+    "unseen": "66cc6c31077856e1db87c477f976983a347c21fba1d27bb94b0f8fd60f9a8349",
+    "validation": "1c8fecc9909d484ce6f56451cf9f153dbff6e140ddae5b7ccd61d403249f0c45"
+  }
+}

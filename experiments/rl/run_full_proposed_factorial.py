@@ -276,6 +276,14 @@ def main(argv=None):
     parser.add_argument("--ordinary-calibration-config", required=True)
     parser.add_argument("--value-calibration-summary", required=True)
     parser.add_argument("--value-calibration-config", required=True)
+    parser.add_argument(
+        "--source-competence-config",
+        default="",
+        help=(
+            "optional YAML mapping overlaid on adaptive reliability; "
+            "used only for preregistered Actor-competence development"
+        ),
+    )
     parser.add_argument("--output-dir", required=True)
     parser.add_argument("--seeds", required=True)
     parser.add_argument("--total-rollouts", type=int, default=100)
@@ -353,6 +361,25 @@ def main(argv=None):
         args.value_calibration_config,
         args.allow_failed_reliability_calibration,
     )
+    source_competence = {}
+    if args.source_competence_config:
+        source_competence_path = Path(
+            args.source_competence_config
+        ).resolve()
+        with source_competence_path.open(
+            "r", encoding="utf-8"
+        ) as handle:
+            source_competence = dict(yaml.safe_load(handle) or {})
+        unknown = sorted(
+            key
+            for key in source_competence
+            if not str(key).startswith("source_competence_")
+        )
+        if unknown:
+            raise ValueError(
+                "source competence overlay contains unrelated keys: %s"
+                % ", ".join(unknown)
+            )
     output = Path(args.output_dir).resolve()
     output.mkdir(parents=True, exist_ok=True)
     scene_by_name = {item["name"]: item for item in scenes}
@@ -394,6 +421,8 @@ def main(argv=None):
             "support_hard_z": float(ensemble["support_hard_z"]),
         }
         reliability = dict(calibration["runtime"])
+        if adaptive:
+            reliability.update(source_competence)
         reliability["enabled"] = bool(adaptive)
         planner["paper_rl_driven"]["reliability"] = reliability
         planner["paper_rl_driven"]["terminal_guidance_radius"] = (
@@ -510,6 +539,12 @@ def main(argv=None):
         "accepted_failed_reliability_calibration": bool(
             args.allow_failed_reliability_calibration
         ),
+        "source_competence_config": (
+            str(Path(args.source_competence_config).resolve())
+            if args.source_competence_config
+            else ""
+        ),
+        "source_competence_overlay": source_competence,
     }
     for name, value in (
         ("provenance.json", provenance),

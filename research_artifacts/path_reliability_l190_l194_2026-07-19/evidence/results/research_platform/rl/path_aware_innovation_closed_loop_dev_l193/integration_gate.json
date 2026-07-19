@@ -1,0 +1,116 @@
+{
+  "adaptive_diagnostics": {
+    "full_proposed": {
+      "active_levels": [
+        "reliability_high_fraction"
+      ],
+      "authority_nonzero": true,
+      "guided_fraction_nonzero": true,
+      "passed": false
+    },
+    "ordinary_adaptive": {
+      "active_levels": [
+        "reliability_high_fraction"
+      ],
+      "authority_nonzero": true,
+      "guided_fraction_nonzero": true,
+      "passed": false
+    }
+  },
+  "arm_summary": {
+    "full_proposed": {
+      "authority_mean": 0.9967210097027438,
+      "collisions": 0,
+      "control_jerk_mean": 0.12432727683388461,
+      "cross_track_rmse_mean": 0.04390439063985472,
+      "episodes": 3,
+      "guided_fraction_mean": 0.5984154243678582,
+      "reliability_level_fractions": {
+        "reliability_high_fraction": 1.0,
+        "reliability_low_fraction": 0.0,
+        "reliability_medium_fraction": 0.0
+      },
+      "successes": 3
+    },
+    "ordinary_adaptive": {
+      "authority_mean": 0.9997431103680494,
+      "collisions": 0,
+      "control_jerk_mean": 0.12444616022427242,
+      "cross_track_rmse_mean": 0.04712260795304821,
+      "episodes": 3,
+      "guided_fraction_mean": 0.5984182091074851,
+      "reliability_level_fractions": {
+        "reliability_high_fraction": 1.0,
+        "reliability_low_fraction": 0.0,
+        "reliability_medium_fraction": 0.0
+      },
+      "successes": 3
+    },
+    "ordinary_fixed": {
+      "authority_mean": 1.0,
+      "collisions": 0,
+      "control_jerk_mean": 0.11525607032652614,
+      "cross_track_rmse_mean": 0.041638671123036625,
+      "episodes": 3,
+      "guided_fraction_mean": 0.3,
+      "reliability_level_fractions": {
+        "reliability_high_fraction": 0.0,
+        "reliability_low_fraction": 0.0,
+        "reliability_medium_fraction": 0.0
+      },
+      "successes": 3
+    },
+    "value_fixed": {
+      "authority_mean": 1.0,
+      "collisions": 0,
+      "control_jerk_mean": 0.11556441612863182,
+      "cross_track_rmse_mean": 0.04352079050884957,
+      "episodes": 3,
+      "guided_fraction_mean": 0.3,
+      "reliability_level_fractions": {
+        "reliability_high_fraction": 0.0,
+        "reliability_low_fraction": 0.0,
+        "reliability_medium_fraction": 0.0
+      },
+      "successes": 3
+    }
+  },
+  "checks": {
+    "adaptive_mechanism_exercised": false,
+    "equal_frozen_budget": true,
+    "full_success_all": true,
+    "full_zero_collision": true,
+    "jerk_vs_ordinary_within_tolerance": true,
+    "tracking_vs_ordinary_within_tolerance": false,
+    "tracking_vs_value_within_tolerance": true
+  },
+  "comparisons": {
+    "full_cross_track_over_ordinary": 1.0544138286767895,
+    "full_cross_track_over_value": 1.0088141811423932,
+    "full_jerk_over_ordinary": 1.078704804715789
+  },
+  "episode_count": 12,
+  "evidence_class": "development_integration_gate",
+  "expected_seeds": [
+    558,
+    559,
+    560
+  ],
+  "frozen_budget": {
+    "expected_iterations": 2,
+    "expected_rollouts": 100,
+    "observed_iterations": [
+      2
+    ],
+    "observed_rollouts": [
+      100
+    ]
+  },
+  "gate_passed": false,
+  "schema_version": 1,
+  "thresholds": {
+    "jerk_ratio_max": 1.1,
+    "level_epsilon": 1e-06,
+    "tracking_ratio_max": 1.05
+  }
+}

@@ -1,0 +1,42 @@
+output_dir: results/research_platform/datasets/path_aware_reliability_l190
+actor_run_dir: results/research_platform/rl/path_conditioned_l185_seed20261901_60k_v2
+actor_checkpoint: results/research_platform/rl/path_conditioned_l185_seed20261901_60k_v2/checkpoints/step_000050000.pt
+seed: 20260721
+
+# Small perturbations expose local model-error variation without replacing the
+# frozen path Actor by random exploration.
+action_noise_std: 0.03
+random_action_probability: 0.05
+require_disjoint_environments: true
+
+# Threshold selection, held-out same-family testing, and development-unseen
+# evaluation use disjoint path geometries.  L186 paths and seeds 561--565 are
+# absent by construction.
+splits:
+  validation:
+    source: training
+    roles: [seen]
+    scene_prefixes:
+      - high_dynamic_accel_straight_l56
+      - high_dynamic_accel_turn_l56
+    episodes_per_environment: 2
+    max_steps: 180
+    seed_base: 22839000
+  test:
+    source: training
+    roles: [seen]
+    scene_prefixes:
+      - high_dynamic_sweep_l56
+      - high_dynamic_chicane_l56
+    episodes_per_environment: 2
+    max_steps: 180
+    seed_base: 22840000
+  unseen:
+    source: validation
+    roles: [seen, unseen]
+    scene_prefixes:
+      - high_dynamic_reverse_s_unseen_l56
+      - high_dynamic_hairpin_unseen_l56
+    episodes_per_environment: 2
+    max_steps: 180
+    seed_base: 22841000

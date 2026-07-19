@@ -1,0 +1,253 @@
+{
+  "actor_checkpoint": {
+    "path": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/rl/path_conditioned_l185_seed20261901_60k_v2/checkpoints/step_000050000.pt",
+    "sha256": "211c88ab2d93fbc8d9bbf9f41c76c9c0814da44998194f9f60c5d62d7abc0ffc"
+  },
+  "actor_ood_offline_proxy": "recorded post-transition Actor observations; runtime uses hypothetical Actor-mean-rollout observations",
+  "candidate_count": 81,
+  "config": {
+    "actor_checkpoint": "results/research_platform/rl/path_conditioned_l185_seed20261901_60k_v2/checkpoints/step_000050000.pt",
+    "actor_ood_hard": 7.0,
+    "actor_ood_soft": 3.0,
+    "calibration_grid": {
+      "hard_quantiles": [
+        0.65,
+        0.8,
+        0.9
+      ],
+      "minimum_episodes_per_occupied_bin": 3,
+      "minimum_occupied_bins": 2,
+      "soft_quantiles": [
+        0.2,
+        0.35,
+        0.5
+      ]
+    },
+    "dataset_dir": "results/research_platform/datasets/path_aware_reliability_l190",
+    "dynamics_power": 1.0,
+    "ensemble": {
+      "disagreement_scales": [
+        0.0192860868,
+        0.0061503653,
+        0.0276655704,
+        0.2438328117,
+        0.6734842658
+      ],
+      "innovation_decay": 0.9,
+      "innovation_minimum_samples": 3,
+      "innovation_scales": [
+        0.25,
+        0.25,
+        0.35,
+        0.25,
+        0.6
+      ],
+      "support_hard_z": 7.0,
+      "support_soft_z": 3.0
+    },
+    "ensemble_checkpoints": [
+      "results/research_platform/l57_icode_high_dynamic_h36_seed20261201_v1/best.pt",
+      "results/research_platform/l57_icode_high_dynamic_h36_seed20261202_v1/best.pt",
+      "results/research_platform/l57_icode_high_dynamic_h36_seed20261203_v1/best.pt"
+    ],
+    "high_confidence": 0.67,
+    "integrator": "rk4",
+    "medium_confidence": 0.33,
+    "nominal_dynamics": {
+      "velocity_time_constant": 0.18,
+      "yaw_time_constant": 0.12
+    },
+    "output_dir": "results/research_platform/rl/path_aware_ordinary_reliability_l190",
+    "require_path_context": true,
+    "rollout_error_scales": [
+      0.25,
+      0.25,
+      0.35,
+      0.25,
+      0.6
+    ],
+    "rollout_horizon": 10,
+    "seed": 20260722
+  },
+  "config_path": "/home/mapples/projects/mobile-robot-mppi-study/configs/rl/path_aware_ordinary_reliability_l190.yaml",
+  "dataset_manifest": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/datasets/path_aware_reliability_l190/dataset_manifest.json",
+  "dataset_manifest_sha256": "84c1460a5fd2b5f0308a32509790988c10b2bb1903ee57ad96a17bd9e9d9ca9b",
+  "ensemble_checkpoints": [
+    {
+      "path": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/l57_icode_high_dynamic_h36_seed20261201_v1/best.pt",
+      "sha256": "a63891a2bcadd08c29d6207878510a9a5927c87b045597edc1b4c1119fd156ab"
+    },
+    {
+      "path": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/l57_icode_high_dynamic_h36_seed20261202_v1/best.pt",
+      "sha256": "a5c91ea951843c3a61bd7552b893e7cde655327d1629008ffe1cbbb4a97bf5aa"
+    },
+    {
+      "path": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/l57_icode_high_dynamic_h36_seed20261203_v1/best.pt",
+      "sha256": "4274f30614af38deb31f60484b7f79919083c7e8838511e10d6798550fd931f9"
+    }
+  ],
+  "evaluation": {
+    "test": {
+      "authority_error_rank_correlation": -0.8588235294117647,
+      "episode_count": 16,
+      "error_separation": 0.12571518912472443,
+      "level_episode_counts": {
+        "high": 1,
+        "low": 4,
+        "medium": 11
+      },
+      "level_mean_rollout_error": {
+        "high": 0.0971724530862168,
+        "low": 0.22288764221094123,
+        "medium": 0.14000696254635844
+      },
+      "monotone_high_to_low": true,
+      "occupied_levels": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "passed": false
+    },
+    "unseen": {
+      "authority_error_rank_correlation": -0.021052631578947364,
+      "episode_count": 20,
+      "error_separation": 0.022220883557542342,
+      "level_episode_counts": {
+        "high": 2,
+        "low": 15,
+        "medium": 3
+      },
+      "level_mean_rollout_error": {
+        "high": 0.14690242437501944,
+        "low": 0.15229271643054157,
+        "medium": 0.16912330793256178
+      },
+      "monotone_high_to_low": false,
+      "occupied_levels": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "passed": false
+    }
+  },
+  "gate": "Gate 3A reliability calibration",
+  "gate_passed": false,
+  "git_sha": "bb26ba5f06f41185b891684f666e6b969d3e189e",
+  "independent_unit": "episode",
+  "representation_audit": {
+    "test": {
+      "actor_observation_dimension": 54,
+      "path_context_present": true,
+      "path_context_required": true,
+      "path_curvature_range": [
+        -0.7540412545204163,
+        0.6430893540382385
+      ],
+      "path_remaining_range": [
+        0.02664479985833168,
+        0.9481866955757141
+      ],
+      "path_signed_cross_track_range": [
+        -0.22653988003730774,
+        0.35205692052841187
+      ],
+      "path_valid_fraction": 1.0,
+      "samples": 1921
+    },
+    "unseen": {
+      "actor_observation_dimension": 54,
+      "path_context_present": true,
+      "path_context_required": true,
+      "path_curvature_range": [
+        -1.0,
+        0.8395971059799194
+      ],
+      "path_remaining_range": [
+        0.02757735177874565,
+        1.0
+      ],
+      "path_signed_cross_track_range": [
+        -0.08817458152770996,
+        0.49601590633392334
+      ],
+      "path_valid_fraction": 1.0,
+      "samples": 2922
+    },
+    "validation": {
+      "actor_observation_dimension": 54,
+      "path_context_present": true,
+      "path_context_required": true,
+      "path_curvature_range": [
+        -0.49131426215171814,
+        0.5233011841773987
+      ],
+      "path_remaining_range": [
+        0.0255219005048275,
+        1.0
+      ],
+      "path_signed_cross_track_range": [
+        -0.2852211892604828,
+        0.1415993869304657
+      ],
+      "path_valid_fraction": 1.0,
+      "samples": 2069
+    }
+  },
+  "runtime_reliability_config": {
+    "actor_ood_hard": 7.0,
+    "actor_ood_soft": 3.0,
+    "dynamics_power": 1.0,
+    "enabled": true,
+    "ensemble_disagreement_hard": 0.07292546111852446,
+    "ensemble_disagreement_soft": 0.03709143736058085,
+    "high_confidence": 0.67,
+    "high_guided_fraction": 0.6,
+    "innovation_error_hard": 0.17294756233391623,
+    "innovation_error_soft": 0.10340236226729052,
+    "innovation_minimum_samples": 3,
+    "low_guided_fraction": 0.0,
+    "medium_confidence": 0.33,
+    "medium_guided_fraction": 0.3
+  },
+  "schema_version": 1,
+  "selected_candidate": {
+    "candidate_id": 73,
+    "ensemble_disagreement_hard": 0.07292546111852446,
+    "ensemble_disagreement_hard_quantile": 0.9,
+    "ensemble_disagreement_soft": 0.03709143736058085,
+    "ensemble_disagreement_soft_quantile": 0.5,
+    "innovation_error_hard": 0.17294756233391623,
+    "innovation_error_hard_quantile": 0.8,
+    "innovation_error_soft": 0.10340236226729052,
+    "innovation_error_soft_quantile": 0.2,
+    "validation_gate": {
+      "authority_error_rank_correlation": -0.8911764705882352,
+      "episode_count": 16,
+      "error_separation": 0.08407410564676443,
+      "level_episode_counts": {
+        "high": 0,
+        "low": 5,
+        "medium": 11
+      },
+      "level_mean_rollout_error": {
+        "high": null,
+        "low": 0.23528107520501504,
+        "medium": 0.1512069695582506
+      },
+      "monotone_high_to_low": true,
+      "occupied_levels": [
+        "low",
+        "medium"
+      ],
+      "passed": true
+    }
+  },
+  "selection_split": "validation",
+  "split_sha256": {
+    "test": "8d1e7bb24668ccea5cdf60a21c8a03c01596c38ba7ce03dcb2db4f803448a410",
+    "unseen": "eda1e1c4637a69804a5f8c4262f343e21877dce9677876f702ca2f0d6a39568e",
+    "validation": "8fd5162bba963782a0ed9c8c7a46677a4d926b0ffd91a15aeeb83eb05f808b18"
+  }
+}

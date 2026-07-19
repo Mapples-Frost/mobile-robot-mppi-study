@@ -32,6 +32,50 @@ def decreasing_linear_confidence(value, soft, hard):
     return confidence
 
 
+def fuse_hybrid_confidence(
+    disagreement_confidence,
+    innovation_confidence,
+    support_confidence,
+    actor_confidence,
+    innovation_ready,
+    mode="conservative_min",
+):
+    """Fuse calibrated signals without changing legacy behavior by default."""
+
+    values = np.asarray(
+        (
+            disagreement_confidence,
+            innovation_confidence,
+            support_confidence,
+            actor_confidence,
+        ),
+        dtype=np.float64,
+    )
+    if not np.isfinite(values).all() or np.any(values < 0.0) or np.any(
+        values > 1.0
+    ):
+        raise ValueError("hybrid confidence inputs must lie in [0,1]")
+    mode = str(mode)
+    if mode == "conservative_min":
+        dynamics = min(values[0], values[1], values[2])
+        actor_factor = values[3]
+    elif mode == "innovation_anchor":
+        # Completed-transition innovation is causal and was the only signal
+        # with consistent error ranking across the L190 path splits.  Before
+        # enough transitions exist, retain the conservative ensemble/support
+        # fallback.  Actor support becomes a hard out-of-support veto instead
+        # of continuously penalizing legitimate held-out route geometry.
+        dynamics = (
+            values[1]
+            if bool(innovation_ready)
+            else min(values[0], values[2])
+        )
+        actor_factor = 1.0 if values[3] > 0.0 else 0.0
+    else:
+        raise ValueError("unknown hybrid confidence fusion mode: %s" % mode)
+    return float(dynamics), float(actor_factor)
+
+
 @dataclass(frozen=True)
 class HybridSamplingReliabilityConfig:
     enabled: bool = False
@@ -48,6 +92,12 @@ class HybridSamplingReliabilityConfig:
     medium_guided_fraction: float = 0.30
     high_guided_fraction: float = 0.60
     dynamics_power: float = 1.0
+    fusion_mode: str = "conservative_min"
+    source_competence_enabled: bool = False
+    source_competence_initial: float = 0.50
+    source_competence_decay: float = 0.90
+    source_competence_prior_success: float = 1.0
+    source_competence_prior_failure: float = 1.0
 
     @classmethod
     def from_mapping(cls, values: Mapping[str, Any]):
@@ -114,6 +164,116 @@ class HybridSamplingReliabilityConfig:
             )
         if not np.isfinite(self.dynamics_power) or self.dynamics_power <= 0.0:
             raise ValueError("dynamics_power must be finite and positive")
+        if self.fusion_mode not in (
+            "conservative_min",
+            "innovation_anchor",
+        ):
+            raise ValueError(
+                "fusion_mode must be conservative_min or innovation_anchor"
+            )
+        if not 0.0 <= float(self.source_competence_initial) <= 1.0:
+            raise ValueError(
+                "source_competence_initial must lie in [0,1]"
+            )
+        if not 0.0 <= float(self.source_competence_decay) < 1.0:
+            raise ValueError(
+                "source_competence_decay must lie in [0,1)"
+            )
+        if (
+            not np.isfinite((
+                self.source_competence_prior_success,
+                self.source_competence_prior_failure,
+            )).all()
+            or float(self.source_competence_prior_success) <= 0.0
+            or float(self.source_competence_prior_failure) <= 0.0
+        ):
+            raise ValueError(
+                "source competence Beta prior must be finite and positive"
+            )
+
+
+class SourceRelativeCompetence:
+    """Causal Actor-source competence from MPPI elite opportunity rates."""
+
+    def __init__(self, config=None):
+        self.config = (
+            config
+            if isinstance(config, HybridSamplingReliabilityConfig)
+            else HybridSamplingReliabilityConfig.from_mapping(config or {})
+        )
+        self.reset()
+
+    def reset(self):
+        self.confidence = float(self.config.source_competence_initial)
+        self.updates = 0
+
+    def update(
+        self,
+        guided_elites,
+        gaussian_elites,
+        guided_opportunities,
+        gaussian_opportunities,
+    ):
+        values = np.asarray(
+            (
+                guided_elites,
+                gaussian_elites,
+                guided_opportunities,
+                gaussian_opportunities,
+            ),
+            dtype=np.float64,
+        )
+        if not np.isfinite(values).all() or np.any(values < 0.0):
+            raise ValueError(
+                "source competence counts must be finite and nonnegative"
+            )
+        guided_elites, gaussian_elites, guided_total, gaussian_total = (
+            values.tolist()
+        )
+        if (
+            guided_elites > guided_total
+            or gaussian_elites > gaussian_total
+        ):
+            raise ValueError(
+                "source competence elites cannot exceed opportunities"
+            )
+        if guided_total <= 0.0 or gaussian_total <= 0.0:
+            return {
+                "updated": False,
+                "raw_confidence": self.confidence,
+                "confidence": self.confidence,
+                "guided_yield": 0.0,
+                "gaussian_yield": 0.0,
+                "updates": self.updates,
+            }
+        alpha = float(self.config.source_competence_prior_success)
+        beta = float(self.config.source_competence_prior_failure)
+        guided_yield = (guided_elites + alpha) / (
+            guided_total + alpha + beta
+        )
+        gaussian_yield = (gaussian_elites + alpha) / (
+            gaussian_total + alpha + beta
+        )
+        raw = float(np.clip(
+            guided_yield / max(gaussian_yield, 1e-12),
+            0.0,
+            1.0,
+        ))
+        decay = float(self.config.source_competence_decay)
+        self.confidence = float(np.clip(
+            decay * self.confidence + (1.0 - decay) * raw,
+            0.0,
+            1.0,
+        ))
+        self.updates += 1
+        return {
+            "updated": True,
+            "raw_confidence": raw,
+            "confidence": self.confidence,
+            "guided_yield": float(guided_yield),
+            "gaussian_yield": float(gaussian_yield),
+            "updates": self.updates,
+        }
 
 
 class HybridSamplingReliability:
@@ -126,12 +286,25 @@ class HybridSamplingReliability:
             else HybridSamplingReliabilityConfig.from_mapping(config or {})
         )
 
+    def allocation_from_authority(self, authority):
+        """Map one finite authority score to the frozen discrete allocation."""
+
+        authority = float(authority)
+        if not np.isfinite(authority) or not 0.0 <= authority <= 1.0:
+            raise ValueError("reliability authority must lie in [0,1]")
+        if authority >= self.config.high_confidence:
+            return "high", float(self.config.high_guided_fraction)
+        if authority >= self.config.medium_confidence:
+            return "medium", float(self.config.medium_guided_fraction)
+        return "low", float(self.config.low_guided_fraction)
+
     def evaluate(
         self,
         residual,
         states,
         controls,
         actor_ood_scores,
+        actor_competence_confidence=1.0,
     ):
         if not self.config.enabled:
             raise RuntimeError(
@@ -205,11 +378,6 @@ class HybridSamplingReliability:
             if innovation_ready
             else 1.0
         )
-        dynamics_confidence = min(
-            disagreement_confidence,
-            innovation_confidence,
-            support_min,
-        )
         actor_confidence = float(
             decreasing_linear_confidence(
                 actor_ood_max,
@@ -217,26 +385,48 @@ class HybridSamplingReliability:
                 self.config.actor_ood_hard,
             )
         )
+        dynamics_confidence, actor_authority_factor = (
+            fuse_hybrid_confidence(
+                disagreement_confidence,
+                innovation_confidence,
+                support_min,
+                actor_confidence,
+                innovation_ready,
+                self.config.fusion_mode,
+            )
+        )
+        actor_competence_confidence = float(
+            actor_competence_confidence
+        )
+        if (
+            not np.isfinite(actor_competence_confidence)
+            or not 0.0 <= actor_competence_confidence <= 1.0
+        ):
+            raise ValueError(
+                "Actor competence confidence must lie in [0,1]"
+            )
+        actor_support_authority_factor = actor_authority_factor
+        actor_authority_factor *= actor_competence_confidence
         authority = float(np.clip(
             dynamics_confidence ** self.config.dynamics_power
-            * actor_confidence,
+            * actor_authority_factor,
             0.0,
             1.0,
         ))
-        if authority >= self.config.high_confidence:
-            level = "high"
-            guided_fraction = self.config.high_guided_fraction
-        elif authority >= self.config.medium_confidence:
-            level = "medium"
-            guided_fraction = self.config.medium_guided_fraction
-        else:
-            level = "low"
-            guided_fraction = self.config.low_guided_fraction
+        level, guided_fraction = self.allocation_from_authority(authority)
         return {
             "reliability_level": level,
             "reliability_authority": authority,
             "dynamics_confidence": float(dynamics_confidence),
             "actor_confidence": actor_confidence,
+            "actor_support_authority_factor": (
+                actor_support_authority_factor
+            ),
+            "actor_competence_confidence": (
+                actor_competence_confidence
+            ),
+            "actor_authority_factor": actor_authority_factor,
+            "fusion_mode": self.config.fusion_mode,
             "ensemble_disagreement_max": disagreement_max,
             "ensemble_disagreement_mean": float(
                 np.mean(disagreement_values)

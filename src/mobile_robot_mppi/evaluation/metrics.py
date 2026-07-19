@@ -266,6 +266,26 @@ class EpisodeMetrics:
             "reliability_actor_confidence": float(
                 planner_diagnostics.get("actor_confidence", 1.0)
             ),
+            "reliability_actor_competence_confidence": float(
+                planner_diagnostics.get(
+                    "actor_competence_confidence", 1.0
+                )
+            ),
+            "reliability_actor_competence_raw_confidence": float(
+                planner_diagnostics.get(
+                    "actor_competence_raw_confidence", 1.0
+                )
+            ),
+            "reliability_actor_competence_guided_yield": float(
+                planner_diagnostics.get(
+                    "actor_competence_guided_yield", 0.0
+                )
+            ),
+            "reliability_actor_competence_gaussian_yield": float(
+                planner_diagnostics.get(
+                    "actor_competence_gaussian_yield", 0.0
+                )
+            ),
             "reliability_ensemble_disagreement_max": float(
                 planner_diagnostics.get(
                     "ensemble_disagreement_max", 0.0
@@ -820,6 +840,48 @@ class EpisodeMetrics:
                 row.get("reliability_authority", 1.0)
                 for row in values
             ])),
+            "reliability_actor_competence_mean": float(np.mean([
+                row.get(
+                    "reliability_actor_competence_confidence", 1.0
+                )
+                for row in values
+            ])),
+            "reliability_actor_competence_min": float(np.min([
+                row.get(
+                    "reliability_actor_competence_confidence", 1.0
+                )
+                for row in values
+            ])),
+            "reliability_actor_competence_max": float(np.max([
+                row.get(
+                    "reliability_actor_competence_confidence", 1.0
+                )
+                for row in values
+            ])),
+            "reliability_actor_competence_raw_mean": float(np.mean([
+                row.get(
+                    "reliability_actor_competence_raw_confidence", 1.0
+                )
+                for row in values
+            ])),
+            "reliability_actor_competence_guided_yield_mean": float(
+                np.mean([
+                    row.get(
+                        "reliability_actor_competence_guided_yield",
+                        0.0,
+                    )
+                    for row in values
+                ])
+            ),
+            "reliability_actor_competence_gaussian_yield_mean": float(
+                np.mean([
+                    row.get(
+                        "reliability_actor_competence_gaussian_yield",
+                        0.0,
+                    )
+                    for row in values
+                ])
+            ),
             "reliability_low_fraction": float(np.mean([
                 row.get("reliability_level", "disabled") == "low"
                 for row in values

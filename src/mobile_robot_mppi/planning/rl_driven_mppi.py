@@ -14,6 +14,7 @@ from mobile_robot_mppi.planning.mppi import MppiController, integrate_batch
 from mobile_robot_mppi.rl.reliability import (
     ConservativeTerminalReliability,
     HybridSamplingReliability,
+    SourceRelativeCompetence,
 )
 
 
@@ -667,6 +668,9 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
         self.hybrid_sampling_reliability = HybridSamplingReliability(
             self.paper_rl_driven_config.reliability or {}
         )
+        self.source_relative_competence = SourceRelativeCompetence(
+            self.hybrid_sampling_reliability.config
+        )
         self.conservative_terminal_reliability = (
             ConservativeTerminalReliability(
                 self.paper_rl_driven_config.conservative_terminal or {}
@@ -701,6 +705,7 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
         self._applied_guided_fraction = float(
             self.paper_rl_driven_config.guided_fraction
         )
+        self.source_relative_competence.reset()
 
     def _delayed_control(self, current, preceding):
         fraction = float(self.config.command_delay_s / self.config.dt)
@@ -1208,6 +1213,12 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
                     reliability_context["states"],
                     reliability_context["controls"],
                     reliability_context["actor_ood_scores"],
+                    actor_competence_confidence=(
+                        self.source_relative_competence.confidence
+                        if self.source_relative_competence.config
+                        .source_competence_enabled
+                        else 1.0
+                    ),
                 )
             )
             raw_next_fraction = float(
@@ -1319,6 +1330,80 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
                 np.sum(labels[elite_indices] == 0)
             )
             costs_by_iteration.append(costs)
+
+        source_competence = {
+            "updated": False,
+            "raw_confidence": 1.0,
+            "confidence": 1.0,
+            "guided_yield": 0.0,
+            "gaussian_yield": 0.0,
+            "updates": 0,
+        }
+        if (
+            self.hybrid_sampling_reliability.config.enabled
+            and self.source_relative_competence.config
+            .source_competence_enabled
+        ):
+            source_competence = self.source_relative_competence.update(
+                total_guided_elites,
+                total_gaussian_elites,
+                guided_count * cfg.iterations,
+                gaussian_count * cfg.iterations,
+            )
+            actor_factor = float(
+                reliability_diagnostics[
+                    "actor_support_authority_factor"
+                ]
+            ) * float(source_competence["confidence"])
+            next_authority = float(np.clip(
+                reliability_diagnostics["dynamics_confidence"]
+                ** self.hybrid_sampling_reliability.config.dynamics_power
+                * actor_factor,
+                0.0,
+                1.0,
+            ))
+            next_level, raw_next_fraction = (
+                self.hybrid_sampling_reliability
+                .allocation_from_authority(next_authority)
+            )
+            next_fraction = max(raw_next_fraction, terminal_floor)
+            self._applied_guided_fraction = next_fraction
+            reliability_diagnostics.update({
+                "reliability_level": next_level,
+                "reliability_authority": next_authority,
+                "actor_authority_factor": actor_factor,
+                "actor_competence_confidence": float(
+                    source_competence["confidence"]
+                ),
+                "actor_competence_raw_confidence": float(
+                    source_competence["raw_confidence"]
+                ),
+                "actor_competence_guided_yield": float(
+                    source_competence["guided_yield"]
+                ),
+                "actor_competence_gaussian_yield": float(
+                    source_competence["gaussian_yield"]
+                ),
+                "actor_competence_updates": int(
+                    source_competence["updates"]
+                ),
+                "actor_competence_updated": bool(
+                    source_competence["updated"]
+                ),
+                "reliability_guided_fraction_next": next_fraction,
+                "reliability_guided_fraction_raw_next": (
+                    raw_next_fraction
+                ),
+                "reliability_causal_lag_steps": 1,
+            })
+        elif self.hybrid_sampling_reliability.config.enabled:
+            reliability_diagnostics.update({
+                "actor_competence_raw_confidence": 1.0,
+                "actor_competence_guided_yield": 0.0,
+                "actor_competence_gaussian_yield": 0.0,
+                "actor_competence_updates": 0,
+                "actor_competence_updated": False,
+            })
 
         sequence = np.clip(
             mean, self.action_spec.lower, self.action_spec.upper

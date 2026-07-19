@@ -59,24 +59,47 @@ def _wrapped_difference(following, current):
     return difference
 
 
-def _selected_environments(snapshot, source, roles):
+def _selected_environments(
+    snapshot,
+    source,
+    roles,
+    scene_prefixes=None,
+):
     key = (
         "training_environments"
         if str(source) == "training"
         else "validation_environments"
     )
     allowed = set(str(role) for role in roles)
+    prefixes = tuple(str(value) for value in (scene_prefixes or ()))
     result = []
     for value in snapshot.get(key, ()):
         config = copy.deepcopy(dict(value))
         role = str(config.get("experiment", {}).get("physics_domain_role", "seen"))
-        if role in allowed:
+        scene = str(config.get("scene", {}).get("name", ""))
+        scene_allowed = (
+            not prefixes
+            or any(scene.startswith(prefix) for prefix in prefixes)
+        )
+        if role in allowed and scene_allowed:
             result.append(config)
     if not result:
         raise ValueError(
-            "no %s environments matched roles %s" % (source, sorted(allowed))
+            "no %s environments matched roles %s and scene prefixes %s"
+            % (source, sorted(allowed), list(prefixes))
         )
     return result
+
+
+def _environment_signature(config):
+    return (
+        str(config.get("scene", {}).get("name", "unknown")),
+        str(
+            config.get("experiment", {}).get(
+                "physics_domain", "nominal"
+            )
+        ),
+    )
 
 
 def _records():
@@ -94,6 +117,7 @@ def _records():
         "residual_target": [],
         "raw_observation_t_plus_1": [],
         "target_position_t_plus_1": [],
+        "path_context_t_plus_1": [],
         "scene": [],
         "physics_domain": [],
         "physics_domain_role": [],
@@ -139,6 +163,7 @@ def collect_split(
         snapshot,
         split_config.get("source", "training"),
         split_config.get("roles", ("seen",)),
+        split_config.get("scene_prefixes", ()),
     )
     episodes_per_environment = int(
         split_config.get("episodes_per_environment", 1)
@@ -218,6 +243,13 @@ def collect_split(
                         environment.truth.timestamp,
                         environment.truth.pose.as_array(),
                     )
+                    path_context = environment.encoder.path_context(
+                        environment.components["reference"],
+                        environment.truth.pose.as_array(),
+                        target=target,
+                    )
+                    if path_context is None:
+                        path_context = np.zeros(6, dtype=np.float32)
                     _append(
                         records,
                         episode_id=episode_id,
@@ -236,6 +268,7 @@ def collect_split(
                             target.pose.x,
                             target.pose.y,
                         ),
+                        path_context_t_plus_1=path_context,
                         scene=str(info["scene"]),
                         physics_domain=str(
                             config.get("experiment", {}).get(
@@ -306,6 +339,50 @@ def main(argv=None):
     output_dir = _resolve(config["output_dir"])
     output_dir.mkdir(parents=True, exist_ok=True)
     seed = int(config.get("seed", 20260718))
+    split_environments = {}
+    environment_owners = {}
+    require_disjoint = bool(
+        config.get("require_disjoint_environments", False)
+    )
+    for split_name, split_config in dict(config["splits"]).items():
+        selected = _selected_environments(
+            snapshot,
+            split_config.get("source", "training"),
+            split_config.get("roles", ("seen",)),
+            split_config.get("scene_prefixes", ()),
+        )
+        signatures = [
+            _environment_signature(environment) for environment in selected
+        ]
+        if len(signatures) != len(set(signatures)):
+            raise ValueError(
+                "%s contains duplicate scene/domain environments"
+                % split_name
+            )
+        if require_disjoint:
+            overlap = sorted(
+                signature
+                for signature in signatures
+                if signature in environment_owners
+            )
+            if overlap:
+                raise ValueError(
+                    "environment leakage between %s and %s: %s"
+                    % (
+                        environment_owners[overlap[0]],
+                        split_name,
+                        overlap,
+                    )
+                )
+        for signature in signatures:
+            environment_owners[signature] = split_name
+        split_environments[split_name] = [
+            {
+                "scene": signature[0],
+                "physics_domain": signature[1],
+            }
+            for signature in signatures
+        ]
     summaries = []
     artifacts = {}
     for split_name, split_config in dict(config["splits"]).items():
@@ -347,6 +424,8 @@ def main(argv=None):
         "random_action_probability": float(
             config.get("random_action_probability", 0.05)
         ),
+        "require_disjoint_environments": require_disjoint,
+        "split_environments": split_environments,
         "artifacts": artifacts,
         "config": config,
     }

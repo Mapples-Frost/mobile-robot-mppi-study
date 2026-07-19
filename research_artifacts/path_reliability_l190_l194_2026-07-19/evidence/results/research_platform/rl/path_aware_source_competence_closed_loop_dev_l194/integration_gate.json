@@ -1,0 +1,163 @@
+{
+  "adaptive_diagnostics": {
+    "full_proposed": {
+      "active_levels": [
+        "reliability_low_fraction",
+        "reliability_medium_fraction",
+        "reliability_high_fraction"
+      ],
+      "authority_nonzero": true,
+      "episode_checks": [
+        {
+          "competence_nonconstant": true,
+          "guided_changed_from_high": true,
+          "seed": 566
+        },
+        {
+          "competence_nonconstant": true,
+          "guided_changed_from_high": true,
+          "seed": 567
+        },
+        {
+          "competence_nonconstant": true,
+          "guided_changed_from_high": true,
+          "seed": 568
+        }
+      ],
+      "guided_fraction_nonzero": true,
+      "passed": true
+    },
+    "ordinary_adaptive": {
+      "active_levels": [
+        "reliability_low_fraction",
+        "reliability_medium_fraction",
+        "reliability_high_fraction"
+      ],
+      "authority_nonzero": true,
+      "episode_checks": [
+        {
+          "competence_nonconstant": true,
+          "guided_changed_from_high": true,
+          "seed": 566
+        },
+        {
+          "competence_nonconstant": true,
+          "guided_changed_from_high": true,
+          "seed": 567
+        },
+        {
+          "competence_nonconstant": true,
+          "guided_changed_from_high": true,
+          "seed": 568
+        }
+      ],
+      "guided_fraction_nonzero": true,
+      "passed": true
+    }
+  },
+  "arm_summary": {
+    "full_proposed": {
+      "actor_competence_max": 0.8550167017816956,
+      "actor_competence_mean": 0.5935716835175925,
+      "actor_competence_min": 0.26613274750795357,
+      "authority_mean": 0.5912643340920416,
+      "collisions": 0,
+      "control_jerk_mean": 0.11931190119384615,
+      "cross_track_rmse_mean": 0.043505129137562215,
+      "episodes": 3,
+      "guided_fraction_mean": 0.41672341917558303,
+      "raw_guided_fraction_mean": 0.41672341917558303,
+      "reliability_level_fractions": {
+        "reliability_high_fraction": 0.3890780639186102,
+        "reliability_low_fraction": 0.06825296130689232,
+        "reliability_medium_fraction": 0.5426689747744974
+      },
+      "successes": 3
+    },
+    "ordinary_adaptive": {
+      "actor_competence_max": 0.864415404637769,
+      "actor_competence_mean": 0.6009102306643098,
+      "actor_competence_min": 0.2463854038325425,
+      "authority_mean": 0.5923549735661638,
+      "collisions": 0,
+      "control_jerk_mean": 0.12109299662557882,
+      "cross_track_rmse_mean": 0.04391450729273283,
+      "episodes": 3,
+      "guided_fraction_mean": 0.4072506051453419,
+      "raw_guided_fraction_mean": 0.4072506051453419,
+      "reliability_level_fractions": {
+        "reliability_high_fraction": 0.35750201715114,
+        "reliability_low_fraction": 0.06058879392212726,
+        "reliability_medium_fraction": 0.5819091889267328
+      },
+      "successes": 3
+    },
+    "ordinary_fixed": {
+      "authority_mean": 1.0,
+      "collisions": 0,
+      "control_jerk_mean": 0.11667613685605048,
+      "cross_track_rmse_mean": 0.04277306739543623,
+      "episodes": 3,
+      "guided_fraction_mean": 0.29999999999999993,
+      "reliability_level_fractions": {
+        "reliability_high_fraction": 0.0,
+        "reliability_low_fraction": 0.0,
+        "reliability_medium_fraction": 0.0
+      },
+      "successes": 3
+    },
+    "value_fixed": {
+      "authority_mean": 1.0,
+      "collisions": 0,
+      "control_jerk_mean": 0.11367984527068513,
+      "cross_track_rmse_mean": 0.04477286574835104,
+      "episodes": 3,
+      "guided_fraction_mean": 0.29999999999999993,
+      "reliability_level_fractions": {
+        "reliability_high_fraction": 0.0,
+        "reliability_low_fraction": 0.0,
+        "reliability_medium_fraction": 0.0
+      },
+      "successes": 3
+    }
+  },
+  "checks": {
+    "adaptive_mechanism_exercised": true,
+    "equal_frozen_budget": true,
+    "full_success_all": true,
+    "full_zero_collision": true,
+    "jerk_vs_ordinary_within_tolerance": true,
+    "tracking_vs_ordinary_within_tolerance": true,
+    "tracking_vs_value_within_tolerance": true
+  },
+  "comparisons": {
+    "full_cross_track_over_ordinary": 1.0171150162170528,
+    "full_cross_track_over_value": 0.97168515819572,
+    "full_jerk_over_ordinary": 1.0225904320182244
+  },
+  "episode_count": 12,
+  "evidence_class": "development_integration_gate",
+  "expected_seeds": [
+    566,
+    567,
+    568
+  ],
+  "frozen_budget": {
+    "expected_iterations": 2,
+    "expected_rollouts": 100,
+    "observed_iterations": [
+      2
+    ],
+    "observed_rollouts": [
+      100
+    ]
+  },
+  "gate_passed": true,
+  "mechanism_mode": "source_competence",
+  "schema_version": 1,
+  "thresholds": {
+    "jerk_ratio_max": 1.1,
+    "level_epsilon": 1e-06,
+    "tracking_ratio_max": 1.05
+  }
+}

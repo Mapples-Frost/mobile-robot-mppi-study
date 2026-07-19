@@ -1,0 +1,196 @@
+{
+  "action_noise_std": 0.03,
+  "actor_checkpoint": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/rl/path_conditioned_l185_seed20261901_60k_v2/checkpoints/step_000050000.pt",
+  "actor_checkpoint_sha256": "211c88ab2d93fbc8d9bbf9f41c76c9c0814da44998194f9f60c5d62d7abc0ffc",
+  "actor_config_snapshot": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/rl/path_conditioned_l185_seed20261901_60k_v2/config_snapshot.json",
+  "actor_config_snapshot_sha256": "e5d14bd967a738df949a834099c5418b06b401cc84ddb41be6b2e0c65d45316f",
+  "artifacts": {
+    "test": {
+      "episodes": 16,
+      "path": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/datasets/path_aware_reliability_innovation_l191/test.npz",
+      "sha256": "233bb8dd51f6b743d26e9a4304942e595b6c911eeeffd7f639e129138f5d01fa",
+      "transitions": 1916
+    },
+    "unseen": {
+      "episodes": 20,
+      "path": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/datasets/path_aware_reliability_innovation_l191/unseen.npz",
+      "sha256": "f90ed68d32d4316a28b09385e82f87bd810d8ad635af76b6ae66fa162584e1de",
+      "transitions": 2917
+    },
+    "validation": {
+      "episodes": 16,
+      "path": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/datasets/path_aware_reliability_innovation_l191/validation.npz",
+      "sha256": "7b81160c432366e6e511636ca6b36bee75fc5afe9bc8d720ccf3cdff5e381b98",
+      "transitions": 2060
+    }
+  },
+  "config": {
+    "action_noise_std": 0.03,
+    "actor_checkpoint": "results/research_platform/rl/path_conditioned_l185_seed20261901_60k_v2/checkpoints/step_000050000.pt",
+    "actor_run_dir": "results/research_platform/rl/path_conditioned_l185_seed20261901_60k_v2",
+    "output_dir": "results/research_platform/datasets/path_aware_reliability_innovation_l191",
+    "random_action_probability": 0.05,
+    "require_disjoint_environments": true,
+    "seed": 20260723,
+    "splits": {
+      "test": {
+        "episodes_per_environment": 2,
+        "max_steps": 180,
+        "roles": [
+          "seen"
+        ],
+        "scene_prefixes": [
+          "high_dynamic_sweep_l56",
+          "high_dynamic_chicane_l56"
+        ],
+        "seed_base": 22843000,
+        "source": "training"
+      },
+      "unseen": {
+        "episodes_per_environment": 2,
+        "max_steps": 180,
+        "roles": [
+          "seen",
+          "unseen"
+        ],
+        "scene_prefixes": [
+          "high_dynamic_reverse_s_unseen_l56",
+          "high_dynamic_hairpin_unseen_l56"
+        ],
+        "seed_base": 22844000,
+        "source": "validation"
+      },
+      "validation": {
+        "episodes_per_environment": 2,
+        "max_steps": 180,
+        "roles": [
+          "seen"
+        ],
+        "scene_prefixes": [
+          "high_dynamic_accel_straight_l56",
+          "high_dynamic_accel_turn_l56"
+        ],
+        "seed_base": 22842000,
+        "source": "training"
+      }
+    }
+  },
+  "created_from_config": "/home/mapples/projects/mobile-robot-mppi-study/configs/icode/path_aware_reliability_innovation_data_l191.yaml",
+  "git_sha": "bb26ba5f06f41185b891684f666e6b969d3e189e",
+  "random_action_probability": 0.05,
+  "require_disjoint_environments": true,
+  "schema_version": 1,
+  "seed": 20260723,
+  "split_environments": {
+    "test": [
+      {
+        "physics_domain": "nominal_seen",
+        "scene": "high_dynamic_sweep_l56__nominal_seen"
+      },
+      {
+        "physics_domain": "high_mass_seen",
+        "scene": "high_dynamic_sweep_l56__high_mass_seen"
+      },
+      {
+        "physics_domain": "low_friction_seen",
+        "scene": "high_dynamic_sweep_l56__low_friction_seen"
+      },
+      {
+        "physics_domain": "long_delay_seen",
+        "scene": "high_dynamic_sweep_l56__long_delay_seen"
+      },
+      {
+        "physics_domain": "nominal_seen",
+        "scene": "high_dynamic_chicane_l56__nominal_seen"
+      },
+      {
+        "physics_domain": "high_mass_seen",
+        "scene": "high_dynamic_chicane_l56__high_mass_seen"
+      },
+      {
+        "physics_domain": "low_friction_seen",
+        "scene": "high_dynamic_chicane_l56__low_friction_seen"
+      },
+      {
+        "physics_domain": "long_delay_seen",
+        "scene": "high_dynamic_chicane_l56__long_delay_seen"
+      }
+    ],
+    "unseen": [
+      {
+        "physics_domain": "nominal_seen",
+        "scene": "high_dynamic_reverse_s_unseen_l56__nominal_seen"
+      },
+      {
+        "physics_domain": "high_mass_seen",
+        "scene": "high_dynamic_reverse_s_unseen_l56__high_mass_seen"
+      },
+      {
+        "physics_domain": "low_friction_seen",
+        "scene": "high_dynamic_reverse_s_unseen_l56__low_friction_seen"
+      },
+      {
+        "physics_domain": "long_delay_seen",
+        "scene": "high_dynamic_reverse_s_unseen_l56__long_delay_seen"
+      },
+      {
+        "physics_domain": "combined_unseen",
+        "scene": "high_dynamic_reverse_s_unseen_l56__combined_unseen"
+      },
+      {
+        "physics_domain": "nominal_seen",
+        "scene": "high_dynamic_hairpin_unseen_l56__nominal_seen"
+      },
+      {
+        "physics_domain": "high_mass_seen",
+        "scene": "high_dynamic_hairpin_unseen_l56__high_mass_seen"
+      },
+      {
+        "physics_domain": "low_friction_seen",
+        "scene": "high_dynamic_hairpin_unseen_l56__low_friction_seen"
+      },
+      {
+        "physics_domain": "long_delay_seen",
+        "scene": "high_dynamic_hairpin_unseen_l56__long_delay_seen"
+      },
+      {
+        "physics_domain": "combined_unseen",
+        "scene": "high_dynamic_hairpin_unseen_l56__combined_unseen"
+      }
+    ],
+    "validation": [
+      {
+        "physics_domain": "nominal_seen",
+        "scene": "high_dynamic_accel_straight_l56__nominal_seen"
+      },
+      {
+        "physics_domain": "high_mass_seen",
+        "scene": "high_dynamic_accel_straight_l56__high_mass_seen"
+      },
+      {
+        "physics_domain": "low_friction_seen",
+        "scene": "high_dynamic_accel_straight_l56__low_friction_seen"
+      },
+      {
+        "physics_domain": "long_delay_seen",
+        "scene": "high_dynamic_accel_straight_l56__long_delay_seen"
+      },
+      {
+        "physics_domain": "nominal_seen",
+        "scene": "high_dynamic_accel_turn_l56__nominal_seen"
+      },
+      {
+        "physics_domain": "high_mass_seen",
+        "scene": "high_dynamic_accel_turn_l56__high_mass_seen"
+      },
+      {
+        "physics_domain": "low_friction_seen",
+        "scene": "high_dynamic_accel_turn_l56__low_friction_seen"
+      },
+      {
+        "physics_domain": "long_delay_seen",
+        "scene": "high_dynamic_accel_turn_l56__long_delay_seen"
+      }
+    ]
+  }
+}

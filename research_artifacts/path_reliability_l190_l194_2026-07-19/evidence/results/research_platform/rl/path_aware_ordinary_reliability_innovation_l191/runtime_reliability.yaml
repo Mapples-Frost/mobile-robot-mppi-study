@@ -1,0 +1,16 @@
+reliability:
+  enabled: true
+  ensemble_disagreement_soft: 0.028812410810530032
+  ensemble_disagreement_hard: 0.0412014343987028
+  innovation_error_soft: 0.1403143491139238
+  innovation_error_hard: 0.1570020416764553
+  innovation_minimum_samples: 3
+  actor_ood_soft: 3.0
+  actor_ood_hard: 7.0
+  medium_confidence: 0.33
+  high_confidence: 0.67
+  low_guided_fraction: 0.0
+  medium_guided_fraction: 0.3
+  high_guided_fraction: 0.6
+  dynamics_power: 1.0
+  fusion_mode: innovation_anchor

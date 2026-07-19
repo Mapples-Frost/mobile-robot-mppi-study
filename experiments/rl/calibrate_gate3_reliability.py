@@ -36,7 +36,10 @@ from mobile_robot_mppi.planning.dynamics import (
 )
 from mobile_robot_mppi.rl.checkpointing import load_sac_checkpoint
 from mobile_robot_mppi.rl.observation import RunningNormalizer
-from mobile_robot_mppi.rl.reliability import decreasing_linear_confidence
+from mobile_robot_mppi.rl.reliability import (
+    decreasing_linear_confidence,
+    fuse_hybrid_confidence,
+)
 
 
 LEVELS = ("low", "medium", "high")
@@ -72,6 +75,73 @@ def _load_split(directory, name):
     if missing:
         raise ValueError("%s is missing %s" % (path, ", ".join(missing)))
     return result, path
+
+
+def validate_actor_representation(dataset, normalizer, config, split_name):
+    """Fail closed when calibration data do not match the frozen Actor."""
+
+    raw = np.asarray(dataset["raw_observation_t_plus_1"])
+    if (
+        raw.ndim != 2
+        or raw.shape[1] != int(normalizer.dimension)
+        or not np.isfinite(raw).all()
+    ):
+        raise ValueError(
+            "%s Actor observations must be finite [N,%d], got %s"
+            % (split_name, normalizer.dimension, raw.shape)
+        )
+    result = {
+        "samples": int(raw.shape[0]),
+        "actor_observation_dimension": int(raw.shape[1]),
+        "path_context_required": bool(
+            config.get("require_path_context", False)
+        ),
+    }
+    if not result["path_context_required"]:
+        result.update({
+            "path_context_present": "path_context_t_plus_1" in dataset,
+            "path_valid_fraction": None,
+        })
+        return result
+    if "path_context_t_plus_1" not in dataset:
+        raise ValueError(
+            "%s lacks path_context_t_plus_1 required by calibration"
+            % split_name
+        )
+    context = np.asarray(
+        dataset["path_context_t_plus_1"], dtype=np.float64
+    )
+    if (
+        context.shape != (raw.shape[0], 6)
+        or not np.isfinite(context).all()
+    ):
+        raise ValueError(
+            "%s path context must be finite [N,6], got %s"
+            % (split_name, context.shape)
+        )
+    valid = context[:, 5] >= 0.5
+    if not np.all(valid):
+        raise ValueError(
+            "%s includes %d non-polyline samples in path calibration"
+            % (split_name, int(np.sum(~valid)))
+        )
+    result.update({
+        "path_context_present": True,
+        "path_valid_fraction": float(np.mean(valid)),
+        "path_signed_cross_track_range": [
+            float(np.min(context[:, 0])),
+            float(np.max(context[:, 0])),
+        ],
+        "path_curvature_range": [
+            float(np.min(context[:, 3])),
+            float(np.max(context[:, 3])),
+        ],
+        "path_remaining_range": [
+            float(np.min(context[:, 4])),
+            float(np.max(context[:, 4])),
+        ],
+    })
+    return result
 
 
 def _state_error(predicted, target):
@@ -224,6 +294,14 @@ def extract_window_signals(dataset, models, config, split_name):
                 actor_ood = np.max(
                     np.abs(normalizer.normalize(raw_observations)), axis=-1
                 )
+                path_context = (
+                    np.asarray(
+                        dataset["path_context_t_plus_1"][window],
+                        dtype=np.float64,
+                    )
+                    if "path_context_t_plus_1" in dataset
+                    else None
+                )
                 rows.append({
                     "split": split_name,
                     "episode_id": str(episode_id),
@@ -248,6 +326,18 @@ def extract_window_signals(dataset, models, config, split_name):
                         ensemble.innovation_samples
                     ),
                     "actor_ood_score_max": float(np.max(actor_ood)),
+                    "path_cross_track_abs_max": (
+                        float(np.max(np.abs(path_context[:, 0])))
+                        if path_context is not None else 0.0
+                    ),
+                    "path_curvature_abs_max": (
+                        float(np.max(np.abs(path_context[:, 3])))
+                        if path_context is not None else 0.0
+                    ),
+                    "path_remaining_mean": (
+                        float(np.mean(path_context[:, 4]))
+                        if path_context is not None else 0.0
+                    ),
                 })
 
             # This completed transition becomes available only after the
@@ -280,9 +370,100 @@ def _rank_correlation(x_values, y_values):
     y = np.asarray(y_values, dtype=np.float64)
     if x.size < 2 or np.std(x) <= 1e-12 or np.std(y) <= 1e-12:
         return 0.0
-    x_rank = np.argsort(np.argsort(x, kind="mergesort"))
-    y_rank = np.argsort(np.argsort(y, kind="mergesort"))
+    x_rank = _average_ranks(x)
+    y_rank = _average_ranks(y)
     return float(np.corrcoef(x_rank, y_rank)[0, 1])
+
+
+def _average_ranks(values):
+    values = np.asarray(values, dtype=np.float64)
+    order = np.argsort(values, kind="mergesort")
+    ranks = np.empty(values.size, dtype=np.float64)
+    start = 0
+    while start < values.size:
+        end = start + 1
+        while (
+            end < values.size
+            and values[order[end]] == values[order[start]]
+        ):
+            end += 1
+        ranks[order[start:end]] = 0.5 * (start + end - 1)
+        start = end
+    return ranks
+
+
+def _continuous_rank_gate(episodes, grid):
+    authorities = np.asarray(
+        [row["authority"] for row in episodes], dtype=np.float64
+    )
+    errors = np.asarray(
+        [row["rollout_error"] for row in episodes], dtype=np.float64
+    )
+    count = int(authorities.size)
+    minimum_episodes = int(grid["minimum_episode_count"])
+    tail_fraction = float(grid.get("tail_fraction", 0.25))
+    minimum_tail = int(grid.get("minimum_tail_episodes", 3))
+    tail_count = max(
+        minimum_tail,
+        int(math.ceil(tail_fraction * count)),
+    )
+    if 2 * tail_count > count:
+        raise ValueError(
+            "continuous reliability tails exceed episode count"
+        )
+    order = np.argsort(authorities, kind="mergesort")
+    low_error = float(np.mean(errors[order[:tail_count]]))
+    high_error = float(np.mean(errors[order[-tail_count:]]))
+    relative_separation = float(
+        (low_error - high_error) / max(abs(low_error), 1e-12)
+    )
+    rank = _rank_correlation(authorities, errors)
+    bootstrap_samples = int(grid.get("bootstrap_samples", 5000))
+    if bootstrap_samples <= 0:
+        raise ValueError("bootstrap_samples must be positive")
+    rng = np.random.RandomState(int(grid.get("bootstrap_seed", 0)))
+    bootstrap = []
+    for _ in range(bootstrap_samples):
+        indices = rng.randint(0, count, size=count)
+        bootstrap.append(_rank_correlation(
+            authorities[indices], errors[indices]
+        ))
+    rank_ci = [
+        float(np.percentile(bootstrap, 2.5)),
+        float(np.percentile(bootstrap, 97.5)),
+    ]
+    passed = bool(
+        count >= minimum_episodes
+        and rank <= float(grid["maximum_rank_correlation"])
+        and rank_ci[1] < float(grid.get("maximum_rank_ci_upper", 0.0))
+        and relative_separation
+        >= float(grid["minimum_relative_tail_separation"])
+    )
+    return {
+        "passed": passed,
+        "gate_mode": "continuous_rank",
+        "episode_count": count,
+        "authority_error_rank_correlation": rank,
+        "authority_error_rank_correlation_ci95": rank_ci,
+        "tail_fraction": tail_fraction,
+        "tail_episode_count": tail_count,
+        "low_authority_tail_error_mean": low_error,
+        "high_authority_tail_error_mean": high_error,
+        "error_separation": float(low_error - high_error),
+        "relative_tail_error_separation": relative_separation,
+        "minimum_episode_count": minimum_episodes,
+        "maximum_rank_correlation": float(
+            grid["maximum_rank_correlation"]
+        ),
+        "maximum_rank_ci_upper": float(
+            grid.get("maximum_rank_ci_upper", 0.0)
+        ),
+        "minimum_relative_tail_separation": float(
+            grid["minimum_relative_tail_separation"]
+        ),
+        "bootstrap_samples": bootstrap_samples,
+        "bootstrap_seed": int(grid.get("bootstrap_seed", 0)),
+    }
 
 
 def _threshold_pairs(values, grid):
@@ -322,19 +503,24 @@ def apply_candidate(rows, candidate, config):
             ))
             if innovation_ready else 1.0
         )
-        dynamics_confidence = min(
-            disagreement_confidence,
-            innovation_confidence,
-            float(source["residual_support_confidence_min"]),
-        )
         actor_confidence = float(decreasing_linear_confidence(
             source["actor_ood_score_max"],
             config["actor_ood_soft"],
             config["actor_ood_hard"],
         ))
+        dynamics_confidence, actor_authority_factor = (
+            fuse_hybrid_confidence(
+                disagreement_confidence,
+                innovation_confidence,
+                float(source["residual_support_confidence_min"]),
+                actor_confidence,
+                innovation_ready,
+                config.get("fusion_mode", "conservative_min"),
+            )
+        )
         authority = float(np.clip(
             dynamics_confidence ** float(config["dynamics_power"])
-            * actor_confidence,
+            * actor_authority_factor,
             0.0,
             1.0,
         ))
@@ -351,6 +537,10 @@ def apply_candidate(rows, candidate, config):
             "innovation_ready": innovation_ready,
             "dynamics_confidence": dynamics_confidence,
             "actor_confidence": actor_confidence,
+            "actor_authority_factor": actor_authority_factor,
+            "fusion_mode": str(
+                config.get("fusion_mode", "conservative_min")
+            ),
             "authority": authority,
             "level": level,
         })
@@ -393,6 +583,8 @@ def episode_level_summary(rows):
 
 
 def evaluate_episode_gate(episodes, grid):
+    if str(grid.get("gate_mode", "legacy_bins")) == "continuous_rank":
+        return _continuous_rank_gate(episodes, grid)
     level_rows = {
         level: [row for row in episodes if row["level"] == level]
         for level in LEVELS
@@ -514,6 +706,11 @@ def calibrate(config_path):
     validation, validation_path = _load_split(
         dataset_dir, "validation"
     )
+    representation_audit = {
+        "validation": validate_actor_representation(
+            validation, models["normalizer"], config, "validation"
+        )
+    }
     validation_signals = extract_window_signals(
         validation, models, config, "validation"
     )
@@ -536,6 +733,14 @@ def calibrate(config_path):
     all_episodes = list(validation_episodes)
     for split_name in ("test", "unseen"):
         dataset, path = _load_split(dataset_dir, split_name)
+        representation_audit[split_name] = (
+            validate_actor_representation(
+                dataset,
+                models["normalizer"],
+                config,
+                split_name,
+            )
+        )
         artifact_hashes[split_name] = _sha256(path)
         models["ensemble"].reset()
         signals = extract_window_signals(
@@ -575,6 +780,9 @@ def calibrate(config_path):
         "medium_guided_fraction": 0.30,
         "high_guided_fraction": 0.60,
         "dynamics_power": float(config["dynamics_power"]),
+        "fusion_mode": str(
+            config.get("fusion_mode", "conservative_min")
+        ),
     }
     summary = {
         "schema_version": 1,
@@ -599,6 +807,7 @@ def calibrate(config_path):
             "path": str(models["actor_path"]),
             "sha256": _sha256(models["actor_path"]),
         },
+        "representation_audit": representation_audit,
         "selection_split": "validation",
         "selected_candidate": selected,
         "runtime_reliability_config": selected_runtime_config,
@@ -664,4 +873,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

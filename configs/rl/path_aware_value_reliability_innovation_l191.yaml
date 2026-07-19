@@ -1,0 +1,38 @@
+output_dir: results/research_platform/rl/path_aware_value_reliability_innovation_l191
+dataset_dir: results/research_platform/datasets/path_aware_reliability_innovation_l191
+ensemble_checkpoints:
+  - results/research_platform/gate3_value_aligned_ensemble_member1_l192/best.pt
+  - results/research_platform/gate3_value_aligned_ensemble_member2_l192/best.pt
+  - results/research_platform/gate3_value_aligned_ensemble_member3_l192/best.pt
+actor_checkpoint: results/research_platform/rl/path_conditioned_l185_seed20261901_60k_v2/checkpoints/step_000050000.pt
+
+seed: 20260723
+rollout_horizon: 10
+integrator: rk4
+require_path_context: true
+fusion_mode: innovation_anchor
+nominal_dynamics:
+  velocity_time_constant: 0.18
+  yaw_time_constant: 0.12
+
+ensemble:
+  disagreement_scales:
+    [0.0192860868, 0.0061503653, 0.0276655704, 0.2438328117, 0.6734842658]
+  innovation_scales: [0.25, 0.25, 0.35, 0.25, 0.60]
+  innovation_decay: 0.90
+  innovation_minimum_samples: 3
+  support_soft_z: 3.0
+  support_hard_z: 7.0
+
+rollout_error_scales: [0.25, 0.25, 0.35, 0.25, 0.60]
+actor_ood_soft: 3.0
+actor_ood_hard: 7.0
+medium_confidence: 0.33
+high_confidence: 0.67
+dynamics_power: 1.0
+
+calibration_grid:
+  soft_quantiles: [0.20, 0.35, 0.50]
+  hard_quantiles: [0.65, 0.80, 0.90]
+  minimum_episodes_per_occupied_bin: 3
+  minimum_occupied_bins: 2

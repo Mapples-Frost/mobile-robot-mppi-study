@@ -14,10 +14,10 @@ final_benchmark:
     - results/research_platform/gate3_value_aligned_ensemble_member2_l192/best.pt
     - results/research_platform/gate3_value_aligned_ensemble_member3_l192/best.pt
   ordinary_calibration_summary: results/research_platform/rl/gate4_ordinary_reliability_calibration_l203/calibration_summary.json
-  ordinary_calibration_config: results/research_platform/rl/gate4_ordinary_reliability_calibration_l203/runtime_reliability.yaml
+  ordinary_calibration_config: configs/rl/gate4_ordinary_reliability_calibration_l203.yaml
   ordinary_calibration_gate_evidence: results/research_platform/rl/gate4_ordinary_reliability_stress_evaluation_l214/stress_summary.json
   value_calibration_summary: results/research_platform/rl/gate3_reliability_calibration_l193/calibration_summary.json
-  value_calibration_config: results/research_platform/rl/gate3_reliability_calibration_l193/runtime_reliability.yaml
+  value_calibration_config: configs/rl/gate3_reliability_calibration_l193.yaml
   value_calibration_gate_evidence: results/research_platform/rl/gate3_reliability_stress_evaluation_l194/stress_summary.json
 
   physics_domain_config: configs/research/mujoco_physics_domains.yaml

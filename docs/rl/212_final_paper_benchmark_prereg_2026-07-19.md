@@ -136,6 +136,8 @@ Qualification 数据永不用于论文效果估计。通过后先提交代码、
 
 该修订没有查看任何 L214 正式结果，也不改变 reliability 阈值、Actor、ICODE checkpoint、HSS 权重或评价指标。
 
+Qualification 随后还发现 manifest 将 `calibration_config` 错指向了只含运行阈值的导出 YAML，而 loader 所需的是同时含 ensemble 尺度的原始 calibration YAML。该路径在任何 episode 生成前已修正，并加入 schema 测试；数值、模型和 Gate 证据均未改变。
+
 ## 9. 后续外部有效性实验
 
 L214 只冻结 point-goal clean dynamics 主实验。复杂静态障碍、动态障碍和 polyline path-tracking 使用独立编号与独立预注册；它们验证外部有效性，但不会反过来修改 L214 配置。实车 offline 与 shadow-mode 结果也单独报告，scan_guard 始终具有最高控制权限。

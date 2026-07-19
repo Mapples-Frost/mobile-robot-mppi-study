@@ -148,6 +148,14 @@ def test_frozen_manifest_is_a_manifest_not_an_experiment_config():
     assert manifest["final_benchmark"]["formal_seeds"] == list(
         range(101, 111)
     )
+    for key in (
+        "ordinary_calibration_config",
+        "value_calibration_config",
+    ):
+        calibration_path = root / manifest["final_benchmark"][key]
+        with calibration_path.open("r", encoding="utf-8") as handle:
+            calibration = yaml.safe_load(handle)
+        assert "ensemble" in calibration
 
 
 def test_external_gate_evidence_must_bind_exact_calibration(

@@ -1,0 +1,45 @@
+final_benchmark:
+  status: preregistered
+  preregistration: docs/rl/212_final_paper_benchmark_prereg_2026-07-19.md
+  base_config: configs/research/mujoco_strong_mppi_baseline.yaml
+  metric_profile: point_goal
+
+  actor_checkpoint: results/research_platform/rl/gate1_direct_control_multidomain_screen_l175/checkpoints/best.pt
+  ordinary_checkpoints:
+    - results/research_platform/l57_icode_high_dynamic_h36_seed20261201_v1/best.pt
+    - results/research_platform/l57_icode_high_dynamic_h36_seed20261202_v1/best.pt
+    - results/research_platform/l57_icode_high_dynamic_h36_seed20261203_v1/best.pt
+  value_checkpoints:
+    - results/research_platform/gate3_value_aligned_ensemble_member1_l192/best.pt
+    - results/research_platform/gate3_value_aligned_ensemble_member2_l192/best.pt
+    - results/research_platform/gate3_value_aligned_ensemble_member3_l192/best.pt
+  ordinary_calibration_summary: results/research_platform/rl/gate4_ordinary_reliability_calibration_l203/calibration_summary.json
+  ordinary_calibration_config: results/research_platform/rl/gate4_ordinary_reliability_calibration_l203/runtime_reliability.yaml
+  value_calibration_summary: results/research_platform/rl/gate3_reliability_calibration_l193/calibration_summary.json
+  value_calibration_config: results/research_platform/rl/gate3_reliability_calibration_l193/runtime_reliability.yaml
+
+  physics_domain_config: configs/research/mujoco_physics_domains.yaml
+  physics_domains:
+    - nominal_seen
+    - long_delay_seen
+    - combined_unseen
+  scene_configs:
+    - configs/research/mujoco_clean_goal_3_3.yaml
+
+  total_rollouts: 100
+  iterations: 2
+  max_steps: 300
+  terminal_guidance_radius: 1.26
+  terminal_guided_fraction_floor: 0.30
+  schedule_seed: 20260719
+  formal_seeds:
+    - 101
+    - 102
+    - 103
+    - 104
+    - 105
+    - 106
+    - 107
+    - 108
+    - 109
+    - 110

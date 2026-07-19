@@ -1,0 +1,52 @@
+session:
+  id: "2026-07-19_031"
+  timestamp: "2026-07-19T14:10:00+08:00"
+  summary: "A preregistered path-transfer factorial confirmed adaptive-sampling cross-track and compute gains, while refuting reliable terminal completion and a positive value-aligned ICODE path main effect."
+
+events_logged:
+  - type: heuristic
+    id: "H70"
+    provenance: ai-suggested
+    summary: "Bound completion floors to explicit reference phase rather than lookahead distance."
+  - type: experiment
+    id: "N134"
+    provenance: ai-executed
+    summary: "Sealed 180-episode path transfer confirmed cross-track, jerk and compute gains but zero terminal successes."
+  - type: claim
+    id: "C93"
+    provenance: ai-suggested
+    summary: "Frozen Full Proposed reduces cross-track error but does not establish path completion."
+  - type: claim
+    id: "C94"
+    provenance: ai-suggested
+    summary: "A positive value-aligned ICODE path main effect was refuted."
+
+ai_actions:
+  - action: "Added path metric profiles, saved-trajectory recomputation, seed-cluster analysis and phase-aware terminal-floor auditing."
+    provenance: ai-executed
+    files_changed:
+      - "experiments/rl/run_full_proposed_factorial.py"
+      - "experiments/rl/analyze_full_proposed_factorial.py"
+      - "src/mobile_robot_mppi/evaluation/metrics.py"
+      - "src/mobile_robot_mppi/planning/rl_driven_mppi.py"
+  - action: "Ran development integrity and sealed confirmation factorials."
+    provenance: ai-executed
+    files_changed:
+      - "docs/rl/183_full_proposed_path_tracking_prereg_2026-07-19.md"
+      - "docs/rl/184_full_proposed_path_tracking_confirmation_results_2026-07-19.md"
+
+claims_touched:
+  - id: "C93"
+    action: created
+    provenance: ai-suggested
+  - id: "C94"
+    action: created
+    provenance: ai-suggested
+
+open_threads:
+  - "Create a new path-policy development split; confirmation seeds 403--407 are permanently sealed."
+  - "Resolve terminal convergence before making a path-success claim."
+  - "Keep point-goal value-aligned ICODE evidence separate from the adverse path main effect."
+
+ai_suggestions_pending:
+  - "Use path-conditioned policy training or a path-aware observation encoder in a new preregistered study, not by tuning on the sealed path set."

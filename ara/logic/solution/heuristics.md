@@ -414,3 +414,9 @@
 - **Provenance**: ai-suggested
 - **Sensitivity**: high
 - **Code ref**: [`src/mobile_robot_mppi/evaluation/factorial.py`, `experiments/rl/analyze_full_proposed_factorial.py`, `docs/rl/182_full_proposed_factorial_confirmation_results_2026-07-19.md`]
+
+## H70: Bind completion safeguards to reference phase, not lookahead distance alone
+- **Rationale**: A polyline controller's current target is a nearby lookahead point throughout the route. A distance-only terminal floor therefore activates globally and silently destroys adaptive sampling. Require an explicit `terminal_approach` or `terminal` reference phase, log both raw and floor-adjusted authority, and test tracking and terminal phases separately.
+- **Provenance**: ai-suggested
+- **Sensitivity**: high
+- **Code ref**: [`src/mobile_robot_mppi/planning/rl_driven_mppi.py`, `src/mobile_robot_mppi/evaluation/metrics.py`, `tests/planners/test_paper_rl_driven_mppi.py`, `docs/rl/183_full_proposed_path_tracking_prereg_2026-07-19.md`]

@@ -828,3 +828,21 @@
 - **Proof**: [`results/research_platform/rl/full_proposed_lab_supplement_l213/paired_comparisons.json`, `results/research_platform/rl/full_proposed_lab_supplement_l213/analysis_summary.json`, `docs/rl/182_full_proposed_factorial_confirmation_results_2026-07-19.md`]
 - **Dependencies**: [C84, C89, C91]
 - **Tags**: adaptive-HSS, compute, complex-navigation, robustness-supplement
+
+## C93: Frozen Full Proposed reduces polyline cross-track error but does not establish path completion
+- **Statement**: On five sealed seeds, three obstacle-free polyline paths and three MuJoCo physics domains, the frozen Full Proposed package reduces cross-track RMSE relative to ordinary ICODE with fixed Actor sampling at equal K=100, without increasing collision or jerk; this does not establish successful terminal convergence.
+- **Status**: supported
+- **Provenance**: ai-suggested
+- **Falsification criteria**: The seed-cluster cross-track favorable interval includes zero; rollout budgets differ; collision or jerk increases beyond the preregistered margin; provenance is inconsistent; or any successful-terminal claim is made from projection completion alone.
+- **Proof**: [`results/research_platform/rl/full_proposed_path_transfer_confirm_l183_analysis/paired_comparisons.json`, `docs/rl/184_full_proposed_path_tracking_confirmation_results_2026-07-19.md`, `ara/evidence/tables/table15_full_proposed_path_transfer.md`]
+- **Dependencies**: [C89, C91]
+- **Tags**: path-tracking, adaptive-HSS, cross-track, confirmation, scope-boundary
+
+## C94: Value-aligned ICODE independently improves frozen path tracking
+- **Statement**: Replacing ordinary ICODE with the frozen competence-gated value-aligned ICODE improves cross-track RMSE in the independent polyline factorial.
+- **Status**: refuted
+- **Provenance**: ai-suggested
+- **Falsification criteria**: The value-alignment factorial main effect is adverse with a seed-cluster interval excluding zero.
+- **Proof**: [`results/research_platform/rl/full_proposed_path_transfer_confirm_l183_analysis/factorial_contrasts.json`, `docs/rl/184_full_proposed_path_tracking_confirmation_results_2026-07-19.md`]
+- **Dependencies**: [C90, C93]
+- **Tags**: ICODE, value-alignment, path-tracking, negative-result

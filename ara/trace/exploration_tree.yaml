@@ -1278,3 +1278,20 @@ tree:
                         result: >
                           Sixty additional 180-step lab-complex episodes had zero successes and zero collisions in every cell, bounding the method away from a complex-navigation claim. Adaptive HSS nevertheless saved about 10.8 ms under both ICODE variants; Full Proposed versus ordinary fixed saved 9.94 ms with interval [8.53, 10.88] ms.
                         evidence: [C91, C92, "results/research_platform/rl/full_proposed_lab_supplement_l213/paired_comparisons.json", "docs/rl/182_full_proposed_factorial_confirmation_results_2026-07-19.md"]
+  - id: N133
+    type: question
+    title: "Does the frozen Full Proposed package transfer from point goals to polyline path tracking?"
+    provenance: ai-suggested
+    timestamp: "2026-07-19T13:00:00+08:00"
+    description: >
+      A preregistered 2x2 factorial tests the untouched Actor, critic and ordinary/value-aligned ICODE ensembles on three obstacle-free paths and three physics domains, with path metrics computed from saved trajectories.
+    also_depends_on: [N131]
+    children:
+      - id: N134
+        type: experiment
+        title: "Sealed Full Proposed polyline transfer confirmation"
+        provenance: ai-executed
+        timestamp: "2026-07-19T14:00:00+08:00"
+        result: >
+          Across 180 episodes on seeds 403--407, Full Proposed reduced cross-track RMSE by 0.1550 m (8.17%, CI [0.1201, 0.1899]), jerk by 2.54% and planner time by 16.8% versus ordinary fixed, with zero collisions. Improvements were directionally consistent across all three paths and physics domains. However all four cells had 0/45 successes, and value-aligned ICODE had an adverse 0.0204 m main effect with CI [0.0010, 0.0434]; the supported result is adaptive-sampling error reduction, not reliable path completion or ICODE-RL synergy.
+        evidence: [C93, C94, H70, "results/research_platform/rl/full_proposed_path_transfer_confirm_l183_analysis/paired_comparisons.json", "results/research_platform/rl/full_proposed_path_transfer_confirm_l183_analysis/factorial_contrasts.json", "ara/evidence/tables/table15_full_proposed_path_transfer.md"]

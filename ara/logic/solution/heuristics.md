@@ -396,3 +396,21 @@
 - **Provenance**: ai-suggested
 - **Sensitivity**: high
 - **Code ref**: [`src/mobile_robot_mppi/planning/rl_driven_mppi.py`, `tests/planners/test_paper_rl_driven_mppi.py`, `docs/rl/177_gate4_conservative_terminal_prereg_2026-07-19.md`]
+
+## H67: Give reliability degradation a task-completion boundary condition
+- **Rationale**: A globally low model-reliability score can suppress all Actor candidates just as the controller approaches the goal, even when fixed Actor guidance is what closes the final 30--50 cm. Outside the terminal region, retain the calibrated 0/30/60% authority; inside one maximum-horizon travel distance, impose only the already qualified 30% paper baseline as a floor. Derive the radius from \(v_{\max}H\Delta t\), not from a trajectory-tuned threshold, and keep total MPPI rollouts unchanged.
+- **Provenance**: ai-suggested
+- **Sensitivity**: high
+- **Code ref**: [`src/mobile_robot_mppi/planning/rl_driven_mppi.py`, `tests/planners/test_paper_rl_driven_mppi.py`, `docs/rl/181_completion_preserving_hss_amendment_2026-07-19.md`]
+
+## H68: Use one preregistered remediation and keep confirmation seeds sealed
+- **Rationale**: When a development Gate exposes a concrete failure, inspect trajectory-level mechanism evidence, freeze one physically derived remedy, rerun only development seeds and stop if it fails. Do not search multiple mappings against the same outcomes or inspect confirmation seeds before the corrected method passes its development Gate.
+- **Provenance**: ai-suggested
+- **Sensitivity**: high
+- **Code ref**: [`docs/rl/180_full_proposed_factorial_prereg_2026-07-19.md`, `docs/rl/181_completion_preserving_hss_amendment_2026-07-19.md`, `experiments/rl/analyze_full_proposed_factorial.py`]
+
+## H69: Separate package superiority from factorial synergy
+- **Rationale**: A complete method may strongly outperform a simple combination while still showing a null or adverse interaction because two modules repair overlapping failures or saturate success. Report the full-versus-simple contrast, both factorial main effects and the interaction separately; never relabel package superiority as super-additive synergy.
+- **Provenance**: ai-suggested
+- **Sensitivity**: high
+- **Code ref**: [`src/mobile_robot_mppi/evaluation/factorial.py`, `experiments/rl/analyze_full_proposed_factorial.py`, `docs/rl/182_full_proposed_factorial_confirmation_results_2026-07-19.md`]

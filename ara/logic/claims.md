@@ -705,10 +705,10 @@
 
 ## C79: Gate 1 proves universal ICODE-RL synergy
 - **Statement**: The L176 simple-combination result by itself establishes a universal positive ICODE by RL interaction across success, safety, smoothness, compute and unseen environments.
-- **Status**: untested
+- **Status**: refuted
 - **Provenance**: ai-suggested
 - **Falsification criteria**: Independent model-block confirmation yields an interaction interval including zero or an unfavorable effect for any claimed primary endpoint, narrow-corridor failures persist, or hard real-time compute limits are violated.
-- **Proof**: [`docs/rl/170_gate1_multidomain_factorial_results_2026-07-18.md`]
+- **Proof**: [`docs/rl/170_gate1_multidomain_factorial_results_2026-07-18.md`, `results/research_platform/rl/full_proposed_confirmation_l211/factorial_contrasts.json`, `docs/rl/182_full_proposed_factorial_confirmation_results_2026-07-19.md`, `ara/evidence/tables/table14_full_proposed_factorial.md`]
 - **Dependencies**: [C78]
 - **Tags**: scope-boundary, interaction, synergy, confirmation-needed
 
@@ -792,3 +792,39 @@
 - **Proof**: [`docs/rl/176_gate3_reliability_hss_results_2026-07-18.md`, `docs/rl/179_gate4_conservative_terminal_results_2026-07-19.md`]
 - **Dependencies**: [C84, C87]
 - **Tags**: cross-layer-reliability, calibration-target, scope-boundary
+
+## C89: The frozen Full Proposed package improves completion over a strong simple combination
+- **Statement**: At equal 100-rollout budget on five sealed seeds and three MuJoCo physics domains, competence-gated value-aligned ICODE plus completion-preserving reliability-adaptive HSS improves success and final goal distance relative to ordinary ICODE with fixed 30% Actor guidance, without increasing collisions and within the prospectively fixed 5% jerk noninferiority margin.
+- **Status**: supported
+- **Provenance**: ai-suggested
+- **Falsification criteria**: Seed-cluster inference fails to show favorable success or final-distance direction; either primary interval includes zero; collisions increase; jerk worsens by more than 5%; rollout budgets differ; or protected seeds/checkpoints were used during remediation.
+- **Proof**: [`results/research_platform/rl/full_proposed_confirmation_l211/paired_comparisons.json`, `results/research_platform/rl/full_proposed_confirmation_l211/analysis_summary.json`, `docs/rl/182_full_proposed_factorial_confirmation_results_2026-07-19.md`, `ara/evidence/tables/table14_full_proposed_factorial.md`]
+- **Dependencies**: [C81, C83, C84, C87]
+- **Tags**: ICODE, RL-driven-MPPI, value-alignment, adaptive-HSS, independent-confirmation
+
+## C90: Value alignment and adaptive HSS have reproducible main effects but no super-additive interaction
+- **Statement**: In the sealed success-resolved factorial, value-aligned ICODE and reliability-adaptive HSS each independently improve success and final distance over ordinary fixed sampling, while their combined success interaction is adverse/sub-additive because both mechanisms repair overlapping failures.
+- **Status**: supported
+- **Provenance**: ai-suggested
+- **Falsification criteria**: Reanalysis does not reproduce value-at-fixed success +0.3333 and HSS-at-ordinary success +0.2667 with strictly favorable seed-cluster intervals, or the success interaction is not negative with interval below zero.
+- **Proof**: [`results/research_platform/rl/full_proposed_confirmation_l211/paired_comparisons.json`, `results/research_platform/rl/full_proposed_confirmation_l211/factorial_contrasts.json`, `docs/rl/182_full_proposed_factorial_confirmation_results_2026-07-19.md`]
+- **Dependencies**: [C79, C81, C84, C89]
+- **Tags**: factorial, main-effect, interaction, scope-boundary, confirmation
+
+## C91: The current Full Proposed package resolves complex navigation success
+- **Statement**: The frozen Full Proposed package improves goal-reaching success in `lab_complex` under the preregistered 180-step horizon.
+- **Status**: refuted
+- **Provenance**: ai-suggested
+- **Falsification criteria**: All four factorial cells have zero successes, or the Full Proposed progress interval is not strictly favorable.
+- **Proof**: [`results/research_platform/rl/full_proposed_lab_supplement_l213/analysis_summary.json`, `results/research_platform/rl/full_proposed_lab_supplement_l213/paired_comparisons.json`, `docs/rl/182_full_proposed_factorial_confirmation_results_2026-07-19.md`]
+- **Dependencies**: [C85, C89]
+- **Tags**: complex-navigation, lab-complex, scope-boundary, negative-result
+
+## C92: Adaptive HSS retains a compute benefit when complex geometry dominates
+- **Statement**: In the 60-episode `lab_complex` robustness supplement, completion-preserving adaptive HSS reduces mean planner time by about 10.8 ms under both ordinary and value-aligned ICODE, with zero collisions, even though no method reaches the goal within 180 steps.
+- **Status**: supported
+- **Provenance**: ai-suggested
+- **Falsification criteria**: Seed-cluster intervals for HSS-at-ordinary or HSS-at-value planner-time savings include zero, collisions increase, or per-decision rollout budgets differ.
+- **Proof**: [`results/research_platform/rl/full_proposed_lab_supplement_l213/paired_comparisons.json`, `results/research_platform/rl/full_proposed_lab_supplement_l213/analysis_summary.json`, `docs/rl/182_full_proposed_factorial_confirmation_results_2026-07-19.md`]
+- **Dependencies**: [C84, C89, C91]
+- **Tags**: adaptive-HSS, compute, complex-navigation, robustness-supplement

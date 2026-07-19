@@ -1221,3 +1221,60 @@ tree:
                 lesson: >
                   Reliability validated for sampling allocation cannot be reused as terminal-value authority; the optional mechanism remains default-off and fixed critic terminal stays in the mainline.
                 evidence: [C87, C88, H65, "results/research_platform/rl/gate4_dyn_terminal_confirmation_l202/paired_comparison.json", "docs/rl/179_gate4_conservative_terminal_results_2026-07-19.md"]
+  - id: N127
+    type: question
+    title: "Does the frozen value-aligned ICODE plus adaptive-HSS package beat simple composition?"
+    provenance: ai-suggested
+    timestamp: "2026-07-19T06:50:00+08:00"
+    description: >
+      A success-resolved 2x2 factorial tests ordinary versus competence-gated value-aligned ICODE and fixed versus reliability-adaptive persistent Actor sampling at equal K=100, while retaining the fixed target critic and rejecting the failed terminal-authority mechanism.
+    also_depends_on: [N116, N122, N126]
+    children:
+      - id: N128
+        type: experiment
+        title: "Ordinary-ensemble reliability calibration"
+        provenance: ai-executed
+        timestamp: "2026-07-19T07:05:00+08:00"
+        result: >
+          The separately calibrated ordinary ICODE ensemble passed the independent graded-stress Gate: high/medium/low bins contained 2/6/22 episodes, normalized errors increased 0.0485/0.0583/0.0778 and authority-error Spearman was -0.888.
+        evidence: [C83, H62, H63, "results/research_platform/rl/gate4_ordinary_reliability_stress_l204/stress_summary.json"]
+        children:
+          - id: N129
+            type: dead_end
+            title: "Unbounded low-authority HSS in the success-resolved development task"
+            provenance: ai-executed
+            timestamp: "2026-07-19T07:20:00+08:00"
+            hypothesis: >
+              The already confirmed 0/30/60% reliability mapping can remain unchanged through the terminal task phase and retain success at 300 steps.
+            failure_mode: >
+              In 36 development episodes, both fixed cells achieved 9/9 success, ordinary adaptive achieved 7/9 and Full Proposed achieved 8/9. The three noncollision failures reached 0.305--0.466 m from the goal with zero Actor guidance, then overshot and moved away.
+            lesson: >
+              Reliability-based proposal suppression requires a completion boundary condition; progress at an earlier truncation does not establish goal-reaching success.
+            evidence: [H67, "results/research_platform/rl/full_proposed_development_l206/paired_comparisons.json", "docs/rl/181_completion_preserving_hss_amendment_2026-07-19.md"]
+            children:
+              - id: N130
+                type: experiment
+                title: "Single preregistered completion-preserving HSS remediation"
+                provenance: ai-executed
+                timestamp: "2026-07-19T07:45:00+08:00"
+                result: >
+                  A 30% Actor-guidance floor was activated only inside the horizon-derived 1.26 m terminal radius. On the same development seeds Full Proposed recovered 9/9 success with zero collisions and millimeter-scale endpoint equivalence to ordinary fixed; ordinary adaptive remained 7/9, producing a positive but uncertain value-alignment-by-HSS success interaction.
+                evidence: [C89, H67, H68, "results/research_platform/rl/full_proposed_remediation_development_l209/paired_comparisons.json", "docs/rl/181_completion_preserving_hss_amendment_2026-07-19.md"]
+                children:
+                  - id: N131
+                    type: experiment
+                    title: "Sealed Full Proposed factorial confirmation"
+                    provenance: ai-executed
+                    timestamp: "2026-07-19T08:15:00+08:00"
+                    result: >
+                      Sixty episodes on untouched seeds 51--55 completed across three physics domains with zero collisions. Full Proposed improved success from 9/15 to 14/15 and final distance by 0.1834 m versus ordinary fixed; both seed-cluster intervals were strictly favorable and jerk worsened only 1.13%, within the frozen 5% margin. Value alignment alone achieved 14/15 and adaptive HSS alone 13/15, so the success interaction was adverse/sub-additive rather than synergistic.
+                    evidence: [C79, C89, C90, H69, "results/research_platform/rl/full_proposed_confirmation_l211/paired_comparisons.json", "results/research_platform/rl/full_proposed_confirmation_l211/factorial_contrasts.json", "ara/evidence/tables/table14_full_proposed_factorial.md"]
+                    children:
+                      - id: N132
+                        type: experiment
+                        title: "Lab-complex robustness and compute supplement"
+                        provenance: ai-executed
+                        timestamp: "2026-07-19T08:35:00+08:00"
+                        result: >
+                          Sixty additional 180-step lab-complex episodes had zero successes and zero collisions in every cell, bounding the method away from a complex-navigation claim. Adaptive HSS nevertheless saved about 10.8 ms under both ICODE variants; Full Proposed versus ordinary fixed saved 9.94 ms with interval [8.53, 10.88] ms.
+                        evidence: [C91, C92, "results/research_platform/rl/full_proposed_lab_supplement_l213/paired_comparisons.json", "docs/rl/182_full_proposed_factorial_confirmation_results_2026-07-19.md"]

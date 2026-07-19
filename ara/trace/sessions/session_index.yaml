@@ -89,3 +89,6 @@ sessions:
   - id: "2026-07-19_029"
     path: "trace/sessions/2026-07-19_029.yaml"
     summary: "Gate 4 retained failed critic-confidence calibration, a non-replicating positive terminal-gate development result, and a sealed negative confirmation that pruned terminal authority from the main method."
+  - id: "2026-07-19_030"
+    path: "trace/sessions/2026-07-19_030.yaml"
+    summary: "A preregistered completion-floor remediation enabled sealed Full Proposed confirmation: the package beat simple composition, both factors had positive main effects, super-additive synergy was refuted, and complex navigation remained unresolved."

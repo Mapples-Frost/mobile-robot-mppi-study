@@ -1,0 +1,89 @@
+session:
+  id: "2026-07-19_030"
+  timestamp: "2026-07-19T08:45:00+08:00"
+  summary: "A preregistered completion-floor remediation enabled sealed Full Proposed confirmation: the package beat simple composition, both factors had positive main effects, super-additive synergy was refuted, and complex navigation remained unresolved."
+
+events_logged:
+  - type: experiment
+    id: "N128"
+    provenance: ai-executed
+    summary: "Calibrated ordinary-ensemble reliability and independently validated graded error ordering."
+  - type: dead_end
+    id: "N129"
+    provenance: ai-executed
+    summary: "Success-resolved development refuted terminal-phase suppression of all Actor candidates."
+  - type: heuristic
+    id: "H67"
+    provenance: ai-suggested
+    summary: "Added a horizon-derived completion boundary to reliability degradation."
+  - type: experiment
+    id: "N130"
+    provenance: ai-executed
+    summary: "One preregistered terminal-floor remediation restored Full Proposed development success."
+  - type: experiment
+    id: "N131"
+    provenance: ai-executed
+    summary: "Sealed 60-episode confirmation supported package superiority and both main effects but refuted super-additive synergy."
+  - type: experiment
+    id: "N132"
+    provenance: ai-executed
+    summary: "Lab-complex supplement retained safety and compute savings but produced no successes."
+  - type: claim
+    id: "C89"
+    provenance: ai-suggested
+    summary: "Full Proposed improves clean-task completion over a strong simple combination."
+  - type: claim
+    id: "C90"
+    provenance: ai-suggested
+    summary: "Both factors have main effects, while the interaction is sub-additive."
+  - type: claim
+    id: "C91"
+    provenance: ai-suggested
+    summary: "Complex-navigation success claim is refuted at the tested horizon."
+  - type: claim
+    id: "C92"
+    provenance: ai-suggested
+    summary: "Adaptive HSS retains a complex-scene compute benefit."
+
+ai_actions:
+  - action: "Implemented completion-preserving adaptive HSS and causal diagnostics."
+    provenance: ai-executed
+    files_changed:
+      - "src/mobile_robot_mppi/planning/rl_driven_mppi.py"
+      - "tests/planners/test_paper_rl_driven_mppi.py"
+  - action: "Implemented randomized factorial sharding, merging and seed-cluster analysis."
+    provenance: ai-executed
+    files_changed:
+      - "experiments/rl/run_full_proposed_factorial.py"
+      - "experiments/rl/analyze_full_proposed_factorial.py"
+      - "tests/experiments/test_full_proposed_factorial.py"
+  - action: "Recorded preregistration amendment and independent confirmation report."
+    provenance: ai-executed
+    files_changed:
+      - "docs/rl/181_completion_preserving_hss_amendment_2026-07-19.md"
+      - "docs/rl/182_full_proposed_factorial_confirmation_results_2026-07-19.md"
+
+claims_touched:
+  - id: "C79"
+    action: weakened
+    provenance: ai-suggested
+  - id: "C89"
+    action: created
+    provenance: ai-suggested
+  - id: "C90"
+    action: created
+    provenance: ai-suggested
+  - id: "C91"
+    action: created
+    provenance: ai-suggested
+  - id: "C92"
+    action: created
+    provenance: ai-suggested
+
+open_threads:
+  - "Run a separately preregistered path-tracking and real-robot confirmation; current evidence is MuJoCo point-goal only."
+  - "Treat global navigation as a separate planning problem; lab-complex success remains zero at 180 steps."
+  - "Use the confirmed main-effect story and do not claim super-additive ICODE-RL synergy."
+
+ai_suggestions_pending:
+  - "Reframe the manuscript around calibrated complementary main effects and package superiority, rather than a synergy claim."

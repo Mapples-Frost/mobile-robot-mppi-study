@@ -36,6 +36,31 @@ def _value_model():
     return FrozenDirectSACValue(agent, encoder, normalizer)
 
 
+def _path_value_model():
+    config = SACConfig(
+        hidden_sizes=(16,),
+        critic_distribution="quantile",
+        critic_num_quantiles=5,
+    )
+    agent = SACAgent(22, 2, config, seed=4)
+    normalizer = {
+        "count": 2,
+        "mean": np.zeros(22, dtype=np.float32),
+        "m2": np.ones(22, dtype=np.float32),
+        "min_std": 0.05,
+        "clip": 10.0,
+    }
+    encoder = ObservationEncoderConfig(
+        lidar_sectors=4,
+        include_previous_action=True,
+        include_safety_state=True,
+        include_path_context=True,
+        path_cross_track_scale=0.75,
+        path_remaining_scale=7.0,
+    )
+    return FrozenDirectSACValue(agent, encoder, normalizer)
+
+
 def _residual_model():
     statistics = {
         "feature_mean": np.zeros(6, dtype=np.float32),
@@ -122,6 +147,47 @@ def test_value_alignment_gradient_reaches_residual_but_not_actor_or_critic():
     )
     assert all(parameter.grad is None for parameter in value.parameters())
     assert torch.isfinite(output["value_rmse"])
+
+
+def test_path_conditioned_value_reencodes_local_route_features():
+    value = _path_value_model()
+    raw = torch.zeros((1, 22), dtype=torch.float32)
+    reference = torch.tensor([[1.0, 2.0, 0.2, 0.1, 0.0]])
+    predicted = reference.clone()
+    predicted[:, 1] += 0.15
+    predicted[:, 2] += 0.1
+    target = torch.tensor([[3.0, 2.0]])
+    path = torch.tensor([[0.2, 0.0, 1.0, 0.1, 0.5, 1.0]])
+    encoded = value.raw_observation_for_state(
+        predicted,
+        raw,
+        target,
+        reference_state=reference,
+        path_context_template=path,
+    )
+    path_start = 8 + 2 + 1
+    assert encoded[0, path_start] > path[0, 0]
+    torch.testing.assert_close(
+        encoded[0, path_start + 1], torch.sin(torch.tensor(0.1))
+    )
+    torch.testing.assert_close(
+        encoded[0, path_start + 2], torch.cos(torch.tensor(0.1))
+    )
+    torch.testing.assert_close(
+        encoded[0, path_start + 3], path[0, 3]
+    )
+    assert encoded[0, path_start + 5] == 1.0
+
+
+def test_path_conditioned_value_requires_explicit_route_context():
+    value = _path_value_model()
+    state = torch.zeros((1, 5))
+    raw = torch.zeros((1, 22))
+    target = torch.ones((1, 2))
+    with np.testing.assert_raises_regex(
+        ValueError, "path-conditioned value requires"
+    ):
+        value.value_from_state(state, raw, target)
 
 
 def test_anchor_loss_is_zero_for_unchanged_checkpoint():

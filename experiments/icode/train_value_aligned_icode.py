@@ -70,7 +70,7 @@ def _batch(dataset, starts, horizon, device):
     tensor = lambda values: torch.as_tensor(
         values, dtype=torch.float32, device=device
     )
-    return {
+    result = {
         "initial_state": tensor(dataset["state_t"][starts]),
         "states_t": tensor(dataset["state_t"][indices]),
         "controls": tensor(dataset["control_t"][indices]),
@@ -84,6 +84,11 @@ def _batch(dataset, starts, horizon, device):
             dataset["target_position_t_plus_1"][indices]
         ),
     }
+    if "path_context_t_plus_1" in dataset:
+        result["path_contexts"] = tensor(
+            dataset["path_context_t_plus_1"][indices]
+        )
+    return result
 
 
 def _rank_correlation(predicted, target):
@@ -128,7 +133,15 @@ def evaluate(model, objective, value_model, dataset, starts, horizon, device, ba
             raw_terminal = batch["raw_observations"][:, -1]
             target_position = batch["target_positions"][:, -1]
             predicted_value = value_model.value_from_state(
-                trajectory[:, -1], raw_terminal, target_position
+                trajectory[:, -1],
+                raw_terminal,
+                target_position,
+                reference_state=batch["target_states"][:, -1],
+                path_context_template=(
+                    batch.get("path_contexts")[:, -1]
+                    if "path_contexts" in batch
+                    else None
+                ),
             )
             true_value = value_model.value_from_raw(raw_terminal)
             terminal_predicted.extend(predicted_value.cpu().numpy().tolist())

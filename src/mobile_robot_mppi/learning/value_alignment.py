@@ -188,8 +188,17 @@ class FrozenDirectSACValue(nn.Module):
         state,
         raw_template,
         target_position,
+        reference_state=None,
+        path_context_template=None,
     ):
-        """Replace only physical-state features in a recorded critic context."""
+        """Re-encode predicted state in a recorded critic context.
+
+        For path-conditioned critics, the local route features are updated
+        with a differentiable tangent-frame approximation around the recorded
+        reference state. Curvature and path-validity remain recorded context;
+        cross-track, heading error, and remaining distance respond to the
+        predicted state.
+        """
 
         if state.shape[:-1] != raw_template.shape[:-1]:
             raise ValueError("state and raw template leading dimensions must match")
@@ -199,6 +208,21 @@ class FrozenDirectSACValue(nn.Module):
             raise ValueError("value alignment supports 3D or 5D unicycle states")
         if raw_template.shape[-1] != self.observation_dim:
             raise ValueError("raw template observation dimension mismatch")
+        path_conditioned = bool(self.encoder_config.include_path_context)
+        if path_conditioned:
+            if reference_state is None or path_context_template is None:
+                raise ValueError(
+                    "path-conditioned value requires reference state and "
+                    "path context"
+                )
+            if reference_state.shape != state.shape:
+                raise ValueError(
+                    "reference state must match predicted state shape"
+                )
+            if path_context_template.shape != state.shape[:-1] + (6,):
+                raise ValueError(
+                    "path context must match state batch with six features"
+                )
         theta = state[..., 2]
         x = state[..., 0]
         y = state[..., 1]
@@ -253,11 +277,77 @@ class FrozenDirectSACValue(nn.Module):
             )
             prefix = torch.cat((prefix, absolute), dim=-1)
             consumed += 2
-        return torch.cat((prefix, raw_template[..., consumed:]), dim=-1)
+        if not path_conditioned:
+            return torch.cat((prefix, raw_template[..., consumed:]), dim=-1)
 
-    def value_from_state(self, state, raw_template, target_position):
+        context_start = consumed
+        if self.encoder_config.include_previous_action:
+            context_start += self.action_dim
+        if self.encoder_config.include_safety_state:
+            context_start += 1
+        context_end = context_start + 6
+        recorded = path_context_template
+        heading_error = torch.atan2(recorded[..., 1], recorded[..., 2])
+        tangent = reference_state[..., 2] - heading_error
+        delta_x = state[..., 0] - reference_state[..., 0]
+        delta_y = state[..., 1] - reference_state[..., 1]
+        lateral = (
+            -torch.sin(tangent) * delta_x
+            + torch.cos(tangent) * delta_y
+        )
+        longitudinal = (
+            torch.cos(tangent) * delta_x
+            + torch.sin(tangent) * delta_y
+        )
+        cross_track = (
+            recorded[..., 0]
+            + lateral / float(self.encoder_config.path_cross_track_scale)
+        )
+        predicted_heading_error = state[..., 2] - tangent
+        remaining = torch.clamp(
+            recorded[..., 4]
+            - longitudinal
+            / float(self.encoder_config.path_remaining_scale),
+            0.0,
+            1.0,
+        )
+        updated = torch.stack(
+            (
+                torch.clamp(cross_track, -2.0, 2.0),
+                torch.sin(predicted_heading_error),
+                torch.cos(predicted_heading_error),
+                recorded[..., 3],
+                remaining,
+                recorded[..., 5],
+            ),
+            dim=-1,
+        )
+        valid = recorded[..., 5:6] > 0.5
+        updated = torch.where(valid, updated, recorded)
+        return torch.cat(
+            (
+                prefix,
+                raw_template[..., consumed:context_start],
+                updated,
+                raw_template[..., context_end:],
+            ),
+            dim=-1,
+        )
+
+    def value_from_state(
+        self,
+        state,
+        raw_template,
+        target_position,
+        reference_state=None,
+        path_context_template=None,
+    ):
         raw = self.raw_observation_for_state(
-            state, raw_template, target_position
+            state,
+            raw_template,
+            target_position,
+            reference_state=reference_state,
+            path_context_template=path_context_template,
         )
         return self.value_from_raw(raw)
 
@@ -349,6 +439,8 @@ class ValueAlignedResidualObjective(nn.Module):
             "raw_observations",
             "target_positions",
         )
+        if self.value_model.encoder_config.include_path_context:
+            required = required + ("path_contexts",)
         missing = [name for name in required if name not in batch]
         if missing:
             raise KeyError("value-alignment batch is missing %s" % ", ".join(missing))
@@ -461,7 +553,11 @@ class ValueAlignedResidualObjective(nn.Module):
                 )
             confidence = confidence * competence
         predicted_values = self.value_model.value_from_state(
-            trajectory, raw_true, target_positions
+            trajectory,
+            raw_true,
+            target_positions,
+            reference_state=target_states,
+            path_context_template=batch.get("path_contexts"),
         )
         normalized_value_error = (
             predicted_values - true_values

@@ -840,6 +840,36 @@ class EpisodeMetrics:
                 row.get("reliability_authority", 1.0)
                 for row in values
             ])),
+            "reliability_dynamics_confidence_mean": float(np.mean([
+                row.get("reliability_dynamics_confidence", 1.0)
+                for row in values
+            ])),
+            "reliability_dynamics_confidence_min": float(np.min([
+                row.get("reliability_dynamics_confidence", 1.0)
+                for row in values
+            ])),
+            "reliability_dynamics_confidence_max": float(np.max([
+                row.get("reliability_dynamics_confidence", 1.0)
+                for row in values
+            ])),
+            "reliability_actor_support_confidence_mean": float(
+                np.mean([
+                    row.get("reliability_actor_confidence", 1.0)
+                    for row in values
+                ])
+            ),
+            "reliability_actor_support_confidence_min": float(
+                np.min([
+                    row.get("reliability_actor_confidence", 1.0)
+                    for row in values
+                ])
+            ),
+            "reliability_actor_support_confidence_max": float(
+                np.max([
+                    row.get("reliability_actor_confidence", 1.0)
+                    for row in values
+                ])
+            ),
             "reliability_actor_competence_mean": float(np.mean([
                 row.get(
                     "reliability_actor_competence_confidence", 1.0

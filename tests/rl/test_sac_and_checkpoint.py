@@ -693,6 +693,19 @@ def test_frozen_correction_exposes_composed_mppi_gaussian():
     assert log_std.shape == expected.shape
     assert np.isfinite(log_std).all()
     assert np.all(np.exp(log_std) > 0.0)
+    with torch.no_grad():
+        tensor = torch.as_tensor(observations)
+        base_pre, base_log_std = correction.base_actor.distribution(tensor)
+        base_mean = torch.tanh(base_pre).numpy()
+    expected_post_tanh_std = (
+        (1.0 - base_mean ** 2) * np.exp(base_log_std.numpy())
+    )
+    actual_post_tanh_std = (
+        (1.0 - np.tanh(pre_tanh_mean) ** 2) * np.exp(log_std)
+    )
+    np.testing.assert_allclose(
+        actual_post_tanh_std, expected_post_tanh_std, rtol=1e-5, atol=1e-6
+    )
 
 
 def test_base_gate_exactly_recovers_frozen_actor_without_critic_authority():

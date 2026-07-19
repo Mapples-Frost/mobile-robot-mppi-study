@@ -1,0 +1,8 @@
+include: residual_conditioned_policy_proposed_l206.yaml
+
+experiment:
+  name: residual_conditioned_policy_proposed_l207
+
+rl:
+  checkpoint: results/research_platform/rl/residual_conditioned_l205_seed20262051_40k_v1/checkpoints/step_000040000.pt
+

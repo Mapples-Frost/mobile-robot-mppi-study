@@ -635,9 +635,10 @@ class SACAgent:
         pre-tanh parameters lets the caller use its own seeded generator while
         preserving the SAC actor's bounded-action transform. For a frozen-base
         correction policy, the deterministic composed physical-control mean is
-        exact. Its spread is the first-order push-forward of the correction
-        Gaussian through tanh and the bounded composition; this is used only as
-        MPPI proposal covariance, never as a plant or value-model assumption.
+        exact. Deployment deliberately retains the frozen base policy's
+        first-order post-tanh spread, so residual conditioning changes only the
+        MPPI proposal mean. This approximation is used only as proposal
+        covariance, never as a plant or value-model assumption.
         """
         data = np.asarray(observations, dtype=np.float32)
         if (
@@ -654,7 +655,10 @@ class SACAgent:
             tensor = torch.as_tensor(data, device=self.device)
             if self.is_correction_policy:
                 self._require_correction_base()
-                base_mean = self.base_actor.mean_action(tensor)
+                base_pre_tanh, base_log_std = self.base_actor.distribution(
+                    tensor
+                )
+                base_mean = torch.tanh(base_pre_tanh)
                 correction_mean, correction_log_std = self.actor.distribution(
                     tensor
                 )
@@ -662,11 +666,15 @@ class SACAgent:
                 final_mean, _, jacobian = self._compose_correction(
                     base_mean, unit_mean
                 )
-                correction_std = (
-                    (1.0 - unit_mean ** 2) * torch.exp(correction_log_std)
-                )
+                # The correction changes only the proposal mean. Preserve the
+                # frozen L185 Actor's post-tanh spread exactly so the MPPI
+                # ablation does not confound residual conditioning with a
+                # covariance change. The correction log-std remains part of
+                # SAC training but does not silently alter deployment sampling.
+                del correction_log_std, jacobian
                 final_std = torch.clamp(
-                    torch.abs(jacobian) * correction_std, min=1e-6
+                    (1.0 - base_mean ** 2) * torch.exp(base_log_std),
+                    min=1e-6,
                 )
                 bounded_mean = torch.clamp(
                     final_mean, -1.0 + 1e-6, 1.0 - 1e-6

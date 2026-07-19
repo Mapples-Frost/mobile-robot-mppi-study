@@ -259,6 +259,71 @@ class RLDrivenMppiController(MppiController):
             "v_index": v_index,
         }
 
+    def _finalize_terminal_action(self, sequence, constraints):
+        """Apply one shared terminal action law after actuator slew clipping."""
+
+        sequence = np.asarray(sequence, dtype=np.float64).copy()
+        action = self.action_spec.clip(
+            sequence[0], self.previous_action, self.config.dt
+        )
+        v_index = constraints["v_index"]
+        if constraints["terminal_speed_limit_active"]:
+            action[v_index] = min(
+                action[v_index],
+                self.config.terminal_translation_speed_limit,
+            )
+        if constraints["terminal_heading_gate_active"]:
+            action[v_index] *= constraints["terminal_translation_scale"]
+        alignment_active = bool(
+            constraints["terminal_heading_gate_active"]
+            and self.config.terminal_alignment_yaw_gain is not None
+            and "omega_cmd" in self.action_spec.names
+        )
+        alignment_omega = 0.0
+        if alignment_active:
+            omega_index = self.action_spec.index("omega_cmd")
+            alignment_omega = (
+                float(self.config.terminal_alignment_yaw_gain)
+                * constraints["terminal_bearing_error"]
+            )
+            action[omega_index] = np.clip(
+                alignment_omega,
+                self.action_spec.lower[omega_index],
+                self.action_spec.upper[omega_index],
+            )
+        sequence[0] = action
+        return action, sequence, {
+            "terminal_translation_speed_limit": (
+                0.0
+                if self.config.terminal_translation_speed_limit is None
+                else float(self.config.terminal_translation_speed_limit)
+            ),
+            "terminal_translation_heading_gate_rad": (
+                0.0
+                if self.config.terminal_translation_heading_gate_rad is None
+                else float(self.config.terminal_translation_heading_gate_rad)
+            ),
+            "terminal_speed_limit_active": bool(
+                constraints["terminal_speed_limit_active"]
+            ),
+            "terminal_heading_gate_active": bool(
+                constraints["terminal_heading_gate_active"]
+            ),
+            "terminal_bearing_error": float(
+                constraints["terminal_bearing_error"]
+            ),
+            "terminal_translation_scale": float(
+                constraints["terminal_translation_scale"]
+            ),
+            "terminal_alignment_active": alignment_active,
+            "terminal_alignment_yaw_gain": (
+                0.0
+                if self.config.terminal_alignment_yaw_gain is None
+                else float(self.config.terminal_alignment_yaw_gain)
+            ),
+            "terminal_alignment_omega": float(alignment_omega),
+        }
+
     def _terminal_value_cost(
         self, trajectories, controls, observation, target
     ):
@@ -401,34 +466,9 @@ class RLDrivenMppiController(MppiController):
             state, target, sequence[None, :, :]
         )
         sequence = sequence[0]
-        action = self.action_spec.clip(
-            sequence[0], self.previous_action, self.config.dt
+        action, sequence, terminal_action_diagnostics = (
+            self._finalize_terminal_action(sequence, constraints)
         )
-        v_index = constraints["v_index"]
-        if constraints["terminal_speed_limit_active"]:
-            action[v_index] = min(
-                action[v_index], self.config.terminal_translation_speed_limit
-            )
-        if constraints["terminal_heading_gate_active"]:
-            action[v_index] *= constraints["terminal_translation_scale"]
-        alignment_active = bool(
-            constraints["terminal_heading_gate_active"]
-            and self.config.terminal_alignment_yaw_gain is not None
-            and "omega_cmd" in self.action_spec.names
-        )
-        alignment_omega = 0.0
-        if alignment_active:
-            omega_index = self.action_spec.index("omega_cmd")
-            alignment_omega = (
-                float(self.config.terminal_alignment_yaw_gain)
-                * constraints["terminal_bearing_error"]
-            )
-            action[omega_index] = np.clip(
-                alignment_omega,
-                self.action_spec.lower[omega_index],
-                self.action_spec.upper[omega_index],
-            )
-        sequence[0] = action
         updated_trajectory = self.rollout(state, sequence)[0]
 
         costs = np.concatenate(all_costs)
@@ -484,36 +524,8 @@ class RLDrivenMppiController(MppiController):
             "target_theta": float(target.pose.theta),
             "target_is_terminal": bool(target.is_terminal),
             "target_phase": str(target.phase),
-            "terminal_translation_speed_limit": (
-                0.0
-                if self.config.terminal_translation_speed_limit is None
-                else float(self.config.terminal_translation_speed_limit)
-            ),
-            "terminal_translation_heading_gate_rad": (
-                0.0
-                if self.config.terminal_translation_heading_gate_rad is None
-                else float(self.config.terminal_translation_heading_gate_rad)
-            ),
-            "terminal_speed_limit_active": bool(
-                constraints["terminal_speed_limit_active"]
-            ),
-            "terminal_heading_gate_active": bool(
-                constraints["terminal_heading_gate_active"]
-            ),
-            "terminal_bearing_error": float(
-                constraints["terminal_bearing_error"]
-            ),
-            "terminal_translation_scale": float(
-                constraints["terminal_translation_scale"]
-            ),
-            "terminal_alignment_active": alignment_active,
-            "terminal_alignment_yaw_gain": (
-                0.0
-                if self.config.terminal_alignment_yaw_gain is None
-                else float(self.config.terminal_alignment_yaw_gain)
-            ),
-            "terminal_alignment_omega": float(alignment_omega),
             "prior": dict(prior.metadata),
+            **terminal_action_diagnostics,
         }
         diagnostics.update(terminal_diagnostics)
         residual = getattr(self.dynamics, "residual", None)
@@ -1315,10 +1327,9 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
             state, target, sequence[None, :, :]
         )
         sequence = sequence[0]
-        action = self.action_spec.clip(
-            sequence[0], self.previous_action, self.config.dt
+        action, sequence, terminal_action_diagnostics = (
+            self._finalize_terminal_action(sequence, constraints)
         )
-        sequence[0] = action
         trajectory = self.rollout(state, sequence)[0]
         all_costs = np.concatenate(costs_by_iteration)
         effective_sample_size = float(
@@ -1354,12 +1365,6 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
             "covariance_scale_mean": float(
                 np.mean(np.sqrt(variance / base_variance))
             ),
-            "terminal_speed_limit_active": bool(
-                constraints["terminal_speed_limit_active"]
-            ),
-            "terminal_heading_gate_active": bool(
-                constraints["terminal_heading_gate_active"]
-            ),
             "reference_id": target.reference_id,
             "target_x": float(target.pose.x),
             "target_y": float(target.pose.y),
@@ -1367,6 +1372,7 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
             "target_is_terminal": bool(target.is_terminal),
             "target_phase": str(target.phase),
             "prior": dict(prior.metadata),
+            **terminal_action_diagnostics,
         }
         diagnostics.update(terminal_diagnostics)
         diagnostics.update(reliability_diagnostics)

@@ -328,6 +328,58 @@ def test_paper_controller_is_deterministic_for_fixed_seed():
     )
 
 
+def test_paper_terminal_heading_gate_preserves_rotate_in_place():
+    policy = JointBatchedDirectPolicy()
+    controller = PaperRLDrivenMppiController(
+        DynamicUnicyclePrediction(),
+        dynamic_unicycle_state(),
+        body_velocity_action((0.0, 0.5), 1.0),
+        MppiConfig(
+            horizon=5,
+            num_samples=20,
+            dt=0.1,
+            noise_sigma=(0.08, 0.20),
+            terminal_translation_speed_limit=0.11,
+            terminal_translation_heading_gate_rad=0.40,
+            terminal_alignment_yaw_gain=1.0,
+            seed=20260719,
+        ),
+        sampling_prior=policy,
+        paper_rl_driven_config={
+            "iterations": 2,
+            "guided_fraction": 0.25,
+            "elite_fraction": 0.25,
+            "terminal_value_weight": 0.0,
+        },
+    )
+    misaligned = RobotObservation(
+        timestamp=0.0,
+        pose=Pose2D(0.0, 0.0, np.pi / 2.0),
+        twist=Twist2D(0.2, 0.0),
+    )
+
+    result = controller.plan(misaligned, PointGoal(2.0, 0.0))
+
+    assert result.proposed_control.values[0] == 0.0
+    assert result.control_sequence[0, 0] == 0.0
+    assert result.proposed_control.values[1] < 0.0
+    assert result.diagnostics["terminal_heading_gate_active"]
+    assert result.diagnostics["terminal_translation_scale"] == 0.0
+    assert result.diagnostics["terminal_alignment_active"]
+    assert result.diagnostics["terminal_bearing_error"] < 0.0
+    assert result.diagnostics["terminal_alignment_omega"] < 0.0
+
+
+def test_paper_terminal_action_constraints_are_opt_in():
+    result = _controller(JointBatchedDirectPolicy()).plan(
+        _observation(), PointGoal(1.0, 0.0)
+    )
+
+    assert not result.diagnostics["terminal_heading_gate_active"]
+    assert not result.diagnostics["terminal_alignment_active"]
+    assert result.diagnostics["terminal_translation_scale"] == 1.0
+
+
 def test_reliability_hss_applies_authority_on_next_control_cycle():
     high = _reliable_controller(ReliabilityDirectPolicy(0.0))
     first = high.plan(_observation(), PointGoal(1.0, 0.0))

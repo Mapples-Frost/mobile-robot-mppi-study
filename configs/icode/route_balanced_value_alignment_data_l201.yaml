@@ -1,0 +1,43 @@
+output_dir: results/research_platform/datasets/route_balanced_value_alignment_l201
+actor_run_dir: results/research_platform/rl/path_conditioned_l185_seed20261901_60k_v2
+actor_checkpoint: results/research_platform/rl/path_conditioned_l185_seed20261901_60k_v2/checkpoints/step_000050000.pt
+seed: 20260750
+require_disjoint_environments: true
+action_noise_std: 0.03
+random_action_probability: 0.05
+
+splits:
+  train:
+    source: training
+    roles: [seen]
+    scene_prefixes:
+      - high_dynamic_accel_straight_l56
+      - high_dynamic_accel_turn_l56
+      - high_dynamic_sweep_l56
+      - high_dynamic_chicane_l56
+    episodes_per_environment: 1
+    max_steps: 180
+    seed_base: 22852000
+  validation:
+    source: validation
+    roles: [seen]
+    scene_prefixes: [high_dynamic_reverse_s_unseen_l56]
+    episodes_per_environment: 1
+    max_steps: 180
+    seed_base: 22853000
+  test:
+    source: validation
+    roles: [seen]
+    scene_prefixes: [high_dynamic_hairpin_unseen_l56]
+    episodes_per_environment: 1
+    max_steps: 180
+    seed_base: 22854000
+  unseen:
+    source: validation
+    roles: [unseen]
+    scene_prefixes:
+      - high_dynamic_reverse_s_unseen_l56
+      - high_dynamic_hairpin_unseen_l56
+    episodes_per_environment: 1
+    max_steps: 180
+    seed_base: 22855000

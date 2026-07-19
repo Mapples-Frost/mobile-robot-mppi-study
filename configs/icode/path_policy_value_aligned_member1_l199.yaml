@@ -11,7 +11,7 @@ disagreement_scale: 1.0
 value_scale: auto
 rollout_horizon: 10
 episode_bootstrap: {enabled: true, seed: 202607431}
-value_competence: {enabled: true, failure_quantile: 0.5, success_quantile: 0.5}
+value_competence: {enabled: false}
 loss_weights: {derivative: 0.25, one_step: 1.0, multistep: 4.0, value: 5.0, anchor: 1.0}
 training:
   epochs: 20

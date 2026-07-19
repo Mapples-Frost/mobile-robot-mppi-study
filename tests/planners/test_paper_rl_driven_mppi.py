@@ -403,6 +403,18 @@ def test_terminal_guidance_floor_does_not_override_tracking_lookahead():
     assert diagnostics["terminal_guidance_floor_active"]
 
 
+def test_paper_diagnostics_preserve_reference_phase():
+    controller = _reliable_controller(
+        ReliabilityDirectPolicy(8.0),
+        terminal_guidance=True,
+    )
+    target = PointGoal(0.4, 0.0, position_tolerance=0.1)
+    result = controller.plan(_observation(), target)
+    assert result.diagnostics["target_phase"] == "terminal"
+    assert result.diagnostics["target_is_terminal"]
+    assert result.diagnostics["target_x"] == 0.4
+
+
 def test_conservative_terminal_uses_candidate_confidence_and_safe_fallback():
     trusted = _reliable_controller(
         ReliabilityDirectPolicy(0.0, critic_disagreement=0.0),

@@ -1360,6 +1360,12 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
             "terminal_heading_gate_active": bool(
                 constraints["terminal_heading_gate_active"]
             ),
+            "reference_id": target.reference_id,
+            "target_x": float(target.pose.x),
+            "target_y": float(target.pose.y),
+            "target_theta": float(target.pose.theta),
+            "target_is_terminal": bool(target.is_terminal),
+            "target_phase": str(target.phase),
             "prior": dict(prior.metadata),
         }
         diagnostics.update(terminal_diagnostics)

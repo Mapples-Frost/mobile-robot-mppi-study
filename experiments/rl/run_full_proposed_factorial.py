@@ -446,6 +446,42 @@ def main(argv=None):
             output / ("%s_episodes.csv" % arm),
             [row for row in rows if row["factorial_arm"] == arm],
         )
+    provenance = {
+        "git_sha": _git_sha(),
+        "actor_checkpoint": {
+            "path": str(Path(args.actor_checkpoint).resolve()),
+            "sha256": _sha256(args.actor_checkpoint),
+        },
+        "ordinary_checkpoints": [
+            {"path": path, "sha256": _sha256(path)}
+            for path in ordinary_checkpoints
+        ],
+        "value_checkpoints": [
+            {"path": path, "sha256": _sha256(path)}
+            for path in value_checkpoints
+        ],
+        "ordinary_calibration": ordinary_reliability,
+        "value_calibration": value_reliability,
+        "schedule_seed": int(args.schedule_seed),
+        "seeds": list(seeds),
+        "scenes": [
+            {"name": item["name"], "source": item["source"]}
+            for item in scenes
+        ],
+        "physics_domains": domains,
+        "total_rollouts": int(args.total_rollouts),
+        "iterations": int(args.iterations),
+        "max_steps": int(args.max_steps),
+        "metric_profile": str(args.metric_profile),
+    }
+    for name, value in (
+        ("provenance.json", provenance),
+        ("schedule.json", schedule),
+    ):
+        (output / name).write_text(
+            json.dumps(value, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
     unique_seeds = sorted({int(row["seed"]) for row in rows})
     if len(unique_seeds) < 2:
         (output / "shard_complete.json").write_text(
@@ -513,39 +549,9 @@ def main(argv=None):
         args.schedule_seed,
         comparison_metrics,
     )
-    provenance = {
-        "git_sha": _git_sha(),
-        "actor_checkpoint": {
-            "path": str(Path(args.actor_checkpoint).resolve()),
-            "sha256": _sha256(args.actor_checkpoint),
-        },
-        "ordinary_checkpoints": [
-            {"path": path, "sha256": _sha256(path)}
-            for path in ordinary_checkpoints
-        ],
-        "value_checkpoints": [
-            {"path": path, "sha256": _sha256(path)}
-            for path in value_checkpoints
-        ],
-        "ordinary_calibration": ordinary_reliability,
-        "value_calibration": value_reliability,
-        "schedule_seed": int(args.schedule_seed),
-        "seeds": list(seeds),
-        "scenes": [
-            {"name": item["name"], "source": item["source"]}
-            for item in scenes
-        ],
-        "physics_domains": domains,
-        "total_rollouts": int(args.total_rollouts),
-        "iterations": int(args.iterations),
-        "max_steps": int(args.max_steps),
-        "metric_profile": str(args.metric_profile),
-    }
     for name, value in (
         ("paired_comparisons.json", paired),
         ("factorial_contrasts.json", factorial),
-        ("provenance.json", provenance),
-        ("schedule.json", schedule),
     ):
         (output / name).write_text(
             json.dumps(value, indent=2, sort_keys=True) + "\n",

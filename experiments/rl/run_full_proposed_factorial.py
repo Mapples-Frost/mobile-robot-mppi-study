@@ -161,13 +161,23 @@ def path_tracking_metrics(
     return result
 
 
-def _load_reliability(summary_path, config_path):
+def _load_reliability(
+    summary_path, config_path, allow_failed_calibration=False
+):
     summary_path = Path(summary_path).resolve()
     config_path = Path(config_path).resolve()
     summary = json.loads(summary_path.read_text(encoding="utf-8"))
     if not summary.get("selected_candidate"):
         raise ValueError(
             "reliability calibration lacks a selected candidate"
+        )
+    if (
+        summary.get("gate_passed") is not True
+        and not bool(allow_failed_calibration)
+    ):
+        raise ValueError(
+            "reliability calibration did not pass its held-out Gate: %s"
+            % summary_path
         )
     with config_path.open("r", encoding="utf-8") as handle:
         config = yaml.safe_load(handle)
@@ -287,6 +297,14 @@ def main(argv=None):
     parser.add_argument(
         "--terminal-guided-fraction-floor", type=float, default=0.0
     )
+    parser.add_argument(
+        "--allow-failed-reliability-calibration",
+        action="store_true",
+        help=(
+            "historical-development reproduction only; sealed evaluation "
+            "must use a calibration whose held-out Gate passed"
+        ),
+    )
     args = parser.parse_args(argv)
     comparison_metrics = metrics_for_profile(args.metric_profile)
 
@@ -328,10 +346,12 @@ def main(argv=None):
     ordinary_reliability = _load_reliability(
         args.ordinary_calibration_summary,
         args.ordinary_calibration_config,
+        args.allow_failed_reliability_calibration,
     )
     value_reliability = _load_reliability(
         args.value_calibration_summary,
         args.value_calibration_config,
+        args.allow_failed_reliability_calibration,
     )
     output = Path(args.output_dir).resolve()
     output.mkdir(parents=True, exist_ok=True)
@@ -487,6 +507,9 @@ def main(argv=None):
         "iterations": int(args.iterations),
         "max_steps": int(args.max_steps),
         "metric_profile": str(args.metric_profile),
+        "accepted_failed_reliability_calibration": bool(
+            args.allow_failed_reliability_calibration
+        ),
     }
     for name, value in (
         ("provenance.json", provenance),

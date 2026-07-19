@@ -1,7 +1,11 @@
+import json
+
 import numpy as np
+import pytest
 
 from experiments.rl.run_full_proposed_factorial import (
     ARMS,
+    _load_reliability,
     factorial_schedule,
     metrics_for_profile,
     path_tracking_metrics,
@@ -96,3 +100,32 @@ def test_path_completion_rejects_far_projection_shortcut(tmp_path):
 
     assert result["raw_path_completion_ratio"] == 1.0
     assert result["path_completion_ratio"] == 0.5
+
+
+def test_failed_reliability_calibration_is_rejected_by_default(tmp_path):
+    summary = tmp_path / "summary.json"
+    config = tmp_path / "config.yaml"
+    summary.write_text(
+        json.dumps({
+            "selected_candidate": {"candidate_id": 1},
+            "gate_passed": False,
+            "runtime_reliability_config": {"enabled": True},
+        }),
+        encoding="utf-8",
+    )
+    config.write_text(
+        "ensemble:\n"
+        "  disagreement_scales: [1, 1, 1, 1, 1]\n"
+        "  innovation_scales: [1, 1, 1, 1, 1]\n"
+        "  innovation_decay: 0.9\n"
+        "  support_soft_z: 3.0\n"
+        "  support_hard_z: 7.0\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="did not pass"):
+        _load_reliability(summary, config)
+    loaded = _load_reliability(
+        summary, config, allow_failed_calibration=True
+    )
+    assert loaded["runtime"]["enabled"]

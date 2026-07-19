@@ -1,0 +1,247 @@
+_config_path: /home/mapples/projects/mobile-robot-mppi-study/configs/research/mujoco_high_dynamic_reverse_s_terminal_dev_l187.yaml
+action_space:
+  lower:
+  - 0.0
+  - -1.25
+  names:
+  - v_cmd
+  - omega_cmd
+  rate_limits:
+  - 1.1
+  - 3.5
+  upper:
+  - 0.65
+  - 1.25
+experiment:
+  control_dt: 0.1
+  gate1_method: ordinary_fixed
+  initial_state:
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  max_steps: 360
+  name: ordinary_fixed__high_dynamic_reverse_s_terminal_dev_l187__nominal_seen__seed557
+  paper_iterations: 2
+  physics_domain: nominal_seen
+  physics_domain_role: seen
+  rollout_budget_per_decision: 100
+  seed: 557
+  terminate_on_collision: true
+memory:
+  enable: false
+perception:
+  local_obstacle_layer:
+    downsample_step: 1
+    fallback_downsample_step: 3
+    max_obstacle_count: 80
+    obstacle_radius: 0.08
+    planner_max_obstacles: 24
+  scan_guard:
+    front_angle_deg: 35.0
+    front_slow_distance: 0.85
+    front_slow_min_scale: 0.45
+    front_soft_block_distance: 0.45
+    front_soft_block_max_speed: 0.04
+    front_stop_distance: 0.35
+    hard_stop_distance: 0.35
+    near_body_stop_radius: 0.35
+    side_angle_deg: 125.0
+    side_stop_distance: 0.35
+planner:
+  checkpoints:
+  - /home/mapples/projects/mobile-robot-mppi-study/results/research_platform/l57_icode_high_dynamic_h36_seed20261201_v1/best.pt
+  - /home/mapples/projects/mobile-robot-mppi-study/results/research_platform/l57_icode_high_dynamic_h36_seed20261202_v1/best.pt
+  - /home/mapples/projects/mobile-robot-mppi-study/results/research_platform/l57_icode_high_dynamic_h36_seed20261203_v1/best.pt
+  collision_penalty: 10000.0
+  command_delay_s: 0.04
+  goal_running_weight: 1.0
+  goal_terminal_weight: 50.0
+  horizon: 36
+  importance_sampling_correction: false
+  integrator: rk4
+  noise_sigma:
+  - 0.18
+  - 0.65
+  num_samples: 50
+  obstacle_influence: 0.7
+  obstacle_weight: 70.0
+  optimizer: paper_rl_driven
+  paper_rl_driven:
+    covariance_max_scale: 2.0
+    covariance_min_scale: 0.25
+    covariance_smoothing: 0.5
+    elite_fraction: 0.2
+    guided_fraction: 0.3
+    iterations: 2
+    reliability:
+      actor_ood_hard: 7.0
+      actor_ood_soft: 3.0
+      dynamics_power: 1.0
+      enabled: false
+      ensemble_disagreement_hard: 0.017349182286947783
+      ensemble_disagreement_soft: 0.014040923165074673
+      high_confidence: 0.67
+      high_guided_fraction: 0.6
+      innovation_error_hard: 0.07275030556850941
+      innovation_error_soft: 0.04817528462507423
+      innovation_minimum_samples: 3
+      low_guided_fraction: 0.0
+      medium_confidence: 0.33
+      medium_guided_fraction: 0.3
+    terminal_critic_source: target
+    terminal_guidance_radius: 0.0
+    terminal_guided_fraction_floor: 0.0
+    terminal_value_weight: 1.0
+  prediction_mode: icode_residual
+  previous_sequence_blend: 0.2
+  prior_terminal_max_speed: 0.12
+  prior_translation_heading_gate_rad: 0.4
+  prior_translation_heading_gate_terminal_only: true
+  prior_v_gain: 1.1
+  prior_yaw_gain: 1.5
+  residual_ensemble:
+    disagreement_scales:
+    - 0.0192860868
+    - 0.0061503653
+    - 0.0276655704
+    - 0.2438328117
+    - 0.6734842658
+    innovation_decay: 0.9
+    innovation_scales:
+    - 0.25
+    - 0.25
+    - 0.35
+    - 0.25
+    - 0.6
+    support_hard_z: 7.0
+    support_soft_z: 3.0
+  residual_torch_num_threads: 1
+  residual_torchscript: true
+  robot_radius: 0.25
+  safety_recovery_prefix_steps: 8
+  sampling_prior: paper_direct_rl
+  temperature: 2.5
+  terminal_alignment_yaw_gain: 0.8
+  terminal_bearing_weight: 12.0
+  terminal_translation_heading_gate_rad: 0.4
+  terminal_translation_speed_limit: 0.12
+  terminal_velocity_weight: 24.0
+  terminal_yaw_rate_weight: 10.0
+plant:
+  actuator:
+    command_delay: 0.04
+    deadband: 0.0
+    integral_limit: 2.5
+    ki: 1.2
+    kp: 0.38
+    profile: torque_pi
+    torque_limit: 1.55
+    torque_slew_rate: 25.0
+  backend: mujoco_diff_drive
+  contact:
+    caster_friction:
+    - 0.05
+    - 0.001
+    - 0.0001
+    floor_friction:
+    - 0.55
+    - 0.0025
+    - 0.00025
+    solimp: 0.95 0.99 0.001
+    solref: 0.01 1
+    wheel_friction:
+    - 0.62
+    - 0.005
+    - 0.0008
+  nominal_velocity_time_constant: 0.18
+  nominal_yaw_time_constant: 0.12
+  physics:
+    integrator: implicitfast
+    iterations: 60
+    solver: Newton
+    timestep: 0.002
+    tolerance: 1.0e-10
+  robot:
+    chassis_half_size:
+    - 0.19
+    - 0.14
+    - 0.045
+    chassis_inertia:
+    - 0.13
+    - 0.19
+    - 0.27
+    chassis_mass: 13.0
+    collision_radius: 0.25
+    track_width: 0.32
+    wheel_mass: 0.38
+    wheel_radius: 0.08
+    wheel_width: 0.035
+rl:
+  checkpoint: results/research_platform/rl/path_conditioned_l185_seed20261901_60k_v2/checkpoints/step_000050000.pt
+  device: cpu
+  enabled: true
+  integration: paper_direct_control
+  policy_id: gate1_direct_control_actor
+  torch_num_threads: 1
+scene:
+  name: high_dynamic_reverse_s_terminal_dev_l187
+  obstacles: []
+sensors:
+  latency: 0.0
+  lidar_angle_max: 3.141592653589793
+  lidar_angle_min: -3.141592653589793
+  lidar_beams: 181
+  lidar_dropout_probability: 0.0
+  lidar_noise_std: 0.0
+  lidar_range_max: 4.0
+  lidar_range_min: 0.05
+  odom_noise_std:
+  - 0.0
+  - 0.0
+  - 0.0
+  pose_source: ground_truth
+  twist_noise_std:
+  - 0.0
+  - 0.0
+  twist_source: ground_truth
+state_space:
+  preset: dynamic_unicycle_5
+task:
+  lookahead_distance: 0.62
+  points:
+  - - 0.0
+    - 0.0
+  - - 0.4
+    - -0.02
+  - - 0.8
+    - -0.12
+  - - 1.2
+    - -0.34
+  - - 1.6
+    - -0.62
+  - - 2.0
+    - -0.82
+  - - 2.4
+    - -0.86
+  - - 2.8
+    - -0.7
+  - - 3.2
+    - -0.42
+  - - 3.6
+    - -0.16
+  - - 4.0
+    - -0.04
+  - - 4.4
+    - -0.12
+  - - 4.8
+    - -0.36
+  - - 5.2
+    - -0.66
+  position:
+  - 3.0
+  - 3.0
+  position_tolerance: 0.25
+  terminal_approach_distance: 1.1
+  type: polyline

@@ -1,0 +1,190 @@
+{
+  "actor_checkpoint": {
+    "path": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/rl/gate1_direct_control_multidomain_screen_l175/checkpoints/best.pt",
+    "sha256": "eaea2e2975de0794da4ad6876fbff3e6e85e53427e5471982e857585fff97ae4"
+  },
+  "actor_ood_offline_proxy": "recorded post-transition Actor observations; runtime uses hypothetical Actor-mean-rollout observations",
+  "candidate_count": 81,
+  "config": {
+    "actor_checkpoint": "results/research_platform/rl/gate1_direct_control_multidomain_screen_l175/checkpoints/best.pt",
+    "actor_ood_hard": 7.0,
+    "actor_ood_soft": 3.0,
+    "calibration_grid": {
+      "hard_quantiles": [
+        0.65,
+        0.8,
+        0.9
+      ],
+      "minimum_episodes_per_occupied_bin": 2,
+      "minimum_occupied_bins": 2,
+      "soft_quantiles": [
+        0.2,
+        0.35,
+        0.5
+      ]
+    },
+    "dataset_dir": "results/research_platform/datasets/gate2_value_alignment_l183",
+    "dynamics_power": 1.0,
+    "ensemble": {
+      "disagreement_scales": [
+        0.0192860868,
+        0.0061503653,
+        0.0276655704,
+        0.2438328117,
+        0.6734842658
+      ],
+      "innovation_decay": 0.9,
+      "innovation_minimum_samples": 3,
+      "innovation_scales": [
+        0.25,
+        0.25,
+        0.35,
+        0.25,
+        0.6
+      ],
+      "support_hard_z": 7.0,
+      "support_soft_z": 3.0
+    },
+    "ensemble_checkpoints": [
+      "results/research_platform/gate3_value_aligned_ensemble_member1_l192/best.pt",
+      "results/research_platform/gate3_value_aligned_ensemble_member2_l192/best.pt",
+      "results/research_platform/gate3_value_aligned_ensemble_member3_l192/best.pt"
+    ],
+    "high_confidence": 0.67,
+    "integrator": "rk4",
+    "medium_confidence": 0.33,
+    "nominal_dynamics": {
+      "velocity_time_constant": 0.18,
+      "yaw_time_constant": 0.12
+    },
+    "output_dir": "results/research_platform/rl/gate3_reliability_calibration_l193",
+    "rollout_error_scales": [
+      0.25,
+      0.25,
+      0.35,
+      0.25,
+      0.6
+    ],
+    "rollout_horizon": 10,
+    "seed": 20260718
+  },
+  "config_path": "/home/mapples/projects/mobile-robot-mppi-study/configs/rl/gate3_reliability_calibration_l193.yaml",
+  "dataset_manifest": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/datasets/gate2_value_alignment_l183/dataset_manifest.json",
+  "dataset_manifest_sha256": "77d6ae8baaa33460c8b01b75c60ad18b8a170fb0a7bf4cd3c8f059d52e6bc365",
+  "ensemble_checkpoints": [
+    {
+      "path": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/gate3_value_aligned_ensemble_member1_l192/best.pt",
+      "sha256": "c43af62cbd96d8b3ab9d2283175ff278df9b396a911609798a8dd7a41047c6f9"
+    },
+    {
+      "path": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/gate3_value_aligned_ensemble_member2_l192/best.pt",
+      "sha256": "e39065703214f5b3c8e9dfa2d16bb3c0be82e9340e54c017c40e5254c420acb8"
+    },
+    {
+      "path": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/gate3_value_aligned_ensemble_member3_l192/best.pt",
+      "sha256": "296159d7b7ae7780a6e7225f20d7e158c43acdd9bf0d4ab8254a07002b779e99"
+    }
+  ],
+  "evaluation": {
+    "test": {
+      "authority_error_rank_correlation": -0.9047619047619048,
+      "episode_count": 8,
+      "error_separation": 0.025761850786521316,
+      "level_episode_counts": {
+        "high": 0,
+        "low": 5,
+        "medium": 3
+      },
+      "level_mean_rollout_error": {
+        "high": null,
+        "low": 0.07735810067572423,
+        "medium": 0.05159624988920291
+      },
+      "monotone_high_to_low": true,
+      "occupied_levels": [
+        "low",
+        "medium"
+      ],
+      "passed": true
+    },
+    "unseen": {
+      "authority_error_rank_correlation": -1.0,
+      "episode_count": 4,
+      "error_separation": 0.0,
+      "level_episode_counts": {
+        "high": 0,
+        "low": 4,
+        "medium": 0
+      },
+      "level_mean_rollout_error": {
+        "high": null,
+        "low": 0.07690816575906426,
+        "medium": null
+      },
+      "monotone_high_to_low": true,
+      "occupied_levels": [
+        "low"
+      ],
+      "passed": false
+    }
+  },
+  "gate": "Gate 3A reliability calibration",
+  "gate_passed": false,
+  "git_sha": "3f1458b41a715c01751d196faaa84fe0aba888f7",
+  "independent_unit": "episode",
+  "runtime_reliability_config": {
+    "actor_ood_hard": 7.0,
+    "actor_ood_soft": 3.0,
+    "dynamics_power": 1.0,
+    "enabled": true,
+    "ensemble_disagreement_hard": 0.029740063775983316,
+    "ensemble_disagreement_soft": 0.01809636916077508,
+    "high_confidence": 0.67,
+    "high_guided_fraction": 0.6,
+    "innovation_error_hard": 0.07152732870917881,
+    "innovation_error_soft": 0.04740944258503671,
+    "innovation_minimum_samples": 3,
+    "low_guided_fraction": 0.0,
+    "medium_confidence": 0.33,
+    "medium_guided_fraction": 0.3
+  },
+  "schema_version": 1,
+  "selected_candidate": {
+    "candidate_id": 18,
+    "ensemble_disagreement_hard": 0.029740063775983316,
+    "ensemble_disagreement_hard_quantile": 0.9,
+    "ensemble_disagreement_soft": 0.01809636916077508,
+    "ensemble_disagreement_soft_quantile": 0.2,
+    "innovation_error_hard": 0.07152732870917881,
+    "innovation_error_hard_quantile": 0.65,
+    "innovation_error_soft": 0.04740944258503671,
+    "innovation_error_soft_quantile": 0.2,
+    "validation_gate": {
+      "authority_error_rank_correlation": -0.9761904761904763,
+      "episode_count": 8,
+      "error_separation": 0.021153895109562955,
+      "level_episode_counts": {
+        "high": 0,
+        "low": 4,
+        "medium": 4
+      },
+      "level_mean_rollout_error": {
+        "high": null,
+        "low": 0.07937447279519785,
+        "medium": 0.0582205776856349
+      },
+      "monotone_high_to_low": true,
+      "occupied_levels": [
+        "low",
+        "medium"
+      ],
+      "passed": true
+    }
+  },
+  "selection_split": "validation",
+  "split_sha256": {
+    "test": "0bd6431f4ae8d1112f2d0a38acdb8f9ac675214d2c7118077bc7c7e86d545319",
+    "unseen": "3476707a9548113bb1844c283b10230987f150e71fc10922d587f47a6e322011",
+    "validation": "ce09cf8f9c0d6c22e4913684c4cec1eaba73196cbfa61b82bfbe811c771df301"
+  }
+}

@@ -1,0 +1,92 @@
+{
+  "aggregates": [
+    {
+      "collision_rate": 0.0,
+      "collisions": 0,
+      "episodes": 20,
+      "global_step": 10000,
+      "mean_cross_track_rmse": 0.22615375722086917,
+      "mean_path_completion_ratio": 0.9662401997147987,
+      "mean_return": 65.869663700514,
+      "success_rate": 1.0,
+      "successes": 20
+    },
+    {
+      "collision_rate": 0.0,
+      "collisions": 0,
+      "episodes": 20,
+      "global_step": 20000,
+      "mean_cross_track_rmse": 0.12474310710384298,
+      "mean_path_completion_ratio": 0.9325903794261233,
+      "mean_return": 76.43361395078037,
+      "success_rate": 0.5,
+      "successes": 10
+    },
+    {
+      "collision_rate": 0.0,
+      "collisions": 0,
+      "episodes": 20,
+      "global_step": 30000,
+      "mean_cross_track_rmse": 0.11295754892081662,
+      "mean_path_completion_ratio": 0.9708382848801571,
+      "mean_return": 104.65624694358544,
+      "success_rate": 1.0,
+      "successes": 20
+    },
+    {
+      "collision_rate": 0.0,
+      "collisions": 0,
+      "episodes": 20,
+      "global_step": 40000,
+      "mean_cross_track_rmse": 0.11605023407496977,
+      "mean_path_completion_ratio": 0.9634837978320563,
+      "mean_return": 99.99896411910694,
+      "success_rate": 1.0,
+      "successes": 20
+    },
+    {
+      "collision_rate": 0.0,
+      "collisions": 0,
+      "episodes": 20,
+      "global_step": 50000,
+      "mean_cross_track_rmse": 0.10665972742154137,
+      "mean_path_completion_ratio": 0.9661892476630751,
+      "mean_return": 104.3965121458838,
+      "success_rate": 1.0,
+      "successes": 20
+    },
+    {
+      "collision_rate": 0.0,
+      "collisions": 0,
+      "episodes": 20,
+      "global_step": 60000,
+      "mean_cross_track_rmse": 0.12765667895939156,
+      "mean_path_completion_ratio": 0.9683791919466204,
+      "mean_return": 101.79372370408878,
+      "success_rate": 1.0,
+      "successes": 20
+    }
+  ],
+  "episodes_per_checkpoint": 20,
+  "expected_steps": [
+    10000,
+    20000,
+    30000,
+    40000,
+    50000,
+    60000
+  ],
+  "run_dir": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/rl/path_conditioned_l185_seed20261901_60k_v2",
+  "schema_version": 1,
+  "selected_checkpoint": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/rl/path_conditioned_l185_seed20261901_60k_v2/checkpoints/step_000050000.pt",
+  "selected_global_step": 50000,
+  "selection_rule": [
+    "minimum_collisions",
+    "maximum_successes",
+    "minimum_mean_cross_track_rmse",
+    "maximum_mean_path_completion_ratio",
+    "maximum_mean_return",
+    "earliest_checkpoint"
+  ],
+  "validation_csv": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/rl/path_conditioned_l185_seed20261901_60k_v2/validation_episodes.csv"
+}

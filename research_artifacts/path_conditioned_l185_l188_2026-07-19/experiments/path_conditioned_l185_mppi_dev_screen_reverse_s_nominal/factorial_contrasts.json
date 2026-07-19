@@ -1,0 +1,1028 @@
+{
+  "collision": {
+    "blocks": 2,
+    "bootstrap_samples": 5000,
+    "bootstrap_seed": 20261951,
+    "cluster_key": "seed",
+    "effects": {
+      "combination_vs_icode": {
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "estimate": 0.0,
+        "favorable": false,
+        "favorable_direction": "negative",
+        "per_block": [
+          0.0,
+          0.0
+        ],
+        "per_cluster": [
+          0.0,
+          0.0
+        ]
+      },
+      "combination_vs_rl": {
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "estimate": 0.0,
+        "favorable": false,
+        "favorable_direction": "negative",
+        "per_block": [
+          0.0,
+          0.0
+        ],
+        "per_cluster": [
+          0.0,
+          0.0
+        ]
+      },
+      "combination_vs_traditional": {
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "estimate": 0.0,
+        "favorable": false,
+        "favorable_direction": "negative",
+        "per_block": [
+          0.0,
+          0.0
+        ],
+        "per_cluster": [
+          0.0,
+          0.0
+        ]
+      },
+      "icode_by_rl_interaction": {
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "estimate": 0.0,
+        "favorable": false,
+        "favorable_direction": "negative",
+        "per_block": [
+          0.0,
+          0.0
+        ],
+        "per_cluster": [
+          0.0,
+          0.0
+        ]
+      },
+      "icode_main_effect": {
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "estimate": 0.0,
+        "favorable": false,
+        "favorable_direction": "negative",
+        "per_block": [
+          0.0,
+          0.0
+        ],
+        "per_cluster": [
+          0.0,
+          0.0
+        ]
+      },
+      "rl_main_effect": {
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "estimate": 0.0,
+        "favorable": false,
+        "favorable_direction": "negative",
+        "per_block": [
+          0.0,
+          0.0
+        ],
+        "per_cluster": [
+          0.0,
+          0.0
+        ]
+      }
+    },
+    "higher_is_better": false,
+    "independent_clusters": 2,
+    "independent_unit": "seed cluster; scene/domain blocks are repeated strata",
+    "metric": "collision"
+  },
+  "control_jerk": {
+    "blocks": 2,
+    "bootstrap_samples": 5000,
+    "bootstrap_seed": 20261951,
+    "cluster_key": "seed",
+    "effects": {
+      "combination_vs_icode": {
+        "ci95": [
+          -0.006493724034634024,
+          -0.004758210569935584
+        ],
+        "estimate": -0.005625967302284804,
+        "favorable": true,
+        "favorable_direction": "negative",
+        "per_block": [
+          -0.006493724034634024,
+          -0.004758210569935584
+        ],
+        "per_cluster": [
+          -0.006493724034634024,
+          -0.004758210569935584
+        ]
+      },
+      "combination_vs_rl": {
+        "ci95": [
+          -0.0029765250312140668,
+          -0.0018113597200333786
+        ],
+        "estimate": -0.0023939423756237227,
+        "favorable": true,
+        "favorable_direction": "negative",
+        "per_block": [
+          -0.0018113597200333786,
+          -0.0029765250312140668
+        ],
+        "per_cluster": [
+          -0.0018113597200333786,
+          -0.0029765250312140668
+        ]
+      },
+      "combination_vs_traditional": {
+        "ci95": [
+          -0.0013753110799190893,
+          0.0064945536817176686
+        ],
+        "estimate": 0.0025596213008992896,
+        "favorable": false,
+        "favorable_direction": "negative",
+        "per_block": [
+          0.0064945536817176686,
+          -0.0013753110799190893
+        ],
+        "per_cluster": [
+          0.0064945536817176686,
+          -0.0013753110799190893
+        ]
+      },
+      "icode_by_rl_interaction": {
+        "ci95": [
+          -0.014799637436385071,
+          -0.006359424521230561
+        ],
+        "estimate": -0.010579530978807816,
+        "favorable": true,
+        "favorable_direction": "negative",
+        "per_block": [
+          -0.014799637436385071,
+          -0.006359424521230561
+        ],
+        "per_cluster": [
+          -0.014799637436385071,
+          -0.006359424521230561
+        ]
+      },
+      "icode_main_effect": {
+        "ci95": [
+          0.0002031872294012138,
+          0.005588458998159157
+        ],
+        "estimate": 0.0028958231137801854,
+        "favorable": false,
+        "favorable_direction": "negative",
+        "per_block": [
+          0.005588458998159157,
+          0.0002031872294012138
+        ],
+        "per_cluster": [
+          0.005588458998159157,
+          0.0002031872294012138
+        ]
+      },
+      "rl_main_effect": {
+        "ci95": [
+          -0.001578498309320303,
+          0.0009060946835585115
+        ],
+        "estimate": -0.0003362018128808958,
+        "favorable": true,
+        "favorable_direction": "negative",
+        "per_block": [
+          0.0009060946835585115,
+          -0.001578498309320303
+        ],
+        "per_cluster": [
+          0.0009060946835585115,
+          -0.001578498309320303
+        ]
+      }
+    },
+    "higher_is_better": false,
+    "independent_clusters": 2,
+    "independent_unit": "seed cluster; scene/domain blocks are repeated strata",
+    "metric": "control_jerk"
+  },
+  "cross_track_max": {
+    "blocks": 2,
+    "bootstrap_samples": 5000,
+    "bootstrap_seed": 20261951,
+    "cluster_key": "seed",
+    "effects": {
+      "combination_vs_icode": {
+        "ci95": [
+          -0.03185503655067197,
+          -0.028637682138084986
+        ],
+        "estimate": -0.030246359344378478,
+        "favorable": true,
+        "favorable_direction": "negative",
+        "per_block": [
+          -0.03185503655067197,
+          -0.028637682138084986
+        ],
+        "per_cluster": [
+          -0.03185503655067197,
+          -0.028637682138084986
+        ]
+      },
+      "combination_vs_rl": {
+        "ci95": [
+          -0.0045137127707375185,
+          0.0012526776378696397
+        ],
+        "estimate": -0.0016305175664339394,
+        "favorable": true,
+        "favorable_direction": "negative",
+        "per_block": [
+          0.0012526776378696397,
+          -0.0045137127707375185
+        ],
+        "per_cluster": [
+          0.0012526776378696397,
+          -0.0045137127707375185
+        ]
+      },
+      "combination_vs_traditional": {
+        "ci95": [
+          -0.04152421398697881,
+          -0.01681996799321013
+        ],
+        "estimate": -0.02917209099009447,
+        "favorable": true,
+        "favorable_direction": "negative",
+        "per_block": [
+          -0.01681996799321013,
+          -0.04152421398697881
+        ],
+        "per_cluster": [
+          -0.01681996799321013,
+          -0.04152421398697881
+        ]
+      },
+      "icode_by_rl_interaction": {
+        "ci95": [
+          -0.013782390919592213,
+          0.00837281907815629
+        ],
+        "estimate": -0.0027047859207179614,
+        "favorable": true,
+        "favorable_direction": "negative",
+        "per_block": [
+          -0.013782390919592213,
+          0.00837281907815629
+        ],
+        "per_cluster": [
+          -0.013782390919592213,
+          0.00837281907815629
+        ]
+      },
+      "icode_main_effect": {
+        "ci95": [
+          -0.00870012230981567,
+          0.00814387309766574
+        ],
+        "estimate": -0.00027812460607496564,
+        "favorable": true,
+        "favorable_direction": "negative",
+        "per_block": [
+          0.00814387309766574,
+          -0.00870012230981567
+        ],
+        "per_cluster": [
+          0.00814387309766574,
+          -0.00870012230981567
+        ]
+      },
+      "rl_main_effect": {
+        "ci95": [
+          -0.03282409167716314,
+          -0.02496384109087587
+        ],
+        "estimate": -0.028893966384019504,
+        "favorable": true,
+        "favorable_direction": "negative",
+        "per_block": [
+          -0.02496384109087587,
+          -0.03282409167716314
+        ],
+        "per_cluster": [
+          -0.02496384109087587,
+          -0.03282409167716314
+        ]
+      }
+    },
+    "higher_is_better": false,
+    "independent_clusters": 2,
+    "independent_unit": "seed cluster; scene/domain blocks are repeated strata",
+    "metric": "cross_track_max"
+  },
+  "cross_track_rmse": {
+    "blocks": 2,
+    "bootstrap_samples": 5000,
+    "bootstrap_seed": 20261951,
+    "cluster_key": "seed",
+    "effects": {
+      "combination_vs_icode": {
+        "ci95": [
+          -0.00903639584966847,
+          -0.0031686525078176014
+        ],
+        "estimate": -0.006102524178743036,
+        "favorable": true,
+        "favorable_direction": "negative",
+        "per_block": [
+          -0.00903639584966847,
+          -0.0031686525078176014
+        ],
+        "per_cluster": [
+          -0.00903639584966847,
+          -0.0031686525078176014
+        ]
+      },
+      "combination_vs_rl": {
+        "ci95": [
+          -0.0019765682544908847,
+          -0.0018908143347858772
+        ],
+        "estimate": -0.001933691294638381,
+        "favorable": true,
+        "favorable_direction": "negative",
+        "per_block": [
+          -0.0018908143347858772,
+          -0.0019765682544908847
+        ],
+        "per_cluster": [
+          -0.0018908143347858772,
+          -0.0019765682544908847
+        ]
+      },
+      "combination_vs_traditional": {
+        "ci95": [
+          -0.008156696778442642,
+          0.0006513590109241615
+        ],
+        "estimate": -0.00375266888375924,
+        "favorable": true,
+        "favorable_direction": "negative",
+        "per_block": [
+          -0.008156696778442642,
+          0.0006513590109241615
+        ],
+        "per_cluster": [
+          -0.008156696778442642,
+          0.0006513590109241615
+        ]
+      },
+      "icode_by_rl_interaction": {
+        "ci95": [
+          -0.005796579773232648,
+          -0.0027705134060117056
+        ],
+        "estimate": -0.004283546589622177,
+        "favorable": true,
+        "favorable_direction": "negative",
+        "per_block": [
+          -0.0027705134060117056,
+          -0.005796579773232648
+        ],
+        "per_cluster": [
+          -0.0027705134060117056,
+          -0.005796579773232648
+        ]
+      },
+      "icode_main_effect": {
+        "ci95": [
+          -0.0005055576317800244,
+          0.0009217216321254391
+        ],
+        "estimate": 0.0002080820001727074,
+        "favorable": false,
+        "favorable_direction": "negative",
+        "per_block": [
+          -0.0005055576317800244,
+          0.0009217216321254391
+        ],
+        "per_cluster": [
+          -0.0005055576317800244,
+          0.0009217216321254391
+        ]
+      },
+      "rl_main_effect": {
+        "ci95": [
+          -0.007651139146662617,
+          -0.0002703626212012776
+        ],
+        "estimate": -0.0039607508839319475,
+        "favorable": true,
+        "favorable_direction": "negative",
+        "per_block": [
+          -0.007651139146662617,
+          -0.0002703626212012776
+        ],
+        "per_cluster": [
+          -0.007651139146662617,
+          -0.0002703626212012776
+        ]
+      }
+    },
+    "higher_is_better": false,
+    "independent_clusters": 2,
+    "independent_unit": "seed cluster; scene/domain blocks are repeated strata",
+    "metric": "cross_track_rmse"
+  },
+  "paper_total_rollouts_mean": {
+    "blocks": 2,
+    "bootstrap_samples": 5000,
+    "bootstrap_seed": 20261951,
+    "cluster_key": "seed",
+    "effects": {
+      "combination_vs_icode": {
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "estimate": 0.0,
+        "favorable": false,
+        "favorable_direction": "negative",
+        "per_block": [
+          0.0,
+          0.0
+        ],
+        "per_cluster": [
+          0.0,
+          0.0
+        ]
+      },
+      "combination_vs_rl": {
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "estimate": 0.0,
+        "favorable": false,
+        "favorable_direction": "negative",
+        "per_block": [
+          0.0,
+          0.0
+        ],
+        "per_cluster": [
+          0.0,
+          0.0
+        ]
+      },
+      "combination_vs_traditional": {
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "estimate": 0.0,
+        "favorable": false,
+        "favorable_direction": "negative",
+        "per_block": [
+          0.0,
+          0.0
+        ],
+        "per_cluster": [
+          0.0,
+          0.0
+        ]
+      },
+      "icode_by_rl_interaction": {
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "estimate": 0.0,
+        "favorable": false,
+        "favorable_direction": "negative",
+        "per_block": [
+          0.0,
+          0.0
+        ],
+        "per_cluster": [
+          0.0,
+          0.0
+        ]
+      },
+      "icode_main_effect": {
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "estimate": 0.0,
+        "favorable": false,
+        "favorable_direction": "negative",
+        "per_block": [
+          0.0,
+          0.0
+        ],
+        "per_cluster": [
+          0.0,
+          0.0
+        ]
+      },
+      "rl_main_effect": {
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "estimate": 0.0,
+        "favorable": false,
+        "favorable_direction": "negative",
+        "per_block": [
+          0.0,
+          0.0
+        ],
+        "per_cluster": [
+          0.0,
+          0.0
+        ]
+      }
+    },
+    "higher_is_better": false,
+    "independent_clusters": 2,
+    "independent_unit": "seed cluster; scene/domain blocks are repeated strata",
+    "metric": "paper_total_rollouts_mean"
+  },
+  "path_completion_ratio": {
+    "blocks": 2,
+    "bootstrap_samples": 5000,
+    "bootstrap_seed": 20261951,
+    "cluster_key": "seed",
+    "effects": {
+      "combination_vs_icode": {
+        "ci95": [
+          -0.008949230642169903,
+          -0.005157198692933407
+        ],
+        "estimate": -0.007053214667551655,
+        "favorable": false,
+        "favorable_direction": "positive",
+        "per_block": [
+          -0.005157198692933407,
+          -0.008949230642169903
+        ],
+        "per_cluster": [
+          -0.005157198692933407,
+          -0.008949230642169903
+        ]
+      },
+      "combination_vs_rl": {
+        "ci95": [
+          -0.010410057987592092,
+          0.003731946782155937
+        ],
+        "estimate": -0.0033390556027180773,
+        "favorable": false,
+        "favorable_direction": "positive",
+        "per_block": [
+          -0.010410057987592092,
+          0.003731946782155937
+        ],
+        "per_cluster": [
+          -0.010410057987592092,
+          0.003731946782155937
+        ]
+      },
+      "combination_vs_traditional": {
+        "ci95": [
+          -0.0024279411912973003,
+          0.0019838735884959435
+        ],
+        "estimate": -0.0002220338014006784,
+        "favorable": false,
+        "favorable_direction": "positive",
+        "per_block": [
+          0.0019838735884959435,
+          -0.0024279411912973003
+        ],
+        "per_cluster": [
+          0.0019838735884959435,
+          -0.0024279411912973003
+        ]
+      },
+      "icode_by_rl_interaction": {
+        "ci95": [
+          -0.017551130269021442,
+          -0.0027893426687166656
+        ],
+        "estimate": -0.010170236468869054,
+        "favorable": false,
+        "favorable_direction": "positive",
+        "per_block": [
+          -0.017551130269021442,
+          -0.0027893426687166656
+        ],
+        "per_cluster": [
+          -0.017551130269021442,
+          -0.0027893426687166656
+        ]
+      },
+      "icode_main_effect": {
+        "ci95": [
+          -0.0016344928530813707,
+          0.00512661811651427
+        ],
+        "estimate": 0.0017460626317164496,
+        "favorable": true,
+        "favorable_direction": "positive",
+        "per_block": [
+          -0.0016344928530813707,
+          0.00512661811651427
+        ],
+        "per_cluster": [
+          -0.0016344928530813707,
+          0.00512661811651427
+        ]
+      },
+      "rl_main_effect": {
+        "ci95": [
+          -0.00755455930781157,
+          0.0036183664415773142
+        ],
+        "estimate": -0.001968096433117128,
+        "favorable": false,
+        "favorable_direction": "positive",
+        "per_block": [
+          0.0036183664415773142,
+          -0.00755455930781157
+        ],
+        "per_cluster": [
+          0.0036183664415773142,
+          -0.00755455930781157
+        ]
+      }
+    },
+    "higher_is_better": true,
+    "independent_clusters": 2,
+    "independent_unit": "seed cluster; scene/domain blocks are repeated strata",
+    "metric": "path_completion_ratio"
+  },
+  "planner_compute_ms_mean": {
+    "blocks": 2,
+    "bootstrap_samples": 5000,
+    "bootstrap_seed": 20261951,
+    "cluster_key": "seed",
+    "effects": {
+      "combination_vs_icode": {
+        "ci95": [
+          -23.659513767658297,
+          -22.90294549962303
+        ],
+        "estimate": -23.281229633640663,
+        "favorable": true,
+        "favorable_direction": "negative",
+        "per_block": [
+          -22.90294549962303,
+          -23.659513767658297
+        ],
+        "per_cluster": [
+          -22.90294549962303,
+          -23.659513767658297
+        ]
+      },
+      "combination_vs_rl": {
+        "ci95": [
+          -0.4306073919805158,
+          5.657096707447096
+        ],
+        "estimate": 2.61324465773329,
+        "favorable": false,
+        "favorable_direction": "negative",
+        "per_block": [
+          5.657096707447096,
+          -0.4306073919805158
+        ],
+        "per_cluster": [
+          5.657096707447096,
+          -0.4306073919805158
+        ]
+      },
+      "combination_vs_traditional": {
+        "ci95": [
+          -23.065440253453232,
+          -17.787724882833146
+        ],
+        "estimate": -20.42658256814319,
+        "favorable": true,
+        "favorable_direction": "negative",
+        "per_block": [
+          -17.787724882833146,
+          -23.065440253453232
+        ],
+        "per_cluster": [
+          -17.787724882833146,
+          -23.065440253453232
+        ]
+      },
+      "icode_by_rl_interaction": {
+        "ci95": [
+          -1.02468090618558,
+          0.5418760906572118
+        ],
+        "estimate": -0.2414024077641841,
+        "favorable": true,
+        "favorable_direction": "negative",
+        "per_block": [
+          0.5418760906572118,
+          -1.02468090618558
+        ],
+        "per_cluster": [
+          0.5418760906572118,
+          -1.02468090618558
+        ]
+      },
+      "icode_main_effect": {
+        "ci95": [
+          0.08173306111227419,
+          5.38615866211849
+        ],
+        "estimate": 2.733945861615382,
+        "favorable": false,
+        "favorable_direction": "negative",
+        "per_block": [
+          5.38615866211849,
+          0.08173306111227419
+        ],
+        "per_cluster": [
+          5.38615866211849,
+          0.08173306111227419
+        ]
+      },
+      "rl_main_effect": {
+        "ci95": [
+          -23.173883544951636,
+          -23.147173314565507
+        ],
+        "estimate": -23.16052842975857,
+        "favorable": true,
+        "favorable_direction": "negative",
+        "per_block": [
+          -23.173883544951636,
+          -23.147173314565507
+        ],
+        "per_cluster": [
+          -23.173883544951636,
+          -23.147173314565507
+        ]
+      }
+    },
+    "higher_is_better": false,
+    "independent_clusters": 2,
+    "independent_unit": "seed cluster; scene/domain blocks are repeated strata",
+    "metric": "planner_compute_ms_mean"
+  },
+  "success": {
+    "blocks": 2,
+    "bootstrap_samples": 5000,
+    "bootstrap_seed": 20261951,
+    "cluster_key": "seed",
+    "effects": {
+      "combination_vs_icode": {
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "estimate": 0.0,
+        "favorable": false,
+        "favorable_direction": "positive",
+        "per_block": [
+          0.0,
+          0.0
+        ],
+        "per_cluster": [
+          0.0,
+          0.0
+        ]
+      },
+      "combination_vs_rl": {
+        "ci95": [
+          -1.0,
+          0.0
+        ],
+        "estimate": -0.5,
+        "favorable": false,
+        "favorable_direction": "positive",
+        "per_block": [
+          -1.0,
+          0.0
+        ],
+        "per_cluster": [
+          -1.0,
+          0.0
+        ]
+      },
+      "combination_vs_traditional": {
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "estimate": 0.0,
+        "favorable": false,
+        "favorable_direction": "positive",
+        "per_block": [
+          0.0,
+          0.0
+        ],
+        "per_cluster": [
+          0.0,
+          0.0
+        ]
+      },
+      "icode_by_rl_interaction": {
+        "ci95": [
+          -1.0,
+          0.0
+        ],
+        "estimate": -0.5,
+        "favorable": false,
+        "favorable_direction": "positive",
+        "per_block": [
+          -1.0,
+          0.0
+        ],
+        "per_cluster": [
+          -1.0,
+          0.0
+        ]
+      },
+      "icode_main_effect": {
+        "ci95": [
+          -0.5,
+          0.0
+        ],
+        "estimate": -0.25,
+        "favorable": false,
+        "favorable_direction": "positive",
+        "per_block": [
+          -0.5,
+          0.0
+        ],
+        "per_cluster": [
+          -0.5,
+          0.0
+        ]
+      },
+      "rl_main_effect": {
+        "ci95": [
+          0.0,
+          0.5
+        ],
+        "estimate": 0.25,
+        "favorable": true,
+        "favorable_direction": "positive",
+        "per_block": [
+          0.5,
+          0.0
+        ],
+        "per_cluster": [
+          0.5,
+          0.0
+        ]
+      }
+    },
+    "higher_is_better": true,
+    "independent_clusters": 2,
+    "independent_unit": "seed cluster; scene/domain blocks are repeated strata",
+    "metric": "success"
+  },
+  "tangent_heading_rmse": {
+    "blocks": 2,
+    "bootstrap_samples": 5000,
+    "bootstrap_seed": 20261951,
+    "cluster_key": "seed",
+    "effects": {
+      "combination_vs_icode": {
+        "ci95": [
+          -0.05264092783345062,
+          -0.028333212929429863
+        ],
+        "estimate": -0.04048707038144024,
+        "favorable": true,
+        "favorable_direction": "negative",
+        "per_block": [
+          -0.028333212929429863,
+          -0.05264092783345062
+        ],
+        "per_cluster": [
+          -0.028333212929429863,
+          -0.05264092783345062
+        ]
+      },
+      "combination_vs_rl": {
+        "ci95": [
+          -0.0019043368398197202,
+          0.03197019936524914
+        ],
+        "estimate": 0.01503293126271471,
+        "favorable": false,
+        "favorable_direction": "negative",
+        "per_block": [
+          0.03197019936524914,
+          -0.0019043368398197202
+        ],
+        "per_cluster": [
+          0.03197019936524914,
+          -0.0019043368398197202
+        ]
+      },
+      "combination_vs_traditional": {
+        "ci95": [
+          -0.0733102617642711,
+          0.03117275647640566
+        ],
+        "estimate": -0.021068752643932723,
+        "favorable": true,
+        "favorable_direction": "negative",
+        "per_block": [
+          0.03117275647640566,
+          -0.0733102617642711
+        ],
+        "per_cluster": [
+          0.03117275647640566,
+          -0.0733102617642711
+        ]
+      },
+      "icode_by_rl_interaction": {
+        "ci95": [
+          -0.027535770040586383,
+          0.018764997091000768
+        ],
+        "estimate": -0.004385386474792807,
+        "favorable": true,
+        "favorable_direction": "negative",
+        "per_block": [
+          -0.027535770040586383,
+          0.018764997091000768
+        ],
+        "per_cluster": [
+          -0.027535770040586383,
+          0.018764997091000768
+        ]
+      },
+      "icode_main_effect": {
+        "ci95": [
+          -0.011286835385320104,
+          0.04573808438554233
+        ],
+        "estimate": 0.017225624500111114,
+        "favorable": false,
+        "favorable_direction": "negative",
+        "per_block": [
+          0.04573808438554233,
+          -0.011286835385320104
+        ],
+        "per_cluster": [
+          0.04573808438554233,
+          -0.011286835385320104
+        ]
+      },
+      "rl_main_effect": {
+        "ci95": [
+          -0.062023426378951,
+          -0.014565327909136672
+        ],
+        "estimate": -0.03829437714404384,
+        "favorable": true,
+        "favorable_direction": "negative",
+        "per_block": [
+          -0.014565327909136672,
+          -0.062023426378951
+        ],
+        "per_cluster": [
+          -0.014565327909136672,
+          -0.062023426378951
+        ]
+      }
+    },
+    "higher_is_better": false,
+    "independent_clusters": 2,
+    "independent_unit": "seed cluster; scene/domain blocks are repeated strata",
+    "metric": "tangent_heading_rmse"
+  }
+}

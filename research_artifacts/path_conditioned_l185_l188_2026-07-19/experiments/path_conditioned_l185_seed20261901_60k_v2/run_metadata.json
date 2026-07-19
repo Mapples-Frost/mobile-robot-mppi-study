@@ -1,0 +1,167 @@
+{
+  "action_mode": "direct_control",
+  "actor_initialization": null,
+  "behavior_cloning_anchor": {
+    "batch_size": 256,
+    "dataset_dir": null,
+    "dataset_manifest_sha256": null,
+    "enabled": false,
+    "log_std_weight": 0.0,
+    "mean_weight": 1.0,
+    "target_log_std": -2.0
+  },
+  "checkpoint_selection": {
+    "config": {
+      "maximum_collision_regressions": 0,
+      "maximum_mean_cross_track_rmse": 0.04,
+      "maximum_mean_goal_distance_increase": 0.0,
+      "maximum_success_losses": 0,
+      "minimum_mean_goal_distance_improvement": 0.005,
+      "minimum_success_gains": 1,
+      "mode": "scalar"
+    },
+    "state": null
+  },
+  "curriculum": {
+    "enabled": false
+  },
+  "encoder": {
+    "goal_distance_scale": 6.0,
+    "history_frames": 1,
+    "include_absolute_pose": false,
+    "include_path_context": true,
+    "include_previous_action": true,
+    "include_safety_state": true,
+    "lidar_max_range": 4.0,
+    "lidar_sectors": 36,
+    "path_cross_track_scale": 0.75,
+    "path_curvature_scale": 2.0,
+    "path_remaining_scale": 7.0,
+    "velocity_scale": 0.65,
+    "yaw_rate_scale": 1.25
+  },
+  "git_sha": "b94d984d767b9ac569dfe5c7f4615bfa9a113049",
+  "initial_state_curriculum": {
+    "enabled": false
+  },
+  "intrinsic_exploration": {
+    "count_exponent": 0.5,
+    "enabled": false,
+    "heading_bins": 8,
+    "maximum_bonus": 0.1,
+    "position_bin_size": 0.25,
+    "weight": 0.05
+  },
+  "observation_dim": 54,
+  "parameterization": {
+    "covariance_anchor_scale": null,
+    "covariance_max_scale": 2.0,
+    "covariance_min_scale": 0.5,
+    "covariance_residual_log_bound": 0.22314355131420976,
+    "delta_scale": 0.65,
+    "kind": "control_knots",
+    "learn_covariance": false,
+    "mode": "delta",
+    "num_knots": 6,
+    "subgoal_command_delay": 0.0,
+    "subgoal_control_dt": 0.1,
+    "subgoal_decoder": "kinematic",
+    "subgoal_heading_gate_rad": 1.0471975511965976,
+    "subgoal_max_bearing": 3.141592653589793,
+    "subgoal_max_distance": 1.5,
+    "subgoal_max_integration_step": 0.02,
+    "subgoal_min_distance": 0.25,
+    "subgoal_v_gain": 0.8,
+    "subgoal_velocity_time_constant": 0.18,
+    "subgoal_yaw_gain": 1.5,
+    "subgoal_yaw_time_constant": 0.12
+  },
+  "policy_action_dim": 2,
+  "policy_mode": "direct",
+  "precision_constraint": {
+    "config": {
+      "dual_lr": 250.0,
+      "enabled": false,
+      "initial_multiplier": 0.0,
+      "maximum_multiplier": 100.0,
+      "target_cross_track_rmse_m": 0.04
+    },
+    "multiplier": 0.0,
+    "updates": 0
+  },
+  "replay_scene_groups": {
+    "0": "high_dynamic_accel_straight_l56__nominal_seen",
+    "1": "high_dynamic_accel_straight_l56__high_mass_seen",
+    "10": "high_dynamic_sweep_l56__low_friction_seen",
+    "11": "high_dynamic_sweep_l56__long_delay_seen",
+    "12": "high_dynamic_chicane_l56__nominal_seen",
+    "13": "high_dynamic_chicane_l56__high_mass_seen",
+    "14": "high_dynamic_chicane_l56__low_friction_seen",
+    "15": "high_dynamic_chicane_l56__long_delay_seen",
+    "2": "high_dynamic_accel_straight_l56__low_friction_seen",
+    "3": "high_dynamic_accel_straight_l56__long_delay_seen",
+    "4": "high_dynamic_accel_turn_l56__nominal_seen",
+    "5": "high_dynamic_accel_turn_l56__high_mass_seen",
+    "6": "high_dynamic_accel_turn_l56__low_friction_seen",
+    "7": "high_dynamic_accel_turn_l56__long_delay_seen",
+    "8": "high_dynamic_sweep_l56__nominal_seen",
+    "9": "high_dynamic_sweep_l56__high_mass_seen"
+  },
+  "resume_provenance": null,
+  "resume_semantics": "restart_interrupted_episode_v1",
+  "sac": {
+    "activation": "relu",
+    "actor_cvar_fraction": 1.0,
+    "actor_group_robust_enabled": false,
+    "actor_group_robust_temperature": 0.1,
+    "actor_lr": 0.0003,
+    "alpha_lr": 0.0003,
+    "automatic_entropy_tuning": true,
+    "correction_gate_alpha": 1.0,
+    "correction_initial_log_std": -2.5,
+    "correction_penalty_weight": 0.0,
+    "correction_scale": [
+      0.2
+    ],
+    "critic_distribution": "quantile",
+    "critic_lr": 0.0003,
+    "critic_num_quantiles": 25,
+    "critic_quantile_huber_kappa": 1.0,
+    "gamma": 0.99,
+    "gradient_clip_norm": 10.0,
+    "hidden_sizes": [
+      256,
+      256
+    ],
+    "initial_alpha": 0.2,
+    "log_std_max": 0.5,
+    "log_std_min": -5.0,
+    "minimum_alpha": 0.0,
+    "policy_mode": "direct",
+    "target_entropy": null,
+    "tau": 0.005
+  },
+  "training": {
+    "actor_update_after": 0,
+    "batch_size": 256,
+    "checkpoint_interval": 10000,
+    "device": "auto",
+    "evaluate_initial_policy": false,
+    "evaluation_episodes": 2,
+    "evaluation_interval": 10000,
+    "normalizer_update": "online",
+    "replay_capacity": 250000,
+    "replay_require_all_scenes": false,
+    "replay_sampling": "uniform",
+    "replay_success_fraction": 0.25,
+    "save_replay_buffer": false,
+    "seed": 20261901,
+    "total_steps": 60000,
+    "update_after": 1000,
+    "updates_per_step": 1,
+    "validation_initial_state_noise": null,
+    "validation_seed_base": 20262551,
+    "warmup_policy": "random",
+    "warmup_steps": 5000
+  }
+}

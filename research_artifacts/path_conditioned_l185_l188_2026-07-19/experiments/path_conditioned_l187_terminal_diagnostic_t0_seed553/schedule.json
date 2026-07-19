@@ -1,0 +1,38 @@
+[
+  {
+    "arm": "ordinary_fixed",
+    "block": "high_dynamic_reverse_s_unseen_l56::nominal_seen::seed553",
+    "global_run_order": 0,
+    "physics_domain": "nominal_seen",
+    "run_order_within_block": 0,
+    "scene": "high_dynamic_reverse_s_unseen_l56",
+    "seed": 553
+  },
+  {
+    "arm": "ordinary_adaptive",
+    "block": "high_dynamic_reverse_s_unseen_l56::nominal_seen::seed553",
+    "global_run_order": 1,
+    "physics_domain": "nominal_seen",
+    "run_order_within_block": 1,
+    "scene": "high_dynamic_reverse_s_unseen_l56",
+    "seed": 553
+  },
+  {
+    "arm": "full_proposed",
+    "block": "high_dynamic_reverse_s_unseen_l56::nominal_seen::seed553",
+    "global_run_order": 2,
+    "physics_domain": "nominal_seen",
+    "run_order_within_block": 2,
+    "scene": "high_dynamic_reverse_s_unseen_l56",
+    "seed": 553
+  },
+  {
+    "arm": "value_fixed",
+    "block": "high_dynamic_reverse_s_unseen_l56::nominal_seen::seed553",
+    "global_run_order": 3,
+    "physics_domain": "nominal_seen",
+    "run_order_within_block": 3,
+    "scene": "high_dynamic_reverse_s_unseen_l56",
+    "seed": 553
+  }
+]

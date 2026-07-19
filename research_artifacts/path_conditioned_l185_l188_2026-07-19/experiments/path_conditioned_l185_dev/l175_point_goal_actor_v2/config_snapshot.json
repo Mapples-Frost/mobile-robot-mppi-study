@@ -1,0 +1,3998 @@
+{
+  "checkpoint": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/rl/gate1_direct_control_multidomain_screen_l175/checkpoints/best.pt",
+  "checkpoint_git_sha": "5d49bdd184b285880f5cc0286519e31666c0d66b",
+  "config": "/home/mapples/projects/mobile-robot-mppi-study/configs/rl/gate1_direct_control_multidomain_screen_l175.yaml",
+  "git_sha": "b863c751394bfa1c0f92e25ace4c3639785810d6",
+  "physics_domain_config": "/home/mapples/projects/mobile-robot-mppi-study/configs/research/mujoco_physics_domains.yaml",
+  "physics_domains": [
+    "nominal_seen",
+    "high_mass_seen",
+    "low_friction_seen",
+    "long_delay_seen",
+    "combined_unseen"
+  ],
+  "resolved_environments": [
+    {
+      "_config_path": "/home/mapples/projects/mobile-robot-mppi-study/configs/research/mujoco_high_dynamic_reverse_s_unseen_l56.yaml",
+      "action_space": {
+        "lower": [
+          0.0,
+          -1.25
+        ],
+        "names": [
+          "v_cmd",
+          "omega_cmd"
+        ],
+        "rate_limits": [
+          1.1,
+          3.5
+        ],
+        "upper": [
+          0.65,
+          1.25
+        ]
+      },
+      "experiment": {
+        "control_dt": 0.1,
+        "initial_state": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "max_steps": 360,
+        "name": "high_dynamic_reverse_s_unseen_l56",
+        "physics_domain": "nominal_seen",
+        "physics_domain_role": "seen",
+        "seed": 0,
+        "terminate_on_collision": true
+      },
+      "memory": {
+        "enable": false
+      },
+      "perception": {
+        "local_obstacle_layer": {
+          "downsample_step": 1,
+          "fallback_downsample_step": 3,
+          "max_obstacle_count": 80,
+          "obstacle_radius": 0.08,
+          "planner_max_obstacles": 24
+        },
+        "scan_guard": {
+          "front_angle_deg": 35.0,
+          "front_slow_distance": 0.85,
+          "front_slow_min_scale": 0.45,
+          "front_soft_block_distance": 0.45,
+          "front_soft_block_max_speed": 0.04,
+          "front_stop_distance": 0.35,
+          "hard_stop_distance": 0.35,
+          "near_body_stop_radius": 0.35,
+          "side_angle_deg": 125.0,
+          "side_stop_distance": 0.35
+        }
+      },
+      "planner": {
+        "collision_penalty": 10000.0,
+        "command_delay_s": 0.04,
+        "goal_running_weight": 1.0,
+        "goal_terminal_weight": 25.0,
+        "horizon": 36,
+        "importance_sampling_correction": true,
+        "integrator": "rk4",
+        "noise_sigma": [
+          0.12,
+          0.5
+        ],
+        "num_samples": 200,
+        "obstacle_influence": 0.7,
+        "obstacle_weight": 70.0,
+        "prediction_mode": "nominal",
+        "previous_sequence_blend": 0.2,
+        "prior_terminal_max_speed": 0.12,
+        "prior_translation_heading_gate_rad": 0.4,
+        "prior_translation_heading_gate_terminal_only": true,
+        "prior_v_gain": 0.7,
+        "prior_yaw_gain": 1.2,
+        "residual_torch_num_threads": 1,
+        "residual_torchscript": true,
+        "robot_radius": 0.25,
+        "safety_recovery_prefix_steps": 8,
+        "sampling_prior": "rl",
+        "temperature": 2.5,
+        "terminal_alignment_yaw_gain": 0.8,
+        "terminal_bearing_weight": 12.0,
+        "terminal_translation_heading_gate_rad": 0.4,
+        "terminal_translation_speed_limit": 0.12,
+        "terminal_velocity_weight": 20.0,
+        "terminal_yaw_rate_weight": 8.0
+      },
+      "plant": {
+        "actuator": {
+          "command_delay": 0.04,
+          "deadband": 0.0,
+          "integral_limit": 2.5,
+          "ki": 1.2,
+          "kp": 0.38,
+          "profile": "torque_pi",
+          "torque_limit": 1.55,
+          "torque_slew_rate": 25.0
+        },
+        "backend": "mujoco_diff_drive",
+        "contact": {
+          "caster_friction": [
+            0.05,
+            0.001,
+            0.0001
+          ],
+          "floor_friction": [
+            0.55,
+            0.0025,
+            0.00025
+          ],
+          "solimp": "0.95 0.99 0.001",
+          "solref": "0.01 1",
+          "wheel_friction": [
+            0.62,
+            0.005,
+            0.0008
+          ]
+        },
+        "nominal_velocity_time_constant": 0.18,
+        "nominal_yaw_time_constant": 0.12,
+        "physics": {
+          "integrator": "implicitfast",
+          "iterations": 60,
+          "solver": "Newton",
+          "timestep": 0.002,
+          "tolerance": 1e-10
+        },
+        "robot": {
+          "chassis_half_size": [
+            0.19,
+            0.14,
+            0.045
+          ],
+          "chassis_inertia": [
+            0.13,
+            0.19,
+            0.27
+          ],
+          "chassis_mass": 13.0,
+          "collision_radius": 0.25,
+          "track_width": 0.32,
+          "wheel_mass": 0.38,
+          "wheel_radius": 0.08,
+          "wheel_width": 0.035
+        }
+      },
+      "rl": {
+        "algorithm": "sac",
+        "checkpoint": null,
+        "device": "cpu",
+        "enabled": true,
+        "gate": {
+          "critic_hard_threshold": 10.0,
+          "critic_soft_threshold": 2.0,
+          "fallback_after_safety_override": false,
+          "fixed_alpha": 1.0,
+          "mode": "none",
+          "ood_hard_threshold": 7.0,
+          "ood_soft_threshold": 3.0,
+          "use_critic_disagreement": false
+        },
+        "integration": "paper_direct_control",
+        "observation": {
+          "goal_distance_scale": 5.0,
+          "include_absolute_pose": false,
+          "include_previous_action": true,
+          "include_safety_state": true,
+          "lidar_max_range": 4.0,
+          "lidar_sectors": 36,
+          "velocity_scale": 0.5,
+          "yaw_rate_scale": 1.2
+        },
+        "policy_backend": "none",
+        "policy_id": "gate1_direct_control_multidomain_screen_l175",
+        "prior": {
+          "covariance_max_scale": 2.0,
+          "covariance_min_scale": 0.5,
+          "delta_scale": 0.65,
+          "learn_covariance": false,
+          "mode": "delta",
+          "num_knots": 6
+        },
+        "reward": {
+          "clearance_margin": 0.45,
+          "clearance_penalty_weight": 1.5,
+          "collision_penalty": 100.0,
+          "control_effort_weight": 0.02,
+          "control_rate_weight": 0.04,
+          "cross_track_penalty_weight": 0.0,
+          "distance_penalty_weight": 0.02,
+          "goal_bonus": 100.0,
+          "path_length_penalty_weight": 0.02,
+          "potential_progress_weight": 8.0,
+          "progress_mode": "distance_delta",
+          "safety_override_penalty": 0.15,
+          "step_penalty": 0.02,
+          "stuck_penalty": 0.03
+        },
+        "sac": {
+          "activation": "relu",
+          "actor_cvar_fraction": 1.0,
+          "actor_lr": 0.0003,
+          "alpha_lr": 0.0003,
+          "automatic_entropy_tuning": true,
+          "critic_distribution": "quantile",
+          "critic_lr": 0.0003,
+          "critic_num_quantiles": 25,
+          "critic_quantile_huber_kappa": 1.0,
+          "gamma": 0.99,
+          "gradient_clip_norm": 10.0,
+          "hidden_sizes": [
+            256,
+            256
+          ],
+          "initial_alpha": 0.2,
+          "log_std_max": 0.5,
+          "log_std_min": -5.0,
+          "policy_mode": "direct",
+          "tau": 0.005
+        },
+        "training": {
+          "action_mode": "direct_control",
+          "actor_update_after": 0,
+          "batch_size": 256,
+          "bc_anchor": {
+            "dataset_dir": null,
+            "enabled": false
+          },
+          "checkpoint_interval": 10000,
+          "checkpoint_selection": {
+            "mode": "scalar"
+          },
+          "curriculum": {
+            "enabled": false
+          },
+          "device": "auto",
+          "evaluate_initial_policy": false,
+          "evaluation_episodes": 3,
+          "evaluation_interval": 10000,
+          "initial_state_curriculum": {
+            "enabled": false
+          },
+          "initial_state_noise": [
+            0.05,
+            0.05,
+            0.1,
+            0.0,
+            0.0
+          ],
+          "normalizer_update": "online",
+          "physics_domain_config": "configs/research/mujoco_physics_domains.yaml",
+          "replay_capacity": 250000,
+          "replay_require_all_scenes": false,
+          "replay_sampling": "uniform",
+          "rl_prior_alpha": 1.0,
+          "save_replay_buffer": false,
+          "scene_configs": [
+            "configs/research/mujoco_strong_mppi_baseline.yaml",
+            "configs/research/mujoco_lab_complex.yaml",
+            "configs/research/mujoco_narrow_corridor.yaml",
+            "configs/research/mujoco_u_trap_long_board.yaml"
+          ],
+          "seed": 20260718,
+          "total_steps": 60000,
+          "training_domain_roles": [
+            "seen"
+          ],
+          "update_after": 1000,
+          "updates_per_step": 1,
+          "validation_domain_roles": [
+            "seen",
+            "unseen"
+          ],
+          "validation_scene_configs": [
+            "configs/research/mujoco_strong_mppi_baseline.yaml",
+            "configs/research/mujoco_narrow_corridor.yaml"
+          ],
+          "validation_seed_base": 22320718,
+          "warmup_policy": "random",
+          "warmup_steps": 5000
+        }
+      },
+      "scene": {
+        "name": "high_dynamic_reverse_s_unseen_l56__nominal_seen",
+        "obstacles": []
+      },
+      "sensors": {
+        "latency": 0.0,
+        "lidar_angle_max": 3.141592653589793,
+        "lidar_angle_min": -3.141592653589793,
+        "lidar_beams": 181,
+        "lidar_dropout_probability": 0.0,
+        "lidar_noise_std": 0.0,
+        "lidar_range_max": 4.0,
+        "lidar_range_min": 0.05,
+        "odom_noise_std": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "pose_source": "ground_truth",
+        "twist_noise_std": [
+          0.0,
+          0.0
+        ],
+        "twist_source": "ground_truth"
+      },
+      "state_space": {
+        "preset": "dynamic_unicycle_5"
+      },
+      "task": {
+        "lookahead_distance": 0.62,
+        "points": [
+          [
+            0.0,
+            0.0
+          ],
+          [
+            0.4,
+            -0.02
+          ],
+          [
+            0.8,
+            -0.12
+          ],
+          [
+            1.2,
+            -0.34
+          ],
+          [
+            1.6,
+            -0.62
+          ],
+          [
+            2.0,
+            -0.82
+          ],
+          [
+            2.4,
+            -0.86
+          ],
+          [
+            2.8,
+            -0.7
+          ],
+          [
+            3.2,
+            -0.42
+          ],
+          [
+            3.6,
+            -0.16
+          ],
+          [
+            4.0,
+            -0.04
+          ],
+          [
+            4.4,
+            -0.12
+          ],
+          [
+            4.8,
+            -0.36
+          ],
+          [
+            5.2,
+            -0.66
+          ]
+        ],
+        "position": [
+          3.0,
+          3.0
+        ],
+        "position_tolerance": 0.25,
+        "terminal_approach_distance": 1.1,
+        "type": "polyline"
+      }
+    },
+    {
+      "_config_path": "/home/mapples/projects/mobile-robot-mppi-study/configs/research/mujoco_high_dynamic_reverse_s_unseen_l56.yaml",
+      "action_space": {
+        "lower": [
+          0.0,
+          -1.25
+        ],
+        "names": [
+          "v_cmd",
+          "omega_cmd"
+        ],
+        "rate_limits": [
+          1.1,
+          3.5
+        ],
+        "upper": [
+          0.65,
+          1.25
+        ]
+      },
+      "experiment": {
+        "control_dt": 0.1,
+        "initial_state": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "max_steps": 360,
+        "name": "high_dynamic_reverse_s_unseen_l56",
+        "physics_domain": "high_mass_seen",
+        "physics_domain_role": "seen",
+        "seed": 0,
+        "terminate_on_collision": true
+      },
+      "memory": {
+        "enable": false
+      },
+      "perception": {
+        "local_obstacle_layer": {
+          "downsample_step": 1,
+          "fallback_downsample_step": 3,
+          "max_obstacle_count": 80,
+          "obstacle_radius": 0.08,
+          "planner_max_obstacles": 24
+        },
+        "scan_guard": {
+          "front_angle_deg": 35.0,
+          "front_slow_distance": 0.85,
+          "front_slow_min_scale": 0.45,
+          "front_soft_block_distance": 0.45,
+          "front_soft_block_max_speed": 0.04,
+          "front_stop_distance": 0.35,
+          "hard_stop_distance": 0.35,
+          "near_body_stop_radius": 0.35,
+          "side_angle_deg": 125.0,
+          "side_stop_distance": 0.35
+        }
+      },
+      "planner": {
+        "collision_penalty": 10000.0,
+        "command_delay_s": 0.04,
+        "goal_running_weight": 1.0,
+        "goal_terminal_weight": 25.0,
+        "horizon": 36,
+        "importance_sampling_correction": true,
+        "integrator": "rk4",
+        "noise_sigma": [
+          0.12,
+          0.5
+        ],
+        "num_samples": 200,
+        "obstacle_influence": 0.7,
+        "obstacle_weight": 70.0,
+        "prediction_mode": "nominal",
+        "previous_sequence_blend": 0.2,
+        "prior_terminal_max_speed": 0.12,
+        "prior_translation_heading_gate_rad": 0.4,
+        "prior_translation_heading_gate_terminal_only": true,
+        "prior_v_gain": 0.7,
+        "prior_yaw_gain": 1.2,
+        "residual_torch_num_threads": 1,
+        "residual_torchscript": true,
+        "robot_radius": 0.25,
+        "safety_recovery_prefix_steps": 8,
+        "sampling_prior": "rl",
+        "temperature": 2.5,
+        "terminal_alignment_yaw_gain": 0.8,
+        "terminal_bearing_weight": 12.0,
+        "terminal_translation_heading_gate_rad": 0.4,
+        "terminal_translation_speed_limit": 0.12,
+        "terminal_velocity_weight": 20.0,
+        "terminal_yaw_rate_weight": 8.0
+      },
+      "plant": {
+        "actuator": {
+          "command_delay": 0.04,
+          "deadband": 0.0,
+          "integral_limit": 2.5,
+          "ki": 1.2,
+          "kp": 0.38,
+          "profile": "torque_pi",
+          "torque_limit": 1.55,
+          "torque_slew_rate": 25.0
+        },
+        "backend": "mujoco_diff_drive",
+        "contact": {
+          "caster_friction": [
+            0.05,
+            0.001,
+            0.0001
+          ],
+          "floor_friction": [
+            0.55,
+            0.0025,
+            0.00025
+          ],
+          "solimp": "0.95 0.99 0.001",
+          "solref": "0.01 1",
+          "wheel_friction": [
+            0.62,
+            0.005,
+            0.0008
+          ]
+        },
+        "nominal_velocity_time_constant": 0.18,
+        "nominal_yaw_time_constant": 0.12,
+        "physics": {
+          "integrator": "implicitfast",
+          "iterations": 60,
+          "solver": "Newton",
+          "timestep": 0.002,
+          "tolerance": 1e-10
+        },
+        "robot": {
+          "chassis_half_size": [
+            0.19,
+            0.14,
+            0.045
+          ],
+          "chassis_inertia": [
+            0.1,
+            0.15,
+            0.2
+          ],
+          "chassis_mass": 11.0,
+          "collision_radius": 0.25,
+          "track_width": 0.32,
+          "wheel_mass": 0.38,
+          "wheel_radius": 0.08,
+          "wheel_width": 0.035
+        }
+      },
+      "rl": {
+        "algorithm": "sac",
+        "checkpoint": null,
+        "device": "cpu",
+        "enabled": true,
+        "gate": {
+          "critic_hard_threshold": 10.0,
+          "critic_soft_threshold": 2.0,
+          "fallback_after_safety_override": false,
+          "fixed_alpha": 1.0,
+          "mode": "none",
+          "ood_hard_threshold": 7.0,
+          "ood_soft_threshold": 3.0,
+          "use_critic_disagreement": false
+        },
+        "integration": "paper_direct_control",
+        "observation": {
+          "goal_distance_scale": 5.0,
+          "include_absolute_pose": false,
+          "include_previous_action": true,
+          "include_safety_state": true,
+          "lidar_max_range": 4.0,
+          "lidar_sectors": 36,
+          "velocity_scale": 0.5,
+          "yaw_rate_scale": 1.2
+        },
+        "policy_backend": "none",
+        "policy_id": "gate1_direct_control_multidomain_screen_l175",
+        "prior": {
+          "covariance_max_scale": 2.0,
+          "covariance_min_scale": 0.5,
+          "delta_scale": 0.65,
+          "learn_covariance": false,
+          "mode": "delta",
+          "num_knots": 6
+        },
+        "reward": {
+          "clearance_margin": 0.45,
+          "clearance_penalty_weight": 1.5,
+          "collision_penalty": 100.0,
+          "control_effort_weight": 0.02,
+          "control_rate_weight": 0.04,
+          "cross_track_penalty_weight": 0.0,
+          "distance_penalty_weight": 0.02,
+          "goal_bonus": 100.0,
+          "path_length_penalty_weight": 0.02,
+          "potential_progress_weight": 8.0,
+          "progress_mode": "distance_delta",
+          "safety_override_penalty": 0.15,
+          "step_penalty": 0.02,
+          "stuck_penalty": 0.03
+        },
+        "sac": {
+          "activation": "relu",
+          "actor_cvar_fraction": 1.0,
+          "actor_lr": 0.0003,
+          "alpha_lr": 0.0003,
+          "automatic_entropy_tuning": true,
+          "critic_distribution": "quantile",
+          "critic_lr": 0.0003,
+          "critic_num_quantiles": 25,
+          "critic_quantile_huber_kappa": 1.0,
+          "gamma": 0.99,
+          "gradient_clip_norm": 10.0,
+          "hidden_sizes": [
+            256,
+            256
+          ],
+          "initial_alpha": 0.2,
+          "log_std_max": 0.5,
+          "log_std_min": -5.0,
+          "policy_mode": "direct",
+          "tau": 0.005
+        },
+        "training": {
+          "action_mode": "direct_control",
+          "actor_update_after": 0,
+          "batch_size": 256,
+          "bc_anchor": {
+            "dataset_dir": null,
+            "enabled": false
+          },
+          "checkpoint_interval": 10000,
+          "checkpoint_selection": {
+            "mode": "scalar"
+          },
+          "curriculum": {
+            "enabled": false
+          },
+          "device": "auto",
+          "evaluate_initial_policy": false,
+          "evaluation_episodes": 3,
+          "evaluation_interval": 10000,
+          "initial_state_curriculum": {
+            "enabled": false
+          },
+          "initial_state_noise": [
+            0.05,
+            0.05,
+            0.1,
+            0.0,
+            0.0
+          ],
+          "normalizer_update": "online",
+          "physics_domain_config": "configs/research/mujoco_physics_domains.yaml",
+          "replay_capacity": 250000,
+          "replay_require_all_scenes": false,
+          "replay_sampling": "uniform",
+          "rl_prior_alpha": 1.0,
+          "save_replay_buffer": false,
+          "scene_configs": [
+            "configs/research/mujoco_strong_mppi_baseline.yaml",
+            "configs/research/mujoco_lab_complex.yaml",
+            "configs/research/mujoco_narrow_corridor.yaml",
+            "configs/research/mujoco_u_trap_long_board.yaml"
+          ],
+          "seed": 20260718,
+          "total_steps": 60000,
+          "training_domain_roles": [
+            "seen"
+          ],
+          "update_after": 1000,
+          "updates_per_step": 1,
+          "validation_domain_roles": [
+            "seen",
+            "unseen"
+          ],
+          "validation_scene_configs": [
+            "configs/research/mujoco_strong_mppi_baseline.yaml",
+            "configs/research/mujoco_narrow_corridor.yaml"
+          ],
+          "validation_seed_base": 22320718,
+          "warmup_policy": "random",
+          "warmup_steps": 5000
+        }
+      },
+      "scene": {
+        "name": "high_dynamic_reverse_s_unseen_l56__high_mass_seen",
+        "obstacles": []
+      },
+      "sensors": {
+        "latency": 0.0,
+        "lidar_angle_max": 3.141592653589793,
+        "lidar_angle_min": -3.141592653589793,
+        "lidar_beams": 181,
+        "lidar_dropout_probability": 0.0,
+        "lidar_noise_std": 0.0,
+        "lidar_range_max": 4.0,
+        "lidar_range_min": 0.05,
+        "odom_noise_std": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "pose_source": "ground_truth",
+        "twist_noise_std": [
+          0.0,
+          0.0
+        ],
+        "twist_source": "ground_truth"
+      },
+      "state_space": {
+        "preset": "dynamic_unicycle_5"
+      },
+      "task": {
+        "lookahead_distance": 0.62,
+        "points": [
+          [
+            0.0,
+            0.0
+          ],
+          [
+            0.4,
+            -0.02
+          ],
+          [
+            0.8,
+            -0.12
+          ],
+          [
+            1.2,
+            -0.34
+          ],
+          [
+            1.6,
+            -0.62
+          ],
+          [
+            2.0,
+            -0.82
+          ],
+          [
+            2.4,
+            -0.86
+          ],
+          [
+            2.8,
+            -0.7
+          ],
+          [
+            3.2,
+            -0.42
+          ],
+          [
+            3.6,
+            -0.16
+          ],
+          [
+            4.0,
+            -0.04
+          ],
+          [
+            4.4,
+            -0.12
+          ],
+          [
+            4.8,
+            -0.36
+          ],
+          [
+            5.2,
+            -0.66
+          ]
+        ],
+        "position": [
+          3.0,
+          3.0
+        ],
+        "position_tolerance": 0.25,
+        "terminal_approach_distance": 1.1,
+        "type": "polyline"
+      }
+    },
+    {
+      "_config_path": "/home/mapples/projects/mobile-robot-mppi-study/configs/research/mujoco_high_dynamic_reverse_s_unseen_l56.yaml",
+      "action_space": {
+        "lower": [
+          0.0,
+          -1.25
+        ],
+        "names": [
+          "v_cmd",
+          "omega_cmd"
+        ],
+        "rate_limits": [
+          1.1,
+          3.5
+        ],
+        "upper": [
+          0.65,
+          1.25
+        ]
+      },
+      "experiment": {
+        "control_dt": 0.1,
+        "initial_state": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "max_steps": 360,
+        "name": "high_dynamic_reverse_s_unseen_l56",
+        "physics_domain": "low_friction_seen",
+        "physics_domain_role": "seen",
+        "seed": 0,
+        "terminate_on_collision": true
+      },
+      "memory": {
+        "enable": false
+      },
+      "perception": {
+        "local_obstacle_layer": {
+          "downsample_step": 1,
+          "fallback_downsample_step": 3,
+          "max_obstacle_count": 80,
+          "obstacle_radius": 0.08,
+          "planner_max_obstacles": 24
+        },
+        "scan_guard": {
+          "front_angle_deg": 35.0,
+          "front_slow_distance": 0.85,
+          "front_slow_min_scale": 0.45,
+          "front_soft_block_distance": 0.45,
+          "front_soft_block_max_speed": 0.04,
+          "front_stop_distance": 0.35,
+          "hard_stop_distance": 0.35,
+          "near_body_stop_radius": 0.35,
+          "side_angle_deg": 125.0,
+          "side_stop_distance": 0.35
+        }
+      },
+      "planner": {
+        "collision_penalty": 10000.0,
+        "command_delay_s": 0.04,
+        "goal_running_weight": 1.0,
+        "goal_terminal_weight": 25.0,
+        "horizon": 36,
+        "importance_sampling_correction": true,
+        "integrator": "rk4",
+        "noise_sigma": [
+          0.12,
+          0.5
+        ],
+        "num_samples": 200,
+        "obstacle_influence": 0.7,
+        "obstacle_weight": 70.0,
+        "prediction_mode": "nominal",
+        "previous_sequence_blend": 0.2,
+        "prior_terminal_max_speed": 0.12,
+        "prior_translation_heading_gate_rad": 0.4,
+        "prior_translation_heading_gate_terminal_only": true,
+        "prior_v_gain": 0.7,
+        "prior_yaw_gain": 1.2,
+        "residual_torch_num_threads": 1,
+        "residual_torchscript": true,
+        "robot_radius": 0.25,
+        "safety_recovery_prefix_steps": 8,
+        "sampling_prior": "rl",
+        "temperature": 2.5,
+        "terminal_alignment_yaw_gain": 0.8,
+        "terminal_bearing_weight": 12.0,
+        "terminal_translation_heading_gate_rad": 0.4,
+        "terminal_translation_speed_limit": 0.12,
+        "terminal_velocity_weight": 20.0,
+        "terminal_yaw_rate_weight": 8.0
+      },
+      "plant": {
+        "actuator": {
+          "command_delay": 0.04,
+          "deadband": 0.0,
+          "integral_limit": 2.5,
+          "ki": 1.2,
+          "kp": 0.38,
+          "profile": "torque_pi",
+          "torque_limit": 1.55,
+          "torque_slew_rate": 25.0
+        },
+        "backend": "mujoco_diff_drive",
+        "contact": {
+          "caster_friction": [
+            0.05,
+            0.001,
+            0.0001
+          ],
+          "floor_friction": [
+            0.75,
+            0.004,
+            0.0004
+          ],
+          "solimp": "0.95 0.99 0.001",
+          "solref": "0.01 1",
+          "wheel_friction": [
+            0.85,
+            0.008,
+            0.0015
+          ]
+        },
+        "nominal_velocity_time_constant": 0.18,
+        "nominal_yaw_time_constant": 0.12,
+        "physics": {
+          "integrator": "implicitfast",
+          "iterations": 60,
+          "solver": "Newton",
+          "timestep": 0.002,
+          "tolerance": 1e-10
+        },
+        "robot": {
+          "chassis_half_size": [
+            0.19,
+            0.14,
+            0.045
+          ],
+          "chassis_inertia": [
+            0.13,
+            0.19,
+            0.27
+          ],
+          "chassis_mass": 13.0,
+          "collision_radius": 0.25,
+          "track_width": 0.32,
+          "wheel_mass": 0.38,
+          "wheel_radius": 0.08,
+          "wheel_width": 0.035
+        }
+      },
+      "rl": {
+        "algorithm": "sac",
+        "checkpoint": null,
+        "device": "cpu",
+        "enabled": true,
+        "gate": {
+          "critic_hard_threshold": 10.0,
+          "critic_soft_threshold": 2.0,
+          "fallback_after_safety_override": false,
+          "fixed_alpha": 1.0,
+          "mode": "none",
+          "ood_hard_threshold": 7.0,
+          "ood_soft_threshold": 3.0,
+          "use_critic_disagreement": false
+        },
+        "integration": "paper_direct_control",
+        "observation": {
+          "goal_distance_scale": 5.0,
+          "include_absolute_pose": false,
+          "include_previous_action": true,
+          "include_safety_state": true,
+          "lidar_max_range": 4.0,
+          "lidar_sectors": 36,
+          "velocity_scale": 0.5,
+          "yaw_rate_scale": 1.2
+        },
+        "policy_backend": "none",
+        "policy_id": "gate1_direct_control_multidomain_screen_l175",
+        "prior": {
+          "covariance_max_scale": 2.0,
+          "covariance_min_scale": 0.5,
+          "delta_scale": 0.65,
+          "learn_covariance": false,
+          "mode": "delta",
+          "num_knots": 6
+        },
+        "reward": {
+          "clearance_margin": 0.45,
+          "clearance_penalty_weight": 1.5,
+          "collision_penalty": 100.0,
+          "control_effort_weight": 0.02,
+          "control_rate_weight": 0.04,
+          "cross_track_penalty_weight": 0.0,
+          "distance_penalty_weight": 0.02,
+          "goal_bonus": 100.0,
+          "path_length_penalty_weight": 0.02,
+          "potential_progress_weight": 8.0,
+          "progress_mode": "distance_delta",
+          "safety_override_penalty": 0.15,
+          "step_penalty": 0.02,
+          "stuck_penalty": 0.03
+        },
+        "sac": {
+          "activation": "relu",
+          "actor_cvar_fraction": 1.0,
+          "actor_lr": 0.0003,
+          "alpha_lr": 0.0003,
+          "automatic_entropy_tuning": true,
+          "critic_distribution": "quantile",
+          "critic_lr": 0.0003,
+          "critic_num_quantiles": 25,
+          "critic_quantile_huber_kappa": 1.0,
+          "gamma": 0.99,
+          "gradient_clip_norm": 10.0,
+          "hidden_sizes": [
+            256,
+            256
+          ],
+          "initial_alpha": 0.2,
+          "log_std_max": 0.5,
+          "log_std_min": -5.0,
+          "policy_mode": "direct",
+          "tau": 0.005
+        },
+        "training": {
+          "action_mode": "direct_control",
+          "actor_update_after": 0,
+          "batch_size": 256,
+          "bc_anchor": {
+            "dataset_dir": null,
+            "enabled": false
+          },
+          "checkpoint_interval": 10000,
+          "checkpoint_selection": {
+            "mode": "scalar"
+          },
+          "curriculum": {
+            "enabled": false
+          },
+          "device": "auto",
+          "evaluate_initial_policy": false,
+          "evaluation_episodes": 3,
+          "evaluation_interval": 10000,
+          "initial_state_curriculum": {
+            "enabled": false
+          },
+          "initial_state_noise": [
+            0.05,
+            0.05,
+            0.1,
+            0.0,
+            0.0
+          ],
+          "normalizer_update": "online",
+          "physics_domain_config": "configs/research/mujoco_physics_domains.yaml",
+          "replay_capacity": 250000,
+          "replay_require_all_scenes": false,
+          "replay_sampling": "uniform",
+          "rl_prior_alpha": 1.0,
+          "save_replay_buffer": false,
+          "scene_configs": [
+            "configs/research/mujoco_strong_mppi_baseline.yaml",
+            "configs/research/mujoco_lab_complex.yaml",
+            "configs/research/mujoco_narrow_corridor.yaml",
+            "configs/research/mujoco_u_trap_long_board.yaml"
+          ],
+          "seed": 20260718,
+          "total_steps": 60000,
+          "training_domain_roles": [
+            "seen"
+          ],
+          "update_after": 1000,
+          "updates_per_step": 1,
+          "validation_domain_roles": [
+            "seen",
+            "unseen"
+          ],
+          "validation_scene_configs": [
+            "configs/research/mujoco_strong_mppi_baseline.yaml",
+            "configs/research/mujoco_narrow_corridor.yaml"
+          ],
+          "validation_seed_base": 22320718,
+          "warmup_policy": "random",
+          "warmup_steps": 5000
+        }
+      },
+      "scene": {
+        "name": "high_dynamic_reverse_s_unseen_l56__low_friction_seen",
+        "obstacles": []
+      },
+      "sensors": {
+        "latency": 0.0,
+        "lidar_angle_max": 3.141592653589793,
+        "lidar_angle_min": -3.141592653589793,
+        "lidar_beams": 181,
+        "lidar_dropout_probability": 0.0,
+        "lidar_noise_std": 0.0,
+        "lidar_range_max": 4.0,
+        "lidar_range_min": 0.05,
+        "odom_noise_std": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "pose_source": "ground_truth",
+        "twist_noise_std": [
+          0.0,
+          0.0
+        ],
+        "twist_source": "ground_truth"
+      },
+      "state_space": {
+        "preset": "dynamic_unicycle_5"
+      },
+      "task": {
+        "lookahead_distance": 0.62,
+        "points": [
+          [
+            0.0,
+            0.0
+          ],
+          [
+            0.4,
+            -0.02
+          ],
+          [
+            0.8,
+            -0.12
+          ],
+          [
+            1.2,
+            -0.34
+          ],
+          [
+            1.6,
+            -0.62
+          ],
+          [
+            2.0,
+            -0.82
+          ],
+          [
+            2.4,
+            -0.86
+          ],
+          [
+            2.8,
+            -0.7
+          ],
+          [
+            3.2,
+            -0.42
+          ],
+          [
+            3.6,
+            -0.16
+          ],
+          [
+            4.0,
+            -0.04
+          ],
+          [
+            4.4,
+            -0.12
+          ],
+          [
+            4.8,
+            -0.36
+          ],
+          [
+            5.2,
+            -0.66
+          ]
+        ],
+        "position": [
+          3.0,
+          3.0
+        ],
+        "position_tolerance": 0.25,
+        "terminal_approach_distance": 1.1,
+        "type": "polyline"
+      }
+    },
+    {
+      "_config_path": "/home/mapples/projects/mobile-robot-mppi-study/configs/research/mujoco_high_dynamic_reverse_s_unseen_l56.yaml",
+      "action_space": {
+        "lower": [
+          0.0,
+          -1.25
+        ],
+        "names": [
+          "v_cmd",
+          "omega_cmd"
+        ],
+        "rate_limits": [
+          1.1,
+          3.5
+        ],
+        "upper": [
+          0.65,
+          1.25
+        ]
+      },
+      "experiment": {
+        "control_dt": 0.1,
+        "initial_state": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "max_steps": 360,
+        "name": "high_dynamic_reverse_s_unseen_l56",
+        "physics_domain": "long_delay_seen",
+        "physics_domain_role": "seen",
+        "seed": 0,
+        "terminate_on_collision": true
+      },
+      "memory": {
+        "enable": false
+      },
+      "perception": {
+        "local_obstacle_layer": {
+          "downsample_step": 1,
+          "fallback_downsample_step": 3,
+          "max_obstacle_count": 80,
+          "obstacle_radius": 0.08,
+          "planner_max_obstacles": 24
+        },
+        "scan_guard": {
+          "front_angle_deg": 35.0,
+          "front_slow_distance": 0.85,
+          "front_slow_min_scale": 0.45,
+          "front_soft_block_distance": 0.45,
+          "front_soft_block_max_speed": 0.04,
+          "front_stop_distance": 0.35,
+          "hard_stop_distance": 0.35,
+          "near_body_stop_radius": 0.35,
+          "side_angle_deg": 125.0,
+          "side_stop_distance": 0.35
+        }
+      },
+      "planner": {
+        "collision_penalty": 10000.0,
+        "command_delay_s": 0.04,
+        "goal_running_weight": 1.0,
+        "goal_terminal_weight": 25.0,
+        "horizon": 36,
+        "importance_sampling_correction": true,
+        "integrator": "rk4",
+        "noise_sigma": [
+          0.12,
+          0.5
+        ],
+        "num_samples": 200,
+        "obstacle_influence": 0.7,
+        "obstacle_weight": 70.0,
+        "prediction_mode": "nominal",
+        "previous_sequence_blend": 0.2,
+        "prior_terminal_max_speed": 0.12,
+        "prior_translation_heading_gate_rad": 0.4,
+        "prior_translation_heading_gate_terminal_only": true,
+        "prior_v_gain": 0.7,
+        "prior_yaw_gain": 1.2,
+        "residual_torch_num_threads": 1,
+        "residual_torchscript": true,
+        "robot_radius": 0.25,
+        "safety_recovery_prefix_steps": 8,
+        "sampling_prior": "rl",
+        "temperature": 2.5,
+        "terminal_alignment_yaw_gain": 0.8,
+        "terminal_bearing_weight": 12.0,
+        "terminal_translation_heading_gate_rad": 0.4,
+        "terminal_translation_speed_limit": 0.12,
+        "terminal_velocity_weight": 20.0,
+        "terminal_yaw_rate_weight": 8.0
+      },
+      "plant": {
+        "actuator": {
+          "command_delay": 0.08,
+          "deadband": 0.0,
+          "integral_limit": 2.5,
+          "ki": 1.2,
+          "kp": 0.38,
+          "profile": "torque_pi",
+          "torque_limit": 1.55,
+          "torque_slew_rate": 25.0
+        },
+        "backend": "mujoco_diff_drive",
+        "contact": {
+          "caster_friction": [
+            0.05,
+            0.001,
+            0.0001
+          ],
+          "floor_friction": [
+            0.55,
+            0.0025,
+            0.00025
+          ],
+          "solimp": "0.95 0.99 0.001",
+          "solref": "0.01 1",
+          "wheel_friction": [
+            0.62,
+            0.005,
+            0.0008
+          ]
+        },
+        "nominal_velocity_time_constant": 0.18,
+        "nominal_yaw_time_constant": 0.12,
+        "physics": {
+          "integrator": "implicitfast",
+          "iterations": 60,
+          "solver": "Newton",
+          "timestep": 0.002,
+          "tolerance": 1e-10
+        },
+        "robot": {
+          "chassis_half_size": [
+            0.19,
+            0.14,
+            0.045
+          ],
+          "chassis_inertia": [
+            0.13,
+            0.19,
+            0.27
+          ],
+          "chassis_mass": 13.0,
+          "collision_radius": 0.25,
+          "track_width": 0.32,
+          "wheel_mass": 0.38,
+          "wheel_radius": 0.08,
+          "wheel_width": 0.035
+        }
+      },
+      "rl": {
+        "algorithm": "sac",
+        "checkpoint": null,
+        "device": "cpu",
+        "enabled": true,
+        "gate": {
+          "critic_hard_threshold": 10.0,
+          "critic_soft_threshold": 2.0,
+          "fallback_after_safety_override": false,
+          "fixed_alpha": 1.0,
+          "mode": "none",
+          "ood_hard_threshold": 7.0,
+          "ood_soft_threshold": 3.0,
+          "use_critic_disagreement": false
+        },
+        "integration": "paper_direct_control",
+        "observation": {
+          "goal_distance_scale": 5.0,
+          "include_absolute_pose": false,
+          "include_previous_action": true,
+          "include_safety_state": true,
+          "lidar_max_range": 4.0,
+          "lidar_sectors": 36,
+          "velocity_scale": 0.5,
+          "yaw_rate_scale": 1.2
+        },
+        "policy_backend": "none",
+        "policy_id": "gate1_direct_control_multidomain_screen_l175",
+        "prior": {
+          "covariance_max_scale": 2.0,
+          "covariance_min_scale": 0.5,
+          "delta_scale": 0.65,
+          "learn_covariance": false,
+          "mode": "delta",
+          "num_knots": 6
+        },
+        "reward": {
+          "clearance_margin": 0.45,
+          "clearance_penalty_weight": 1.5,
+          "collision_penalty": 100.0,
+          "control_effort_weight": 0.02,
+          "control_rate_weight": 0.04,
+          "cross_track_penalty_weight": 0.0,
+          "distance_penalty_weight": 0.02,
+          "goal_bonus": 100.0,
+          "path_length_penalty_weight": 0.02,
+          "potential_progress_weight": 8.0,
+          "progress_mode": "distance_delta",
+          "safety_override_penalty": 0.15,
+          "step_penalty": 0.02,
+          "stuck_penalty": 0.03
+        },
+        "sac": {
+          "activation": "relu",
+          "actor_cvar_fraction": 1.0,
+          "actor_lr": 0.0003,
+          "alpha_lr": 0.0003,
+          "automatic_entropy_tuning": true,
+          "critic_distribution": "quantile",
+          "critic_lr": 0.0003,
+          "critic_num_quantiles": 25,
+          "critic_quantile_huber_kappa": 1.0,
+          "gamma": 0.99,
+          "gradient_clip_norm": 10.0,
+          "hidden_sizes": [
+            256,
+            256
+          ],
+          "initial_alpha": 0.2,
+          "log_std_max": 0.5,
+          "log_std_min": -5.0,
+          "policy_mode": "direct",
+          "tau": 0.005
+        },
+        "training": {
+          "action_mode": "direct_control",
+          "actor_update_after": 0,
+          "batch_size": 256,
+          "bc_anchor": {
+            "dataset_dir": null,
+            "enabled": false
+          },
+          "checkpoint_interval": 10000,
+          "checkpoint_selection": {
+            "mode": "scalar"
+          },
+          "curriculum": {
+            "enabled": false
+          },
+          "device": "auto",
+          "evaluate_initial_policy": false,
+          "evaluation_episodes": 3,
+          "evaluation_interval": 10000,
+          "initial_state_curriculum": {
+            "enabled": false
+          },
+          "initial_state_noise": [
+            0.05,
+            0.05,
+            0.1,
+            0.0,
+            0.0
+          ],
+          "normalizer_update": "online",
+          "physics_domain_config": "configs/research/mujoco_physics_domains.yaml",
+          "replay_capacity": 250000,
+          "replay_require_all_scenes": false,
+          "replay_sampling": "uniform",
+          "rl_prior_alpha": 1.0,
+          "save_replay_buffer": false,
+          "scene_configs": [
+            "configs/research/mujoco_strong_mppi_baseline.yaml",
+            "configs/research/mujoco_lab_complex.yaml",
+            "configs/research/mujoco_narrow_corridor.yaml",
+            "configs/research/mujoco_u_trap_long_board.yaml"
+          ],
+          "seed": 20260718,
+          "total_steps": 60000,
+          "training_domain_roles": [
+            "seen"
+          ],
+          "update_after": 1000,
+          "updates_per_step": 1,
+          "validation_domain_roles": [
+            "seen",
+            "unseen"
+          ],
+          "validation_scene_configs": [
+            "configs/research/mujoco_strong_mppi_baseline.yaml",
+            "configs/research/mujoco_narrow_corridor.yaml"
+          ],
+          "validation_seed_base": 22320718,
+          "warmup_policy": "random",
+          "warmup_steps": 5000
+        }
+      },
+      "scene": {
+        "name": "high_dynamic_reverse_s_unseen_l56__long_delay_seen",
+        "obstacles": []
+      },
+      "sensors": {
+        "latency": 0.0,
+        "lidar_angle_max": 3.141592653589793,
+        "lidar_angle_min": -3.141592653589793,
+        "lidar_beams": 181,
+        "lidar_dropout_probability": 0.0,
+        "lidar_noise_std": 0.0,
+        "lidar_range_max": 4.0,
+        "lidar_range_min": 0.05,
+        "odom_noise_std": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "pose_source": "ground_truth",
+        "twist_noise_std": [
+          0.0,
+          0.0
+        ],
+        "twist_source": "ground_truth"
+      },
+      "state_space": {
+        "preset": "dynamic_unicycle_5"
+      },
+      "task": {
+        "lookahead_distance": 0.62,
+        "points": [
+          [
+            0.0,
+            0.0
+          ],
+          [
+            0.4,
+            -0.02
+          ],
+          [
+            0.8,
+            -0.12
+          ],
+          [
+            1.2,
+            -0.34
+          ],
+          [
+            1.6,
+            -0.62
+          ],
+          [
+            2.0,
+            -0.82
+          ],
+          [
+            2.4,
+            -0.86
+          ],
+          [
+            2.8,
+            -0.7
+          ],
+          [
+            3.2,
+            -0.42
+          ],
+          [
+            3.6,
+            -0.16
+          ],
+          [
+            4.0,
+            -0.04
+          ],
+          [
+            4.4,
+            -0.12
+          ],
+          [
+            4.8,
+            -0.36
+          ],
+          [
+            5.2,
+            -0.66
+          ]
+        ],
+        "position": [
+          3.0,
+          3.0
+        ],
+        "position_tolerance": 0.25,
+        "terminal_approach_distance": 1.1,
+        "type": "polyline"
+      }
+    },
+    {
+      "_config_path": "/home/mapples/projects/mobile-robot-mppi-study/configs/research/mujoco_high_dynamic_reverse_s_unseen_l56.yaml",
+      "action_space": {
+        "lower": [
+          0.0,
+          -1.25
+        ],
+        "names": [
+          "v_cmd",
+          "omega_cmd"
+        ],
+        "rate_limits": [
+          1.1,
+          3.5
+        ],
+        "upper": [
+          0.65,
+          1.25
+        ]
+      },
+      "experiment": {
+        "control_dt": 0.1,
+        "initial_state": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "max_steps": 360,
+        "name": "high_dynamic_reverse_s_unseen_l56",
+        "physics_domain": "combined_unseen",
+        "physics_domain_role": "unseen",
+        "seed": 0,
+        "terminate_on_collision": true
+      },
+      "memory": {
+        "enable": false
+      },
+      "perception": {
+        "local_obstacle_layer": {
+          "downsample_step": 1,
+          "fallback_downsample_step": 3,
+          "max_obstacle_count": 80,
+          "obstacle_radius": 0.08,
+          "planner_max_obstacles": 24
+        },
+        "scan_guard": {
+          "front_angle_deg": 35.0,
+          "front_slow_distance": 0.85,
+          "front_slow_min_scale": 0.45,
+          "front_soft_block_distance": 0.45,
+          "front_soft_block_max_speed": 0.04,
+          "front_stop_distance": 0.35,
+          "hard_stop_distance": 0.35,
+          "near_body_stop_radius": 0.35,
+          "side_angle_deg": 125.0,
+          "side_stop_distance": 0.35
+        }
+      },
+      "planner": {
+        "collision_penalty": 10000.0,
+        "command_delay_s": 0.04,
+        "goal_running_weight": 1.0,
+        "goal_terminal_weight": 25.0,
+        "horizon": 36,
+        "importance_sampling_correction": true,
+        "integrator": "rk4",
+        "noise_sigma": [
+          0.12,
+          0.5
+        ],
+        "num_samples": 200,
+        "obstacle_influence": 0.7,
+        "obstacle_weight": 70.0,
+        "prediction_mode": "nominal",
+        "previous_sequence_blend": 0.2,
+        "prior_terminal_max_speed": 0.12,
+        "prior_translation_heading_gate_rad": 0.4,
+        "prior_translation_heading_gate_terminal_only": true,
+        "prior_v_gain": 0.7,
+        "prior_yaw_gain": 1.2,
+        "residual_torch_num_threads": 1,
+        "residual_torchscript": true,
+        "robot_radius": 0.25,
+        "safety_recovery_prefix_steps": 8,
+        "sampling_prior": "rl",
+        "temperature": 2.5,
+        "terminal_alignment_yaw_gain": 0.8,
+        "terminal_bearing_weight": 12.0,
+        "terminal_translation_heading_gate_rad": 0.4,
+        "terminal_translation_speed_limit": 0.12,
+        "terminal_velocity_weight": 20.0,
+        "terminal_yaw_rate_weight": 8.0
+      },
+      "plant": {
+        "actuator": {
+          "command_delay": 0.1,
+          "deadband": 0.0,
+          "integral_limit": 2.5,
+          "ki": 1.2,
+          "kp": 0.48,
+          "profile": "torque_pi",
+          "torque_limit": 1.8,
+          "torque_slew_rate": 25.0
+        },
+        "backend": "mujoco_diff_drive",
+        "contact": {
+          "caster_friction": [
+            0.05,
+            0.001,
+            0.0001
+          ],
+          "floor_friction": [
+            0.6,
+            0.003,
+            0.0003
+          ],
+          "solimp": "0.95 0.99 0.001",
+          "solref": "0.01 1",
+          "wheel_friction": [
+            0.72,
+            0.006,
+            0.001
+          ]
+        },
+        "nominal_velocity_time_constant": 0.18,
+        "nominal_yaw_time_constant": 0.12,
+        "physics": {
+          "integrator": "implicitfast",
+          "iterations": 60,
+          "solver": "Newton",
+          "timestep": 0.002,
+          "tolerance": 1e-10
+        },
+        "robot": {
+          "chassis_half_size": [
+            0.19,
+            0.14,
+            0.045
+          ],
+          "chassis_inertia": [
+            0.11,
+            0.16,
+            0.22
+          ],
+          "chassis_mass": 12.0,
+          "collision_radius": 0.25,
+          "track_width": 0.32,
+          "wheel_mass": 0.38,
+          "wheel_radius": 0.08,
+          "wheel_width": 0.035
+        }
+      },
+      "rl": {
+        "algorithm": "sac",
+        "checkpoint": null,
+        "device": "cpu",
+        "enabled": true,
+        "gate": {
+          "critic_hard_threshold": 10.0,
+          "critic_soft_threshold": 2.0,
+          "fallback_after_safety_override": false,
+          "fixed_alpha": 1.0,
+          "mode": "none",
+          "ood_hard_threshold": 7.0,
+          "ood_soft_threshold": 3.0,
+          "use_critic_disagreement": false
+        },
+        "integration": "paper_direct_control",
+        "observation": {
+          "goal_distance_scale": 5.0,
+          "include_absolute_pose": false,
+          "include_previous_action": true,
+          "include_safety_state": true,
+          "lidar_max_range": 4.0,
+          "lidar_sectors": 36,
+          "velocity_scale": 0.5,
+          "yaw_rate_scale": 1.2
+        },
+        "policy_backend": "none",
+        "policy_id": "gate1_direct_control_multidomain_screen_l175",
+        "prior": {
+          "covariance_max_scale": 2.0,
+          "covariance_min_scale": 0.5,
+          "delta_scale": 0.65,
+          "learn_covariance": false,
+          "mode": "delta",
+          "num_knots": 6
+        },
+        "reward": {
+          "clearance_margin": 0.45,
+          "clearance_penalty_weight": 1.5,
+          "collision_penalty": 100.0,
+          "control_effort_weight": 0.02,
+          "control_rate_weight": 0.04,
+          "cross_track_penalty_weight": 0.0,
+          "distance_penalty_weight": 0.02,
+          "goal_bonus": 100.0,
+          "path_length_penalty_weight": 0.02,
+          "potential_progress_weight": 8.0,
+          "progress_mode": "distance_delta",
+          "safety_override_penalty": 0.15,
+          "step_penalty": 0.02,
+          "stuck_penalty": 0.03
+        },
+        "sac": {
+          "activation": "relu",
+          "actor_cvar_fraction": 1.0,
+          "actor_lr": 0.0003,
+          "alpha_lr": 0.0003,
+          "automatic_entropy_tuning": true,
+          "critic_distribution": "quantile",
+          "critic_lr": 0.0003,
+          "critic_num_quantiles": 25,
+          "critic_quantile_huber_kappa": 1.0,
+          "gamma": 0.99,
+          "gradient_clip_norm": 10.0,
+          "hidden_sizes": [
+            256,
+            256
+          ],
+          "initial_alpha": 0.2,
+          "log_std_max": 0.5,
+          "log_std_min": -5.0,
+          "policy_mode": "direct",
+          "tau": 0.005
+        },
+        "training": {
+          "action_mode": "direct_control",
+          "actor_update_after": 0,
+          "batch_size": 256,
+          "bc_anchor": {
+            "dataset_dir": null,
+            "enabled": false
+          },
+          "checkpoint_interval": 10000,
+          "checkpoint_selection": {
+            "mode": "scalar"
+          },
+          "curriculum": {
+            "enabled": false
+          },
+          "device": "auto",
+          "evaluate_initial_policy": false,
+          "evaluation_episodes": 3,
+          "evaluation_interval": 10000,
+          "initial_state_curriculum": {
+            "enabled": false
+          },
+          "initial_state_noise": [
+            0.05,
+            0.05,
+            0.1,
+            0.0,
+            0.0
+          ],
+          "normalizer_update": "online",
+          "physics_domain_config": "configs/research/mujoco_physics_domains.yaml",
+          "replay_capacity": 250000,
+          "replay_require_all_scenes": false,
+          "replay_sampling": "uniform",
+          "rl_prior_alpha": 1.0,
+          "save_replay_buffer": false,
+          "scene_configs": [
+            "configs/research/mujoco_strong_mppi_baseline.yaml",
+            "configs/research/mujoco_lab_complex.yaml",
+            "configs/research/mujoco_narrow_corridor.yaml",
+            "configs/research/mujoco_u_trap_long_board.yaml"
+          ],
+          "seed": 20260718,
+          "total_steps": 60000,
+          "training_domain_roles": [
+            "seen"
+          ],
+          "update_after": 1000,
+          "updates_per_step": 1,
+          "validation_domain_roles": [
+            "seen",
+            "unseen"
+          ],
+          "validation_scene_configs": [
+            "configs/research/mujoco_strong_mppi_baseline.yaml",
+            "configs/research/mujoco_narrow_corridor.yaml"
+          ],
+          "validation_seed_base": 22320718,
+          "warmup_policy": "random",
+          "warmup_steps": 5000
+        }
+      },
+      "scene": {
+        "name": "high_dynamic_reverse_s_unseen_l56__combined_unseen",
+        "obstacles": []
+      },
+      "sensors": {
+        "latency": 0.0,
+        "lidar_angle_max": 3.141592653589793,
+        "lidar_angle_min": -3.141592653589793,
+        "lidar_beams": 181,
+        "lidar_dropout_probability": 0.0,
+        "lidar_noise_std": 0.0,
+        "lidar_range_max": 4.0,
+        "lidar_range_min": 0.05,
+        "odom_noise_std": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "pose_source": "ground_truth",
+        "twist_noise_std": [
+          0.0,
+          0.0
+        ],
+        "twist_source": "ground_truth"
+      },
+      "state_space": {
+        "preset": "dynamic_unicycle_5"
+      },
+      "task": {
+        "lookahead_distance": 0.62,
+        "points": [
+          [
+            0.0,
+            0.0
+          ],
+          [
+            0.4,
+            -0.02
+          ],
+          [
+            0.8,
+            -0.12
+          ],
+          [
+            1.2,
+            -0.34
+          ],
+          [
+            1.6,
+            -0.62
+          ],
+          [
+            2.0,
+            -0.82
+          ],
+          [
+            2.4,
+            -0.86
+          ],
+          [
+            2.8,
+            -0.7
+          ],
+          [
+            3.2,
+            -0.42
+          ],
+          [
+            3.6,
+            -0.16
+          ],
+          [
+            4.0,
+            -0.04
+          ],
+          [
+            4.4,
+            -0.12
+          ],
+          [
+            4.8,
+            -0.36
+          ],
+          [
+            5.2,
+            -0.66
+          ]
+        ],
+        "position": [
+          3.0,
+          3.0
+        ],
+        "position_tolerance": 0.25,
+        "terminal_approach_distance": 1.1,
+        "type": "polyline"
+      }
+    },
+    {
+      "_config_path": "/home/mapples/projects/mobile-robot-mppi-study/configs/research/mujoco_high_dynamic_hairpin_unseen_l56.yaml",
+      "action_space": {
+        "lower": [
+          0.0,
+          -1.25
+        ],
+        "names": [
+          "v_cmd",
+          "omega_cmd"
+        ],
+        "rate_limits": [
+          1.1,
+          3.5
+        ],
+        "upper": [
+          0.65,
+          1.25
+        ]
+      },
+      "experiment": {
+        "control_dt": 0.1,
+        "initial_state": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "max_steps": 380,
+        "name": "high_dynamic_hairpin_unseen_l56",
+        "physics_domain": "nominal_seen",
+        "physics_domain_role": "seen",
+        "seed": 0,
+        "terminate_on_collision": true
+      },
+      "memory": {
+        "enable": false
+      },
+      "perception": {
+        "local_obstacle_layer": {
+          "downsample_step": 1,
+          "fallback_downsample_step": 3,
+          "max_obstacle_count": 80,
+          "obstacle_radius": 0.08,
+          "planner_max_obstacles": 24
+        },
+        "scan_guard": {
+          "front_angle_deg": 35.0,
+          "front_slow_distance": 0.85,
+          "front_slow_min_scale": 0.45,
+          "front_soft_block_distance": 0.45,
+          "front_soft_block_max_speed": 0.04,
+          "front_stop_distance": 0.35,
+          "hard_stop_distance": 0.35,
+          "near_body_stop_radius": 0.35,
+          "side_angle_deg": 125.0,
+          "side_stop_distance": 0.35
+        }
+      },
+      "planner": {
+        "collision_penalty": 10000.0,
+        "command_delay_s": 0.04,
+        "goal_running_weight": 1.0,
+        "goal_terminal_weight": 25.0,
+        "horizon": 36,
+        "importance_sampling_correction": true,
+        "integrator": "rk4",
+        "noise_sigma": [
+          0.12,
+          0.5
+        ],
+        "num_samples": 200,
+        "obstacle_influence": 0.7,
+        "obstacle_weight": 70.0,
+        "prediction_mode": "nominal",
+        "previous_sequence_blend": 0.2,
+        "prior_terminal_max_speed": 0.12,
+        "prior_translation_heading_gate_rad": 0.4,
+        "prior_translation_heading_gate_terminal_only": true,
+        "prior_v_gain": 0.7,
+        "prior_yaw_gain": 1.2,
+        "residual_torch_num_threads": 1,
+        "residual_torchscript": true,
+        "robot_radius": 0.25,
+        "safety_recovery_prefix_steps": 8,
+        "sampling_prior": "rl",
+        "temperature": 2.5,
+        "terminal_alignment_yaw_gain": 0.8,
+        "terminal_bearing_weight": 12.0,
+        "terminal_translation_heading_gate_rad": 0.4,
+        "terminal_translation_speed_limit": 0.12,
+        "terminal_velocity_weight": 20.0,
+        "terminal_yaw_rate_weight": 8.0
+      },
+      "plant": {
+        "actuator": {
+          "command_delay": 0.04,
+          "deadband": 0.0,
+          "integral_limit": 2.5,
+          "ki": 1.2,
+          "kp": 0.38,
+          "profile": "torque_pi",
+          "torque_limit": 1.55,
+          "torque_slew_rate": 25.0
+        },
+        "backend": "mujoco_diff_drive",
+        "contact": {
+          "caster_friction": [
+            0.05,
+            0.001,
+            0.0001
+          ],
+          "floor_friction": [
+            0.55,
+            0.0025,
+            0.00025
+          ],
+          "solimp": "0.95 0.99 0.001",
+          "solref": "0.01 1",
+          "wheel_friction": [
+            0.62,
+            0.005,
+            0.0008
+          ]
+        },
+        "nominal_velocity_time_constant": 0.18,
+        "nominal_yaw_time_constant": 0.12,
+        "physics": {
+          "integrator": "implicitfast",
+          "iterations": 60,
+          "solver": "Newton",
+          "timestep": 0.002,
+          "tolerance": 1e-10
+        },
+        "robot": {
+          "chassis_half_size": [
+            0.19,
+            0.14,
+            0.045
+          ],
+          "chassis_inertia": [
+            0.13,
+            0.19,
+            0.27
+          ],
+          "chassis_mass": 13.0,
+          "collision_radius": 0.25,
+          "track_width": 0.32,
+          "wheel_mass": 0.38,
+          "wheel_radius": 0.08,
+          "wheel_width": 0.035
+        }
+      },
+      "rl": {
+        "algorithm": "sac",
+        "checkpoint": null,
+        "device": "cpu",
+        "enabled": true,
+        "gate": {
+          "critic_hard_threshold": 10.0,
+          "critic_soft_threshold": 2.0,
+          "fallback_after_safety_override": false,
+          "fixed_alpha": 1.0,
+          "mode": "none",
+          "ood_hard_threshold": 7.0,
+          "ood_soft_threshold": 3.0,
+          "use_critic_disagreement": false
+        },
+        "integration": "paper_direct_control",
+        "observation": {
+          "goal_distance_scale": 5.0,
+          "include_absolute_pose": false,
+          "include_previous_action": true,
+          "include_safety_state": true,
+          "lidar_max_range": 4.0,
+          "lidar_sectors": 36,
+          "velocity_scale": 0.5,
+          "yaw_rate_scale": 1.2
+        },
+        "policy_backend": "none",
+        "policy_id": "gate1_direct_control_multidomain_screen_l175",
+        "prior": {
+          "covariance_max_scale": 2.0,
+          "covariance_min_scale": 0.5,
+          "delta_scale": 0.65,
+          "learn_covariance": false,
+          "mode": "delta",
+          "num_knots": 6
+        },
+        "reward": {
+          "clearance_margin": 0.45,
+          "clearance_penalty_weight": 1.5,
+          "collision_penalty": 100.0,
+          "control_effort_weight": 0.02,
+          "control_rate_weight": 0.04,
+          "cross_track_penalty_weight": 0.0,
+          "distance_penalty_weight": 0.02,
+          "goal_bonus": 100.0,
+          "path_length_penalty_weight": 0.02,
+          "potential_progress_weight": 8.0,
+          "progress_mode": "distance_delta",
+          "safety_override_penalty": 0.15,
+          "step_penalty": 0.02,
+          "stuck_penalty": 0.03
+        },
+        "sac": {
+          "activation": "relu",
+          "actor_cvar_fraction": 1.0,
+          "actor_lr": 0.0003,
+          "alpha_lr": 0.0003,
+          "automatic_entropy_tuning": true,
+          "critic_distribution": "quantile",
+          "critic_lr": 0.0003,
+          "critic_num_quantiles": 25,
+          "critic_quantile_huber_kappa": 1.0,
+          "gamma": 0.99,
+          "gradient_clip_norm": 10.0,
+          "hidden_sizes": [
+            256,
+            256
+          ],
+          "initial_alpha": 0.2,
+          "log_std_max": 0.5,
+          "log_std_min": -5.0,
+          "policy_mode": "direct",
+          "tau": 0.005
+        },
+        "training": {
+          "action_mode": "direct_control",
+          "actor_update_after": 0,
+          "batch_size": 256,
+          "bc_anchor": {
+            "dataset_dir": null,
+            "enabled": false
+          },
+          "checkpoint_interval": 10000,
+          "checkpoint_selection": {
+            "mode": "scalar"
+          },
+          "curriculum": {
+            "enabled": false
+          },
+          "device": "auto",
+          "evaluate_initial_policy": false,
+          "evaluation_episodes": 3,
+          "evaluation_interval": 10000,
+          "initial_state_curriculum": {
+            "enabled": false
+          },
+          "initial_state_noise": [
+            0.05,
+            0.05,
+            0.1,
+            0.0,
+            0.0
+          ],
+          "normalizer_update": "online",
+          "physics_domain_config": "configs/research/mujoco_physics_domains.yaml",
+          "replay_capacity": 250000,
+          "replay_require_all_scenes": false,
+          "replay_sampling": "uniform",
+          "rl_prior_alpha": 1.0,
+          "save_replay_buffer": false,
+          "scene_configs": [
+            "configs/research/mujoco_strong_mppi_baseline.yaml",
+            "configs/research/mujoco_lab_complex.yaml",
+            "configs/research/mujoco_narrow_corridor.yaml",
+            "configs/research/mujoco_u_trap_long_board.yaml"
+          ],
+          "seed": 20260718,
+          "total_steps": 60000,
+          "training_domain_roles": [
+            "seen"
+          ],
+          "update_after": 1000,
+          "updates_per_step": 1,
+          "validation_domain_roles": [
+            "seen",
+            "unseen"
+          ],
+          "validation_scene_configs": [
+            "configs/research/mujoco_strong_mppi_baseline.yaml",
+            "configs/research/mujoco_narrow_corridor.yaml"
+          ],
+          "validation_seed_base": 22320718,
+          "warmup_policy": "random",
+          "warmup_steps": 5000
+        }
+      },
+      "scene": {
+        "name": "high_dynamic_hairpin_unseen_l56__nominal_seen",
+        "obstacles": []
+      },
+      "sensors": {
+        "latency": 0.0,
+        "lidar_angle_max": 3.141592653589793,
+        "lidar_angle_min": -3.141592653589793,
+        "lidar_beams": 181,
+        "lidar_dropout_probability": 0.0,
+        "lidar_noise_std": 0.0,
+        "lidar_range_max": 4.0,
+        "lidar_range_min": 0.05,
+        "odom_noise_std": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "pose_source": "ground_truth",
+        "twist_noise_std": [
+          0.0,
+          0.0
+        ],
+        "twist_source": "ground_truth"
+      },
+      "state_space": {
+        "preset": "dynamic_unicycle_5"
+      },
+      "task": {
+        "lookahead_distance": 0.5,
+        "points": [
+          [
+            0.0,
+            0.0
+          ],
+          [
+            0.45,
+            0.0
+          ],
+          [
+            0.9,
+            0.0
+          ],
+          [
+            1.35,
+            0.06
+          ],
+          [
+            1.72,
+            0.26
+          ],
+          [
+            1.94,
+            0.58
+          ],
+          [
+            2.02,
+            0.96
+          ],
+          [
+            1.94,
+            1.32
+          ],
+          [
+            1.68,
+            1.56
+          ],
+          [
+            1.32,
+            1.68
+          ],
+          [
+            0.92,
+            1.68
+          ],
+          [
+            0.58,
+            1.82
+          ],
+          [
+            0.38,
+            2.1
+          ],
+          [
+            0.46,
+            2.38
+          ],
+          [
+            0.76,
+            2.58
+          ],
+          [
+            1.18,
+            2.68
+          ],
+          [
+            1.64,
+            2.7
+          ],
+          [
+            2.12,
+            2.7
+          ],
+          [
+            2.6,
+            2.7
+          ]
+        ],
+        "position": [
+          3.0,
+          3.0
+        ],
+        "position_tolerance": 0.25,
+        "terminal_approach_distance": 1.1,
+        "type": "polyline"
+      }
+    },
+    {
+      "_config_path": "/home/mapples/projects/mobile-robot-mppi-study/configs/research/mujoco_high_dynamic_hairpin_unseen_l56.yaml",
+      "action_space": {
+        "lower": [
+          0.0,
+          -1.25
+        ],
+        "names": [
+          "v_cmd",
+          "omega_cmd"
+        ],
+        "rate_limits": [
+          1.1,
+          3.5
+        ],
+        "upper": [
+          0.65,
+          1.25
+        ]
+      },
+      "experiment": {
+        "control_dt": 0.1,
+        "initial_state": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "max_steps": 380,
+        "name": "high_dynamic_hairpin_unseen_l56",
+        "physics_domain": "high_mass_seen",
+        "physics_domain_role": "seen",
+        "seed": 0,
+        "terminate_on_collision": true
+      },
+      "memory": {
+        "enable": false
+      },
+      "perception": {
+        "local_obstacle_layer": {
+          "downsample_step": 1,
+          "fallback_downsample_step": 3,
+          "max_obstacle_count": 80,
+          "obstacle_radius": 0.08,
+          "planner_max_obstacles": 24
+        },
+        "scan_guard": {
+          "front_angle_deg": 35.0,
+          "front_slow_distance": 0.85,
+          "front_slow_min_scale": 0.45,
+          "front_soft_block_distance": 0.45,
+          "front_soft_block_max_speed": 0.04,
+          "front_stop_distance": 0.35,
+          "hard_stop_distance": 0.35,
+          "near_body_stop_radius": 0.35,
+          "side_angle_deg": 125.0,
+          "side_stop_distance": 0.35
+        }
+      },
+      "planner": {
+        "collision_penalty": 10000.0,
+        "command_delay_s": 0.04,
+        "goal_running_weight": 1.0,
+        "goal_terminal_weight": 25.0,
+        "horizon": 36,
+        "importance_sampling_correction": true,
+        "integrator": "rk4",
+        "noise_sigma": [
+          0.12,
+          0.5
+        ],
+        "num_samples": 200,
+        "obstacle_influence": 0.7,
+        "obstacle_weight": 70.0,
+        "prediction_mode": "nominal",
+        "previous_sequence_blend": 0.2,
+        "prior_terminal_max_speed": 0.12,
+        "prior_translation_heading_gate_rad": 0.4,
+        "prior_translation_heading_gate_terminal_only": true,
+        "prior_v_gain": 0.7,
+        "prior_yaw_gain": 1.2,
+        "residual_torch_num_threads": 1,
+        "residual_torchscript": true,
+        "robot_radius": 0.25,
+        "safety_recovery_prefix_steps": 8,
+        "sampling_prior": "rl",
+        "temperature": 2.5,
+        "terminal_alignment_yaw_gain": 0.8,
+        "terminal_bearing_weight": 12.0,
+        "terminal_translation_heading_gate_rad": 0.4,
+        "terminal_translation_speed_limit": 0.12,
+        "terminal_velocity_weight": 20.0,
+        "terminal_yaw_rate_weight": 8.0
+      },
+      "plant": {
+        "actuator": {
+          "command_delay": 0.04,
+          "deadband": 0.0,
+          "integral_limit": 2.5,
+          "ki": 1.2,
+          "kp": 0.38,
+          "profile": "torque_pi",
+          "torque_limit": 1.55,
+          "torque_slew_rate": 25.0
+        },
+        "backend": "mujoco_diff_drive",
+        "contact": {
+          "caster_friction": [
+            0.05,
+            0.001,
+            0.0001
+          ],
+          "floor_friction": [
+            0.55,
+            0.0025,
+            0.00025
+          ],
+          "solimp": "0.95 0.99 0.001",
+          "solref": "0.01 1",
+          "wheel_friction": [
+            0.62,
+            0.005,
+            0.0008
+          ]
+        },
+        "nominal_velocity_time_constant": 0.18,
+        "nominal_yaw_time_constant": 0.12,
+        "physics": {
+          "integrator": "implicitfast",
+          "iterations": 60,
+          "solver": "Newton",
+          "timestep": 0.002,
+          "tolerance": 1e-10
+        },
+        "robot": {
+          "chassis_half_size": [
+            0.19,
+            0.14,
+            0.045
+          ],
+          "chassis_inertia": [
+            0.1,
+            0.15,
+            0.2
+          ],
+          "chassis_mass": 11.0,
+          "collision_radius": 0.25,
+          "track_width": 0.32,
+          "wheel_mass": 0.38,
+          "wheel_radius": 0.08,
+          "wheel_width": 0.035
+        }
+      },
+      "rl": {
+        "algorithm": "sac",
+        "checkpoint": null,
+        "device": "cpu",
+        "enabled": true,
+        "gate": {
+          "critic_hard_threshold": 10.0,
+          "critic_soft_threshold": 2.0,
+          "fallback_after_safety_override": false,
+          "fixed_alpha": 1.0,
+          "mode": "none",
+          "ood_hard_threshold": 7.0,
+          "ood_soft_threshold": 3.0,
+          "use_critic_disagreement": false
+        },
+        "integration": "paper_direct_control",
+        "observation": {
+          "goal_distance_scale": 5.0,
+          "include_absolute_pose": false,
+          "include_previous_action": true,
+          "include_safety_state": true,
+          "lidar_max_range": 4.0,
+          "lidar_sectors": 36,
+          "velocity_scale": 0.5,
+          "yaw_rate_scale": 1.2
+        },
+        "policy_backend": "none",
+        "policy_id": "gate1_direct_control_multidomain_screen_l175",
+        "prior": {
+          "covariance_max_scale": 2.0,
+          "covariance_min_scale": 0.5,
+          "delta_scale": 0.65,
+          "learn_covariance": false,
+          "mode": "delta",
+          "num_knots": 6
+        },
+        "reward": {
+          "clearance_margin": 0.45,
+          "clearance_penalty_weight": 1.5,
+          "collision_penalty": 100.0,
+          "control_effort_weight": 0.02,
+          "control_rate_weight": 0.04,
+          "cross_track_penalty_weight": 0.0,
+          "distance_penalty_weight": 0.02,
+          "goal_bonus": 100.0,
+          "path_length_penalty_weight": 0.02,
+          "potential_progress_weight": 8.0,
+          "progress_mode": "distance_delta",
+          "safety_override_penalty": 0.15,
+          "step_penalty": 0.02,
+          "stuck_penalty": 0.03
+        },
+        "sac": {
+          "activation": "relu",
+          "actor_cvar_fraction": 1.0,
+          "actor_lr": 0.0003,
+          "alpha_lr": 0.0003,
+          "automatic_entropy_tuning": true,
+          "critic_distribution": "quantile",
+          "critic_lr": 0.0003,
+          "critic_num_quantiles": 25,
+          "critic_quantile_huber_kappa": 1.0,
+          "gamma": 0.99,
+          "gradient_clip_norm": 10.0,
+          "hidden_sizes": [
+            256,
+            256
+          ],
+          "initial_alpha": 0.2,
+          "log_std_max": 0.5,
+          "log_std_min": -5.0,
+          "policy_mode": "direct",
+          "tau": 0.005
+        },
+        "training": {
+          "action_mode": "direct_control",
+          "actor_update_after": 0,
+          "batch_size": 256,
+          "bc_anchor": {
+            "dataset_dir": null,
+            "enabled": false
+          },
+          "checkpoint_interval": 10000,
+          "checkpoint_selection": {
+            "mode": "scalar"
+          },
+          "curriculum": {
+            "enabled": false
+          },
+          "device": "auto",
+          "evaluate_initial_policy": false,
+          "evaluation_episodes": 3,
+          "evaluation_interval": 10000,
+          "initial_state_curriculum": {
+            "enabled": false
+          },
+          "initial_state_noise": [
+            0.05,
+            0.05,
+            0.1,
+            0.0,
+            0.0
+          ],
+          "normalizer_update": "online",
+          "physics_domain_config": "configs/research/mujoco_physics_domains.yaml",
+          "replay_capacity": 250000,
+          "replay_require_all_scenes": false,
+          "replay_sampling": "uniform",
+          "rl_prior_alpha": 1.0,
+          "save_replay_buffer": false,
+          "scene_configs": [
+            "configs/research/mujoco_strong_mppi_baseline.yaml",
+            "configs/research/mujoco_lab_complex.yaml",
+            "configs/research/mujoco_narrow_corridor.yaml",
+            "configs/research/mujoco_u_trap_long_board.yaml"
+          ],
+          "seed": 20260718,
+          "total_steps": 60000,
+          "training_domain_roles": [
+            "seen"
+          ],
+          "update_after": 1000,
+          "updates_per_step": 1,
+          "validation_domain_roles": [
+            "seen",
+            "unseen"
+          ],
+          "validation_scene_configs": [
+            "configs/research/mujoco_strong_mppi_baseline.yaml",
+            "configs/research/mujoco_narrow_corridor.yaml"
+          ],
+          "validation_seed_base": 22320718,
+          "warmup_policy": "random",
+          "warmup_steps": 5000
+        }
+      },
+      "scene": {
+        "name": "high_dynamic_hairpin_unseen_l56__high_mass_seen",
+        "obstacles": []
+      },
+      "sensors": {
+        "latency": 0.0,
+        "lidar_angle_max": 3.141592653589793,
+        "lidar_angle_min": -3.141592653589793,
+        "lidar_beams": 181,
+        "lidar_dropout_probability": 0.0,
+        "lidar_noise_std": 0.0,
+        "lidar_range_max": 4.0,
+        "lidar_range_min": 0.05,
+        "odom_noise_std": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "pose_source": "ground_truth",
+        "twist_noise_std": [
+          0.0,
+          0.0
+        ],
+        "twist_source": "ground_truth"
+      },
+      "state_space": {
+        "preset": "dynamic_unicycle_5"
+      },
+      "task": {
+        "lookahead_distance": 0.5,
+        "points": [
+          [
+            0.0,
+            0.0
+          ],
+          [
+            0.45,
+            0.0
+          ],
+          [
+            0.9,
+            0.0
+          ],
+          [
+            1.35,
+            0.06
+          ],
+          [
+            1.72,
+            0.26
+          ],
+          [
+            1.94,
+            0.58
+          ],
+          [
+            2.02,
+            0.96
+          ],
+          [
+            1.94,
+            1.32
+          ],
+          [
+            1.68,
+            1.56
+          ],
+          [
+            1.32,
+            1.68
+          ],
+          [
+            0.92,
+            1.68
+          ],
+          [
+            0.58,
+            1.82
+          ],
+          [
+            0.38,
+            2.1
+          ],
+          [
+            0.46,
+            2.38
+          ],
+          [
+            0.76,
+            2.58
+          ],
+          [
+            1.18,
+            2.68
+          ],
+          [
+            1.64,
+            2.7
+          ],
+          [
+            2.12,
+            2.7
+          ],
+          [
+            2.6,
+            2.7
+          ]
+        ],
+        "position": [
+          3.0,
+          3.0
+        ],
+        "position_tolerance": 0.25,
+        "terminal_approach_distance": 1.1,
+        "type": "polyline"
+      }
+    },
+    {
+      "_config_path": "/home/mapples/projects/mobile-robot-mppi-study/configs/research/mujoco_high_dynamic_hairpin_unseen_l56.yaml",
+      "action_space": {
+        "lower": [
+          0.0,
+          -1.25
+        ],
+        "names": [
+          "v_cmd",
+          "omega_cmd"
+        ],
+        "rate_limits": [
+          1.1,
+          3.5
+        ],
+        "upper": [
+          0.65,
+          1.25
+        ]
+      },
+      "experiment": {
+        "control_dt": 0.1,
+        "initial_state": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "max_steps": 380,
+        "name": "high_dynamic_hairpin_unseen_l56",
+        "physics_domain": "low_friction_seen",
+        "physics_domain_role": "seen",
+        "seed": 0,
+        "terminate_on_collision": true
+      },
+      "memory": {
+        "enable": false
+      },
+      "perception": {
+        "local_obstacle_layer": {
+          "downsample_step": 1,
+          "fallback_downsample_step": 3,
+          "max_obstacle_count": 80,
+          "obstacle_radius": 0.08,
+          "planner_max_obstacles": 24
+        },
+        "scan_guard": {
+          "front_angle_deg": 35.0,
+          "front_slow_distance": 0.85,
+          "front_slow_min_scale": 0.45,
+          "front_soft_block_distance": 0.45,
+          "front_soft_block_max_speed": 0.04,
+          "front_stop_distance": 0.35,
+          "hard_stop_distance": 0.35,
+          "near_body_stop_radius": 0.35,
+          "side_angle_deg": 125.0,
+          "side_stop_distance": 0.35
+        }
+      },
+      "planner": {
+        "collision_penalty": 10000.0,
+        "command_delay_s": 0.04,
+        "goal_running_weight": 1.0,
+        "goal_terminal_weight": 25.0,
+        "horizon": 36,
+        "importance_sampling_correction": true,
+        "integrator": "rk4",
+        "noise_sigma": [
+          0.12,
+          0.5
+        ],
+        "num_samples": 200,
+        "obstacle_influence": 0.7,
+        "obstacle_weight": 70.0,
+        "prediction_mode": "nominal",
+        "previous_sequence_blend": 0.2,
+        "prior_terminal_max_speed": 0.12,
+        "prior_translation_heading_gate_rad": 0.4,
+        "prior_translation_heading_gate_terminal_only": true,
+        "prior_v_gain": 0.7,
+        "prior_yaw_gain": 1.2,
+        "residual_torch_num_threads": 1,
+        "residual_torchscript": true,
+        "robot_radius": 0.25,
+        "safety_recovery_prefix_steps": 8,
+        "sampling_prior": "rl",
+        "temperature": 2.5,
+        "terminal_alignment_yaw_gain": 0.8,
+        "terminal_bearing_weight": 12.0,
+        "terminal_translation_heading_gate_rad": 0.4,
+        "terminal_translation_speed_limit": 0.12,
+        "terminal_velocity_weight": 20.0,
+        "terminal_yaw_rate_weight": 8.0
+      },
+      "plant": {
+        "actuator": {
+          "command_delay": 0.04,
+          "deadband": 0.0,
+          "integral_limit": 2.5,
+          "ki": 1.2,
+          "kp": 0.38,
+          "profile": "torque_pi",
+          "torque_limit": 1.55,
+          "torque_slew_rate": 25.0
+        },
+        "backend": "mujoco_diff_drive",
+        "contact": {
+          "caster_friction": [
+            0.05,
+            0.001,
+            0.0001
+          ],
+          "floor_friction": [
+            0.75,
+            0.004,
+            0.0004
+          ],
+          "solimp": "0.95 0.99 0.001",
+          "solref": "0.01 1",
+          "wheel_friction": [
+            0.85,
+            0.008,
+            0.0015
+          ]
+        },
+        "nominal_velocity_time_constant": 0.18,
+        "nominal_yaw_time_constant": 0.12,
+        "physics": {
+          "integrator": "implicitfast",
+          "iterations": 60,
+          "solver": "Newton",
+          "timestep": 0.002,
+          "tolerance": 1e-10
+        },
+        "robot": {
+          "chassis_half_size": [
+            0.19,
+            0.14,
+            0.045
+          ],
+          "chassis_inertia": [
+            0.13,
+            0.19,
+            0.27
+          ],
+          "chassis_mass": 13.0,
+          "collision_radius": 0.25,
+          "track_width": 0.32,
+          "wheel_mass": 0.38,
+          "wheel_radius": 0.08,
+          "wheel_width": 0.035
+        }
+      },
+      "rl": {
+        "algorithm": "sac",
+        "checkpoint": null,
+        "device": "cpu",
+        "enabled": true,
+        "gate": {
+          "critic_hard_threshold": 10.0,
+          "critic_soft_threshold": 2.0,
+          "fallback_after_safety_override": false,
+          "fixed_alpha": 1.0,
+          "mode": "none",
+          "ood_hard_threshold": 7.0,
+          "ood_soft_threshold": 3.0,
+          "use_critic_disagreement": false
+        },
+        "integration": "paper_direct_control",
+        "observation": {
+          "goal_distance_scale": 5.0,
+          "include_absolute_pose": false,
+          "include_previous_action": true,
+          "include_safety_state": true,
+          "lidar_max_range": 4.0,
+          "lidar_sectors": 36,
+          "velocity_scale": 0.5,
+          "yaw_rate_scale": 1.2
+        },
+        "policy_backend": "none",
+        "policy_id": "gate1_direct_control_multidomain_screen_l175",
+        "prior": {
+          "covariance_max_scale": 2.0,
+          "covariance_min_scale": 0.5,
+          "delta_scale": 0.65,
+          "learn_covariance": false,
+          "mode": "delta",
+          "num_knots": 6
+        },
+        "reward": {
+          "clearance_margin": 0.45,
+          "clearance_penalty_weight": 1.5,
+          "collision_penalty": 100.0,
+          "control_effort_weight": 0.02,
+          "control_rate_weight": 0.04,
+          "cross_track_penalty_weight": 0.0,
+          "distance_penalty_weight": 0.02,
+          "goal_bonus": 100.0,
+          "path_length_penalty_weight": 0.02,
+          "potential_progress_weight": 8.0,
+          "progress_mode": "distance_delta",
+          "safety_override_penalty": 0.15,
+          "step_penalty": 0.02,
+          "stuck_penalty": 0.03
+        },
+        "sac": {
+          "activation": "relu",
+          "actor_cvar_fraction": 1.0,
+          "actor_lr": 0.0003,
+          "alpha_lr": 0.0003,
+          "automatic_entropy_tuning": true,
+          "critic_distribution": "quantile",
+          "critic_lr": 0.0003,
+          "critic_num_quantiles": 25,
+          "critic_quantile_huber_kappa": 1.0,
+          "gamma": 0.99,
+          "gradient_clip_norm": 10.0,
+          "hidden_sizes": [
+            256,
+            256
+          ],
+          "initial_alpha": 0.2,
+          "log_std_max": 0.5,
+          "log_std_min": -5.0,
+          "policy_mode": "direct",
+          "tau": 0.005
+        },
+        "training": {
+          "action_mode": "direct_control",
+          "actor_update_after": 0,
+          "batch_size": 256,
+          "bc_anchor": {
+            "dataset_dir": null,
+            "enabled": false
+          },
+          "checkpoint_interval": 10000,
+          "checkpoint_selection": {
+            "mode": "scalar"
+          },
+          "curriculum": {
+            "enabled": false
+          },
+          "device": "auto",
+          "evaluate_initial_policy": false,
+          "evaluation_episodes": 3,
+          "evaluation_interval": 10000,
+          "initial_state_curriculum": {
+            "enabled": false
+          },
+          "initial_state_noise": [
+            0.05,
+            0.05,
+            0.1,
+            0.0,
+            0.0
+          ],
+          "normalizer_update": "online",
+          "physics_domain_config": "configs/research/mujoco_physics_domains.yaml",
+          "replay_capacity": 250000,
+          "replay_require_all_scenes": false,
+          "replay_sampling": "uniform",
+          "rl_prior_alpha": 1.0,
+          "save_replay_buffer": false,
+          "scene_configs": [
+            "configs/research/mujoco_strong_mppi_baseline.yaml",
+            "configs/research/mujoco_lab_complex.yaml",
+            "configs/research/mujoco_narrow_corridor.yaml",
+            "configs/research/mujoco_u_trap_long_board.yaml"
+          ],
+          "seed": 20260718,
+          "total_steps": 60000,
+          "training_domain_roles": [
+            "seen"
+          ],
+          "update_after": 1000,
+          "updates_per_step": 1,
+          "validation_domain_roles": [
+            "seen",
+            "unseen"
+          ],
+          "validation_scene_configs": [
+            "configs/research/mujoco_strong_mppi_baseline.yaml",
+            "configs/research/mujoco_narrow_corridor.yaml"
+          ],
+          "validation_seed_base": 22320718,
+          "warmup_policy": "random",
+          "warmup_steps": 5000
+        }
+      },
+      "scene": {
+        "name": "high_dynamic_hairpin_unseen_l56__low_friction_seen",
+        "obstacles": []
+      },
+      "sensors": {
+        "latency": 0.0,
+        "lidar_angle_max": 3.141592653589793,
+        "lidar_angle_min": -3.141592653589793,
+        "lidar_beams": 181,
+        "lidar_dropout_probability": 0.0,
+        "lidar_noise_std": 0.0,
+        "lidar_range_max": 4.0,
+        "lidar_range_min": 0.05,
+        "odom_noise_std": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "pose_source": "ground_truth",
+        "twist_noise_std": [
+          0.0,
+          0.0
+        ],
+        "twist_source": "ground_truth"
+      },
+      "state_space": {
+        "preset": "dynamic_unicycle_5"
+      },
+      "task": {
+        "lookahead_distance": 0.5,
+        "points": [
+          [
+            0.0,
+            0.0
+          ],
+          [
+            0.45,
+            0.0
+          ],
+          [
+            0.9,
+            0.0
+          ],
+          [
+            1.35,
+            0.06
+          ],
+          [
+            1.72,
+            0.26
+          ],
+          [
+            1.94,
+            0.58
+          ],
+          [
+            2.02,
+            0.96
+          ],
+          [
+            1.94,
+            1.32
+          ],
+          [
+            1.68,
+            1.56
+          ],
+          [
+            1.32,
+            1.68
+          ],
+          [
+            0.92,
+            1.68
+          ],
+          [
+            0.58,
+            1.82
+          ],
+          [
+            0.38,
+            2.1
+          ],
+          [
+            0.46,
+            2.38
+          ],
+          [
+            0.76,
+            2.58
+          ],
+          [
+            1.18,
+            2.68
+          ],
+          [
+            1.64,
+            2.7
+          ],
+          [
+            2.12,
+            2.7
+          ],
+          [
+            2.6,
+            2.7
+          ]
+        ],
+        "position": [
+          3.0,
+          3.0
+        ],
+        "position_tolerance": 0.25,
+        "terminal_approach_distance": 1.1,
+        "type": "polyline"
+      }
+    },
+    {
+      "_config_path": "/home/mapples/projects/mobile-robot-mppi-study/configs/research/mujoco_high_dynamic_hairpin_unseen_l56.yaml",
+      "action_space": {
+        "lower": [
+          0.0,
+          -1.25
+        ],
+        "names": [
+          "v_cmd",
+          "omega_cmd"
+        ],
+        "rate_limits": [
+          1.1,
+          3.5
+        ],
+        "upper": [
+          0.65,
+          1.25
+        ]
+      },
+      "experiment": {
+        "control_dt": 0.1,
+        "initial_state": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "max_steps": 380,
+        "name": "high_dynamic_hairpin_unseen_l56",
+        "physics_domain": "long_delay_seen",
+        "physics_domain_role": "seen",
+        "seed": 0,
+        "terminate_on_collision": true
+      },
+      "memory": {
+        "enable": false
+      },
+      "perception": {
+        "local_obstacle_layer": {
+          "downsample_step": 1,
+          "fallback_downsample_step": 3,
+          "max_obstacle_count": 80,
+          "obstacle_radius": 0.08,
+          "planner_max_obstacles": 24
+        },
+        "scan_guard": {
+          "front_angle_deg": 35.0,
+          "front_slow_distance": 0.85,
+          "front_slow_min_scale": 0.45,
+          "front_soft_block_distance": 0.45,
+          "front_soft_block_max_speed": 0.04,
+          "front_stop_distance": 0.35,
+          "hard_stop_distance": 0.35,
+          "near_body_stop_radius": 0.35,
+          "side_angle_deg": 125.0,
+          "side_stop_distance": 0.35
+        }
+      },
+      "planner": {
+        "collision_penalty": 10000.0,
+        "command_delay_s": 0.04,
+        "goal_running_weight": 1.0,
+        "goal_terminal_weight": 25.0,
+        "horizon": 36,
+        "importance_sampling_correction": true,
+        "integrator": "rk4",
+        "noise_sigma": [
+          0.12,
+          0.5
+        ],
+        "num_samples": 200,
+        "obstacle_influence": 0.7,
+        "obstacle_weight": 70.0,
+        "prediction_mode": "nominal",
+        "previous_sequence_blend": 0.2,
+        "prior_terminal_max_speed": 0.12,
+        "prior_translation_heading_gate_rad": 0.4,
+        "prior_translation_heading_gate_terminal_only": true,
+        "prior_v_gain": 0.7,
+        "prior_yaw_gain": 1.2,
+        "residual_torch_num_threads": 1,
+        "residual_torchscript": true,
+        "robot_radius": 0.25,
+        "safety_recovery_prefix_steps": 8,
+        "sampling_prior": "rl",
+        "temperature": 2.5,
+        "terminal_alignment_yaw_gain": 0.8,
+        "terminal_bearing_weight": 12.0,
+        "terminal_translation_heading_gate_rad": 0.4,
+        "terminal_translation_speed_limit": 0.12,
+        "terminal_velocity_weight": 20.0,
+        "terminal_yaw_rate_weight": 8.0
+      },
+      "plant": {
+        "actuator": {
+          "command_delay": 0.08,
+          "deadband": 0.0,
+          "integral_limit": 2.5,
+          "ki": 1.2,
+          "kp": 0.38,
+          "profile": "torque_pi",
+          "torque_limit": 1.55,
+          "torque_slew_rate": 25.0
+        },
+        "backend": "mujoco_diff_drive",
+        "contact": {
+          "caster_friction": [
+            0.05,
+            0.001,
+            0.0001
+          ],
+          "floor_friction": [
+            0.55,
+            0.0025,
+            0.00025
+          ],
+          "solimp": "0.95 0.99 0.001",
+          "solref": "0.01 1",
+          "wheel_friction": [
+            0.62,
+            0.005,
+            0.0008
+          ]
+        },
+        "nominal_velocity_time_constant": 0.18,
+        "nominal_yaw_time_constant": 0.12,
+        "physics": {
+          "integrator": "implicitfast",
+          "iterations": 60,
+          "solver": "Newton",
+          "timestep": 0.002,
+          "tolerance": 1e-10
+        },
+        "robot": {
+          "chassis_half_size": [
+            0.19,
+            0.14,
+            0.045
+          ],
+          "chassis_inertia": [
+            0.13,
+            0.19,
+            0.27
+          ],
+          "chassis_mass": 13.0,
+          "collision_radius": 0.25,
+          "track_width": 0.32,
+          "wheel_mass": 0.38,
+          "wheel_radius": 0.08,
+          "wheel_width": 0.035
+        }
+      },
+      "rl": {
+        "algorithm": "sac",
+        "checkpoint": null,
+        "device": "cpu",
+        "enabled": true,
+        "gate": {
+          "critic_hard_threshold": 10.0,
+          "critic_soft_threshold": 2.0,
+          "fallback_after_safety_override": false,
+          "fixed_alpha": 1.0,
+          "mode": "none",
+          "ood_hard_threshold": 7.0,
+          "ood_soft_threshold": 3.0,
+          "use_critic_disagreement": false
+        },
+        "integration": "paper_direct_control",
+        "observation": {
+          "goal_distance_scale": 5.0,
+          "include_absolute_pose": false,
+          "include_previous_action": true,
+          "include_safety_state": true,
+          "lidar_max_range": 4.0,
+          "lidar_sectors": 36,
+          "velocity_scale": 0.5,
+          "yaw_rate_scale": 1.2
+        },
+        "policy_backend": "none",
+        "policy_id": "gate1_direct_control_multidomain_screen_l175",
+        "prior": {
+          "covariance_max_scale": 2.0,
+          "covariance_min_scale": 0.5,
+          "delta_scale": 0.65,
+          "learn_covariance": false,
+          "mode": "delta",
+          "num_knots": 6
+        },
+        "reward": {
+          "clearance_margin": 0.45,
+          "clearance_penalty_weight": 1.5,
+          "collision_penalty": 100.0,
+          "control_effort_weight": 0.02,
+          "control_rate_weight": 0.04,
+          "cross_track_penalty_weight": 0.0,
+          "distance_penalty_weight": 0.02,
+          "goal_bonus": 100.0,
+          "path_length_penalty_weight": 0.02,
+          "potential_progress_weight": 8.0,
+          "progress_mode": "distance_delta",
+          "safety_override_penalty": 0.15,
+          "step_penalty": 0.02,
+          "stuck_penalty": 0.03
+        },
+        "sac": {
+          "activation": "relu",
+          "actor_cvar_fraction": 1.0,
+          "actor_lr": 0.0003,
+          "alpha_lr": 0.0003,
+          "automatic_entropy_tuning": true,
+          "critic_distribution": "quantile",
+          "critic_lr": 0.0003,
+          "critic_num_quantiles": 25,
+          "critic_quantile_huber_kappa": 1.0,
+          "gamma": 0.99,
+          "gradient_clip_norm": 10.0,
+          "hidden_sizes": [
+            256,
+            256
+          ],
+          "initial_alpha": 0.2,
+          "log_std_max": 0.5,
+          "log_std_min": -5.0,
+          "policy_mode": "direct",
+          "tau": 0.005
+        },
+        "training": {
+          "action_mode": "direct_control",
+          "actor_update_after": 0,
+          "batch_size": 256,
+          "bc_anchor": {
+            "dataset_dir": null,
+            "enabled": false
+          },
+          "checkpoint_interval": 10000,
+          "checkpoint_selection": {
+            "mode": "scalar"
+          },
+          "curriculum": {
+            "enabled": false
+          },
+          "device": "auto",
+          "evaluate_initial_policy": false,
+          "evaluation_episodes": 3,
+          "evaluation_interval": 10000,
+          "initial_state_curriculum": {
+            "enabled": false
+          },
+          "initial_state_noise": [
+            0.05,
+            0.05,
+            0.1,
+            0.0,
+            0.0
+          ],
+          "normalizer_update": "online",
+          "physics_domain_config": "configs/research/mujoco_physics_domains.yaml",
+          "replay_capacity": 250000,
+          "replay_require_all_scenes": false,
+          "replay_sampling": "uniform",
+          "rl_prior_alpha": 1.0,
+          "save_replay_buffer": false,
+          "scene_configs": [
+            "configs/research/mujoco_strong_mppi_baseline.yaml",
+            "configs/research/mujoco_lab_complex.yaml",
+            "configs/research/mujoco_narrow_corridor.yaml",
+            "configs/research/mujoco_u_trap_long_board.yaml"
+          ],
+          "seed": 20260718,
+          "total_steps": 60000,
+          "training_domain_roles": [
+            "seen"
+          ],
+          "update_after": 1000,
+          "updates_per_step": 1,
+          "validation_domain_roles": [
+            "seen",
+            "unseen"
+          ],
+          "validation_scene_configs": [
+            "configs/research/mujoco_strong_mppi_baseline.yaml",
+            "configs/research/mujoco_narrow_corridor.yaml"
+          ],
+          "validation_seed_base": 22320718,
+          "warmup_policy": "random",
+          "warmup_steps": 5000
+        }
+      },
+      "scene": {
+        "name": "high_dynamic_hairpin_unseen_l56__long_delay_seen",
+        "obstacles": []
+      },
+      "sensors": {
+        "latency": 0.0,
+        "lidar_angle_max": 3.141592653589793,
+        "lidar_angle_min": -3.141592653589793,
+        "lidar_beams": 181,
+        "lidar_dropout_probability": 0.0,
+        "lidar_noise_std": 0.0,
+        "lidar_range_max": 4.0,
+        "lidar_range_min": 0.05,
+        "odom_noise_std": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "pose_source": "ground_truth",
+        "twist_noise_std": [
+          0.0,
+          0.0
+        ],
+        "twist_source": "ground_truth"
+      },
+      "state_space": {
+        "preset": "dynamic_unicycle_5"
+      },
+      "task": {
+        "lookahead_distance": 0.5,
+        "points": [
+          [
+            0.0,
+            0.0
+          ],
+          [
+            0.45,
+            0.0
+          ],
+          [
+            0.9,
+            0.0
+          ],
+          [
+            1.35,
+            0.06
+          ],
+          [
+            1.72,
+            0.26
+          ],
+          [
+            1.94,
+            0.58
+          ],
+          [
+            2.02,
+            0.96
+          ],
+          [
+            1.94,
+            1.32
+          ],
+          [
+            1.68,
+            1.56
+          ],
+          [
+            1.32,
+            1.68
+          ],
+          [
+            0.92,
+            1.68
+          ],
+          [
+            0.58,
+            1.82
+          ],
+          [
+            0.38,
+            2.1
+          ],
+          [
+            0.46,
+            2.38
+          ],
+          [
+            0.76,
+            2.58
+          ],
+          [
+            1.18,
+            2.68
+          ],
+          [
+            1.64,
+            2.7
+          ],
+          [
+            2.12,
+            2.7
+          ],
+          [
+            2.6,
+            2.7
+          ]
+        ],
+        "position": [
+          3.0,
+          3.0
+        ],
+        "position_tolerance": 0.25,
+        "terminal_approach_distance": 1.1,
+        "type": "polyline"
+      }
+    },
+    {
+      "_config_path": "/home/mapples/projects/mobile-robot-mppi-study/configs/research/mujoco_high_dynamic_hairpin_unseen_l56.yaml",
+      "action_space": {
+        "lower": [
+          0.0,
+          -1.25
+        ],
+        "names": [
+          "v_cmd",
+          "omega_cmd"
+        ],
+        "rate_limits": [
+          1.1,
+          3.5
+        ],
+        "upper": [
+          0.65,
+          1.25
+        ]
+      },
+      "experiment": {
+        "control_dt": 0.1,
+        "initial_state": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "max_steps": 380,
+        "name": "high_dynamic_hairpin_unseen_l56",
+        "physics_domain": "combined_unseen",
+        "physics_domain_role": "unseen",
+        "seed": 0,
+        "terminate_on_collision": true
+      },
+      "memory": {
+        "enable": false
+      },
+      "perception": {
+        "local_obstacle_layer": {
+          "downsample_step": 1,
+          "fallback_downsample_step": 3,
+          "max_obstacle_count": 80,
+          "obstacle_radius": 0.08,
+          "planner_max_obstacles": 24
+        },
+        "scan_guard": {
+          "front_angle_deg": 35.0,
+          "front_slow_distance": 0.85,
+          "front_slow_min_scale": 0.45,
+          "front_soft_block_distance": 0.45,
+          "front_soft_block_max_speed": 0.04,
+          "front_stop_distance": 0.35,
+          "hard_stop_distance": 0.35,
+          "near_body_stop_radius": 0.35,
+          "side_angle_deg": 125.0,
+          "side_stop_distance": 0.35
+        }
+      },
+      "planner": {
+        "collision_penalty": 10000.0,
+        "command_delay_s": 0.04,
+        "goal_running_weight": 1.0,
+        "goal_terminal_weight": 25.0,
+        "horizon": 36,
+        "importance_sampling_correction": true,
+        "integrator": "rk4",
+        "noise_sigma": [
+          0.12,
+          0.5
+        ],
+        "num_samples": 200,
+        "obstacle_influence": 0.7,
+        "obstacle_weight": 70.0,
+        "prediction_mode": "nominal",
+        "previous_sequence_blend": 0.2,
+        "prior_terminal_max_speed": 0.12,
+        "prior_translation_heading_gate_rad": 0.4,
+        "prior_translation_heading_gate_terminal_only": true,
+        "prior_v_gain": 0.7,
+        "prior_yaw_gain": 1.2,
+        "residual_torch_num_threads": 1,
+        "residual_torchscript": true,
+        "robot_radius": 0.25,
+        "safety_recovery_prefix_steps": 8,
+        "sampling_prior": "rl",
+        "temperature": 2.5,
+        "terminal_alignment_yaw_gain": 0.8,
+        "terminal_bearing_weight": 12.0,
+        "terminal_translation_heading_gate_rad": 0.4,
+        "terminal_translation_speed_limit": 0.12,
+        "terminal_velocity_weight": 20.0,
+        "terminal_yaw_rate_weight": 8.0
+      },
+      "plant": {
+        "actuator": {
+          "command_delay": 0.1,
+          "deadband": 0.0,
+          "integral_limit": 2.5,
+          "ki": 1.2,
+          "kp": 0.48,
+          "profile": "torque_pi",
+          "torque_limit": 1.8,
+          "torque_slew_rate": 25.0
+        },
+        "backend": "mujoco_diff_drive",
+        "contact": {
+          "caster_friction": [
+            0.05,
+            0.001,
+            0.0001
+          ],
+          "floor_friction": [
+            0.6,
+            0.003,
+            0.0003
+          ],
+          "solimp": "0.95 0.99 0.001",
+          "solref": "0.01 1",
+          "wheel_friction": [
+            0.72,
+            0.006,
+            0.001
+          ]
+        },
+        "nominal_velocity_time_constant": 0.18,
+        "nominal_yaw_time_constant": 0.12,
+        "physics": {
+          "integrator": "implicitfast",
+          "iterations": 60,
+          "solver": "Newton",
+          "timestep": 0.002,
+          "tolerance": 1e-10
+        },
+        "robot": {
+          "chassis_half_size": [
+            0.19,
+            0.14,
+            0.045
+          ],
+          "chassis_inertia": [
+            0.11,
+            0.16,
+            0.22
+          ],
+          "chassis_mass": 12.0,
+          "collision_radius": 0.25,
+          "track_width": 0.32,
+          "wheel_mass": 0.38,
+          "wheel_radius": 0.08,
+          "wheel_width": 0.035
+        }
+      },
+      "rl": {
+        "algorithm": "sac",
+        "checkpoint": null,
+        "device": "cpu",
+        "enabled": true,
+        "gate": {
+          "critic_hard_threshold": 10.0,
+          "critic_soft_threshold": 2.0,
+          "fallback_after_safety_override": false,
+          "fixed_alpha": 1.0,
+          "mode": "none",
+          "ood_hard_threshold": 7.0,
+          "ood_soft_threshold": 3.0,
+          "use_critic_disagreement": false
+        },
+        "integration": "paper_direct_control",
+        "observation": {
+          "goal_distance_scale": 5.0,
+          "include_absolute_pose": false,
+          "include_previous_action": true,
+          "include_safety_state": true,
+          "lidar_max_range": 4.0,
+          "lidar_sectors": 36,
+          "velocity_scale": 0.5,
+          "yaw_rate_scale": 1.2
+        },
+        "policy_backend": "none",
+        "policy_id": "gate1_direct_control_multidomain_screen_l175",
+        "prior": {
+          "covariance_max_scale": 2.0,
+          "covariance_min_scale": 0.5,
+          "delta_scale": 0.65,
+          "learn_covariance": false,
+          "mode": "delta",
+          "num_knots": 6
+        },
+        "reward": {
+          "clearance_margin": 0.45,
+          "clearance_penalty_weight": 1.5,
+          "collision_penalty": 100.0,
+          "control_effort_weight": 0.02,
+          "control_rate_weight": 0.04,
+          "cross_track_penalty_weight": 0.0,
+          "distance_penalty_weight": 0.02,
+          "goal_bonus": 100.0,
+          "path_length_penalty_weight": 0.02,
+          "potential_progress_weight": 8.0,
+          "progress_mode": "distance_delta",
+          "safety_override_penalty": 0.15,
+          "step_penalty": 0.02,
+          "stuck_penalty": 0.03
+        },
+        "sac": {
+          "activation": "relu",
+          "actor_cvar_fraction": 1.0,
+          "actor_lr": 0.0003,
+          "alpha_lr": 0.0003,
+          "automatic_entropy_tuning": true,
+          "critic_distribution": "quantile",
+          "critic_lr": 0.0003,
+          "critic_num_quantiles": 25,
+          "critic_quantile_huber_kappa": 1.0,
+          "gamma": 0.99,
+          "gradient_clip_norm": 10.0,
+          "hidden_sizes": [
+            256,
+            256
+          ],
+          "initial_alpha": 0.2,
+          "log_std_max": 0.5,
+          "log_std_min": -5.0,
+          "policy_mode": "direct",
+          "tau": 0.005
+        },
+        "training": {
+          "action_mode": "direct_control",
+          "actor_update_after": 0,
+          "batch_size": 256,
+          "bc_anchor": {
+            "dataset_dir": null,
+            "enabled": false
+          },
+          "checkpoint_interval": 10000,
+          "checkpoint_selection": {
+            "mode": "scalar"
+          },
+          "curriculum": {
+            "enabled": false
+          },
+          "device": "auto",
+          "evaluate_initial_policy": false,
+          "evaluation_episodes": 3,
+          "evaluation_interval": 10000,
+          "initial_state_curriculum": {
+            "enabled": false
+          },
+          "initial_state_noise": [
+            0.05,
+            0.05,
+            0.1,
+            0.0,
+            0.0
+          ],
+          "normalizer_update": "online",
+          "physics_domain_config": "configs/research/mujoco_physics_domains.yaml",
+          "replay_capacity": 250000,
+          "replay_require_all_scenes": false,
+          "replay_sampling": "uniform",
+          "rl_prior_alpha": 1.0,
+          "save_replay_buffer": false,
+          "scene_configs": [
+            "configs/research/mujoco_strong_mppi_baseline.yaml",
+            "configs/research/mujoco_lab_complex.yaml",
+            "configs/research/mujoco_narrow_corridor.yaml",
+            "configs/research/mujoco_u_trap_long_board.yaml"
+          ],
+          "seed": 20260718,
+          "total_steps": 60000,
+          "training_domain_roles": [
+            "seen"
+          ],
+          "update_after": 1000,
+          "updates_per_step": 1,
+          "validation_domain_roles": [
+            "seen",
+            "unseen"
+          ],
+          "validation_scene_configs": [
+            "configs/research/mujoco_strong_mppi_baseline.yaml",
+            "configs/research/mujoco_narrow_corridor.yaml"
+          ],
+          "validation_seed_base": 22320718,
+          "warmup_policy": "random",
+          "warmup_steps": 5000
+        }
+      },
+      "scene": {
+        "name": "high_dynamic_hairpin_unseen_l56__combined_unseen",
+        "obstacles": []
+      },
+      "sensors": {
+        "latency": 0.0,
+        "lidar_angle_max": 3.141592653589793,
+        "lidar_angle_min": -3.141592653589793,
+        "lidar_beams": 181,
+        "lidar_dropout_probability": 0.0,
+        "lidar_noise_std": 0.0,
+        "lidar_range_max": 4.0,
+        "lidar_range_min": 0.05,
+        "odom_noise_std": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "pose_source": "ground_truth",
+        "twist_noise_std": [
+          0.0,
+          0.0
+        ],
+        "twist_source": "ground_truth"
+      },
+      "state_space": {
+        "preset": "dynamic_unicycle_5"
+      },
+      "task": {
+        "lookahead_distance": 0.5,
+        "points": [
+          [
+            0.0,
+            0.0
+          ],
+          [
+            0.45,
+            0.0
+          ],
+          [
+            0.9,
+            0.0
+          ],
+          [
+            1.35,
+            0.06
+          ],
+          [
+            1.72,
+            0.26
+          ],
+          [
+            1.94,
+            0.58
+          ],
+          [
+            2.02,
+            0.96
+          ],
+          [
+            1.94,
+            1.32
+          ],
+          [
+            1.68,
+            1.56
+          ],
+          [
+            1.32,
+            1.68
+          ],
+          [
+            0.92,
+            1.68
+          ],
+          [
+            0.58,
+            1.82
+          ],
+          [
+            0.38,
+            2.1
+          ],
+          [
+            0.46,
+            2.38
+          ],
+          [
+            0.76,
+            2.58
+          ],
+          [
+            1.18,
+            2.68
+          ],
+          [
+            1.64,
+            2.7
+          ],
+          [
+            2.12,
+            2.7
+          ],
+          [
+            2.6,
+            2.7
+          ]
+        ],
+        "position": [
+          3.0,
+          3.0
+        ],
+        "position_tolerance": 0.25,
+        "terminal_approach_distance": 1.1,
+        "type": "polyline"
+      }
+    }
+  ],
+  "scene_configs": [
+    "/home/mapples/projects/mobile-robot-mppi-study/configs/research/mujoco_high_dynamic_reverse_s_unseen_l56.yaml",
+    "/home/mapples/projects/mobile-robot-mppi-study/configs/research/mujoco_high_dynamic_hairpin_unseen_l56.yaml"
+  ],
+  "schema_version": 1,
+  "seeds": [
+    551,
+    552,
+    553,
+    554,
+    555
+  ]
+}

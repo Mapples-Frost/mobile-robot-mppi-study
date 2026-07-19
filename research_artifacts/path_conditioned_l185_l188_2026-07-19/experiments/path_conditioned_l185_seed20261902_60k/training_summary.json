@@ -1,0 +1,45 @@
+{
+  "best_validation_score": 1106.3204886731141,
+  "checkpoint_selection": null,
+  "episode_records": 338,
+  "episodes": 338,
+  "global_step": 60000,
+  "interrupted_episodes": 0,
+  "precision_constraint": {
+    "config": {
+      "dual_lr": 250.0,
+      "enabled": false,
+      "initial_multiplier": 0.0,
+      "maximum_multiplier": 100.0,
+      "target_cross_track_rmse_m": 0.04
+    },
+    "multiplier": 0.0,
+    "updates": 0
+  },
+  "replay_group_counts": {
+    "0": 2922,
+    "1": 2389,
+    "2": 4339,
+    "3": 2813,
+    "4": 5425,
+    "5": 4869,
+    "6": 3033,
+    "7": 6058,
+    "8": 2620,
+    "9": 2723,
+    "10": 4525,
+    "11": 3365,
+    "12": 3633,
+    "13": 4549,
+    "14": 3519,
+    "15": 3218
+  },
+  "replay_outcome_counts": {
+    "-1": 21,
+    "0": 11400,
+    "1": 48579
+  },
+  "replay_sampling": "uniform",
+  "update_records": 59001,
+  "validation_records": 120
+}

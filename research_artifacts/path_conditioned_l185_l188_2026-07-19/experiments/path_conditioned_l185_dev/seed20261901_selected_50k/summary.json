@@ -1,0 +1,15 @@
+{
+  "checkpoint": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/rl/path_conditioned_l185_seed20261901_60k_v2/checkpoints/step_000050000.pt",
+  "collision_rate": 0.0,
+  "episodes": 50,
+  "mean_control_jerk": 2.8971015720557296,
+  "mean_cross_track_max": 0.2274797434218968,
+  "mean_cross_track_rmse": 0.1057096033085613,
+  "mean_heading_rmse": 0.17973014085042086,
+  "mean_minimum_clearance": null,
+  "mean_path_completion_ratio": 0.9668339923238559,
+  "mean_raw_path_completion_ratio": 0.9668339923238559,
+  "mean_return": 104.44490694516378,
+  "success_rate": 1.0,
+  "unbounded_clearance_fraction": 1.0
+}

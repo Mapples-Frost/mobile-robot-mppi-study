@@ -1,0 +1,5 @@
+# Research result packages carry SHA256 manifests. Preserve their exact bytes
+# across Windows and Linux checkouts so provenance validation remains valid.
+# Some source CSVs use CRLF, so whitespace checking is intentionally disabled
+# inside immutable evidence packages.
+research_artifacts/** -text whitespace=-trailing-space,-space-before-tab

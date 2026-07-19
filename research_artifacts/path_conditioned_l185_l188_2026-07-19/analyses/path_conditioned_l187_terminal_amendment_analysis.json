@@ -1,0 +1,43 @@
+{
+  "confirmation": {
+    "criteria": {
+      "full_cross_track_within_5pct": true,
+      "full_jerk_within_10pct": true,
+      "full_success_every_episode": false,
+      "full_zero_collisions": true
+    },
+    "full_collisions": 0,
+    "full_control_jerk_mean": 0.2020793517711652,
+    "full_cross_track_rmse_mean": 0.042383697673452764,
+    "full_successes": 1,
+    "integration_gate_passed": false,
+    "ordinary_control_jerk_mean": 0.20277863390742668,
+    "ordinary_cross_track_rmse_mean": 0.051853150594211236,
+    "paired_blocks": 2
+  },
+  "diagnostic": {
+    "candidate_selected": true,
+    "criteria": {
+      "cross_track_regression_within_10pct": true,
+      "increased_successes": true,
+      "jerk_regression_within_10pct": true,
+      "zero_candidate_collisions": true
+    },
+    "cross_track_ratio_t1_over_t0": 0.9000112879053341,
+    "jerk_ratio_t1_over_t0": 1.0050131447132054,
+    "t0": {
+      "collisions": 0,
+      "episodes": 4,
+      "mean_control_jerk": 0.20311207784224228,
+      "mean_cross_track_rmse": 0.04981501658039287,
+      "successes": 0
+    },
+    "t1": {
+      "collisions": 0,
+      "episodes": 4,
+      "mean_control_jerk": 0.2041303080814653,
+      "mean_cross_track_rmse": 0.04483407722954496,
+      "successes": 2
+    }
+  }
+}

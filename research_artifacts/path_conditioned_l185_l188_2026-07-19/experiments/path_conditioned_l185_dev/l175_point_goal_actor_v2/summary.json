@@ -1,0 +1,14 @@
+{
+  "checkpoint": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/rl/gate1_direct_control_multidomain_screen_l175/checkpoints/best.pt",
+  "collision_rate": 0.0,
+  "episodes": 50,
+  "mean_control_jerk": 3.1836840393795955,
+  "mean_cross_track_max": 5.69596125303881,
+  "mean_cross_track_rmse": 4.384673109018734,
+  "mean_heading_rmse": 0.9266672189305215,
+  "mean_minimum_clearance": null,
+  "mean_path_completion_ratio": 1.0,
+  "mean_return": -49.24518783156939,
+  "success_rate": 0.0,
+  "unbounded_clearance_fraction": 1.0
+}

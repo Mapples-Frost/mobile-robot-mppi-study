@@ -324,6 +324,12 @@ class PlatformResidualEnsemble:
         self.innovation_error_ema = 0.0
         self.innovation_samples = 0
         self.last_innovation_error = 0.0
+        self.innovation_error_vector_ema = np.zeros(
+            self.state_dim, dtype=np.float64
+        )
+        self.last_innovation_error_vector = np.zeros(
+            self.state_dim, dtype=np.float64
+        )
 
     def _validated_scales(self, values, name):
         result = np.asarray(values, dtype=np.float64).reshape(-1)
@@ -341,6 +347,8 @@ class PlatformResidualEnsemble:
         self.innovation_error_ema = 0.0
         self.innovation_samples = 0
         self.last_innovation_error = 0.0
+        self.innovation_error_vector_ema.fill(0.0)
+        self.last_innovation_error_vector.fill(0.0)
 
     def member_derivatives(self, state, control, time=None):
         values = np.stack(
@@ -473,12 +481,18 @@ class PlatformResidualEnsemble:
         )))
         if self.innovation_samples == 0:
             self.innovation_error_ema = value
+            self.innovation_error_vector_ema = error.copy()
         else:
             self.innovation_error_ema = (
                 self.innovation_decay * self.innovation_error_ema
                 + (1.0 - self.innovation_decay) * value
             )
+            self.innovation_error_vector_ema = (
+                self.innovation_decay * self.innovation_error_vector_ema
+                + (1.0 - self.innovation_decay) * error
+            )
         self.last_innovation_error = value
+        self.last_innovation_error_vector = error.copy()
         self.innovation_samples += 1
         return self.innovation_error_ema
 
@@ -494,6 +508,12 @@ class PlatformResidualEnsemble:
             ),
             "residual_ensemble_last_innovation_error": float(
                 self.last_innovation_error
+            ),
+            "residual_ensemble_innovation_error_vector_ema": (
+                self.innovation_error_vector_ema.copy()
+            ),
+            "residual_ensemble_last_innovation_error_vector": (
+                self.last_innovation_error_vector.copy()
             ),
         }
 

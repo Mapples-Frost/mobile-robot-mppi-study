@@ -348,10 +348,9 @@ class MppiController:
 
     def _observe_residual_reliability(self, current_state):
         residual = getattr(self.dynamics, "residual", None)
-        observer = getattr(residual, "observe_prediction_errors", None)
         ungated = getattr(residual, "ungated_derivative", None)
         nominal = getattr(self.dynamics, "nominal", None)
-        if not callable(observer) or not callable(ungated) or nominal is None:
+        if residual is None or nominal is None:
             return
         if (
             self._reliability_previous_state is None
@@ -359,27 +358,80 @@ class MppiController:
         ):
             return
 
-        class _UngatedCombined:
+        previous = self._reliability_previous_state
+        control = self._reliability_pending_control
+        self.observe_completed_transition(
+            previous,
+            control,
+            current_state,
+            residual_derivative=(ungated if callable(ungated) else None),
+        )
+        self._reliability_pending_control = None
+
+    def observe_completed_transition(
+        self,
+        previous_state,
+        applied_control,
+        current_state,
+        residual_derivative=None,
+    ):
+        """Update residual diagnostics from one already completed transition.
+
+        This public hook is shared by online MPPI execution and offline direct
+        Actor training.  It is intentionally called only after ``current_state``
+        has been measured, so no future plant information can leak into the
+        command that generated the transition.
+        """
+
+        residual = getattr(self.dynamics, "residual", None)
+        nominal = getattr(self.dynamics, "nominal", None)
+        if residual is None or nominal is None:
+            return False
+        observers = []
+        seen = set()
+        current = residual
+        while current is not None and id(current) not in seen:
+            seen.add(id(current))
+            observer = getattr(current, "observe_prediction_errors", None)
+            if callable(observer):
+                observers.append(observer)
+            child = getattr(current, "residual", None)
+            current = None if child is current else child
+        if not observers:
+            return False
+        previous = self.state_spec.validate(previous_state)
+        control = np.asarray(applied_control, dtype=np.float64).reshape(-1)
+        if (
+            control.shape != (self.action_spec.dimension,)
+            or not np.isfinite(control).all()
+        ):
+            raise ValueError("completed-transition control is invalid")
+        observed = self.state_spec.validate(current_state)
+        derivative = residual_derivative
+        if derivative is None:
+            derivative = getattr(residual, "ungated_derivative", None)
+        if not callable(derivative):
+            derivative = residual.derivative
+
+        class _ResidualCombined:
             state_dim = int(self.dynamics.state_dim)
             control_dim = int(self.dynamics.control_dim)
 
-            def derivative(inner_self, state, control, time=None):
+            def derivative(inner_self, state, action, time=None):
                 return np.asarray(
-                    nominal.derivative(state, control, time), dtype=np.float64
-                ) + np.asarray(ungated(state, control, time), dtype=np.float64)
+                    nominal.derivative(state, action, time), dtype=np.float64
+                ) + np.asarray(derivative(state, action, time), dtype=np.float64)
 
-        previous = self._reliability_previous_state
-        control = self._reliability_pending_control
         nominal_prediction = integrate_batch(
             nominal, previous, control, self.config.dt,
             self.state_spec, self.config.integrator,
         )
         residual_prediction = integrate_batch(
-            _UngatedCombined(), previous, control, self.config.dt,
+            _ResidualCombined(), previous, control, self.config.dt,
             self.state_spec, self.config.integrator,
         )
-        nominal_error = nominal_prediction - current_state
-        residual_error = residual_prediction - current_state
+        nominal_error = nominal_prediction - observed
+        residual_error = residual_prediction - observed
         for index in self.state_spec.periodic_indices:
             nominal_error[index] = np.arctan2(
                 np.sin(nominal_error[index]), np.cos(nominal_error[index])
@@ -387,8 +439,9 @@ class MppiController:
             residual_error[index] = np.arctan2(
                 np.sin(residual_error[index]), np.cos(residual_error[index])
             )
-        observer(nominal_error, residual_error)
-        self._reliability_pending_control = None
+        for observer in observers:
+            observer(nominal_error.copy(), residual_error.copy())
+        return True
 
     def _sample(self, prior: PriorOutput, rng=None) -> np.ndarray:
         rng = self.rng if rng is None else rng

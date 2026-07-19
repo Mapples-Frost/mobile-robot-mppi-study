@@ -159,3 +159,54 @@ def test_correction_initialization_freezes_bc_and_keeps_zero_residual(tmp_path):
     for name, value in trainer.agent.actor.state_dict().items():
         if name not in ("network.4.weight", "network.4.bias"):
             torch.testing.assert_close(value.cpu(), correction_before[name])
+
+
+def test_actor_initialization_can_zero_extend_residual_context(tmp_path):
+    source_items = _save_source(tmp_path)
+    checkpoint, source, source_normalizer, encoder, prior, action_spec = source_items
+    trainer = SACTrainer.__new__(SACTrainer)
+    trainer.agent = SACAgent(
+        12,
+        2,
+        SACConfig(hidden_sizes=(8, 8), activation="relu"),
+        device="cpu",
+        seed=99,
+    )
+    trainer.normalizer = RunningNormalizer(12)
+    trainer.encoder_config = ObservationEncoderConfig(
+        **{
+            **encoder.to_dict(),
+            "include_residual_context": True,
+            "residual_context_dimension": 7,
+        }
+    )
+    trainer.parameterization_config = prior
+    trainer.action_spec = action_spec
+    trainer.actor_initialization = None
+    trainer.bc_anchor = SimpleNamespace(enabled=False)
+    trainer.training_config = SimpleNamespace(
+        allow_observation_extension_initialization=True
+    )
+    trainer._write_run_metadata = lambda: None
+
+    raw = np.linspace(-0.2, 0.2, 5, dtype=np.float32)
+    source_action, _ = source.select_action(
+        source_normalizer.normalize(raw), deterministic=True
+    )
+    trainer.initialize_actor_from(checkpoint)
+    expanded_raw = np.concatenate((raw, np.zeros(7, dtype=np.float32)))
+    target_action, _ = trainer.agent.select_action(
+        trainer.normalizer.normalize(expanded_raw), deterministic=True
+    )
+
+    np.testing.assert_array_equal(target_action, source_action)
+    assert trainer.normalizer.dimension == 12
+    np.testing.assert_allclose(trainer.normalizer.std[5:], 1.0)
+    first_weight = trainer.agent.actor.state_dict()["network.0.weight"]
+    torch.testing.assert_close(
+        first_weight[:, :5], source.actor.state_dict()["network.0.weight"]
+    )
+    torch.testing.assert_close(
+        first_weight[:, 5:], torch.zeros_like(first_weight[:, 5:])
+    )
+    assert trainer.actor_initialization["zero_initialized_context_columns"]

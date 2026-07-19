@@ -78,6 +78,32 @@ def test_missing_scan_is_explicit_not_nan():
     assert encoded[-1] == 0.0
 
 
+def test_residual_context_is_appended_without_changing_legacy_prefix():
+    action_spec = body_velocity_action((0.0, 0.4), 1.0)
+    legacy = ObservationEncoder(
+        ObservationEncoderConfig(lidar_sectors=4), action_spec
+    )
+    expanded = ObservationEncoder(
+        ObservationEncoderConfig(
+            lidar_sectors=4,
+            include_residual_context=True,
+            residual_context_dimension=7,
+        ),
+        action_spec,
+    )
+    previous = np.asarray((0.2, -0.1))
+    old = legacy.encode(_observation(), PointGoal(0.0, 2.0), previous)
+    context = np.linspace(-0.6, 0.6, 7)
+    new = expanded.encode(
+        _observation(),
+        PointGoal(0.0, 2.0),
+        previous,
+        residual_context=context,
+    )
+    np.testing.assert_array_equal(new[:old.size], old)
+    np.testing.assert_allclose(new[old.size:], context)
+
+
 def test_cached_scan_encoding_is_numerically_identical():
     action_spec = body_velocity_action((0.0, 0.4), 1.0)
     encoder = ObservationEncoder({"lidar_sectors": 5}, action_spec)

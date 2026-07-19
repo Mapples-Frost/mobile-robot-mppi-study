@@ -19,7 +19,7 @@ from .demonstrations import (
     load_demonstration_split,
 )
 from .environment import DirectControlEnv, MppiPriorEnv
-from .observation import RunningNormalizer
+from .observation import ObservationEncoderConfig, RunningNormalizer
 from .parameterization import PriorParameterizationConfig
 from .replay import ReplayBuffer
 from .sac import SACAgent, SACConfig
@@ -117,6 +117,7 @@ class TrainingConfig:
     validation_initial_state_noise: Optional[Sequence[float]] = None
     normalizer_update: str = "online"
     device: str = "auto"
+    allow_observation_extension_initialization: bool = False
 
     @classmethod
     def from_mapping(cls, values: Optional[Mapping[str, Any]] = None):
@@ -1443,12 +1444,46 @@ class SACTrainer:
         )
         mismatches = []
         source_agent = payload["agent"]
-        if int(source_agent.get("observation_dim", -1)) != self.agent.observation_dim:
+        source_observation_dim = int(source_agent.get("observation_dim", -1))
+        extension_requested = bool(
+            getattr(
+                getattr(self, "training_config", None),
+                "allow_observation_extension_initialization",
+                False,
+            )
+        )
+        observation_extended = bool(
+            extension_requested
+            and source_observation_dim > 0
+            and source_observation_dim < self.agent.observation_dim
+        )
+        if source_observation_dim != self.agent.observation_dim and not observation_extended:
             mismatches.append("observation_dim")
         if int(source_agent.get("action_dim", -1)) != self.agent.action_dim:
             mismatches.append("action_dim")
-        if dict(payload["encoder_config"]) != self.encoder_config.to_dict():
-            mismatches.append("encoder_config")
+        source_encoder = ObservationEncoderConfig.from_mapping(
+            payload["encoder_config"]
+        )
+        if source_encoder.to_dict() != self.encoder_config.to_dict():
+            source_without_context = source_encoder.to_dict()
+            target_without_context = self.encoder_config.to_dict()
+            source_without_context.update({
+                "include_residual_context": False,
+                "residual_context_dimension": int(
+                    self.encoder_config.residual_context_dimension
+                ),
+            })
+            target_without_context["include_residual_context"] = False
+            valid_context_extension = bool(
+                observation_extended
+                and not source_encoder.include_residual_context
+                and self.encoder_config.include_residual_context
+                and source_without_context == target_without_context
+                and self.agent.observation_dim - source_observation_dim
+                == int(self.encoder_config.residual_context_dimension)
+            )
+            if not valid_context_extension:
+                mismatches.append("encoder_config")
         # Canonicalize older checkpoints through the current defaults.  This
         # accepts fields that were absent before the dynamic subgoal decoder
         # was introduced only when they resolve to exactly the current
@@ -1479,7 +1514,13 @@ class SACTrainer:
             if source_value != target_value:
                 mismatches.append("actor_config.%s" % name)
         normalizer = RunningNormalizer.from_state_dict(payload["normalizer"])
-        if normalizer.dimension != self.agent.observation_dim:
+        if (
+            normalizer.dimension != self.agent.observation_dim
+            and not (
+                observation_extended
+                and normalizer.dimension == source_observation_dim
+            )
+        ):
             mismatches.append("normalizer.dimension")
         if normalizer.count <= 0:
             mismatches.append("normalizer.count")
@@ -1501,6 +1542,57 @@ class SACTrainer:
         if self.agent.is_correction_policy:
             self.agent.initialize_frozen_base_actor(source_agent["actor"])
             initialization_mode = "frozen_bc_base_and_normalizer_only"
+        elif observation_extended:
+            source_state = source_agent["actor"]
+            target_state = self.agent.actor.state_dict()
+            expanded_keys = []
+            copied_state = {}
+            for name, target_value in target_state.items():
+                if name not in source_state:
+                    raise ValueError(
+                        "expanded Actor source is missing parameter %s" % name
+                    )
+                source_value = source_state[name]
+                if source_value.shape == target_value.shape:
+                    copied_state[name] = source_value
+                elif (
+                    source_value.ndim == 2
+                    and target_value.ndim == 2
+                    and source_value.shape[0] == target_value.shape[0]
+                    and source_value.shape[1] == source_observation_dim
+                    and target_value.shape[1] == self.agent.observation_dim
+                ):
+                    expanded = target_value.clone()
+                    expanded.zero_()
+                    expanded[:, :source_observation_dim].copy_(source_value)
+                    copied_state[name] = expanded
+                    expanded_keys.append(name)
+                else:
+                    raise ValueError(
+                        "expanded Actor parameter shape mismatch for %s" % name
+                    )
+            if len(expanded_keys) != 1:
+                raise ValueError(
+                    "expanded Actor must alter exactly one input layer; got %s"
+                    % expanded_keys
+                )
+            self.agent.actor.load_state_dict(copied_state)
+            expanded_normalizer = RunningNormalizer(
+                self.agent.observation_dim,
+                min_std=normalizer.min_std,
+                clip=normalizer.clip,
+            )
+            expanded_normalizer.count = normalizer.count
+            expanded_normalizer.mean[:source_observation_dim] = normalizer.mean
+            expanded_normalizer.m2[:source_observation_dim] = normalizer.m2
+            if normalizer.count >= 2:
+                expanded_normalizer.m2[source_observation_dim:] = float(
+                    normalizer.count - 1
+                )
+            normalizer = expanded_normalizer
+            initialization_mode = (
+                "actor_zero_context_extension_and_normalizer_migration"
+            )
         else:
             self.agent.actor.load_state_dict(source_agent["actor"])
             initialization_mode = "actor_and_normalizer_only"
@@ -1516,6 +1608,9 @@ class SACTrainer:
             "source_git_sha": payload.get("git_sha"),
             "source_phase": payload.get("training_state", {}).get("phase"),
             "source_bc_epoch": payload.get("training_state", {}).get("bc_epoch"),
+            "source_observation_dim": source_observation_dim,
+            "target_observation_dim": self.agent.observation_dim,
+            "zero_initialized_context_columns": bool(observation_extended),
         }
         self._write_run_metadata()
 

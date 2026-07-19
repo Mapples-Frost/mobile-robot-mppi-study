@@ -244,6 +244,24 @@ class MppiPriorEnv:
         self.components = make_components(
             self.config, self.project_root, rl_policy=self.external_prior
         )
+        self.residual_context = None
+        if self.encoder.config.include_residual_context:
+            from .residual_context import ResidualContextEncoder
+
+            context_mapping = dict(rl_config.get("residual_context", {}))
+            context_mapping["enabled"] = True
+            self.residual_context = ResidualContextEncoder(
+                self.components["controller"].dynamics,
+                self.components["state_spec"],
+                context_mapping,
+            )
+            if (
+                self.residual_context.dimension
+                != self.encoder.config.residual_context_dimension
+            ):
+                raise ValueError(
+                    "RL observation and residual context dimensions differ"
+                )
         self.reward_config = RewardConfig.from_mapping(rl_config.get("reward", {}))
         self.reward_config.validate()
         self.intrinsic_exploration = EpisodicPoseCountBonus(
@@ -283,11 +301,20 @@ class MppiPriorEnv:
         return self.parameterization.parameter_dimension
 
     def _encoded_observation(self):
+        residual_context = None
+        if self.residual_context is not None:
+            state = self.components["controller"].state_from_observation(
+                self.perceived.observation
+            )
+            residual_context = self.residual_context.features(
+                state, self.previous_control
+            )
         return self.encoder.encode(
             self.perceived.observation,
             self.components["reference"],
             previous_action=self.previous_control,
             safety_override=self.last_safety_override,
+            residual_context=residual_context,
         )
 
     def _distance_to_final(self, truth):
@@ -329,6 +356,8 @@ class MppiPriorEnv:
         # the training-config seed, so nominally fixed validation seeds did
         # not reproduce the standard evaluation path.
         self.components["controller"].reset(seed=self.seed)
+        if self.residual_context is not None:
+            self.residual_context.reset()
         self.encoder.reset()
         perception_reset = getattr(self.components["perception"], "reset", None)
         if callable(perception_reset):
@@ -471,6 +500,9 @@ class MppiPriorEnv:
             raise TypeError("proposed_control must be a ControlCommand")
         controller = self.components["controller"]
         reference = self.components["reference"]
+        previous_prediction_state = controller.state_from_observation(
+            self.perceived.observation
+        )
         decision = self.components["safety"].arbitrate(
             proposed_control, self.perceived.guard
         )
@@ -528,6 +560,19 @@ class MppiPriorEnv:
             ),
             dtype=np.float64,
         )
+        delay_fraction = float(
+            controller.config.command_delay_s / controller.config.dt
+        )
+        prediction_control = (
+            delay_fraction * self.previous_control
+            + (1.0 - delay_fraction) * decision.executed_control.values
+        )
+        if not notify_controller:
+            controller.observe_completed_transition(
+                previous_prediction_state,
+                prediction_control,
+                controller.state_from_observation(self.perceived.observation),
+            )
         self.previous_distance = distance
         self.previous_path_progress = float(path_state["progress"])
         self.previous_control = decision.executed_control.values.copy()

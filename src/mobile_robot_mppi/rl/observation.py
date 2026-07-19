@@ -21,6 +21,8 @@ class ObservationEncoderConfig:
     include_previous_action: bool = True
     include_safety_state: bool = True
     include_path_context: bool = False
+    include_residual_context: bool = False
+    residual_context_dimension: int = 7
     path_cross_track_scale: float = 1.0
     path_curvature_scale: float = 2.0
     path_remaining_scale: float = 6.0
@@ -39,6 +41,12 @@ class ObservationEncoderConfig:
             include_previous_action=bool(values.get("include_previous_action", True)),
             include_safety_state=bool(values.get("include_safety_state", True)),
             include_path_context=bool(values.get("include_path_context", False)),
+            include_residual_context=bool(
+                values.get("include_residual_context", False)
+            ),
+            residual_context_dimension=int(
+                values.get("residual_context_dimension", 7)
+            ),
             path_cross_track_scale=float(values.get("path_cross_track_scale", 1.0)),
             path_curvature_scale=float(values.get("path_curvature_scale", 2.0)),
             path_remaining_scale=float(values.get("path_remaining_scale", 6.0)),
@@ -61,6 +69,8 @@ class ObservationEncoderConfig:
             raise ValueError("RL observation scales and lidar_sectors must be positive")
         if self.history_frames <= 0:
             raise ValueError("RL observation history_frames must be positive")
+        if self.residual_context_dimension <= 0:
+            raise ValueError("residual_context_dimension must be positive")
 
     def to_dict(self):
         return asdict(self)
@@ -99,6 +109,8 @@ class ObservationEncoder:
             # signed cross-track, sin/cos heading error, curvature, remaining,
             # and an explicit path-valid flag.
             size += 6
+        if self.config.include_residual_context:
+            size += self.config.residual_context_dimension
         return size
 
     @property
@@ -143,6 +155,7 @@ class ObservationEncoder:
         safety_override=False,
         scan_encoding=None,
         path_context=None,
+        residual_context=None,
     ):
         pose = observation.pose
         dx = float(target.pose.x - pose.x)
@@ -202,6 +215,25 @@ class ObservationEncoder:
                 raise ValueError("cached scan features must be finite")
         features.extend(scan_features.tolist())
         features.append(scan_valid)
+        if self.config.include_residual_context:
+            if residual_context is None:
+                residual_context = np.zeros(
+                    self.config.residual_context_dimension, dtype=np.float64
+                )
+            residual_context = np.asarray(
+                residual_context, dtype=np.float64
+            ).reshape(-1)
+            if (
+                residual_context.shape
+                != (self.config.residual_context_dimension,)
+                or not np.isfinite(residual_context).all()
+            ):
+                raise ValueError(
+                    "residual context must be a finite configured-size vector"
+                )
+            # Append after every legacy feature so an expanded Actor can copy
+            # the old input layer verbatim and initialize only new columns.
+            features.extend(residual_context.tolist())
         frame = np.asarray(features, dtype=np.float32)
         if frame.shape != (self.frame_dimension,) or not np.isfinite(frame).all():
             raise FloatingPointError("RL observation encoder produced invalid features")
@@ -216,6 +248,7 @@ class ObservationEncoder:
         update_history=True,
         scan_encoding=None,
         path_context=None,
+        residual_context=None,
     ):
         """Encode against an explicit target, optionally without state mutation.
 
@@ -231,6 +264,7 @@ class ObservationEncoder:
             safety_override=safety_override,
             scan_encoding=scan_encoding,
             path_context=path_context,
+            residual_context=residual_context,
         )
         history_frames = self.config.history_frames
         if update_history:
@@ -260,6 +294,7 @@ class ObservationEncoder:
         scan_encoding,
         safety_override=False,
         path_context_features=None,
+        residual_context_features=None,
     ):
         """Vectorize history-free hypothetical policy observations.
 
@@ -375,6 +410,24 @@ class ObservationEncoder:
             np.broadcast_to(scan_features[None, :], (batch, scan_features.size)),
             np.full((batch, 1), float(scan_valid), dtype=np.float64),
         ))
+        if self.config.include_residual_context:
+            if residual_context_features is None:
+                residual_context_features = np.zeros(
+                    (batch, self.config.residual_context_dimension),
+                    dtype=np.float64,
+                )
+            residual_context_features = np.asarray(
+                residual_context_features, dtype=np.float64
+            )
+            if (
+                residual_context_features.shape
+                != (batch, self.config.residual_context_dimension)
+                or not np.isfinite(residual_context_features).all()
+            ):
+                raise ValueError(
+                    "batched residual context has an invalid shape or value"
+                )
+            blocks.append(residual_context_features)
         encoded = np.concatenate(blocks, axis=1).astype(
             np.float32, copy=False
         )
@@ -393,6 +446,7 @@ class ObservationEncoder:
         reference,
         previous_action=None,
         safety_override=False,
+        residual_context=None,
     ):
         target = reference.target_at(
             observation.timestamp, observation.pose.as_array()
@@ -409,6 +463,7 @@ class ObservationEncoder:
             safety_override=safety_override,
             update_history=True,
             path_context=path_context,
+            residual_context=residual_context,
         )
 
     def path_context(

@@ -32,6 +32,7 @@ class PaperDirectControlPolicy:
         action_spec,
         fallback_prior=None,
         checkpoint_path=None,
+        residual_context=None,
     ):
         if int(agent.action_dim) != int(action_spec.dimension):
             raise ValueError(
@@ -50,6 +51,19 @@ class PaperDirectControlPolicy:
             if checkpoint_path is None
             else str(Path(checkpoint_path).resolve())
         )
+        self.residual_context = residual_context
+        context_enabled = bool(self.encoder.config.include_residual_context)
+        if context_enabled != (self.residual_context is not None):
+            raise ValueError(
+                "checkpoint residual-context observation and runtime context "
+                "provider must be enabled together"
+            )
+        if (
+            context_enabled
+            and int(self.residual_context.dimension)
+            != int(self.encoder.config.residual_context_dimension)
+        ):
+            raise ValueError("residual context provider dimension differs from checkpoint")
         self.previous_action = np.zeros(
             self.action_spec.dimension, dtype=np.float64
         )
@@ -72,6 +86,8 @@ class PaperDirectControlPolicy:
         self.previous_action.fill(0.0)
         self.safety_override = False
         self.encoder.reset()
+        if self.residual_context is not None:
+            self.residual_context.reset()
 
     def set_previous(self, sequence):
         values = np.asarray(sequence, dtype=np.float64)
@@ -281,6 +297,11 @@ class PaperDirectControlPolicy:
             scan_encoding,
             safety_override=False,
             path_context_features=path_contexts,
+            residual_context_features=(
+                None
+                if self.residual_context is None
+                else self.residual_context.features(states, previous_controls)
+            ),
         )
         normalized = self.normalizer.normalize(raw).astype(
             np.float32, copy=False
@@ -448,6 +469,7 @@ class PaperDirectControlPolicy:
         action_spec,
         device="cpu",
         fallback_prior=None,
+        residual_context=None,
     ):
         payload = load_sac_checkpoint(checkpoint_path, map_location=device)
         action_mode = str(
@@ -496,4 +518,5 @@ class PaperDirectControlPolicy:
             action_spec,
             fallback_prior=fallback_prior,
             checkpoint_path=checkpoint_path,
+            residual_context=residual_context,
         )

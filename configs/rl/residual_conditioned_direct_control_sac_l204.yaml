@@ -1,0 +1,52 @@
+include: path_conditioned_direct_control_sac_l185.yaml
+
+experiment:
+  name: residual_conditioned_direct_control_sac_l204
+  output_dir: results/research_platform/rl/residual_conditioned_direct_control_sac_l204
+
+# L204 changes only the Actor observation: the ordinary ICODE ensemble supplies
+# causal residual/innovation/reliability context.  The source L185 Actor is
+# migrated exactly, with zero weights for the seven appended context channels.
+planner:
+  prediction_mode: icode_residual
+  checkpoints:
+    - results/research_platform/l57_icode_high_dynamic_h36_seed20261201_v1/best.pt
+    - results/research_platform/l57_icode_high_dynamic_h36_seed20261202_v1/best.pt
+    - results/research_platform/l57_icode_high_dynamic_h36_seed20261203_v1/best.pt
+  device: cpu
+  residual_torch_num_threads: 1
+  residual_torchscript: true
+  residual_component_mask: [0.0, 0.0, 0.0, 1.0, 1.0]
+  residual_ensemble:
+    disagreement_scales: [0.0192860868, 0.0061503653, 0.0276655704, 0.2438328117, 0.6734842658]
+    innovation_scales: [0.25, 0.25, 0.35, 0.25, 0.60]
+    innovation_decay: 0.90
+    support_soft_z: 3.0
+    support_hard_z: 7.0
+
+rl:
+  policy_id: residual_conditioned_direct_control_sac_l204
+  observation:
+    include_residual_context: true
+    residual_context_dimension: 7
+  residual_context:
+    enabled: true
+    state_names: [v, omega]
+    residual_scales: [0.2438328117, 0.6734842658]
+    innovation_scales: [0.25, 0.60]
+    signed_clip: 5.0
+    disagreement_clip: 5.0
+  training:
+    total_steps: 60000
+    warmup_steps: 0
+    warmup_policy: actor
+    update_after: 1000
+    actor_update_after: 5000
+    evaluate_initial_policy: true
+    normalizer_update: frozen
+    allow_observation_extension_initialization: true
+    replay_sampling: scene_balanced
+    replay_require_all_scenes: true
+    seed: 20262041
+    validation_seed_base: 20262641
+

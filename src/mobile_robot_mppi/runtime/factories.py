@@ -419,12 +419,25 @@ def make_components(config, project_root, rl_policy=None):
             from mobile_robot_mppi.rl.paper_policy import (
                 PaperDirectControlPolicy,
             )
+            residual_context = None
+            residual_context_mapping = dict(
+                rl_cfg.get("residual_context", {})
+            )
+            if bool(residual_context_mapping.get("enabled", False)):
+                from mobile_robot_mppi.rl.residual_context import (
+                    ResidualContextEncoder,
+                )
+
+                residual_context = ResidualContextEncoder(
+                    dynamics, state_spec, residual_context_mapping
+                )
 
             prior = PaperDirectControlPolicy.from_checkpoint(
                 checkpoint_path,
                 action_spec,
                 device=rl_device,
                 fallback_prior=fallback,
+                residual_context=residual_context,
             )
     else:
         raise ValueError("unknown built-in sampling prior: %s" % prior_kind)

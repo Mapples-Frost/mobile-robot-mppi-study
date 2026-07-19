@@ -61,6 +61,10 @@ def test_residual_ensemble_innovation_uses_completed_residual_error():
     assert first == pytest.approx(1.0)
     assert second == pytest.approx(0.5)
     assert ensemble.diagnostics()["residual_ensemble_innovation_samples"] == 2
+    np.testing.assert_allclose(
+        ensemble.innovation_error_vector_ema,
+        np.asarray((0.5, 1.0, 2.0)),
+    )
 
 
 def test_residual_ensemble_keeps_derivative_and_state_error_scales_separate():

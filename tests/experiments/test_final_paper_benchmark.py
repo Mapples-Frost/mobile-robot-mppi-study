@@ -1,4 +1,7 @@
 import copy
+from pathlib import Path
+
+import yaml
 
 from experiments.rl.run_final_paper_benchmark import (
     ARMS,
@@ -129,3 +132,16 @@ def test_core_factorial_rows_use_only_the_four_confirmatory_arms():
         "rl_driven_mppi",
         "simple_combination",
     }
+
+
+def test_frozen_manifest_is_a_manifest_not_an_experiment_config():
+    root = Path(__file__).resolve().parents[2]
+    path = root / (
+        "configs/research/final_paper_benchmark_point_goal_l214.yaml"
+    )
+    with path.open("r", encoding="utf-8") as handle:
+        manifest = yaml.safe_load(handle)
+    assert manifest["final_benchmark"]["status"] == "preregistered"
+    assert manifest["final_benchmark"]["formal_seeds"] == list(
+        range(101, 111)
+    )

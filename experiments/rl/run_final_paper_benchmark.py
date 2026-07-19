@@ -12,6 +12,8 @@ import math
 import sys
 from pathlib import Path
 
+import yaml
+
 
 ROOT = Path(__file__).resolve().parents[2]
 for path in (ROOT, ROOT / "src"):
@@ -273,7 +275,10 @@ def main(argv=None):
     args = parser.parse_args(argv)
 
     manifest_path = Path(args.manifest).resolve()
-    manifest = load_yaml(manifest_path)
+    with manifest_path.open("r", encoding="utf-8") as handle:
+        manifest = yaml.safe_load(handle)
+    if not isinstance(manifest, dict) or "final_benchmark" not in manifest:
+        raise ValueError("manifest must define final_benchmark")
     frozen = dict(manifest["final_benchmark"])
     if not args.qualification and frozen.get("status") != "preregistered":
         raise ValueError("formal benchmark requires status=preregistered")

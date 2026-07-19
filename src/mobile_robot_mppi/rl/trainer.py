@@ -1743,6 +1743,19 @@ class SACTrainer:
             "cross_track_rmse": float(
                 np.sqrt(cross_track_square_sum / max(steps, 1))
             ),
+            "path_completion_ratio": float(np.clip(
+                float(last_info.get("path_progress", 0.0))
+                / max(
+                    float(getattr(
+                        environment.components["reference"],
+                        "total_length",
+                        1.0,
+                    )),
+                    1e-12,
+                ),
+                0.0,
+                1.0,
+            )),
         }
         for index in range(environment.action_spec.dimension):
             result["covariance_scale_%d_mean" % index] = float(
@@ -1783,6 +1796,9 @@ class SACTrainer:
             "collision_rate": collision_rate,
             "mean_return": mean_return,
             "mean_goal_distance": mean_distance,
+            "mean_path_completion_ratio": float(np.mean([
+                row["path_completion_ratio"] for row in rows
+            ])),
             "mean_cross_track_rmse": float(np.mean([
                 row["cross_track_rmse"] for row in rows
             ])),

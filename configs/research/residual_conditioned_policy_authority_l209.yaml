@@ -1,0 +1,13 @@
+include: residual_conditioned_policy_proposed_l207.yaml
+
+experiment:
+  name: residual_conditioned_policy_authority_l209
+
+rl:
+  residual_correction_authority:
+    enabled: true
+    innovation_onset: 0.03
+    innovation_full: 0.08
+    support_power: 1.0
+    minimum_authority: 0.0
+    maximum_authority: 1.0

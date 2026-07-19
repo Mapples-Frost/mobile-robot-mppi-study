@@ -19,6 +19,7 @@ from .observation import (
     RunningNormalizer,
 )
 from .sac import SACAgent, SACConfig
+from .residual_context import ResidualCorrectionAuthority
 
 
 class PaperDirectControlPolicy:
@@ -33,6 +34,7 @@ class PaperDirectControlPolicy:
         fallback_prior=None,
         checkpoint_path=None,
         residual_context=None,
+        residual_correction_authority=None,
     ):
         if int(agent.action_dim) != int(action_spec.dimension):
             raise ValueError(
@@ -56,6 +58,7 @@ class PaperDirectControlPolicy:
             else str(Path(checkpoint_path).resolve())
         )
         self.residual_context = residual_context
+        self.residual_correction_authority = None
         context_enabled = bool(self.encoder.config.include_residual_context)
         if context_enabled != (self.residual_context is not None):
             raise ValueError(
@@ -68,6 +71,19 @@ class PaperDirectControlPolicy:
             != int(self.encoder.config.residual_context_dimension)
         ):
             raise ValueError("residual context provider dimension differs from checkpoint")
+        authority_mapping = dict(residual_correction_authority or {})
+        if bool(authority_mapping.get("enabled", False)):
+            if self.residual_context is None:
+                raise ValueError(
+                    "residual correction authority requires residual context"
+                )
+            if not bool(getattr(self.agent, "is_correction_policy", False)):
+                raise ValueError(
+                    "residual correction authority requires a correction Actor"
+                )
+            self.residual_correction_authority = ResidualCorrectionAuthority(
+                self.residual_context.dimension, authority_mapping
+            )
         self.previous_action = np.zeros(
             self.action_spec.dimension, dtype=np.float64
         )
@@ -335,6 +351,37 @@ class PaperDirectControlPolicy:
             normalized
         )
         normalized_mean = np.tanh(pre_tanh_mean)
+        correction_authority = None
+        context_features = None
+        if self.residual_context is not None:
+            dimension = int(self.residual_context.dimension)
+            context_features = np.asarray(
+                raw[:, -dimension:], dtype=np.float64
+            )
+        if self.residual_correction_authority is not None:
+            base_pre_tanh, base_log_std = (
+                self.agent.correction_base_gaussian_parameters_batch(
+                    normalized
+                )
+            )
+            base_mean = np.tanh(base_pre_tanh)
+            correction_authority = self.residual_correction_authority.evaluate(
+                context_features
+            )
+            normalized_mean = (
+                base_mean
+                + correction_authority[:, None]
+                * (normalized_mean - base_mean)
+            )
+            bounded_mean = np.clip(normalized_mean, -1.0 + 1e-6, 1.0 - 1e-6)
+            base_post_tanh_std = np.maximum(
+                (1.0 - base_mean ** 2) * np.exp(base_log_std), 1e-6
+            )
+            pre_tanh_mean = np.arctanh(bounded_mean)
+            log_std = np.log(
+                base_post_tanh_std
+                / np.maximum(1.0 - bounded_mean ** 2, 1e-6)
+            )
         physical_mean = self.normalized_to_physical(normalized_mean)
         # Delta-method variance is used only to initialize MPPI covariance.
         normalized_std = (
@@ -351,11 +398,10 @@ class PaperDirectControlPolicy:
             "physical_mean": physical_mean,
             "physical_std": physical_std,
         }
-        if self.residual_context is not None:
-            dimension = int(self.residual_context.dimension)
-            result["residual_context_features"] = np.asarray(
-                raw[:, -dimension:], dtype=np.float64
-            )
+        if context_features is not None:
+            result["residual_context_features"] = context_features
+        if correction_authority is not None:
+            result["residual_correction_authority"] = correction_authority
         return result
 
     def sample_actions(
@@ -480,6 +526,7 @@ class PaperDirectControlPolicy:
         device="cpu",
         fallback_prior=None,
         residual_context=None,
+        residual_correction_authority=None,
     ):
         payload = load_sac_checkpoint(checkpoint_path, map_location=device)
         action_mode = str(
@@ -529,4 +576,5 @@ class PaperDirectControlPolicy:
             fallback_prior=fallback_prior,
             checkpoint_path=checkpoint_path,
             residual_context=residual_context,
+            residual_correction_authority=residual_correction_authority,
         )

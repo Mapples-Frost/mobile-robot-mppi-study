@@ -431,6 +431,61 @@ class EpisodeMetrics:
                     "terminal_q_disagreement_mean", 0.0
                 )
             ),
+            "residual_policy_context_enabled": float(
+                planner_diagnostics.get(
+                    "residual_policy_context_enabled", False
+                )
+            ),
+            "residual_policy_predicted_abs_mean": float(
+                planner_diagnostics.get(
+                    "residual_policy_predicted_abs_mean", 0.0
+                )
+            ),
+            "residual_policy_predicted_abs_max": float(
+                planner_diagnostics.get(
+                    "residual_policy_predicted_abs_max", 0.0
+                )
+            ),
+            "residual_policy_innovation_abs_mean": float(
+                planner_diagnostics.get(
+                    "residual_policy_innovation_abs_mean", 0.0
+                )
+            ),
+            "residual_policy_innovation_abs_max": float(
+                planner_diagnostics.get(
+                    "residual_policy_innovation_abs_max", 0.0
+                )
+            ),
+            "residual_policy_disagreement_mean": float(
+                planner_diagnostics.get(
+                    "residual_policy_disagreement_mean", 0.0
+                )
+            ),
+            "residual_policy_support_mean": float(
+                planner_diagnostics.get(
+                    "residual_policy_support_mean", 0.0
+                )
+            ),
+            "residual_policy_innovation_valid_fraction": float(
+                planner_diagnostics.get(
+                    "residual_policy_innovation_valid_fraction", 0.0
+                )
+            ),
+            "residual_policy_authority_enabled": float(
+                planner_diagnostics.get(
+                    "residual_policy_authority_enabled", False
+                )
+            ),
+            "residual_policy_authority_mean": float(
+                planner_diagnostics.get(
+                    "residual_policy_authority_mean", 0.0
+                )
+            ),
+            "residual_policy_authority_max": float(
+                planner_diagnostics.get(
+                    "residual_policy_authority_max", 0.0
+                )
+            ),
             "anytime_selected_samples": int(
                 planner_diagnostics.get("anytime_selected_samples", 0)
             ),
@@ -1053,6 +1108,50 @@ class EpisodeMetrics:
             ])),
             "terminal_q_disagreement_mean": float(np.mean([
                 row.get("terminal_q_disagreement_mean", 0.0)
+                for row in values
+            ])),
+            "residual_policy_context_enabled_fraction": float(np.mean([
+                row.get("residual_policy_context_enabled", 0.0)
+                for row in values
+            ])),
+            "residual_policy_predicted_abs_mean": float(np.mean([
+                row.get("residual_policy_predicted_abs_mean", 0.0)
+                for row in values
+            ])),
+            "residual_policy_predicted_abs_max": float(np.max([
+                row.get("residual_policy_predicted_abs_max", 0.0)
+                for row in values
+            ])),
+            "residual_policy_innovation_abs_mean": float(np.mean([
+                row.get("residual_policy_innovation_abs_mean", 0.0)
+                for row in values
+            ])),
+            "residual_policy_innovation_abs_max": float(np.max([
+                row.get("residual_policy_innovation_abs_max", 0.0)
+                for row in values
+            ])),
+            "residual_policy_disagreement_mean": float(np.mean([
+                row.get("residual_policy_disagreement_mean", 0.0)
+                for row in values
+            ])),
+            "residual_policy_support_mean": float(np.mean([
+                row.get("residual_policy_support_mean", 0.0)
+                for row in values
+            ])),
+            "residual_policy_innovation_valid_fraction": float(np.mean([
+                row.get("residual_policy_innovation_valid_fraction", 0.0)
+                for row in values
+            ])),
+            "residual_policy_authority_enabled_fraction": float(np.mean([
+                row.get("residual_policy_authority_enabled", 0.0)
+                for row in values
+            ])),
+            "residual_policy_authority_mean": float(np.mean([
+                row.get("residual_policy_authority_mean", 0.0)
+                for row in values
+            ])),
+            "residual_policy_authority_max": float(np.max([
+                row.get("residual_policy_authority_max", 0.0)
                 for row in values
             ])),
             "anytime_mean_samples": float(np.mean([

@@ -771,6 +771,7 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
             self.sampling_prior, "support_ood_scores", None
         )
         residual_context_rows = []
+        residual_authority_rows = []
         for step in range(self.config.horizon):
             rollout_states[step] = states[0]
             distribution = self.sampling_prior.action_distribution(
@@ -785,6 +786,10 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
                 residual_context_rows.append(np.asarray(
                     distribution["residual_context_features"][0],
                     dtype=np.float64,
+                ))
+            if "residual_correction_authority" in distribution:
+                residual_authority_rows.append(float(
+                    distribution["residual_correction_authority"][0]
                 ))
             command = self.action_spec.clip(
                 distribution["physical_mean"],
@@ -823,6 +828,9 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
             "actor_ood_scores": actor_ood_scores,
             "residual_context": np.asarray(
                 residual_context_rows, dtype=np.float64
+            ),
+            "residual_authority": np.asarray(
+                residual_authority_rows, dtype=np.float64
             ),
         }
 
@@ -917,6 +925,7 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
             self.sampling_prior, "support_ood_scores", None
         )
         residual_context_rows = []
+        residual_authority_rows = []
         for step in range(self.config.horizon):
             rollout_states[step] = states[0]
             distribution = self.sampling_prior.action_distribution(
@@ -931,6 +940,10 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
                 residual_context_rows.append(np.asarray(
                     distribution["residual_context_features"][0],
                     dtype=np.float64,
+                ))
+            if "residual_correction_authority" in distribution:
+                residual_authority_rows.append(float(
+                    distribution["residual_correction_authority"][0]
                 ))
             command = np.asarray(
                 distribution["physical_mean"], dtype=np.float64
@@ -995,6 +1008,9 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
             "actor_ood_scores": actor_ood_scores,
             "residual_context": np.asarray(
                 residual_context_rows, dtype=np.float64
+            ),
+            "residual_authority": np.asarray(
+                residual_authority_rows, dtype=np.float64
             ),
         }
 
@@ -1525,4 +1541,21 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
         diagnostics.update(self._residual_policy_context_diagnostics(
             reliability_context.get("residual_context", np.empty((0, 0)))
         ))
+        residual_authority = np.asarray(
+            reliability_context.get("residual_authority", np.empty(0)),
+            dtype=np.float64,
+        )
+        diagnostics.update({
+            "residual_policy_authority_enabled": bool(
+                residual_authority.size
+            ),
+            "residual_policy_authority_mean": float(
+                np.mean(residual_authority)
+                if residual_authority.size else 0.0
+            ),
+            "residual_policy_authority_max": float(
+                np.max(residual_authority)
+                if residual_authority.size else 0.0
+            ),
+        })
         return action, sequence, trajectory, diagnostics

@@ -697,6 +697,11 @@ def test_frozen_correction_exposes_composed_mppi_gaussian():
         tensor = torch.as_tensor(observations)
         base_pre, base_log_std = correction.base_actor.distribution(tensor)
         base_mean = torch.tanh(base_pre).numpy()
+    reported_base_pre, reported_base_log_std = (
+        correction.correction_base_gaussian_parameters_batch(observations)
+    )
+    np.testing.assert_allclose(reported_base_pre, base_pre.numpy())
+    np.testing.assert_allclose(reported_base_log_std, base_log_std.numpy())
     expected_post_tanh_std = (
         (1.0 - base_mean ** 2) * np.exp(base_log_std.numpy())
     )

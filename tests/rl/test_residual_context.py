@@ -2,7 +2,10 @@ import numpy as np
 
 from mobile_robot_mppi.core.spaces import dynamic_unicycle_state
 from mobile_robot_mppi.learning.models import PlatformResidualEnsemble
-from mobile_robot_mppi.rl.residual_context import ResidualContextEncoder
+from mobile_robot_mppi.rl.residual_context import (
+    ResidualContextEncoder,
+    ResidualCorrectionAuthority,
+)
 
 
 class _Member:
@@ -29,6 +32,29 @@ class _Combined:
 
     def __init__(self, residual):
         self.residual = residual
+
+
+def test_residual_correction_authority_is_causal_bounded_and_monotone():
+    gate = ResidualCorrectionAuthority(
+        7,
+        {
+            "enabled": True,
+            "innovation_onset": 0.03,
+            "innovation_full": 0.08,
+            "support_power": 1.0,
+        },
+    )
+    # Layout: residual[2], innovation[2], disagreement, support, valid.
+    features = np.asarray((
+        (4.0, -4.0, 0.01, -0.01, 0.2, 1.0, 1.0),
+        (0.0, 0.0, 0.05, -0.05, 0.2, 0.8, 1.0),
+        (0.0, 0.0, 0.10, -0.10, 0.2, 0.7, 1.0),
+        (0.0, 0.0, 0.10, -0.10, 0.2, 1.0, 0.0),
+    ))
+    authority = gate.evaluate(features)
+
+    np.testing.assert_allclose(authority, (0.0, 0.32, 0.7, 0.0))
+    assert np.all((authority >= 0.0) & (authority <= 1.0))
 
 
 def test_residual_context_is_scaled_causal_and_batched():

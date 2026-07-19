@@ -438,6 +438,9 @@ def make_components(config, project_root, rl_policy=None):
                 device=rl_device,
                 fallback_prior=fallback,
                 residual_context=residual_context,
+                residual_correction_authority=rl_cfg.get(
+                    "residual_correction_authority", {}
+                ),
             )
     else:
         raise ValueError("unknown built-in sampling prior: %s" % prior_kind)

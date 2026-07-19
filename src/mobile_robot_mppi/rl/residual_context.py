@@ -75,6 +75,92 @@ class ResidualContextConfig:
         return asdict(self)
 
 
+@dataclass(frozen=True)
+class ResidualCorrectionAuthorityConfig:
+    """Causal authority assigned to a residual-conditioned Actor correction."""
+
+    enabled: bool = False
+    innovation_onset: float = 0.03
+    innovation_full: float = 0.08
+    support_power: float = 1.0
+    minimum_authority: float = 0.0
+    maximum_authority: float = 1.0
+
+    @classmethod
+    def from_mapping(cls, values: Optional[Mapping[str, Any]] = None):
+        values = dict(values or {})
+        return cls(
+            enabled=bool(values.get("enabled", False)),
+            innovation_onset=float(values.get("innovation_onset", 0.03)),
+            innovation_full=float(values.get("innovation_full", 0.08)),
+            support_power=float(values.get("support_power", 1.0)),
+            minimum_authority=float(values.get("minimum_authority", 0.0)),
+            maximum_authority=float(values.get("maximum_authority", 1.0)),
+        )
+
+    def validate(self):
+        values = np.asarray((
+            self.innovation_onset,
+            self.innovation_full,
+            self.support_power,
+            self.minimum_authority,
+            self.maximum_authority,
+        ), dtype=np.float64)
+        if not np.isfinite(values).all():
+            raise ValueError("residual correction authority must be finite")
+        if self.innovation_onset < 0.0 or self.innovation_full <= self.innovation_onset:
+            raise ValueError("authority innovation_full must exceed nonnegative onset")
+        if self.support_power < 0.0:
+            raise ValueError("authority support_power must be nonnegative")
+        if not (0.0 <= self.minimum_authority <= self.maximum_authority <= 1.0):
+            raise ValueError("authority bounds must satisfy 0 <= min <= max <= 1")
+
+
+class ResidualCorrectionAuthority:
+    """Map prior completed-transition innovation to safe correction authority."""
+
+    def __init__(self, context_dimension, config=None):
+        self.config = (
+            config
+            if isinstance(config, ResidualCorrectionAuthorityConfig)
+            else ResidualCorrectionAuthorityConfig.from_mapping(config)
+        )
+        self.config.validate()
+        self.context_dimension = int(context_dimension)
+        self.state_count = (self.context_dimension - 3) // 2
+        if self.state_count <= 0 or 2 * self.state_count + 3 != self.context_dimension:
+            raise ValueError("residual authority context dimension is invalid")
+
+    def evaluate(self, context_features):
+        features = np.asarray(context_features, dtype=np.float64)
+        if (
+            features.ndim != 2
+            or features.shape[1] != self.context_dimension
+            or not np.isfinite(features).all()
+        ):
+            raise ValueError("residual authority features must be finite [B,C]")
+        innovation = features[:, self.state_count : 2 * self.state_count]
+        magnitude = np.mean(np.abs(innovation), axis=1)
+        support = np.clip(features[:, -2], 0.0, 1.0)
+        valid = features[:, -1] > 0.5
+        scaled = np.clip(
+            (magnitude - self.config.innovation_onset)
+            / (self.config.innovation_full - self.config.innovation_onset),
+            0.0,
+            1.0,
+        )
+        scaled *= support ** self.config.support_power
+        authority = (
+            self.config.minimum_authority
+            + (self.config.maximum_authority - self.config.minimum_authority)
+            * scaled
+        )
+        authority = np.where(valid, authority, 0.0)
+        if not np.isfinite(authority).all():
+            raise FloatingPointError("residual correction authority is invalid")
+        return authority.astype(np.float64, copy=False)
+
+
 def _residual_chain(residual):
     """Yield transparent residual wrappers without assuming their concrete type."""
 

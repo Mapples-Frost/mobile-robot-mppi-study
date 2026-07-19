@@ -122,6 +122,9 @@ def evaluate(model, objective, value_model, dataset, starts, horizon, device, ba
                 "multistep",
                 "value",
                 "value_rmse",
+                "value_ranking",
+                "value_ranking_accuracy",
+                "value_ranking_pair_fraction",
                 "anchor",
                 "confidence_mean",
                 "competence_mean",
@@ -414,6 +417,13 @@ def main(argv=None):
         one_step_weight=float(weights.get("one_step", 1.0)),
         multistep_weight=float(weights.get("multistep", 4.0)),
         value_weight=float(weights.get("value", 0.05)),
+        value_ranking_weight=float(weights.get("value_ranking", 0.0)),
+        value_ranking_margin=float(
+            training.get("value_ranking_margin", 0.05)
+        ),
+        value_ranking_temperature=float(
+            training.get("value_ranking_temperature", 0.10)
+        ),
         anchor_weight=float(weights.get("anchor", 1.0)),
         value_scale=calibrated_value_scale,
         competence_off_value=competence_calibration.get("off_value"),
@@ -480,7 +490,20 @@ def main(argv=None):
     minimum_value_improvement = float(
         training.get("minimum_value_improvement", 0.0)
     )
-    best_score = float(baseline_validation["terminal_value_rmse"])
+    selection_metric = str(
+        training.get("selection_metric", "terminal_value_rmse")
+    )
+    if selection_metric not in (
+        "terminal_value_rmse", "terminal_value_rank_correlation"
+    ):
+        raise ValueError("unsupported value-alignment selection_metric")
+    maximum_value_degradation = float(
+        training.get("maximum_value_rmse_degradation", 0.05)
+    )
+    minimum_rank_improvement = float(
+        training.get("minimum_rank_improvement", 0.0)
+    )
+    best_score = float(baseline_validation[selection_metric])
     best_epoch = 0
     best_eligible = True
     history = []
@@ -541,6 +564,9 @@ def main(argv=None):
                 "multistep",
                 "value",
                 "value_rmse",
+                "value_ranking",
+                "value_ranking_accuracy",
+                "value_ranking_pair_fraction",
                 "anchor",
                 "confidence_mean",
                 "competence_mean",
@@ -570,13 +596,29 @@ def main(argv=None):
             baseline_validation["terminal_value_rmse"]
             - validation_metrics["terminal_value_rmse"]
         ) / max(baseline_validation["terminal_value_rmse"], 1e-12)
-        selected = bool(
-            eligible
-            and value_improvement >= minimum_value_improvement
-            and validation_metrics["terminal_value_rmse"] < best_score
+        rank_improvement = (
+            validation_metrics["terminal_value_rank_correlation"]
+            - baseline_validation["terminal_value_rank_correlation"]
         )
+        value_degradation = (
+            validation_metrics["terminal_value_rmse"]
+            - baseline_validation["terminal_value_rmse"]
+        ) / max(baseline_validation["terminal_value_rmse"], 1e-12)
+        if selection_metric == "terminal_value_rmse":
+            selected = bool(
+                eligible
+                and value_improvement >= minimum_value_improvement
+                and validation_metrics[selection_metric] < best_score
+            )
+        else:
+            selected = bool(
+                eligible
+                and value_degradation <= maximum_value_degradation
+                and rank_improvement >= minimum_rank_improvement
+                and validation_metrics[selection_metric] > best_score
+            )
         if selected:
-            best_score = validation_metrics["terminal_value_rmse"]
+            best_score = validation_metrics[selection_metric]
             best_epoch = epoch
             best_eligible = eligible
             save_checkpoint(output_dir / "best.pt", epoch, validation_metrics)
@@ -592,6 +634,10 @@ def main(argv=None):
             "epoch": epoch,
             "train_total": train_metrics["total"],
             "train_value_rmse": train_metrics["value_rmse"],
+            "train_value_ranking": train_metrics["value_ranking"],
+            "train_value_ranking_accuracy": train_metrics[
+                "value_ranking_accuracy"
+            ],
             "train_competence_mean": train_metrics[
                 "competence_mean"
             ],
@@ -604,6 +650,12 @@ def main(argv=None):
             ],
             "validation_value_rank_correlation": validation_metrics[
                 "terminal_value_rank_correlation"
+            ],
+            "validation_value_ranking": validation_metrics[
+                "value_ranking"
+            ],
+            "validation_value_ranking_accuracy": validation_metrics[
+                "value_ranking_accuracy"
             ],
             "validation_rollout_rmse": validation_metrics["rollout_rmse"],
             "validation_position_rmse": validation_metrics[
@@ -660,6 +712,10 @@ def main(argv=None):
                 aligned_metrics["rollout_rmse"]
                 - base_metrics["rollout_rmse"]
             ) / max(base_metrics["rollout_rmse"], 1e-12),
+            "value_rank_correlation_change": (
+                aligned_metrics["terminal_value_rank_correlation"]
+                - base_metrics["terminal_value_rank_correlation"]
+            ),
         }
     gate = {
         "best_epoch": int(best_epoch),
@@ -671,6 +727,12 @@ def main(argv=None):
         "unseen_value_improved": bool(
             evaluations["unseen"]["relative_value_rmse_reduction"] > 0.0
         ),
+        "test_value_rank_improved": bool(
+            evaluations["test"]["value_rank_correlation_change"] > 0.0
+        ),
+        "unseen_value_rank_improved": bool(
+            evaluations["unseen"]["value_rank_correlation_change"] > 0.0
+        ),
         "test_rollout_within_limit": bool(
             evaluations["test"]["relative_rollout_rmse_change"]
             <= maximum_rollout_degradation
@@ -680,7 +742,28 @@ def main(argv=None):
             <= maximum_rollout_degradation
         ),
     }
-    gate["offline_gate_passed"] = bool(all(gate.values()))
+    if selection_metric == "terminal_value_rank_correlation":
+        required_gate_keys = (
+            "selected_fine_tuned_checkpoint",
+            "rollout_constraint_satisfied",
+            "test_value_rank_improved",
+            "unseen_value_rank_improved",
+            "test_rollout_within_limit",
+            "unseen_rollout_within_limit",
+        )
+    else:
+        required_gate_keys = (
+            "selected_fine_tuned_checkpoint",
+            "rollout_constraint_satisfied",
+            "test_value_improved",
+            "unseen_value_improved",
+            "test_rollout_within_limit",
+            "unseen_rollout_within_limit",
+        )
+    gate["offline_gate_passed"] = bool(
+        all(gate[name] for name in required_gate_keys)
+    )
+    gate["selection_metric"] = selection_metric
     summary = {
         "schema_version": 1,
         "git_sha": git_sha(ROOT),

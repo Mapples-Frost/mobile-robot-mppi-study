@@ -364,6 +364,9 @@ class ValueAlignedResidualObjective(nn.Module):
         one_step_weight=1.0,
         multistep_weight=4.0,
         value_weight=0.05,
+        value_ranking_weight=0.0,
+        value_ranking_margin=0.05,
+        value_ranking_temperature=0.10,
         anchor_weight=1.0,
         value_scale=1.0,
         competence_off_value=None,
@@ -389,6 +392,18 @@ class ValueAlignedResidualObjective(nn.Module):
             multistep_weight, "multistep_weight"
         )
         self.value_weight = _finite_nonnegative(value_weight, "value_weight")
+        self.value_ranking_weight = _finite_nonnegative(
+            value_ranking_weight, "value_ranking_weight"
+        )
+        self.value_ranking_margin = _finite_nonnegative(
+            value_ranking_margin, "value_ranking_margin"
+        )
+        self.value_ranking_temperature = float(value_ranking_temperature)
+        if (
+            not math.isfinite(self.value_ranking_temperature)
+            or self.value_ranking_temperature <= 0.0
+        ):
+            raise ValueError("value_ranking_temperature must be positive")
         self.anchor_weight = _finite_nonnegative(anchor_weight, "anchor_weight")
         self.value_scale = float(value_scale)
         if not math.isfinite(self.value_scale) or self.value_scale <= 0.0:
@@ -570,11 +585,55 @@ class ValueAlignedResidualObjective(nn.Module):
             (predicted_values - true_values).square()
         ))
 
+        # Randomized training-window order makes adjacent batch rows independent
+        # trajectory windows. Pair their terminal values so the residual model
+        # learns the control-relevant ordering supplied by the frozen critic,
+        # rather than trying to regress an arbitrary absolute Q scale alone.
+        pair_count = predicted_values.shape[0] // 2
+        if pair_count > 0:
+            first = torch.arange(
+                0, 2 * pair_count, 2, device=predicted_values.device
+            )
+            second = first + 1
+            true_delta = (
+                true_values[first, -1] - true_values[second, -1]
+            ) / self.value_scale
+            predicted_delta = (
+                predicted_values[first, -1]
+                - predicted_values[second, -1]
+            ) / self.value_scale
+            informative = (
+                torch.abs(true_delta) >= self.value_ranking_margin
+            ).to(predicted_delta.dtype)
+            pair_confidence = torch.minimum(
+                confidence[first, -1], confidence[second, -1]
+            ) * informative
+            direction = torch.sign(true_delta)
+            ranking_terms = torch.nn.functional.softplus(
+                (
+                    self.value_ranking_margin
+                    - direction * predicted_delta
+                ) / self.value_ranking_temperature
+            ) * self.value_ranking_temperature
+            ranking = torch.sum(pair_confidence * ranking_terms) / torch.clamp(
+                torch.sum(pair_confidence), min=1e-6
+            )
+            ranking_accuracy = torch.sum(
+                pair_confidence
+                * (direction * predicted_delta > 0.0).to(predicted_delta.dtype)
+            ) / torch.clamp(torch.sum(pair_confidence), min=1e-6)
+            ranking_pair_fraction = torch.mean(informative)
+        else:
+            ranking = predicted_values.sum() * 0.0
+            ranking_accuracy = ranking.detach()
+            ranking_pair_fraction = ranking.detach()
+
         total = (
             self.derivative_weight * derivative
             + self.one_step_weight * one_step
             + self.multistep_weight * multistep
             + self.value_weight * value
+            + self.value_ranking_weight * ranking
             + self.anchor_weight * anchor
         )
         if not bool(torch.isfinite(total).item()):
@@ -586,6 +645,9 @@ class ValueAlignedResidualObjective(nn.Module):
             "multistep": multistep,
             "value": value,
             "value_rmse": value_rmse,
+            "value_ranking": ranking,
+            "value_ranking_accuracy": ranking_accuracy,
+            "value_ranking_pair_fraction": ranking_pair_fraction,
             "anchor": anchor,
             "confidence_mean": confidence.mean(),
             "competence_mean": competence.mean(),

@@ -214,6 +214,49 @@ def test_anchor_loss_is_zero_for_unchanged_checkpoint():
     }
     output = objective(model, batch)
     torch.testing.assert_close(output["anchor"], torch.zeros(()))
+    assert torch.isfinite(output["value_ranking"])
+    assert 0.0 <= float(output["value_ranking_pair_fraction"]) <= 1.0
+
+
+def test_pairwise_value_ranking_is_finite_and_backpropagates_when_informative():
+    model = _residual_model()
+    value = _value_model()
+    objective = ValueAlignedResidualObjective(
+        model,
+        value,
+        {
+            "velocity_time_constant": 0.18,
+            "yaw_time_constant": 0.12,
+            "integrator": "rk4",
+        },
+        derivative_weight=0.0,
+        one_step_weight=0.0,
+        multistep_weight=0.0,
+        value_weight=0.0,
+        value_ranking_weight=1.0,
+        value_ranking_margin=0.0,
+        anchor_weight=0.0,
+    )
+    batch_size, horizon = 4, 2
+    raw = torch.zeros((batch_size, horizon, 16))
+    raw[:, :, 0] = torch.tensor((-1.0, -0.2, 0.4, 1.0))[:, None]
+    batch = {
+        "initial_state": torch.zeros((batch_size, 5)),
+        "states_t": torch.zeros((batch_size, horizon, 5)),
+        "controls": torch.tensor([[[0.2, 0.1], [0.3, -0.1]]] * batch_size),
+        "dt": torch.full((batch_size, horizon), 0.1),
+        "target_states": torch.zeros((batch_size, horizon, 5)),
+        "residual_targets": torch.zeros((batch_size, horizon, 5)),
+        "raw_observations": raw,
+        "target_positions": torch.tensor([[[1.0, 0.0], [1.2, 0.2]]] * batch_size),
+    }
+
+    output = objective(model, batch)
+    output["total"].backward()
+
+    assert torch.isfinite(output["value_ranking"])
+    assert torch.isfinite(output["value_ranking_accuracy"])
+    assert any(parameter.grad is not None for parameter in model.parameters())
 
 
 def test_critic_competence_removes_low_value_sample_authority():

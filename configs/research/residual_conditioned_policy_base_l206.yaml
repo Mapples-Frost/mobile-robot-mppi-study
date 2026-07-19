@@ -1,0 +1,57 @@
+include: mujoco_high_dynamic_reverse_s_terminal_dev_l187.yaml
+
+experiment:
+  name: residual_conditioned_policy_base_l206
+  max_steps: 360
+
+planner:
+  prediction_mode: icode_residual
+  checkpoints:
+    - results/research_platform/l57_icode_high_dynamic_h36_seed20261201_v1/best.pt
+    - results/research_platform/l57_icode_high_dynamic_h36_seed20261202_v1/best.pt
+    - results/research_platform/l57_icode_high_dynamic_h36_seed20261203_v1/best.pt
+  device: cpu
+  residual_torch_num_threads: 1
+  residual_torchscript: true
+  residual_component_mask: [0.0, 0.0, 0.0, 1.0, 1.0]
+  residual_ensemble:
+    disagreement_scales: [0.0192860868, 0.0061503653, 0.0276655704, 0.2438328117, 0.6734842658]
+    innovation_scales: [0.25, 0.25, 0.35, 0.25, 0.60]
+    innovation_decay: 0.90
+    support_soft_z: 3.0
+    support_hard_z: 7.0
+  command_delay_s: 0.04
+  horizon: 36
+  num_samples: 50
+  temperature: 2.5
+  integrator: rk4
+  noise_sigma: [0.18, 0.65]
+  sampling_prior: paper_direct_rl
+  optimizer: paper_rl_driven
+  importance_sampling_correction: false
+  previous_sequence_blend: 0.20
+  paper_rl_driven:
+    iterations: 2
+    guided_fraction: 0.30
+    elite_fraction: 0.20
+    covariance_smoothing: 0.50
+    covariance_min_scale: 0.25
+    covariance_max_scale: 2.0
+    terminal_value_weight: 0.0
+  prior_v_gain: 1.1
+  prior_yaw_gain: 1.5
+  prior_translation_heading_gate_rad: 0.4
+  prior_translation_heading_gate_terminal_only: true
+  prior_terminal_max_speed: 0.12
+  terminal_translation_heading_gate_rad: 0.4
+  terminal_translation_speed_limit: 0.12
+  safety_recovery_prefix_steps: 8
+
+rl:
+  enabled: true
+  integration: paper_direct_control
+  policy_id: ordinary_path_actor_l185
+  checkpoint: results/research_platform/rl/path_conditioned_l185_seed20261901_60k_v2/checkpoints/step_000050000.pt
+  device: cpu
+  torch_num_threads: 1
+

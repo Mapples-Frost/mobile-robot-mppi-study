@@ -1,0 +1,16 @@
+include: residual_conditioned_policy_base_unseen_l206.yaml
+
+experiment:
+  name: residual_conditioned_policy_proposed_unseen_l206
+
+rl:
+  policy_id: residual_conditioned_bounded_correction_l205
+  checkpoint: results/research_platform/rl/residual_conditioned_l205_seed20262051_40k_v1/checkpoints/best.pt
+  residual_context:
+    enabled: true
+    state_names: [v, omega]
+    residual_scales: [0.2438328117, 0.6734842658]
+    innovation_scales: [0.25, 0.60]
+    signed_clip: 5.0
+    disagreement_clip: 5.0
+

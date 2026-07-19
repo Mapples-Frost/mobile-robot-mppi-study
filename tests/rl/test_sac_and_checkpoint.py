@@ -677,6 +677,24 @@ def test_frozen_correction_zero_mean_exactly_recovers_bc_and_is_bounded():
     assert torch.all(negative_delta.abs() <= maximum + 1e-7)
 
 
+def test_frozen_correction_exposes_composed_mppi_gaussian():
+    _, correction = _frozen_correction_agent(seed=19)
+    observations = np.linspace(-0.4, 0.4, 15, dtype=np.float32).reshape(3, 5)
+    expected = correction.select_action_batch(observations, deterministic=True)
+
+    pre_tanh_mean, log_std = correction.policy_gaussian_parameters_batch(
+        observations
+    )
+
+    np.testing.assert_allclose(
+        np.tanh(pre_tanh_mean), expected, rtol=1e-6, atol=1e-6
+    )
+    assert pre_tanh_mean.shape == expected.shape
+    assert log_std.shape == expected.shape
+    assert np.isfinite(log_std).all()
+    assert np.all(np.exp(log_std) > 0.0)
+
+
 def test_base_gate_exactly_recovers_frozen_actor_without_critic_authority():
     base, correction = _frozen_correction_agent(seed=23)
     observation = np.asarray((0.2, -0.1, 0.4, 0.3, -0.2), dtype=np.float32)

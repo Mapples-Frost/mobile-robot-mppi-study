@@ -38,8 +38,12 @@ class PaperDirectControlPolicy:
             raise ValueError(
                 "direct Actor action dimension must match physical action space"
             )
-        if bool(getattr(agent, "is_correction_policy", False)):
-            raise ValueError("paper-faithful policy must use direct SAC mode")
+        if bool(getattr(agent, "is_correction_policy", False)) and not bool(
+            getattr(agent, "base_actor_initialized", False)
+        ):
+            raise ValueError(
+                "bounded correction policy requires an initialized frozen base Actor"
+            )
         self.agent = agent
         self.agent.eval()
         self.encoder = encoder

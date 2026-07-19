@@ -1,0 +1,19 @@
+include: residual_conditioned_policy_base_l206.yaml
+
+experiment:
+  name: residual_conditioned_policy_base_unseen_l206
+  physics_domain: combined_unseen
+  physics_domain_role: unseen
+
+plant:
+  robot:
+    chassis_mass: 12.0
+    chassis_inertia: [0.11, 0.16, 0.22]
+  actuator:
+    command_delay: 0.10
+    torque_limit: 1.8
+    kp: 0.48
+  contact:
+    wheel_friction: [0.72, 0.006, 0.001]
+    floor_friction: [0.60, 0.003, 0.0003]
+

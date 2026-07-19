@@ -628,20 +628,17 @@ class SACAgent:
         return selected.cpu().numpy().astype(np.float32)
 
     def policy_gaussian_parameters_batch(self, observations):
-        """Return the direct Actor's pre-tanh Gaussian parameters.
+        """Return an auditable Gaussian approximation of the physical Actor.
 
         RL-Driven MPPI needs both the policy mean and its stochastic spread to
         initialize a control-sequence distribution.  Returning the exact
         pre-tanh parameters lets the caller use its own seeded generator while
-        preserving the SAC actor's bounded-action transform.  Correction
-        policies are intentionally rejected because Gate 1 requires a
-        physical low-level Actor, not a residual latent-action policy.
+        preserving the SAC actor's bounded-action transform. For a frozen-base
+        correction policy, the deterministic composed physical-control mean is
+        exact. Its spread is the first-order push-forward of the correction
+        Gaussian through tanh and the bounded composition; this is used only as
+        MPPI proposal covariance, never as a plant or value-model assumption.
         """
-
-        if self.is_correction_policy:
-            raise ValueError(
-                "paper-faithful low-level rollout requires a direct SAC actor"
-            )
         data = np.asarray(observations, dtype=np.float32)
         if (
             data.ndim != 2
@@ -655,7 +652,33 @@ class SACAgent:
             )
         with torch.no_grad():
             tensor = torch.as_tensor(data, device=self.device)
-            mean, log_std = self.actor.distribution(tensor)
+            if self.is_correction_policy:
+                self._require_correction_base()
+                base_mean = self.base_actor.mean_action(tensor)
+                correction_mean, correction_log_std = self.actor.distribution(
+                    tensor
+                )
+                unit_mean = torch.tanh(correction_mean)
+                final_mean, _, jacobian = self._compose_correction(
+                    base_mean, unit_mean
+                )
+                correction_std = (
+                    (1.0 - unit_mean ** 2) * torch.exp(correction_log_std)
+                )
+                final_std = torch.clamp(
+                    torch.abs(jacobian) * correction_std, min=1e-6
+                )
+                bounded_mean = torch.clamp(
+                    final_mean, -1.0 + 1e-6, 1.0 - 1e-6
+                )
+                mean = torch.atanh(bounded_mean)
+                log_std = torch.log(
+                    final_std / torch.clamp(
+                        1.0 - bounded_mean ** 2, min=1e-6
+                    )
+                )
+            else:
+                mean, log_std = self.actor.distribution(tensor)
         if not bool(torch.isfinite(mean).all() and torch.isfinite(log_std).all()):
             raise FloatingPointError(
                 "SAC policy Gaussian parameters contain NaN or Inf"

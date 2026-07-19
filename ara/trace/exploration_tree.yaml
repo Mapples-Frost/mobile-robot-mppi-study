@@ -1336,3 +1336,49 @@ tree:
                     lesson: >
                       Do not force critic gradients into ICODE when held-out value consistency fails; retain ordinary ICODE and require separately validated online value coupling.
                     evidence: [C97, H72, "docs/rl/202_l196_l201_reliability_and_value_alignment_results_2026-07-19.md", "ara/evidence/tables/table16_l196_l201_reliability_value_alignment.md"]
+  - id: N139
+    type: question
+    title: "Which two bidirectional ICODE-RL couplings should remain in the paper?"
+    provenance: user
+    timestamp: "2026-07-19T20:00:00+08:00"
+    description: >
+      The user required the original RL+ICODE direction to remain fixed while at least two coupling mechanisms were selected and tuned before reporting.
+    also_depends_on: [N132, N138]
+    children:
+      - id: N140
+        type: dead_end
+        title: "Causal residual-conditioned SAC action correction"
+        provenance: ai-executed
+        timestamp: "2026-07-19T20:10:00+08:00"
+        hypothesis: >
+          ICODE residual and completed-transition innovation can condition a bounded SAC correction that improves both nominal and unseen-domain MPPI tracking.
+        failure_mode: >
+          L207 isolated proposal mean from covariance and improved unseen RMSE 5.56% but worsened nominal RMSE 16.15%. L209 innovation/support gating retained 100% success and zero collisions, yet worsened nominal RMSE 10.61%, improved unseen RMSE only 1.22%, and worsened unseen jerk 5.69%.
+        lesson: >
+          Causal context and safe fallback are necessary but insufficient; a high-dimensional free action correction is not sample-efficient enough for the present mainline.
+        evidence: [C98, H73, "ara/evidence/tables/table17_l204_l210_coupling_selection.md"]
+      - id: N141
+        type: dead_end
+        title: "Pairwise value-ranked path-policy ICODE"
+        provenance: ai-executed
+        timestamp: "2026-07-19T20:20:00+08:00"
+        hypothesis: >
+          Preserving frozen-critic terminal-state ordering generalizes better than absolute-Q regression on held-out path routes.
+        failure_mode: >
+          Baseline test/unseen rank correlations were already 0.9773/0.9829. L210 reduced them by 0.0100/0.0019 and worsened test rollout RMSE 7.88%, so the offline Gate failed after one bootstrap member.
+        lesson: >
+          Rank consistency is ceiling-limited on this dataset and must not replace the already confirmed competence-gated value-alignment mechanism.
+        evidence: [C99, H74, "results/research_platform/value_ranked_icode_member1_l210/training_summary.json"]
+      - id: N142
+        type: decision
+        title: "Freeze competence-gated value alignment and reliability-adaptive HSS"
+        provenance: ai-suggested
+        timestamp: "2026-07-19T20:30:00+08:00"
+        choice: >
+          Retain RL-to-ICODE competence-gated value alignment and ICODE-to-RL fixed-budget reliability-adaptive hybrid sampling as the two paper mechanisms; keep new residual-context interfaces experimental and default-off.
+        alternatives:
+          - "Always-on or innovation-gated residual-conditioned SAC action correction"
+          - "Pairwise value-ranked path-policy ICODE"
+          - "Reliability-weighted terminal critic authority"
+        evidence: >
+          C81/C84/C90 provide sealed independent factorial main effects for both retained mechanisms, whereas C98/C99 and C87 are refuted.

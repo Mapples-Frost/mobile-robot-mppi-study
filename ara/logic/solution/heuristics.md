@@ -432,3 +432,15 @@
 - **Provenance**: ai-suggested
 - **Sensitivity**: high
 - **Code ref**: [`src/mobile_robot_mppi/learning/value_alignment.py`, `experiments/icode/train_value_aligned_icode.py`, `docs/rl/202_l196_l201_reliability_and_value_alignment_results_2026-07-19.md`]
+
+## H73: Isolate learned-prior mean from proposal covariance before attribution
+- **Rationale**: A bounded correction Actor can silently change both deterministic prior mean and post-tanh sampling spread. Preserve the frozen base Actor's first-order post-tanh spread when testing residual-conditioned mean correction; otherwise an apparent policy effect is confounded by covariance adaptation.
+- **Provenance**: ai-suggested
+- **Sensitivity**: high
+- **Code ref**: [`src/mobile_robot_mppi/rl/sac.py`, `tests/rl/test_sac_and_checkpoint.py`, `docs/rl/207_mean_only_residual_policy_screen_prereg_2026-07-19.md`]
+
+## H74: Do not optimize a critic-ranking objective at a held-out ceiling
+- **Rationale**: When the baseline dynamics already yields critic rank correlations near 0.98 on test and unseen routes, a pairwise ranking loss has little headroom and readily overfits the weaker validation split. Measure baseline rank first and require disjoint-route improvement plus rollout noninferiority before expanding to an ensemble.
+- **Provenance**: ai-suggested
+- **Sensitivity**: high
+- **Code ref**: [`src/mobile_robot_mppi/learning/value_alignment.py`, `experiments/icode/train_value_aligned_icode.py`, `configs/icode/value_ranked_icode_member1_l210.yaml`, `docs/rl/211_two_coupling_mechanisms_frozen_2026-07-19.md`]

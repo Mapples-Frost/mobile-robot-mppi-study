@@ -873,3 +873,21 @@
 - **Proof**: [`docs/rl/202_l196_l201_reliability_and_value_alignment_results_2026-07-19.md`, `research_artifacts/l196_l201_2026-07-19/manifest.json`]
 - **Dependencies**: [C94]
 - **Tags**: value-consistency, ICODE, path-policy, generalization, negative-result
+
+## C98: Residual-conditioned SAC action correction generalizes across nominal and unseen dynamics
+- **Statement**: A bounded SAC correction conditioned on causal ICODE residual, innovation, disagreement and support improves MPPI path tracking in both nominal and unseen dynamics without a smoothness regression.
+- **Status**: refuted
+- **Provenance**: ai-suggested
+- **Falsification criteria**: Covariance-isolated or innovation-gated paired screens worsen nominal cross-track RMSE, fail unseen improvement, or exceed the preregistered jerk margin.
+- **Proof**: [`docs/rl/211_two_coupling_mechanisms_frozen_2026-07-19.md`, `results/research_platform/rl/residual_conditioned_closed_loop_l207/`, `results/research_platform/rl/residual_conditioned_closed_loop_l209/`, `ara/evidence/tables/table17_l204_l210_coupling_selection.md`]
+- **Dependencies**: [C83, C90]
+- **Tags**: residual-conditioned-policy, SAC, ICODE, negative-result, paired-design
+
+## C99: Pairwise critic ranking improves path-policy ICODE generalization
+- **Statement**: Replacing dominant absolute-Q regression with a confidence-weighted pairwise critic-ranking loss improves held-out and unseen-route value ordering while preserving ICODE rollout accuracy.
+- **Status**: refuted
+- **Provenance**: ai-suggested
+- **Falsification criteria**: Either held-out or unseen rank correlation decreases, rollout degradation exceeds 3%, or the offline selector retains an overfit checkpoint.
+- **Proof**: [`docs/rl/210_value_ranked_icode_prereg_2026-07-19.md`, `docs/rl/211_two_coupling_mechanisms_frozen_2026-07-19.md`, `results/research_platform/value_ranked_icode_member1_l210/training_summary.json`, `ara/evidence/tables/table17_l204_l210_coupling_selection.md`]
+- **Dependencies**: [C97]
+- **Tags**: value-ranking, ICODE, path-policy, ceiling-effect, negative-result

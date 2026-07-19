@@ -1,0 +1,63 @@
+session:
+  id: "2026-07-19_033"
+  timestamp: "2026-07-19T20:35:58+08:00"
+  summary: "L204--L210 screened two new cross-layer couplings and froze the two mechanisms already supported by sealed factorial evidence."
+
+events_logged:
+  - type: dead_end
+    id: N140
+    provenance: ai-executed
+    summary: "Residual-conditioned SAC correction failed nominal/unseen joint advancement after covariance isolation and innovation gating."
+  - type: dead_end
+    id: N141
+    provenance: ai-executed
+    summary: "Pairwise value-ranked ICODE failed route-disjoint offline generalization."
+  - type: decision
+    id: N142
+    provenance: ai-suggested
+    summary: "Freeze competence-gated value alignment and reliability-adaptive HSS as the two paper mechanisms."
+  - type: claim
+    id: C98
+    provenance: ai-suggested
+    summary: "General residual-conditioned action correction was refuted."
+  - type: claim
+    id: C99
+    provenance: ai-suggested
+    summary: "Pairwise path-value ranking generalization was refuted."
+  - type: heuristic
+    id: H73
+    provenance: ai-suggested
+    summary: "Isolate learned-prior mean from proposal covariance."
+  - type: heuristic
+    id: H74
+    provenance: ai-suggested
+    summary: "Do not optimize critic ranking at a held-out ceiling."
+
+ai_actions:
+  - action: "Implemented causal residual context, backward-compatible checkpoint extension, bounded correction inference, innovation authority and telemetry."
+    provenance: ai-executed
+    files_changed: ["src/mobile_robot_mppi/rl/residual_context.py", "src/mobile_robot_mppi/rl/sac.py", "src/mobile_robot_mppi/rl/paper_policy.py", "src/mobile_robot_mppi/planning/rl_driven_mppi.py"]
+  - action: "Implemented pairwise value-ranking loss, selection metrics and route-disjoint offline Gate."
+    provenance: ai-executed
+    files_changed: ["src/mobile_robot_mppi/learning/value_alignment.py", "experiments/icode/train_value_aligned_icode.py"]
+  - action: "Ran L204-L210 training/screens and a 747-test full repository regression."
+    provenance: ai-executed
+    files_changed: []
+
+claims_touched:
+  - id: C98
+    action: created
+    provenance: ai-suggested
+  - id: C99
+    action: created
+    provenance: ai-suggested
+  - id: C90
+    action: confirmed
+    provenance: ai-suggested
+
+open_threads:
+  - "Run the manuscript-level final benchmark matrix and real-robot data/shadow validation for the frozen two-mechanism method."
+  - "Keep residual-conditioned action correction and pairwise value ranking default-off unless a new preregistered dataset changes their falsification status."
+
+ai_suggestions_pending:
+  - "Use mutual calibration and complementary main effects, not super-additive synergy, as the paper narrative."

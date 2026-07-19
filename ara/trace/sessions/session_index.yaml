@@ -98,3 +98,6 @@ sessions:
   - id: "2026-07-19_032"
     path: "trace/sessions/2026-07-19_032.yaml"
     summary: "L196--L201 repaired Actor-source parity calibration, retained its failed sealed path confirmation, and rejected non-generalizing path-value ICODE fine-tuning."
+  - id: "2026-07-19_033"
+    path: "trace/sessions/2026-07-19_033.yaml"
+    summary: "L204--L210 built causal residual-policy coupling and value-ranking infrastructure, rejected both new candidates, and froze the two independently confirmed bidirectional mechanisms."

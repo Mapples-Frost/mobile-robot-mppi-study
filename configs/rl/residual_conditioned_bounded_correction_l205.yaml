@@ -1,0 +1,42 @@
+include: residual_conditioned_direct_control_sac_l204.yaml
+
+experiment:
+  name: residual_conditioned_bounded_correction_l205
+  output_dir: results/research_platform/rl/residual_conditioned_bounded_correction_l205
+
+rl:
+  policy_id: residual_conditioned_bounded_correction_l205
+  reward:
+    # L204 showed that path progress can dominate precision after the already
+    # competent L185 initialization. L205 makes precision the remediation target.
+    cross_track_penalty_weight: 10.0
+    heading_error_penalty_weight: 0.8
+    control_rate_weight: 0.08
+  sac:
+    policy_mode: frozen_bc_correction
+    correction_scale: [0.10, 0.15]
+    correction_gate_alpha: 0.50
+    correction_initial_log_std: -2.5
+    correction_penalty_weight: 0.10
+    actor_lr: 0.0001
+    critic_lr: 0.0003
+    alpha_lr: 0.0001
+    initial_alpha: 0.05
+    minimum_alpha: 0.01
+    actor_group_robust_enabled: true
+    actor_group_robust_temperature: 0.10
+  training:
+    total_steps: 40000
+    warmup_steps: 0
+    warmup_policy: actor
+    update_after: 1000
+    actor_update_after: 5000
+    evaluation_interval: 5000
+    checkpoint_interval: 5000
+    evaluate_initial_policy: true
+    normalizer_update: frozen
+    allow_observation_extension_initialization: true
+    replay_sampling: scene_balanced
+    replay_require_all_scenes: true
+    seed: 20262051
+    validation_seed_base: 20262651

@@ -210,3 +210,52 @@ def test_actor_initialization_can_zero_extend_residual_context(tmp_path):
         first_weight[:, 5:], torch.zeros_like(first_weight[:, 5:])
     )
     assert trainer.actor_initialization["zero_initialized_context_columns"]
+
+
+def test_frozen_correction_can_zero_extend_residual_context(tmp_path):
+    source_items = _save_source(tmp_path)
+    checkpoint, source, source_normalizer, encoder, prior, action_spec = source_items
+    config = SACConfig(
+        hidden_sizes=(8, 8),
+        activation="relu",
+        policy_mode="frozen_bc_correction",
+        correction_scale=(0.1, 0.1),
+    )
+    trainer = SACTrainer.__new__(SACTrainer)
+    trainer.agent = SACAgent(12, 2, config, device="cpu", seed=99)
+    trainer.normalizer = RunningNormalizer(12)
+    trainer.encoder_config = ObservationEncoderConfig(
+        **{
+            **encoder.to_dict(),
+            "include_residual_context": True,
+            "residual_context_dimension": 7,
+        }
+    )
+    trainer.parameterization_config = prior
+    trainer.action_spec = action_spec
+    trainer.actor_initialization = None
+    trainer.bc_anchor = SimpleNamespace(enabled=False)
+    trainer.training_config = SimpleNamespace(
+        allow_observation_extension_initialization=True
+    )
+    trainer._write_run_metadata = lambda: None
+
+    raw = np.linspace(-0.2, 0.2, 5, dtype=np.float32)
+    expected, _ = source.select_action(
+        source_normalizer.normalize(raw), deterministic=True
+    )
+    trainer.initialize_actor_from(checkpoint)
+    expanded_raw = np.concatenate((raw, np.ones(7, dtype=np.float32)))
+    actual, diagnostics = trainer.agent.select_action(
+        trainer.normalizer.normalize(expanded_raw), deterministic=True
+    )
+
+    np.testing.assert_array_equal(actual, expected)
+    assert diagnostics["applied_correction_abs_max"] == 0.0
+    assert trainer.actor_initialization["mode"] == (
+        "frozen_base_zero_context_extension_and_normalizer_migration"
+    )
+    first_weight = trainer.agent.base_actor.state_dict()["network.0.weight"]
+    torch.testing.assert_close(
+        first_weight[:, 5:], torch.zeros_like(first_weight[:, 5:])
+    )

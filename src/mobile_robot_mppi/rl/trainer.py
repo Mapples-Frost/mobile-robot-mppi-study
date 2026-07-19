@@ -1540,7 +1540,44 @@ class SACTrainer:
         # trainable residual policy.  Neither path imports critic, optimizer,
         # replay, entropy-temperature, RNG or counter state from the source.
         if self.agent.is_correction_policy:
-            self.agent.initialize_frozen_base_actor(source_agent["actor"])
+            base_state = source_agent["actor"]
+            if observation_extended:
+                target_state = self.agent.base_actor.state_dict()
+                expanded_keys = []
+                migrated_state = {}
+                for name, target_value in target_state.items():
+                    if name not in base_state:
+                        raise ValueError(
+                            "expanded base Actor source is missing parameter %s"
+                            % name
+                        )
+                    source_value = base_state[name]
+                    if source_value.shape == target_value.shape:
+                        migrated_state[name] = source_value
+                    elif (
+                        source_value.ndim == 2
+                        and target_value.ndim == 2
+                        and source_value.shape[0] == target_value.shape[0]
+                        and source_value.shape[1] == source_observation_dim
+                        and target_value.shape[1] == self.agent.observation_dim
+                    ):
+                        expanded = target_value.clone()
+                        expanded.zero_()
+                        expanded[:, :source_observation_dim].copy_(source_value)
+                        migrated_state[name] = expanded
+                        expanded_keys.append(name)
+                    else:
+                        raise ValueError(
+                            "expanded base Actor parameter shape mismatch for %s"
+                            % name
+                        )
+                if len(expanded_keys) != 1:
+                    raise ValueError(
+                        "expanded base Actor must alter exactly one input layer; "
+                        "got %s" % expanded_keys
+                    )
+                base_state = migrated_state
+            self.agent.initialize_frozen_base_actor(base_state)
             initialization_mode = "frozen_bc_base_and_normalizer_only"
         elif observation_extended:
             source_state = source_agent["actor"]
@@ -1577,6 +1614,13 @@ class SACTrainer:
                     % expanded_keys
                 )
             self.agent.actor.load_state_dict(copied_state)
+            initialization_mode = (
+                "actor_zero_context_extension_and_normalizer_migration"
+            )
+        else:
+            self.agent.actor.load_state_dict(source_agent["actor"])
+            initialization_mode = "actor_and_normalizer_only"
+        if observation_extended:
             expanded_normalizer = RunningNormalizer(
                 self.agent.observation_dim,
                 min_std=normalizer.min_std,
@@ -1590,12 +1634,10 @@ class SACTrainer:
                     normalizer.count - 1
                 )
             normalizer = expanded_normalizer
-            initialization_mode = (
-                "actor_zero_context_extension_and_normalizer_migration"
-            )
-        else:
-            self.agent.actor.load_state_dict(source_agent["actor"])
-            initialization_mode = "actor_and_normalizer_only"
+            if self.agent.is_correction_policy:
+                initialization_mode = (
+                    "frozen_base_zero_context_extension_and_normalizer_migration"
+                )
         self.normalizer = normalizer
         self.actor_initialization = {
             "mode": initialization_mode,

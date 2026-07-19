@@ -1,0 +1,16 @@
+output_dir: results/research_platform/rl/gate4_ordinary_reliability_stress_evaluation_l214
+calibration_config: configs/rl/gate4_ordinary_reliability_calibration_l203.yaml
+calibration_summary: results/research_platform/rl/gate4_ordinary_reliability_calibration_l203/calibration_summary.json
+dataset_dir: results/research_platform/datasets/gate3_reliability_stress_l194
+split: stress_confirmation
+
+# Reuse the already frozen Gate 3A2 acceptance rule without retuning.
+gate:
+  maximum_authority_error_rank_correlation: -0.30
+  minimum_low_confidence_episodes: 2
+  minimum_nonlow_confidence_episodes: 2
+  minimum_occupied_bins: 2
+  minimum_episodes_per_occupied_bin: 2
+  require_low_error_greater_than_nonlow: true
+  require_combined_unseen_authority_below_nominal: true
+  require_combined_unseen_error_above_nominal: true

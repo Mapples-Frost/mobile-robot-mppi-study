@@ -265,6 +265,32 @@ def _manifest_paths(values):
     return [str(_resolve_manifest_path(value)) for value in values]
 
 
+def _load_reliability_with_gate(summary_path, config_path, evidence_path):
+    """Load calibration only when an external frozen-gate audit passed."""
+
+    summary_path = Path(summary_path).resolve()
+    reliability = _load_reliability(
+        summary_path, config_path, allow_failed_calibration=True
+    )
+    evidence_path = Path(evidence_path).resolve()
+    evidence = json.loads(evidence_path.read_text(encoding="utf-8"))
+    if evidence.get("gate_passed") is not True:
+        raise ValueError(
+            "external reliability evidence did not pass: %s"
+            % evidence_path
+        )
+    expected = str(evidence.get("calibration_summary_sha256", ""))
+    observed = _sha256(summary_path)
+    if expected != observed:
+        raise ValueError(
+            "external reliability evidence does not bind calibration: %s"
+            % summary_path
+        )
+    reliability["gate_evidence_path"] = str(evidence_path)
+    reliability["gate_evidence_sha256"] = _sha256(evidence_path)
+    return reliability
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser()
     parser.add_argument("--manifest", required=True)
@@ -289,13 +315,15 @@ def main(argv=None):
         frozen["ordinary_checkpoints"]
     )
     value_checkpoints = _manifest_paths(frozen["value_checkpoints"])
-    ordinary_reliability = _load_reliability(
+    ordinary_reliability = _load_reliability_with_gate(
         _resolve_manifest_path(frozen["ordinary_calibration_summary"]),
         _resolve_manifest_path(frozen["ordinary_calibration_config"]),
+        _resolve_manifest_path(frozen["ordinary_calibration_gate_evidence"]),
     )
-    value_reliability = _load_reliability(
+    value_reliability = _load_reliability_with_gate(
         _resolve_manifest_path(frozen["value_calibration_summary"]),
         _resolve_manifest_path(frozen["value_calibration_config"]),
+        _resolve_manifest_path(frozen["value_calibration_gate_evidence"]),
     )
     base = load_yaml(base_path)
     seeds = parse_ints(args.seeds)
@@ -424,6 +452,14 @@ def main(argv=None):
             {"path": path, "sha256": _sha256(path)}
             for path in value_checkpoints
         ],
+        "ordinary_reliability_gate": {
+            "path": ordinary_reliability["gate_evidence_path"],
+            "sha256": ordinary_reliability["gate_evidence_sha256"],
+        },
+        "value_reliability_gate": {
+            "path": value_reliability["gate_evidence_path"],
+            "sha256": value_reliability["gate_evidence_sha256"],
+        },
         "seeds": list(seeds),
         "independent_unit": "seed",
         "repeated_strata": ["scene", "physics_domain"],

@@ -1,4 +1,6 @@
 import copy
+import hashlib
+import json
 from pathlib import Path
 
 import yaml
@@ -8,6 +10,7 @@ from experiments.rl.run_final_paper_benchmark import (
     _core_factorial_rows,
     build_arm_config,
     final_schedule,
+    _load_reliability_with_gate,
 )
 
 
@@ -145,3 +148,43 @@ def test_frozen_manifest_is_a_manifest_not_an_experiment_config():
     assert manifest["final_benchmark"]["formal_seeds"] == list(
         range(101, 111)
     )
+
+
+def test_external_gate_evidence_must_bind_exact_calibration(
+    tmp_path, monkeypatch
+):
+    summary = tmp_path / "summary.json"
+    summary.write_text("{}\n", encoding="utf-8")
+    evidence = tmp_path / "evidence.json"
+    digest = hashlib.sha256(summary.read_bytes()).hexdigest()
+    evidence.write_text(
+        json.dumps({
+            "gate_passed": True,
+            "calibration_summary_sha256": digest,
+        }),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(
+        "experiments.rl.run_final_paper_benchmark._load_reliability",
+        lambda *args, **kwargs: {"runtime": {}, "ensemble": {}},
+    )
+    loaded = _load_reliability_with_gate(
+        summary, tmp_path / "runtime.yaml", evidence
+    )
+    assert loaded["gate_evidence_sha256"]
+
+    evidence.write_text(
+        json.dumps({
+            "gate_passed": True,
+            "calibration_summary_sha256": "wrong",
+        }),
+        encoding="utf-8",
+    )
+    try:
+        _load_reliability_with_gate(
+            summary, tmp_path / "runtime.yaml", evidence
+        )
+    except ValueError as exc:
+        assert "does not bind calibration" in str(exc)
+    else:
+        raise AssertionError("mismatched evidence must be rejected")

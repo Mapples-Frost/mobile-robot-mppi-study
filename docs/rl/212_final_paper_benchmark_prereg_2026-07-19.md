@@ -1,7 +1,7 @@
 # L214 最终论文级 Point-goal Benchmark 预注册
 
 日期：2026-07-19  
-状态：在读取 L214 正式 seeds 结果前冻结  
+状态：在读取 L214 正式 seeds 结果前冻结；qualification 修订 1
 配置：`configs/research/final_paper_benchmark_point_goal_l214.yaml`
 
 ## 1. 目的与证据层级
@@ -36,6 +36,7 @@
 - HSS guided-fraction floor：0.30；
 - Memory-Augmented MPPI：关闭；
 - Actor、ordinary ICODE ensemble、value-aligned ICODE ensemble 和 reliability calibration 的路径均写入冻结 YAML；
+- 每份 reliability calibration 必须绑定通过 Gate 3A2 的外部压力评估及其 SHA256；原始 severe-unseen 分箱未覆盖全部 authority level，不单独作为放行依据；
 - 正式 seed：101–110；schedule seed：20260719。
 
 正式运行开始后，不得根据中间结果改变以上值。任何后来改变均建立新的实验编号，并作为探索性结果标注。
@@ -123,6 +124,17 @@ L211 五个开发外确认 seed 中，Full vs Simple 的 final-distance seed-lev
 - nominal / ICODE / RL 开关没有串扰。
 
 Qualification 数据永不用于论文效果估计。通过后先提交代码、配置和本预注册，再启动正式 seeds。
+
+### Qualification 修订 1（正式数据开始前）
+
+第一次入口检查发现两份 calibration summary 都如实保留了原始 severe-unseen 分箱 Gate 未通过的状态；value-aligned calibration 后续通过了不改阈值的独立 30-episode 分级压力 Gate 3A2，但原 runner 需要历史兼容开关才能加载。为避免正式实验依赖该开关，本修订要求显式绑定外部 Gate 证据：
+
+- value-aligned calibration 绑定既有 L194 Gate 3A2；
+- ordinary calibration 使用同一 L194 stress split 和完全相同、已经冻结的判据做一次不调参验证；
+- runner 同时检查 `gate_passed=true`、calibration summary SHA256 匹配和 evidence SHA256；
+- 若 ordinary calibration 未通过，L214 正式 seeds 不启动。
+
+该修订没有查看任何 L214 正式结果，也不改变 reliability 阈值、Actor、ICODE checkpoint、HSS 权重或评价指标。
 
 ## 9. 后续外部有效性实验
 

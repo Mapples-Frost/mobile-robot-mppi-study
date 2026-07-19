@@ -1,0 +1,37 @@
+include: mujoco_high_dynamic_fixed_plant_l56.yaml
+
+experiment:
+  name: path_asymmetric_hairpin_holdout_l186
+  max_steps: 420
+
+# Frozen before L185 development seeds 551--555 are evaluated.  Its asymmetric
+# return leg prevents the confirmation set from being a mirrored training
+# curve while remaining feasible for the bounded differential-drive plant.
+task:
+  lookahead_distance: 0.48
+  points:
+    - [0.00, 0.00]
+    - [0.42, 0.00]
+    - [0.84, 0.02]
+    - [1.24, 0.10]
+    - [1.56, 0.30]
+    - [1.78, 0.60]
+    - [1.86, 0.96]
+    - [1.80, 1.30]
+    - [1.58, 1.58]
+    - [1.26, 1.74]
+    - [0.88, 1.78]
+    - [0.52, 1.88]
+    - [0.26, 2.10]
+    - [0.18, 2.40]
+    - [0.32, 2.66]
+    - [0.62, 2.82]
+    - [1.00, 2.88]
+    - [1.42, 2.84]
+    - [1.84, 2.72]
+    - [2.24, 2.62]
+    - [2.66, 2.64]
+
+scene:
+  name: path_asymmetric_hairpin_holdout_l186
+  obstacles: []

@@ -1,0 +1,32 @@
+include: mujoco_high_dynamic_fixed_plant_l56.yaml
+
+experiment:
+  name: path_offset_serpentine_holdout_l186
+  max_steps: 380
+
+# Frozen before L185 development seeds 551--555 are evaluated.  This path is
+# confirmation-only and must not enter SAC training, checkpoint selection, or
+# reward calibration.
+task:
+  lookahead_distance: 0.58
+  points:
+    - [0.00, 0.00]
+    - [0.40, -0.02]
+    - [0.80, -0.14]
+    - [1.18, -0.38]
+    - [1.52, -0.66]
+    - [1.90, -0.82]
+    - [2.30, -0.78]
+    - [2.66, -0.56]
+    - [2.98, -0.24]
+    - [3.30, 0.12]
+    - [3.66, 0.38]
+    - [4.06, 0.46]
+    - [4.46, 0.34]
+    - [4.82, 0.08]
+    - [5.16, -0.20]
+    - [5.56, -0.30]
+
+scene:
+  name: path_offset_serpentine_holdout_l186
+  obstacles: []

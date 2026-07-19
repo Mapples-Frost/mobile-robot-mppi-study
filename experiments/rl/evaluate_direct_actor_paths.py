@@ -107,6 +107,13 @@ def _episode(config, checkpoint, agent, normalizer, seed, output_dir):
         raise ValueError("checkpoint/environment action dimensions differ")
     rows = []
     total_return = 0.0
+    validated_progress = 0.0
+    completion_corridor = float(
+        config["task"].get("completion_corridor", 0.75)
+    )
+    if not np.isfinite(completion_corridor) or completion_corridor <= 0.0:
+        environment.close()
+        raise ValueError("task completion_corridor must be positive and finite")
     try:
         while True:
             normalized = normalizer.normalize(observation)
@@ -115,6 +122,10 @@ def _episode(config, checkpoint, agent, normalizer, seed, output_dir):
                 action
             )
             total_return += float(reward)
+            if float(info["cross_track_error"]) <= completion_corridor:
+                validated_progress = max(
+                    validated_progress, float(info["path_progress"])
+                )
             rows.append({
                 "step": len(rows),
                 "time": float(environment.truth.timestamp),
@@ -129,6 +140,7 @@ def _episode(config, checkpoint, agent, normalizer, seed, output_dir):
                 "executed_omega": float(info["executed_control"][1]),
                 "cross_track_error": float(info["cross_track_error"]),
                 "path_progress": float(info["path_progress"]),
+                "validated_path_progress": float(validated_progress),
                 "path_remaining": float(info["path_remaining"]),
                 "path_heading_error": float(info["path_heading_error"]),
                 "minimum_clearance": float(info["minimum_clearance"]),
@@ -156,6 +168,9 @@ def _episode(config, checkpoint, agent, normalizer, seed, output_dir):
         environment.components["reference"].total_length
     )
     final = rows[-1]
+    raw_minimum_clearance = float(min(
+        row["minimum_clearance"] for row in rows
+    ))
     summary = {
         "checkpoint": str(Path(checkpoint).resolve()),
         "scene": str(config["scene"]["name"]),
@@ -175,11 +190,20 @@ def _episode(config, checkpoint, agent, normalizer, seed, output_dir):
             row["path_heading_error"] ** 2 for row in rows
         ]))),
         "path_completion_ratio": float(np.clip(
+            final["validated_path_progress"] / max(total_length, 1e-12),
+            0.0,
+            1.0,
+        )),
+        "raw_path_completion_ratio": float(np.clip(
             final["path_progress"] / max(total_length, 1e-12), 0.0, 1.0
         )),
-        "minimum_clearance": float(min(
-            row["minimum_clearance"] for row in rows
-        )),
+        "completion_corridor": completion_corridor,
+        "minimum_clearance": (
+            raw_minimum_clearance
+            if np.isfinite(raw_minimum_clearance)
+            else None
+        ),
+        "unbounded_clearance": bool(np.isposinf(raw_minimum_clearance)),
         "control_jerk": jerk,
     }
     if not all(
@@ -201,9 +225,14 @@ def summarize(rows):
         "cross_track_max",
         "heading_rmse",
         "path_completion_ratio",
-        "minimum_clearance",
+        "raw_path_completion_ratio",
         "control_jerk",
     )
+    finite_clearances = [
+        float(row["minimum_clearance"])
+        for row in rows
+        if row["minimum_clearance"] is not None
+    ]
     return {
         "episodes": len(rows),
         "success_rate": float(np.mean([float(row["success"]) for row in rows])),
@@ -212,6 +241,14 @@ def summarize(rows):
             "mean_%s" % name: float(np.mean([row[name] for row in rows]))
             for name in numeric
         },
+        "mean_minimum_clearance": (
+            None
+            if not finite_clearances
+            else float(np.mean(finite_clearances))
+        ),
+        "unbounded_clearance_fraction": float(np.mean([
+            float(row["unbounded_clearance"]) for row in rows
+        ])),
     }
 
 

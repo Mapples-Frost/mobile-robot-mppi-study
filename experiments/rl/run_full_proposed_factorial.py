@@ -115,9 +115,16 @@ def metrics_for_profile(profile):
     raise ValueError("unknown metric profile: %s" % profile)
 
 
-def path_tracking_metrics(trajectory_path, points):
+def path_tracking_metrics(
+    trajectory_path, points, completion_corridor=0.75
+):
     """Compute auditable path metrics from one saved trajectory."""
 
+    completion_corridor = float(completion_corridor)
+    if not math.isfinite(completion_corridor) or completion_corridor <= 0.0:
+        raise ValueError(
+            "path completion corridor must be positive and finite"
+        )
     with Path(trajectory_path).open(
         "r", newline="", encoding="utf-8"
     ) as handle:
@@ -134,8 +141,14 @@ def path_tracking_metrics(trajectory_path, points):
     cross_track, heading_error, completion = project_polyline(
         points, xy, theta
     )
+    valid = cross_track <= completion_corridor
+    validated_completion = (
+        float(np.max(completion[valid])) if np.any(valid) else 0.0
+    )
     result = {
-        "path_completion_ratio": float(completion[-1]),
+        "path_completion_ratio": validated_completion,
+        "raw_path_completion_ratio": float(completion[-1]),
+        "path_completion_corridor": completion_corridor,
         "tangent_heading_rmse": float(
             np.sqrt(np.mean(np.square(heading_error)))
         ),
@@ -389,6 +402,7 @@ def main(argv=None):
             tracking = path_tracking_metrics(
                 run_dir / "trajectory.csv",
                 config["task"]["points"],
+                config["task"].get("completion_corridor", 0.75),
             )
             if not math.isclose(
                 float(row["cross_track_rmse"]),

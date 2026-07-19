@@ -68,6 +68,7 @@ def test_path_tracking_profile_and_saved_trajectory_metrics(tmp_path):
         trajectory, [[0.0, 0.0], [1.0, 0.0]]
     )
     assert result["path_completion_ratio"] == 1.0
+    assert result["raw_path_completion_ratio"] == 1.0
     assert result["tangent_heading_rmse"] == 0.0
     assert np.isclose(
         result["path_cross_track_rmse_recomputed"],
@@ -75,3 +76,23 @@ def test_path_tracking_profile_and_saved_trajectory_metrics(tmp_path):
     )
     assert not metrics_for_profile("path_tracking")["cross_track_rmse"]
     assert metrics_for_profile("path_tracking")["path_completion_ratio"]
+
+
+def test_path_completion_rejects_far_projection_shortcut(tmp_path):
+    trajectory = tmp_path / "trajectory.csv"
+    trajectory.write_text(
+        "x,y,theta\n"
+        "0.0,0.0,0.0\n"
+        "0.5,0.1,0.0\n"
+        "1.0,2.0,0.0\n",
+        encoding="utf-8",
+    )
+
+    result = path_tracking_metrics(
+        trajectory,
+        [[0.0, 0.0], [1.0, 0.0]],
+        completion_corridor=0.75,
+    )
+
+    assert result["raw_path_completion_ratio"] == 1.0
+    assert result["path_completion_ratio"] == 0.5

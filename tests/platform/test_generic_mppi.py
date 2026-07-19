@@ -106,6 +106,41 @@ def test_terminal_heading_gate_stops_translation_but_preserves_turning():
     assert result.proposed_control.values[1] < 0.0
 
 
+def test_terminal_control_radius_limits_alignment_to_goal_neighbourhood():
+    action = body_velocity_action((0.0, 0.7), 1.0)
+    config = MppiConfig(
+        horizon=5,
+        num_samples=32,
+        dt=0.1,
+        noise_sigma=(0.2, 0.3),
+        terminal_translation_speed_limit=0.11,
+        terminal_translation_heading_gate_rad=0.4,
+        terminal_alignment_yaw_gain=1.0,
+        terminal_control_radius=0.8,
+        seed=23,
+    )
+    controller = MppiController(
+        DynamicUnicyclePrediction(), dynamic_unicycle_state(), action, config
+    )
+    misaligned = RobotObservation(
+        0.0, Pose2D(0.0, 0.0, np.pi / 2.0), Twist2D(0.2, 0.0)
+    )
+
+    far = controller.plan(misaligned, PointGoal(2.0, 0.0))
+    assert not far.diagnostics["terminal_control_region_active"]
+    assert not far.diagnostics["terminal_heading_gate_active"]
+    assert not far.diagnostics["terminal_speed_limit_active"]
+    assert not far.diagnostics["terminal_alignment_active"]
+
+    near = controller.plan(misaligned, PointGoal(0.7, 0.0))
+    assert near.diagnostics["terminal_control_region_active"]
+    assert near.diagnostics["terminal_heading_gate_active"]
+    assert near.diagnostics["terminal_speed_limit_active"]
+    assert near.diagnostics["terminal_alignment_active"]
+    assert near.proposed_control.values[0] == 0.0
+    assert near.proposed_control.values[1] < 0.0
+
+
 def test_terminal_heading_gate_is_backward_compatible_when_disabled():
     action = body_velocity_action((0.0, 0.7), 1.0)
     config = MppiConfig(

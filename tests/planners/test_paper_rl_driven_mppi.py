@@ -370,6 +370,52 @@ def test_paper_terminal_heading_gate_preserves_rotate_in_place():
     assert result.diagnostics["terminal_alignment_omega"] < 0.0
 
 
+def test_paper_terminal_control_radius_preserves_actor_far_from_goal():
+    policy = JointBatchedDirectPolicy()
+    controller = PaperRLDrivenMppiController(
+        DynamicUnicyclePrediction(),
+        dynamic_unicycle_state(),
+        body_velocity_action((0.0, 0.5), 1.0),
+        MppiConfig(
+            horizon=5,
+            num_samples=20,
+            dt=0.1,
+            noise_sigma=(0.08, 0.20),
+            terminal_translation_speed_limit=0.11,
+            terminal_translation_heading_gate_rad=0.40,
+            terminal_alignment_yaw_gain=1.0,
+            terminal_control_radius=0.8,
+            seed=20260719,
+        ),
+        sampling_prior=policy,
+        paper_rl_driven_config={
+            "iterations": 2,
+            "guided_fraction": 0.25,
+            "elite_fraction": 0.25,
+            "terminal_value_weight": 0.0,
+        },
+    )
+    misaligned = RobotObservation(
+        timestamp=0.0,
+        pose=Pose2D(0.0, 0.0, np.pi / 2.0),
+        twist=Twist2D(0.2, 0.0),
+    )
+
+    far = controller.plan(misaligned, PointGoal(2.0, 0.0))
+    assert not far.diagnostics["terminal_control_region_active"]
+    assert not far.diagnostics["terminal_heading_gate_active"]
+    assert not far.diagnostics["terminal_speed_limit_active"]
+    assert not far.diagnostics["terminal_alignment_active"]
+
+    near = controller.plan(misaligned, PointGoal(0.7, 0.0))
+    assert near.diagnostics["terminal_control_region_active"]
+    assert near.diagnostics["terminal_heading_gate_active"]
+    assert near.diagnostics["terminal_speed_limit_active"]
+    assert near.diagnostics["terminal_alignment_active"]
+    assert near.proposed_control.values[0] == 0.0
+    assert near.proposed_control.values[1] < 0.0
+
+
 def test_paper_terminal_action_constraints_are_opt_in():
     result = _controller(JointBatchedDirectPolicy()).plan(
         _observation(), PointGoal(1.0, 0.0)
@@ -453,6 +499,89 @@ def test_terminal_guidance_floor_does_not_override_tracking_lookahead():
     assert floor == 0.3
     assert diagnostics["terminal_guidance_terminal_phase"]
     assert diagnostics["terminal_guidance_floor_active"]
+
+
+def test_completion_handover_is_continuous_and_terminal_only():
+    controller = _reliable_controller(ReliabilityDirectPolicy(0.0))
+    config = dict(controller.paper_rl_driven_config.__dict__)
+    config.update({
+        "completion_handover_full_fallback_distance": 0.4,
+        "completion_handover_full_rl_distance": 0.8,
+    })
+    controller = PaperRLDrivenMppiController(
+        controller.dynamics,
+        controller.state_spec,
+        controller.action_spec,
+        controller.config,
+        sampling_prior=ReliabilityDirectPolicy(0.0),
+        paper_rl_driven_config=config,
+    )
+
+    near = ReferenceTarget(
+        Pose2D(0.3, 0.0, 0.0),
+        position_tolerance=0.2,
+        is_terminal=True,
+        phase="terminal",
+    )
+    authority, diagnostics = controller._completion_handover(
+        np.zeros(5), near
+    )
+    assert authority == 0.0
+    assert diagnostics["completion_handover_enabled"]
+
+    middle = ReferenceTarget(
+        Pose2D(0.6, 0.0, 0.0),
+        position_tolerance=0.2,
+        is_terminal=True,
+        phase="terminal",
+    )
+    authority, _ = controller._completion_handover(np.zeros(5), middle)
+    assert np.isclose(authority, 0.5)
+
+    far = ReferenceTarget(
+        Pose2D(1.0, 0.0, 0.0),
+        position_tolerance=0.2,
+        is_terminal=True,
+        phase="terminal",
+    )
+    authority, _ = controller._completion_handover(np.zeros(5), far)
+    assert authority == 1.0
+
+    tracking = ReferenceTarget(
+        Pose2D(0.3, 0.0, 0.0),
+        position_tolerance=0.0,
+        is_terminal=False,
+        phase="tracking",
+    )
+    authority, diagnostics = controller._completion_handover(
+        np.zeros(5), tracking
+    )
+    assert authority == 1.0
+    assert not diagnostics["completion_handover_enabled"]
+
+
+def test_completion_handover_attenuates_guidance_and_terminal_value():
+    controller = _reliable_controller(ReliabilityDirectPolicy(0.0))
+    config = dict(controller.paper_rl_driven_config.__dict__)
+    config.update({
+        "terminal_value_weight": 0.5,
+        "completion_handover_full_fallback_distance": 0.4,
+        "completion_handover_full_rl_distance": 0.8,
+    })
+    controller = PaperRLDrivenMppiController(
+        controller.dynamics,
+        controller.state_spec,
+        controller.action_spec,
+        controller.config,
+        sampling_prior=ReliabilityDirectPolicy(0.0),
+        paper_rl_driven_config=config,
+    )
+    result = controller.plan(_observation(), PointGoal(0.3, 0.0))
+
+    assert result.diagnostics["completion_handover_authority"] == 0.0
+    assert result.diagnostics["paper_guided_unique_sequences"] == 0
+    assert result.diagnostics["terminal_value_completion_authority"] == 0.0
+    assert result.diagnostics["terminal_value_completion_handover_enabled"]
 
 
 def test_paper_diagnostics_preserve_reference_phase():

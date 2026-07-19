@@ -209,9 +209,18 @@ class RLDrivenMppiController(MppiController):
 
     def _terminal_constraints(self, state, target, controls):
         samples = np.asarray(controls, dtype=np.float64).copy()
+        x_index, y_index = self.state_spec.position_indices
+        dx = float(target.pose.x - state[x_index])
+        dy = float(target.pose.y - state[y_index])
+        distance = float(np.hypot(dx, dy))
+        control_region_active = bool(
+            self.config.terminal_control_radius is None
+            or distance <= self.config.terminal_control_radius
+        )
         heading_gate_active = bool(
             self.config.terminal_translation_heading_gate_rad is not None
             and target.phase in ("terminal_approach", "terminal")
+            and control_region_active
             and "v_cmd" in self.action_spec.names
             and "theta" in self.state_spec.names
         )
@@ -219,9 +228,6 @@ class RLDrivenMppiController(MppiController):
         translation_scale = 1.0
         if heading_gate_active:
             theta = float(state[self.state_spec.index("theta")])
-            x_index, y_index = self.state_spec.position_indices
-            dx = float(target.pose.x - state[x_index])
-            dy = float(target.pose.y - state[y_index])
             if np.hypot(dx, dy) > 1e-12:
                 desired = float(np.arctan2(dy, dx))
                 bearing_error = float(np.arctan2(
@@ -240,6 +246,7 @@ class RLDrivenMppiController(MppiController):
         speed_limit_active = bool(
             self.config.terminal_translation_speed_limit is not None
             and target.phase in ("terminal_approach", "terminal")
+            and control_region_active
             and "v_cmd" in self.action_spec.names
         )
         v_index = None
@@ -257,6 +264,8 @@ class RLDrivenMppiController(MppiController):
             "terminal_heading_gate_active": heading_gate_active,
             "terminal_bearing_error": bearing_error,
             "terminal_translation_scale": translation_scale,
+            "terminal_control_distance": distance,
+            "terminal_control_region_active": control_region_active,
             "v_index": v_index,
         }
 
@@ -321,6 +330,17 @@ class RLDrivenMppiController(MppiController):
                 0.0
                 if self.config.terminal_alignment_yaw_gain is None
                 else float(self.config.terminal_alignment_yaw_gain)
+            ),
+            "terminal_control_radius": (
+                0.0
+                if self.config.terminal_control_radius is None
+                else float(self.config.terminal_control_radius)
+            ),
+            "terminal_control_distance": float(
+                constraints["terminal_control_distance"]
+            ),
+            "terminal_control_region_active": bool(
+                constraints["terminal_control_region_active"]
             ),
             "terminal_alignment_omega": float(alignment_omega),
         }
@@ -571,6 +591,8 @@ class PaperRLDrivenMppiConfig:
     conservative_terminal: Any = None
     terminal_guidance_radius: float = 0.0
     terminal_guided_fraction_floor: float = 0.0
+    completion_handover_full_fallback_distance: float = 0.0
+    completion_handover_full_rl_distance: float = 0.0
 
     @classmethod
     def from_mapping(cls, values: Mapping[str, Any]):
@@ -590,6 +612,8 @@ class PaperRLDrivenMppiConfig:
             self.terminal_value_weight,
             self.terminal_guidance_radius,
             self.terminal_guided_fraction_floor,
+            self.completion_handover_full_fallback_distance,
+            self.completion_handover_full_rl_distance,
         ), dtype=np.float64)
         if not np.isfinite(values).all():
             raise ValueError("paper RL-Driven MPPI settings must be finite")
@@ -622,6 +646,20 @@ class PaperRLDrivenMppiConfig:
         ):
             raise ValueError(
                 "a positive terminal guidance floor requires a positive radius"
+            )
+        fallback = self.completion_handover_full_fallback_distance
+        full_rl = self.completion_handover_full_rl_distance
+        if (fallback == 0.0) != (full_rl == 0.0):
+            raise ValueError(
+                "completion handover distances must both be zero or positive"
+            )
+        if fallback < 0.0 or full_rl < 0.0:
+            raise ValueError(
+                "completion handover distances must be non-negative"
+            )
+        if full_rl > 0.0 and full_rl <= fallback:
+            raise ValueError(
+                "full-RL distance must exceed full-fallback distance"
             )
         if self.terminal_critic_source not in ("online", "target"):
             raise ValueError("terminal_critic_source must be online or target")
@@ -749,6 +787,47 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
             "terminal_guided_fraction_floor": float(
                 cfg.terminal_guided_fraction_floor
             ),
+        }
+
+    def _completion_handover(self, state, target):
+        """Return a continuous Actor-to-MPPI authority near the goal.
+
+        The handover is opt-in and only applies to terminal references.  It
+        closes a semantic gap in reliability-adaptive HSS: reducing the
+        number of Actor samples alone did not remove the Actor mean used to
+        initialize the Gaussian proposal.  Authority therefore controls both
+        the persistent Actor share and the proposal mean/covariance.
+        """
+
+        cfg = self.paper_rl_driven_config
+        low = float(cfg.completion_handover_full_fallback_distance)
+        high = float(cfg.completion_handover_full_rl_distance)
+        position = np.asarray(state, dtype=np.float64)[
+            list(self.state_spec.position_indices)
+        ]
+        target_xy = np.asarray(
+            (target.pose.x, target.pose.y), dtype=np.float64
+        )
+        distance = float(np.linalg.norm(target_xy - position))
+        terminal_phase = str(
+            getattr(target, "phase", "terminal")
+        ) in ("terminal_approach", "terminal")
+        enabled = bool(low > 0.0 and high > low and terminal_phase)
+        if not enabled or distance >= high:
+            authority = 1.0
+        elif distance <= low:
+            authority = 0.0
+        else:
+            # Smoothstep avoids an abrupt proposal jump at either boundary.
+            ratio = (distance - low) / (high - low)
+            authority = float(ratio * ratio * (3.0 - 2.0 * ratio))
+        return authority, {
+            "completion_handover_enabled": enabled,
+            "completion_handover_terminal_phase": terminal_phase,
+            "completion_handover_distance": distance,
+            "completion_handover_authority": authority,
+            "completion_handover_full_fallback_distance": low,
+            "completion_handover_full_rl_distance": high,
         }
 
     def _actor_mean_rollout(self, state, observation, reference):
@@ -1234,8 +1313,14 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
         terminal_floor, terminal_floor_diagnostics = (
             self._completion_preserving_guidance(state, target)
         )
-        applied_guided_fraction = max(
+        handover_authority, handover_diagnostics = (
+            self._completion_handover(state, target)
+        )
+        pre_handover_guided_fraction = max(
             float(raw_applied_guided_fraction), terminal_floor
+        )
+        applied_guided_fraction = (
+            pre_handover_guided_fraction * handover_authority
         )
         guided_count = int(round(
             self.config.num_samples * applied_guided_fraction
@@ -1277,6 +1362,7 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
                 raw_applied_guided_fraction
             ),
             **terminal_floor_diagnostics,
+            **handover_diagnostics,
         }
         if self.hybrid_sampling_reliability.config.enabled:
             reliability_diagnostics = (
@@ -1303,7 +1389,9 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
                 "reliability_guided_fraction_applied": float(
                     applied_guided_fraction
                 ),
-                "reliability_guided_fraction_next": next_fraction,
+                "reliability_guided_fraction_next": (
+                    next_fraction * handover_authority
+                ),
                 "reliability_guided_fraction_raw_next": raw_next_fraction,
                 "reliability_guided_fraction_raw_applied": float(
                     raw_applied_guided_fraction
@@ -1313,13 +1401,26 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
                 # remain jointly batched and no second Actor pass is added.
                 "reliability_causal_lag_steps": 1,
                 **terminal_floor_diagnostics,
+                **handover_diagnostics,
             })
+        actor_mean = mean
+        baseline_mean = np.asarray(prior.mean, dtype=np.float64)
+        if baseline_mean.shape != actor_mean.shape:
+            raise ValueError("baseline and Actor proposal means disagree")
+        mean = (
+            handover_authority * actor_mean
+            + (1.0 - handover_authority) * baseline_mean
+        )
         base_variance = np.broadcast_to(
             np.asarray(self.config.noise_sigma, dtype=np.float64)[None, :] ** 2,
             mean.shape,
         ).copy()
+        proposal_variance = (
+            handover_authority * actor_variance
+            + (1.0 - handover_authority) * base_variance
+        )
         variance = np.clip(
-            actor_variance,
+            proposal_variance,
             base_variance * cfg.covariance_min_scale ** 2,
             base_variance * cfg.covariance_max_scale ** 2,
         )
@@ -1357,6 +1458,21 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
             terminal, terminal_diagnostics = self._paper_terminal_cost(
                 trajectories, samples, observation, reference
             )
+            # A learned critic is useful beyond the finite MPPI horizon, but
+            # its coarse value geometry should not override the exact goal
+            # cost during final convergence.  The same continuous authority
+            # that hands the proposal back to the trusted baseline therefore
+            # attenuates only the *incremental* critic term.  The unchanged
+            # MPPI geometric terminal cost remains present in ``running``.
+            terminal = terminal * handover_authority
+            terminal_diagnostics.update({
+                "terminal_value_completion_authority": float(
+                    handover_authority
+                ),
+                "terminal_value_completion_handover_enabled": bool(
+                    handover_diagnostics["completion_handover_enabled"]
+                ),
+            })
             costs = np.asarray(running, dtype=np.float64) + terminal
             if not np.isfinite(costs).all():
                 raise FloatingPointError(
@@ -1466,7 +1582,9 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
                 "actor_competence_updated": bool(
                     source_competence["updated"]
                 ),
-                "reliability_guided_fraction_next": next_fraction,
+                "reliability_guided_fraction_next": (
+                    next_fraction * handover_authority
+                ),
                 "reliability_guided_fraction_raw_next": (
                     raw_next_fraction
                 ),
@@ -1535,6 +1653,7 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
             "target_phase": str(target.phase),
             "prior": dict(prior.metadata),
             **terminal_action_diagnostics,
+            **handover_diagnostics,
         }
         diagnostics.update(terminal_diagnostics)
         diagnostics.update(reliability_diagnostics)

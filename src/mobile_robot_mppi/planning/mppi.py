@@ -55,6 +55,7 @@ class MppiConfig:
     terminal_translation_speed_limit: Optional[float] = None
     terminal_translation_heading_gate_rad: Optional[float] = None
     terminal_alignment_yaw_gain: Optional[float] = None
+    terminal_control_radius: Optional[float] = None
     control_weight: float = 0.05
     control_rate_weight: float = 0.08
     obstacle_weight: float = 30.0
@@ -100,6 +101,11 @@ class MppiConfig:
                 None
                 if values.get("terminal_alignment_yaw_gain") is None
                 else float(values["terminal_alignment_yaw_gain"])
+            ),
+            terminal_control_radius=(
+                None
+                if values.get("terminal_control_radius") is None
+                else float(values["terminal_control_radius"])
             ),
             control_weight=float(values.get("control_weight", 0.05)),
             control_rate_weight=float(values.get("control_rate_weight", 0.08)),
@@ -175,6 +181,13 @@ class MppiConfig:
         ):
             raise ValueError(
                 "terminal_alignment_yaw_gain must be finite and positive"
+            )
+        if self.terminal_control_radius is not None and (
+            not np.isfinite(self.terminal_control_radius)
+            or self.terminal_control_radius <= 0.0
+        ):
+            raise ValueError(
+                "terminal_control_radius must be finite and positive"
             )
         if not 0 <= self.safety_recovery_prefix_steps <= self.horizon:
             raise ValueError("safety_recovery_prefix_steps must be within the horizon")
@@ -738,9 +751,21 @@ class MppiController:
             stage_started = now
 
         samples = self._sample(prior, rng=rng)
+        terminal_dx = float(
+            target.pose.x - state[self.state_spec.position_indices[0]]
+        )
+        terminal_dy = float(
+            target.pose.y - state[self.state_spec.position_indices[1]]
+        )
+        terminal_distance = float(np.hypot(terminal_dx, terminal_dy))
+        terminal_control_region_active = bool(
+            self.config.terminal_control_radius is None
+            or terminal_distance <= self.config.terminal_control_radius
+        )
         terminal_heading_gate_active = bool(
             self.config.terminal_translation_heading_gate_rad is not None
             and target.phase in ("terminal_approach", "terminal")
+            and terminal_control_region_active
             and "v_cmd" in self.action_spec.names
             and "theta" in self.state_spec.names
         )
@@ -748,8 +773,8 @@ class MppiController:
         terminal_translation_scale = 1.0
         if terminal_heading_gate_active:
             theta = float(state[self.state_spec.index("theta")])
-            dx = float(target.pose.x - state[self.state_spec.position_indices[0]])
-            dy = float(target.pose.y - state[self.state_spec.position_indices[1]])
+            dx = terminal_dx
+            dy = terminal_dy
             if np.hypot(dx, dy) > 1e-12:
                 desired_heading = float(np.arctan2(dy, dx))
                 terminal_bearing_error = float(np.arctan2(
@@ -771,6 +796,7 @@ class MppiController:
         terminal_speed_limit_active = bool(
             self.config.terminal_translation_speed_limit is not None
             and target.phase in ("terminal_approach", "terminal")
+            and terminal_control_region_active
             and "v_cmd" in self.action_spec.names
         )
         if terminal_speed_limit_active:
@@ -897,6 +923,13 @@ class MppiController:
                 else float(self.config.terminal_alignment_yaw_gain)
             ),
             "terminal_alignment_omega": terminal_alignment_omega,
+            "terminal_control_radius": (
+                0.0
+                if self.config.terminal_control_radius is None
+                else float(self.config.terminal_control_radius)
+            ),
+            "terminal_control_distance": terminal_distance,
+            "terminal_control_region_active": terminal_control_region_active,
             "prior": dict(prior.metadata),
         }
         residual = getattr(self.dynamics, "residual", None)

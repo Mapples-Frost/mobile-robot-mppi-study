@@ -104,3 +104,11 @@ Development Gate 只决定是否有资格做确认实验，不构成论文证据
 允许：开发结果用于定位失败、选择单一冻结候选。  
 禁止：筛选好看的 seed、删除失败 episode、把 development 当确认集、把 0 collision 等同于全局安全保证，或把公开 control-affine residual 实现声称为原始 ICODE 全部理论保证。
 
+## 9. Development amendment：定位隔离与终点交接
+
+本修订在 sealed benchmark 开启前完成，只依据 development seed 48 的失败审计；它不改变 ICODE、RL guidance、value alignment 或 reliability-adaptive HSS 的核心机制。
+
+1. 主复杂导航 benchmark 使用带既有微小传感噪声的 MuJoCo ground-truth pose/twist，隔离本文研究的动力学失配与规划变量。原始 wheel-odometry 模式保留为独立 localization stress test，不混入主因果比较。
+2. 七种方法共同启用同一近目标控制律：仅在距目标 0.80 m 内限制平移速度，并在航向偏差较大时允许 `v=0, omega!=0` 原地对准。目标区外不改变 Actor 或 MPPI 的障碍绕行能力。
+3. Adaptive-HSS arms 在 0.80 m 至 0.40 m 内连续将 Actor proposal 与 incremental learned terminal value 交还给 baseline MPPI；0.40 m 内 learned authority 为零。该修复补足“只减少 Actor 候选数、但 Gaussian mean 仍由 Actor 初始化”的实现语义漏洞。
+4. 旧的 wheel-odometry 负向结果与修订后的 qualification 结果必须同时保留。只有完整 development matrix 通过第 6 节 Gate，才允许另行预注册从未运行的新 sealed seeds。

@@ -347,6 +347,26 @@ class EpisodeMetrics:
                     "terminal_guided_fraction_floor", 0.0
                 )
             ),
+            "completion_handover_enabled": float(
+                planner_diagnostics.get(
+                    "completion_handover_enabled", False
+                )
+            ),
+            "completion_handover_authority": float(
+                planner_diagnostics.get(
+                    "completion_handover_authority", 1.0
+                )
+            ),
+            "completion_handover_distance": float(
+                planner_diagnostics.get(
+                    "completion_handover_distance", float("inf")
+                )
+            ),
+            "terminal_value_completion_authority": float(
+                planner_diagnostics.get(
+                    "terminal_value_completion_authority", 1.0
+                )
+            ),
             "paper_guided_elite_count": int(
                 planner_diagnostics.get("paper_guided_elite_count", 0)
             ),
@@ -1037,6 +1057,26 @@ class EpisodeMetrics:
                 )
                 for row in values
             ) else 0.0,
+            "completion_handover_enabled_fraction": float(np.mean([
+                row.get("completion_handover_enabled", 0.0)
+                for row in values
+            ])),
+            "completion_handover_authority_mean": float(np.mean([
+                row.get("completion_handover_authority", 1.0)
+                for row in values
+            ])),
+            "completion_handover_authority_min": float(np.min([
+                row.get("completion_handover_authority", 1.0)
+                for row in values
+            ])),
+            "terminal_value_completion_authority_mean": float(np.mean([
+                row.get("terminal_value_completion_authority", 1.0)
+                for row in values
+            ])),
+            "terminal_value_completion_authority_min": float(np.min([
+                row.get("terminal_value_completion_authority", 1.0)
+                for row in values
+            ])),
             "paper_guided_elite_count_total": int(sum(
                 row.get("paper_guided_elite_count", 0)
                 for row in values

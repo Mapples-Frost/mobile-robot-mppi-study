@@ -11,6 +11,11 @@ from experiments.rl.run_final_paper_benchmark import (
     build_arm_config,
     final_schedule,
     _load_reliability_with_gate,
+    _comparison,
+)
+from experiments.rl.analyze_final_paper_benchmark import (
+    aggregate,
+    validate_completed_rows,
 )
 
 
@@ -122,6 +127,33 @@ def test_confirmatory_arms_change_only_frozen_factors():
     assert value["planner"]["checkpoints"] == ["v1.pt", "v2.pt"]
 
 
+def test_shared_planner_and_sensor_overrides_apply_to_every_arm():
+    for arm in ARMS:
+        config, _, _, _ = build_arm_config(
+            copy.deepcopy(_base()),
+            {"arm": arm, "seed": 7},
+            "actor.pt",
+            ["o1.pt", "o2.pt"],
+            ["v1.pt", "v2.pt"],
+            _calibration(),
+            _calibration(),
+            100,
+            2,
+            {"name": "nominal", "role": "seen", "plant_override": {}},
+            300,
+            0.0,
+            0.0,
+            planner_overrides={"terminal_control_radius": 0.8},
+            sensor_overrides={
+                "pose_source": "ground_truth",
+                "twist_source": "ground_truth",
+            },
+        )
+        assert config["planner"]["terminal_control_radius"] == 0.8
+        assert config["sensors"]["pose_source"] == "ground_truth"
+        assert config["sensors"]["twist_source"] == "ground_truth"
+
+
 def test_core_factorial_rows_use_only_the_four_confirmatory_arms():
     rows = [
         {"benchmark_arm": arm, "method": arm, "block": "b"}
@@ -196,3 +228,68 @@ def test_external_gate_evidence_must_bind_exact_calibration(
         assert "does not bind calibration" in str(exc)
     else:
         raise AssertionError("mismatched evidence must be rejected")
+
+
+def _formal_row(seed, arm, domain="nominal_seen"):
+    return {
+        "scene": "clean",
+        "physics_domain": domain,
+        "seed": seed,
+        "benchmark_arm": arm,
+        "block": "clean::%s::seed%d" % (domain, seed),
+        "qualification": 0,
+        "final_goal_distance": 1.0,
+    }
+
+
+def test_completed_row_validation_rejects_qualification_and_missing_arm():
+    rows = [_formal_row(101, arm) for arm in ARMS]
+    audit = validate_completed_rows(rows, (101,))
+    assert audit["episodes"] == 7
+    assert audit["blocks"] == 1
+    rows[0]["qualification"] = 1
+    try:
+        validate_completed_rows(rows, (101,))
+    except ValueError as exc:
+        assert "qualification" in str(exc)
+    else:
+        raise AssertionError("qualification data must be rejected")
+
+    rows = [_formal_row(101, arm) for arm in ARMS[:-1]]
+    try:
+        validate_completed_rows(rows, (101,))
+    except ValueError as exc:
+        assert "incomplete formal blocks" in str(exc)
+    else:
+        raise AssertionError("an incomplete block must be rejected")
+
+
+def test_final_comparison_uses_benchmark_arm_rows():
+    rows = []
+    for seed in (101, 102):
+        before = _formal_row(seed, "simple_combination")
+        after = _formal_row(seed, "full_proposed")
+        before["final_goal_distance"] = 1.0
+        after["final_goal_distance"] = 0.8
+        rows.extend((before, after))
+    result = _comparison(
+        rows,
+        "simple_combination",
+        "full_proposed",
+        "full_vs_simple",
+        100,
+        7,
+        {"final_goal_distance": False},
+    )
+    assert abs(
+        result["metrics"]["final_goal_distance"]["favorable_effect"]
+        - 0.2
+    ) < 1e-12
+
+
+def test_descriptive_aggregate_accepts_csv_boolean_strings():
+    rows = [_formal_row(101, "traditional_mppi")]
+    rows[0].update({"success": "True", "collision": "False"})
+    summary = aggregate(rows, ("success", "collision"))
+    assert summary[0]["success_mean"] == 1.0
+    assert summary[0]["collision_mean"] == 0.0

@@ -34,6 +34,19 @@ final_benchmark:
   max_steps: 600
   terminal_guidance_radius: 0.0
   terminal_guided_fraction_floor: 0.0
+  completion_handover_full_fallback_distance: 0.40
+  completion_handover_full_rl_distance: 0.80
+  planner_overrides:
+    terminal_control_radius: 0.80
+    terminal_translation_speed_limit: 0.12
+    terminal_translation_heading_gate_rad: 0.40
+    terminal_alignment_yaw_gain: 0.80
+  # The primary benchmark isolates learned dynamics and navigation.  Global
+  # localization error is a separate stress factor; mixing raw wheel-dead-
+  # reckoning drift into truth-referenced success would confound this Gate.
+  sensor_overrides:
+    pose_source: ground_truth
+    twist_source: ground_truth
   schedule_seed: 20260723
   development_seeds:
     - 48

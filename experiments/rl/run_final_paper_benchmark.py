@@ -24,7 +24,6 @@ from experiments.rl.run_full_proposed_factorial import (
     _factorial,
     _git_sha,
     _load_reliability,
-    _paired,
     _parse_paths,
     _sha256,
     _write_csv,
@@ -38,6 +37,9 @@ from experiments.rl.run_gate1_simple_combination import (
     parse_ints,
 )
 from mobile_robot_mppi.core.config import load_yaml
+from mobile_robot_mppi.evaluation.paired_checkpoint import (
+    paired_checkpoint_effects,
+)
 from mobile_robot_mppi.runtime.experiment_runner import ExperimentRunner
 
 ARMS = (
@@ -63,7 +65,7 @@ CORE_FACTORIAL_METHOD = {
 }
 
 
-def final_schedule(seeds, domains, scenes, schedule_seed):
+def final_schedule(seeds, domains, scenes, schedule_seed, arms=ARMS):
     """Randomize all seven arms inside each seed-scene-domain block."""
 
     import numpy as np
@@ -76,7 +78,7 @@ def final_schedule(seeds, domains, scenes, schedule_seed):
                 block = "%s::%s::seed%d" % (
                     scene["name"], domain["name"], int(seed)
                 )
-                order = list(ARMS)
+                order = list(arms)
                 rng.shuffle(order)
                 for within, arm in enumerate(order):
                     jobs.append({
@@ -123,6 +125,10 @@ def build_arm_config(
     max_steps,
     terminal_guidance_radius,
     terminal_guided_fraction_floor,
+    completion_handover_full_fallback_distance=0.0,
+    completion_handover_full_rl_distance=0.0,
+    planner_overrides=None,
+    sensor_overrides=None,
 ):
     """Build one frozen arm without allowing cross-arm parameter leakage."""
 
@@ -180,7 +186,23 @@ def build_arm_config(
             if flags["adaptive_hss"]
             else 0.0
         )
+        planner["paper_rl_driven"][
+            "completion_handover_full_fallback_distance"
+        ] = (
+            float(completion_handover_full_fallback_distance)
+            if flags["adaptive_hss"]
+            else 0.0
+        )
+        planner["paper_rl_driven"][
+            "completion_handover_full_rl_distance"
+        ] = (
+            float(completion_handover_full_rl_distance)
+            if flags["adaptive_hss"]
+            else 0.0
+        )
         planner["paper_rl_driven"].pop("conservative_terminal", None)
+    planner.update(dict(planner_overrides or {}))
+    config.setdefault("sensors", {}).update(dict(sensor_overrides or {}))
     if int(max_steps) > 0:
         config["experiment"]["max_steps"] = int(max_steps)
     config["experiment"]["final_benchmark_arm"] = arm
@@ -210,13 +232,13 @@ def _comparison(rows, before, after, label, samples, seed, metrics):
         for row in rows
         if row["benchmark_arm"] == after
     ]
-    return _paired(
+    return paired_checkpoint_effects(
         control,
         aligned,
-        label,
-        samples,
-        seed,
-        metrics,
+        method=label,
+        metrics=metrics,
+        bootstrap_samples=int(samples),
+        seed=int(seed),
     )
 
 
@@ -298,6 +320,21 @@ def main(argv=None):
     parser.add_argument("--seeds", required=True)
     parser.add_argument("--bootstrap-samples", type=int, default=5000)
     parser.add_argument("--qualification", action="store_true")
+    parser.add_argument(
+        "--arms",
+        default="",
+        help="qualification-only comma-separated arm subset",
+    )
+    parser.add_argument(
+        "--scene-configs",
+        default="",
+        help="qualification-only comma-separated scene override",
+    )
+    parser.add_argument(
+        "--physics-domains",
+        default="",
+        help="qualification-only comma-separated domain override",
+    )
     args = parser.parse_args(argv)
 
     manifest_path = Path(args.manifest).resolve()
@@ -308,6 +345,20 @@ def main(argv=None):
     frozen = dict(manifest["final_benchmark"])
     if not args.qualification and frozen.get("status") != "preregistered":
         raise ValueError("formal benchmark requires status=preregistered")
+    if not args.qualification and any((
+        args.arms, args.scene_configs, args.physics_domains
+    )):
+        raise ValueError("formal benchmark forbids qualification overrides")
+    selected_arms = tuple(
+        item.strip() for item in args.arms.split(",") if item.strip()
+    ) or ARMS
+    unknown_arms = sorted(set(selected_arms) - set(ARMS))
+    if unknown_arms:
+        raise ValueError(
+            "unknown qualification arms: %s" % ", ".join(unknown_arms)
+        )
+    if len(set(selected_arms)) != len(selected_arms):
+        raise ValueError("qualification arms must be unique")
     base_path = _resolve_manifest_path(frozen["base_config"])
     domain_path = _resolve_manifest_path(frozen["physics_domain_config"])
     actor = str(_resolve_manifest_path(frozen["actor_checkpoint"]))
@@ -327,10 +378,20 @@ def main(argv=None):
     )
     base = load_yaml(base_path)
     seeds = parse_ints(args.seeds)
+    selected_domains = tuple(
+        item.strip()
+        for item in args.physics_domains.split(",")
+        if item.strip()
+    ) or tuple(frozen["physics_domains"])
+    selected_scene_paths = tuple(
+        item.strip()
+        for item in args.scene_configs.split(",")
+        if item.strip()
+    ) or tuple(frozen["scene_configs"])
     domains = load_physics_domains(
-        domain_path, tuple(frozen["physics_domains"]), ()
+        domain_path, selected_domains, ()
     )
-    scenes = load_scenes(base, tuple(frozen["scene_configs"]))
+    scenes = load_scenes(base, selected_scene_paths)
     profile = str(frozen.get("metric_profile", "point_goal"))
     metrics = metrics_for_profile(profile)
     if profile == "path_tracking":
@@ -349,6 +410,7 @@ def main(argv=None):
         domains,
         scenes,
         int(frozen["schedule_seed"]),
+        selected_arms,
     )
     output = Path(args.output_dir).resolve()
     output.mkdir(parents=True, exist_ok=True)
@@ -370,6 +432,14 @@ def main(argv=None):
             int(frozen["max_steps"]),
             float(frozen["terminal_guidance_radius"]),
             float(frozen["terminal_guided_fraction_floor"]),
+            float(frozen.get(
+                "completion_handover_full_fallback_distance", 0.0
+            )),
+            float(frozen.get(
+                "completion_handover_full_rl_distance", 0.0
+            )),
+            frozen.get("planner_overrides", {}),
+            frozen.get("sensor_overrides", {}),
         )
         arm = str(job["arm"])
         run_dir = output / "runs" / arm / config["experiment"]["name"]
@@ -429,7 +499,7 @@ def main(argv=None):
         rows.append(row)
         _write_csv(output / "progress.csv", rows)
 
-    for arm in ARMS:
+    for arm in selected_arms:
         _write_csv(
             output / ("%s_episodes.csv" % arm),
             [row for row in rows if row["benchmark_arm"] == arm],
@@ -463,7 +533,7 @@ def main(argv=None):
         "seeds": list(seeds),
         "independent_unit": "seed",
         "repeated_strata": ["scene", "physics_domain"],
-        "arms": list(ARMS),
+        "arms": list(selected_arms),
         "scenes": [
             {"name": item["name"], "source": item["source"]}
             for item in scenes
@@ -480,7 +550,7 @@ def main(argv=None):
         json.dumps(schedule, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
     )
-    if len(seeds) >= 2:
+    if len(seeds) >= 2 and set(selected_arms) == set(ARMS):
         paired, factorial = _analyse(
             rows,
             int(args.bootstrap_samples),
@@ -499,7 +569,7 @@ def main(argv=None):
         "output_dir": str(output),
         "episodes": len(rows),
         "independent_seeds": len(seeds),
-        "blocks": len(schedule) // len(ARMS),
+        "blocks": len(schedule) // len(selected_arms),
         "status": provenance["status"],
     }, indent=2, sort_keys=True))
     return 0

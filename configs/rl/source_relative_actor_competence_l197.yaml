@@ -1,0 +1,7 @@
+source_competence_enabled: true
+source_competence_initial: 0.50
+source_competence_decay: 0.90
+source_competence_prior_success: 1.0
+source_competence_prior_failure: 1.0
+source_competence_ratio_off: 0.75
+source_competence_ratio_on: 1.00

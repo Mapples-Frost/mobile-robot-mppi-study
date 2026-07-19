@@ -276,6 +276,11 @@ class EpisodeMetrics:
                     "actor_competence_raw_confidence", 1.0
                 )
             ),
+            "reliability_actor_competence_mapped_confidence": float(
+                planner_diagnostics.get(
+                    "actor_competence_mapped_confidence", 1.0
+                )
+            ),
             "reliability_actor_competence_guided_yield": float(
                 planner_diagnostics.get(
                     "actor_competence_guided_yield", 0.0
@@ -891,6 +896,12 @@ class EpisodeMetrics:
             "reliability_actor_competence_raw_mean": float(np.mean([
                 row.get(
                     "reliability_actor_competence_raw_confidence", 1.0
+                )
+                for row in values
+            ])),
+            "reliability_actor_competence_mapped_mean": float(np.mean([
+                row.get(
+                    "reliability_actor_competence_mapped_confidence", 1.0
                 )
                 for row in values
             ])),

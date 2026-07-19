@@ -1334,6 +1334,7 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
         source_competence = {
             "updated": False,
             "raw_confidence": 1.0,
+            "mapped_confidence": 1.0,
             "confidence": 1.0,
             "guided_yield": 0.0,
             "gaussian_yield": 0.0,
@@ -1378,6 +1379,9 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
                 "actor_competence_raw_confidence": float(
                     source_competence["raw_confidence"]
                 ),
+                "actor_competence_mapped_confidence": float(
+                    source_competence["mapped_confidence"]
+                ),
                 "actor_competence_guided_yield": float(
                     source_competence["guided_yield"]
                 ),
@@ -1399,6 +1403,7 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
         elif self.hybrid_sampling_reliability.config.enabled:
             reliability_diagnostics.update({
                 "actor_competence_raw_confidence": 1.0,
+                "actor_competence_mapped_confidence": 1.0,
                 "actor_competence_guided_yield": 0.0,
                 "actor_competence_gaussian_yield": 0.0,
                 "actor_competence_updates": 0,

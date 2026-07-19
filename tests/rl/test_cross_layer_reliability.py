@@ -154,6 +154,38 @@ def test_source_relative_competence_retains_state_without_both_sources():
     assert tracker.confidence == before
 
 
+def test_source_relative_competence_maps_below_parity_to_zero_authority():
+    config = _config()
+    config.update({
+        "source_competence_enabled": True,
+        "source_competence_initial": 0.5,
+        "source_competence_decay": 0.0,
+        "source_competence_ratio_off": 0.75,
+        "source_competence_ratio_on": 1.0,
+    })
+    tracker = SourceRelativeCompetence(config)
+    result = tracker.update(59, 99, 100, 100)
+    assert result["raw_confidence"] == pytest.approx(0.6, abs=0.02)
+    assert result["mapped_confidence"] == 0.0
+    assert result["confidence"] == 0.0
+
+
+def test_source_relative_competence_parity_calibration_is_monotone():
+    config = _config()
+    config.update({
+        "source_competence_enabled": True,
+        "source_competence_decay": 0.0,
+        "source_competence_ratio_off": 0.75,
+        "source_competence_ratio_on": 1.0,
+    })
+    low = SourceRelativeCompetence(config).update(74, 99, 100, 100)
+    middle = SourceRelativeCompetence(config).update(86, 99, 100, 100)
+    parity = SourceRelativeCompetence(config).update(99, 99, 100, 100)
+    assert low["mapped_confidence"] == pytest.approx(0.0, abs=1e-12)
+    assert 0.0 < middle["mapped_confidence"] < 1.0
+    assert parity["mapped_confidence"] == pytest.approx(1.0)
+
+
 def test_actor_competence_multiplies_dynamics_authority():
     config = _config()
     config["fusion_mode"] = "innovation_anchor"

@@ -98,6 +98,8 @@ class HybridSamplingReliabilityConfig:
     source_competence_decay: float = 0.90
     source_competence_prior_success: float = 1.0
     source_competence_prior_failure: float = 1.0
+    source_competence_ratio_off: float = 0.0
+    source_competence_ratio_on: float = 1.0
 
     @classmethod
     def from_mapping(cls, values: Mapping[str, Any]):
@@ -190,6 +192,19 @@ class HybridSamplingReliabilityConfig:
             raise ValueError(
                 "source competence Beta prior must be finite and positive"
             )
+        if (
+            not np.isfinite((
+                self.source_competence_ratio_off,
+                self.source_competence_ratio_on,
+            )).all()
+            or float(self.source_competence_ratio_off) < 0.0
+            or float(self.source_competence_ratio_on)
+            <= float(self.source_competence_ratio_off)
+        ):
+            raise ValueError(
+                "source competence calibration requires finite "
+                "0 <= ratio_off < ratio_on"
+            )
 
 
 class SourceRelativeCompetence:
@@ -241,6 +256,7 @@ class SourceRelativeCompetence:
             return {
                 "updated": False,
                 "raw_confidence": self.confidence,
+                "mapped_confidence": self.confidence,
                 "confidence": self.confidence,
                 "guided_yield": 0.0,
                 "gaussian_yield": 0.0,
@@ -254,21 +270,29 @@ class SourceRelativeCompetence:
         gaussian_yield = (gaussian_elites + alpha) / (
             gaussian_total + alpha + beta
         )
-        raw = float(np.clip(
+        raw_ratio = float(np.clip(
             guided_yield / max(gaussian_yield, 1e-12),
+            0.0,
+            1.0,
+        ))
+        ratio_off = float(self.config.source_competence_ratio_off)
+        ratio_on = float(self.config.source_competence_ratio_on)
+        mapped = float(np.clip(
+            (raw_ratio - ratio_off) / (ratio_on - ratio_off),
             0.0,
             1.0,
         ))
         decay = float(self.config.source_competence_decay)
         self.confidence = float(np.clip(
-            decay * self.confidence + (1.0 - decay) * raw,
+            decay * self.confidence + (1.0 - decay) * mapped,
             0.0,
             1.0,
         ))
         self.updates += 1
         return {
             "updated": True,
-            "raw_confidence": raw,
+            "raw_confidence": raw_ratio,
+            "mapped_confidence": mapped,
             "confidence": self.confidence,
             "guided_yield": float(guided_yield),
             "gaussian_yield": float(gaussian_yield),

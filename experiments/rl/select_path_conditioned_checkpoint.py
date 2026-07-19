@@ -126,7 +126,7 @@ def main(argv=None):
     )
     result = aggregate_validation_rows(rows, expected_steps=expected)
     step = result["selected_global_step"]
-    checkpoint = run_dir / "checkpoints" / ("step_%012d.pt" % step)
+    checkpoint = run_dir / "checkpoints" / ("step_%09d.pt" % step)
     if not checkpoint.is_file():
         raise FileNotFoundError("selected checkpoint is missing: %s" % checkpoint)
     result.update({

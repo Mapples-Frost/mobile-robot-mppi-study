@@ -5,6 +5,7 @@ import argparse
 import csv
 import hashlib
 import json
+import math
 import subprocess
 import sys
 from pathlib import Path
@@ -24,6 +25,7 @@ from experiments.rl.run_gate1_simple_combination import (
     method_config,
     parse_ints,
 )
+from experiments.rl.summarize_icode_path_tracking import project_polyline
 from mobile_robot_mppi.core.config import load_yaml
 from mobile_robot_mppi.evaluation.factorial import (
     blocked_factorial_contrasts,
@@ -46,7 +48,7 @@ FACTORIAL_METHOD = {
     "ordinary_adaptive": "rl_driven_mppi",
     "full_proposed": "simple_combination",
 }
-COMPARISON_METRICS = {
+POINT_GOAL_METRICS = {
     "success": True,
     "collision": False,
     "final_goal_distance": False,
@@ -55,6 +57,19 @@ COMPARISON_METRICS = {
     "planner_compute_ms_mean": False,
     "paper_total_rollouts_mean": False,
 }
+PATH_TRACKING_METRICS = {
+    "success": True,
+    "collision": False,
+    "cross_track_rmse": False,
+    "path_completion_ratio": True,
+    "tangent_heading_rmse": False,
+    "cross_track_max": False,
+    "control_jerk": False,
+    "planner_compute_ms_mean": False,
+    "paper_total_rollouts_mean": False,
+}
+# Backward-compatible public name used by earlier point-goal tooling.
+COMPARISON_METRICS = POINT_GOAL_METRICS
 
 
 def _sha256(path):
@@ -89,6 +104,47 @@ def _parse_paths(value):
     ]
     if len(result) < 2:
         raise ValueError("factorial requires at least two checkpoints")
+    return result
+
+
+def metrics_for_profile(profile):
+    if profile == "point_goal":
+        return POINT_GOAL_METRICS
+    if profile == "path_tracking":
+        return PATH_TRACKING_METRICS
+    raise ValueError("unknown metric profile: %s" % profile)
+
+
+def path_tracking_metrics(trajectory_path, points):
+    """Compute auditable path metrics from one saved trajectory."""
+
+    with Path(trajectory_path).open(
+        "r", newline="", encoding="utf-8"
+    ) as handle:
+        rows = list(csv.DictReader(handle))
+    if not rows:
+        raise ValueError("path trajectory is empty")
+    xy = np.asarray(
+        [[float(row["x"]), float(row["y"])] for row in rows],
+        dtype=np.float64,
+    )
+    theta = np.asarray(
+        [float(row["theta"]) for row in rows], dtype=np.float64
+    )
+    cross_track, heading_error, completion = project_polyline(
+        points, xy, theta
+    )
+    result = {
+        "path_completion_ratio": float(completion[-1]),
+        "tangent_heading_rmse": float(
+            np.sqrt(np.mean(np.square(heading_error)))
+        ),
+        "path_cross_track_rmse_recomputed": float(
+            np.sqrt(np.mean(np.square(cross_track)))
+        ),
+    }
+    if not all(math.isfinite(value) for value in result.values()):
+        raise FloatingPointError("nonfinite path-tracking metric")
     return result
 
 
@@ -137,7 +193,15 @@ def factorial_schedule(seeds, domains, scenes, schedule_seed):
     return jobs
 
 
-def _paired(rows, control_arm, aligned_arm, label, samples, seed):
+def _paired(
+    rows,
+    control_arm,
+    aligned_arm,
+    label,
+    samples,
+    seed,
+    metrics=None,
+):
     control = [
         dict(row, method=label)
         for row in rows
@@ -152,15 +216,17 @@ def _paired(rows, control_arm, aligned_arm, label, samples, seed):
         control,
         aligned,
         method=label,
-        metrics=COMPARISON_METRICS,
+        metrics=metrics or COMPARISON_METRICS,
         bootstrap_samples=int(samples),
         seed=int(seed),
     )
 
 
-def _factorial(rows, samples, seed):
+def _factorial(rows, samples, seed, metrics=None):
     result = {}
-    for metric, higher_is_better in COMPARISON_METRICS.items():
+    for metric, higher_is_better in (
+        metrics or COMPARISON_METRICS
+    ).items():
         result[metric] = blocked_factorial_contrasts(
             rows,
             metric,
@@ -198,12 +264,18 @@ def main(argv=None):
     parser.add_argument("--physics-domains", required=True)
     parser.add_argument("--max-steps", type=int, default=300)
     parser.add_argument(
+        "--metric-profile",
+        choices=("point_goal", "path_tracking"),
+        default="point_goal",
+    )
+    parser.add_argument(
         "--terminal-guidance-radius", type=float, default=0.0
     )
     parser.add_argument(
         "--terminal-guided-fraction-floor", type=float, default=0.0
     )
     args = parser.parse_args(argv)
+    comparison_metrics = metrics_for_profile(args.metric_profile)
 
     base = load_yaml(args.config)
     seeds = parse_ints(args.seeds)
@@ -224,6 +296,17 @@ def main(argv=None):
             if item.strip()
         ),
     )
+    if args.metric_profile == "path_tracking":
+        invalid = [
+            item["name"]
+            for item in scenes
+            if item["config"].get("task", {}).get("type") != "polyline"
+        ]
+        if invalid:
+            raise ValueError(
+                "path_tracking profile requires polyline scenes: %s"
+                % ", ".join(invalid)
+            )
     schedule = factorial_schedule(
         seeds, domains, scenes, args.schedule_seed
     )
@@ -293,7 +376,8 @@ def main(argv=None):
         planner["paper_rl_driven"].pop(
             "conservative_terminal", None
         )
-        config["experiment"]["max_steps"] = int(args.max_steps)
+        if args.max_steps > 0:
+            config["experiment"]["max_steps"] = int(args.max_steps)
         run_dir = (
             output / "runs" / arm / config["experiment"]["name"]
         )
@@ -301,6 +385,21 @@ def main(argv=None):
             config, ROOT, run_dir, headless=True
         ).run()
         row = dict(experiment.summary)
+        if args.metric_profile == "path_tracking":
+            tracking = path_tracking_metrics(
+                run_dir / "trajectory.csv",
+                config["task"]["points"],
+            )
+            if not math.isclose(
+                float(row["cross_track_rmse"]),
+                tracking["path_cross_track_rmse_recomputed"],
+                rel_tol=1e-9,
+                abs_tol=1e-12,
+            ):
+                raise ValueError(
+                    "saved trajectory and episode cross-track metrics disagree"
+                )
+            row.update(tracking)
         row.update({
             "method": FACTORIAL_METHOD[arm],
             "factorial_arm": arm,
@@ -329,6 +428,7 @@ def main(argv=None):
             ],
             "rollout_budget_per_decision": int(args.total_rollouts),
             "paper_iterations": int(args.iterations),
+            "metric_profile": str(args.metric_profile),
             "terminal_guidance_radius": (
                 float(args.terminal_guidance_radius) if adaptive else 0.0
             ),
@@ -368,6 +468,7 @@ def main(argv=None):
             "full_vs_simple",
             args.bootstrap_samples,
             args.schedule_seed,
+            comparison_metrics,
         ),
         "value_at_fixed": _paired(
             rows,
@@ -376,6 +477,7 @@ def main(argv=None):
             "value_at_fixed",
             args.bootstrap_samples,
             args.schedule_seed + 1,
+            comparison_metrics,
         ),
         "hss_at_ordinary": _paired(
             rows,
@@ -384,6 +486,7 @@ def main(argv=None):
             "hss_at_ordinary",
             args.bootstrap_samples,
             args.schedule_seed + 2,
+            comparison_metrics,
         ),
         "hss_at_value": _paired(
             rows,
@@ -392,6 +495,7 @@ def main(argv=None):
             "hss_at_value",
             args.bootstrap_samples,
             args.schedule_seed + 3,
+            comparison_metrics,
         ),
         "value_at_adaptive": _paired(
             rows,
@@ -400,10 +504,14 @@ def main(argv=None):
             "value_at_adaptive",
             args.bootstrap_samples,
             args.schedule_seed + 4,
+            comparison_metrics,
         ),
     }
     factorial = _factorial(
-        rows, args.bootstrap_samples, args.schedule_seed
+        rows,
+        args.bootstrap_samples,
+        args.schedule_seed,
+        comparison_metrics,
     )
     provenance = {
         "git_sha": _git_sha(),
@@ -431,6 +539,7 @@ def main(argv=None):
         "total_rollouts": int(args.total_rollouts),
         "iterations": int(args.iterations),
         "max_steps": int(args.max_steps),
+        "metric_profile": str(args.metric_profile),
     }
     for name, value in (
         ("paired_comparisons.json", paired),

@@ -1,6 +1,6 @@
 import numpy as np
 
-from mobile_robot_mppi.core.references import PointGoal
+from mobile_robot_mppi.core.references import PointGoal, ReferenceTarget
 from mobile_robot_mppi.core.spaces import (
     body_velocity_action,
     dynamic_unicycle_state,
@@ -369,6 +369,38 @@ def test_terminal_guidance_floor_preserves_completion_candidate_share():
     assert near.diagnostics["reliability_guided_fraction_applied"] == 0.3
     assert near.diagnostics["reliability_guided_fraction_next"] == 0.3
     assert near.diagnostics["paper_guided_unique_sequences"] == 6
+
+
+def test_terminal_guidance_floor_does_not_override_tracking_lookahead():
+    controller = _reliable_controller(
+        ReliabilityDirectPolicy(8.0),
+        terminal_guidance=True,
+    )
+    tracking = ReferenceTarget(
+        Pose2D(0.4, 0.0, 0.0),
+        position_tolerance=0.0,
+        is_terminal=False,
+        phase="tracking",
+    )
+    floor, diagnostics = controller._completion_preserving_guidance(
+        np.zeros(5), tracking
+    )
+    assert floor == 0.0
+    assert not diagnostics["terminal_guidance_terminal_phase"]
+    assert not diagnostics["terminal_guidance_floor_active"]
+
+    approach = ReferenceTarget(
+        Pose2D(0.4, 0.0, 0.0),
+        position_tolerance=0.0,
+        is_terminal=False,
+        phase="terminal_approach",
+    )
+    floor, diagnostics = controller._completion_preserving_guidance(
+        np.zeros(5), approach
+    )
+    assert floor == 0.3
+    assert diagnostics["terminal_guidance_terminal_phase"]
+    assert diagnostics["terminal_guidance_floor_active"]
 
 
 def test_conservative_terminal_uses_candidate_confidence_and_safe_fallback():

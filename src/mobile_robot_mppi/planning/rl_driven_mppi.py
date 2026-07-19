@@ -710,13 +710,21 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
             and cfg.terminal_guidance_radius > 0.0
             and cfg.terminal_guided_fraction_floor > 0.0
         )
-        active = bool(enabled and distance <= cfg.terminal_guidance_radius)
+        terminal_phase = str(
+            getattr(target, "phase", "terminal")
+        ) in ("terminal_approach", "terminal")
+        active = bool(
+            enabled
+            and terminal_phase
+            and distance <= cfg.terminal_guidance_radius
+        )
         floor = (
             float(cfg.terminal_guided_fraction_floor) if active else 0.0
         )
         return floor, {
             "terminal_guidance_floor_enabled": enabled,
             "terminal_guidance_floor_active": active,
+            "terminal_guidance_terminal_phase": terminal_phase,
             "terminal_guidance_distance": distance,
             "terminal_guidance_radius": float(
                 cfg.terminal_guidance_radius

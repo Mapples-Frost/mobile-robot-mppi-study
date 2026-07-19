@@ -112,6 +112,8 @@ def test_episode_metrics_summarizes_hss_reliability_levels():
                 "reliability_authority": 0.2 + 0.6 * index,
                 "reliability_guided_fraction_applied": 0.3 * index,
                 "reliability_guided_fraction_next": 0.6 * index,
+                "reliability_guided_fraction_raw_applied": 0.3 * index,
+                "reliability_guided_fraction_raw_next": 0.6 * index,
             },
         )
 
@@ -121,3 +123,31 @@ def test_episode_metrics_summarizes_hss_reliability_levels():
     assert result["reliability_low_fraction"] == 0.5
     assert result["reliability_high_fraction"] == 0.5
     assert result["reliability_guided_fraction_applied_mean"] == 0.15
+    assert result["reliability_guided_fraction_raw_applied_min"] == 0.0
+    assert result["reliability_guided_fraction_raw_next_min"] == 0.0
+
+
+def test_episode_metrics_audits_terminal_guidance_by_reference_phase():
+    metrics = EpisodeMetrics(1.0, 0.0, 0.2, control_dt=0.1)
+    for index, (phase, active) in enumerate((
+        ("tracking", False),
+        ("terminal_approach", True),
+    )):
+        metrics.update(
+            _truth(0.1 * (index + 1), 0.2 * (index + 1)),
+            _decision(),
+            {
+                "target_phase": phase,
+                "terminal_guidance_floor_active": active,
+                "terminal_guidance_terminal_phase": (
+                    phase == "terminal_approach"
+                ),
+                "terminal_guided_fraction_floor": 0.3,
+            },
+        )
+
+    result = metrics.summary()
+
+    assert result["terminal_guidance_floor_active_fraction"] == 0.5
+    assert result["terminal_guidance_tracking_active_fraction"] == 0.0
+    assert result["terminal_guidance_terminal_active_fraction"] == 1.0

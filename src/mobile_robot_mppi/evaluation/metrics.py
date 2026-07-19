@@ -284,6 +284,44 @@ class EpisodeMetrics:
                     "reliability_guided_fraction_next", 0.30
                 )
             ),
+            "reliability_guided_fraction_raw_applied": float(
+                planner_diagnostics.get(
+                    "reliability_guided_fraction_raw_applied", 0.30
+                )
+            ),
+            "reliability_guided_fraction_raw_next": float(
+                planner_diagnostics.get(
+                    "reliability_guided_fraction_raw_next", 0.30
+                )
+            ),
+            "terminal_guidance_floor_enabled": float(
+                planner_diagnostics.get(
+                    "terminal_guidance_floor_enabled", False
+                )
+            ),
+            "terminal_guidance_floor_active": float(
+                planner_diagnostics.get(
+                    "terminal_guidance_floor_active", False
+                )
+            ),
+            "terminal_guidance_terminal_phase": float(
+                planner_diagnostics.get(
+                    "terminal_guidance_terminal_phase", False
+                )
+            ),
+            "terminal_guidance_distance": float(
+                planner_diagnostics.get(
+                    "terminal_guidance_distance", float("inf")
+                )
+            ),
+            "terminal_guidance_radius": float(
+                planner_diagnostics.get("terminal_guidance_radius", 0.0)
+            ),
+            "terminal_guided_fraction_floor": float(
+                planner_diagnostics.get(
+                    "terminal_guided_fraction_floor", 0.0
+                )
+            ),
             "paper_guided_elite_count": int(
                 planner_diagnostics.get("paper_guided_elite_count", 0)
             ),
@@ -802,6 +840,45 @@ class EpisodeMetrics:
                 row.get("reliability_guided_fraction_next", 0.30)
                 for row in values
             ])),
+            "reliability_guided_fraction_raw_applied_mean": float(np.mean([
+                row.get("reliability_guided_fraction_raw_applied", 0.30)
+                for row in values
+            ])),
+            "reliability_guided_fraction_raw_applied_min": float(np.min([
+                row.get("reliability_guided_fraction_raw_applied", 0.30)
+                for row in values
+            ])),
+            "reliability_guided_fraction_raw_next_mean": float(np.mean([
+                row.get("reliability_guided_fraction_raw_next", 0.30)
+                for row in values
+            ])),
+            "reliability_guided_fraction_raw_next_min": float(np.min([
+                row.get("reliability_guided_fraction_raw_next", 0.30)
+                for row in values
+            ])),
+            "terminal_guidance_floor_active_fraction": float(np.mean([
+                row.get("terminal_guidance_floor_active", 0.0)
+                for row in values
+            ])),
+            "terminal_guidance_tracking_active_fraction": float(np.mean([
+                row.get("terminal_guidance_floor_active", 0.0)
+                for row in values
+                if row.get("target_phase") == "tracking"
+            ])) if any(
+                row.get("target_phase") == "tracking" for row in values
+            ) else 0.0,
+            "terminal_guidance_terminal_active_fraction": float(np.mean([
+                row.get("terminal_guidance_floor_active", 0.0)
+                for row in values
+                if row.get("target_phase") in (
+                    "terminal_approach", "terminal"
+                )
+            ])) if any(
+                row.get("target_phase") in (
+                    "terminal_approach", "terminal"
+                )
+                for row in values
+            ) else 0.0,
             "paper_guided_elite_count_total": int(sum(
                 row.get("paper_guided_elite_count", 0)
                 for row in values

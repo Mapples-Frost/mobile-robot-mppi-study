@@ -1,6 +1,10 @@
+import numpy as np
+
 from experiments.rl.run_full_proposed_factorial import (
     ARMS,
     factorial_schedule,
+    metrics_for_profile,
+    path_tracking_metrics,
 )
 from experiments.rl.analyze_full_proposed_factorial import (
     validate_complete_factorial,
@@ -49,3 +53,25 @@ def test_factorial_analysis_rejects_missing_arm_and_accepts_complete_blocks():
         assert "incomplete factorial blocks" in str(exc)
     else:
         raise AssertionError("missing factorial arm was accepted")
+
+
+def test_path_tracking_profile_and_saved_trajectory_metrics(tmp_path):
+    trajectory = tmp_path / "trajectory.csv"
+    trajectory.write_text(
+        "x,y,theta\n"
+        "0.0,0.0,0.0\n"
+        "0.5,0.1,0.0\n"
+        "1.0,0.0,0.0\n",
+        encoding="utf-8",
+    )
+    result = path_tracking_metrics(
+        trajectory, [[0.0, 0.0], [1.0, 0.0]]
+    )
+    assert result["path_completion_ratio"] == 1.0
+    assert result["tangent_heading_rmse"] == 0.0
+    assert np.isclose(
+        result["path_cross_track_rmse_recomputed"],
+        0.1 / np.sqrt(3.0),
+    )
+    assert not metrics_for_profile("path_tracking")["cross_track_rmse"]
+    assert metrics_for_profile("path_tracking")["path_completion_ratio"]

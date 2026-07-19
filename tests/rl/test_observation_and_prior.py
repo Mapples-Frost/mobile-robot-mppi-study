@@ -2,8 +2,11 @@ import numpy as np
 import pytest
 from types import SimpleNamespace
 
-from mobile_robot_mppi.core.references import PointGoal
-from mobile_robot_mppi.core.spaces import body_velocity_action
+from mobile_robot_mppi.core.references import PointGoal, PolylineReference
+from mobile_robot_mppi.core.spaces import (
+    body_velocity_action,
+    dynamic_unicycle_state,
+)
 from mobile_robot_mppi.core.types import (
     ControlCommand,
     LaserScan,
@@ -21,6 +24,7 @@ from mobile_robot_mppi.rl.parameterization import (
     PriorParameterization,
     PriorParameterizationConfig,
 )
+from mobile_robot_mppi.rl.paper_policy import PaperDirectControlPolicy
 from mobile_robot_mppi.rl.environment import _resolved_prior_mapping
 from mobile_robot_mppi.rl.prior import (
     ExternalActionPrior,
@@ -134,6 +138,124 @@ def test_batched_kinematic_encoding_matches_scalar_encoder():
     )
 
     np.testing.assert_allclose(batched[0], scalar, rtol=0.0, atol=1e-7)
+
+
+def test_path_context_exposes_signed_error_heading_curvature_and_remaining():
+    action_spec = body_velocity_action((0.0, 0.4), 1.0)
+    encoder = ObservationEncoder(
+        {
+            "lidar_sectors": 5,
+            "include_path_context": True,
+            "path_cross_track_scale": 0.5,
+            "path_curvature_scale": 2.0,
+            "path_remaining_scale": 3.0,
+        },
+        action_spec,
+    )
+    reference = PolylineReference(
+        ((0.0, 0.0), (1.0, 0.0), (1.0, 1.0)),
+        lookahead_distance=0.3,
+    )
+    context = encoder.path_context(
+        reference, np.asarray((0.5, 0.2, 0.0)), progress_floor=0.0
+    )
+
+    assert context.shape == (6,)
+    assert context[0] == pytest.approx(0.4)
+    assert context[1] == pytest.approx(0.0)
+    assert context[2] == pytest.approx(1.0)
+    assert context[3] > 0.0
+    assert context[4] == pytest.approx(1.5 / 3.0)
+    assert context[5] == pytest.approx(1.0)
+    assert encoder.dimension == (
+        ObservationEncoderConfig(lidar_sectors=5).lidar_sectors + 18
+    )
+
+
+def test_path_context_batched_encoding_matches_scalar_layout():
+    action_spec = body_velocity_action((0.0, 0.4), 1.0)
+    encoder = ObservationEncoder(
+        {
+            "lidar_sectors": 5,
+            "include_absolute_pose": True,
+            "include_path_context": True,
+        },
+        action_spec,
+    )
+    observation = _observation()
+    reference = PolylineReference(
+        ((0.0, 0.0), (0.0, 1.0), (1.0, 1.0)),
+        lookahead_distance=0.3,
+    )
+    pose = observation.pose.as_array()
+    target = reference.preview_target_at(0.0, pose, progress_floor=0.0)
+    context = encoder.path_context(
+        reference, pose, target=target, progress_floor=0.0
+    )
+    previous = np.asarray((0.2, -0.1))
+    scan_encoding = encoder._scan_features(observation.scan)
+    scalar = encoder.encode_to_target(
+        observation,
+        target,
+        previous_action=previous,
+        safety_override=True,
+        update_history=False,
+        scan_encoding=scan_encoding,
+        path_context=context,
+    )
+    batched = encoder.encode_kinematic_batch(
+        pose[None, :],
+        np.asarray(((observation.twist.v, observation.twist.omega),)),
+        np.asarray(((target.pose.x, target.pose.y),)),
+        previous[None, :],
+        scan_encoding,
+        safety_override=np.asarray((True,)),
+        path_context_features=context[None, :],
+    )
+
+    np.testing.assert_allclose(batched[0], scalar, rtol=0.0, atol=1e-7)
+
+
+def test_hypothetical_path_actor_batch_does_not_advance_live_reference():
+    class DummyAgent:
+        action_dim = 2
+        is_correction_policy = False
+
+        def eval(self):
+            return None
+
+    action_spec = body_velocity_action((0.0, 0.4), 1.0)
+    encoder = ObservationEncoder(
+        {"lidar_sectors": 5, "include_path_context": True},
+        action_spec,
+    )
+    normalizer = RunningNormalizer(encoder.dimension)
+    normalizer.update(np.zeros((2, encoder.dimension)))
+    policy = PaperDirectControlPolicy(
+        DummyAgent(), encoder, normalizer, action_spec
+    )
+    reference = PolylineReference(
+        ((0.0, 0.0), (1.0, 0.0), (1.0, 1.0)),
+        lookahead_distance=0.3,
+    )
+    reference.target_at(0.0, np.asarray((0.2, 0.0, 0.0)))
+    progress_before = reference.progress
+    states = np.asarray((
+        (0.8, 0.1, 0.0, 0.2, 0.0),
+        (0.3, -0.1, 0.0, 0.2, 0.0),
+    ))
+    raw, normalized = policy._encoded_batch(
+        states,
+        np.zeros((2, 2)),
+        _observation(),
+        reference,
+        dynamic_unicycle_state(),
+        np.asarray((0.1, 0.2)),
+    )
+
+    assert raw.shape == normalized.shape == (2, encoder.dimension)
+    assert np.isfinite(raw).all()
+    assert reference.progress == pytest.approx(progress_before)
 
 
 def test_observation_history_stacks_oldest_to_newest_and_resets():

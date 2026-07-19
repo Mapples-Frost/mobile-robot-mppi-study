@@ -24,6 +24,9 @@ class RewardConfig:
     distance_penalty_weight: float = 0.0
     path_length_penalty_weight: float = 0.0
     cross_track_penalty_weight: float = 0.0
+    path_progress_weight: float = 0.0
+    path_progress_corridor: float = 0.0
+    heading_error_penalty_weight: float = 0.0
     step_penalty: float = 0.02
     goal_bonus: float = 100.0
     collision_penalty: float = 100.0
@@ -111,6 +114,41 @@ def _cross_track_error(reference, pose):
     return float(
         np.min(np.linalg.norm(projections - position[None, :], axis=1))
     )
+
+
+def _path_tracking_state(reference, pose):
+    """Return read-only path metrics, or neutral values for point goals."""
+
+    project = getattr(reference, "project", None)
+    if not callable(project):
+        return {
+            "valid": False,
+            "progress": 0.0,
+            "remaining": 0.0,
+            "cross_track_error": 0.0,
+            "signed_cross_track_error": 0.0,
+            "heading_error": 0.0,
+            "curvature": 0.0,
+        }
+    projection = project(
+        np.asarray((pose.x, pose.y), dtype=np.float64),
+        minimum_progress=getattr(reference, "progress", None),
+    )
+    heading_error = float(np.arctan2(
+        np.sin(float(pose.theta) - projection.tangent_heading),
+        np.cos(float(pose.theta) - projection.tangent_heading),
+    ))
+    return {
+        "valid": True,
+        "progress": float(projection.progress),
+        "remaining": float(projection.remaining),
+        "cross_track_error": float(projection.cross_track_error),
+        "signed_cross_track_error": float(
+            projection.signed_cross_track_error
+        ),
+        "heading_error": heading_error,
+        "curvature": float(projection.curvature),
+    }
 
 
 def _resolved_prior_mapping(values, plant_config, control_dt):
@@ -231,6 +269,7 @@ class MppiPriorEnv:
         self.final_target = None
         self.steps = 0
         self.previous_distance = None
+        self.previous_path_progress = None
         self.previous_control = np.zeros(self.action_spec.dimension, dtype=np.float64)
         self.last_safety_override = False
         self.action_mode = "mppi_prior"
@@ -303,10 +342,16 @@ class MppiPriorEnv:
         self.previous_distance = self._distance_to_final(self.truth)
         self.previous_control.fill(0.0)
         self.last_safety_override = False
-        return self._encoded_observation(), {
+        encoded_observation = self._encoded_observation()
+        path_state = _path_tracking_state(
+            self.components["reference"], self.truth.pose
+        )
+        self.previous_path_progress = float(path_state["progress"])
+        return encoded_observation, {
             "seed": self.seed,
             "scene": self.config.get("scene", {}).get("name", "unknown"),
             "goal_distance": self.previous_distance,
+            "path_tracking": path_state,
             "intrinsic_exploration": intrinsic_diagnostics,
         }
 
@@ -317,15 +362,28 @@ class MppiPriorEnv:
         truth,
         terminated_success,
         intrinsic_bonus=0.0,
+        path_state=None,
     ):
         cfg = self.reward_config
         progress = _progress_signal(
             self.previous_distance, distance, self.gamma, cfg.progress_mode
         )
         control_dt = float(self.config["experiment"]["control_dt"])
-        cross_track_error = _cross_track_error(
-            self.components["reference"], truth.pose
-        )
+        if path_state is None:
+            path_state = _path_tracking_state(
+                self.components["reference"], truth.pose
+            )
+        cross_track_error = float(path_state["cross_track_error"])
+        path_progress = 0.0
+        if bool(path_state["valid"]) and self.previous_path_progress is not None:
+            path_progress = float(
+                path_state["progress"] - self.previous_path_progress
+            )
+        corridor_weight = 1.0
+        if cfg.path_progress_corridor > 0.0:
+            corridor_weight = float(np.exp(
+                -(cross_track_error / cfg.path_progress_corridor) ** 2
+            ))
         terms = {
             "potential_progress": cfg.potential_progress_weight
             * progress,
@@ -335,6 +393,11 @@ class MppiPriorEnv:
             * control_dt,
             "cross_track": -cfg.cross_track_penalty_weight
             * cross_track_error ** 2,
+            "path_progress": cfg.path_progress_weight
+            * path_progress
+            * corridor_weight,
+            "heading_error": -cfg.heading_error_penalty_weight
+            * float(path_state["heading_error"]) ** 2,
             "step": -cfg.step_penalty,
             "goal": cfg.goal_bonus if terminated_success else 0.0,
             "collision": -cfg.collision_penalty if truth.collision else 0.0,
@@ -432,6 +495,7 @@ class MppiPriorEnv:
         distance = self._distance_to_final(self.truth)
         state = self.truth.pose.as_array()
         current_target = reference.target_at(self.truth.timestamp, state)
+        path_state = _path_tracking_state(reference, self.truth.pose)
         current_distance = math.hypot(
             current_target.pose.x - self.truth.pose.x,
             current_target.pose.y - self.truth.pose.y,
@@ -456,6 +520,7 @@ class MppiPriorEnv:
             self.truth,
             success,
             intrinsic_bonus=intrinsic_bonus,
+            path_state=path_state,
         )
         applied = np.asarray(
             plant_step.metadata.get(
@@ -464,6 +529,7 @@ class MppiPriorEnv:
             dtype=np.float64,
         )
         self.previous_distance = distance
+        self.previous_path_progress = float(path_state["progress"])
         self.previous_control = decision.executed_control.values.copy()
         self.last_safety_override = bool(decision.overridden)
         next_observation = self._encoded_observation()
@@ -478,9 +544,14 @@ class MppiPriorEnv:
             "executed_control": decision.executed_control.values.copy(),
             "applied_control": applied,
             "planner_compute_ms": float(planner_compute_ms),
-            "cross_track_error": _cross_track_error(
-                reference, self.truth.pose
+            "cross_track_error": float(path_state["cross_track_error"]),
+            "signed_cross_track_error": float(
+                path_state["signed_cross_track_error"]
             ),
+            "path_progress": float(path_state["progress"]),
+            "path_remaining": float(path_state["remaining"]),
+            "path_heading_error": float(path_state["heading_error"]),
+            "path_curvature": float(path_state["curvature"]),
             "prior": dict(prior_diagnostics or {}),
             "action_mode": self.action_mode,
             "reward_terms": reward_terms,

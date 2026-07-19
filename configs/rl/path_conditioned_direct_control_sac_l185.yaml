@@ -1,0 +1,82 @@
+include: gate1_direct_control_multidomain_screen_l175.yaml
+
+experiment:
+  name: path_conditioned_direct_control_sac_l185
+  output_dir: results/research_platform/rl/path_conditioned_direct_control_sac_l185
+
+# L185 repairs the task representation exposed by the first path-transfer
+# confirmation.  The Actor remains a paper-compatible offline SAC policy that
+# later supplies the MPPI rollout prior; this configuration does not change
+# ICODE, MPPI costs, LaserScan, scan_guard, or safety arbitration.
+rl:
+  policy_id: path_conditioned_direct_control_sac_l185
+
+  observation:
+    lidar_sectors: 36
+    lidar_max_range: 4.0
+    goal_distance_scale: 6.0
+    velocity_scale: 0.65
+    yaw_rate_scale: 1.25
+    include_absolute_pose: false
+    include_previous_action: true
+    include_safety_state: true
+    history_frames: 1
+    include_path_context: true
+    path_cross_track_scale: 0.75
+    path_curvature_scale: 2.0
+    path_remaining_scale: 7.0
+
+  reward:
+    progress_mode: distance_delta
+    # Final-goal progress is intentionally disabled for this path-specialized
+    # Actor.  It would reward cutting across an S-curve.
+    potential_progress_weight: 0.0
+    distance_penalty_weight: 0.0
+    path_progress_weight: 12.0
+    # Progress credit decays outside the route corridor, preventing a policy
+    # from earning return by projecting forward while far from the path.
+    path_progress_corridor: 0.75
+    cross_track_penalty_weight: 2.0
+    heading_error_penalty_weight: 0.20
+    path_length_penalty_weight: 0.01
+    step_penalty: 0.01
+    goal_bonus: 40.0
+    collision_penalty: 100.0
+    clearance_margin: 0.45
+    clearance_penalty_weight: 1.5
+    safety_override_penalty: 0.15
+    control_effort_weight: 0.01
+    control_rate_weight: 0.04
+    stuck_penalty: 0.03
+
+  training:
+    total_steps: 60000
+    warmup_steps: 5000
+    warmup_policy: random
+    update_after: 1000
+    actor_update_after: 0
+    batch_size: 256
+    replay_capacity: 250000
+    replay_sampling: uniform
+    replay_require_all_scenes: false
+    updates_per_step: 1
+    evaluation_interval: 10000
+    evaluation_episodes: 2
+    checkpoint_interval: 10000
+    evaluate_initial_policy: false
+    normalizer_update: online
+    save_replay_buffer: false
+    seed: 20261901
+    validation_seed_base: 20262551
+    device: auto
+    scene_configs:
+      - configs/research/mujoco_high_dynamic_accel_straight_l56.yaml
+      - configs/research/mujoco_high_dynamic_accel_turn_l56.yaml
+      - configs/research/mujoco_high_dynamic_sweep_l56.yaml
+      - configs/research/mujoco_high_dynamic_chicane_l56.yaml
+    validation_scene_configs:
+      - configs/research/mujoco_high_dynamic_reverse_s_unseen_l56.yaml
+      - configs/research/mujoco_high_dynamic_hairpin_unseen_l56.yaml
+    physics_domain_config: configs/research/mujoco_physics_domains.yaml
+    training_domain_roles: [seen]
+    validation_domain_roles: [seen, unseen]

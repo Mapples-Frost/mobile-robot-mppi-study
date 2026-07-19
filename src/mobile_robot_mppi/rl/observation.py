@@ -20,6 +20,10 @@ class ObservationEncoderConfig:
     include_absolute_pose: bool = False
     include_previous_action: bool = True
     include_safety_state: bool = True
+    include_path_context: bool = False
+    path_cross_track_scale: float = 1.0
+    path_curvature_scale: float = 2.0
+    path_remaining_scale: float = 6.0
     history_frames: int = 1
 
     @classmethod
@@ -34,6 +38,10 @@ class ObservationEncoderConfig:
             include_absolute_pose=bool(values.get("include_absolute_pose", False)),
             include_previous_action=bool(values.get("include_previous_action", True)),
             include_safety_state=bool(values.get("include_safety_state", True)),
+            include_path_context=bool(values.get("include_path_context", False)),
+            path_cross_track_scale=float(values.get("path_cross_track_scale", 1.0)),
+            path_curvature_scale=float(values.get("path_curvature_scale", 2.0)),
+            path_remaining_scale=float(values.get("path_remaining_scale", 6.0)),
             history_frames=int(values.get("history_frames", 1)),
         )
 
@@ -44,6 +52,9 @@ class ObservationEncoderConfig:
             self.goal_distance_scale,
             self.velocity_scale,
             self.yaw_rate_scale,
+            self.path_cross_track_scale,
+            self.path_curvature_scale,
+            self.path_remaining_scale,
         )
         numeric = np.asarray(positive, dtype=np.float64)
         if not np.isfinite(numeric).all() or np.any(numeric <= 0.0):
@@ -84,6 +95,10 @@ class ObservationEncoder:
             size += self.action_spec.dimension
         if self.config.include_safety_state:
             size += 1
+        if self.config.include_path_context:
+            # signed cross-track, sin/cos heading error, curvature, remaining,
+            # and an explicit path-valid flag.
+            size += 6
         return size
 
     @property
@@ -127,6 +142,7 @@ class ObservationEncoder:
         previous_action=None,
         safety_override=False,
         scan_encoding=None,
+        path_context=None,
     ):
         pose = observation.pose
         dx = float(target.pose.x - pose.x)
@@ -156,6 +172,22 @@ class ObservationEncoder:
             features.extend(self._normalized_action(previous_action).tolist())
         if self.config.include_safety_state:
             features.append(float(bool(safety_override)))
+        if self.config.include_path_context:
+            if path_context is None:
+                # Explicitly encode a non-polyline target.  This fallback
+                # keeps point-goal tasks valid in mixed-task training while
+                # preventing the Actor from confusing a fabricated straight
+                # path with a configured route.
+                path_context = np.asarray(
+                    (0.0, 0.0, 1.0, 0.0, np.clip(
+                        distance / self.config.path_remaining_scale, 0.0, 1.0
+                    ), 0.0),
+                    dtype=np.float64,
+                )
+            path_context = np.asarray(path_context, dtype=np.float64).reshape(-1)
+            if path_context.shape != (6,) or not np.isfinite(path_context).all():
+                raise ValueError("path context must contain six finite features")
+            features.extend(path_context.tolist())
         if scan_encoding is None:
             scan_features, scan_valid = self._scan_features(observation.scan)
         else:
@@ -183,6 +215,7 @@ class ObservationEncoder:
         safety_override=False,
         update_history=True,
         scan_encoding=None,
+        path_context=None,
     ):
         """Encode against an explicit target, optionally without state mutation.
 
@@ -197,6 +230,7 @@ class ObservationEncoder:
             previous_action=previous_action,
             safety_override=safety_override,
             scan_encoding=scan_encoding,
+            path_context=path_context,
         )
         history_frames = self.config.history_frames
         if update_history:
@@ -225,6 +259,7 @@ class ObservationEncoder:
         previous_actions,
         scan_encoding,
         safety_override=False,
+        path_context_features=None,
     ):
         """Vectorize history-free hypothetical policy observations.
 
@@ -310,6 +345,32 @@ class ObservationEncoder:
             if flag.shape != (batch,) or not np.isfinite(flag).all():
                 raise ValueError("batched safety state is invalid")
             blocks.append(flag[:, None])
+        if self.config.include_path_context:
+            if path_context_features is None:
+                remaining = np.clip(
+                    np.hypot(dx, dy) / self.config.path_remaining_scale,
+                    0.0,
+                    1.0,
+                )
+                path_context_features = np.column_stack((
+                    np.zeros(batch),
+                    np.zeros(batch),
+                    np.ones(batch),
+                    np.zeros(batch),
+                    remaining,
+                    np.zeros(batch),
+                ))
+            path_context_features = np.asarray(
+                path_context_features, dtype=np.float64
+            )
+            if (
+                path_context_features.shape != (batch, 6)
+                or not np.isfinite(path_context_features).all()
+            ):
+                raise ValueError(
+                    "batched path context must be finite with shape [B,6]"
+                )
+            blocks.append(path_context_features)
         blocks.extend((
             np.broadcast_to(scan_features[None, :], (batch, scan_features.size)),
             np.full((batch, 1), float(scan_valid), dtype=np.float64),
@@ -336,13 +397,90 @@ class ObservationEncoder:
         target = reference.target_at(
             observation.timestamp, observation.pose.as_array()
         )
+        path_context = self.path_context(
+            reference,
+            observation.pose.as_array(),
+            target=target,
+        )
         return self.encode_to_target(
             observation,
             target,
             previous_action=previous_action,
             safety_override=safety_override,
             update_history=True,
+            path_context=path_context,
         )
+
+    def path_context(
+        self,
+        reference,
+        pose,
+        target=None,
+        progress_floor=None,
+    ):
+        """Encode path geometry for one real or hypothetical pose.
+
+        The returned values are dimensionless and bounded.  This method is
+        side-effect free: it calls the polyline's public read-only projection
+        API and never advances the live route.
+        """
+
+        if not self.config.include_path_context:
+            return None
+        pose = np.asarray(pose, dtype=np.float64).reshape(-1)
+        if pose.shape != (3,) or not np.isfinite(pose).all():
+            raise ValueError("path context pose must be finite [x,y,theta]")
+        project = getattr(reference, "project", None)
+        if not callable(project):
+            if target is None:
+                target = reference.target_at(0.0, pose)
+            distance = float(np.hypot(
+                target.pose.x - pose[0], target.pose.y - pose[1]
+            ))
+            return np.asarray((
+                0.0,
+                0.0,
+                1.0,
+                0.0,
+                np.clip(
+                    distance / self.config.path_remaining_scale, 0.0, 1.0
+                ),
+                0.0,
+            ), dtype=np.float32)
+        floor = (
+            getattr(reference, "progress", None)
+            if progress_floor is None
+            else progress_floor
+        )
+        projection = project(pose[:2], minimum_progress=floor)
+        heading_error = float(np.arctan2(
+            np.sin(pose[2] - projection.tangent_heading),
+            np.cos(pose[2] - projection.tangent_heading),
+        ))
+        result = np.asarray((
+            np.clip(
+                projection.signed_cross_track_error
+                / self.config.path_cross_track_scale,
+                -1.0,
+                1.0,
+            ),
+            np.sin(heading_error),
+            np.cos(heading_error),
+            np.clip(
+                projection.curvature / self.config.path_curvature_scale,
+                -1.0,
+                1.0,
+            ),
+            np.clip(
+                projection.remaining / self.config.path_remaining_scale,
+                0.0,
+                1.0,
+            ),
+            1.0,
+        ), dtype=np.float32)
+        if not np.isfinite(result).all():
+            raise FloatingPointError("path context encoder produced NaN or Inf")
+        return result
 
 
 class RunningNormalizer:

@@ -246,12 +246,33 @@ class PaperDirectControlPolicy:
             else float(observation.twist.omega)
         )
         targets = np.empty((states.shape[0], 2), dtype=np.float64)
+        path_contexts = (
+            np.empty((states.shape[0], 6), dtype=np.float64)
+            if self.encoder.config.include_path_context
+            else None
+        )
+        preview_target = getattr(reference, "preview_target_at", None)
+        progress_floor = getattr(reference, "progress", None)
         for index, (state, offset) in enumerate(zip(states, offsets)):
-            target = reference.target_at(
-                float(observation.timestamp) + float(offset),
-                state[[x_index, y_index, theta_index]],
-            )
+            pose = state[[x_index, y_index, theta_index]]
+            if callable(preview_target):
+                target = preview_target(
+                    float(observation.timestamp) + float(offset),
+                    pose,
+                    progress_floor=progress_floor,
+                )
+            else:
+                target = reference.target_at(
+                    float(observation.timestamp) + float(offset), pose
+                )
             targets[index] = (target.pose.x, target.pose.y)
+            if path_contexts is not None:
+                path_contexts[index] = self.encoder.path_context(
+                    reference,
+                    pose,
+                    target=target,
+                    progress_floor=progress_floor,
+                )
         raw = self.encoder.encode_kinematic_batch(
             poses,
             twists,
@@ -259,6 +280,7 @@ class PaperDirectControlPolicy:
             previous_controls,
             scan_encoding,
             safety_override=False,
+            path_context_features=path_contexts,
         )
         normalized = self.normalizer.normalize(raw).astype(
             np.float32, copy=False

@@ -19,6 +19,27 @@ class ReferenceTarget:
 
 
 @dataclass(frozen=True)
+class PolylineProjection:
+    """Read-only geometric projection of a pose onto a polyline.
+
+    ``signed_cross_track_error`` is positive on the left side of the local
+    path tangent and negative on the right.  Curvature is a finite-difference
+    estimate at the active segment; it is an observable path descriptor, not
+    a vehicle-state estimate.
+    """
+
+    point: Tuple[float, float]
+    progress: float
+    remaining: float
+    normalized_progress: float
+    segment_index: int
+    tangent_heading: float
+    cross_track_error: float
+    signed_cross_track_error: float
+    curvature: float
+
+
+@dataclass(frozen=True)
 class PointGoal:
     x: float
     y: float
@@ -151,7 +172,27 @@ class PolylineReference:
     def reset(self) -> None:
         self.progress = 0.0
 
-    def _project_progress(self, position: np.ndarray) -> float:
+    def project(
+        self,
+        position: np.ndarray,
+        minimum_progress: Optional[float] = None,
+    ) -> PolylineProjection:
+        """Project a position without mutating online reference progress.
+
+        ``minimum_progress`` supplies the online progress floor when the path
+        crosses itself or a hypothetical rollout falls behind the robot.  The
+        method is intentionally side-effect free so batched policy and MPPI
+        rollouts cannot influence one another through candidate order.
+        """
+
+        position = np.asarray(position, dtype=np.float64).reshape(-1)
+        if position.shape != (2,) or not np.isfinite(position).all():
+            raise ValueError("polyline projection requires one finite x/y pair")
+        floor = None if minimum_progress is None else float(minimum_progress)
+        if floor is not None and (
+            not np.isfinite(floor) or not 0.0 <= floor <= self.total_length
+        ):
+            raise ValueError("minimum polyline progress is outside the route")
         starts = self.points[:-1]
         vectors = np.diff(self.points, axis=0)
         fractions = np.sum((position[None, :] - starts) * vectors, axis=1)
@@ -161,14 +202,40 @@ class PolylineReference:
         distances = np.linalg.norm(projections - position[None, :], axis=1)
         candidate_progress = self.cumulative[:-1] + fractions * self.segment_lengths
         # Never jump to an earlier branch of a route that passes near itself.
-        admissible = candidate_progress >= self.progress - self.lookahead_distance
+        admissible = np.ones(candidate_progress.shape, dtype=bool)
+        if floor is not None:
+            admissible = candidate_progress >= floor - self.lookahead_distance
         if not np.any(admissible):
-            return self.progress
-        masked = np.where(admissible, distances, np.inf)
-        candidate = float(candidate_progress[int(np.argmin(masked))])
-        return max(self.progress, candidate)
+            progress = floor
+        else:
+            masked = np.where(admissible, distances, np.inf)
+            progress = float(candidate_progress[int(np.argmin(masked))])
+            if floor is not None:
+                progress = max(floor, progress)
+        point, theta, index = self._geometry_at_progress(progress)
+        tangent = np.asarray((np.cos(theta), np.sin(theta)), dtype=np.float64)
+        displacement = position - point
+        signed_error = float(
+            tangent[0] * displacement[1] - tangent[1] * displacement[0]
+        )
+        cross_track = float(np.linalg.norm(displacement))
+        curvature = self._curvature_at_segment(index)
+        return PolylineProjection(
+            point=(float(point[0]), float(point[1])),
+            progress=float(progress),
+            remaining=float(self.total_length - progress),
+            normalized_progress=float(progress / self.total_length),
+            segment_index=int(index),
+            tangent_heading=float(theta),
+            cross_track_error=cross_track,
+            signed_cross_track_error=signed_error,
+            curvature=float(curvature),
+        )
 
-    def _point_at_progress(self, progress: float):
+    def _project_progress(self, position: np.ndarray) -> float:
+        return self.project(position, minimum_progress=self.progress).progress
+
+    def _geometry_at_progress(self, progress: float):
         value = float(np.clip(progress, 0.0, self.total_length))
         index = min(
             int(np.searchsorted(self.cumulative, value, side="right") - 1),
@@ -178,17 +245,33 @@ class PolylineReference:
         point = self.points[index] + fraction * (self.points[index + 1] - self.points[index])
         tangent = self.points[index + 1] - self.points[index]
         theta = float(np.arctan2(tangent[1], tangent[0]))
+        return point, theta, index
+
+    def _curvature_at_segment(self, index: int) -> float:
+        headings = np.arctan2(
+            np.diff(self.points, axis=0)[:, 1],
+            np.diff(self.points, axis=0)[:, 0],
+        )
+        if headings.size <= 1:
+            return 0.0
+        left = int(np.clip(index, 0, headings.size - 2))
+        delta = float(np.arctan2(
+            np.sin(headings[left + 1] - headings[left]),
+            np.cos(headings[left + 1] - headings[left]),
+        ))
+        scale = 0.5 * (
+            self.segment_lengths[left] + self.segment_lengths[left + 1]
+        )
+        return delta / float(scale)
+
+    def _point_at_progress(self, progress: float):
+        point, theta, _ = self._geometry_at_progress(progress)
         return point, theta
 
-    def target_at(self, time: float, state: np.ndarray) -> ReferenceTarget:
-        del time
-        state_value = np.asarray(state, dtype=np.float64)
-        if state_value.size < 2 or not np.isfinite(state_value[:2]).all():
-            raise ValueError("polyline reference state must contain finite x/y")
-        self.progress = self._project_progress(state_value[:2])
-        target_progress = min(self.total_length, self.progress + self.lookahead_distance)
+    def _target_from_progress(self, progress: float) -> ReferenceTarget:
+        target_progress = min(self.total_length, progress + self.lookahead_distance)
         point, theta = self._point_at_progress(target_progress)
-        remaining = self.total_length - self.progress
+        remaining = self.total_length - progress
         is_terminal = bool(target_progress >= self.total_length - 1e-9)
         phase = (
             "terminal"
@@ -204,6 +287,32 @@ class PolylineReference:
             is_terminal=is_terminal,
             phase=phase,
         )
+
+    def preview_target_at(
+        self,
+        time: float,
+        state: np.ndarray,
+        progress_floor: Optional[float] = None,
+    ) -> ReferenceTarget:
+        """Return a hypothetical target without advancing the live route."""
+
+        del time
+        state_value = np.asarray(state, dtype=np.float64)
+        if state_value.size < 2 or not np.isfinite(state_value[:2]).all():
+            raise ValueError("polyline reference state must contain finite x/y")
+        floor = self.progress if progress_floor is None else float(progress_floor)
+        progress = self.project(
+            state_value[:2], minimum_progress=floor
+        ).progress
+        return self._target_from_progress(progress)
+
+    def target_at(self, time: float, state: np.ndarray) -> ReferenceTarget:
+        del time
+        state_value = np.asarray(state, dtype=np.float64)
+        if state_value.size < 2 or not np.isfinite(state_value[:2]).all():
+            raise ValueError("polyline reference state must contain finite x/y")
+        self.progress = self._project_progress(state_value[:2])
+        return self._target_from_progress(self.progress)
 
 
 class TimeTrajectoryReference:

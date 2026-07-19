@@ -93,3 +93,34 @@ def test_polyline_reference_progress_is_monotonic_and_uses_final_tolerance_only(
     assert final.is_terminal
     assert final.phase == "terminal"
     assert final.position_tolerance == pytest.approx(0.1)
+
+
+def test_polyline_projection_is_signed_and_preview_is_side_effect_free():
+    reference = PolylineReference(
+        ((0.0, 0.0), (1.0, 0.0), (1.0, 1.0)),
+        lookahead_distance=0.3,
+    )
+    reference.target_at(0.0, np.asarray((0.4, 0.0, 0.0)))
+    live_progress = reference.progress
+
+    left = reference.project(
+        np.asarray((0.6, 0.2)), minimum_progress=live_progress
+    )
+    assert left.signed_cross_track_error > 0.0
+    assert left.cross_track_error == pytest.approx(0.2)
+    assert left.remaining == pytest.approx(reference.total_length - 0.6)
+    assert left.curvature > 0.0
+
+    target = reference.preview_target_at(
+        1.0, np.asarray((0.9, 0.1, 0.0)), progress_floor=live_progress
+    )
+    assert target.reference_id.startswith("polyline_")
+    assert reference.progress == pytest.approx(live_progress)
+
+
+def test_polyline_projection_rejects_invalid_inputs():
+    reference = PolylineReference(((0.0, 0.0), (1.0, 0.0)))
+    with pytest.raises(ValueError, match="finite x/y"):
+        reference.project(np.asarray((np.nan, 0.0)))
+    with pytest.raises(ValueError, match="outside"):
+        reference.project(np.asarray((0.0, 0.0)), minimum_progress=2.0)

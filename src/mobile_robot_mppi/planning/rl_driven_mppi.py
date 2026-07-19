@@ -770,6 +770,7 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
         support_evaluator = getattr(
             self.sampling_prior, "support_ood_scores", None
         )
+        residual_context_rows = []
         for step in range(self.config.horizon):
             rollout_states[step] = states[0]
             distribution = self.sampling_prior.action_distribution(
@@ -780,6 +781,11 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
                 self.state_spec,
                 step * self.config.dt,
             )
+            if "residual_context_features" in distribution:
+                residual_context_rows.append(np.asarray(
+                    distribution["residual_context_features"][0],
+                    dtype=np.float64,
+                ))
             command = self.action_spec.clip(
                 distribution["physical_mean"],
                 previous=previous,
@@ -815,6 +821,9 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
             "states": rollout_states,
             "controls": reliability_controls,
             "actor_ood_scores": actor_ood_scores,
+            "residual_context": np.asarray(
+                residual_context_rows, dtype=np.float64
+            ),
         }
 
     def _guided_rollouts(
@@ -907,6 +916,7 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
         support_evaluator = getattr(
             self.sampling_prior, "support_ood_scores", None
         )
+        residual_context_rows = []
         for step in range(self.config.horizon):
             rollout_states[step] = states[0]
             distribution = self.sampling_prior.action_distribution(
@@ -917,6 +927,11 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
                 self.state_spec,
                 step * self.config.dt,
             )
+            if "residual_context_features" in distribution:
+                residual_context_rows.append(np.asarray(
+                    distribution["residual_context_features"][0],
+                    dtype=np.float64,
+                ))
             command = np.asarray(
                 distribution["physical_mean"], dtype=np.float64
             ).copy()
@@ -978,6 +993,47 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
             "states": rollout_states,
             "controls": reliability_controls,
             "actor_ood_scores": actor_ood_scores,
+            "residual_context": np.asarray(
+                residual_context_rows, dtype=np.float64
+            ),
+        }
+
+    @staticmethod
+    def _residual_policy_context_diagnostics(context):
+        values = np.asarray(context, dtype=np.float64)
+        if values.size == 0:
+            return {"residual_policy_context_enabled": False}
+        if values.ndim != 2 or values.shape[1] < 5:
+            raise ValueError("residual policy context diagnostics are invalid")
+        state_count = (values.shape[1] - 3) // 2
+        if 2 * state_count + 3 != values.shape[1] or state_count <= 0:
+            raise ValueError("residual policy context dimension is invalid")
+        residual = values[:, :state_count]
+        innovation = values[:, state_count : 2 * state_count]
+        disagreement = values[:, -3]
+        support = values[:, -2]
+        valid = values[:, -1]
+        return {
+            "residual_policy_context_enabled": True,
+            "residual_policy_predicted_abs_mean": float(
+                np.mean(np.abs(residual))
+            ),
+            "residual_policy_predicted_abs_max": float(
+                np.max(np.abs(residual))
+            ),
+            "residual_policy_innovation_abs_mean": float(
+                np.mean(np.abs(innovation))
+            ),
+            "residual_policy_innovation_abs_max": float(
+                np.max(np.abs(innovation))
+            ),
+            "residual_policy_disagreement_mean": float(
+                np.mean(disagreement)
+            ),
+            "residual_policy_support_mean": float(np.mean(support)),
+            "residual_policy_innovation_valid_fraction": float(
+                np.mean(valid > 0.5)
+            ),
         }
 
     def _residual_for_reliability(self):
@@ -1466,4 +1522,7 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
         }
         diagnostics.update(terminal_diagnostics)
         diagnostics.update(reliability_diagnostics)
+        diagnostics.update(self._residual_policy_context_diagnostics(
+            reliability_context.get("residual_context", np.empty((0, 0)))
+        ))
         return action, sequence, trajectory, diagnostics

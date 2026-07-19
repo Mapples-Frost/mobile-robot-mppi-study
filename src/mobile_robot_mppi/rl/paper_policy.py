@@ -343,7 +343,7 @@ class PaperDirectControlPolicy:
         physical_std = np.maximum(
             np.abs(self.action_half_range) * normalized_std, 1e-6
         )
-        return {
+        result = {
             "raw_observation": raw,
             "normalized_observation": normalized,
             "pre_tanh_mean": pre_tanh_mean,
@@ -351,6 +351,12 @@ class PaperDirectControlPolicy:
             "physical_mean": physical_mean,
             "physical_std": physical_std,
         }
+        if self.residual_context is not None:
+            dimension = int(self.residual_context.dimension)
+            result["residual_context_features"] = np.asarray(
+                raw[:, -dimension:], dtype=np.float64
+            )
+        return result
 
     def sample_actions(
         self,

@@ -24,6 +24,7 @@ for candidate in (ROOT, ROOT / "src"):
 
 from mobile_robot_mppi.core.config import load_yaml
 from mobile_robot_mppi.core.references import PolylineReference
+from experiments.rl.run_final_paper_benchmark import load_benchmark_manifest
 
 
 SCENES = {
@@ -57,7 +58,7 @@ def _episode_files(run_dir):
     return episode
 
 
-def _audit_episode(run_dir, expected_git_sha):
+def _audit_episode(run_dir, expected_git_sha, expected_guard):
     episode = _episode_files(run_dir)
     metrics = json.loads((episode / "metrics.json").read_text(encoding="utf-8"))
     metadata = metrics["metadata"]
@@ -82,8 +83,21 @@ def _audit_episode(run_dir, expected_git_sha):
         "path_preview_heading_weight": float(
             config["planner"]["path_preview_heading_weight"]
         ),
+        "scan_guard": {
+            name: float(config["perception"]["scan_guard"][name])
+            for name in (
+                "near_body_stop_radius",
+                "side_stop_distance",
+                "hard_stop_distance",
+                "front_stop_distance",
+                "front_soft_block_distance",
+                "front_soft_block_max_speed",
+                "front_slow_distance",
+                "front_slow_min_scale",
+            )
+        },
     }
-    expected_contract = {
+    expected_core = {
         "plant_backend": "mujoco_diff_drive",
         "mujoco_version": "3.2.3",
         "prediction_mode": "icode_residual",
@@ -95,8 +109,12 @@ def _audit_episode(run_dir, expected_git_sha):
         "path_preview_speed_mps": 0.45,
         "path_preview_heading_weight": 0.25,
     }
-    if contract != expected_contract:
-        raise ValueError("Gate A contract mismatch: %s" % contract)
+    for name, value in expected_core.items():
+        if contract[name] != value:
+            raise ValueError("Gate A contract mismatch: %s" % contract)
+    for name, value in expected_guard.items():
+        if not np.isclose(contract["scan_guard"][name], float(value)):
+            raise ValueError("Gate A scan_guard mismatch: %s" % contract)
     if config["task"]["points"] != expected_config["task"]["points"]:
         raise ValueError("resolved reference differs from frozen scene: %s" % scene)
 
@@ -202,17 +220,24 @@ def main(argv=None):
     parser = argparse.ArgumentParser()
     parser.add_argument("--run-glob", required=True)
     parser.add_argument("--expected-git-sha", required=True)
+    parser.add_argument("--expected-manifest")
     parser.add_argument("--output-dir", required=True)
     args = parser.parse_args(argv)
     run_dirs = sorted(path for path in ROOT.glob(args.run_glob) if path.is_dir())
     if len(run_dirs) != 3:
         raise ValueError("expected three Gate A run directories, got %d" % len(run_dirs))
+    expected_guard = {}
+    if args.expected_manifest:
+        manifest = load_benchmark_manifest(ROOT / args.expected_manifest)
+        expected_guard = dict(
+            manifest["final_benchmark"].get("scan_guard_overrides", {})
+        )
     rows = []
     contracts = []
     windows = []
     for run_dir in run_dirs:
         row, contract, episode_windows = _audit_episode(
-            run_dir, args.expected_git_sha
+            run_dir, args.expected_git_sha, expected_guard
         )
         rows.append(row)
         contracts.append(contract)

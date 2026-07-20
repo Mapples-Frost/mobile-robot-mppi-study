@@ -1,0 +1,10 @@
+include: mujoco_tracking_grand_s_chicane_l234.yaml
+
+experiment:
+  name: mujoco_tracking_grand_s_chicane_w3p5d_l237
+
+task:
+  corridor_half_width: 0.875
+  corridor_half_width_profile:
+    - [0.00, 0.875]
+    - [1.00, 0.875]

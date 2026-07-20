@@ -1,0 +1,9 @@
+include: tracking_boundary_aware_probe_l236.yaml
+
+final_benchmark:
+  status: development
+  preregistration: docs/experiments/post_l217/l237_corridor_width_3p5d_protocol.md
+  scene_configs:
+    - configs/research/mujoco_tracking_grand_s_chicane_w3p5d_l237.yaml
+    - configs/research/mujoco_tracking_grand_hairpin_w3p5d_l237.yaml
+    - configs/research/mujoco_tracking_grand_infinity_w3p5d_l237.yaml

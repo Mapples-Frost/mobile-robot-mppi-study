@@ -36,6 +36,12 @@ seeds，不得包含 simulator obstacle truth 形式的在线 planner 输入。
 5. 三候选各训练 30,000 environment steps，初始化仍为 L219 frozen Actor 的
    69 维零列扩展版本。
 
+L241 Actor 的 action contract 是 normalized direct control `(v, omega)`，不能把
+仓库已有的 local-subgoal `(distance, bearing)` 教师标签直接当作同一种 action。
+采集前必须新增版本化的 `normalized_direct_control` demonstration schema、loader
+校验和单元测试；BC anchor 只有在 dataset action contract 与 checkpoint policy
+mode 都为 `direct` 时才允许启用，否则 fail closed。
+
 ## 4. 冻结选择与 Gate
 
 候选仍按 L241 完全相同的 validation 字典序选择：碰撞、成功、完成度、cross-track

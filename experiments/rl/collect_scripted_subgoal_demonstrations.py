@@ -24,6 +24,7 @@ for import_root in (ROOT, ROOT / "src"):
         sys.path.insert(0, str(import_root))
 
 from mobile_robot_mppi.core.config import git_sha, load_yaml
+from mobile_robot_mppi.evaluation.scene_feasibility import audit_reference_path
 from mobile_robot_mppi.rl.demonstrations import (
     DEMONSTRATION_SCHEMA,
     DEMONSTRATION_SCHEMA_VERSION,
@@ -83,6 +84,35 @@ def _teacher_scene(rl_config, scene_path, seed, num_samples, max_steps, mode):
         )
         config["planner"]["prediction_mode"] = prediction_mode
     return config
+
+
+def _teacher_route(config, args):
+    """Return the frozen task reference or an explicitly requested A* route."""
+
+    if args.route_source == "offline_astar":
+        return _offline_route(
+            config,
+            args.route_margin,
+            args.route_resolution,
+            endpoint_margin=args.endpoint_route_margin,
+        )
+    points = np.asarray(config.get("task", {}).get("points", ()), dtype=np.float64)
+    if (
+        points.ndim != 2
+        or points.shape[0] < 2
+        or points.shape[1] != 2
+        or not np.isfinite(points).all()
+    ):
+        raise ValueError("task_points route_source requires finite task.points [N,2]")
+    robot_radius = float(config["plant"]["robot"]["collision_radius"])
+    audit = audit_reference_path(
+        config["scene"], points, robot_radius, margin=0.0, sample_spacing=0.005
+    )
+    audit.update({
+        "source": "task.points",
+        "path": points.tolist(),
+    })
+    return points, audit
 
 
 def _collect_episode(environment, policy, episode_id, seed, split):
@@ -246,6 +276,11 @@ def _parse_args(argv=None):
     )
     parser.add_argument("--lookahead", type=float, default=0.70)
     parser.add_argument(
+        "--route-source",
+        choices=("offline_astar", "task_points"),
+        default="offline_astar",
+    )
+    parser.add_argument(
         "--teacher-action-mode",
         choices=("local_subgoal", "direct_control"),
         default="local_subgoal",
@@ -324,12 +359,7 @@ def main(argv=None):
             raise ValueError("duplicate scene name in demonstration collection: %s" % scene_name)
         seen_scene_names.add(scene_name)
         scene_slug = _slug(scene_name)
-        route, route_audit = _offline_route(
-            template,
-            args.route_margin,
-            args.route_resolution,
-            endpoint_margin=args.endpoint_route_margin,
-        )
+        route, route_audit = _teacher_route(template, args)
         with (output / "audit" / "routes" / (scene_slug + ".json")).open(
             "w", encoding="utf-8"
         ) as handle:
@@ -514,6 +544,7 @@ def main(argv=None):
             "teacher_action_mode": str(args.teacher_action_mode),
             "teacher_cruise_speed": float(args.teacher_cruise_speed),
             "teacher_yaw_gain": float(args.teacher_yaw_gain),
+            "route_source": str(args.route_source),
             "num_samples": int(args.num_samples),
             "max_steps": int(args.max_steps),
             "route_margin": float(args.route_margin),

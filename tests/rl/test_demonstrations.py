@@ -173,6 +173,21 @@ def test_direct_teacher_scene_retains_residual_prediction_context(monkeypatch):
     assert legacy["planner"]["prediction_mode"] == "nominal"
 
 
+def test_teacher_route_can_use_frozen_task_points_without_astar():
+    config = {
+        "task": {"points": [[0.0, 0.0], [1.0, 0.0]]},
+        "plant": {"robot": {"collision_radius": 0.25}},
+        "scene": {"name": "empty", "obstacles": []},
+    }
+    args = SimpleNamespace(route_source="task_points")
+
+    route, audit = collector_module._teacher_route(config, args)
+
+    np.testing.assert_allclose(route, config["task"]["points"])
+    assert audit["source"] == "task.points"
+    assert audit["path_clear"] is True
+
+
 def test_demonstration_loader_roundtrip_exposes_only_student_arrays(tmp_path):
     _dataset(tmp_path)
 

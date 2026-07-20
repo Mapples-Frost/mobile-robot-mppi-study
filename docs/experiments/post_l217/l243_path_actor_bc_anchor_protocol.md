@@ -69,3 +69,11 @@ RMSE、goal distance、return、seed/step tie-break。不得根据 L234 outcome 
 
 未通过则保留全部负向结果并停止 Tracking sealed 注册。不得筛 seed、删除失败、
 放松 scan_guard 或改变论文核心机制。
+
+## 6. 离线教师定位契约
+
+直接控制教师跟踪 L222 已审计的 `task.points` 时，显式使用 MuJoCo
+ground-truth pose，避免长轨迹轮速里程计漂移把教师带离安全参考线。这是离线教师
+专用特权：学生保存的 69 维输入仍逐字节来自 `DirectControlEnv.reset/step` 的正常
+observation，不附加真值位姿；在线学生也不读取 simulator truth 或障碍物真值。
+manifest 与逐步 audit 必须记录 `teacher_pose_source=ground_truth`。

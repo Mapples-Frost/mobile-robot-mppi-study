@@ -490,3 +490,33 @@ def test_failed_teacher_episode_is_marked_audit_only():
     assert audit
     assert summary["success"] is False
     assert summary["included_in_training_shard"] is False
+
+
+def test_ground_truth_teacher_pose_does_not_replace_student_observation():
+    environment = _FakeEnvironment(success=True)
+    original_state = environment._state
+
+    def _state_with_biased_perception(x):
+        original_state(x)
+        environment.perceived.observation.pose = environment._pose(x + 100.0)
+
+    environment._state = _state_with_biased_perception
+    arrays, audit, _ = _collect_episode(
+        environment,
+        _FakePolicy(),
+        9,
+        103,
+        "train",
+        teacher_pose_source="ground_truth",
+    )
+
+    np.testing.assert_allclose(
+        arrays["observation"],
+        [[10.0, 11.0, 12.0], [11.0, 12.0, 13.0]],
+    )
+    np.testing.assert_allclose(
+        arrays["teacher_action"], [[0.0, -0.5], [0.25, -0.5]]
+    )
+    assert all(row["teacher_pose_source"] == "ground_truth" for row in audit)
+    assert audit[0]["teacher_x_before"] == audit[0]["truth_x_before"]
+    assert audit[0]["perceived_x_before"] == 100.0

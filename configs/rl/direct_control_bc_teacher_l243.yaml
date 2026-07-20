@@ -8,3 +8,8 @@ rl:
   policy_id: direct_control_bc_teacher_l243
   training:
     action_mode: direct_control
+
+teacher:
+  route_source: task_points
+  pose_source: ground_truth
+  action_mode: direct_control

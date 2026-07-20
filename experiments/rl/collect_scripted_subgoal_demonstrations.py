@@ -115,8 +115,20 @@ def _teacher_route(config, args):
     return points, audit
 
 
-def _collect_episode(environment, policy, episode_id, seed, split):
+def _collect_episode(
+    environment,
+    policy,
+    episode_id,
+    seed,
+    split,
+    teacher_pose_source="perceived",
+):
     """Collect one episode from exact environment observations and teacher actions."""
+
+    if teacher_pose_source not in ("perceived", "ground_truth"):
+        raise ValueError(
+            "teacher_pose_source must be 'perceived' or 'ground_truth'"
+        )
 
     observation, reset_info = environment.reset(seed=int(seed))
     observation = np.asarray(observation, dtype=np.float32).copy()
@@ -131,12 +143,18 @@ def _collect_episode(environment, policy, episode_id, seed, split):
     truncated = False
     step = 0
     while not (terminated or truncated):
-        # The teacher is privileged because its internal polyline was computed
-        # offline.  Its pose is the same perceived pose available to the stack,
-        # while simulator truth below is written only to the audit sidecar.
+        # Student inputs always remain the exact environment observation.  The
+        # offline teacher may additionally use simulator pose truth for robust
+        # path tracking; this privilege is recorded in provenance and never
+        # appended to the student observation.
         perceived_pose = environment.perceived.observation.pose
         truth_before = environment.truth.pose
-        action, teacher_diagnostic = policy.action(perceived_pose)
+        teacher_pose = (
+            truth_before
+            if teacher_pose_source == "ground_truth"
+            else perceived_pose
+        )
+        action, teacher_diagnostic = policy.action(teacher_pose)
         action = np.asarray(action, dtype=np.float32).copy()
         if action.shape != (2,) or not np.isfinite(action).all():
             raise FloatingPointError("teacher must emit a finite normalized action [2]")
@@ -170,6 +188,10 @@ def _collect_episode(environment, policy, episode_id, seed, split):
             "perceived_x_before": float(perceived_pose.x),
             "perceived_y_before": float(perceived_pose.y),
             "perceived_theta_before": float(perceived_pose.theta),
+            "teacher_pose_source": str(teacher_pose_source),
+            "teacher_x_before": float(teacher_pose.x),
+            "teacher_y_before": float(teacher_pose.y),
+            "teacher_theta_before": float(teacher_pose.theta),
             "truth_x_after": float(truth_after.pose.x),
             "truth_y_after": float(truth_after.pose.y),
             "truth_theta_after": float(truth_after.pose.theta),
@@ -287,6 +309,15 @@ def _parse_args(argv=None):
     )
     parser.add_argument("--teacher-cruise-speed", type=float, default=0.28)
     parser.add_argument("--teacher-yaw-gain", type=float, default=1.8)
+    parser.add_argument(
+        "--teacher-pose-source",
+        choices=("perceived", "ground_truth"),
+        default="perceived",
+        help=(
+            "pose used only by the offline teacher; student observations are "
+            "unchanged and never receive this privileged pose"
+        ),
+    )
     parser.add_argument("--num-samples", type=int, default=100)
     parser.add_argument("--max-steps", type=int, default=360)
     parser.add_argument("--route-margin", type=float, default=0.20)
@@ -456,6 +487,7 @@ def main(argv=None):
                     episode_id=episode_id,
                     seed=current_seed,
                     split=split,
+                    teacher_pose_source=str(args.teacher_pose_source),
                 )
                 # Resolved configs contain simulator scene/plant truth and are
                 # therefore retained exclusively in the audit sidecar.
@@ -544,6 +576,7 @@ def main(argv=None):
             "teacher_action_mode": str(args.teacher_action_mode),
             "teacher_cruise_speed": float(args.teacher_cruise_speed),
             "teacher_yaw_gain": float(args.teacher_yaw_gain),
+            "teacher_pose_source": str(args.teacher_pose_source),
             "route_source": str(args.route_source),
             "num_samples": int(args.num_samples),
             "max_steps": int(args.max_steps),
@@ -581,6 +614,10 @@ def main(argv=None):
                 else "MppiPriorEnv.reset_and_step"
             ),
             "privileged_route_training_only": True,
+            "teacher_pose_source": str(args.teacher_pose_source),
+            "privileged_pose_training_only": bool(
+                args.teacher_pose_source == "ground_truth"
+            ),
         },
         "split_plan": {
             name: [int(value) for value in split_plan[name]]

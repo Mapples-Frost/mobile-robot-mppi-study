@@ -95,3 +95,11 @@ manifest 与逐步 audit 必须记录 `teacher_pose_source=ground_truth`。
   0.971--0.975，末 200 步仍前进约 5 m，仍为时限截断。
 - v8：预注册单变量为 `max_steps 1400 -> 1500`；其余参数与 v7 完全一致。
   这是根据 v7 剩余 0.69--0.79 m 路径和末段推进率作出的事前时限修正。
+  结果为 3/3 成功、零碰撞、零 boundary，学生 observation 为 69 维且不含
+  absolute pose。
+
+正式教师数据采集由 `configs/rl/direct_control_bc_teacher_l243.yaml` 的
+`collection` 段和 `run_l243_direct_control_teacher_collection.py` 唯一驱动：六张
+L222 地图、seeds 20262401--20262415、split seed 20260721、lookahead 0.35 m、
+1500 步上限均在运行前冻结。采集器不允许空 split；任一 split 没有成功教师回合即
+fail closed。

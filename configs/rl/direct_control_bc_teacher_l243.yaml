@@ -13,3 +13,25 @@ teacher:
   route_source: task_points
   pose_source: ground_truth
   action_mode: direct_control
+
+collection:
+  output_dir: results/research_platform/rl/l243_direct_control_teacher_dataset_v1
+  scene_configs:
+    - configs/research/mujoco_l222_serpentine_safe_polyline.yaml
+    - configs/research/mujoco_l218_giant_u_polyline.yaml
+    - configs/research/mujoco_l218_opposed_u_polyline.yaml
+    - configs/research/mujoco_l222_nested_u_safe_polyline.yaml
+    - configs/research/mujoco_l218_cylinder_forest_polyline.yaml
+    - configs/research/mujoco_l222_cylinder_spiral_safe_polyline.yaml
+  seeds: [20262401, 20262402, 20262403, 20262404, 20262405,
+          20262406, 20262407, 20262408, 20262409, 20262410,
+          20262411, 20262412, 20262413, 20262414, 20262415]
+  split_seed: 20260721
+  validation_fraction: 0.20
+  test_fraction: 0.20
+  lookahead: 0.35
+  cruise_speed: 0.28
+  yaw_gain: 1.8
+  num_samples: 20
+  max_steps: 1500
+  allow_non_ground_truth_localization: true

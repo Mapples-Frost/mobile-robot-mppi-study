@@ -1,0 +1,19 @@
+include: expanded_navigation_actor_development_l219.yaml
+
+# L220 candidate A: activate the already implemented causal source-relative
+# competence term.  It compares Actor-guided and Gaussian opportunity-normalized
+# elite yields and feeds the result into role-aware HSS on the next control
+# cycle.  ICODE, Actor checkpoint, MPPI cost, rollout budget and safety are
+# unchanged from L219.
+final_benchmark:
+  status: development
+  preregistration: docs/rl/226_l220_actor_competence_remediation_protocol_2026-07-20.md
+  reliability_overrides:
+    source_competence_enabled: true
+    source_competence_initial: 0.50
+    source_competence_decay: 0.90
+    source_competence_prior_success: 1.0
+    source_competence_prior_failure: 1.0
+    source_competence_ratio_off: 0.75
+    source_competence_ratio_on: 1.00
+

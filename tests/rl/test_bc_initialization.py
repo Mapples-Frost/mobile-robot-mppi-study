@@ -100,6 +100,24 @@ def test_actor_only_initialization_does_not_import_sac_state(tmp_path):
     assert trainer.actor_initialization["source_phase"] == "behavior_cloning"
 
 
+def test_actor_only_initialization_allows_new_bc_training_objective(tmp_path):
+    source_items = _save_source(tmp_path)
+    trainer = _target_trainer(source_items)
+    trainer.bc_anchor = SimpleNamespace(
+        enabled=True,
+        manifest_fingerprint="b" * 64,
+    )
+
+    trainer.initialize_actor_from(source_items[0])
+
+    assert trainer.actor_initialization[
+        "source_bc_dataset_manifest_sha256"
+    ] is None
+    assert trainer.actor_initialization[
+        "target_bc_dataset_manifest_sha256"
+    ] == "b" * 64
+
+
 def test_actor_only_initialization_fails_closed_on_contract_mismatch(tmp_path):
     source_items = _save_source(tmp_path)
     trainer = _target_trainer(source_items)

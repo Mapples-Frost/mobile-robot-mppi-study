@@ -1563,12 +1563,10 @@ class SACTrainer:
             mismatches.append("normalizer.dimension")
         if normalizer.count <= 0:
             mismatches.append("normalizer.count")
-        if self.bc_anchor.enabled:
-            source_fingerprint = payload.get("training_state", {}).get(
-                "dataset_manifest_sha256"
-            )
-            if source_fingerprint != self.bc_anchor.manifest_fingerprint:
-                mismatches.append("bc_anchor.dataset_manifest_sha256")
+        # Actor-only initialization deliberately imports neither optimizer nor
+        # training-objective state.  A new run may therefore add or replace a
+        # BC anchor while warm-starting compatible Actor weights.  Exact BC
+        # dataset identity remains fail-closed for resume in ``resume()``.
         if mismatches:
             raise ValueError(
                 "actor initialization checkpoint contract mismatch: %s"
@@ -1692,6 +1690,13 @@ class SACTrainer:
             "source_observation_dim": source_observation_dim,
             "target_observation_dim": self.agent.observation_dim,
             "zero_initialized_context_columns": bool(observation_extended),
+            "source_bc_dataset_manifest_sha256": payload.get(
+                "training_state", {}
+            ).get("dataset_manifest_sha256"),
+            "target_bc_dataset_manifest_sha256": (
+                self.bc_anchor.manifest_fingerprint
+                if self.bc_anchor.enabled else None
+            ),
         }
         self._write_run_metadata()
 

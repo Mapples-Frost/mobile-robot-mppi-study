@@ -121,3 +121,8 @@ BC anchor 只在有安全成功教师证据的四图提供稳定化，SAC 仍在
 log-std -2.0。完整候选使用 seeds 20262331--33 和 validation bases
 20262931--33；仅 smoke 配置把 actor update 起点改为 8，以在 60 步内验证 BC
 更新链路，完整 30k 配置仍保持 actor update after 3000。
+
+BC smoke 首次启动在更新前被旧 actor-initialization contract 拦截：该检查错误地要求
+源 checkpoint 与新训练使用相同 BC dataset。L243 只执行 actor-only warm start，不继承
+optimizer、replay 或训练目标，因此允许目标 run 新增 BC anchor；严格 dataset fingerprint
+匹配仍保留在 resume 路径。修复后初始化 provenance 同时记录 source/target BC fingerprint。

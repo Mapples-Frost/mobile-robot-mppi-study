@@ -1,0 +1,50 @@
+include: mujoco_l218_expanded_base.yaml
+
+experiment:
+  name: mujoco_l218_cylinder_spiral_polyline
+  initial_state: [3.25, 0.55, 2.171, 0.0, 0.0]
+  max_steps: 900
+
+task:
+  type: polyline
+  position_tolerance: 0.30
+  lookahead_distance: 0.40
+  terminal_approach_distance: 0.80
+  completion_corridor: 0.70
+  points:
+    - [3.25, 0.55]
+    - [1.95, 2.45]
+    - [1.70, 3.25]
+    - [1.95, 4.05]
+    - [2.10, 4.25]
+    - [2.35, 4.35]
+    - [2.60, 4.35]
+    - [2.80, 4.20]
+    - [2.95, 4.00]
+    - [3.25, 3.25]
+
+scene:
+  name: l218_cylinder_spiral
+  field_size: [6.5, 6.5]
+  obstacles:
+    - {type: cylinder, position: [5.5500, 3.2500], radius: 0.17, height: 0.36}
+    - {type: cylinder, position: [5.3749, 4.1302], radius: 0.17, height: 0.36}
+    - {type: cylinder, position: [4.8763, 4.8763], radius: 0.17, height: 0.36}
+    - {type: cylinder, position: [4.1302, 5.3749], radius: 0.17, height: 0.36}
+    - {type: cylinder, position: [3.2500, 5.5500], radius: 0.17, height: 0.36}
+    - {type: cylinder, position: [2.3698, 5.3749], radius: 0.17, height: 0.36}
+    - {type: cylinder, position: [1.6237, 4.8763], radius: 0.17, height: 0.36}
+    - {type: cylinder, position: [1.1251, 4.1302], radius: 0.17, height: 0.36}
+    - {type: cylinder, position: [0.9500, 3.2500], radius: 0.17, height: 0.36}
+    - {type: cylinder, position: [1.1251, 2.3698], radius: 0.17, height: 0.36}
+    - {type: cylinder, position: [1.6237, 1.6237], radius: 0.17, height: 0.36}
+    - {type: cylinder, position: [4.8763, 1.6237], radius: 0.17, height: 0.36}
+    - {type: cylinder, position: [5.3749, 2.3698], radius: 0.17, height: 0.36}
+    - {type: cylinder, position: [4.2500, 3.2500], radius: 0.15, height: 0.36}
+    - {type: cylinder, position: [4.0590, 3.8378], radius: 0.15, height: 0.36}
+    - {type: cylinder, position: [2.4410, 3.8378], radius: 0.15, height: 0.36}
+    - {type: cylinder, position: [2.2500, 3.2500], radius: 0.15, height: 0.36}
+    - {type: cylinder, position: [2.4410, 2.6622], radius: 0.15, height: 0.36}
+    - {type: cylinder, position: [2.9410, 2.2989], radius: 0.15, height: 0.36}
+    - {type: cylinder, position: [3.5590, 2.2989], radius: 0.15, height: 0.36}
+    - {type: cylinder, position: [4.0590, 2.6622], radius: 0.15, height: 0.36}

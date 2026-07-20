@@ -434,6 +434,8 @@ def test_reliability_hss_applies_authority_on_next_control_cycle():
     assert first.diagnostics["paper_guided_unique_sequences"] == 6
     assert first.diagnostics["reliability_level"] == "high"
     assert first.diagnostics["reliability_guided_fraction_next"] == 0.6
+    assert first.diagnostics["reliability_proposal_authority"] == 1.0
+    assert first.diagnostics["reliability_proposal_fallback_fraction"] == 0.0
     assert second.diagnostics["paper_guided_unique_sequences"] == 12
     assert second.diagnostics["reliability_guided_fraction_applied"] == 0.6
 
@@ -442,6 +444,8 @@ def test_reliability_hss_applies_authority_on_next_control_cycle():
     suppressed = low.plan(_observation(), PointGoal(1.0, 0.0))
     assert suppressed.diagnostics["paper_guided_unique_sequences"] == 0
     assert suppressed.diagnostics["reliability_guided_fraction_applied"] == 0.0
+    assert suppressed.diagnostics["reliability_proposal_authority"] == 0.0
+    assert suppressed.diagnostics["reliability_proposal_fallback_fraction"] == 1.0
 
 
 def test_terminal_guidance_floor_preserves_completion_candidate_share():

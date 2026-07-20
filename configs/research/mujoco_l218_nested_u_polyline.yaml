@@ -1,0 +1,33 @@
+include: mujoco_l218_expanded_base.yaml
+
+experiment:
+  name: mujoco_l218_nested_u_polyline
+  initial_state: [3.25, 0.55, 2.640, 0.0, 0.0]
+  max_steps: 900
+
+task:
+  type: polyline
+  position_tolerance: 0.30
+  lookahead_distance: 0.40
+  terminal_approach_distance: 0.90
+  completion_corridor: 0.70
+  points:
+    - [3.25, 0.55]
+    - [1.70, 1.40]
+    - [1.55, 1.55]
+    - [1.55, 4.70]
+    - [1.70, 4.85]
+    - [2.50, 4.85]
+    - [2.55, 4.80]
+    - [3.25, 3.10]
+
+scene:
+  name: l218_nested_u
+  field_size: [6.5, 6.5]
+  obstacles:
+    - {type: box, position: [0.90, 3.55], size: [0.09, 2.35], height: 0.32}
+    - {type: box, position: [5.60, 3.55], size: [0.09, 2.35], height: 0.32}
+    - {type: box, position: [3.25, 5.90], size: [2.35, 0.09], height: 0.32}
+    - {type: box, position: [2.10, 3.15], size: [0.09, 1.35], height: 0.32}
+    - {type: box, position: [4.40, 3.15], size: [0.09, 1.35], height: 0.32}
+    - {type: box, position: [3.25, 1.80], size: [1.15, 0.09], height: 0.32}

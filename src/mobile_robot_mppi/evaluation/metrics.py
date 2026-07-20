@@ -260,6 +260,16 @@ class EpisodeMetrics:
             "reliability_authority": float(
                 planner_diagnostics.get("reliability_authority", 1.0)
             ),
+            "reliability_proposal_authority": float(
+                planner_diagnostics.get(
+                    "reliability_proposal_authority", 1.0
+                )
+            ),
+            "reliability_proposal_fallback_fraction": float(
+                planner_diagnostics.get(
+                    "reliability_proposal_fallback_fraction", 0.0
+                )
+            ),
             "reliability_dynamics_confidence": float(
                 planner_diagnostics.get("dynamics_confidence", 1.0)
             ),
@@ -928,6 +938,26 @@ class EpisodeMetrics:
                 row.get("reliability_authority", 1.0)
                 for row in values
             ])),
+            "reliability_proposal_authority_mean": float(np.mean([
+                row.get("reliability_proposal_authority", 1.0)
+                for row in values
+            ])),
+            "reliability_proposal_authority_min": float(np.min([
+                row.get("reliability_proposal_authority", 1.0)
+                for row in values
+            ])),
+            "reliability_proposal_authority_max": float(np.max([
+                row.get("reliability_proposal_authority", 1.0)
+                for row in values
+            ])),
+            "reliability_proposal_fallback_fraction_mean": float(
+                np.mean([
+                    row.get(
+                        "reliability_proposal_fallback_fraction", 0.0
+                    )
+                    for row in values
+                ])
+            ),
             "reliability_dynamics_confidence_mean": float(np.mean([
                 row.get("reliability_dynamics_confidence", 1.0)
                 for row in values

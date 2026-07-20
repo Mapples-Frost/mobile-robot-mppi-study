@@ -194,6 +194,74 @@ def test_reliability_override_is_confined_to_adaptive_arms():
         assert "dynamics_routing_mode" not in reliability
 
 
+def test_residual_conditioned_actor_is_confined_to_coupled_arms():
+    overrides = {
+        "policy_id": "residual_conditioned_actor",
+        "device": "auto",
+        "residual_context": {
+            "enabled": True,
+            "state_names": ["v", "omega"],
+        },
+    }
+    configs = {}
+    for arm in ARMS:
+        configs[arm], _, _, _ = build_arm_config(
+            copy.deepcopy(_base()),
+            {"arm": arm, "seed": 7},
+            "ordinary_actor.pt",
+            ["o1.pt", "o2.pt"],
+            ["v1.pt", "v2.pt"],
+            _calibration(),
+            _calibration(),
+            100,
+            2,
+            {"name": "nominal", "role": "seen", "plant_override": {}},
+            300,
+            0.0,
+            0.0,
+            coupled_actor_checkpoint="coupled_actor.pt",
+            coupled_rl_overrides=overrides,
+        )
+    for arm in (
+        "simple_combination",
+        "value_fixed",
+        "ordinary_adaptive",
+        "full_proposed",
+    ):
+        assert configs[arm]["rl"]["checkpoint"] == "coupled_actor.pt"
+        assert configs[arm]["rl"]["residual_context"]["enabled"] is True
+    assert configs["rl_driven_mppi"]["rl"]["checkpoint"] == (
+        "ordinary_actor.pt"
+    )
+    assert "residual_context" not in configs["rl_driven_mppi"]["rl"]
+
+
+def test_paper_rl_overrides_are_shared_by_every_rl_arm():
+    for arm in ARMS:
+        config, flags, _, _ = build_arm_config(
+            copy.deepcopy(_base()),
+            {"arm": arm, "seed": 7},
+            "actor.pt",
+            ["o1.pt", "o2.pt"],
+            ["v1.pt", "v2.pt"],
+            _calibration(),
+            _calibration(),
+            100,
+            2,
+            {"name": "nominal", "role": "seen", "plant_override": {}},
+            300,
+            0.0,
+            0.0,
+            paper_rl_driven_overrides={"terminal_value_weight": 0.75},
+        )
+        if flags["use_rl"]:
+            assert config["planner"]["paper_rl_driven"][
+                "terminal_value_weight"
+            ] == 0.75
+        else:
+            assert "paper_rl_driven" not in config["planner"]
+
+
 def test_core_factorial_rows_use_only_the_four_confirmatory_arms():
     rows = [
         {"benchmark_arm": arm, "method": arm, "block": "b"}

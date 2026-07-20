@@ -1,0 +1,10 @@
+include: expanded_navigation_development_l218.yaml
+
+final_benchmark:
+  status: development
+  scene_configs:
+    - configs/research/mujoco_l218_giant_u_polyline.yaml
+  physics_domains: [nominal_seen]
+  total_rollouts: 20
+  iterations: 1
+  max_steps: 3

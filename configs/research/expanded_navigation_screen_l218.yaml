@@ -1,0 +1,10 @@
+include: expanded_navigation_development_l218.yaml
+
+# Fast development screen only. It preserves equal budgets between Simple and
+# Full while reducing the budget from the eventual 100-rollout confirmation.
+# The long-form development manifest below remains unchanged.
+final_benchmark:
+  status: development
+  total_rollouts: 30
+  iterations: 1
+  max_steps: 900

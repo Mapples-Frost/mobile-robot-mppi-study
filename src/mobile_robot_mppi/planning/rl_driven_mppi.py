@@ -1407,18 +1407,39 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
         baseline_mean = np.asarray(prior.mean, dtype=np.float64)
         if baseline_mean.shape != actor_mean.shape:
             raise ValueError("baseline and Actor proposal means disagree")
+        # HSS authority must govern the proposal centre as well as the share
+        # of guided samples. Otherwise an OOD Actor can retain complete
+        # control of the Gaussian sampling mean after HSS assigns it zero
+        # authority. The current authority is causal: it uses only checkpoint
+        # support and already-completed transition innovation.
+        proposal_reliability_authority = (
+            float(reliability_diagnostics["reliability_authority"])
+            if self.hybrid_sampling_reliability.config.enabled
+            else 1.0
+        )
+        proposal_authority = float(np.clip(
+            handover_authority * proposal_reliability_authority,
+            0.0,
+            1.0,
+        ))
         mean = (
-            handover_authority * actor_mean
-            + (1.0 - handover_authority) * baseline_mean
+            proposal_authority * actor_mean
+            + (1.0 - proposal_authority) * baseline_mean
         )
         base_variance = np.broadcast_to(
             np.asarray(self.config.noise_sigma, dtype=np.float64)[None, :] ** 2,
             mean.shape,
         ).copy()
         proposal_variance = (
-            handover_authority * actor_variance
-            + (1.0 - handover_authority) * base_variance
+            proposal_authority * actor_variance
+            + (1.0 - proposal_authority) * base_variance
         )
+        reliability_diagnostics.update({
+            "reliability_proposal_authority": proposal_authority,
+            "reliability_proposal_fallback_fraction": (
+                1.0 - proposal_authority
+            ),
+        })
         variance = np.clip(
             proposal_variance,
             base_variance * cfg.covariance_min_scale ** 2,

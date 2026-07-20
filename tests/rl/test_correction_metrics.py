@@ -110,6 +110,10 @@ def test_episode_metrics_summarizes_hss_reliability_levels():
                 "reliability_hss_enabled": True,
                 "reliability_level": level,
                 "reliability_authority": 0.2 + 0.6 * index,
+                "reliability_proposal_authority": 0.1 + 0.8 * index,
+                "reliability_proposal_fallback_fraction": (
+                    0.9 - 0.8 * index
+                ),
                 "reliability_guided_fraction_applied": 0.3 * index,
                 "reliability_guided_fraction_next": 0.6 * index,
                 "reliability_guided_fraction_raw_applied": 0.3 * index,
@@ -120,6 +124,10 @@ def test_episode_metrics_summarizes_hss_reliability_levels():
     result = metrics.summary()
 
     assert result["reliability_hss_enabled_fraction"] == 1.0
+    assert result["reliability_proposal_authority_mean"] == 0.5
+    assert result["reliability_proposal_authority_min"] == 0.1
+    assert result["reliability_proposal_authority_max"] == 0.9
+    assert result["reliability_proposal_fallback_fraction_mean"] == 0.5
     assert result["reliability_low_fraction"] == 0.5
     assert result["reliability_high_fraction"] == 0.5
     assert result["reliability_guided_fraction_applied_mean"] == 0.15

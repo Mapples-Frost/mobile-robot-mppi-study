@@ -78,8 +78,14 @@ def make_components(config, project_root, rl_policy=None):
             dynamics, OracleResidualPrediction(true_dynamics, dynamics)
         )
     elif prediction_mode in ("mlp_residual", "icode_residual"):
-        if str(planner_cfg.get("device", "cpu")) == "cpu":
-            import torch
+        import torch
+        requested_device = str(planner_cfg.get("device", "cpu"))
+        if requested_device == "auto":
+            device = "cuda" if torch.cuda.is_available() else "cpu"
+        else:
+            device = requested_device
+        planner_cfg["device"] = device
+        if device == "cpu":
             thread_count = int(planner_cfg.get("residual_torch_num_threads", 1))
             if thread_count <= 0:
                 raise ValueError("residual_torch_num_threads must be positive")
@@ -112,10 +118,10 @@ def make_components(config, project_root, rl_policy=None):
                 checkpoint_path = Path(project_root) / checkpoint_path
             checkpoint_paths.append(checkpoint_path.resolve())
         checkpoint_path = checkpoint_paths[0]
-        device = str(planner_cfg.get("device", "cpu"))
         try:
             from mobile_robot_mppi.learning.models import (
                 InnovationGatedResidualDynamics,
+                CanonicalizedStateResidualDynamics,
                 NormalizedSupportGatedResidualDynamics,
                 PlatformResidualDynamics,
                 PlatformResidualEnsemble,
@@ -165,6 +171,41 @@ def make_components(config, project_root, rl_policy=None):
                         ensemble.get("innovation_decay", 0.9)
                     ),
                     member_paths=checkpoint_paths,
+                )
+            canonicalization = dict(
+                planner_cfg.get("residual_state_canonicalization", {})
+            )
+            if bool(canonicalization.get("enabled", False)):
+                state_names = tuple(
+                    str(value)
+                    for value in canonicalization.get("state_names", ())
+                )
+                canonical_values = tuple(
+                    float(value)
+                    for value in canonicalization.get("values", ())
+                )
+                if (
+                    not state_names
+                    or len(state_names) != len(canonical_values)
+                    or len(set(state_names)) != len(state_names)
+                ):
+                    raise ValueError(
+                        "residual state canonicalization requires aligned "
+                        "unique state_names and values"
+                    )
+                unknown = [
+                    name for name in state_names
+                    if name not in state_spec.names
+                ]
+                if unknown:
+                    raise ValueError(
+                        "canonical residual state names are unavailable: %s"
+                        % unknown
+                    )
+                residual = CanonicalizedStateResidualDynamics(
+                    residual,
+                    [state_spec.index(name) for name in state_names],
+                    canonical_values,
                 )
             component_mask = planner_cfg.get("residual_component_mask")
             if component_mask is not None:

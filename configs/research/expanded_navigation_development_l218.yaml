@@ -1,0 +1,52 @@
+include: complex_navigation_development_l216_policy_rescue.yaml
+
+final_benchmark:
+  status: development
+  preregistration: docs/rl/222_expanded_mujoco_navigation_development_protocol_2026-07-20.md
+  metric_profile: path_tracking
+
+  scene_configs:
+    - configs/research/mujoco_l218_serpentine_polyline.yaml
+    - configs/research/mujoco_l218_giant_u_polyline.yaml
+    - configs/research/mujoco_l218_opposed_u_polyline.yaml
+    - configs/research/mujoco_l218_nested_u_polyline.yaml
+    - configs/research/mujoco_l218_cylinder_forest_polyline.yaml
+    - configs/research/mujoco_l218_cylinder_spiral_polyline.yaml
+  physics_domains:
+    - nominal_seen
+    - combined_unseen
+
+  # The ordinary Actor remains the RL-only comparator. Coupled arms receive
+  # the separately trained residual-conditioned Actor so the ICODE -> policy
+  # link is active without contaminating the RL-only baseline.
+  coupled_actor_checkpoint: results/research_platform/rl/residual_conditioned_l205_seed20262051_40k_v1/checkpoints/best.pt
+  coupled_rl_overrides:
+    policy_id: residual_conditioned_bounded_correction_l205
+    device: auto
+    torch_num_threads: 1
+    residual_context:
+      enabled: true
+      state_names: [v, omega]
+      residual_scales: [0.2438328117, 0.6734842658]
+      innovation_scales: [0.25, 0.60]
+      signed_clip: 5.0
+      disagreement_clip: 5.0
+
+  planner_overrides:
+    device: auto
+    residual_state_canonicalization:
+      enabled: true
+      state_names: [x, y]
+      # Frozen ordinary/value ICODE training feature means. This is valid only
+      # because both L218 physics domains are spatially homogeneous.
+      values: [3.2452182770, 0.3136115074]
+    terminal_control_radius: 0.80
+    terminal_translation_speed_limit: 0.12
+    terminal_translation_heading_gate_rad: 0.40
+    terminal_alignment_yaw_gain: 0.80
+
+  total_rollouts: 100
+  iterations: 2
+  max_steps: 1400
+  schedule_seed: 20260725
+  development_seeds: [91001, 91002, 91003]

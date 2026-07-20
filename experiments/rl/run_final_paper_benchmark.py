@@ -154,6 +154,9 @@ def build_arm_config(
     planner_overrides=None,
     sensor_overrides=None,
     reliability_overrides=None,
+    coupled_actor_checkpoint=None,
+    coupled_rl_overrides=None,
+    paper_rl_driven_overrides=None,
 ):
     """Build one frozen arm without allowing cross-arm parameter leakage."""
 
@@ -169,12 +172,19 @@ def build_arm_config(
         if flags["value_aligned"]
         else ordinary_reliability
     )
+    selected_actor = actor_checkpoint
+    if (
+        flags["use_icode"]
+        and flags["use_rl"]
+        and coupled_actor_checkpoint
+    ):
+        selected_actor = str(coupled_actor_checkpoint)
     config = method_config(
         base,
         arm,
         flags["use_icode"],
         flags["use_rl"],
-        actor_checkpoint,
+        selected_actor,
         checkpoints[0],
         total_rollouts,
         iterations,
@@ -228,6 +238,19 @@ def build_arm_config(
             else 0.0
         )
         planner["paper_rl_driven"].pop("conservative_terminal", None)
+        if paper_rl_driven_overrides:
+            planner["paper_rl_driven"] = deep_merge(
+                planner["paper_rl_driven"],
+                dict(paper_rl_driven_overrides),
+            )
+        if (
+            flags["use_icode"]
+            and coupled_actor_checkpoint
+            and coupled_rl_overrides
+        ):
+            config["rl"] = deep_merge(
+                config["rl"], dict(coupled_rl_overrides)
+            )
     planner.update(dict(planner_overrides or {}))
     config.setdefault("sensors", {}).update(dict(sensor_overrides or {}))
     if int(max_steps) > 0:
@@ -455,6 +478,12 @@ def main(argv=None):
     base_path = _resolve_manifest_path(frozen["base_config"])
     domain_path = _resolve_manifest_path(frozen["physics_domain_config"])
     actor = str(_resolve_manifest_path(frozen["actor_checkpoint"]))
+    coupled_actor_value = frozen.get("coupled_actor_checkpoint")
+    coupled_actor = (
+        str(_resolve_manifest_path(coupled_actor_value))
+        if coupled_actor_value
+        else actor
+    )
     ordinary_checkpoints = _manifest_paths(
         frozen["ordinary_checkpoints"]
     )
@@ -545,6 +574,13 @@ def main(argv=None):
             frozen.get("planner_overrides", {}),
             frozen.get("sensor_overrides", {}),
             frozen.get("reliability_overrides", {}),
+            coupled_actor_checkpoint=coupled_actor,
+            coupled_rl_overrides=frozen.get(
+                "coupled_rl_overrides", {}
+            ),
+            paper_rl_driven_overrides=frozen.get(
+                "paper_rl_driven_overrides", {}
+            ),
         )
         arm = str(job["arm"])
         run_dir = output / "runs" / arm / config["experiment"]["name"]
@@ -585,7 +621,10 @@ def main(argv=None):
                 job["run_order_within_block"]
             ),
             "global_run_order": int(job["global_run_order"]),
-            "actor_checkpoint": actor if flags["use_rl"] else "",
+            "actor_checkpoint": (
+                str(config.get("rl", {}).get("checkpoint", ""))
+                if flags["use_rl"] else ""
+            ),
             "icode_checkpoints": (
                 "|".join(checkpoints) if flags["use_icode"] else ""
             ),
@@ -619,6 +658,10 @@ def main(argv=None):
         "manifest": str(manifest_path),
         "manifest_sha256": _sha256(manifest_path),
         "actor_checkpoint": {"path": actor, "sha256": _sha256(actor)},
+        "coupled_actor_checkpoint": {
+            "path": coupled_actor,
+            "sha256": _sha256(coupled_actor),
+        },
         "ordinary_checkpoints": [
             {"path": path, "sha256": _sha256(path)}
             for path in ordinary_checkpoints

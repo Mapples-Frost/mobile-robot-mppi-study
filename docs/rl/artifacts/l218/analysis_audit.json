@@ -1,0 +1,41 @@
+{
+  "analysis_git_head": "43034bedb805242a698aee0061e2863f984b4dc5",
+  "analysis_worktree_dirty": true,
+  "analysis_worktree_tracked_patch_sha256": "168e74e7d43dcd0cad054e1b35169a1413cbc809909c5530442b5838d20ea64b",
+  "arms": [
+    "simple_combination",
+    "full_proposed"
+  ],
+  "bootstrap_samples": 10000,
+  "bootstrap_seed": 20260720,
+  "episodes": 36,
+  "formal_claim_allowed": false,
+  "gate_status": "development_gate_passed",
+  "independent_seeds": [
+    91001,
+    91002,
+    91003
+  ],
+  "independent_unit": "seed",
+  "mujoco_version": "3.2.3",
+  "paired_cells": 18,
+  "physics_domains": [
+    "nominal_seen"
+  ],
+  "plant_backend": "mujoco_diff_drive",
+  "qualification_rows": 36,
+  "reason_formal_claim_forbidden": "qualification seeds and an uncommitted development implementation",
+  "repeated_strata": [
+    "scene"
+  ],
+  "run_git_sha": "43034bedb805242a698aee0061e2863f984b4dc5",
+  "scenes": [
+    "l218_serpentine",
+    "l218_giant_u",
+    "l218_opposed_u",
+    "l218_nested_u",
+    "l218_cylinder_forest",
+    "l218_cylinder_spiral"
+  ],
+  "status": "complete_development_qualification"
+}

@@ -30,6 +30,63 @@ def point_clearance(x, y, obstacles, robot_radius):
     return min(values) if values else float("inf")
 
 
+def audit_reference_path(
+    scene, points, robot_radius, margin=0.03, sample_spacing=0.02
+):
+    """Offline clearance audit for a configured task reference.
+
+    This helper is deliberately outside the online planner.  It verifies that
+    a hand-authored or global-planner reference does not intersect the static
+    MuJoCo geometry after inflating obstacles by the robot footprint.
+    """
+
+    values = np.asarray(points, dtype=np.float64)
+    if (
+        values.ndim != 2
+        or values.shape[0] < 2
+        or values.shape[1] < 2
+        or not np.isfinite(values).all()
+    ):
+        raise ValueError("reference points must contain at least two finite XY rows")
+    if robot_radius <= 0.0 or margin < 0.0 or sample_spacing <= 0.0:
+        raise ValueError(
+            "robot radius and sample spacing must be positive; margin non-negative"
+        )
+    obstacles = tuple(scene.get("obstacles", ()))
+    minimum = float("inf")
+    minimum_location = values[0, :2].copy()
+    samples = 0
+    length = 0.0
+    for start, end in zip(values[:-1, :2], values[1:, :2]):
+        delta = end - start
+        segment_length = float(np.linalg.norm(delta))
+        if segment_length <= 0.0:
+            raise ValueError("reference cannot contain duplicate consecutive points")
+        count = max(1, int(math.ceil(segment_length / float(sample_spacing))))
+        for fraction in np.linspace(0.0, 1.0, count + 1):
+            point = start + float(fraction) * delta
+            clearance = point_clearance(
+                point[0], point[1], obstacles, robot_radius
+            )
+            samples += 1
+            if clearance < minimum:
+                minimum = float(clearance)
+                minimum_location = point.copy()
+        length += segment_length
+    return {
+        "scene": str(scene.get("name", "unknown")),
+        "reference_length": float(length),
+        "minimum_clearance": float(minimum),
+        "minimum_clearance_location": [
+            float(minimum_location[0]), float(minimum_location[1])
+        ],
+        "margin": float(margin),
+        "sample_spacing": float(sample_spacing),
+        "sample_count": int(samples),
+        "path_clear": bool(minimum >= float(margin)),
+    }
+
+
 def audit_static_scene(
     scene, start, goal, robot_radius, margin=0.03, resolution=0.05,
     include_path=False,

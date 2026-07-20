@@ -518,6 +518,99 @@ class PlatformResidualEnsemble:
         }
 
 
+class CanonicalizedStateResidualDynamics:
+    """Remove known nuisance coordinates from residual inference.
+
+    A globally homogeneous wheel-ground model is translation invariant: the
+    same velocity/yaw response applies at every world-frame x/y location.  A
+    network trained on finite trajectories can nevertheless treat absolute
+    position as out-of-support.  This explicit wrapper replaces configured
+    nuisance state channels with frozen training-reference values for both
+    residual inference and uncertainty diagnostics.  It must remain disabled
+    for spatially varying terrain or disturbances.
+    """
+
+    def __init__(self, residual, state_indices, canonical_values):
+        self.residual = residual
+        self.model = getattr(residual, "model", None)
+        self.state_dim = int(residual.state_dim)
+        self.control_dim = int(residual.control_dim)
+        self.state_indices = np.asarray(state_indices, dtype=np.int64).reshape(-1)
+        self.canonical_values = np.asarray(
+            canonical_values, dtype=np.float64
+        ).reshape(-1)
+        if (
+            self.state_indices.size == 0
+            or self.state_indices.shape != self.canonical_values.shape
+            or len(set(int(v) for v in self.state_indices))
+            != self.state_indices.size
+            or np.any(self.state_indices < 0)
+            or np.any(self.state_indices >= self.state_dim)
+            or not np.isfinite(self.canonical_values).all()
+        ):
+            raise ValueError(
+                "canonical residual states require unique valid indices and "
+                "aligned finite values"
+            )
+
+    def __getattr__(self, name):
+        return getattr(self.residual, name)
+
+    def _canonical_state(self, state):
+        value = np.asarray(state, dtype=np.float64)
+        if value.shape[-1] != self.state_dim or not np.isfinite(value).all():
+            raise ValueError("canonical residual state has invalid dimensions")
+        result = value.copy()
+        result[..., self.state_indices] = self.canonical_values
+        return result
+
+    def derivative(self, state, control, time=None):
+        return self.residual.derivative(
+            self._canonical_state(state), control, time
+        )
+
+    def ungated_derivative(self, state, control, time=None):
+        evaluator = getattr(self.residual, "ungated_derivative", None)
+        if not callable(evaluator):
+            evaluator = self.residual.derivative
+        return evaluator(self._canonical_state(state), control, time)
+
+    def member_derivatives(self, state, control, time=None):
+        return self.residual.member_derivatives(
+            self._canonical_state(state), control, time
+        )
+
+    def disagreement(self, state, control, time=None):
+        return self.residual.disagreement(
+            self._canonical_state(state), control, time
+        )
+
+    def support_confidence(self, state, control):
+        return self.residual.support_confidence(
+            self._canonical_state(state), control
+        )
+
+    def confidence(self, state, control):
+        evaluator = getattr(self.residual, "confidence", None)
+        if callable(evaluator):
+            return evaluator(self._canonical_state(state), control)
+        return self.support_confidence(state, control)
+
+    def diagnostics(self):
+        evaluator = getattr(self.residual, "diagnostics", None)
+        values = dict(evaluator() if callable(evaluator) else {})
+        values.update({
+            "residual_state_canonicalization_enabled": True,
+            "residual_state_canonicalization_indices": (
+                self.state_indices.copy()
+            ),
+            "residual_state_canonicalization_values": (
+                self.canonical_values.copy()
+            ),
+        })
+        return values
+
+
 class NormalizedSupportGatedResidualDynamics:
     """Fail toward nominal dynamics outside the residual training support.
 

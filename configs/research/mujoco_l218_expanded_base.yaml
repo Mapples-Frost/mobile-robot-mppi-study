@@ -1,0 +1,37 @@
+include: mujoco_strong_mppi_baseline.yaml
+
+# Match the physical action contract of the residual-conditioned Actor. The
+# same bounds apply to every benchmark arm; MuJoCo still determines the actual
+# wheel acceleration through torque, inertia, friction and command delay.
+action_space:
+  names: [v_cmd, omega_cmd]
+  lower: [0.0, -1.25]
+  upper: [0.65, 1.25]
+  rate_limits: [1.0, 3.0]
+
+perception:
+  scan_guard:
+    front_stop_distance: 0.40
+    hard_stop_distance: 0.40
+    front_soft_block_distance: 0.55
+    front_soft_block_max_speed: 0.04
+    front_slow_distance: 1.10
+    front_slow_min_scale: 0.35
+    front_angle_deg: 35.0
+    side_stop_distance: 0.38
+    side_angle_deg: 125.0
+    near_body_stop_radius: 0.38
+  local_obstacle_layer:
+    downsample_step: 1
+    fallback_downsample_step: 3
+    obstacle_radius: 0.08
+    max_obstacle_count: 120
+    planner_max_obstacles: 32
+
+planner:
+  noise_sigma: [0.18, 0.65]
+  prior_v_gain: 1.1
+  prior_yaw_gain: 1.5
+  prior_translation_heading_gate_rad: 0.40
+  prior_translation_heading_gate_terminal_only: true
+  prior_terminal_max_speed: 0.12

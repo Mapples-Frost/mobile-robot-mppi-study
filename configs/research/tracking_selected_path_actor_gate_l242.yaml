@@ -1,0 +1,23 @@
+include: tracking_corridor_w4p0d_probe_l239.yaml
+
+final_benchmark:
+  status: development
+  preregistration: docs/experiments/post_l217/l242_selected_path_actor_tracking_gate_protocol.md
+
+  # Selected solely from the frozen L241 validation episodes. The selected
+  # global step is zero; this is intentionally retained as a negative/null
+  # training outcome rather than replaced using L234 development results.
+  coupled_actor_checkpoint: results/research_platform/rl/l241_path_preview_actor_seed20262222_30k_v1/checkpoints/initial.pt
+  coupled_rl_overrides:
+    policy_id: path_residual_conditioned_l241_selected_initial
+    device: cpu
+    torch_num_threads: 1
+    residual_context:
+      enabled: true
+      state_names: [v, omega]
+      residual_scales: [0.2438328117, 0.6734842658]
+      innovation_scales: [0.25, 0.60]
+      signed_clip: 5.0
+      disagreement_clip: 5.0
+
+  development_seeds: [923301001]

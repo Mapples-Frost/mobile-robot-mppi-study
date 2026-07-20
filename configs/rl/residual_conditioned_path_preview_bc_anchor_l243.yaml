@@ -9,6 +9,7 @@ rl:
   training:
     seed: 20262331
     validation_seed_base: 20262931
+    normalizer_update: frozen
     bc_anchor:
       enabled: true
       dataset_dir: results/research_platform/rl/l243_direct_control_teacher_dataset_v1

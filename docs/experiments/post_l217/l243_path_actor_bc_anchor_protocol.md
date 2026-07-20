@@ -126,3 +126,8 @@ BC smoke 首次启动在更新前被旧 actor-initialization contract 拦截：�
 源 checkpoint 与新训练使用相同 BC dataset。L243 只执行 actor-only warm start，不继承
 optimizer、replay 或训练目标，因此允许目标 run 新增 BC anchor；严格 dataset fingerprint
 匹配仍保留在 resume 路径。修复后初始化 provenance 同时记录 source/target BC fingerprint。
+
+第二次 smoke 在更新前触发既有的 normalizer 防漂移约束：BC anchor 训练必须冻结
+初始化 checkpoint 已拟合的 observation normalizer，否则固定教师样本的归一化坐标会
+随在线数据变化。L243 因此预注册 `normalizer_update=frozen`；这不会把真值加入学生
+输入，也不会冻结 Actor、critic 或 SAC 更新。

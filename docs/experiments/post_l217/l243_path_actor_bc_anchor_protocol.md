@@ -91,4 +91,7 @@ manifest 与逐步 audit 必须记录 `teacher_pose_source=ground_truth`。
   0.568，末 200 步仍持续前进；未到达由 900 步时限导致。
 - v7：预注册单变量为 `max_steps 900 -> 1400`；lookahead 0.35 m、
   ground-truth teacher pose、速度、yaw gain、地图、参考线与安全链保持 v6 不变。
-  只有 v7 完成后才读取结果。
+  只有 v7 完成后才读取结果。结果为 3/3 零碰撞、零 boundary，完成度
+  0.971--0.975，末 200 步仍前进约 5 m，仍为时限截断。
+- v8：预注册单变量为 `max_steps 1400 -> 1500`；其余参数与 v7 完全一致。
+  这是根据 v7 剩余 0.69--0.79 m 路径和末段推进率作出的事前时限修正。

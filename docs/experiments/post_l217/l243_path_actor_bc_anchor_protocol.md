@@ -87,4 +87,8 @@ manifest 与逐步 audit 必须记录 `teacher_pose_source=ground_truth`。
   3/3 未到达，冻结保留。
 - v6：预注册单变量为 lookahead `0.70 -> 0.35 m`；pose source、速度、
   yaw gain、900 步、地图、参考线和安全链均保持 v5 不变。只有 v6 完成后才读取
-  结果；不得覆盖 v4/v5。
+  结果；不得覆盖 v4/v5。结果为 3/3 零碰撞、零 boundary，平均完成度约
+  0.568，末 200 步仍持续前进；未到达由 900 步时限导致。
+- v7：预注册单变量为 `max_steps 900 -> 1400`；lookahead 0.35 m、
+  ground-truth teacher pose、速度、yaw gain、地图、参考线与安全链保持 v6 不变。
+  只有 v7 完成后才读取结果。

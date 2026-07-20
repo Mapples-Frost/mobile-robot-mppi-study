@@ -1,0 +1,7 @@
+include: mujoco_tracking_grand_infinity_l234.yaml
+
+experiment:
+  name: mujoco_tracking_grand_infinity_w4p0d_l239
+
+task:
+  corridor_half_width: 1.00

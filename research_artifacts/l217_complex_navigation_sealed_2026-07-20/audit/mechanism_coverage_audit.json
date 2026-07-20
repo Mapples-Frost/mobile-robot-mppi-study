@@ -1,0 +1,22 @@
+{
+  "complete_planned_method_coverage": false,
+  "mean_dynamics_confidence": 0.04755062100495276,
+  "mean_hss_authority": 0.9080747347178229,
+  "mean_residual_policy_context_enabled_fraction": 0.0,
+  "mean_terminal_value_authority": 1.0,
+  "required_for_complete_claim": [
+    "value_aligned_icode_checkpoint_selected",
+    "rl_prior_enabled",
+    "role_aware_hss_activated",
+    "residual_policy_context_activated",
+    "terminal_value_reliability_weighting_observed"
+  ],
+  "residual_policy_authority_activated": false,
+  "residual_policy_context_activated": false,
+  "rl_prior_enabled": true,
+  "role_aware_hss_activated": true,
+  "status": "partial_mechanism_coverage",
+  "terminal_value_enabled": true,
+  "terminal_value_reliability_weighting_observed": false,
+  "value_aligned_icode_checkpoint_selected": true
+}

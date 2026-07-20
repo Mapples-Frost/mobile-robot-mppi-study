@@ -16,9 +16,12 @@ from experiments.rl.run_final_paper_benchmark import (
     resolve_benchmark_seeds,
 )
 from experiments.rl.analyze_final_paper_benchmark import (
+    PREDECLARED_POINT_GOAL_METRICS,
     aggregate,
     validate_completed_rows,
 )
+from experiments.rl.merge_sealed_benchmark_shards import numeric, row_key
+from experiments.rl.summarize_l217_complex_navigation import mechanism_coverage
 
 
 def _base():
@@ -416,3 +419,48 @@ def test_descriptive_aggregate_accepts_csv_boolean_strings():
     summary = aggregate(rows, ("success", "collision"))
     assert summary[0]["success_mean"] == 1.0
     assert summary[0]["collision_mean"] == 0.0
+
+
+def test_l217_predeclared_point_goal_analysis_keeps_bounded_time_and_safety():
+    assert PREDECLARED_POINT_GOAL_METRICS["steps"] is False
+    assert PREDECLARED_POINT_GOAL_METRICS["trajectory_length"] is False
+    assert PREDECLARED_POINT_GOAL_METRICS["minimum_clearance"] is True
+    assert PREDECLARED_POINT_GOAL_METRICS["planner_compute_ms_p95"] is False
+
+
+def test_shard_merge_identity_and_numeric_parsing_are_strict():
+    row = {
+        "scene": "lab_complex",
+        "physics_domain": "combined_unseen",
+        "seed": "78006",
+        "benchmark_arm": "full_proposed",
+    }
+    assert row_key(row) == (
+        "lab_complex",
+        "combined_unseen",
+        78006,
+        "full_proposed",
+    )
+    assert numeric("True") == 1.0
+    assert numeric("False") == 0.0
+
+
+def test_mechanism_coverage_does_not_relabel_inactive_context_as_full_method():
+    row = {
+        "benchmark_arm": "full_proposed",
+        "value_alignment": "1",
+        "icode_checkpoints": "member1.pt,member2.pt",
+        "actor_checkpoint": "actor.pt",
+        "reliability_hss_enabled_fraction": "1",
+        "residual_policy_context_enabled_fraction": "0",
+        "residual_policy_authority_enabled_fraction": "0",
+        "terminal_value_enabled_fraction": "1",
+        "reliability_dynamics_confidence_mean": "0.05",
+        "terminal_value_authority_mean": "1",
+        "reliability_authority_mean": "0.9",
+    }
+    audit = mechanism_coverage([row])
+    assert audit["status"] == "partial_mechanism_coverage"
+    assert audit["role_aware_hss_activated"] is True
+    assert audit["residual_policy_context_activated"] is False
+    assert audit["terminal_value_reliability_weighting_observed"] is False

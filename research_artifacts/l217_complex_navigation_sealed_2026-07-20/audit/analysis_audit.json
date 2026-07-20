@@ -1,0 +1,40 @@
+{
+  "arms": [
+    "traditional_mppi",
+    "icode_mppi",
+    "rl_driven_mppi",
+    "simple_combination",
+    "value_fixed",
+    "ordinary_adaptive",
+    "full_proposed"
+  ],
+  "blocks": 60,
+  "bootstrap_samples": 10000,
+  "bootstrap_seed": 20260724,
+  "episodes": 420,
+  "independent_seeds": 10,
+  "independent_unit": "seed",
+  "metric_profile": "point_goal",
+  "progress_path": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/rl/complex_navigation_sealed_l217/merged_analysis/progress.csv",
+  "progress_sha256": "d802fc11e30af8b2a24fd6b98b0b09142f542cc21eee780f70aae7e41ad60f4a",
+  "provenance_path": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/rl/complex_navigation_sealed_l217/merged_analysis/provenance.json",
+  "provenance_sha256": "6b3dad8e8f4a1ddd8a6f1db763bcf25b18e409f437a4e8377982897872a58e2b",
+  "qualification_rows": 0,
+  "repeated_strata": [
+    "scene",
+    "physics_domain"
+  ],
+  "seeds": [
+    78006,
+    78007,
+    78008,
+    78009,
+    78010,
+    78011,
+    78012,
+    78013,
+    78014,
+    78015
+  ],
+  "status": "complete_and_analysed"
+}

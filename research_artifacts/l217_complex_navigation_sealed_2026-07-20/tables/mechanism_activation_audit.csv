@@ -1,0 +1,8 @@
+benchmark_arm,episodes,reliability_hss_enabled_fraction_mean,reliability_authority_mean_mean,reliability_dynamics_confidence_mean_mean,reliability_actor_support_confidence_mean_mean,reliability_guided_fraction_applied_mean_mean,terminal_value_enabled_fraction_mean,terminal_value_authority_mean_mean,terminal_value_dynamics_confidence_mean_mean,terminal_value_critic_confidence_mean_mean,residual_policy_context_enabled_fraction_mean,residual_policy_authority_enabled_fraction_mean,residual_policy_authority_mean_mean
+traditional_mppi,60,0.0,1.0,1.0,1.0,0.29999999999999993,0.0,1.0,1.0,1.0,0.0,0.0,0.0
+icode_mppi,60,0.0,1.0,1.0,1.0,0.29999999999999993,0.0,1.0,1.0,1.0,0.0,0.0,0.0
+rl_driven_mppi,60,0.0,1.0,1.0,1.0,0.3,1.0,1.0,1.0,1.0,0.0,0.0,0.0
+simple_combination,60,0.0,1.0,1.0,1.0,0.3,1.0,1.0,1.0,1.0,0.0,0.0,0.0
+value_fixed,60,0.0,1.0,1.0,1.0,0.3,1.0,1.0,1.0,1.0,0.0,0.0,0.0
+ordinary_adaptive,60,1.0,0.9183857694962523,0.01072537120876678,0.9237405630949981,0.5647604793473515,1.0,1.0,1.0,1.0,0.0,0.0,0.0
+full_proposed,60,1.0,0.9080747347178229,0.04755062100495276,0.9311334076086727,0.5621103901951353,1.0,1.0,1.0,1.0,0.0,0.0,0.0

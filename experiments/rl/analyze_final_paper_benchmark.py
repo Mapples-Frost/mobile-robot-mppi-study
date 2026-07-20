@@ -25,6 +25,22 @@ from experiments.rl.run_final_paper_benchmark import (
 from experiments.rl.run_gate1_simple_combination import parse_ints
 
 
+# These outcomes were explicitly frozen for the point-goal confirmation in
+# docs/rl/217_complex_navigation_sealed_preregistration_2026-07-20.md.  Failed
+# episodes have no time_to_goal_s, so ``steps`` is the non-selective bounded
+# completion-time endpoint (all failures remain at the frozen step limit).
+PREDECLARED_POINT_GOAL_METRICS = {
+    "steps": False,
+    "trajectory_length": False,
+    "minimum_clearance": True,
+    "spin_steps": False,
+    "mean_abs_omega": False,
+    "planner_compute_ms_p95": False,
+    "planner_compute_ms_max": False,
+    "safety_interventions": False,
+}
+
+
 def _sha256(path):
     digest = hashlib.sha256()
     with Path(path).open("rb") as handle:
@@ -163,7 +179,9 @@ def main(argv=None):
     if len(profiles) != 1:
         raise ValueError("metric profile changes inside formal results")
     profile = next(iter(profiles))
-    metrics = metrics_for_profile(profile)
+    metrics = dict(metrics_for_profile(profile))
+    if profile == "point_goal":
+        metrics.update(PREDECLARED_POINT_GOAL_METRICS)
     paired, factorial = _analyse(
         rows,
         int(args.bootstrap_samples),

@@ -1,0 +1,7 @@
+include: tracking_corridor_w3p5d_probe_l237.yaml
+
+final_benchmark:
+  status: development
+  preregistration: docs/experiments/post_l217/l238_boundary_buffer_15cm_protocol.md
+  planner_overrides:
+    path_boundary_buffer: 0.15

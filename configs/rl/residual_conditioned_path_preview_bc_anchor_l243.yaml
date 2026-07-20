@@ -1,0 +1,18 @@
+include: residual_conditioned_path_preview_l222.yaml
+
+experiment:
+  name: residual_conditioned_path_preview_bc_anchor_l243
+  output_dir: results/research_platform/rl/l243_path_preview_bc_anchor
+
+rl:
+  policy_id: residual_conditioned_path_preview_bc_anchor_l243
+  training:
+    seed: 20262331
+    validation_seed_base: 20262931
+    bc_anchor:
+      enabled: true
+      dataset_dir: results/research_platform/rl/l243_direct_control_teacher_dataset_v1
+      batch_size: 256
+      mean_weight: 2.0
+      log_std_weight: 0.001
+      target_log_std: -2.0

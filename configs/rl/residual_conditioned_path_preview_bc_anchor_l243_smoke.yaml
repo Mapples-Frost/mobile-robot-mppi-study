@@ -1,0 +1,9 @@
+include: residual_conditioned_path_preview_bc_anchor_l243.yaml
+
+experiment:
+  name: residual_conditioned_path_preview_bc_anchor_l243_smoke
+  output_dir: results/research_platform/rl/l243_path_preview_bc_anchor_smoke
+
+rl:
+  training:
+    actor_update_after: 8

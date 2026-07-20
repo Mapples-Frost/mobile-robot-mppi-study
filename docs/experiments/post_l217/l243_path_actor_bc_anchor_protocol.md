@@ -110,3 +110,14 @@ shards 已在异常前完整落盘，禁止浪费性重跑。修复校验器后�
 `finalize_l243_teacher_dataset.py` 对 90 个 scene×seed 键、shard episode IDs、哈希和
 69D student contract 进行 fail-closed 重建；manifest 同时记录原采集 Git SHA 与最终
 校验 Git SHA。
+
+完整数据集包含 90 个回合，全部零碰撞、零 boundary；Serpentine、Giant-U、
+Nested-U、Cylinder-Spiral 共 60 个成功回合进入 student shards，Opposed-U 与
+Cylinder-Forest 的 30 个失败回合只保留在 privileged audit。train/validation/test
+分别包含 36/12/12 个成功 episode 和 25159/8390/8383 个样本。该结果不做筛选：
+BC anchor 只在有安全成功教师证据的四图提供稳定化，SAC 仍在六图环境交互中学习。
+
+冻结 BC 配置为 batch size 256、mean weight 2.0、log-std weight 0.001、target
+log-std -2.0。完整候选使用 seeds 20262331--33 和 validation bases
+20262931--33；仅 smoke 配置把 actor update 起点改为 8，以在 60 步内验证 BC
+更新链路，完整 30k 配置仍保持 actor update after 3000。

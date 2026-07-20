@@ -152,6 +152,9 @@ class PolylineReference:
         terminal_approach_distance: float = 0.9,
         projection_backtrack_distance: Optional[float] = None,
         projection_forward_distance: Optional[float] = None,
+        corridor_half_width: Optional[float] = None,
+        footprint_radius: Optional[float] = None,
+        corridor_half_width_profile: Sequence[Sequence[float]] = (),
     ):
         self.points = np.asarray(points, dtype=np.float64)
         if self.points.ndim != 2 or self.points.shape[0] < 2 or self.points.shape[1] < 2:
@@ -172,6 +175,16 @@ class PolylineReference:
             if projection_forward_distance is None
             else float(projection_forward_distance)
         )
+        self.corridor_half_width = (
+            None if corridor_half_width is None else float(corridor_half_width)
+        )
+        self.footprint_radius = (
+            None if footprint_radius is None else float(footprint_radius)
+        )
+        self.corridor_half_width_profile = tuple(
+            (float(item[0]), float(item[1]))
+            for item in corridor_half_width_profile
+        )
         if min(self.tolerance, self.lookahead_distance, self.terminal_approach_distance) <= 0.0:
             raise ValueError("polyline tolerances and distances must be positive")
         if (
@@ -181,6 +194,33 @@ class PolylineReference:
             or np.isnan(self.projection_forward_distance)
         ):
             raise ValueError("polyline projection window must be positive")
+        if (self.corridor_half_width is None) != (self.footprint_radius is None):
+            raise ValueError(
+                "polyline corridor width and footprint radius must be configured together"
+            )
+        if self.corridor_half_width is not None and (
+            not np.isfinite(self.corridor_half_width)
+            or not np.isfinite(self.footprint_radius)
+            or self.corridor_half_width <= 0.0
+            or self.footprint_radius < 0.0
+            or self.footprint_radius >= self.corridor_half_width
+        ):
+            raise ValueError("polyline corridor must contain the configured footprint")
+        if self.corridor_half_width_profile:
+            profile = np.asarray(self.corridor_half_width_profile, dtype=np.float64)
+            if (
+                self.corridor_half_width is None
+                or profile.ndim != 2
+                or profile.shape[1] != 2
+                or not np.isfinite(profile).all()
+                or profile[0, 0] != 0.0
+                or profile[-1, 0] != 1.0
+                or np.any(np.diff(profile[:, 0]) <= 0.0)
+                or np.any(profile[:, 1] <= self.footprint_radius)
+            ):
+                raise ValueError(
+                    "corridor width profile must span [0,1] with feasible widths"
+                )
         self.segment_lengths = np.linalg.norm(np.diff(self.points, axis=0), axis=1)
         if np.any(self.segment_lengths <= 1e-9):
             raise ValueError("polyline cannot contain duplicate consecutive points")
@@ -333,6 +373,27 @@ class PolylineReference:
             raise ValueError("polyline preview progress floor is outside the route")
         return self.poses_at_progress(floor + offsets)
 
+    def preview_corridor_half_widths(
+        self,
+        distances: np.ndarray,
+        progress_floor: Optional[float] = None,
+    ) -> np.ndarray:
+        """Return corridor half widths aligned with path-preview samples."""
+
+        if self.corridor_half_width is None:
+            raise ValueError("polyline does not define a tracking corridor")
+        offsets = np.asarray(distances, dtype=np.float64)
+        if offsets.ndim == 0 or not np.isfinite(offsets).all() or np.any(offsets < 0.0):
+            raise ValueError("corridor preview distances must be a non-negative array")
+        floor = self.progress if progress_floor is None else float(progress_floor)
+        if not np.isfinite(floor) or not 0.0 <= floor <= self.total_length:
+            raise ValueError("corridor preview progress floor is outside the route")
+        ratios = np.clip((floor + offsets) / self.total_length, 0.0, 1.0)
+        if not self.corridor_half_width_profile:
+            return np.full(ratios.shape, self.corridor_half_width, dtype=np.float64)
+        profile = np.asarray(self.corridor_half_width_profile, dtype=np.float64)
+        return np.interp(ratios, profile[:, 0], profile[:, 1])
+
     def _target_from_progress(self, progress: float) -> ReferenceTarget:
         target_progress = min(self.total_length, progress + self.lookahead_distance)
         point, theta = self._point_at_progress(target_progress)
@@ -437,6 +498,11 @@ def reference_from_config(config: Mapping[str, object]):
             ),
             projection_forward_distance=config.get(
                 "projection_forward_distance"
+            ),
+            corridor_half_width=config.get("corridor_half_width"),
+            footprint_radius=config.get("footprint_radius"),
+            corridor_half_width_profile=config.get(
+                "corridor_half_width_profile", ()
             ),
         )
     if kind == "time_trajectory":

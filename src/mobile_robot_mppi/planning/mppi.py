@@ -52,6 +52,10 @@ class MppiConfig:
     path_preview_enabled: bool = False
     path_preview_speed_mps: float = 0.45
     path_preview_heading_weight: float = 0.0
+    path_boundary_enabled: bool = False
+    path_boundary_buffer: float = 0.0
+    path_boundary_weight: float = 0.0
+    path_boundary_violation_penalty: float = 0.0
     terminal_velocity_weight: float = 0.0
     terminal_yaw_rate_weight: float = 0.0
     terminal_bearing_weight: float = 0.0
@@ -93,6 +97,18 @@ class MppiConfig:
             ),
             path_preview_heading_weight=float(
                 values.get("path_preview_heading_weight", 0.0)
+            ),
+            path_boundary_enabled=bool(
+                values.get("path_boundary_enabled", False)
+            ),
+            path_boundary_buffer=float(
+                values.get("path_boundary_buffer", 0.0)
+            ),
+            path_boundary_weight=float(
+                values.get("path_boundary_weight", 0.0)
+            ),
+            path_boundary_violation_penalty=float(
+                values.get("path_boundary_violation_penalty", 0.0)
             ),
             terminal_velocity_weight=float(values.get("terminal_velocity_weight", 0.0)),
             terminal_yaw_rate_weight=float(values.get("terminal_yaw_rate_weight", 0.0)),
@@ -156,6 +172,9 @@ class MppiConfig:
             self.goal_terminal_weight,
             self.heading_weight,
             self.path_preview_heading_weight,
+            self.path_boundary_buffer,
+            self.path_boundary_weight,
+            self.path_boundary_violation_penalty,
             self.terminal_velocity_weight,
             self.terminal_yaw_rate_weight,
             self.terminal_bearing_weight,
@@ -173,6 +192,13 @@ class MppiConfig:
             or self.path_preview_speed_mps <= 0.0
         ):
             raise ValueError("path_preview_speed_mps must be finite and positive")
+        if self.path_boundary_enabled and (
+            not self.path_preview_enabled
+            or self.path_boundary_violation_penalty <= 0.0
+        ):
+            raise ValueError(
+                "path boundary enforcement requires path preview and a positive violation penalty"
+            )
         if self.integrator not in ("euler", "rk4"):
             raise ValueError("MPPI integrator must be 'euler' or 'rk4'")
         if not 0.0 <= self.previous_sequence_blend <= 1.0:
@@ -732,6 +758,40 @@ class MppiController:
             )
             costs += self.config.path_preview_heading_weight * np.sum(
                 heading_error ** 2, axis=1
+            )
+        if self.config.path_boundary_enabled:
+            width_preview = getattr(
+                reference, "preview_corridor_half_widths", None
+            )
+            footprint_radius = getattr(reference, "footprint_radius", None)
+            if not callable(width_preview) or footprint_radius is None:
+                raise ValueError(
+                    "path boundary enforcement requires corridor-aware reference"
+                )
+            half_widths = np.asarray(width_preview(offsets), dtype=np.float64)
+            if half_widths.shape != (self.config.horizon + 1,):
+                raise ValueError("corridor preview must have shape [H+1]")
+            tangent = reference_poses[None, :, 2]
+            delta = xy - reference_poses[None, :, :2]
+            lateral_error = (
+                -np.sin(tangent) * delta[..., 0]
+                + np.cos(tangent) * delta[..., 1]
+            )
+            margins = (
+                half_widths[None, :]
+                - float(footprint_radius)
+                - np.abs(lateral_error)
+            )
+            buffered_excess = np.maximum(
+                0.0, self.config.path_boundary_buffer - margins[:, 1:]
+            )
+            costs += self.config.path_boundary_weight * np.sum(
+                buffered_excess ** 2, axis=1
+            )
+            boundary_violation = np.any(margins[:, 1:] < 0.0, axis=1)
+            costs += (
+                self.config.path_boundary_violation_penalty
+                * boundary_violation.astype(np.float64)
             )
         if target.heading_tolerance is not None and "theta" in self.state_spec.names:
             theta = trajectories[:, -1, self.state_spec.index("theta")]

@@ -1482,7 +1482,27 @@ class SACTrainer:
                 and self.agent.observation_dim - source_observation_dim
                 == int(self.encoder_config.residual_context_dimension)
             )
-            if not valid_context_extension:
+            source_without_preview = source_encoder.to_dict()
+            target_without_preview = self.encoder_config.to_dict()
+            source_without_preview.update({
+                "include_path_preview": False,
+                "path_preview_distances": tuple(
+                    self.encoder_config.path_preview_distances
+                ),
+                "path_preview_scale": float(
+                    self.encoder_config.path_preview_scale
+                ),
+            })
+            target_without_preview["include_path_preview"] = False
+            valid_preview_extension = bool(
+                observation_extended
+                and not source_encoder.include_path_preview
+                and self.encoder_config.include_path_preview
+                and source_without_preview == target_without_preview
+                and self.agent.observation_dim - source_observation_dim
+                == 2 * len(self.encoder_config.path_preview_distances)
+            )
+            if not (valid_context_extension or valid_preview_extension):
                 mismatches.append("encoder_config")
         # Canonicalize older checkpoints through the current defaults.  This
         # accepts fields that were absent before the dynamic subgoal decoder
@@ -1615,7 +1635,7 @@ class SACTrainer:
                 )
             self.agent.actor.load_state_dict(copied_state)
             initialization_mode = (
-                "actor_zero_context_extension_and_normalizer_migration"
+                "actor_zero_feature_extension_and_normalizer_migration"
             )
         else:
             self.agent.actor.load_state_dict(source_agent["actor"])

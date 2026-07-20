@@ -49,6 +49,9 @@ class MppiConfig:
     goal_running_weight: float = 1.0
     goal_terminal_weight: float = 12.0
     heading_weight: float = 0.2
+    path_preview_enabled: bool = False
+    path_preview_speed_mps: float = 0.45
+    path_preview_heading_weight: float = 0.0
     terminal_velocity_weight: float = 0.0
     terminal_yaw_rate_weight: float = 0.0
     terminal_bearing_weight: float = 0.0
@@ -84,6 +87,13 @@ class MppiConfig:
             goal_running_weight=float(values.get("goal_running_weight", 1.0)),
             goal_terminal_weight=float(values.get("goal_terminal_weight", 12.0)),
             heading_weight=float(values.get("heading_weight", 0.2)),
+            path_preview_enabled=bool(values.get("path_preview_enabled", False)),
+            path_preview_speed_mps=float(
+                values.get("path_preview_speed_mps", 0.45)
+            ),
+            path_preview_heading_weight=float(
+                values.get("path_preview_heading_weight", 0.0)
+            ),
             terminal_velocity_weight=float(values.get("terminal_velocity_weight", 0.0)),
             terminal_yaw_rate_weight=float(values.get("terminal_yaw_rate_weight", 0.0)),
             terminal_bearing_weight=float(values.get("terminal_bearing_weight", 0.0)),
@@ -145,6 +155,7 @@ class MppiConfig:
             self.goal_running_weight,
             self.goal_terminal_weight,
             self.heading_weight,
+            self.path_preview_heading_weight,
             self.terminal_velocity_weight,
             self.terminal_yaw_rate_weight,
             self.terminal_bearing_weight,
@@ -157,6 +168,11 @@ class MppiConfig:
         )
         if not np.isfinite(numeric_costs).all() or any(value < 0.0 for value in numeric_costs):
             raise ValueError("MPPI cost and geometry parameters must be finite and non-negative")
+        if (
+            not np.isfinite(self.path_preview_speed_mps)
+            or self.path_preview_speed_mps <= 0.0
+        ):
+            raise ValueError("path_preview_speed_mps must be finite and positive")
         if self.integrator not in ("euler", "rk4"):
             raise ValueError("MPPI integrator must be 'euler' or 'rk4'")
         if not 0.0 <= self.previous_sequence_blend <= 1.0:
@@ -549,6 +565,7 @@ class MppiController:
         controls: np.ndarray,
         target,
         obstacles: Iterable[Sequence[float]] = (),
+        reference=None,
     ) -> SequenceEvaluation:
         """Roll out and score a fixed, bounded batch without sampling it.
 
@@ -559,7 +576,9 @@ class MppiController:
 
         values = self._validate_evaluation_controls(controls)
         trajectories = self.rollout(initial_state, values)
-        costs = self.cost_trajectories(trajectories, values, target, obstacles)
+        costs = self.cost_trajectories(
+            trajectories, values, target, obstacles, reference=reference
+        )
         return SequenceEvaluation(trajectories=trajectories, costs=costs)
 
     def cost_trajectories(
@@ -568,6 +587,7 @@ class MppiController:
         controls: np.ndarray,
         target,
         obstacles: Iterable[Sequence[float]] = (),
+        reference=None,
     ) -> np.ndarray:
         """Apply the controller's base cost contract to fixed trajectories."""
 
@@ -586,7 +606,9 @@ class MppiController:
         if not np.isfinite(paths).all():
             raise ValueError("evaluation trajectories must be finite")
         costs = np.asarray(
-            self._cost(paths, values, target, tuple(obstacles)),
+            self._cost(
+                paths, values, target, tuple(obstacles), reference=reference
+            ),
             dtype=np.float64,
         )
         if costs.shape != (values.shape[0],) or not np.isfinite(costs).all():
@@ -674,13 +696,43 @@ class MppiController:
         preceding[:, 1:, :] = values[:, :-1, :]
         return fraction * preceding + (1.0 - fraction) * values
 
-    def _cost(self, trajectories, controls, target, obstacles):
+    def _cost(self, trajectories, controls, target, obstacles, reference=None):
         xy_indices = self.state_spec.position_indices
         xy = trajectories[..., list(xy_indices)]
         target_xy = np.asarray((target.pose.x, target.pose.y), dtype=np.float64)
-        distance_sq = np.sum((xy - target_xy) ** 2, axis=-1)
+        preview = getattr(reference, "preview_poses", None)
+        path_preview_active = bool(
+            self.config.path_preview_enabled and callable(preview)
+        )
+        if path_preview_active:
+            initial_offset = float(getattr(reference, "lookahead_distance", 0.0))
+            offsets = initial_offset + np.arange(
+                self.config.horizon + 1, dtype=np.float64
+            ) * self.config.dt * self.config.path_preview_speed_mps
+            reference_poses = np.asarray(preview(offsets), dtype=np.float64)
+            if reference_poses.shape != (self.config.horizon + 1, 3):
+                raise ValueError("path preview must have shape [H+1,3]")
+            distance_sq = np.sum(
+                (xy - reference_poses[None, :, :2]) ** 2, axis=-1
+            )
+        else:
+            reference_poses = None
+            distance_sq = np.sum((xy - target_xy) ** 2, axis=-1)
         costs = self.config.goal_running_weight * np.sum(distance_sq[:, 1:-1], axis=1)
         costs += self.config.goal_terminal_weight * distance_sq[:, -1]
+        if (
+            path_preview_active
+            and self.config.path_preview_heading_weight > 0.0
+            and "theta" in self.state_spec.names
+        ):
+            theta = trajectories[:, 1:, self.state_spec.index("theta")]
+            heading_error = np.arctan2(
+                np.sin(theta - reference_poses[None, 1:, 2]),
+                np.cos(theta - reference_poses[None, 1:, 2]),
+            )
+            costs += self.config.path_preview_heading_weight * np.sum(
+                heading_error ** 2, axis=1
+            )
         if target.heading_tolerance is not None and "theta" in self.state_spec.names:
             theta = trajectories[:, -1, self.state_spec.index("theta")]
             error = np.arctan2(np.sin(theta - target.pose.theta), np.cos(theta - target.pose.theta))
@@ -734,7 +786,7 @@ class MppiController:
         self, state, prior, target, obstacles, rng, observation=None,
         reference=None,
     ):
-        del observation, reference
+        del observation
         profiling = self.config.profile_components
         solve_started = time.perf_counter() if profiling else None
         stage_started = solve_started
@@ -820,7 +872,9 @@ class MppiController:
         mark("sampling")
         trajectories = self.rollout(state, samples)
         mark("batch_rollout")
-        costs = self._cost(trajectories, samples, target, obstacles)
+        costs = self._cost(
+            trajectories, samples, target, obstacles, reference=reference
+        )
         mark("cost")
         correction = self._importance_sampling_cost(prior.mean, perturbations, covariance)
         costs = costs + correction

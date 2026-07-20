@@ -5,7 +5,7 @@ This keeps the policy input compatible with the existing robot sensing chain.
 """
 
 from dataclasses import asdict, dataclass
-from typing import Any, Mapping, Optional
+from typing import Any, Mapping, Optional, Tuple
 
 import numpy as np
 
@@ -21,6 +21,9 @@ class ObservationEncoderConfig:
     include_previous_action: bool = True
     include_safety_state: bool = True
     include_path_context: bool = False
+    include_path_preview: bool = False
+    path_preview_distances: Tuple[float, ...] = (0.4, 0.8, 1.2, 1.6)
+    path_preview_scale: float = 2.0
     include_residual_context: bool = False
     residual_context_dimension: int = 7
     path_cross_track_scale: float = 1.0
@@ -41,6 +44,13 @@ class ObservationEncoderConfig:
             include_previous_action=bool(values.get("include_previous_action", True)),
             include_safety_state=bool(values.get("include_safety_state", True)),
             include_path_context=bool(values.get("include_path_context", False)),
+            include_path_preview=bool(values.get("include_path_preview", False)),
+            path_preview_distances=tuple(
+                float(value) for value in values.get(
+                    "path_preview_distances", (0.4, 0.8, 1.2, 1.6)
+                )
+            ),
+            path_preview_scale=float(values.get("path_preview_scale", 2.0)),
             include_residual_context=bool(
                 values.get("include_residual_context", False)
             ),
@@ -63,6 +73,7 @@ class ObservationEncoderConfig:
             self.path_cross_track_scale,
             self.path_curvature_scale,
             self.path_remaining_scale,
+            self.path_preview_scale,
         )
         numeric = np.asarray(positive, dtype=np.float64)
         if not np.isfinite(numeric).all() or np.any(numeric <= 0.0):
@@ -71,6 +82,17 @@ class ObservationEncoderConfig:
             raise ValueError("RL observation history_frames must be positive")
         if self.residual_context_dimension <= 0:
             raise ValueError("residual_context_dimension must be positive")
+        preview = np.asarray(self.path_preview_distances, dtype=np.float64)
+        if (
+            preview.ndim != 1
+            or (self.include_path_preview and preview.size == 0)
+            or not np.isfinite(preview).all()
+            or np.any(preview <= 0.0)
+            or (preview.size > 1 and np.any(np.diff(preview) <= 0.0))
+        ):
+            raise ValueError(
+                "path_preview_distances must be finite, positive, and increasing"
+            )
 
     def to_dict(self):
         return asdict(self)
@@ -111,6 +133,8 @@ class ObservationEncoder:
             size += 6
         if self.config.include_residual_context:
             size += self.config.residual_context_dimension
+        if self.config.include_path_preview:
+            size += 2 * len(self.config.path_preview_distances)
         return size
 
     @property
@@ -156,6 +180,7 @@ class ObservationEncoder:
         scan_encoding=None,
         path_context=None,
         residual_context=None,
+        path_preview=None,
     ):
         pose = observation.pose
         dx = float(target.pose.x - pose.x)
@@ -234,6 +259,20 @@ class ObservationEncoder:
             # Append after every legacy feature so an expanded Actor can copy
             # the old input layer verbatim and initialize only new columns.
             features.extend(residual_context.tolist())
+        if self.config.include_path_preview:
+            if path_preview is None:
+                path_preview = np.zeros(
+                    2 * len(self.config.path_preview_distances),
+                    dtype=np.float64,
+                )
+            path_preview = np.asarray(path_preview, dtype=np.float64).reshape(-1)
+            expected = 2 * len(self.config.path_preview_distances)
+            if path_preview.shape != (expected,) or not np.isfinite(path_preview).all():
+                raise ValueError("path preview must match the configured distances")
+            # Appended after every legacy and residual-context feature so old
+            # Actor input columns can be migrated exactly and new columns can
+            # be initialized independently.
+            features.extend(path_preview.tolist())
         frame = np.asarray(features, dtype=np.float32)
         if frame.shape != (self.frame_dimension,) or not np.isfinite(frame).all():
             raise FloatingPointError("RL observation encoder produced invalid features")
@@ -249,6 +288,7 @@ class ObservationEncoder:
         scan_encoding=None,
         path_context=None,
         residual_context=None,
+        path_preview=None,
     ):
         """Encode against an explicit target, optionally without state mutation.
 
@@ -265,6 +305,7 @@ class ObservationEncoder:
             scan_encoding=scan_encoding,
             path_context=path_context,
             residual_context=residual_context,
+            path_preview=path_preview,
         )
         history_frames = self.config.history_frames
         if update_history:
@@ -295,6 +336,7 @@ class ObservationEncoder:
         safety_override=False,
         path_context_features=None,
         residual_context_features=None,
+        path_preview_features=None,
     ):
         """Vectorize history-free hypothetical policy observations.
 
@@ -428,6 +470,23 @@ class ObservationEncoder:
                     "batched residual context has an invalid shape or value"
                 )
             blocks.append(residual_context_features)
+        if self.config.include_path_preview:
+            expected = 2 * len(self.config.path_preview_distances)
+            if path_preview_features is None:
+                path_preview_features = np.zeros(
+                    (batch, expected), dtype=np.float64
+                )
+            path_preview_features = np.asarray(
+                path_preview_features, dtype=np.float64
+            )
+            if (
+                path_preview_features.shape != (batch, expected)
+                or not np.isfinite(path_preview_features).all()
+            ):
+                raise ValueError(
+                    "batched path preview has an invalid shape or value"
+                )
+            blocks.append(path_preview_features)
         encoded = np.concatenate(blocks, axis=1).astype(
             np.float32, copy=False
         )
@@ -456,6 +515,11 @@ class ObservationEncoder:
             observation.pose.as_array(),
             target=target,
         )
+        path_preview = self.path_preview(
+            reference,
+            observation.pose.as_array(),
+            progress_floor=getattr(reference, "progress", None),
+        )
         return self.encode_to_target(
             observation,
             target,
@@ -464,7 +528,45 @@ class ObservationEncoder:
             update_history=True,
             path_context=path_context,
             residual_context=residual_context,
+            path_preview=path_preview,
         )
+
+    def path_preview(self, reference, pose, progress_floor=None):
+        """Encode future route points in the current body frame.
+
+        The route is an externally supplied task reference.  No obstacle truth
+        is queried, so the same feature is available from a global path on the
+        real robot.
+        """
+
+        if not self.config.include_path_preview:
+            return None
+        pose = np.asarray(pose, dtype=np.float64).reshape(-1)
+        if pose.shape != (3,) or not np.isfinite(pose).all():
+            raise ValueError("path preview pose must be finite [x,y,theta]")
+        preview = getattr(reference, "preview_poses", None)
+        project = getattr(reference, "project", None)
+        expected = 2 * len(self.config.path_preview_distances)
+        if not callable(preview) or not callable(project):
+            return np.zeros(expected, dtype=np.float32)
+        projection = project(pose[:2], minimum_progress=progress_floor)
+        values = np.asarray(preview(
+            np.asarray(self.config.path_preview_distances, dtype=np.float64),
+            progress_floor=projection.progress,
+        ), dtype=np.float64)
+        if values.shape != (len(self.config.path_preview_distances), 3):
+            raise ValueError("reference returned an invalid path preview")
+        delta = values[:, :2] - pose[None, :2]
+        cosine, sine = float(np.cos(pose[2])), float(np.sin(pose[2]))
+        body_x = cosine * delta[:, 0] + sine * delta[:, 1]
+        body_y = -sine * delta[:, 0] + cosine * delta[:, 1]
+        result = np.column_stack((body_x, body_y)).reshape(-1)
+        result = np.clip(
+            result / float(self.config.path_preview_scale), -1.0, 1.0
+        ).astype(np.float32)
+        if result.shape != (expected,) or not np.isfinite(result).all():
+            raise FloatingPointError("path preview encoder produced NaN or Inf")
+        return result
 
     def path_context(
         self,

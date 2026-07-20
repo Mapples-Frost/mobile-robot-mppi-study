@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from mobile_robot_mppi.core.references import PointGoal, WaypointReference
+from mobile_robot_mppi.core.references import PointGoal, PolylineReference, WaypointReference
 from mobile_robot_mppi.core.spaces import ActionSpec, body_velocity_action, dynamic_unicycle_state, unicycle_state
 from mobile_robot_mppi.core.types import (
     ControlCommand,
@@ -189,6 +189,69 @@ def test_terminal_bearing_cost_prefers_heading_toward_goal():
 
     np.testing.assert_allclose(costs[0], 0.0, atol=1e-12)
     np.testing.assert_allclose(costs[1], 2.0 * (np.pi / 2.0) ** 2)
+
+
+def test_path_preview_cost_tracks_future_polyline_poses_not_one_static_target():
+    action = body_velocity_action((0.0, 0.7), 1.0)
+    config = MppiConfig(
+        horizon=2,
+        num_samples=2,
+        dt=1.0,
+        noise_sigma=(0.2, 0.3),
+        goal_running_weight=1.0,
+        goal_terminal_weight=5.0,
+        path_preview_enabled=True,
+        path_preview_speed_mps=1.0,
+        control_weight=0.0,
+        control_rate_weight=0.0,
+    )
+    controller = MppiController(
+        DynamicUnicyclePrediction(), dynamic_unicycle_state(), action, config
+    )
+    reference = PolylineReference(
+        ((0.0, 0.0), (1.0, 0.0), (1.0, 1.0)), lookahead_distance=0.2
+    )
+    target = reference.target_at(0.0, np.zeros(5))
+    trajectories = np.zeros((2, 3, 5), dtype=np.float64)
+    # Candidate 0 follows the time-indexed future route. Candidate 1 remains
+    # at the old single lookahead point and would win under the legacy cost.
+    trajectories[0, 1, :2] = (1.0, 0.2)
+    trajectories[0, 2, :2] = (1.0, 1.0)
+    trajectories[1, 1:, :2] = (0.2, 0.0)
+    controls = np.zeros((2, 2, 2), dtype=np.float64)
+
+    costs = controller._cost(
+        trajectories, controls, target, (), reference=reference
+    )
+
+    assert costs[0] < costs[1]
+
+
+def test_path_preview_disabled_preserves_legacy_static_target_cost():
+    action = body_velocity_action((0.0, 0.7), 1.0)
+    config = MppiConfig(
+        horizon=2,
+        num_samples=1,
+        dt=0.1,
+        noise_sigma=(0.2, 0.3),
+        path_preview_enabled=False,
+        control_weight=0.0,
+        control_rate_weight=0.0,
+    )
+    controller = MppiController(
+        DynamicUnicyclePrediction(), dynamic_unicycle_state(), action, config
+    )
+    reference = PolylineReference(((0.0, 0.0), (1.0, 0.0)))
+    target = reference.target_at(0.0, np.zeros(5))
+    trajectories = np.zeros((1, 3, 5), dtype=np.float64)
+    controls = np.zeros((1, 2, 2), dtype=np.float64)
+
+    with_reference = controller._cost(
+        trajectories, controls, target, (), reference=reference
+    )
+    legacy = controller._cost(trajectories, controls, target, ())
+
+    np.testing.assert_array_equal(with_reference, legacy)
 
 
 def test_mppi_reset_accepts_episode_seed_and_preserves_legacy_default():

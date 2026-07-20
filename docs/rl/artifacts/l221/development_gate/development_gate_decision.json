@@ -1,0 +1,17 @@
+{
+  "criteria": {
+    "actor_support_and_proposal_authority_nonzero": true,
+    "full_better_than_simple_under_equal_budget": true,
+    "full_noninferior_to_icode_on_safety_success_completion": true,
+    "improved_previously_failed_maps": [],
+    "no_scene_collision_worsening_vs_icode_and_old_full": true,
+    "no_systematic_regression_on_previously_successful_maps": true,
+    "previously_failed_map_improved": false,
+    "previously_successful_map_successes_new": 9,
+    "previously_successful_map_successes_old": 9,
+    "regressed_previously_successful_map_count": 0
+  },
+  "formal_claim_allowed": false,
+  "reason": "Three reused development seed clusters; sealed confirmation is required.",
+  "status": "development_gate_failed"
+}

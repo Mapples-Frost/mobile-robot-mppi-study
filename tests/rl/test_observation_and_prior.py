@@ -242,6 +242,54 @@ def test_path_context_batched_encoding_matches_scalar_layout():
     np.testing.assert_allclose(batched[0], scalar, rtol=0.0, atol=1e-7)
 
 
+def test_path_preview_features_match_scalar_and_batched_actor_layout():
+    action_spec = body_velocity_action((0.0, 0.4), 1.0)
+    encoder = ObservationEncoder(
+        {
+            "lidar_sectors": 5,
+            "include_path_context": True,
+            "include_path_preview": True,
+            "path_preview_distances": [0.4, 0.8],
+            "path_preview_scale": 2.0,
+        },
+        action_spec,
+    )
+    observation = _observation()
+    reference = PolylineReference(
+        ((0.0, 0.0), (1.0, 0.0), (1.0, 1.0)), lookahead_distance=0.3
+    )
+    pose = observation.pose.as_array()
+    target = reference.preview_target_at(0.0, pose, progress_floor=0.0)
+    context = encoder.path_context(reference, pose, progress_floor=0.0)
+    preview = encoder.path_preview(reference, pose, progress_floor=0.0)
+    previous = np.asarray((0.2, -0.1))
+    scan_encoding = encoder._scan_features(observation.scan)
+    scalar = encoder.encode_to_target(
+        observation,
+        target,
+        previous_action=previous,
+        update_history=False,
+        scan_encoding=scan_encoding,
+        path_context=context,
+        path_preview=preview,
+    )
+    batched = encoder.encode_kinematic_batch(
+        pose[None, :],
+        np.asarray(((observation.twist.v, observation.twist.omega),)),
+        np.asarray(((target.pose.x, target.pose.y),)),
+        previous[None, :],
+        scan_encoding,
+        path_context_features=context[None, :],
+        path_preview_features=preview[None, :],
+    )
+
+    assert preview.shape == (4,)
+    # The fixture faces +y, so future world +x points appear on the right
+    # (negative body-y) after the 2.0 m normalization.
+    np.testing.assert_allclose(preview, (0.0, -0.2, 0.0, -0.4), atol=1e-7)
+    np.testing.assert_allclose(batched[0], scalar, rtol=0.0, atol=1e-7)
+
+
 def test_hypothetical_path_actor_batch_does_not_advance_live_reference():
     class DummyAgent:
         action_dim = 2

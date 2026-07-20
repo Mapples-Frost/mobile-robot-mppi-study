@@ -1,0 +1,4 @@
+scene,config,robot_collision_radius_m,scan_guard_near_body_radius_m,reference_length_m,physical_minimum_clearance_m,physical_minimum_x,physical_minimum_y,physical_reference_clear,guard_minimum_clearance_m,guard_minimum_x,guard_minimum_y,guard_reference_clear
+l218_serpentine,/home/mapples/projects/mobile-robot-mppi-study/configs/research/mujoco_l218_serpentine_polyline.yaml,0.25,0.38,25.69346402545321,0.09999999999999964,5.35,1.12,1,-0.03000000000000036,5.35,1.12,0
+l218_nested_u,/home/mapples/projects/mobile-robot-mppi-study/configs/research/mujoco_l218_nested_u_polyline.yaml,0.25,0.38,8.051219330881974,0.09999999999999964,2.01,4.85,1,-0.03000000000000036,2.01,4.85,0
+l218_cylinder_spiral,/home/mapples/projects/mobile-robot-mppi-study/configs/research/mujoco_l218_cylinder_spiral_polyline.yaml,0.25,0.38,6.055511309495189,0.10452068369574008,2.8441176470588236,4.141176470588236,1,-0.025479316304259925,2.8441176470588236,4.141176470588236,0

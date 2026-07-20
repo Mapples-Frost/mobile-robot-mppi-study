@@ -287,6 +287,17 @@ class PaperDirectControlPolicy:
             if self.encoder.config.include_path_context
             else None
         )
+        path_previews = (
+            np.empty(
+                (
+                    states.shape[0],
+                    2 * len(self.encoder.config.path_preview_distances),
+                ),
+                dtype=np.float64,
+            )
+            if self.encoder.config.include_path_preview
+            else None
+        )
         preview_target = getattr(reference, "preview_target_at", None)
         progress_floor = getattr(reference, "progress", None)
         for index, (state, offset) in enumerate(zip(states, offsets)):
@@ -309,6 +320,12 @@ class PaperDirectControlPolicy:
                     target=target,
                     progress_floor=progress_floor,
                 )
+            if path_previews is not None:
+                path_previews[index] = self.encoder.path_preview(
+                    reference,
+                    pose,
+                    progress_floor=progress_floor,
+                )
         raw = self.encoder.encode_kinematic_batch(
             poses,
             twists,
@@ -322,6 +339,7 @@ class PaperDirectControlPolicy:
                 if self.residual_context is None
                 else self.residual_context.features(states, previous_controls)
             ),
+            path_preview_features=path_previews,
         )
         normalized = self.normalizer.normalize(raw).astype(
             np.float32, copy=False

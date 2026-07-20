@@ -1,0 +1,23 @@
+include: mujoco_l218_serpentine_polyline.yaml
+
+# Same MuJoCo obstacles as L218. Only the external task reference is revised
+# to remain at least 0.03 m outside the unchanged 0.38 m scan_guard envelope.
+experiment:
+  name: mujoco_l222_serpentine_safe_polyline
+  max_steps: 1400
+
+task:
+  points:
+    - [0.65, 0.65]
+    - [5.45, 0.65]
+    - [5.45, 1.70]
+    - [1.05, 1.90]
+    - [1.05, 3.10]
+    - [5.45, 3.20]
+    - [5.45, 4.40]
+    - [1.05, 4.50]
+    - [1.05, 5.70]
+    - [5.85, 5.85]
+
+scene:
+  name: l222_serpentine_safe

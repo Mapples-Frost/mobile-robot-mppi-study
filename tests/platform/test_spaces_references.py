@@ -124,3 +124,23 @@ def test_polyline_projection_rejects_invalid_inputs():
         reference.project(np.asarray((np.nan, 0.0)))
     with pytest.raises(ValueError, match="outside"):
         reference.project(np.asarray((0.0, 0.0)), minimum_progress=2.0)
+
+
+def test_polyline_preview_poses_are_vectorized_clipped_and_side_effect_free():
+    reference = PolylineReference(
+        ((0.0, 0.0), (1.0, 0.0), (1.0, 1.0)),
+        lookahead_distance=0.3,
+    )
+    reference.target_at(0.0, np.asarray((0.4, 0.0, 0.0)))
+    progress_before = reference.progress
+
+    poses = reference.preview_poses(
+        np.asarray((0.0, 0.4, 2.0)), progress_floor=progress_before
+    )
+
+    assert poses.shape == (3, 3)
+    np.testing.assert_allclose(poses[0, :2], (0.4, 0.0))
+    np.testing.assert_allclose(poses[1, :2], (0.8, 0.0))
+    np.testing.assert_allclose(poses[2, :2], (1.0, 1.0))
+    assert poses[2, 2] == pytest.approx(np.pi / 2.0)
+    assert reference.progress == pytest.approx(progress_before)

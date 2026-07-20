@@ -97,13 +97,14 @@ def _git_output(*args):
     return subprocess.check_output(("git",) + args, cwd=str(ROOT), text=True).strip()
 
 
-def _validate_new(run_dirs, seeds):
+def _validate_new(run_dirs, seeds, expected_git_sha=EXPECTED_GIT_SHA,
+                  expected_actor_sha=EXPECTED_ACTOR_SHA):
     rows, artifacts, observed = [], [], set()
     for run_dir in run_dirs:
         provenance = json.loads((run_dir / "provenance.json").read_text())
-        if provenance["git_sha"] != EXPECTED_GIT_SHA:
+        if provenance["git_sha"] != expected_git_sha:
             raise ValueError("unexpected top-level Git SHA: %s" % run_dir)
-        if provenance["coupled_actor_checkpoint"]["sha256"] != EXPECTED_ACTOR_SHA:
+        if provenance["coupled_actor_checkpoint"]["sha256"] != expected_actor_sha:
             raise ValueError("unexpected L219 Actor: %s" % run_dir)
         schedule = json.loads((run_dir / "schedule.json").read_text())
         if len(schedule) != len(ARMS):
@@ -147,7 +148,7 @@ def _validate_new(run_dirs, seeds):
             if metadata.get("prediction_mode") != "icode_residual":
                 raise ValueError("L219 arm bypassed ICODE: %s" % episode)
             run_provenance = json.loads(paths["provenance.json"].read_text())
-            if run_provenance["git_sha"] != EXPECTED_GIT_SHA:
+            if run_provenance["git_sha"] != expected_git_sha:
                 raise ValueError("run-level Git SHA changed: %s" % episode)
             if row["benchmark_arm"] != "icode_mppi":
                 if not metadata.get("rl_checkpoint", "").endswith("step_000010000.pt"):
@@ -321,17 +322,30 @@ def main(argv=None):
     parser.add_argument("--output-dir", required=True)
     parser.add_argument("--bootstrap-samples", type=int, default=10000)
     parser.add_argument("--bootstrap-seed", type=int, default=20260720)
+    parser.add_argument(
+        "--new-run-glob",
+        default=(
+            "results/research_platform/rl/"
+            "l218_dev_screen_l219_actor_s9100*_*_seed9100*"
+        ),
+        help="Repository-relative glob for the 18 new development run directories.",
+    )
+    parser.add_argument("--expected-git-sha", default=EXPECTED_GIT_SHA)
+    parser.add_argument("--expected-actor-sha", default=EXPECTED_ACTOR_SHA)
     args = parser.parse_args(argv)
     seeds = (91001, 91002, 91003)
-    new_dirs = sorted(path for path in ROOT.glob(
-        "results/research_platform/rl/l218_dev_screen_l219_actor_s9100*_*_seed9100*"
-    ) if path.is_dir())
+    new_dirs = sorted(path for path in ROOT.glob(args.new_run_glob) if path.is_dir())
     old_dirs = sorted(path for path in ROOT.glob(
         "results/research_platform/rl/l218_dev_screen_coupled_gate_v2_s*_seed*"
     ) if path.is_dir())
     if len(new_dirs) != 18 or len(old_dirs) != 18:
         raise ValueError("expected 18 new and 18 old map directories")
-    new_rows, artifacts = _validate_new(new_dirs, seeds)
+    new_rows, artifacts = _validate_new(
+        new_dirs,
+        seeds,
+        expected_git_sha=args.expected_git_sha,
+        expected_actor_sha=args.expected_actor_sha,
+    )
     old_rows = _load_old_full(old_dirs, seeds)
     all_rows = new_rows + old_rows
     comparisons = {
@@ -366,8 +380,8 @@ def main(argv=None):
         "qualification": True,
         "plant_backend": "mujoco_diff_drive",
         "mujoco_version": "3.2.3",
-        "run_git_sha": EXPECTED_GIT_SHA,
-        "actor_checkpoint_sha256": EXPECTED_ACTOR_SHA,
+        "run_git_sha": args.expected_git_sha,
+        "actor_checkpoint_sha256": args.expected_actor_sha,
         "analysis_git_head": _git_output("rev-parse", "HEAD"),
         "bootstrap_samples": args.bootstrap_samples,
         "bootstrap_seed": args.bootstrap_seed,

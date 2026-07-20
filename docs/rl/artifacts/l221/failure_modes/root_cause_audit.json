@@ -1,0 +1,27 @@
+{
+  "all_reference_paths_physically_collision_free": true,
+  "all_reference_paths_scan_guard_feasible": false,
+  "configuration_contract": {
+    "control_dt_s": 0.1,
+    "horizon_steps": 36,
+    "iterations": 1,
+    "max_steps_observed": 900,
+    "near_body_stop_radius_m": 0.38,
+    "obstacle_influence_m": 0.7,
+    "prediction_horizon_s": 3.6,
+    "rollouts_per_decision": 30
+  },
+  "diagnosis_scope": "Offline geometry and executed-trajectory audit only; static obstacle truth was never supplied to an online planner.",
+  "formal_claim_allowed": false,
+  "independent_seeds": [
+    91001,
+    91002,
+    91003
+  ],
+  "independent_unit": "seed",
+  "repeated_strata": [
+    "scene"
+  ],
+  "run_git_sha": "4a19aeeeec89e469587dfc734641585f5b927e80",
+  "status": "complete_development_diagnostic"
+}

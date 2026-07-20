@@ -1,0 +1,25 @@
+include: expanded_navigation_counterfactual_gate_l221.yaml
+
+# L222 platform-development manifest. All benchmark arms receive the same
+# safety-feasible reference and finite-horizon path-preview cost. The learned
+# Actor remains unchanged in the first engineering probe.
+final_benchmark:
+  status: development
+  preregistration: docs/rl/231_l222_safe_reference_path_preview_protocol_2026-07-20.md
+  metric_profile: path_tracking
+  scene_configs:
+    - configs/research/mujoco_l222_serpentine_safe_polyline.yaml
+    - configs/research/mujoco_l218_giant_u_polyline.yaml
+    - configs/research/mujoco_l218_opposed_u_polyline.yaml
+    - configs/research/mujoco_l222_nested_u_safe_polyline.yaml
+    - configs/research/mujoco_l218_cylinder_forest_polyline.yaml
+    - configs/research/mujoco_l222_cylinder_spiral_safe_polyline.yaml
+  physics_domains: [nominal_seen]
+  total_rollouts: 30
+  iterations: 1
+  max_steps: 1400
+  development_seeds: [91001, 91002, 91003]
+  planner_overrides:
+    path_preview_enabled: true
+    path_preview_speed_mps: 0.45
+    path_preview_heading_weight: 0.25

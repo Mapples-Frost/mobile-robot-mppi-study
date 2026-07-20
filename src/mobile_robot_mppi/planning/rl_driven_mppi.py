@@ -385,7 +385,6 @@ class RLDrivenMppiController(MppiController):
         self, state, prior, target, obstacles, rng, observation=None,
         reference=None,
     ):
-        del reference
         if observation is None:
             raise ValueError("RL-Driven MPPI requires the current observation")
         means, proposal_covariances = self._proposal_means(prior)
@@ -434,7 +433,13 @@ class RLDrivenMppiController(MppiController):
             for name, count in zip(self.SOURCE_NAMES, counts):
                 total_counts[name] += int(count)
             trajectories = self.rollout(state, samples)
-            costs = self._cost(trajectories, samples, target, obstacles)
+            costs = self._cost(
+                trajectories,
+                samples,
+                target,
+                obstacles,
+                reference=reference,
+            )
             terminal_cost, terminal_diagnostics = self._terminal_value_cost(
                 trajectories, samples, observation, target
             )
@@ -1604,7 +1609,11 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
             )
             trajectories = self.rollout(state, samples)
             running = self._cost(
-                trajectories, samples, target, obstacles
+                trajectories,
+                samples,
+                target,
+                obstacles,
+                reference=reference,
             )
             terminal, terminal_diagnostics = self._paper_terminal_cost(
                 trajectories, samples, observation, reference

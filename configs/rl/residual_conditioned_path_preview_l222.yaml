@@ -1,0 +1,38 @@
+include: residual_conditioned_expanded_maps_l219.yaml
+
+experiment:
+  name: residual_conditioned_path_preview_l222
+  output_dir: results/research_platform/rl/residual_conditioned_path_preview_l222
+
+planner:
+  path_preview_enabled: true
+  path_preview_speed_mps: 0.45
+  path_preview_heading_weight: 0.25
+
+rl:
+  policy_id: residual_conditioned_path_preview_l222
+  observation:
+    include_path_preview: true
+    path_preview_distances: [0.4, 0.8, 1.2, 1.6]
+    path_preview_scale: 2.0
+  training:
+    allow_observation_extension_initialization: true
+    total_steps: 30000
+    checkpoint_interval: 5000
+    evaluation_interval: 5000
+    seed: 20262221
+    validation_seed_base: 20262821
+    scene_configs:
+      - configs/research/mujoco_l222_serpentine_safe_polyline.yaml
+      - configs/research/mujoco_l218_giant_u_polyline.yaml
+      - configs/research/mujoco_l218_opposed_u_polyline.yaml
+      - configs/research/mujoco_l222_nested_u_safe_polyline.yaml
+      - configs/research/mujoco_l218_cylinder_forest_polyline.yaml
+      - configs/research/mujoco_l222_cylinder_spiral_safe_polyline.yaml
+    validation_scene_configs:
+      - configs/research/mujoco_l222_serpentine_safe_polyline.yaml
+      - configs/research/mujoco_l218_giant_u_polyline.yaml
+      - configs/research/mujoco_l218_opposed_u_polyline.yaml
+      - configs/research/mujoco_l222_nested_u_safe_polyline.yaml
+      - configs/research/mujoco_l218_cylinder_forest_polyline.yaml
+      - configs/research/mujoco_l222_cylinder_spiral_safe_polyline.yaml

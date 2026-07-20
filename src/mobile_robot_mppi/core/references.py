@@ -268,6 +268,46 @@ class PolylineReference:
         point, theta, _ = self._geometry_at_progress(progress)
         return point, theta
 
+    def poses_at_progress(self, progress_values: np.ndarray) -> np.ndarray:
+        """Return finite ``[x, y, tangent]`` poses at route arc lengths.
+
+        The operation is side-effect free and clips arc lengths to the route.
+        It is the shared task representation used by MPPI path-preview costs
+        and learned-policy preview features; it never exposes obstacle truth.
+        """
+
+        values = np.asarray(progress_values, dtype=np.float64)
+        if values.ndim == 0 or not np.isfinite(values).all():
+            raise ValueError("polyline progress samples must be a finite array")
+        flat = np.clip(values.reshape(-1), 0.0, self.total_length)
+        indices = np.searchsorted(self.cumulative, flat, side="right") - 1
+        indices = np.clip(indices, 0, len(self.segment_lengths) - 1)
+        fractions = (
+            (flat - self.cumulative[indices]) / self.segment_lengths[indices]
+        )
+        vectors = self.points[indices + 1] - self.points[indices]
+        points = self.points[indices] + fractions[:, None] * vectors
+        headings = np.arctan2(vectors[:, 1], vectors[:, 0])
+        result = np.column_stack((points, headings)).reshape(values.shape + (3,))
+        if not np.isfinite(result).all():
+            raise FloatingPointError("polyline pose preview produced NaN or Inf")
+        return result
+
+    def preview_poses(
+        self,
+        distances: np.ndarray,
+        progress_floor: Optional[float] = None,
+    ) -> np.ndarray:
+        """Sample route poses at non-negative distances beyond live progress."""
+
+        offsets = np.asarray(distances, dtype=np.float64)
+        if offsets.ndim == 0 or not np.isfinite(offsets).all() or np.any(offsets < 0.0):
+            raise ValueError("polyline preview distances must be a non-negative array")
+        floor = self.progress if progress_floor is None else float(progress_floor)
+        if not np.isfinite(floor) or not 0.0 <= floor <= self.total_length:
+            raise ValueError("polyline preview progress floor is outside the route")
+        return self.poses_at_progress(floor + offsets)
+
     def _target_from_progress(self, progress: float) -> ReferenceTarget:
         target_progress = min(self.total_length, progress + self.lookahead_distance)
         point, theta = self._point_at_progress(target_progress)

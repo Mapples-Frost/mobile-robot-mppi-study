@@ -1,0 +1,20 @@
+include: mujoco_l218_cylinder_spiral_polyline.yaml
+
+# Same cylinder rings. The route uses the lower outer opening, the annular
+# corridor, and the upper inner opening while respecting scan_guard inflation.
+experiment:
+  name: mujoco_l222_cylinder_spiral_safe_polyline
+  max_steps: 1400
+
+task:
+  points:
+    - [3.25, 0.55]
+    - [3.25, 1.50]
+    - [2.05, 2.05]
+    - [1.55, 3.25]
+    - [2.05, 4.45]
+    - [3.25, 4.70]
+    - [3.25, 3.25]
+
+scene:
+  name: l222_cylinder_spiral_safe

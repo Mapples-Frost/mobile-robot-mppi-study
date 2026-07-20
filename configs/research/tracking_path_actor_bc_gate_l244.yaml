@@ -1,0 +1,22 @@
+include: tracking_corridor_w4p0d_probe_l239.yaml
+
+final_benchmark:
+  status: development
+  preregistration: docs/experiments/post_l217/l244_path_actor_bc_tracking_gate_protocol.md
+
+  # Frozen exclusively by the L243 validation-only lexicographic selector.
+  # L234/L239/L242 closed-loop outcomes were not used to choose this model.
+  coupled_actor_checkpoint: results/research_platform/rl/l243_path_preview_bc_anchor_seed20262332_30k_v1/checkpoints/step_000030000.pt
+  coupled_rl_overrides:
+    policy_id: path_residual_conditioned_bc_anchor_l243_selected
+    device: cpu
+    torch_num_threads: 1
+    residual_context:
+      enabled: true
+      state_names: [v, omega]
+      residual_scales: [0.2438328117, 0.6734842658]
+      innovation_scales: [0.25, 0.60]
+      signed_clip: 5.0
+      disagreement_clip: 5.0
+
+  development_seeds: [923301001]

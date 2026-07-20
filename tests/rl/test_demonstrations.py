@@ -520,3 +520,15 @@ def test_ground_truth_teacher_pose_does_not_replace_student_observation():
     assert all(row["teacher_pose_source"] == "ground_truth" for row in audit)
     assert audit[0]["teacher_x_before"] == audit[0]["truth_x_before"]
     assert audit[0]["perceived_x_before"] == 100.0
+
+
+def test_v3_manifest_counts_each_scene_seed_episode(tmp_path):
+    manifest = _dataset(tmp_path)
+    manifest["config"]["scene_configs"] = ["scene_a.yaml", "scene_b.yaml"]
+    manifest["counts"]["requested_episodes"] = 6
+    manifest["splits"]["train"]["episodes"] = 2
+    manifest["splits"]["validation"]["episodes"] = 2
+    manifest["splits"]["test"]["episodes"] = 2
+    manifest["counts"]["successful_episodes"] = 6
+
+    write_demonstration_manifest(tmp_path, manifest)

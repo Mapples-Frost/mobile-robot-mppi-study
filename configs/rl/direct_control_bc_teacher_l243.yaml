@@ -15,6 +15,7 @@ teacher:
   action_mode: direct_control
 
 collection:
+  collection_git_sha: e41f4ab4234664d1201a8dc62bb17a8468c4d6e2
   output_dir: results/research_platform/rl/l243_direct_control_teacher_dataset_v1
   scene_configs:
     - configs/research/mujoco_l222_serpentine_safe_polyline.yaml

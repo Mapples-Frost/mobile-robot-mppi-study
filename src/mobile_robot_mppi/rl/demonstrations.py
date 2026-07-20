@@ -407,9 +407,20 @@ def _validate_manifest(manifest, allow_legacy_v1=False):
             if first.intersection(second):
                 raise ValueError("episode seeds leak across demonstration splits")
     counts = manifest["counts"]
-    if "requested_episodes" in counts and int(counts["requested_episodes"]) != sum(
-        len(values) for values in planned_sets
-    ):
+    planned_episode_total = sum(len(values) for values in planned_sets)
+    if schema_version >= 3:
+        scene_configs = manifest["config"].get("scene_configs")
+        if scene_configs is not None:
+            if not isinstance(scene_configs, list) or not scene_configs:
+                raise ValueError("demonstration scene_configs must be non-empty")
+            if len(scene_configs) != len(
+                set(str(value) for value in scene_configs)
+            ):
+                raise ValueError("demonstration scene_configs must be unique")
+            planned_episode_total *= len(scene_configs)
+    if "requested_episodes" in counts and int(
+        counts["requested_episodes"]
+    ) != planned_episode_total:
         raise ValueError("requested episode count disagrees with split_plan")
     if "successful_episodes" in counts and int(
         counts["successful_episodes"]

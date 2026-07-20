@@ -103,3 +103,10 @@ manifest 与逐步 audit 必须记录 `teacher_pose_source=ground_truth`。
 L222 地图、seeds 20262401--20262415、split seed 20260721、lookahead 0.35 m、
 1500 步上限均在运行前冻结。采集器不允许空 split；任一 split 没有成功教师回合即
 fail closed。
+
+首次 90 回合采集在写最终 manifest 时暴露了 v3 多场景计数校验缺陷：旧校验器只
+计 15 个 split seeds，未乘六个 scene。全部 MuJoCo 轨迹、resolved config 和 split
+shards 已在异常前完整落盘，禁止浪费性重跑。修复校验器后，由
+`finalize_l243_teacher_dataset.py` 对 90 个 scene×seed 键、shard episode IDs、哈希和
+69D student contract 进行 fail-closed 重建；manifest 同时记录原采集 Git SHA 与最终
+校验 Git SHA。

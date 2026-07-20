@@ -1,0 +1,14 @@
+include: expanded_navigation_actor_competence_l220.yaml
+
+# L221 candidate B: use the same ICODE rollout model to compare the learned
+# Actor proposal with the trusted warm start before granting proposal authority.
+# The authority continuously bounds the Actor as a residual around the baseline.
+final_benchmark:
+  status: development
+  preregistration: docs/rl/227_l221_counterfactual_proposal_gate_protocol_2026-07-20.md
+  paper_rl_driven_overrides:
+    counterfactual_proposal_gate_enabled: true
+    counterfactual_progress_soft_m: 0.0
+    counterfactual_progress_hard_m: -0.15
+    counterfactual_cross_track_weight: 0.50
+

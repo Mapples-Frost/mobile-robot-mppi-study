@@ -1,6 +1,10 @@
 import numpy as np
 
-from mobile_robot_mppi.core.references import PointGoal, ReferenceTarget
+from mobile_robot_mppi.core.references import (
+    PointGoal,
+    PolylineReference,
+    ReferenceTarget,
+)
 from mobile_robot_mppi.core.spaces import (
     body_velocity_action,
     dynamic_unicycle_state,
@@ -586,6 +590,49 @@ def test_completion_handover_attenuates_guidance_and_terminal_value():
     assert result.diagnostics["paper_guided_unique_sequences"] == 0
     assert result.diagnostics["terminal_value_completion_authority"] == 0.0
     assert result.diagnostics["terminal_value_completion_handover_enabled"]
+
+
+def test_counterfactual_proposal_gate_bounds_route_regressing_actor():
+    base = _reliable_controller(ReliabilityDirectPolicy(0.0))
+    config = dict(base.paper_rl_driven_config.__dict__)
+    config.update({
+        "counterfactual_proposal_gate_enabled": True,
+        "counterfactual_progress_soft_m": 0.0,
+        "counterfactual_progress_hard_m": -0.15,
+        "counterfactual_cross_track_weight": 0.5,
+    })
+    controller = PaperRLDrivenMppiController(
+        base.dynamics,
+        base.state_spec,
+        base.action_spec,
+        base.config,
+        sampling_prior=ReliabilityDirectPolicy(0.0),
+        paper_rl_driven_config=config,
+    )
+    reference = PolylineReference(((0.0, 0.0), (2.0, 0.0)))
+    baseline = np.tile((0.5, 0.0), (controller.config.horizon, 1))
+    actor_terminal = np.asarray((0.10, 0.40, 0.0, 0.0, 0.0))
+
+    authority, diagnostics = controller._counterfactual_proposal_gate(
+        np.zeros(5), actor_terminal, baseline, reference
+    )
+
+    assert authority == 0.0
+    assert diagnostics["reliability_counterfactual_enabled"]
+    assert diagnostics["reliability_counterfactual_advantage"] < -0.15
+    assert (
+        diagnostics["reliability_counterfactual_baseline_progress"]
+        > diagnostics["reliability_counterfactual_actor_progress"]
+    )
+
+
+def test_counterfactual_proposal_gate_is_polyline_only():
+    controller = _reliable_controller(ReliabilityDirectPolicy(0.0))
+    authority, diagnostics = controller._counterfactual_proposal_gate(
+        np.zeros(5), np.zeros(5), np.zeros((5, 2)), PointGoal(1.0, 0.0)
+    )
+    assert authority == 1.0
+    assert not diagnostics["reliability_counterfactual_enabled"]
 
 
 def test_paper_diagnostics_preserve_reference_phase():

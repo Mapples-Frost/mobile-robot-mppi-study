@@ -270,6 +270,31 @@ class EpisodeMetrics:
                     "reliability_proposal_fallback_fraction", 0.0
                 )
             ),
+            "reliability_counterfactual_enabled": float(
+                planner_diagnostics.get(
+                    "reliability_counterfactual_enabled", False
+                )
+            ),
+            "reliability_counterfactual_authority": float(
+                planner_diagnostics.get(
+                    "reliability_counterfactual_authority", 1.0
+                )
+            ),
+            "reliability_counterfactual_advantage": float(
+                planner_diagnostics.get(
+                    "reliability_counterfactual_advantage", 0.0
+                )
+            ),
+            "reliability_counterfactual_actor_progress": float(
+                planner_diagnostics.get(
+                    "reliability_counterfactual_actor_progress", 0.0
+                )
+            ),
+            "reliability_counterfactual_baseline_progress": float(
+                planner_diagnostics.get(
+                    "reliability_counterfactual_baseline_progress", 0.0
+                )
+            ),
             "reliability_dynamics_confidence": float(
                 planner_diagnostics.get("dynamics_confidence", 1.0)
             ),
@@ -954,6 +979,46 @@ class EpisodeMetrics:
                 np.mean([
                     row.get(
                         "reliability_proposal_fallback_fraction", 0.0
+                    )
+                    for row in values
+                ])
+            ),
+            "reliability_counterfactual_enabled_fraction": float(
+                np.mean([
+                    row.get("reliability_counterfactual_enabled", 0.0)
+                    for row in values
+                ])
+            ),
+            "reliability_counterfactual_authority_mean": float(
+                np.mean([
+                    row.get("reliability_counterfactual_authority", 1.0)
+                    for row in values
+                ])
+            ),
+            "reliability_counterfactual_authority_min": float(
+                np.min([
+                    row.get("reliability_counterfactual_authority", 1.0)
+                    for row in values
+                ])
+            ),
+            "reliability_counterfactual_advantage_mean": float(
+                np.mean([
+                    row.get("reliability_counterfactual_advantage", 0.0)
+                    for row in values
+                ])
+            ),
+            "reliability_counterfactual_actor_progress_mean": float(
+                np.mean([
+                    row.get(
+                        "reliability_counterfactual_actor_progress", 0.0
+                    )
+                    for row in values
+                ])
+            ),
+            "reliability_counterfactual_baseline_progress_mean": float(
+                np.mean([
+                    row.get(
+                        "reliability_counterfactual_baseline_progress", 0.0
                     )
                     for row in values
                 ])

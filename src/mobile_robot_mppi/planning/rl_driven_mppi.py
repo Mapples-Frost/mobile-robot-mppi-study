@@ -593,6 +593,10 @@ class PaperRLDrivenMppiConfig:
     terminal_guided_fraction_floor: float = 0.0
     completion_handover_full_fallback_distance: float = 0.0
     completion_handover_full_rl_distance: float = 0.0
+    counterfactual_proposal_gate_enabled: bool = False
+    counterfactual_progress_soft_m: float = 0.0
+    counterfactual_progress_hard_m: float = -0.15
+    counterfactual_cross_track_weight: float = 0.50
 
     @classmethod
     def from_mapping(cls, values: Mapping[str, Any]):
@@ -614,6 +618,9 @@ class PaperRLDrivenMppiConfig:
             self.terminal_guided_fraction_floor,
             self.completion_handover_full_fallback_distance,
             self.completion_handover_full_rl_distance,
+            self.counterfactual_progress_soft_m,
+            self.counterfactual_progress_hard_m,
+            self.counterfactual_cross_track_weight,
         ), dtype=np.float64)
         if not np.isfinite(values).all():
             raise ValueError("paper RL-Driven MPPI settings must be finite")
@@ -663,6 +670,17 @@ class PaperRLDrivenMppiConfig:
             )
         if self.terminal_critic_source not in ("online", "target"):
             raise ValueError("terminal_critic_source must be online or target")
+        if (
+            self.counterfactual_progress_hard_m
+            >= self.counterfactual_progress_soft_m
+        ):
+            raise ValueError(
+                "counterfactual progress hard threshold must be below soft"
+            )
+        if self.counterfactual_cross_track_weight < 0.0:
+            raise ValueError(
+                "counterfactual cross-track weight must be non-negative"
+            )
         HybridSamplingReliability(self.reliability or {})
         ConservativeTerminalReliability(self.conservative_terminal or {})
         guided = int(round(float(samples) * self.guided_fraction))
@@ -911,6 +929,7 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
             "residual_authority": np.asarray(
                 residual_authority_rows, dtype=np.float64
             ),
+            "terminal_state": states[0].copy(),
         }
 
     def _guided_rollouts(
@@ -1091,7 +1110,90 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
             "residual_authority": np.asarray(
                 residual_authority_rows, dtype=np.float64
             ),
+            "terminal_state": states[0].copy(),
         }
+
+    def _counterfactual_proposal_gate(
+        self,
+        state,
+        actor_terminal_state,
+        baseline_mean,
+        reference,
+    ):
+        """Compare Actor and trusted-baseline path progress under ICODE.
+
+        This is a causal model-based authority signal.  Both alternatives are
+        rolled out from the same current state with the same declared planner
+        dynamics.  The public polyline projection is read-only; no simulator
+        obstacle truth or future execution state is consulted.
+        """
+
+        cfg = self.paper_rl_driven_config
+        project = getattr(reference, "project", None)
+        enabled = bool(
+            cfg.counterfactual_proposal_gate_enabled and callable(project)
+        )
+        diagnostics = {
+            "reliability_counterfactual_enabled": enabled,
+            "reliability_counterfactual_authority": 1.0,
+            "reliability_counterfactual_actor_progress": 0.0,
+            "reliability_counterfactual_baseline_progress": 0.0,
+            "reliability_counterfactual_actor_cross_track": 0.0,
+            "reliability_counterfactual_baseline_cross_track": 0.0,
+            "reliability_counterfactual_advantage": 0.0,
+        }
+        if not enabled:
+            return 1.0, diagnostics
+        baseline = np.asarray(baseline_mean, dtype=np.float64)
+        if baseline.shape != (
+            self.config.horizon,
+            self.action_spec.dimension,
+        ):
+            raise ValueError("counterfactual baseline sequence is invalid")
+        baseline_terminal = self.rollout(
+            np.asarray(state, dtype=np.float64), baseline[None, :, :]
+        )[0, -1]
+        actor_terminal = np.asarray(
+            actor_terminal_state, dtype=np.float64
+        ).reshape(-1)
+        position_indices = list(self.state_spec.position_indices)
+        if actor_terminal.shape != (self.state_spec.dimension,):
+            raise ValueError("counterfactual Actor terminal state is invalid")
+        progress_floor = getattr(reference, "progress", None)
+        actor_projection = project(
+            actor_terminal[position_indices],
+            minimum_progress=progress_floor,
+        )
+        baseline_projection = project(
+            baseline_terminal[position_indices],
+            minimum_progress=progress_floor,
+        )
+        actor_progress = float(actor_projection.progress)
+        baseline_progress = float(baseline_projection.progress)
+        actor_cross_track = float(actor_projection.cross_track_error)
+        baseline_cross_track = float(baseline_projection.cross_track_error)
+        advantage = (
+            actor_progress
+            - baseline_progress
+            - float(cfg.counterfactual_cross_track_weight)
+            * max(0.0, actor_cross_track - baseline_cross_track)
+        )
+        soft = float(cfg.counterfactual_progress_soft_m)
+        hard = float(cfg.counterfactual_progress_hard_m)
+        authority = float(np.clip(
+            (advantage - hard) / (soft - hard), 0.0, 1.0
+        ))
+        if advantage >= soft:
+            authority = 1.0
+        diagnostics.update({
+            "reliability_counterfactual_authority": authority,
+            "reliability_counterfactual_actor_progress": actor_progress,
+            "reliability_counterfactual_baseline_progress": baseline_progress,
+            "reliability_counterfactual_actor_cross_track": actor_cross_track,
+            "reliability_counterfactual_baseline_cross_track": baseline_cross_track,
+            "reliability_counterfactual_advantage": float(advantage),
+        })
+        return authority, diagnostics
 
     @staticmethod
     def _residual_policy_context_diagnostics(context):
@@ -1407,6 +1509,30 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
         baseline_mean = np.asarray(prior.mean, dtype=np.float64)
         if baseline_mean.shape != actor_mean.shape:
             raise ValueError("baseline and Actor proposal means disagree")
+        counterfactual_authority, counterfactual_diagnostics = (
+            self._counterfactual_proposal_gate(
+                state,
+                reliability_context["terminal_state"],
+                baseline_mean,
+                reference,
+            )
+        )
+        reliability_diagnostics.update(counterfactual_diagnostics)
+        if guided.size and counterfactual_authority < 1.0:
+            # Preserve the fixed candidate count while turning the learned
+            # proposal into a bounded residual around the trusted baseline.
+            # This is the same causal authority used for the sampling centre;
+            # it does not add privileged information or extra rollouts.
+            guided = (
+                counterfactual_authority * guided
+                + (1.0 - counterfactual_authority)
+                * baseline_mean[None, :, :]
+            )
+            guided = np.clip(
+                guided,
+                self.action_spec.lower[None, None, :],
+                self.action_spec.upper[None, None, :],
+            )
         # HSS authority must govern the proposal centre as well as the share
         # of guided samples. Otherwise an OOD Actor can retain complete
         # control of the Gaussian sampling mean after HSS assigns it zero
@@ -1418,7 +1544,9 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
             else 1.0
         )
         proposal_authority = float(np.clip(
-            handover_authority * proposal_reliability_authority,
+            handover_authority
+            * proposal_reliability_authority
+            * counterfactual_authority,
             0.0,
             1.0,
         ))

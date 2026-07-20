@@ -1,0 +1,21 @@
+include: complex_navigation_development_l216_policy_rescue.yaml
+
+# Formal complex-navigation confirmation.  These seeds were selected before
+# execution as the first unused contiguous ten-seed interval found by the
+# repository-wide seed audit described in the linked preregistration.
+final_benchmark:
+  status: preregistered
+  preregistration: docs/rl/217_complex_navigation_sealed_preregistration_2026-07-20.md
+  bootstrap_samples: 10000
+  schedule_seed: 20260724
+  sealed_seeds:
+    - 78006
+    - 78007
+    - 78008
+    - 78009
+    - 78010
+    - 78011
+    - 78012
+    - 78013
+    - 78014
+    - 78015

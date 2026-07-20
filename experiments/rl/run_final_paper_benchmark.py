@@ -310,6 +310,55 @@ def _resolve_manifest_path(value):
     return path if path.is_absolute() else (ROOT / path).resolve()
 
 
+def resolve_benchmark_seeds(
+    cli_seeds,
+    frozen,
+    qualification,
+    shard_index=0,
+    shard_count=1,
+):
+    """Bind formal seeds to the preregistration and derive safe shards.
+
+    Qualification runs intentionally accept an explicit development subset.
+    Formal runs do not: their complete seed list lives in the committed
+    manifest, and an optional parallel shard is a deterministic strided view
+    of that list.  This prevents a formal invocation from silently replacing
+    or cherry-picking sealed seeds.
+    """
+
+    shard_index = int(shard_index)
+    shard_count = int(shard_count)
+    if shard_count <= 0:
+        raise ValueError("formal shard count must be positive")
+    if shard_index < 0 or shard_index >= shard_count:
+        raise ValueError(
+            "formal shard index must satisfy 0 <= index < count"
+        )
+    provided = tuple(parse_ints(cli_seeds)) if str(cli_seeds).strip() else ()
+    if qualification:
+        if shard_count != 1 or shard_index != 0:
+            raise ValueError("qualification runs do not use formal shards")
+        if not provided:
+            raise ValueError("qualification run requires explicit seeds")
+        return provided, provided
+
+    sealed = tuple(int(seed) for seed in frozen.get(
+        "sealed_seeds", frozen.get("formal_seeds", ())
+    ))
+    if not sealed:
+        raise ValueError("formal manifest must define sealed_seeds")
+    if len(set(sealed)) != len(sealed):
+        raise ValueError("formal manifest sealed_seeds must be unique")
+    selected = sealed[shard_index::shard_count]
+    if not selected:
+        raise ValueError("formal shard selects no sealed seeds")
+    if provided and provided != selected:
+        raise ValueError(
+            "formal CLI seeds do not match the preregistered shard"
+        )
+    return selected, sealed
+
+
 def _manifest_paths(values):
     return [str(_resolve_manifest_path(value)) for value in values]
 
@@ -344,7 +393,16 @@ def main(argv=None):
     parser = argparse.ArgumentParser()
     parser.add_argument("--manifest", required=True)
     parser.add_argument("--output-dir", required=True)
-    parser.add_argument("--seeds", required=True)
+    parser.add_argument(
+        "--seeds",
+        default="",
+        help=(
+            "development seeds for --qualification; formal seeds are "
+            "loaded from the preregistered manifest"
+        ),
+    )
+    parser.add_argument("--formal-shard-index", type=int, default=0)
+    parser.add_argument("--formal-shard-count", type=int, default=1)
     parser.add_argument("--bootstrap-samples", type=int, default=5000)
     parser.add_argument("--qualification", action="store_true")
     parser.add_argument(
@@ -371,6 +429,15 @@ def main(argv=None):
     frozen = dict(manifest["final_benchmark"])
     if not args.qualification and frozen.get("status") != "preregistered":
         raise ValueError("formal benchmark requires status=preregistered")
+    if (
+        not args.qualification
+        and frozen.get("bootstrap_samples") is not None
+        and int(args.bootstrap_samples)
+        != int(frozen["bootstrap_samples"])
+    ):
+        raise ValueError(
+            "formal bootstrap count must match the preregistered manifest"
+        )
     if not args.qualification and any((
         args.arms, args.scene_configs, args.physics_domains
     )):
@@ -403,7 +470,13 @@ def main(argv=None):
         _resolve_manifest_path(frozen["value_calibration_gate_evidence"]),
     )
     base = load_yaml(base_path)
-    seeds = parse_ints(args.seeds)
+    seeds, sealed_seeds = resolve_benchmark_seeds(
+        args.seeds,
+        frozen,
+        bool(args.qualification),
+        args.formal_shard_index,
+        args.formal_shard_count,
+    )
     selected_domains = tuple(
         item.strip()
         for item in args.physics_domains.split(",")
@@ -431,13 +504,18 @@ def main(argv=None):
                 "path_tracking profile requires polyline scenes: %s"
                 % ", ".join(invalid)
             )
-    schedule = final_schedule(
-        seeds,
+    full_schedule = final_schedule(
+        sealed_seeds,
         domains,
         scenes,
         int(frozen["schedule_seed"]),
         selected_arms,
     )
+    selected_seed_set = set(seeds)
+    schedule = [
+        job for job in full_schedule
+        if int(job["seed"]) in selected_seed_set
+    ]
     output = Path(args.output_dir).resolve()
     output.mkdir(parents=True, exist_ok=True)
     scene_by_name = {item["name"]: item for item in scenes}
@@ -558,6 +636,11 @@ def main(argv=None):
             "sha256": value_reliability["gate_evidence_sha256"],
         },
         "seeds": list(seeds),
+        "sealed_seeds": list(sealed_seeds),
+        "formal_shard": {
+            "index": int(args.formal_shard_index),
+            "count": int(args.formal_shard_count),
+        },
         "independent_unit": "seed",
         "repeated_strata": ["scene", "physics_domain"],
         "arms": list(selected_arms),

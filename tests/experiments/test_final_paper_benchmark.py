@@ -13,6 +13,7 @@ from experiments.rl.run_final_paper_benchmark import (
     load_benchmark_manifest,
     _load_reliability_with_gate,
     _comparison,
+    resolve_benchmark_seeds,
 )
 from experiments.rl.analyze_final_paper_benchmark import (
     aggregate,
@@ -239,6 +240,74 @@ def test_development_manifest_inheritance_is_recursive():
     assert completion["completion_handover_full_fallback_distance"] == 0.0
     assert completion["sensor_overrides"]["pose_source"] == "ground_truth"
     assert rescue["reliability_overrides"] == {
+        "dynamics_routing_mode": "policy_rescue",
+        "policy_rescue_floor": 0.5,
+    }
+
+
+def test_formal_seed_shards_are_derived_from_preregistered_seeds():
+    frozen = {"sealed_seeds": [11, 12, 13, 14, 15]}
+    selected, sealed = resolve_benchmark_seeds(
+        "", frozen, False, shard_index=1, shard_count=2
+    )
+    assert sealed == (11, 12, 13, 14, 15)
+    assert selected == (12, 14)
+
+    legacy, _ = resolve_benchmark_seeds(
+        "", {"formal_seeds": [21, 22]}, False
+    )
+    assert legacy == (21, 22)
+
+    selected, _ = resolve_benchmark_seeds(
+        "12,14", frozen, False, shard_index=1, shard_count=2
+    )
+    assert selected == (12, 14)
+
+
+def test_formal_seed_override_and_invalid_shards_are_rejected():
+    frozen = {"sealed_seeds": [11, 12, 13, 14]}
+    for cli, index, count in (
+        ("11,12", 0, 1),
+        ("", 2, 2),
+        ("", 0, 0),
+    ):
+        try:
+            resolve_benchmark_seeds(
+                cli, frozen, False, shard_index=index, shard_count=count
+            )
+        except ValueError:
+            pass
+        else:
+            raise AssertionError("invalid formal seed selection accepted")
+
+
+def test_qualification_requires_explicit_unsharded_seeds():
+    selected, sealed = resolve_benchmark_seeds(
+        "48,49", {}, True
+    )
+    assert selected == sealed == (48, 49)
+    for cli, index, count in (("", 0, 1), ("48", 1, 2)):
+        try:
+            resolve_benchmark_seeds(
+                cli, {}, True, shard_index=index, shard_count=count
+            )
+        except ValueError:
+            pass
+        else:
+            raise AssertionError("invalid qualification seeds accepted")
+
+
+def test_l217_manifest_freezes_unseen_seeds_and_policy_rescue():
+    root = Path(__file__).resolve().parents[2]
+    frozen = load_benchmark_manifest(
+        root / "configs/research/complex_navigation_sealed_l217.yaml"
+    )["final_benchmark"]
+    assert frozen["status"] == "preregistered"
+    assert frozen["sealed_seeds"] == list(range(78006, 78016))
+    assert frozen["bootstrap_samples"] == 10000
+    assert frozen["completion_handover_full_fallback_distance"] == 0.0
+    assert frozen["completion_handover_full_rl_distance"] == 0.0
+    assert frozen["reliability_overrides"] == {
         "dynamics_routing_mode": "policy_rescue",
         "policy_rescue_floor": 0.5,
     }

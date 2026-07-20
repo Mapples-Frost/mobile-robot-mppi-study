@@ -1,0 +1,18 @@
+include: mujoco_l218_nested_u_polyline.yaml
+
+# Same nested-U MuJoCo geometry. The reference explicitly traverses the left
+# safety-feasible corridor and enters the inner U from its open side.
+experiment:
+  name: mujoco_l222_nested_u_safe_polyline
+  max_steps: 1400
+
+task:
+  points:
+    - [3.25, 0.55]
+    - [1.50, 1.20]
+    - [1.50, 5.05]
+    - [3.25, 5.05]
+    - [3.25, 3.10]
+
+scene:
+  name: l222_nested_u_safe

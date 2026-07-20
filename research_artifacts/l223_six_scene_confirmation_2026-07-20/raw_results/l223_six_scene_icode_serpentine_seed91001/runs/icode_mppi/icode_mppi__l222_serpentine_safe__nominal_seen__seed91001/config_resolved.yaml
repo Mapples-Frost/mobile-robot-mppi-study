@@ -1,0 +1,256 @@
+_config_path: /home/mapples/projects/mobile-robot-mppi-study/configs/research/mujoco_l222_serpentine_safe_polyline.yaml
+action_space:
+  lower:
+  - 0.0
+  - -1.25
+  names:
+  - v_cmd
+  - omega_cmd
+  rate_limits:
+  - 1.0
+  - 3.0
+  upper:
+  - 0.65
+  - 1.25
+experiment:
+  control_dt: 0.1
+  final_benchmark_arm: icode_mppi
+  gate1_method: icode_mppi
+  initial_state:
+  - 0.65
+  - 0.65
+  - 0.0215
+  - 0.0
+  - 0.0
+  max_steps: 1400
+  name: icode_mppi__l222_serpentine_safe__nominal_seen__seed91001
+  paper_iterations: 1
+  physics_domain: nominal_seen
+  physics_domain_role: seen
+  rollout_budget_per_decision: 30
+  seed: 91001
+  terminate_on_collision: true
+memory:
+  enable: false
+perception:
+  local_obstacle_layer:
+    downsample_step: 1
+    fallback_downsample_step: 3
+    max_obstacle_count: 120
+    obstacle_radius: 0.08
+    planner_max_obstacles: 32
+  scan_guard:
+    front_angle_deg: 35.0
+    front_slow_distance: 0.85
+    front_slow_min_scale: 0.45
+    front_soft_block_distance: 0.48
+    front_soft_block_max_speed: 0.06
+    front_stop_distance: 0.34
+    hard_stop_distance: 0.34
+    near_body_stop_radius: 0.32
+    side_angle_deg: 125.0
+    side_stop_distance: 0.32
+planner:
+  checkpoints:
+  - /home/mapples/projects/mobile-robot-mppi-study/results/research_platform/l57_icode_high_dynamic_h36_seed20261201_v1/best.pt
+  - /home/mapples/projects/mobile-robot-mppi-study/results/research_platform/l57_icode_high_dynamic_h36_seed20261202_v1/best.pt
+  - /home/mapples/projects/mobile-robot-mppi-study/results/research_platform/l57_icode_high_dynamic_h36_seed20261203_v1/best.pt
+  collision_penalty: 10000.0
+  device: auto
+  goal_running_weight: 1.0
+  goal_terminal_weight: 25.0
+  horizon: 36
+  importance_sampling_correction: true
+  integrator: rk4
+  noise_sigma:
+  - 0.18
+  - 0.65
+  num_samples: 30
+  obstacle_influence: 0.7
+  obstacle_weight: 70.0
+  optimizer: standard
+  path_preview_enabled: true
+  path_preview_heading_weight: 0.25
+  path_preview_speed_mps: 0.45
+  prediction_mode: icode_residual
+  previous_sequence_blend: 0.2
+  prior_terminal_max_speed: 0.12
+  prior_translation_heading_gate_rad: 0.4
+  prior_translation_heading_gate_terminal_only: true
+  prior_v_gain: 1.1
+  prior_yaw_gain: 1.5
+  residual_ensemble:
+    disagreement_scales:
+    - 0.0192860868
+    - 0.0061503653
+    - 0.0276655704
+    - 0.2438328117
+    - 0.6734842658
+    innovation_decay: 0.9
+    innovation_scales:
+    - 0.25
+    - 0.25
+    - 0.35
+    - 0.25
+    - 0.6
+    support_hard_z: 7.0
+    support_soft_z: 3.0
+  residual_state_canonicalization:
+    enabled: true
+    state_names:
+    - x
+    - y
+    values:
+    - 3.245218277
+    - 0.3136115074
+  residual_torch_num_threads: 1
+  residual_torchscript: true
+  robot_radius: 0.25
+  safety_recovery_prefix_steps: 8
+  sampling_prior: goal_warm_start
+  temperature: 2.5
+  terminal_alignment_yaw_gain: 0.8
+  terminal_control_radius: 0.8
+  terminal_translation_heading_gate_rad: 0.4
+  terminal_translation_speed_limit: 0.12
+  terminal_velocity_weight: 20.0
+  terminal_yaw_rate_weight: 8.0
+plant:
+  actuator:
+    command_delay: 0.04
+    deadband: 0.0
+    integral_limit: 2.5
+    ki: 1.5
+    kp: 0.55
+    profile: torque_pi
+    torque_limit: 2.2
+    torque_slew_rate: 50.0
+  backend: mujoco_diff_drive
+  contact:
+    caster_friction:
+    - 0.05
+    - 0.001
+    - 0.0001
+    floor_friction:
+    - 1.0
+    - 0.005
+    - 0.0005
+    solimp: 0.95 0.99 0.001
+    solref: 0.01 1
+    wheel_friction:
+    - 1.2
+    - 0.01
+    - 0.002
+  nominal_velocity_time_constant: 0.18
+  nominal_yaw_time_constant: 0.12
+  physics:
+    integrator: implicitfast
+    iterations: 60
+    solver: Newton
+    timestep: 0.002
+    tolerance: 1.0e-10
+  robot:
+    chassis_half_size:
+    - 0.19
+    - 0.14
+    - 0.045
+    chassis_inertia:
+    - 0.08
+    - 0.12
+    - 0.16
+    chassis_mass: 9.0
+    collision_radius: 0.25
+    track_width: 0.32
+    wheel_mass: 0.32
+    wheel_radius: 0.08
+    wheel_width: 0.035
+rl:
+  enabled: false
+scene:
+  field_size:
+  - 6.5
+  - 6.5
+  name: l222_serpentine_safe
+  obstacles:
+  - height: 0.32
+    position:
+    - 2.625
+    - 1.2
+    size:
+    - 2.375
+    - 0.08
+    type: box
+  - height: 0.32
+    position:
+    - 3.875
+    - 2.5
+    size:
+    - 2.375
+    - 0.08
+    type: box
+  - height: 0.32
+    position:
+    - 2.625
+    - 3.8
+    size:
+    - 2.375
+    - 0.08
+    type: box
+  - height: 0.32
+    position:
+    - 3.875
+    - 5.1
+    size:
+    - 2.375
+    - 0.08
+    type: box
+sensors:
+  latency: 0.0
+  lidar_angle_max: 3.141592653589793
+  lidar_angle_min: -3.141592653589793
+  lidar_beams: 181
+  lidar_dropout_probability: 0.0
+  lidar_noise_std: 0.002
+  lidar_range_max: 4.0
+  lidar_range_min: 0.05
+  odom_noise_std:
+  - 0.0005
+  - 0.0005
+  - 0.0005
+  pose_source: ground_truth
+  twist_noise_std:
+  - 0.001
+  - 0.002
+  twist_source: ground_truth
+state_space:
+  preset: dynamic_unicycle_5
+task:
+  completion_corridor: 0.75
+  lookahead_distance: 0.45
+  points:
+  - - 0.65
+    - 0.65
+  - - 5.45
+    - 0.65
+  - - 5.45
+    - 1.7
+  - - 1.05
+    - 1.9
+  - - 1.05
+    - 3.1
+  - - 5.45
+    - 3.2
+  - - 5.45
+    - 4.4
+  - - 1.05
+    - 4.5
+  - - 1.05
+    - 5.7
+  - - 5.85
+    - 5.85
+  position:
+  - 3.0
+  - 3.0
+  position_tolerance: 0.3
+  terminal_approach_distance: 0.9
+  type: polyline

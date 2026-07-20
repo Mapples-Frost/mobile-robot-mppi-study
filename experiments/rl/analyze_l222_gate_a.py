@@ -27,11 +27,19 @@ from mobile_robot_mppi.core.references import PolylineReference
 from experiments.rl.run_final_paper_benchmark import load_benchmark_manifest
 
 
-SCENES = {
+ALL_SCENES = {
     "l222_serpentine_safe": "mujoco_l222_serpentine_safe_polyline.yaml",
     "l222_nested_u_safe": "mujoco_l222_nested_u_safe_polyline.yaml",
     "l222_cylinder_spiral_safe": "mujoco_l222_cylinder_spiral_safe_polyline.yaml",
+    "l218_giant_u": "mujoco_l218_giant_u_polyline.yaml",
+    "l218_opposed_u": "mujoco_l218_opposed_u_polyline.yaml",
+    "l218_cylinder_forest": "mujoco_l218_cylinder_forest_polyline.yaml",
 }
+DEFAULT_SCENES = (
+    "l222_serpentine_safe",
+    "l222_nested_u_safe",
+    "l222_cylinder_spiral_safe",
+)
 
 
 def _read_csv(path):
@@ -65,9 +73,9 @@ def _audit_episode(run_dir, expected_git_sha, expected_guard):
     provenance = metrics["provenance"]
     config = load_yaml(episode / "config_resolved.yaml")
     scene = str(config["scene"]["name"])
-    if scene not in SCENES:
+    if scene not in ALL_SCENES:
         raise ValueError("unexpected Gate A scene: %s" % scene)
-    expected_config = load_yaml(ROOT / "configs" / "research" / SCENES[scene])
+    expected_config = load_yaml(ROOT / "configs" / "research" / ALL_SCENES[scene])
     if provenance["git_sha"] != expected_git_sha:
         raise ValueError("unexpected Git SHA in %s" % episode)
     contract = {
@@ -218,14 +226,37 @@ def _audit_episode(run_dir, expected_git_sha, expected_guard):
 
 def main(argv=None):
     parser = argparse.ArgumentParser()
-    parser.add_argument("--run-glob", required=True)
+    parser.add_argument(
+        "--run-glob", action="append", required=True,
+        help="repeatable repository-relative result-directory glob",
+    )
     parser.add_argument("--expected-git-sha", required=True)
     parser.add_argument("--expected-manifest")
+    parser.add_argument(
+        "--expected-scenes", default=",".join(DEFAULT_SCENES),
+        help="comma-separated resolved scene names",
+    )
+    parser.add_argument("--required-successes", type=int, default=2)
     parser.add_argument("--output-dir", required=True)
     args = parser.parse_args(argv)
-    run_dirs = sorted(path for path in ROOT.glob(args.run_glob) if path.is_dir())
-    if len(run_dirs) != 3:
-        raise ValueError("expected three Gate A run directories, got %d" % len(run_dirs))
+    expected_scenes = tuple(
+        value.strip() for value in args.expected_scenes.split(",") if value.strip()
+    )
+    if not expected_scenes or len(set(expected_scenes)) != len(expected_scenes):
+        raise ValueError("expected scenes must be non-empty and unique")
+    if not 1 <= args.required_successes <= len(expected_scenes):
+        raise ValueError("required successes must be within the scene count")
+    run_dirs = sorted({
+        path
+        for pattern in args.run_glob
+        for path in ROOT.glob(pattern)
+        if path.is_dir()
+    })
+    if len(run_dirs) != len(expected_scenes):
+        raise ValueError(
+            "expected %d run directories, got %d"
+            % (len(expected_scenes), len(run_dirs))
+        )
     expected_guard = {}
     if args.expected_manifest:
         manifest = load_benchmark_manifest(ROOT / args.expected_manifest)
@@ -244,7 +275,7 @@ def main(argv=None):
         windows.extend(episode_windows)
     if len({json.dumps(item, sort_keys=True) for item in contracts}) != 1:
         raise ValueError("Gate A execution contract differs across scenes")
-    if {row["scene"] for row in rows} != set(SCENES):
+    if {row["scene"] for row in rows} != set(expected_scenes):
         raise ValueError("Gate A scene matrix is incomplete")
 
     output = Path(args.output_dir).resolve()
@@ -261,7 +292,7 @@ def main(argv=None):
         writer.writeheader()
         writer.writerows(windows)
     passed = (
-        sum(bool(row["success"]) for row in rows) >= 2
+        sum(bool(row["success"]) for row in rows) >= args.required_successes
         and not any(bool(row["collision"]) for row in rows)
     )
     report = {
@@ -270,7 +301,7 @@ def main(argv=None):
         "development_seed": 91001,
         "successes": sum(bool(row["success"]) for row in rows),
         "collisions": sum(bool(row["collision"]) for row in rows),
-        "required_successes": 2,
+        "required_successes": args.required_successes,
         "execution_contract": contracts[0],
         "episodes": rows,
     }

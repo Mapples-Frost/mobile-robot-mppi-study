@@ -1,0 +1,7 @@
+{
+  "blocks": 1,
+  "episodes": 1,
+  "independent_seeds": 1,
+  "output_dir": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/rl/l223_six_scene_icode_cylinder_spiral_seed91001",
+  "status": "pipeline_qualification"
+}

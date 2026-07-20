@@ -1,0 +1,83 @@
+{
+  "actor_checkpoint": {
+    "path": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/rl/gate1_direct_control_multidomain_screen_l175/checkpoints/best.pt",
+    "sha256": "eaea2e2975de0794da4ad6876fbff3e6e85e53427e5471982e857585fff97ae4"
+  },
+  "arms": [
+    "icode_mppi"
+  ],
+  "coupled_actor_checkpoint": {
+    "path": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/rl/l219_expanded_actor_seed20262193_30k_v2/checkpoints/step_000010000.pt",
+    "sha256": "bf26a67ebac313930d63760db931e5d50704cdd9181923afd7f66d16159356b4"
+  },
+  "formal_shard": {
+    "count": 1,
+    "index": 0
+  },
+  "git_sha": "b77ec38489995e8114838de1483a52c71b3c01e5",
+  "independent_unit": "seed",
+  "manifest": "/home/mapples/projects/mobile-robot-mppi-study/configs/research/expanded_navigation_relaxed_guard_l223.yaml",
+  "manifest_sha256": "ebe3000c4e7411fec7498d36d4c089b8452b2ae9bb308b9d7aaab231c0ebcf7b",
+  "metric_profile": "path_tracking",
+  "ordinary_checkpoints": [
+    {
+      "path": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/l57_icode_high_dynamic_h36_seed20261201_v1/best.pt",
+      "sha256": "a63891a2bcadd08c29d6207878510a9a5927c87b045597edc1b4c1119fd156ab"
+    },
+    {
+      "path": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/l57_icode_high_dynamic_h36_seed20261202_v1/best.pt",
+      "sha256": "a5c91ea951843c3a61bd7552b893e7cde655327d1629008ffe1cbbb4a97bf5aa"
+    },
+    {
+      "path": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/l57_icode_high_dynamic_h36_seed20261203_v1/best.pt",
+      "sha256": "4274f30614af38deb31f60484b7f79919083c7e8838511e10d6798550fd931f9"
+    }
+  ],
+  "ordinary_reliability_gate": {
+    "path": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/rl/gate4_ordinary_reliability_stress_evaluation_l214/stress_summary.json",
+    "sha256": "536a537c647dd5d5dc786a9aee76d73f4f7c8f272315282b2683c1abc63565d4"
+  },
+  "physics_domains": [
+    {
+      "name": "nominal_seen",
+      "plant_override": {},
+      "role": "seen"
+    }
+  ],
+  "repeated_strata": [
+    "scene",
+    "physics_domain"
+  ],
+  "scenes": [
+    {
+      "name": "l218_opposed_u",
+      "source": "/home/mapples/projects/mobile-robot-mppi-study/configs/research/mujoco_l218_opposed_u_polyline.yaml"
+    }
+  ],
+  "schedule_seed": 20260725,
+  "sealed_seeds": [
+    91001
+  ],
+  "seeds": [
+    91001
+  ],
+  "status": "pipeline_qualification",
+  "value_checkpoints": [
+    {
+      "path": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/gate3_value_aligned_ensemble_member1_l192/best.pt",
+      "sha256": "c43af62cbd96d8b3ab9d2283175ff278df9b396a911609798a8dd7a41047c6f9"
+    },
+    {
+      "path": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/gate3_value_aligned_ensemble_member2_l192/best.pt",
+      "sha256": "e39065703214f5b3c8e9dfa2d16bb3c0be82e9340e54c017c40e5254c420acb8"
+    },
+    {
+      "path": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/gate3_value_aligned_ensemble_member3_l192/best.pt",
+      "sha256": "296159d7b7ae7780a6e7225f20d7e158c43acdd9bf0d4ab8254a07002b779e99"
+    }
+  ],
+  "value_reliability_gate": {
+    "path": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/rl/gate3_reliability_stress_evaluation_l194/stress_summary.json",
+    "sha256": "020f4e8861f2f979f24a6e02f498349852efbbbcc49c75e68aa9ad4524558eb5"
+  }
+}

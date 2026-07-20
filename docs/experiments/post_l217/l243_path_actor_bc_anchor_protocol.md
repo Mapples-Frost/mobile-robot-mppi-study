@@ -131,3 +131,8 @@ optimizer、replay 或训练目标，因此允许目标 run 新增 BC anchor；�
 初始化 checkpoint 已拟合的 observation normalizer，否则固定教师样本的归一化坐标会
 随在线数据变化。L243 因此预注册 `normalizer_update=frozen`；这不会把真值加入学生
 输入，也不会冻结 Actor、critic 或 SAC 更新。
+
+第三次 smoke 通过：60 environment steps 产生 53 条 update records（step 8--60），
+`bc_anchor_mean_mse`、RMSE 与 log-std 项均为有限值，action mode 为 direct-control，
+observation/action dimensions 为 69/2，无 NaN/Inf。前两次启动失败作为工程负向记录
+保留，不计作训练效果。

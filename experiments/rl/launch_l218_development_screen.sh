@@ -6,8 +6,10 @@ PYTHON="${ROOT}/.venv/bin/python"
 SEED="${1:-91001}"
 ARMS="${2:-simple_combination,full_proposed}"
 LABEL="${3:-coupled}"
+MANIFEST="${4:-configs/research/expanded_navigation_screen_l218.yaml}"
+PHYSICS_DOMAINS="${5:-nominal_seen}"
+SCENE_FILTER="${6:-all}"
 LOG_ROOT="/mnt/c/Users/lenovo"
-MANIFEST="configs/research/expanded_navigation_screen_l218.yaml"
 
 if [[ ! -x "${PYTHON}" ]]; then
   echo "project Python is unavailable: ${PYTHON}" >&2
@@ -30,6 +32,9 @@ cd "${ROOT}"
 for item in "${scenes[@]}"; do
   slug="${item%%:*}"
   scene_file="${item#*:}"
+  if [[ "${SCENE_FILTER}" != "all" ]] && ! grep -qE "(^|,)${slug}(,|$)" <<<"${SCENE_FILTER}"; then
+    continue
+  fi
   stdout="${LOG_ROOT}/l218_dev_screen_${LABEL}_${slug}.stdout.log"
   stderr="${LOG_ROOT}/l218_dev_screen_${LABEL}_${slug}.stderr.log"
   output="results/research_platform/rl/l218_dev_screen_${LABEL}_${slug}_seed${SEED}"
@@ -45,7 +50,7 @@ for item in "${scenes[@]}"; do
       --seeds "${SEED}" \
       --arms "${ARMS}" \
       --scene-configs "configs/research/${scene_file}" \
-      --physics-domains nominal_seen \
+      --physics-domains "${PHYSICS_DOMAINS}" \
       --bootstrap-samples 100 \
       >"${stdout}" 2>"${stderr}" </dev/null &
   printf '%s,%d,%s\n' "${slug}" "$!" "${SEED}" >>"${pid_file}"

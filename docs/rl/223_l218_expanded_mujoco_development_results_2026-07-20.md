@@ -192,3 +192,21 @@ Actor proposal 的均值和方差按 `proposal_authority` 与 GoalWarmStart/prev
 5. 将 L217 的支持域结果和 L218 的极端 OOD 结果分层报告：前者评价 RL 引导收益，后者评价可靠性退化能力。
 
 只有完成上述 Gate，才能决定这一模块能否进入论文主结果，而不是只进入工程消融或附录。
+
+## 12. 完整预算复核（追加）
+
+为排除低预算导致三张困难地图失败的可能，使用同一 development seed 91001 对 Serpentine、Nested U 和 Cylinder rings 进行了追加复核：
+
+- rollout 数由 30 提高到 100；
+- MPPI 更新由 1 次提高到 2 次；
+- 最大闭环步数由 900 提高到 1400；
+- 方法固定为 Full Proposed；
+- 仍使用 MuJoCo 3.2.3、ICODE prediction、LaserScan 和完整安全链。
+
+| 场景 | 成功 | 路径完成度 | 最终目标距离 | 碰撞 | proposal authority | fallback fraction |
+|---|---:|---:|---:|---:|---:|---:|
+| Serpentine | 否 | 0.2657 | 4.2986 m | 否 | 0.0 | 1.0 |
+| Nested U | 否 | 0.2720 | 2.2829 m | 否 | 0.0 | 1.0 |
+| Cylinder rings | 否 | 0.6375 | 1.5049 m | 否 | 0.0 | 1.0 |
+
+该复核保留了零碰撞，但三张地图均在 1400 步终止。由此排除了“单纯增加 K、iterations 和等待时间即可解决”的解释。Actor 仍被 HSS 全程判为 OOD，说明在封存测试之前必须先在开发阶段扩展 residual-conditioned Actor 的跨地图训练分布。对应的 L219 协议与配置已单独冻结；本追加结果仍是 qualification，不允许形成正式外推结论。

@@ -77,3 +77,14 @@ ground-truth pose，避免长轨迹轮速里程计漂移把教师带离安全参
 专用特权：学生保存的 69 维输入仍逐字节来自 `DirectControlEnv.reset/step` 的正常
 observation，不附加真值位姿；在线学生也不读取 simulator truth 或障碍物真值。
 manifest 与逐步 audit 必须记录 `teacher_pose_source=ground_truth`。
+
+## 7. 教师开发尝试登记
+
+- v4：`task.points`、perceived pose、lookahead 0.70 m、900 步；因长时轮速
+  里程计漂移而偏离参考线，3/3 未到达，冻结保留。
+- v5：仅将 teacher pose 改为 ground truth；定位漂移被隔离，但 0.70 m
+  前视在首个直角产生约 0.071 m 切弯，最低净空降至约 0.13 m 并被安全链截停，
+  3/3 未到达，冻结保留。
+- v6：预注册单变量为 lookahead `0.70 -> 0.35 m`；pose source、速度、
+  yaw gain、900 步、地图、参考线和安全链均保持 v5 不变。只有 v6 完成后才读取
+  结果；不得覆盖 v4/v5。

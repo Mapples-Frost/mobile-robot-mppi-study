@@ -32,7 +32,7 @@ MPPI -> scan_guard -> MuJoCo
 - 新训练：三组独立 seed，分别训练 30,000 environment steps；
 - 训练场景：L218 六场景全部纳入；
 - 物理域：seen 与 unseen 均纳入，防止只学习单一响应；
-- replay：scene-balanced，且所有场景进入 replay 后才允许均衡更新；
+- replay：scene-balanced；场景×物理域覆盖单独审计，不使用会因长回合而永久锁死梯度更新的 all-groups latch；
 - observation normalizer：仅用新的训练流在线更新；
 - validation：固定且与训练 seed 隔离；
 - checkpoint 选择：验证集控制指标，不读取后续封存数据。
@@ -49,3 +49,9 @@ MPPI -> scan_guard -> MuJoCo
 6. 如果 Actor 被 HSS 全程拒绝，或激活后造成碰撞/系统性退化，则 Gate 失败，不进入 sealed benchmark。
 
 只有通过 Gate 后，才会固定 checkpoint SHA-256、代码 Git SHA、配置、方法矩阵和全新 sealed seeds。
+
+## 训练 Gate 修正记录
+
+首轮三组 30k 运行完整结束且无异常，但训练摘要显示 `update_records = 0`。原因是 `replay_require_all_scenes` 在当前 pool 中实际要求训练开始前随机访问全部场景×物理域 group；长回合使每组训练只产生约 30 个 episode，未能覆盖所有 group，因此所有梯度更新被阻断。
+
+这三组输出作为负向工程结果完整保留，不参与 Actor 候选比较。修正仅关闭该 all-groups latch，保持 scene-balanced replay、warmup、训练场景、物理域、奖励、网络、ICODE、HSS 和 MPPI 不变。修正后的运行使用新版本号，禁止覆盖首轮目录。

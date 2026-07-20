@@ -42,7 +42,12 @@ rl:
     batch_size: 256
     replay_capacity: 250000
     replay_sampling: scene_balanced
-    replay_require_all_scenes: true
+    # The pool expands six maps across multiple physics-domain variants.  A
+    # strict all-groups latch can suppress every update when long episodes do
+    # not visit all combinations early. Scene-balanced replay already prevents
+    # visited maps from dominating, so begin updates once the normal SAC warmup
+    # is met and audit group coverage separately.
+    replay_require_all_scenes: false
     updates_per_step: 1
     evaluation_interval: 5000
     evaluation_episodes: 1

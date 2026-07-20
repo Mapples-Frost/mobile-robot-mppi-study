@@ -19,9 +19,9 @@ declare -a child_pids=()
 
 cd "${ROOT}"
 for seed in "${seeds[@]}"; do
-  output="results/research_platform/rl/l219_expanded_actor_seed${seed}_30k_v1"
-  stdout="${LOG_ROOT}/l219_expanded_actor_seed${seed}.stdout.log"
-  stderr="${LOG_ROOT}/l219_expanded_actor_seed${seed}.stderr.log"
+  output="results/research_platform/rl/l219_expanded_actor_seed${seed}_30k_v2"
+  stdout="${LOG_ROOT}/l219_expanded_actor_seed${seed}_v2.stdout.log"
+  stderr="${LOG_ROOT}/l219_expanded_actor_seed${seed}_v2.stderr.log"
   env \
     PYTHONPATH=.:src \
     OPENBLAS_NUM_THREADS=1 \

@@ -1,0 +1,23 @@
+include: expanded_navigation_screen_l218.yaml
+
+final_benchmark:
+  status: development
+  preregistration: docs/rl/224_l219_residual_conditioned_actor_development_protocol_2026-07-20.md
+
+  # Selected only from the 3-seed, 30-cell-per-checkpoint validation table by
+  # the frozen lexicographic safety/control rule. Development evaluation seeds
+  # 91001--91003 were not used for this selection.
+  coupled_actor_checkpoint: results/research_platform/rl/l219_expanded_actor_seed20262193_30k_v2/checkpoints/step_000010000.pt
+  coupled_rl_overrides:
+    policy_id: residual_conditioned_expanded_maps_l219
+    device: auto
+    torch_num_threads: 1
+    residual_context:
+      enabled: true
+      state_names: [v, omega]
+      residual_scales: [0.2438328117, 0.6734842658]
+      innovation_scales: [0.25, 0.60]
+      signed_clip: 5.0
+      disagreement_clip: 5.0
+
+  development_seeds: [91001, 91002, 91003]

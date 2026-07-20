@@ -55,3 +55,25 @@ MPPI -> scan_guard -> MuJoCo
 首轮三组 30k 运行完整结束且无异常，但训练摘要显示 `update_records = 0`。原因是 `replay_require_all_scenes` 在当前 pool 中实际要求训练开始前随机访问全部场景×物理域 group；长回合使每组训练只产生约 30 个 episode，未能覆盖所有 group，因此所有梯度更新被阻断。
 
 这三组输出作为负向工程结果完整保留，不参与 Actor 候选比较。修正仅关闭该 all-groups latch，保持 scene-balanced replay、warmup、训练场景、物理域、奖励、网络、ICODE、HSS 和 MPPI 不变。修正后的运行使用新版本号，禁止覆盖首轮目录。
+
+## V2 checkpoint 选择规则
+
+V2 三组训练各完成 30,000 步和 29,001 次梯度更新。候选只能使用固定 validation seeds 产生的 30 个场景—物理域回合；development evaluation seeds 91001--91003 不参与选择。
+
+固定字典序如下：
+
+1. 最小化碰撞数；
+2. 最大化成功数；
+3. 最大化平均路径完成度；
+4. 最小化平均横向 RMSE；
+5. 最小化平均目标距离；
+6. 最大化平均 return；
+7. seed 和 step 只用于确定性打破完全相同的排序。
+
+按该规则选中 seed 20262193 的 step 10,000 checkpoint，SHA-256 为：
+
+```text
+bf26a67ebac313930d63760db931e5d50704cdd9181923afd7f66d16159356b4
+```
+
+该选择仍属于 development validation。它必须在 seeds 91001--91003 的等预算 MPPI 闭环比较中通过 Gate，才能进入预注册 sealed benchmark。

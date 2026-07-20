@@ -1,0 +1,7 @@
+include: tracking_corridor_w4p0d_probe_l239.yaml
+
+final_benchmark:
+  status: development
+  preregistration: docs/experiments/post_l217/l240_path_preview_075_protocol.md
+  planner_overrides:
+    path_preview_speed_mps: 0.75

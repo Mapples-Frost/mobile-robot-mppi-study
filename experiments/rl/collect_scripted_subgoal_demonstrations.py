@@ -69,6 +69,22 @@ def _write_csv(path, rows, fieldnames):
         writer.writerows(rows)
 
 
+def _teacher_scene(rl_config, scene_path, seed, num_samples, max_steps, mode):
+    """Resolve a collection scene without disabling required Actor context."""
+
+    config = _resolved_scene(
+        rl_config, scene_path, seed, num_samples, max_steps
+    )
+    if str(mode) == "direct_control":
+        prediction_mode = str(
+            dict(rl_config.get("planner", {})).get(
+                "prediction_mode", "icode_residual"
+            )
+        )
+        config["planner"]["prediction_mode"] = prediction_mode
+    return config
+
+
 def _collect_episode(environment, policy, episode_id, seed, split):
     """Collect one episode from exact environment observations and teacher actions."""
 
@@ -295,8 +311,13 @@ def main(argv=None):
     episode_id = 0
 
     for scene_path in args.configs:
-        template = _resolved_scene(
-            rl_config, scene_path, seeds[0], args.num_samples, args.max_steps
+        template = _teacher_scene(
+            rl_config,
+            scene_path,
+            seeds[0],
+            args.num_samples,
+            args.max_steps,
+            args.teacher_action_mode,
         )
         scene_name = str(template["scene"]["name"])
         if scene_name in seen_scene_names:
@@ -322,12 +343,13 @@ def main(argv=None):
 
         for current_seed in seeds:
             split = seed_to_split[int(current_seed)]
-            config = _resolved_scene(
+            config = _teacher_scene(
                 rl_config,
                 scene_path,
                 current_seed,
                 args.num_samples,
                 args.max_steps,
+                args.teacher_action_mode,
             )
             environment_class = (
                 DirectControlEnv

@@ -4,6 +4,7 @@ from types import SimpleNamespace
 import numpy as np
 import pytest
 
+import experiments.rl.collect_scripted_subgoal_demonstrations as collector_module
 from experiments.rl.collect_scripted_subgoal_demonstrations import _collect_episode
 from mobile_robot_mppi.rl.demonstrations import (
     DEMONSTRATION_SCHEMA,
@@ -151,6 +152,25 @@ def test_seed_split_rejects_duplicates_bad_fractions_and_too_few_seeds():
         split_episode_seeds([1, 2, 3], 0.5, 0.5)
     with pytest.raises(ValueError, match="too few"):
         split_episode_seeds([1, 2], 0.2, 0.2)
+
+
+def test_direct_teacher_scene_retains_residual_prediction_context(monkeypatch):
+    monkeypatch.setattr(
+        collector_module,
+        "_resolved_scene",
+        lambda *_args: {"planner": {"prediction_mode": "nominal"}},
+    )
+    rl_config = {"planner": {"prediction_mode": "icode_residual"}}
+
+    direct = collector_module._teacher_scene(
+        rl_config, "scene.yaml", 1, 2, 3, "direct_control"
+    )
+    legacy = collector_module._teacher_scene(
+        rl_config, "scene.yaml", 1, 2, 3, "local_subgoal"
+    )
+
+    assert direct["planner"]["prediction_mode"] == "icode_residual"
+    assert legacy["planner"]["prediction_mode"] == "nominal"
 
 
 def test_demonstration_loader_roundtrip_exposes_only_student_arrays(tmp_path):

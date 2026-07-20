@@ -1,0 +1,16 @@
+schema_version: 1
+experiment_id: TBD
+status: development
+created_at_utc: TBD
+git_sha: TBD
+config_sha256: TBD
+seed_registry_sha256: TBD
+checkpoint_sha256: {}
+independent_unit: seed
+repeated_strata: []
+methods: []
+scenes: []
+physics_domains: []
+expected_episodes: 0
+qualification: true
+

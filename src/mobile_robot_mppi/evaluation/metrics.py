@@ -4,6 +4,12 @@ from typing import Dict, List, Optional, Sequence
 
 import numpy as np
 
+from mobile_robot_mppi.core.references import PolylineReference
+from mobile_robot_mppi.evaluation.tracking import (
+    FootprintCorridor,
+    TrackingEventMonitor,
+)
+
 
 @dataclass
 class EpisodeMetrics:
@@ -12,7 +18,27 @@ class EpisodeMetrics:
     goal_tolerance: float
     control_dt: float = 0.0
     reference_points: Optional[Sequence[Sequence[float]]] = None
+    tracking_reference: Optional[PolylineReference] = None
+    tracking_corridor: Optional[FootprintCorridor] = None
+    tracking_obstacle_positions: Sequence[Sequence[float]] = field(
+        default_factory=tuple
+    )
+    tracking_center_crossing: Optional[Sequence[float]] = None
+    tracking_center_crossing_radius: float = 0.5
     records: List[Dict[str, float]] = field(default_factory=list)
+
+    def __post_init__(self):
+        self._tracking_monitor = None
+        if self.tracking_reference is not None:
+            if self.tracking_corridor is None:
+                raise ValueError("tracking corridor is required with a reference")
+            self._tracking_monitor = TrackingEventMonitor(
+                self.tracking_reference,
+                self.tracking_corridor,
+                self.tracking_obstacle_positions,
+                center_crossing=self.tracking_center_crossing,
+                center_crossing_radius=self.tracking_center_crossing_radius,
+            )
 
     def _cross_track_errors(self, values):
         if self.reference_points is None:
@@ -54,7 +80,7 @@ class EpisodeMetrics:
         safety_diagnostics = dict(
             getattr(safety_decision, "diagnostics", {}) or {}
         )
-        self.records.append({
+        record = {
             "time": truth.timestamp,
             "x": truth.pose.x,
             "y": truth.pose.y,
@@ -763,7 +789,12 @@ class EpisodeMetrics:
             "rl_subgoal_y_body": float(
                 prior.get("subgoal_y_body", 0.0)
             ),
-        })
+        }
+        if self._tracking_monitor is not None:
+            record.update(self._tracking_monitor.update(
+                truth.pose.as_array(), truth.timestamp
+            ).to_dict())
+        self.records.append(record)
 
     def summary(self, termination_reason=None):
         if not self.records:
@@ -810,7 +841,7 @@ class EpisodeMetrics:
             if row["safety_override"]:
                 reason = row["safety_reason"]
                 safety_reason_counts[reason] = safety_reason_counts.get(reason, 0) + 1
-        return {
+        result = {
             "steps": len(values),
             "success": success,
             "termination_reason": termination_reason or ("goal_reached" if success else "unknown"),
@@ -1569,3 +1600,42 @@ class EpisodeMetrics:
                 ])
             ),
         }
+        if self._tracking_monitor is not None:
+            signed = np.asarray([
+                row["signed_cross_track_error"] for row in values
+            ], dtype=np.float64)
+            heading = np.asarray([
+                row["tangent_heading_error"] for row in values
+            ], dtype=np.float64)
+            margins = np.asarray([
+                row["minimum_footprint_boundary_margin"] for row in values
+            ], dtype=np.float64)
+            result.update({
+                "signed_cross_track_error_mean": float(np.mean(signed)),
+                "cross_track_p95": float(np.percentile(np.abs(signed), 95)),
+                "integrated_deviation_area": float(
+                    np.sum(np.abs(signed)) * self.control_dt
+                ),
+                "tangent_heading_rmse": float(
+                    np.sqrt(np.mean(np.square(heading)))
+                ),
+                "minimum_footprint_boundary_margin": float(np.min(margins)),
+                "boundary_violation_steps": int(np.sum(margins < 0.0)),
+                "boundary_safe_success": bool(success and np.all(margins >= 0.0)),
+                "obstacle_pass_events": int(sum(
+                    row["obstacle_pass_event"] for row in values
+                )),
+                "recovery_events": int(sum(
+                    row["recovery_event"] for row in values
+                )),
+                "maximum_recovery_time": float(max(
+                    row["recovery_time"] for row in values
+                )),
+                "maximum_recovery_distance": float(max(
+                    row["recovery_distance"] for row in values
+                )),
+                "center_crossing_count": int(max(
+                    row["center_crossing_count"] for row in values
+                )),
+            })
+        return result

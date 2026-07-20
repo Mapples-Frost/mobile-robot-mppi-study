@@ -150,6 +150,8 @@ class PolylineReference:
         tolerance: float = 0.2,
         lookahead_distance: float = 0.45,
         terminal_approach_distance: float = 0.9,
+        projection_backtrack_distance: Optional[float] = None,
+        projection_forward_distance: Optional[float] = None,
     ):
         self.points = np.asarray(points, dtype=np.float64)
         if self.points.ndim != 2 or self.points.shape[0] < 2 or self.points.shape[1] < 2:
@@ -160,8 +162,25 @@ class PolylineReference:
         self.tolerance = float(tolerance)
         self.lookahead_distance = float(lookahead_distance)
         self.terminal_approach_distance = float(terminal_approach_distance)
+        self.projection_backtrack_distance = float(
+            self.lookahead_distance
+            if projection_backtrack_distance is None
+            else projection_backtrack_distance
+        )
+        self.projection_forward_distance = (
+            float("inf")
+            if projection_forward_distance is None
+            else float(projection_forward_distance)
+        )
         if min(self.tolerance, self.lookahead_distance, self.terminal_approach_distance) <= 0.0:
             raise ValueError("polyline tolerances and distances must be positive")
+        if (
+            not np.isfinite(self.projection_backtrack_distance)
+            or self.projection_backtrack_distance < 0.0
+            or self.projection_forward_distance <= 0.0
+            or np.isnan(self.projection_forward_distance)
+        ):
+            raise ValueError("polyline projection window must be positive")
         self.segment_lengths = np.linalg.norm(np.diff(self.points, axis=0), axis=1)
         if np.any(self.segment_lengths <= 1e-9):
             raise ValueError("polyline cannot contain duplicate consecutive points")
@@ -204,7 +223,13 @@ class PolylineReference:
         # Never jump to an earlier branch of a route that passes near itself.
         admissible = np.ones(candidate_progress.shape, dtype=bool)
         if floor is not None:
-            admissible = candidate_progress >= floor - self.lookahead_distance
+            admissible = (
+                candidate_progress
+                >= floor - self.projection_backtrack_distance
+            ) & (
+                candidate_progress
+                <= floor + self.projection_forward_distance
+            )
         if not np.any(admissible):
             progress = floor
         else:
@@ -406,6 +431,12 @@ def reference_from_config(config: Mapping[str, object]):
             lookahead_distance=float(config.get("lookahead_distance", 0.45)),
             terminal_approach_distance=float(
                 config.get("terminal_approach_distance", 0.9)
+            ),
+            projection_backtrack_distance=config.get(
+                "projection_backtrack_distance"
+            ),
+            projection_forward_distance=config.get(
+                "projection_forward_distance"
             ),
         )
     if kind == "time_trajectory":

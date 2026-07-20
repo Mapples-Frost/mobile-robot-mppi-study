@@ -1,0 +1,17 @@
+include: expanded_navigation_relaxed_guard_l223.yaml
+
+final_benchmark:
+  status: development
+  metric_profile: path_tracking
+  schedule_seed: 20260725
+  scene_configs:
+    - configs/research/mujoco_tracking_grand_s_chicane_l234.yaml
+    - configs/research/mujoco_tracking_grand_hairpin_l234.yaml
+    - configs/research/mujoco_tracking_grand_infinity_l234.yaml
+  physics_domains:
+    - nominal_seen
+  total_rollouts: 30
+  iterations: 1
+  max_steps: 1200
+  terminal_guidance_radius: 0.0
+  terminal_guided_fraction_floor: 0.0

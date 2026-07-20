@@ -1,0 +1,8 @@
+include: tracking_smoke_l234.yaml
+
+final_benchmark:
+  status: development
+  preregistration: docs/experiments/post_l217/l235_first_obstacle_sampling_probe_protocol.md
+  total_rollouts: 100
+  iterations: 2
+  max_steps: 700

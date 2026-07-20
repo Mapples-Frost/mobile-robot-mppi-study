@@ -8,6 +8,10 @@ import numpy as np
 
 from mobile_robot_mppi.evaluation.artifacts import ArtifactWriter
 from mobile_robot_mppi.evaluation.metrics import EpisodeMetrics
+from mobile_robot_mppi.evaluation.tracking import (
+    FootprintCorridor,
+    obstacle_positions_from_scene,
+)
 from mobile_robot_mppi.visualization.mujoco_viewer import MujocoViewer
 from .factories import make_components
 
@@ -68,12 +72,36 @@ class ExperimentRunner:
                     getattr(reference, attribute), dtype=np.float64
                 )[:, :2]
                 break
+        corridor = None
+        if hasattr(reference, "project") and "corridor_half_width" in self.config["task"]:
+            corridor = FootprintCorridor(
+                half_width=float(self.config["task"]["corridor_half_width"]),
+                footprint_radius=float(
+                    self.config["task"].get("footprint_radius", 0.25)
+                ),
+                half_width_profile=tuple(
+                    tuple(value) for value in self.config["task"].get(
+                        "corridor_half_width_profile", ()
+                    )
+                ),
+            )
         metrics = EpisodeMetrics(
             target.x,
             target.y,
             float(self.config["task"].get("position_tolerance", 0.2)),
             control_dt=dt,
             reference_points=reference_points,
+            tracking_reference=reference if corridor is not None else None,
+            tracking_corridor=corridor,
+            tracking_obstacle_positions=obstacle_positions_from_scene(
+                self.config.get("scene", {}).get("obstacles", ())
+            ) if corridor is not None else (),
+            tracking_center_crossing=self.config["task"].get(
+                "center_crossing"
+            ) if corridor is not None else None,
+            tracking_center_crossing_radius=float(
+                self.config["task"].get("center_crossing_radius", 0.5)
+            ),
         )
         writer = ArtifactWriter(self.output_dir, self.config, self.project_root)
         viewer = MujocoViewer(plant, enabled=not self.headless)
@@ -106,6 +134,15 @@ class ExperimentRunner:
                         "plant_interval_average",
                     ),
                 )
+                if (
+                    corridor is not None
+                    and bool(self.config["task"].get(
+                        "terminate_on_boundary_violation", True
+                    ))
+                    and metrics.records[-1]["boundary_violation"]
+                ):
+                    termination_reason = "boundary_violation"
+                    break
                 viewer.sync()
                 if not self.headless:
                     # MuJoCo can simulate much faster than wall time.  Pace only

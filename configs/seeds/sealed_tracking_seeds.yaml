@@ -1,0 +1,21 @@
+schema_version: 1
+registry: sealed_tracking
+role: sealed_confirmatory_only
+created: '2026-07-20'
+status: reserved_not_opened
+seeds:
+  - 923302001
+  - 923302002
+  - 923302003
+  - 923302004
+  - 923302005
+  - 923302006
+  - 923302007
+  - 923302008
+  - 923302009
+  - 923302010
+rules:
+  paired_across_methods: true
+  allowed_for_smoke: false
+  allowed_for_tuning: false
+  require_preregistration_before_use: true

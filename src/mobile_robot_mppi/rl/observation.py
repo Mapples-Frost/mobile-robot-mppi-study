@@ -95,7 +95,13 @@ class ObservationEncoderConfig:
             )
 
     def to_dict(self):
-        return asdict(self)
+        values = asdict(self)
+        # Configuration dictionaries are persisted through JSON/YAML.  Keep
+        # the public representation JSON-native so a saved manifest loads to
+        # the exact same canonical contract instead of changing this tuple to
+        # a list on disk and then failing strict equality validation.
+        values["path_preview_distances"] = list(self.path_preview_distances)
+        return values
 
 
 class ObservationEncoder:

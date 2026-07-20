@@ -1486,7 +1486,7 @@ class SACTrainer:
             target_without_preview = self.encoder_config.to_dict()
             source_without_preview.update({
                 "include_path_preview": False,
-                "path_preview_distances": tuple(
+                "path_preview_distances": list(
                     self.encoder_config.path_preview_distances
                 ),
                 "path_preview_scale": float(

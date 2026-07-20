@@ -1,0 +1,16 @@
+schema_version: 1
+registry: post_l223_development
+role: development_only
+created: '2026-07-20'
+seeds:
+  - 923301001
+  - 923301002
+  - 923301003
+rules:
+  paired_across_methods: true
+  allowed_for_smoke: true
+  allowed_for_tuning: true
+  allowed_for_formal_claims: false
+  forbidden_registries:
+    - sealed_tracking
+    - sealed_dynamic

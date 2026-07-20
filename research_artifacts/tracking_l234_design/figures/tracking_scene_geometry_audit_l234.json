@@ -1,0 +1,214 @@
+[
+  {
+    "centre_clearance_at_boundary_nominal": 0.6000000000000001,
+    "corridor_full_width_min": 1.6,
+    "corridor_full_width_nominal": 1.6,
+    "corridor_half_width": 0.8,
+    "footprint_radius": 0.2,
+    "geometry_passed": true,
+    "obstacles": [
+      {
+        "best_free_gap": 0.561703409406731,
+        "cross_track_to_reference": 0.11170340940673096,
+        "label": "O1",
+        "lateral_half_extent": 0.35,
+        "local_corridor_half_width": 0.8,
+        "position": [
+          6.55,
+          4.88
+        ],
+        "recommended_safety_bypass_margin": 0.04170340940673101,
+        "required_gap_with_0.15D_safety": 0.52,
+        "safe_bypass_exists": true,
+        "signed_cross_track_to_reference": -0.11170340940673096,
+        "type": "cylinder"
+      },
+      {
+        "best_free_gap": 0.6147443856175476,
+        "cross_track_to_reference": 0.1647443856175476,
+        "label": "O2",
+        "lateral_half_extent": 0.35,
+        "local_corridor_half_width": 0.8,
+        "position": [
+          16.21,
+          11.1
+        ],
+        "recommended_safety_bypass_margin": 0.09474438561754761,
+        "required_gap_with_0.15D_safety": 0.52,
+        "safe_bypass_exists": true,
+        "signed_cross_track_to_reference": 0.1647443856175476,
+        "type": "cylinder"
+      },
+      {
+        "best_free_gap": 0.5442066346316159,
+        "cross_track_to_reference": 0.0942066346316159,
+        "label": "O3",
+        "lateral_half_extent": 0.35,
+        "local_corridor_half_width": 0.8,
+        "position": [
+          6.45,
+          10.94
+        ],
+        "recommended_safety_bypass_margin": 0.024206634631615875,
+        "required_gap_with_0.15D_safety": 0.52,
+        "safe_bypass_exists": true,
+        "signed_cross_track_to_reference": 0.0942066346316159,
+        "type": "cylinder"
+      }
+    ],
+    "path_length": 48.71536376331067,
+    "scene": "tracking_grand_infinity_l234"
+  },
+  {
+    "centre_clearance_at_boundary_nominal": 0.6000000000000001,
+    "corridor_full_width_min": 1.45,
+    "corridor_full_width_nominal": 1.6,
+    "corridor_half_width": 0.8,
+    "footprint_radius": 0.2,
+    "geometry_passed": true,
+    "obstacles": [
+      {
+        "best_free_gap": 0.6026200845423233,
+        "cross_track_to_reference": 0.15262008454232326,
+        "label": "O1",
+        "lateral_half_extent": 0.35,
+        "local_corridor_half_width": 0.8,
+        "position": [
+          6.7,
+          11.42
+        ],
+        "recommended_safety_bypass_margin": 0.08262008454232328,
+        "required_gap_with_0.15D_safety": 0.52,
+        "safe_bypass_exists": true,
+        "signed_cross_track_to_reference": -0.15262008454232326,
+        "type": "cylinder"
+      },
+      {
+        "best_free_gap": 0.6166059057187541,
+        "cross_track_to_reference": 0.1499999999999999,
+        "label": "O2",
+        "lateral_half_extent": 0.2572183961112466,
+        "local_corridor_half_width": 0.725,
+        "position": [
+          13.0,
+          3.85
+        ],
+        "recommended_safety_bypass_margin": 0.09660590571875405,
+        "required_gap_with_0.15D_safety": 0.52,
+        "safe_bypass_exists": true,
+        "signed_cross_track_to_reference": -0.1488243018300007,
+        "type": "box"
+      },
+      {
+        "best_free_gap": 0.5476717620785123,
+        "cross_track_to_reference": 0.09767176207851229,
+        "label": "O3",
+        "lateral_half_extent": 0.35,
+        "local_corridor_half_width": 0.8,
+        "position": [
+          19.1,
+          11.58
+        ],
+        "recommended_safety_bypass_margin": 0.027671762078512296,
+        "required_gap_with_0.15D_safety": 0.52,
+        "safe_bypass_exists": true,
+        "signed_cross_track_to_reference": 0.0976717620785123,
+        "type": "cylinder"
+      }
+    ],
+    "path_length": 33.706276921556764,
+    "scene": "tracking_grand_s_chicane_l234"
+  },
+  {
+    "centre_clearance_at_boundary_nominal": 0.6000000000000001,
+    "corridor_full_width_min": 1.6,
+    "corridor_full_width_nominal": 1.6,
+    "corridor_half_width": 0.8,
+    "footprint_radius": 0.2,
+    "geometry_passed": true,
+    "obstacles": [
+      {
+        "best_free_gap": 0.5500000000000002,
+        "cross_track_to_reference": 0.10000000000000009,
+        "label": "O1",
+        "lateral_half_extent": 0.35,
+        "local_corridor_half_width": 0.8,
+        "position": [
+          8.5,
+          3.1
+        ],
+        "recommended_safety_bypass_margin": 0.030000000000000138,
+        "required_gap_with_0.15D_safety": 0.52,
+        "safe_bypass_exists": true,
+        "signed_cross_track_to_reference": 0.10000000000000009,
+        "type": "box"
+      },
+      {
+        "best_free_gap": 0.559905682753635,
+        "cross_track_to_reference": 0.059905682753634865,
+        "label": "O2",
+        "lateral_half_extent": 0.3,
+        "local_corridor_half_width": 0.8,
+        "position": [
+          19.44,
+          6.5
+        ],
+        "recommended_safety_bypass_margin": 0.03990568275363493,
+        "required_gap_with_0.15D_safety": 0.52,
+        "safe_bypass_exists": true,
+        "signed_cross_track_to_reference": 0.059905682753634865,
+        "type": "cylinder"
+      },
+      {
+        "best_free_gap": 0.8,
+        "cross_track_to_reference": 0.25,
+        "label": "O3a",
+        "lateral_half_extent": 0.25,
+        "local_corridor_half_width": 0.8,
+        "position": [
+          11.0,
+          9.75
+        ],
+        "recommended_safety_bypass_margin": 0.28,
+        "required_gap_with_0.15D_safety": 0.52,
+        "safe_bypass_exists": true,
+        "signed_cross_track_to_reference": 0.25,
+        "type": "cylinder"
+      },
+      {
+        "best_free_gap": 0.8,
+        "cross_track_to_reference": 0.25,
+        "label": "O3b",
+        "lateral_half_extent": 0.25,
+        "local_corridor_half_width": 0.8,
+        "position": [
+          9.0,
+          10.25
+        ],
+        "recommended_safety_bypass_margin": 0.28,
+        "required_gap_with_0.15D_safety": 0.52,
+        "safe_bypass_exists": true,
+        "signed_cross_track_to_reference": -0.25,
+        "type": "cylinder"
+      },
+      {
+        "best_free_gap": 0.6346702890321662,
+        "cross_track_to_reference": 0.13467028903216616,
+        "label": "O4",
+        "lateral_half_extent": 0.3,
+        "local_corridor_half_width": 0.8,
+        "position": [
+          13.6,
+          12.18
+        ],
+        "recommended_safety_bypass_margin": 0.11467028903216614,
+        "required_gap_with_0.15D_safety": 0.52,
+        "safe_bypass_exists": true,
+        "signed_cross_track_to_reference": 0.13467028903216613,
+        "type": "cylinder"
+      }
+    ],
+    "path_length": 53.0230477471498,
+    "scene": "tracking_grand_hairpin_l234"
+  }
+]

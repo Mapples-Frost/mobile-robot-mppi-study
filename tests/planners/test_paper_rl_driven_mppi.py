@@ -635,6 +635,26 @@ def test_counterfactual_proposal_gate_is_polyline_only():
     assert not diagnostics["reliability_counterfactual_enabled"]
 
 
+def test_counterfactual_proposal_gate_cannot_leak_into_simple_combination():
+    controller = _controller(ReliabilityDirectPolicy(0.0))
+    config = dict(controller.paper_rl_driven_config.__dict__)
+    config["counterfactual_proposal_gate_enabled"] = True
+    controller = PaperRLDrivenMppiController(
+        controller.dynamics,
+        controller.state_spec,
+        controller.action_spec,
+        controller.config,
+        sampling_prior=ReliabilityDirectPolicy(0.0),
+        paper_rl_driven_config=config,
+    )
+    reference = PolylineReference(((0.0, 0.0), (2.0, 0.0)))
+    authority, diagnostics = controller._counterfactual_proposal_gate(
+        np.zeros(5), np.zeros(5), np.zeros((5, 2)), reference
+    )
+    assert authority == 1.0
+    assert not diagnostics["reliability_counterfactual_enabled"]
+
+
 def test_paper_diagnostics_preserve_reference_phase():
     controller = _reliable_controller(
         ReliabilityDirectPolicy(8.0),

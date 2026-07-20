@@ -35,6 +35,8 @@ advantage = actor_progress - baseline_progress
 
 该比较不读取 simulator future、障碍物真值、scene 标签或 sealed outcome；只使用 planner 本来就允许使用的当前观测、参考路径和 ICODE prediction model。
 
+反事实 authority 只在 adaptive HSS 启用时生效。Simple combination 明确保持 HSS 关闭，不能继承该 gate；这保证 Full 对 Simple 的比较仍隔离所提出的可靠性耦合机制。
+
 ## 开发探针
 
 首先仅运行 seed 91001：opposed-U、cylinder forest、serpentine；方法为 ICODE-MPPI 与 Full Proposed；K=30、1 iteration、max 900。

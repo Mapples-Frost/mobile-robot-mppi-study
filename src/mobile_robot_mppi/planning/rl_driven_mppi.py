@@ -1131,7 +1131,9 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
         cfg = self.paper_rl_driven_config
         project = getattr(reference, "project", None)
         enabled = bool(
-            cfg.counterfactual_proposal_gate_enabled and callable(project)
+            cfg.counterfactual_proposal_gate_enabled
+            and self.hybrid_sampling_reliability.config.enabled
+            and callable(project)
         )
         diagnostics = {
             "reliability_counterfactual_enabled": enabled,

@@ -3,9 +3,8 @@ include: tracking_first_obstacle_probe_l235.yaml
 final_benchmark:
   status: development
   preregistration: docs/experiments/post_l217/l236_boundary_aware_tracking_protocol.md
-
-planner:
-  path_boundary_enabled: true
-  path_boundary_buffer: 0.05
-  path_boundary_weight: 400.0
-  path_boundary_violation_penalty: 10000.0
+  planner_overrides:
+    path_boundary_enabled: true
+    path_boundary_buffer: 0.05
+    path_boundary_weight: 400.0
+    path_boundary_violation_penalty: 10000.0

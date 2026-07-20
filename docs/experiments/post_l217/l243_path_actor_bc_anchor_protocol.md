@@ -27,7 +27,8 @@ seeds，不得包含 simulator obstacle truth 形式的在线 planner 输入。
 
 ## 3. 数据与隔离
 
-1. 先从 L222 六张 safe-reference 训练地图生成版本化教师数据；
+1. 先从 L222 六张 safe-reference 训练地图生成版本化教师数据；正式教师 seeds
+   固定为 `20262401--20262415`，split seed 固定为 `20260721`；
 2. 只保留零碰撞、无 boundary violation 的教师片段；所有丢弃原因写入 manifest；
 3. 教师生成 seed 与训练 seeds `20262331--20262333`、validation bases
    `20262931--20262933`、development seed `923301001` 相互隔离；

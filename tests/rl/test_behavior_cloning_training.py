@@ -64,6 +64,7 @@ def _write_dataset(root):
         "config": {"unit": True},
         "observation_dim": 3,
         "action_dim": 2,
+        "action_mode": "mppi_prior",
         "observation_encoder": ObservationEncoderConfig(
             lidar_sectors=1,
             include_previous_action=False,

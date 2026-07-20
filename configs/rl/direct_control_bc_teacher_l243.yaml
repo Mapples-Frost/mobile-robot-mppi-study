@@ -1,0 +1,10 @@
+include: residual_conditioned_path_preview_l222.yaml
+
+experiment:
+  name: direct_control_bc_teacher_l243
+  output_dir: results/research_platform/rl/l243_direct_control_teacher_placeholder
+
+rl:
+  policy_id: direct_control_bc_teacher_l243
+  training:
+    action_mode: direct_control

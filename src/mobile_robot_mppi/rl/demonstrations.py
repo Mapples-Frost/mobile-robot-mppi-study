@@ -19,7 +19,7 @@ from .parameterization import PriorParameterizationConfig
 
 
 DEMONSTRATION_SCHEMA = "mobile_robot_mppi.scripted_subgoal_demonstrations"
-DEMONSTRATION_SCHEMA_VERSION = 2
+DEMONSTRATION_SCHEMA_VERSION = 3
 DEMONSTRATION_SPLITS = ("train", "validation", "test")
 SHARD_FIELDS = frozenset((
     "observation",
@@ -240,6 +240,18 @@ def _safe_dataset_path(dataset_dir, relative_path):
     return candidate
 
 
+def demonstration_action_mode(manifest):
+    """Return the explicit policy-action contract for a loaded manifest."""
+
+    version = int(manifest.get("schema_version", 1))
+    if version >= 3:
+        return str(manifest.get("action_mode", ""))
+    teacher = dict(manifest.get("teacher", {}))
+    if teacher.get("action_space") == "normalized_local_subgoal_distance_bearing":
+        return "mppi_prior"
+    raise ValueError("legacy demonstration action contract cannot be inferred")
+
+
 def _validate_manifest(manifest, allow_legacy_v1=False):
     if not isinstance(manifest, dict):
         raise ValueError("demonstration manifest must be a JSON object")
@@ -250,9 +262,9 @@ def _validate_manifest(manifest, allow_legacy_v1=False):
     except (TypeError, ValueError):
         raise ValueError("unsupported demonstration schema version")
     allowed_versions = (
-        (1, DEMONSTRATION_SCHEMA_VERSION)
+        (1, 2, DEMONSTRATION_SCHEMA_VERSION)
         if allow_legacy_v1
-        else (DEMONSTRATION_SCHEMA_VERSION,)
+        else (2, DEMONSTRATION_SCHEMA_VERSION)
     )
     if schema_version not in allowed_versions:
         raise ValueError("unsupported demonstration schema version")
@@ -275,6 +287,8 @@ def _validate_manifest(manifest, allow_legacy_v1=False):
     missing = sorted(required - set(manifest))
     if missing:
         raise ValueError("demonstration manifest is missing keys: %s" % missing)
+    if schema_version >= 3 and "action_mode" not in manifest:
+        raise ValueError("demonstration manifest is missing keys: ['action_mode']")
     observation_dim = int(manifest["observation_dim"])
     action_dim = int(manifest["action_dim"])
     if observation_dim <= 0 or action_dim != 2:
@@ -305,18 +319,36 @@ def _validate_manifest(manifest, allow_legacy_v1=False):
         raise ValueError(
             "demonstration prior_parameterization must store the complete canonical config"
         )
-    if canonical_prior.kind != "local_subgoal" or canonical_prior.learn_covariance:
-        raise ValueError(
-            "demonstration prior must be local_subgoal with learn_covariance=false"
-        )
+    action_mode = demonstration_action_mode(manifest)
+    if action_mode not in ("mppi_prior", "direct_control"):
+        raise ValueError("demonstration action_mode is not approved")
+    if canonical_prior.learn_covariance:
+        raise ValueError("demonstration prior cannot learn covariance")
     teacher = manifest["teacher"]
     if not isinstance(teacher, dict):
         raise ValueError("demonstration teacher metadata must be an object")
-    if teacher.get("class") != "ScriptedPolylineSubgoal":
+    approved_contracts = {
+        "mppi_prior": {
+            "prior_kind": "local_subgoal",
+            "teacher_class": "ScriptedPolylineSubgoal",
+            "action_space": "normalized_local_subgoal_distance_bearing",
+            "observation_source": "MppiPriorEnv.reset_and_step",
+        },
+        "direct_control": {
+            "prior_kind": "control_knots",
+            "teacher_class": "ScriptedPolylineDirectControl",
+            "action_space": "normalized_direct_control_v_omega",
+            "observation_source": "DirectControlEnv.reset_and_step",
+        },
+    }
+    contract = approved_contracts[action_mode]
+    if canonical_prior.kind != contract["prior_kind"]:
+        raise ValueError("demonstration prior kind does not match action_mode")
+    if teacher.get("class") != contract["teacher_class"]:
         raise ValueError("demonstration teacher class is not approved")
-    if teacher.get("action_space") != "normalized_local_subgoal_distance_bearing":
+    if teacher.get("action_space") != contract["action_space"]:
         raise ValueError("demonstration teacher action contract is not approved")
-    if teacher.get("student_observation_source") != "MppiPriorEnv.reset_and_step":
+    if teacher.get("student_observation_source") != contract["observation_source"]:
         raise ValueError("demonstration observation provenance is not approved")
     if not isinstance(manifest["config"], dict) or not isinstance(
         manifest["counts"], dict
@@ -356,9 +388,17 @@ def _validate_manifest(manifest, allow_legacy_v1=False):
             raise ValueError("demonstration split descriptor contains duplicate seeds")
         if not set(successful_seeds).issubset(set(planned)):
             raise ValueError("successful split seeds are outside split_plan")
-        if len(successful_seeds) != int(descriptor["episodes"]):
+        if schema_version <= 2 and len(successful_seeds) != int(
+            descriptor["episodes"]
+        ):
             raise ValueError(
                 "demonstration split seed count must match episode count"
+            )
+        if schema_version >= 3 and int(descriptor["episodes"]) < len(
+            successful_seeds
+        ):
+            raise ValueError(
+                "demonstration split cannot have fewer episodes than successful seeds"
             )
         descriptor_episode_total += int(descriptor["episodes"])
         descriptor_sample_total += int(descriptor["samples"])

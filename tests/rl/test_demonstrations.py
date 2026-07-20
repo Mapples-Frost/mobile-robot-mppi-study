@@ -20,6 +20,7 @@ from mobile_robot_mppi.rl.demonstrations import (
 )
 from mobile_robot_mppi.rl.observation import ObservationEncoderConfig
 from mobile_robot_mppi.rl.parameterization import PriorParameterizationConfig
+from mobile_robot_mppi.rl.trainer import BehaviorCloningAnchor
 
 
 def _encoder_contract():
@@ -72,6 +73,7 @@ def _dataset(tmp_path):
         "config": {"unit": True},
         "observation_dim": 3,
         "action_dim": 2,
+        "action_mode": "mppi_prior",
         "observation_encoder": _encoder_contract(),
         "prior_parameterization": _prior_contract(),
         "teacher": {
@@ -299,8 +301,53 @@ def test_manifest_rejects_absolute_pose_and_incomplete_semantic_contracts(tmp_pa
 
     manifest = _dataset(tmp_path)
     manifest["prior_parameterization"]["kind"] = "control_knots"
-    with pytest.raises(ValueError, match="must be local_subgoal"):
+    with pytest.raises(ValueError, match="prior kind does not match"):
         write_demonstration_manifest(tmp_path, manifest)
+
+
+def test_manifest_accepts_direct_control_and_rejects_semantic_mismatch(tmp_path):
+    manifest = _dataset(tmp_path)
+    manifest["action_mode"] = "direct_control"
+    manifest["prior_parameterization"] = PriorParameterizationConfig(
+        kind="control_knots", num_knots=6, learn_covariance=False
+    ).to_dict()
+    manifest["teacher"] = {
+        "class": "ScriptedPolylineDirectControl",
+        "action_space": "normalized_direct_control_v_omega",
+        "student_observation_source": "DirectControlEnv.reset_and_step",
+    }
+    write_demonstration_manifest(tmp_path, manifest)
+    assert load_demonstration_manifest(tmp_path)["action_mode"] == "direct_control"
+
+    manifest["teacher"]["action_space"] = (
+        "normalized_local_subgoal_distance_bearing"
+    )
+    with pytest.raises(ValueError, match="action contract"):
+        write_demonstration_manifest(tmp_path, manifest)
+
+
+def test_bc_anchor_fails_closed_on_action_mode_mismatch(tmp_path):
+    manifest = _dataset(tmp_path)
+    manifest["action_mode"] = "direct_control"
+    manifest["prior_parameterization"] = PriorParameterizationConfig(
+        kind="control_knots", num_knots=6, learn_covariance=False
+    ).to_dict()
+    manifest["teacher"] = {
+        "class": "ScriptedPolylineDirectControl",
+        "action_space": "normalized_direct_control_v_omega",
+        "student_observation_source": "DirectControlEnv.reset_and_step",
+    }
+    write_demonstration_manifest(tmp_path, manifest)
+
+    with pytest.raises(ValueError, match="action_mode does not match"):
+        BehaviorCloningAnchor(
+            {"enabled": True, "dataset_dir": str(tmp_path)},
+            tmp_path,
+            observation_dim=3,
+            action_dim=2,
+            seed=5,
+            action_mode="mppi_prior",
+        )
 
 
 def test_manifest_rejects_seed_leakage_and_escaped_shard_path(tmp_path):

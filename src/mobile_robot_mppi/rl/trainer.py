@@ -14,6 +14,7 @@ import torch
 from mobile_robot_mppi.core.config import git_sha
 from .checkpointing import load_sac_checkpoint, save_sac_checkpoint
 from .demonstrations import (
+    demonstration_action_mode,
     demonstration_manifest_fingerprint,
     load_demonstration_manifest,
     load_demonstration_split,
@@ -660,7 +661,15 @@ class BehaviorCloningAnchorConfig:
 class BehaviorCloningAnchor:
     """Train-split-only supervised anchor sampled beside online replay."""
 
-    def __init__(self, config, project_root, observation_dim, action_dim, seed):
+    def __init__(
+        self,
+        config,
+        project_root,
+        observation_dim,
+        action_dim,
+        seed,
+        action_mode="mppi_prior",
+    ):
         self.config = (
             config
             if isinstance(config, BehaviorCloningAnchorConfig)
@@ -670,6 +679,7 @@ class BehaviorCloningAnchor:
         self.enabled = bool(self.config.enabled)
         self.dataset_dir = None
         self.manifest_fingerprint = None
+        self.action_mode = str(action_mode)
         self.observations = None
         self.actions = None
         self.rng = np.random.RandomState(int(seed) + 7919)
@@ -680,6 +690,13 @@ class BehaviorCloningAnchor:
             path = Path(project_root) / path
         self.dataset_dir = path.resolve()
         manifest = load_demonstration_manifest(self.dataset_dir)
+        dataset_action_mode = demonstration_action_mode(manifest)
+        if dataset_action_mode != self.action_mode:
+            raise ValueError(
+                "BC anchor action_mode does not match actor "
+                "(dataset=%s, actor=%s)"
+                % (dataset_action_mode, self.action_mode)
+            )
         arrays = load_demonstration_split(self.dataset_dir, "train")
         self.manifest_fingerprint = demonstration_manifest_fingerprint(manifest)
         self.observations = arrays["observations"]
@@ -711,6 +728,7 @@ class BehaviorCloningAnchor:
                 None if self.dataset_dir is None else str(self.dataset_dir)
             ),
             "dataset_manifest_sha256": self.manifest_fingerprint,
+            "action_mode": self.action_mode,
             "batch_size": int(self.config.batch_size),
             "mean_weight": float(self.config.mean_weight),
             "log_std_weight": float(self.config.log_std_weight),
@@ -1108,6 +1126,7 @@ class SACTrainer:
             observation_dim,
             action_dim,
             self.training_config.seed,
+            action_mode=self.action_mode,
         )
         if self.agent.is_correction_policy and self.bc_anchor.enabled:
             raise ValueError(

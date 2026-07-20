@@ -32,7 +32,11 @@ from mobile_robot_mppi.rl.demonstrations import (
     write_demonstration_manifest,
     write_demonstration_shard,
 )
-from mobile_robot_mppi.rl.environment import MppiPriorEnv
+from mobile_robot_mppi.rl.environment import DirectControlEnv, MppiPriorEnv
+from mobile_robot_mppi.rl.scripted_direct_control import (
+    ScriptedDirectControlConfig,
+    ScriptedPolylineDirectControl,
+)
 from mobile_robot_mppi.rl.scripted_subgoal import (
     ScriptedPolylineSubgoal,
     ScriptedSubgoalConfig,
@@ -125,6 +129,8 @@ def _collect_episode(environment, policy, episode_id, seed, split):
             "truth_theta_after": float(truth_after.pose.theta),
             "teacher_distance_action": float(action[0]),
             "teacher_bearing_action": float(action[1]),
+            "teacher_action_0": float(action[0]),
+            "teacher_action_1": float(action[1]),
             "route_progress": float(teacher_diagnostic["route_progress"]),
             "target_progress": float(teacher_diagnostic["target_progress"]),
             "route_length": float(teacher_diagnostic["route_length"]),
@@ -142,6 +148,9 @@ def _collect_episode(environment, policy, episode_id, seed, split):
             "minimum_clearance": float(last_info["minimum_clearance"]),
             "safety_override": bool(last_info["safety_override"]),
             "collision": bool(last_info["collision"]),
+            "boundary_violation": bool(
+                last_info.get("boundary_violation", False)
+            ),
             "success": bool(last_info["success"]),
             "terminated": bool(terminated),
             "truncated": bool(truncated),
@@ -170,6 +179,9 @@ def _collect_episode(environment, policy, episode_id, seed, split):
         "safety_interventions": int(sum(
             int(row["safety_override"]) for row in audit_rows
         )),
+        "boundary_violation_steps": int(sum(
+            int(row["boundary_violation"]) for row in audit_rows
+        )),
         "pose_source": str(environment.config["sensors"].get(
             "pose_source", "wheel_odometry"
         )),
@@ -177,7 +189,11 @@ def _collect_episode(environment, policy, episode_id, seed, split):
             "twist_source", "wheel_odometry"
         )),
         "reset_goal_distance": float(reset_info["goal_distance"]),
-        "included_in_training_shard": bool(last_info.get("success", False)),
+        "included_in_training_shard": bool(
+            last_info.get("success", False)
+            and not last_info.get("collision", False)
+            and not any(row["boundary_violation"] for row in audit_rows)
+        ),
     }
     return arrays, audit_rows, summary
 
@@ -213,6 +229,13 @@ def _parse_args(argv=None):
         default="41,42,43,44,45,46,47,48,49,50,51,52,53,54,55",
     )
     parser.add_argument("--lookahead", type=float, default=0.70)
+    parser.add_argument(
+        "--teacher-action-mode",
+        choices=("local_subgoal", "direct_control"),
+        default="local_subgoal",
+    )
+    parser.add_argument("--teacher-cruise-speed", type=float, default=0.28)
+    parser.add_argument("--teacher-yaw-gain", type=float, default=1.8)
     parser.add_argument("--num-samples", type=int, default=100)
     parser.add_argument("--max-steps", type=int, default=360)
     parser.add_argument("--route-margin", type=float, default=0.20)
@@ -306,7 +329,12 @@ def main(argv=None):
                 args.num_samples,
                 args.max_steps,
             )
-            environment = MppiPriorEnv(config, ROOT, seed=current_seed)
+            environment_class = (
+                DirectControlEnv
+                if args.teacher_action_mode == "direct_control"
+                else MppiPriorEnv
+            )
+            environment = environment_class(config, ROOT, seed=current_seed)
             if environment.encoder.config.include_absolute_pose:
                 environment.close()
                 raise ValueError(
@@ -351,11 +379,24 @@ def main(argv=None):
                 "pose_source": pose_source,
                 "twist_source": twist_source,
             }
-            policy = ScriptedPolylineSubgoal(
-                route,
-                environment.config["rl"]["prior"],
-                ScriptedSubgoalConfig(lookahead_distance=float(args.lookahead)),
-            )
+            if args.teacher_action_mode == "direct_control":
+                policy = ScriptedPolylineDirectControl(
+                    route,
+                    environment.action_spec,
+                    ScriptedDirectControlConfig(
+                        lookahead_distance=float(args.lookahead),
+                        cruise_speed=float(args.teacher_cruise_speed),
+                        yaw_gain=float(args.teacher_yaw_gain),
+                    ),
+                )
+            else:
+                policy = ScriptedPolylineSubgoal(
+                    route,
+                    environment.config["rl"]["prior"],
+                    ScriptedSubgoalConfig(
+                        lookahead_distance=float(args.lookahead)
+                    ),
+                )
             try:
                 arrays, audit_rows, summary = _collect_episode(
                     environment,
@@ -386,7 +427,7 @@ def main(argv=None):
             )
             _write_csv(audit_path, audit_rows, list(audit_rows[0]))
             episode_summaries.append(summary)
-            if summary["success"]:
+            if summary["included_in_training_shard"]:
                 successful[split].append({
                     **arrays,
                     "seed": int(current_seed),
@@ -435,8 +476,10 @@ def main(argv=None):
     _write_csv(
         output / "audit" / "episodes.csv", episode_summaries, summary_fields
     )
-    success_count = int(sum(int(row["success"]) for row in episode_summaries))
-    failure_count = len(episode_summaries) - success_count
+    accepted_count = int(sum(
+        int(row["included_in_training_shard"]) for row in episode_summaries
+    ))
+    failure_count = len(episode_summaries) - accepted_count
     manifest = {
         "schema": DEMONSTRATION_SCHEMA,
         "schema_version": DEMONSTRATION_SCHEMA_VERSION,
@@ -446,6 +489,9 @@ def main(argv=None):
             "rl_config": str(Path(args.rl_config)),
             "scene_configs": [str(Path(value)) for value in args.configs],
             "lookahead": float(args.lookahead),
+            "teacher_action_mode": str(args.teacher_action_mode),
+            "teacher_cruise_speed": float(args.teacher_cruise_speed),
+            "teacher_yaw_gain": float(args.teacher_yaw_gain),
             "num_samples": int(args.num_samples),
             "max_steps": int(args.max_steps),
             "route_margin": float(args.route_margin),
@@ -458,12 +504,29 @@ def main(argv=None):
         },
         "observation_dim": int(observation_dim),
         "action_dim": 2,
+        "action_mode": (
+            "direct_control"
+            if args.teacher_action_mode == "direct_control"
+            else "mppi_prior"
+        ),
         "observation_encoder": observation_config,
         "prior_parameterization": prior_config,
         "teacher": {
-            "class": "ScriptedPolylineSubgoal",
-            "action_space": "normalized_local_subgoal_distance_bearing",
-            "student_observation_source": "MppiPriorEnv.reset_and_step",
+            "class": (
+                "ScriptedPolylineDirectControl"
+                if args.teacher_action_mode == "direct_control"
+                else "ScriptedPolylineSubgoal"
+            ),
+            "action_space": (
+                "normalized_direct_control_v_omega"
+                if args.teacher_action_mode == "direct_control"
+                else "normalized_local_subgoal_distance_bearing"
+            ),
+            "student_observation_source": (
+                "DirectControlEnv.reset_and_step"
+                if args.teacher_action_mode == "direct_control"
+                else "MppiPriorEnv.reset_and_step"
+            ),
             "privileged_route_training_only": True,
         },
         "split_plan": {
@@ -473,7 +536,7 @@ def main(argv=None):
         "splits": split_descriptors,
         "counts": {
             "requested_episodes": len(episode_summaries),
-            "successful_episodes": success_count,
+            "successful_episodes": accepted_count,
             "failed_episodes": failure_count,
             "training_samples": int(sum(
                 value["samples"] for value in split_descriptors.values()

@@ -132,7 +132,7 @@ def test_confirmatory_arms_change_only_frozen_factors():
     assert value["planner"]["checkpoints"] == ["v1.pt", "v2.pt"]
 
 
-def test_shared_planner_and_sensor_overrides_apply_to_every_arm():
+def test_shared_planner_sensor_and_scan_guard_overrides_apply_to_every_arm():
     for arm in ARMS:
         config, _, _, _ = build_arm_config(
             copy.deepcopy(_base()),
@@ -153,10 +153,20 @@ def test_shared_planner_and_sensor_overrides_apply_to_every_arm():
                 "pose_source": "ground_truth",
                 "twist_source": "ground_truth",
             },
+            scan_guard_overrides={
+                "near_body_stop_radius": 0.32,
+                "front_slow_distance": 0.85,
+            },
         )
         assert config["planner"]["terminal_control_radius"] == 0.8
         assert config["sensors"]["pose_source"] == "ground_truth"
         assert config["sensors"]["twist_source"] == "ground_truth"
+        assert config["perception"]["scan_guard"][
+            "near_body_stop_radius"
+        ] == 0.32
+        assert config["perception"]["scan_guard"][
+            "front_slow_distance"
+        ] == 0.85
 
 
 def test_reliability_override_is_confined_to_adaptive_arms():

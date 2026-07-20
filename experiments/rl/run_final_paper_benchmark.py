@@ -157,6 +157,7 @@ def build_arm_config(
     coupled_actor_checkpoint=None,
     coupled_rl_overrides=None,
     paper_rl_driven_overrides=None,
+    scan_guard_overrides=None,
 ):
     """Build one frozen arm without allowing cross-arm parameter leakage."""
 
@@ -253,6 +254,9 @@ def build_arm_config(
             )
     planner.update(dict(planner_overrides or {}))
     config.setdefault("sensors", {}).update(dict(sensor_overrides or {}))
+    config.setdefault("perception", {}).setdefault("scan_guard", {}).update(
+        dict(scan_guard_overrides or {})
+    )
     if int(max_steps) > 0:
         config["experiment"]["max_steps"] = int(max_steps)
     config["experiment"]["final_benchmark_arm"] = arm
@@ -581,6 +585,7 @@ def main(argv=None):
             paper_rl_driven_overrides=frozen.get(
                 "paper_rl_driven_overrides", {}
             ),
+            scan_guard_overrides=frozen.get("scan_guard_overrides", {}),
         )
         arm = str(job["arm"])
         run_dir = output / "runs" / arm / config["experiment"]["name"]

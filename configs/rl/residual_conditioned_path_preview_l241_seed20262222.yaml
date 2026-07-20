@@ -1,0 +1,10 @@
+include: residual_conditioned_path_preview_l222.yaml
+
+experiment:
+  name: residual_conditioned_path_preview_l241_seed20262222
+  output_dir: results/research_platform/rl/l241_path_preview_actor_seed20262222_30k_v1
+
+rl:
+  training:
+    seed: 20262222
+    validation_seed_base: 20262822

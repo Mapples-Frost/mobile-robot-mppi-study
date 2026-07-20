@@ -18,7 +18,7 @@
 - 新增输入列零初始化，critics、optimizers、replay 和计数器重新初始化；
 - 三个独立训练 seed：`20262221, 20262222, 20262223`；
 - 各训练 30,000 environment steps；
-- validation seed bases 分别由显式训练 seed 派生，并与 development seed `923301001` 隔离；
+- 三个候选的 validation seed bases 分别固定为 `20262821, 20262822, 20262823`，并与训练 seed、development seed `923301001` 隔离；
 - 训练/验证场景沿用 L222 的六张 safe-reference MuJoCo 地图；
 - seen/unseen physics 均覆盖，scene-balanced replay；
 - 不使用任何 Tracking sealed seed。

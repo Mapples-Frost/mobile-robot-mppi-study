@@ -1,0 +1,4 @@
+scene,path_completion_ratio,delta_vs_l244,delta_vs_l242,success,collision,cross_track_rmse,boundary_violation_steps,minimum_footprint_boundary_margin,safety_interventions,proposal_authority_mean,guided_elites,planner_compute_ms_mean
+hairpin,0.2589198517,-0.0833227021,0.1512212056,0,0,0.4278360273,0,0.0030813669,73,0.1553768435,30,393.2573981
+s_chicane,0.1815806191,-0.0061444245,0.0057767976,0,0,0.4606689786,1,-0.0096740957,37,0.0952817129,25,409.0470332
+infinity,0.1060523353,0.0005318086,0.0035599830,0,0,0.3340176399,1,-0.0066848025,92,0.1054027942,20,400.1073739

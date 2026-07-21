@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 
 import yaml
+import pytest
 
 from experiments.rl.run_final_paper_benchmark import (
     ARMS,
@@ -15,6 +16,7 @@ from experiments.rl.run_final_paper_benchmark import (
     _comparison,
     resolve_benchmark_seeds,
     resolve_scene_max_steps,
+    validate_required_arm_config,
 )
 from experiments.rl.analyze_final_paper_benchmark import (
     PREDECLARED_POINT_GOAL_METRICS,
@@ -203,6 +205,33 @@ def test_reliability_override_is_confined_to_adaptive_arms():
             "reliability"
         ]
         assert "dynamics_routing_mode" not in reliability
+
+
+def test_required_arm_config_fails_closed_for_missing_nested_treatment():
+    contracts = {
+        "full_proposed": {
+            "planner.paper_rl_driven.conservative_terminal.enabled": True,
+        }
+    }
+    config = {
+        "planner": {
+            "paper_rl_driven": {
+                "conservative_terminal": {"enabled": True},
+            }
+        }
+    }
+    validate_required_arm_config(config, "full_proposed", contracts)
+
+    config["planner"]["paper_rl_driven"]["conservative_terminal"][
+        "enabled"
+    ] = False
+    with pytest.raises(ValueError, match="required arm config mismatch"):
+        validate_required_arm_config(config, "full_proposed", contracts)
+
+    with pytest.raises(ValueError, match="required arm config is missing"):
+        validate_required_arm_config(
+            {"planner": {}}, "full_proposed", contracts
+        )
 
 
 def test_residual_conditioned_actor_is_confined_to_coupled_arms():

@@ -1412,6 +1412,24 @@ class EpisodeMetrics:
                 row.get("terminal_value_authority_max", 1.0)
                 for row in values
             ])),
+            "terminal_value_raw_authority_mean": float(np.mean([
+                row.get("terminal_value_raw_authority_mean", 0.0)
+                for row in values
+            ])),
+            "terminal_value_causal_dynamics_cap_mean": float(np.mean([
+                row.get("terminal_value_causal_dynamics_cap", 1.0)
+                for row in values
+            ])),
+            "terminal_value_causal_dynamics_cap_min": float(np.min([
+                row.get("terminal_value_causal_dynamics_cap", 1.0)
+                for row in values
+            ])),
+            "terminal_value_causal_cap_active_fraction": float(np.mean([
+                row.get(
+                    "terminal_value_causal_cap_active_fraction", 0.0
+                )
+                for row in values
+            ])),
             "terminal_value_dynamics_confidence_mean": float(np.mean([
                 row.get(
                     "terminal_value_dynamics_confidence_mean", 1.0

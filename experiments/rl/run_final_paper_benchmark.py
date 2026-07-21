@@ -263,6 +263,32 @@ def build_arm_config(
     return config, flags, checkpoints, calibration
 
 
+def validate_required_arm_config(config, arm, contracts):
+    """Fail closed when a preregistered treatment was not injected.
+
+    Contracts use dotted paths so an experiment manifest can assert the
+    resolved runtime configuration before MuJoCo starts.  This prevents a
+    development run from silently becoming a no-treatment duplicate because
+    an optional nested planner feature retained its default value.
+    """
+
+    required = dict((contracts or {}).get(str(arm), {}))
+    for dotted_path, expected in required.items():
+        current = config
+        for key in str(dotted_path).split("."):
+            if not isinstance(current, dict) or key not in current:
+                raise ValueError(
+                    "required arm config is missing %s:%s"
+                    % (arm, dotted_path)
+                )
+            current = current[key]
+        if current != expected:
+            raise ValueError(
+                "required arm config mismatch %s:%s: expected %r, got %r"
+                % (arm, dotted_path, expected, current)
+            )
+
+
 def _core_factorial_rows(rows):
     result = []
     for row in rows:
@@ -629,6 +655,11 @@ def main(argv=None):
             scan_guard_overrides=frozen.get("scan_guard_overrides", {}),
         )
         arm = str(job["arm"])
+        validate_required_arm_config(
+            config,
+            arm,
+            frozen.get("required_arm_config", {}),
+        )
         run_dir = output / "runs" / arm / config["experiment"]["name"]
         experiment = ExperimentRunner(
             config, ROOT, run_dir, headless=True

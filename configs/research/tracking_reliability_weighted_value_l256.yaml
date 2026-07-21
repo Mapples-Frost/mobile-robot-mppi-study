@@ -1,0 +1,27 @@
+include: tracking_causal_value_cap_l255.yaml
+
+final_benchmark:
+  status: development_diagnostic
+  preregistration: docs/experiments/post_l217/l256_reliability_weighted_value_protocol.md
+  paper_rl_driven_overrides:
+    conservative_terminal:
+      enabled: true
+      ensemble_disagreement_soft: 0.01809636916077508
+      ensemble_disagreement_hard: 0.029740063775983316
+      innovation_error_soft: 0.04740944258503671
+      innovation_error_hard: 0.07152732870917881
+      innovation_minimum_samples: 3
+      critic_ood_soft: 3.0
+      critic_ood_hard: 7.0
+      critic_disagreement_soft: 0.033
+      critic_disagreement_hard: 0.366
+      use_critic_support: true
+      use_critic_disagreement: true
+      uncertainty_penalty_weight: 0.0
+  required_arm_config:
+    full_proposed:
+      planner.optimizer_diagnostics_enabled: true
+      planner.paper_rl_driven.reliability.enabled: true
+      planner.paper_rl_driven.conservative_terminal.enabled: true
+      planner.paper_rl_driven.terminal_value_weight: 1.0
+

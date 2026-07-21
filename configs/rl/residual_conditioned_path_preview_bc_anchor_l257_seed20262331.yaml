@@ -1,0 +1,10 @@
+include: residual_conditioned_path_preview_bc_anchor_l257_120k.yaml
+
+experiment:
+  name: residual_conditioned_path_preview_bc_anchor_l257_seed20262331
+  output_dir: results/research_platform/rl/l257_path_preview_bc_anchor_seed20262331_120k_v1
+
+rl:
+  training:
+    seed: 20262331
+    validation_seed_base: 20262931

@@ -1,0 +1,18 @@
+include: residual_conditioned_path_preview_bc_anchor_l243.yaml
+
+experiment:
+  name: residual_conditioned_path_preview_bc_anchor_l257_120k
+  output_dir: results/research_platform/rl/l257_path_preview_bc_anchor_120k
+
+rl:
+  policy_id: residual_conditioned_path_preview_bc_anchor_l257_120k
+  training:
+    # L257 changes training exposure only. Model, reward, scene pool, BC anchor,
+    # observation, action contract, and online MPPI integration remain frozen.
+    total_steps: 120000
+    evaluation_interval: 10000
+    checkpoint_interval: 30000
+    device: cuda
+    # L243 deliberately omitted replay tensors, which made exact continuation
+    # impossible. L257 checkpoints are resumable and fail closed on mismatch.
+    save_replay_buffer: true

@@ -1,0 +1,11 @@
+include: tracking_fair_episode_budget_l247.yaml
+
+final_benchmark:
+  status: development
+  preregistration: docs/experiments/post_l217/l248_candidate_boundary_filter_protocol.md
+
+  # The only L248 treatment. All arms share the same footprint feasibility
+  # contract; ICODE, Actor, MPPI costs, maps and safety arbitration stay frozen.
+  planner_overrides:
+    path_boundary_candidate_filter_enabled: true
+

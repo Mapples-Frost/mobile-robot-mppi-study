@@ -56,6 +56,7 @@ class MppiConfig:
     path_boundary_buffer: float = 0.0
     path_boundary_weight: float = 0.0
     path_boundary_violation_penalty: float = 0.0
+    path_boundary_candidate_filter_enabled: bool = False
     terminal_velocity_weight: float = 0.0
     terminal_yaw_rate_weight: float = 0.0
     terminal_bearing_weight: float = 0.0
@@ -109,6 +110,9 @@ class MppiConfig:
             ),
             path_boundary_violation_penalty=float(
                 values.get("path_boundary_violation_penalty", 0.0)
+            ),
+            path_boundary_candidate_filter_enabled=bool(
+                values.get("path_boundary_candidate_filter_enabled", False)
             ),
             terminal_velocity_weight=float(values.get("terminal_velocity_weight", 0.0)),
             terminal_yaw_rate_weight=float(values.get("terminal_yaw_rate_weight", 0.0)),
@@ -198,6 +202,13 @@ class MppiConfig:
         ):
             raise ValueError(
                 "path boundary enforcement requires path preview and a positive violation penalty"
+            )
+        if (
+            self.path_boundary_candidate_filter_enabled
+            and not self.path_boundary_enabled
+        ):
+            raise ValueError(
+                "path boundary candidate filtering requires path boundary enforcement"
             )
         if self.integrator not in ("euler", "rk4"):
             raise ValueError("MPPI integrator must be 'euler' or 'rk4'")
@@ -760,27 +771,11 @@ class MppiController:
                 heading_error ** 2, axis=1
             )
         if self.config.path_boundary_enabled:
-            width_preview = getattr(
-                reference, "preview_corridor_half_widths", None
-            )
-            footprint_radius = getattr(reference, "footprint_radius", None)
-            if not callable(width_preview) or footprint_radius is None:
-                raise ValueError(
-                    "path boundary enforcement requires corridor-aware reference"
-                )
-            half_widths = np.asarray(width_preview(offsets), dtype=np.float64)
-            if half_widths.shape != (self.config.horizon + 1,):
-                raise ValueError("corridor preview must have shape [H+1]")
-            tangent = reference_poses[None, :, 2]
-            delta = xy - reference_poses[None, :, :2]
-            lateral_error = (
-                -np.sin(tangent) * delta[..., 0]
-                + np.cos(tangent) * delta[..., 1]
-            )
-            margins = (
-                half_widths[None, :]
-                - float(footprint_radius)
-                - np.abs(lateral_error)
+            margins = self._path_boundary_margins(
+                trajectories,
+                reference,
+                offsets=offsets,
+                reference_poses=reference_poses,
             )
             buffered_excess = np.maximum(
                 0.0, self.config.path_boundary_buffer - margins[:, 1:]
@@ -842,6 +837,68 @@ class MppiController:
                 costs[index] += float(self.memory_cost(trajectories[index], controls[index]))
         return costs
 
+    def _path_boundary_margins(
+        self,
+        trajectories,
+        reference,
+        offsets=None,
+        reference_poses=None,
+    ):
+        """Return footprint clearance to both sides of the path corridor.
+
+        Positive values mean that the circular planning footprint remains
+        inside the corridor.  This helper is shared by the soft path cost and
+        the optional hard candidate filter so both enforce exactly the same
+        geometry contract.
+        """
+
+        paths = np.asarray(trajectories, dtype=np.float64)
+        if paths.ndim != 3 or paths.shape[1] != self.config.horizon + 1:
+            raise ValueError("boundary trajectories must have shape [K,H+1,nx]")
+        preview = getattr(reference, "preview_poses", None)
+        width_preview = getattr(reference, "preview_corridor_half_widths", None)
+        footprint_radius = getattr(reference, "footprint_radius", None)
+        if (
+            not callable(preview)
+            or not callable(width_preview)
+            or footprint_radius is None
+        ):
+            raise ValueError(
+                "path boundary enforcement requires corridor-aware reference"
+            )
+        if offsets is None:
+            initial_offset = float(getattr(reference, "lookahead_distance", 0.0))
+            offsets = initial_offset + np.arange(
+                self.config.horizon + 1, dtype=np.float64
+            ) * self.config.dt * self.config.path_preview_speed_mps
+        offsets = np.asarray(offsets, dtype=np.float64)
+        if offsets.shape != (self.config.horizon + 1,):
+            raise ValueError("path preview offsets must have shape [H+1]")
+        if reference_poses is None:
+            reference_poses = np.asarray(preview(offsets), dtype=np.float64)
+        else:
+            reference_poses = np.asarray(reference_poses, dtype=np.float64)
+        if reference_poses.shape != (self.config.horizon + 1, 3):
+            raise ValueError("path preview must have shape [H+1,3]")
+        half_widths = np.asarray(width_preview(offsets), dtype=np.float64)
+        if half_widths.shape != (self.config.horizon + 1,):
+            raise ValueError("corridor preview must have shape [H+1]")
+        xy = paths[..., list(self.state_spec.position_indices)]
+        tangent = reference_poses[None, :, 2]
+        delta = xy - reference_poses[None, :, :2]
+        lateral_error = (
+            -np.sin(tangent) * delta[..., 0]
+            + np.cos(tangent) * delta[..., 1]
+        )
+        margins = (
+            half_widths[None, :]
+            - float(footprint_radius)
+            - np.abs(lateral_error)
+        )
+        if not np.isfinite(margins).all():
+            raise FloatingPointError("path boundary margins contain NaN or Inf")
+        return margins
+
     def _solve_plan(
         self, state, prior, target, obstacles, rng, observation=None,
         reference=None,
@@ -863,6 +920,18 @@ class MppiController:
             stage_started = now
 
         samples = self._sample(prior, rng=rng)
+        hard_boundary_filter = bool(
+            self.config.path_boundary_candidate_filter_enabled
+        )
+        if hard_boundary_filter:
+            # Reserve one of the already budgeted candidates for a deterministic
+            # braking sequence.  This does not increase K and gives the
+            # fail-closed branch a reproducible control sequence when every
+            # stochastic proposal is footprint-infeasible.
+            samples[0] = 0.0
+            samples[0, 0] = self.action_spec.clip(
+                samples[0, 0], self.previous_action, self.config.dt
+            )
         terminal_dx = float(
             target.pose.x - state[self.state_spec.position_indices[0]]
         )
@@ -924,6 +993,14 @@ class MppiController:
             # the predicted in-place alignment rather than becoming blind to
             # the value of turning.
             samples[:, 0, v_index] *= terminal_translation_scale
+        if hard_boundary_filter:
+            # Candidate rollouts must use the same first command that can
+            # actually pass the actuator slew-rate contract.  Otherwise a
+            # nominally feasible sample may become infeasible only after the
+            # selected command is clipped below.
+            samples[:, 0, :] = self.action_spec.clip(
+                samples[:, 0, :], self.previous_action, self.config.dt
+            )
         # Effective perturbations include actuator-bound clipping.  Expressing
         # the update this way makes the MPPI control law explicit while
         # remaining numerically equivalent to the historical weighted average.
@@ -938,10 +1015,37 @@ class MppiController:
         mark("cost")
         correction = self._importance_sampling_cost(prior.mean, perturbations, covariance)
         costs = costs + correction
+        boundary_candidate_feasible = np.ones(
+            self.config.num_samples, dtype=bool
+        )
+        boundary_candidate_min_margin = np.full(
+            self.config.num_samples, np.nan, dtype=np.float64
+        )
+        if hard_boundary_filter:
+            candidate_margins = self._path_boundary_margins(
+                trajectories, reference
+            )
+            boundary_candidate_min_margin = np.min(
+                candidate_margins[:, 1:], axis=1
+            )
+            boundary_candidate_feasible = boundary_candidate_min_margin >= 0.0
         beta = float(np.min(costs))
         exponent = np.clip(-(costs - beta) / self.config.temperature, -700.0, 0.0)
+        if hard_boundary_filter and np.any(boundary_candidate_feasible):
+            exponent = np.where(
+                boundary_candidate_feasible, exponent, -np.inf
+            )
         weights = np.exp(exponent)
         weights /= max(float(np.sum(weights)), 1e-12)
+        boundary_no_feasible_candidates = bool(
+            hard_boundary_filter and not np.any(boundary_candidate_feasible)
+        )
+        if boundary_no_feasible_candidates:
+            # Candidate zero is the fixed braking sequence inserted above.
+            # Use it deterministically instead of allowing an infeasible RL or
+            # Gaussian proposal to dominate merely through a lower soft cost.
+            weights[:] = 0.0
+            weights[0] = 1.0
         weighted_perturbation = np.sum(weights[:, None, None] * perturbations, axis=0)
         sequence = prior.mean + weighted_perturbation
         sequence = np.clip(sequence, self.action_spec.lower, self.action_spec.upper)
@@ -985,6 +1089,39 @@ class MppiController:
         sequence[0] = action
         mark("weighting_update")
         updated_trajectory = self.rollout(state, sequence)[0]
+        boundary_weighted_update_feasible = True
+        boundary_fallback_used = False
+        boundary_fallback_candidate_index = -1
+        if hard_boundary_filter:
+            updated_margin = float(np.min(
+                self._path_boundary_margins(
+                    updated_trajectory[None, ...], reference
+                )[0, 1:]
+            ))
+            boundary_weighted_update_feasible = bool(updated_margin >= 0.0)
+            if (
+                not boundary_weighted_update_feasible
+                and np.any(boundary_candidate_feasible)
+            ):
+                feasible_indices = np.flatnonzero(boundary_candidate_feasible)
+                boundary_fallback_candidate_index = int(
+                    feasible_indices[np.argmin(costs[feasible_indices])]
+                )
+                sequence = samples[boundary_fallback_candidate_index].copy()
+                action = self.action_spec.clip(
+                    sequence[0], self.previous_action, self.config.dt
+                )
+                sequence[0] = action
+                updated_trajectory = self.rollout(state, sequence)[0]
+                boundary_fallback_used = True
+                updated_margin = float(np.min(
+                    self._path_boundary_margins(
+                        updated_trajectory[None, ...], reference
+                    )[0, 1:]
+                ))
+                boundary_weighted_update_feasible = bool(updated_margin >= 0.0)
+        else:
+            updated_margin = 0.0
         mark("final_rollout")
         diagnostics = {
             "cost_min": float(costs.min()),
@@ -996,6 +1133,28 @@ class MppiController:
             "effective_sample_size": float(1.0 / np.sum(weights ** 2)),
             "effective_sample_fraction": float(
                 (1.0 / np.sum(weights ** 2)) / self.config.num_samples
+            ),
+            "path_boundary_candidate_filter_enabled": hard_boundary_filter,
+            "path_boundary_candidate_feasible_count": int(
+                np.sum(boundary_candidate_feasible)
+            ),
+            "path_boundary_candidate_feasible_fraction": float(
+                np.mean(boundary_candidate_feasible)
+            ),
+            "path_boundary_candidate_min_margin": float(
+                np.nanmin(boundary_candidate_min_margin)
+                if hard_boundary_filter else 0.0
+            ),
+            "path_boundary_no_feasible_candidates": (
+                boundary_no_feasible_candidates
+            ),
+            "path_boundary_weighted_update_feasible": (
+                boundary_weighted_update_feasible
+            ),
+            "path_boundary_final_min_margin": updated_margin,
+            "path_boundary_fallback_used": boundary_fallback_used,
+            "path_boundary_fallback_candidate_index": (
+                boundary_fallback_candidate_index
             ),
             "importance_sampling_correction": bool(
                 self.config.importance_sampling_correction

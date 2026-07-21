@@ -386,6 +386,46 @@ def resolve_benchmark_seeds(
     return selected, sealed
 
 
+def resolve_scene_max_steps(frozen, scenes):
+    """Resolve a positive episode budget for every selected scene.
+
+    Existing manifests keep their historical scalar ``max_steps`` behavior.
+    A manifest that opts into ``max_steps_by_scene`` is fail-closed: every
+    selected scene must have an explicit positive budget.  This prevents a
+    misspelled scene name from silently falling back to an incomparable
+    episode horizon.
+    """
+
+    mapping = frozen.get("max_steps_by_scene")
+    if mapping is None:
+        value = int(frozen["max_steps"])
+        if value <= 0:
+            raise ValueError("final_benchmark.max_steps must be positive")
+        return {str(scene["name"]): value for scene in scenes}
+    if not isinstance(mapping, dict) or not mapping:
+        raise ValueError(
+            "final_benchmark.max_steps_by_scene must be a non-empty mapping"
+        )
+    parsed = {}
+    for name, value in mapping.items():
+        if not isinstance(name, str) or not name.strip():
+            raise ValueError("max_steps_by_scene keys must be scene names")
+        parsed_value = int(value)
+        if parsed_value <= 0:
+            raise ValueError(
+                "max_steps_by_scene[%s] must be positive" % name
+            )
+        parsed[str(name)] = parsed_value
+    selected_names = tuple(str(scene["name"]) for scene in scenes)
+    missing = sorted(set(selected_names) - set(parsed))
+    if missing:
+        raise ValueError(
+            "max_steps_by_scene is missing selected scenes: %s"
+            % ", ".join(missing)
+        )
+    return {name: parsed[name] for name in selected_names}
+
+
 def _manifest_paths(values):
     return [str(_resolve_manifest_path(value)) for value in values]
 
@@ -524,6 +564,7 @@ def main(argv=None):
         domain_path, selected_domains, ()
     )
     scenes = load_scenes(base, selected_scene_paths)
+    max_steps_by_scene = resolve_scene_max_steps(frozen, scenes)
     profile = str(frozen.get("metric_profile", "point_goal"))
     metrics = metrics_for_profile(profile)
     if profile == "path_tracking":
@@ -566,7 +607,7 @@ def main(argv=None):
             int(frozen["total_rollouts"]),
             int(frozen["iterations"]),
             domain_by_name[job["physics_domain"]],
-            int(frozen["max_steps"]),
+            int(max_steps_by_scene[job["scene"]]),
             float(frozen["terminal_guidance_radius"]),
             float(frozen["terminal_guided_fraction_floor"]),
             float(frozen.get(
@@ -639,6 +680,7 @@ def main(argv=None):
             "rollout_budget_per_decision": int(
                 frozen["total_rollouts"]
             ),
+            "max_steps_budget": int(max_steps_by_scene[job["scene"]]),
             "paper_iterations": (
                 int(frozen["iterations"]) if flags["use_rl"] else 1
             ),
@@ -699,6 +741,7 @@ def main(argv=None):
         "physics_domains": domains,
         "schedule_seed": int(frozen["schedule_seed"]),
         "metric_profile": profile,
+        "max_steps_by_scene": dict(max_steps_by_scene),
     }
     (output / "provenance.json").write_text(
         json.dumps(provenance, indent=2, sort_keys=True) + "\n",

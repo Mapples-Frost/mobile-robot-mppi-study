@@ -1,0 +1,14 @@
+include: tracking_path_actor_bc_gate_l244.yaml
+
+final_benchmark:
+  status: development
+  preregistration: docs/experiments/post_l217/l247_fair_episode_budget_protocol.md
+
+  # Frozen before reading any L247 outcome.  Each value is
+  # ceil(1.25 * path_length / (0.30 m/s * 0.1 s)).  The same scene budget is
+  # applied to every arm; the inherited scalar max_steps is intentionally
+  # ignored whenever this mapping is present.
+  max_steps_by_scene:
+    tracking_grand_hairpin_l234: 2210
+    tracking_grand_s_chicane_l234: 1405
+    tracking_grand_infinity_l234: 2030

@@ -14,6 +14,7 @@ from experiments.rl.run_final_paper_benchmark import (
     _load_reliability_with_gate,
     _comparison,
     resolve_benchmark_seeds,
+    resolve_scene_max_steps,
 )
 from experiments.rl.analyze_final_paper_benchmark import (
     PREDECLARED_POINT_GOAL_METRICS,
@@ -376,6 +377,48 @@ def test_qualification_requires_explicit_unsharded_seeds():
             pass
         else:
             raise AssertionError("invalid qualification seeds accepted")
+
+
+def test_scene_specific_episode_budgets_are_fail_closed_and_legacy_safe():
+    scenes = ({"name": "hairpin"}, {"name": "infinity"})
+    assert resolve_scene_max_steps({"max_steps": 700}, scenes) == {
+        "hairpin": 700,
+        "infinity": 700,
+    }
+    frozen = {
+        "max_steps": 700,
+        "max_steps_by_scene": {"hairpin": 2210, "infinity": 2030},
+    }
+    assert resolve_scene_max_steps(frozen, scenes) == {
+        "hairpin": 2210,
+        "infinity": 2030,
+    }
+    for invalid in (
+        {"max_steps": 0},
+        {"max_steps_by_scene": {}},
+        {"max_steps_by_scene": {"hairpin": 2210}},
+        {"max_steps_by_scene": {"hairpin": -1, "infinity": 2030}},
+    ):
+        try:
+            resolve_scene_max_steps(invalid, scenes)
+        except (KeyError, ValueError):
+            pass
+        else:
+            raise AssertionError("invalid scene episode budget accepted")
+
+
+def test_l247_manifest_freezes_the_three_scene_episode_budgets():
+    root = Path(__file__).resolve().parents[2]
+    frozen = load_benchmark_manifest(
+        root / "configs/research/tracking_fair_episode_budget_l247.yaml"
+    )["final_benchmark"]
+    assert frozen["status"] == "development"
+    assert frozen["development_seeds"] == [923301001]
+    assert frozen["max_steps_by_scene"] == {
+        "tracking_grand_hairpin_l234": 2210,
+        "tracking_grand_s_chicane_l234": 1405,
+        "tracking_grand_infinity_l234": 2030,
+    }
 
 
 def test_l217_manifest_freezes_unseen_seeds_and_policy_rescue():

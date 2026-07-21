@@ -1,0 +1,4 @@
+scene,observed_steps,control_dt_s,path_length_m,maximum_speed_mps,mean_forward_applied_speed_mps,final_completion_ratio,theoretical_min_steps,applied_velocity_estimated_steps,empirical_progress_estimated_steps,theoretical_margin_vs_700_steps,applied_velocity_margin_vs_700_steps,empirical_progress_margin_vs_700_steps
+hairpin,700,0.1000000000000334,53.0230477471498,0.65,0.3514860015351305,0.34224255386288965,816,1509,2046,-116,-809,-1346
+s_chicane,493,0.1000000000000334,33.706276921556764,0.65,0.1995705314955202,0.18785442722186904,519,1689,2625,181,-989,-1925
+infinity,530,0.1000000000000334,48.71536376331067,0.65,0.20106959179487346,0.10569832279262337,750,2423,5015,-50,-1723,-4315

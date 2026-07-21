@@ -1,0 +1,102 @@
+{
+  "analysis": "L246_tracking_root_cause_audit",
+  "episode_limit": 700,
+  "inputs": {
+    "hairpin": {
+      "episode_provenance": {
+        "path": "results/research_platform/rl/tracking_l244_bc_anchor_hairpin_seed923301001/runs/full_proposed/full_proposed__tracking_grand_hairpin_l234__nominal_seen__seed923301001/provenance.json",
+        "sha256": "f389d4d4c2540fd05bc214dd21dc1529007596ad3175e4df67ea0f551efa29a0"
+      },
+      "metrics": {
+        "path": "results/research_platform/rl/tracking_l244_bc_anchor_hairpin_seed923301001/runs/full_proposed/full_proposed__tracking_grand_hairpin_l234__nominal_seen__seed923301001/metrics.json",
+        "sha256": "1caafee85a648c7edaf411068d35457de93623003a53629da04469b913fd2a65"
+      },
+      "provenance": {
+        "actor_sha256": "e8e446cbe9a9520a4053012a28995e63238a85dae4f0462e5574e2a0c0746c3c",
+        "git_sha": "edf9e1a419e1af899cb1feda88c774d95b99bde8",
+        "manifest_sha256": "73d32e0e44853d2c4095e97dc5f1da5c10e70018bdfef263db7bc8a96fe1a517",
+        "seed": 923301001,
+        "status": "pipeline_qualification"
+      },
+      "resolved_config": {
+        "path": "results/research_platform/rl/tracking_l244_bc_anchor_hairpin_seed923301001/runs/full_proposed/full_proposed__tracking_grand_hairpin_l234__nominal_seen__seed923301001/config_resolved.yaml",
+        "sha256": "c541b698ebe63fd624bea3a39b5c5d42bb121dabf7317d4177ed6cd9627f2c66"
+      },
+      "run_provenance": {
+        "path": "results/research_platform/rl/tracking_l244_bc_anchor_hairpin_seed923301001/provenance.json",
+        "sha256": "0169ca2c4f655e7c864d9075905c0afcbf784b7bdbd8b34a1e5b065d341a281a"
+      },
+      "trajectory": {
+        "path": "results/research_platform/rl/tracking_l244_bc_anchor_hairpin_seed923301001/runs/full_proposed/full_proposed__tracking_grand_hairpin_l234__nominal_seen__seed923301001/trajectory.csv",
+        "sha256": "b9cb405c21868d0c326fb55eff58fc7805a8960804e62b42b85ec708e6a8798a"
+      }
+    },
+    "infinity": {
+      "episode_provenance": {
+        "path": "results/research_platform/rl/tracking_l244_bc_anchor_infinity_seed923301001/runs/full_proposed/full_proposed__tracking_grand_infinity_l234__nominal_seen__seed923301001/provenance.json",
+        "sha256": "9c6f6c804c65fee0cff955bba81e960657b546fde2fdcdebf95994aed0c4f2d1"
+      },
+      "metrics": {
+        "path": "results/research_platform/rl/tracking_l244_bc_anchor_infinity_seed923301001/runs/full_proposed/full_proposed__tracking_grand_infinity_l234__nominal_seen__seed923301001/metrics.json",
+        "sha256": "5e83dc9b42add0567c5b2f6bf1984dae1cb3a50b900d881345031e4de82787ef"
+      },
+      "provenance": {
+        "actor_sha256": "e8e446cbe9a9520a4053012a28995e63238a85dae4f0462e5574e2a0c0746c3c",
+        "git_sha": "edf9e1a419e1af899cb1feda88c774d95b99bde8",
+        "manifest_sha256": "73d32e0e44853d2c4095e97dc5f1da5c10e70018bdfef263db7bc8a96fe1a517",
+        "seed": 923301001,
+        "status": "pipeline_qualification"
+      },
+      "resolved_config": {
+        "path": "results/research_platform/rl/tracking_l244_bc_anchor_infinity_seed923301001/runs/full_proposed/full_proposed__tracking_grand_infinity_l234__nominal_seen__seed923301001/config_resolved.yaml",
+        "sha256": "cc8cb94786db55d7f7d6cc940f5bd9e2c709a0d04e8c0d620fc47db667ceab0f"
+      },
+      "run_provenance": {
+        "path": "results/research_platform/rl/tracking_l244_bc_anchor_infinity_seed923301001/provenance.json",
+        "sha256": "40ec56a435c6eaed8cb7d231f8aa74b47bb711b3b912fd2352975d31d6f897c9"
+      },
+      "trajectory": {
+        "path": "results/research_platform/rl/tracking_l244_bc_anchor_infinity_seed923301001/runs/full_proposed/full_proposed__tracking_grand_infinity_l234__nominal_seen__seed923301001/trajectory.csv",
+        "sha256": "88bba6b9a8bb01cf00087f2f3bf062b10728ac2bcb41d65857a5c90303eb0bdb"
+      }
+    },
+    "s_chicane": {
+      "episode_provenance": {
+        "path": "results/research_platform/rl/tracking_l244_bc_anchor_s_chicane_seed923301001/runs/full_proposed/full_proposed__tracking_grand_s_chicane_l234__nominal_seen__seed923301001/provenance.json",
+        "sha256": "b27a541263206c5d4f0543d6f3c1d94e419b6555f406bb99e300b36ec51365a5"
+      },
+      "metrics": {
+        "path": "results/research_platform/rl/tracking_l244_bc_anchor_s_chicane_seed923301001/runs/full_proposed/full_proposed__tracking_grand_s_chicane_l234__nominal_seen__seed923301001/metrics.json",
+        "sha256": "5f939ea3771c19a1781722d3c56ee47ad47362307e702aeb9ea85052a7f9b387"
+      },
+      "provenance": {
+        "actor_sha256": "e8e446cbe9a9520a4053012a28995e63238a85dae4f0462e5574e2a0c0746c3c",
+        "git_sha": "edf9e1a419e1af899cb1feda88c774d95b99bde8",
+        "manifest_sha256": "73d32e0e44853d2c4095e97dc5f1da5c10e70018bdfef263db7bc8a96fe1a517",
+        "seed": 923301001,
+        "status": "pipeline_qualification"
+      },
+      "resolved_config": {
+        "path": "results/research_platform/rl/tracking_l244_bc_anchor_s_chicane_seed923301001/runs/full_proposed/full_proposed__tracking_grand_s_chicane_l234__nominal_seen__seed923301001/config_resolved.yaml",
+        "sha256": "470874e6c918a3a04861867f4242ce34afaa276253638cd344038f6ffad84d62"
+      },
+      "run_provenance": {
+        "path": "results/research_platform/rl/tracking_l244_bc_anchor_s_chicane_seed923301001/provenance.json",
+        "sha256": "c7d51faea0aa29c204c4eeac3cce8951db0bcbc8560b786075a732803f6c2e4e"
+      },
+      "trajectory": {
+        "path": "results/research_platform/rl/tracking_l244_bc_anchor_s_chicane_seed923301001/runs/full_proposed/full_proposed__tracking_grand_s_chicane_l234__nominal_seen__seed923301001/trajectory.csv",
+        "sha256": "4129842b647434a2d9fb17190d0ba4100de7398297d3ca4b0a46b3bceceb7bd7"
+      }
+    }
+  },
+  "protocol": "docs/experiments/post_l217/l246_tracking_root_cause_audit_protocol.md",
+  "read_only": true,
+  "thresholds": {
+    "progress_jump_threshold": 0.03,
+    "progress_regression_threshold": -0.002,
+    "safety_dense_threshold": 0.5,
+    "stall_max_arc_gain_m": 0.05,
+    "stall_window_steps": 50
+  }
+}

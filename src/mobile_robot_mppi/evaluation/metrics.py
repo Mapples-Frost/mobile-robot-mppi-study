@@ -236,6 +236,21 @@ class EpisodeMetrics:
                     "optimizer_initial_proposal_first_omega", 0.0
                 )
             ),
+            "terminal_value_raw_authority_mean": float(
+                planner_diagnostics.get(
+                    "terminal_value_raw_authority_mean", 0.0
+                )
+            ),
+            "terminal_value_causal_dynamics_cap": float(
+                planner_diagnostics.get(
+                    "terminal_value_causal_dynamics_cap", 1.0
+                )
+            ),
+            "terminal_value_causal_cap_active_fraction": float(
+                planner_diagnostics.get(
+                    "terminal_value_causal_cap_active_fraction", 0.0
+                )
+            ),
             "sample_saturation_fraction": float(
                 planner_diagnostics.get("sample_saturation_fraction", 0.0)
             ),

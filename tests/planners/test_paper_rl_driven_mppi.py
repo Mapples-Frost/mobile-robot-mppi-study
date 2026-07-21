@@ -744,3 +744,26 @@ def test_conservative_terminal_uses_candidate_confidence_and_safe_fallback():
         untrusted.diagnostics["terminal_value_safe_fallback"]
         == "existing_mppi_geometric_terminal"
     )
+
+
+def test_conservative_terminal_authority_is_capped_by_causal_dynamics_confidence():
+    controller = _reliable_controller(
+        ReliabilityDirectPolicy(0.0, critic_disagreement=0.0),
+        conservative_terminal=True,
+    )
+    trajectories = np.zeros((2, controller.config.horizon + 1, 5))
+    controls = np.zeros((2, controller.config.horizon, 2))
+
+    costs, diagnostics = controller._paper_terminal_cost(
+        trajectories,
+        controls,
+        _observation(),
+        PointGoal(1.0, 0.0),
+        causal_dynamics_confidence=0.0,
+    )
+
+    np.testing.assert_allclose(costs, 0.0)
+    assert diagnostics["terminal_value_raw_authority_mean"] == 1.0
+    assert diagnostics["terminal_value_authority_mean"] == 0.0
+    assert diagnostics["terminal_value_causal_dynamics_cap"] == 0.0
+    assert diagnostics["terminal_value_causal_cap_active_fraction"] == 1.0

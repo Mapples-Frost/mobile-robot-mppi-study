@@ -1,0 +1,11 @@
+include: tracking_optimizer_diagnostics_l254.yaml
+
+final_benchmark:
+  status: development_diagnostic
+  preregistration: docs/experiments/post_l217/l255_causal_value_authority_protocol.md
+  max_steps_by_scene:
+    tracking_grand_s_chicane_l234: 350
+  planner_overrides:
+    prior_path_rollout_enabled: true
+    optimizer_diagnostics_enabled: true
+

@@ -1279,7 +1279,12 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
         return samples
 
     def _paper_terminal_cost(
-        self, trajectories, controls, observation, reference
+        self,
+        trajectories,
+        controls,
+        observation,
+        reference,
+        causal_dynamics_confidence=1.0,
     ):
         cfg = self.paper_rl_driven_config
         if cfg.terminal_value_weight <= 0.0:
@@ -1317,7 +1322,21 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
                 details["critic_ood_scores"],
                 details["critic_disagreement"],
             )
-            authority = confidence["authority"]
+            causal_cap = float(np.clip(
+                causal_dynamics_confidence, 0.0, 1.0
+            ))
+            raw_authority = np.asarray(
+                confidence["authority"], dtype=np.float64
+            )
+            # The terminal-state estimator must not overrule causal evidence
+            # already available at the current executed state.  Without this
+            # cap the planner can reject the RL proposal as dynamically
+            # untrustworthy while simultaneously granting its critic full
+            # authority, which lets an extrapolating value function dominate
+            # the geometric MPPI cost.  The cap implements the intended
+            # cross-layer contract: value authority cannot exceed current
+            # ICODE/innovation dynamics confidence.
+            authority = np.minimum(raw_authority, causal_cap)
             uncertainty_cost = (
                 terminal_cfg.uncertainty_penalty_weight
                 * confidence["dynamics_uncertainty"]
@@ -1340,6 +1359,13 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
                 ),
                 "terminal_value_authority_max": float(
                     np.max(authority)
+                ),
+                "terminal_value_raw_authority_mean": float(
+                    np.mean(raw_authority)
+                ),
+                "terminal_value_causal_dynamics_cap": causal_cap,
+                "terminal_value_causal_cap_active_fraction": float(
+                    np.mean(authority < raw_authority - 1e-12)
                 ),
                 "terminal_value_dynamics_confidence_mean": float(
                     np.mean(confidence["dynamics_confidence"])
@@ -1646,7 +1672,13 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
                 reference=reference,
             )
             terminal, terminal_diagnostics = self._paper_terminal_cost(
-                trajectories, samples, observation, reference
+                trajectories,
+                samples,
+                observation,
+                reference,
+                causal_dynamics_confidence=float(
+                    reliability_diagnostics.get("dynamics_confidence", 1.0)
+                ),
             )
             # A learned critic is useful beyond the finite MPPI horizon, but
             # its coarse value geometry should not override the exact goal
@@ -1925,6 +1957,11 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
                 sequence[None, ...],
                 observation,
                 reference,
+                causal_dynamics_confidence=float(
+                    reliability_diagnostics.get(
+                        "dynamics_confidence", 1.0
+                    )
+                ),
             )[0][0]) * handover_authority
             selected_cost = selected_running + selected_terminal
             v_index_diag = (

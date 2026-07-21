@@ -1,0 +1,18 @@
+include: ../../mujoco_l218_serpentine_polyline.yaml
+
+# l258_generated: procedural route; no held-out route data used
+experiment:
+  name: l258_generated_hairpin_like_20262442_0
+  max_steps: 1400
+  physics_domain_role: seen
+task:
+  type: polyline
+  points:
+    - [4.23744, 4.87434]
+    - [1.87736, 4.04077]
+    - [2.15522, 3.25407]
+    - [4.25795, 3.72024]
+    - [4.62264, 2.68771]
+    - [2.39856, 1.62566]
+scene:
+  name: l258_generated_hairpin_like_20262442_0

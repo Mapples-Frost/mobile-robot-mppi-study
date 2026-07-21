@@ -1,0 +1,26 @@
+include: residual_conditioned_path_preview_bc_anchor_l257_120k.yaml
+
+experiment:
+  name: l258_tracking_curriculum_seed20262441_60k
+  output_dir: results/research_platform/rl/l258_tracking_curriculum_seed20262441_60k
+
+rl:
+  policy_id: l258_tracking_curriculum_60k
+  training:
+    seed: 20262441
+    validation_seed_base: 20263441
+    total_steps: 60000
+    checkpoint_interval: 15000
+    evaluation_interval: 10000
+    scene_configs:
+      - configs/research/l258_curriculum/seed20262441/l258_generated_s_curve_20262441_0.yaml
+      - configs/research/l258_curriculum/seed20262441/l258_generated_hairpin_like_20262441_0.yaml
+      - configs/research/l258_curriculum/seed20262441/l258_generated_double_loop_20262441_0.yaml
+      - configs/research/l258_curriculum/seed20262441/l258_generated_curvature_ramp_20262441_0.yaml
+      - configs/research/l258_curriculum/seed20262441/l258_generated_corridor_20262441_0.yaml
+    validation_scene_configs:
+      - configs/research/l258_curriculum/seed20263441/l258_generated_s_curve_20263441_0.yaml
+      - configs/research/l258_curriculum/seed20263441/l258_generated_hairpin_like_20263441_0.yaml
+      - configs/research/l258_curriculum/seed20263441/l258_generated_double_loop_20263441_0.yaml
+      - configs/research/l258_curriculum/seed20263441/l258_generated_curvature_ramp_20263441_0.yaml
+      - configs/research/l258_curriculum/seed20263441/l258_generated_corridor_20263441_0.yaml

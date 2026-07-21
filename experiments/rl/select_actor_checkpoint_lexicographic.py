@@ -82,6 +82,16 @@ def aggregate_run(run_dir: Path) -> List[Dict[str, object]]:
     expected_count = None
     aggregates: List[Dict[str, object]] = []
     for global_step, group in sorted(grouped.items()):
+        checkpoint_candidate = (
+            run_dir / "checkpoints" / (
+                "initial.pt" if global_step == 0 else f"step_{global_step:09d}.pt"
+            )
+        )
+        # Validation is emitted every 10k while L257 checkpoints are frozen at
+        # 0/30k intervals. Keep the audit explicit and rank only reproducible
+        # candidates with an actual checkpoint artifact.
+        if not checkpoint_candidate.is_file():
+            continue
         keys = [(row["scene"], int(row["seed"])) for row in group]
         if len(keys) != len(set(keys)):
             raise ValueError("duplicate validation episode key in {} at step {}".format(run_dir, global_step))

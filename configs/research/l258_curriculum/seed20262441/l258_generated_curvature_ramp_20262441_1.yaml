@@ -1,0 +1,23 @@
+include: ../../mujoco_l218_serpentine_polyline.yaml
+
+# l258_generated: procedural route; no held-out route data used
+experiment:
+  name: l258_generated_curvature_ramp_20262441_1
+  max_steps: 1400
+  physics_domain_role: seen
+task:
+  type: polyline
+  points:
+    - [4.04489, 0.65]
+    - [4.0478, 1.16338]
+    - [4.01467, 1.67823]
+    - [3.9455, 2.19455]
+    - [3.84029, 2.71234]
+    - [3.69904, 3.23161]
+    - [3.52176, 3.75234]
+    - [3.30843, 4.27455]
+    - [3.05906, 4.79823]
+    - [2.77365, 5.32338]
+    - [2.4522, 5.85]
+scene:
+  name: l258_generated_curvature_ramp_20262441_1

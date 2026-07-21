@@ -1,0 +1,79 @@
+{
+  "protocol": "L258",
+  "generator": "generate_l258_tracking_curriculum.py",
+  "generator_seed": 20263443,
+  "routes_per_family": 2,
+  "families": [
+    "s_curve",
+    "hairpin_like",
+    "double_loop",
+    "curvature_ramp",
+    "corridor"
+  ],
+  "physics_roles": [
+    "seen",
+    "unseen"
+  ],
+  "routes": [
+    {
+      "family": "s_curve",
+      "replica": 0,
+      "role": "unseen",
+      "path": "D:\\Projects\\mobile-robot-mppi-study\\configs\\research\\l258_curriculum\\seed20263443\\l258_generated_s_curve_20263443_0.yaml"
+    },
+    {
+      "family": "s_curve",
+      "replica": 1,
+      "role": "seen",
+      "path": "D:\\Projects\\mobile-robot-mppi-study\\configs\\research\\l258_curriculum\\seed20263443\\l258_generated_s_curve_20263443_1.yaml"
+    },
+    {
+      "family": "hairpin_like",
+      "replica": 0,
+      "role": "unseen",
+      "path": "D:\\Projects\\mobile-robot-mppi-study\\configs\\research\\l258_curriculum\\seed20263443\\l258_generated_hairpin_like_20263443_0.yaml"
+    },
+    {
+      "family": "hairpin_like",
+      "replica": 1,
+      "role": "seen",
+      "path": "D:\\Projects\\mobile-robot-mppi-study\\configs\\research\\l258_curriculum\\seed20263443\\l258_generated_hairpin_like_20263443_1.yaml"
+    },
+    {
+      "family": "double_loop",
+      "replica": 0,
+      "role": "unseen",
+      "path": "D:\\Projects\\mobile-robot-mppi-study\\configs\\research\\l258_curriculum\\seed20263443\\l258_generated_double_loop_20263443_0.yaml"
+    },
+    {
+      "family": "double_loop",
+      "replica": 1,
+      "role": "seen",
+      "path": "D:\\Projects\\mobile-robot-mppi-study\\configs\\research\\l258_curriculum\\seed20263443\\l258_generated_double_loop_20263443_1.yaml"
+    },
+    {
+      "family": "curvature_ramp",
+      "replica": 0,
+      "role": "unseen",
+      "path": "D:\\Projects\\mobile-robot-mppi-study\\configs\\research\\l258_curriculum\\seed20263443\\l258_generated_curvature_ramp_20263443_0.yaml"
+    },
+    {
+      "family": "curvature_ramp",
+      "replica": 1,
+      "role": "seen",
+      "path": "D:\\Projects\\mobile-robot-mppi-study\\configs\\research\\l258_curriculum\\seed20263443\\l258_generated_curvature_ramp_20263443_1.yaml"
+    },
+    {
+      "family": "corridor",
+      "replica": 0,
+      "role": "unseen",
+      "path": "D:\\Projects\\mobile-robot-mppi-study\\configs\\research\\l258_curriculum\\seed20263443\\l258_generated_corridor_20263443_0.yaml"
+    },
+    {
+      "family": "corridor",
+      "replica": 1,
+      "role": "seen",
+      "path": "D:\\Projects\\mobile-robot-mppi-study\\configs\\research\\l258_curriculum\\seed20263443\\l258_generated_corridor_20263443_1.yaml"
+    }
+  ]
+}

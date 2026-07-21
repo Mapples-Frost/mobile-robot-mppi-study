@@ -1,0 +1,18 @@
+include: ../../mujoco_l218_serpentine_polyline.yaml
+
+# l258_generated: procedural route; no held-out route data used
+experiment:
+  name: l258_generated_corridor_20262442_1
+  max_steps: 1400
+  physics_domain_role: unseen
+task:
+  type: polyline
+  points:
+    - [2.34746, 0.72085]
+    - [3.13756, 1.80853]
+    - [2.89813, 2.81326]
+    - [3.55655, 3.71966]
+    - [3.42828, 4.78211]
+    - [4.15254, 5.77915]
+scene:
+  name: l258_generated_corridor_20262442_1

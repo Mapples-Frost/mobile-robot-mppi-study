@@ -774,8 +774,6 @@ class MppiController:
             margins = self._path_boundary_margins(
                 trajectories,
                 reference,
-                offsets=offsets,
-                reference_poses=reference_poses,
             )
             buffered_excess = np.maximum(
                 0.0, self.config.path_boundary_buffer - margins[:, 1:]
@@ -841,60 +839,90 @@ class MppiController:
         self,
         trajectories,
         reference,
-        offsets=None,
-        reference_poses=None,
     ):
-        """Return footprint clearance to both sides of the path corridor.
+        """Return spatial footprint clearance to the path corridor.
 
         Positive values mean that the circular planning footprint remains
-        inside the corridor.  This helper is shared by the soft path cost and
-        the optional hard candidate filter so both enforce exactly the same
-        geometry contract.
+        inside the corridor.  Each predicted state is projected onto the
+        nearest admissible path segment with monotonic per-candidate progress.
+        The corridor is spatial, not a time-indexed tube: a stationary braking
+        candidate must not become infeasible merely because a preview point
+        continues around a downstream bend.  This helper is shared by the soft
+        path cost and the optional hard candidate filter.
         """
 
         paths = np.asarray(trajectories, dtype=np.float64)
         if paths.ndim != 3 or paths.shape[1] != self.config.horizon + 1:
             raise ValueError("boundary trajectories must have shape [K,H+1,nx]")
-        preview = getattr(reference, "preview_poses", None)
-        width_preview = getattr(reference, "preview_corridor_half_widths", None)
         footprint_radius = getattr(reference, "footprint_radius", None)
         if (
-            not callable(preview)
-            or not callable(width_preview)
+            not hasattr(reference, "points")
+            or not hasattr(reference, "segment_lengths")
+            or not hasattr(reference, "cumulative")
             or footprint_radius is None
+            or getattr(reference, "corridor_half_width", None) is None
         ):
             raise ValueError(
                 "path boundary enforcement requires corridor-aware reference"
             )
-        if offsets is None:
-            initial_offset = float(getattr(reference, "lookahead_distance", 0.0))
-            offsets = initial_offset + np.arange(
-                self.config.horizon + 1, dtype=np.float64
-            ) * self.config.dt * self.config.path_preview_speed_mps
-        offsets = np.asarray(offsets, dtype=np.float64)
-        if offsets.shape != (self.config.horizon + 1,):
-            raise ValueError("path preview offsets must have shape [H+1]")
-        if reference_poses is None:
-            reference_poses = np.asarray(preview(offsets), dtype=np.float64)
-        else:
-            reference_poses = np.asarray(reference_poses, dtype=np.float64)
-        if reference_poses.shape != (self.config.horizon + 1, 3):
-            raise ValueError("path preview must have shape [H+1,3]")
-        half_widths = np.asarray(width_preview(offsets), dtype=np.float64)
-        if half_widths.shape != (self.config.horizon + 1,):
-            raise ValueError("corridor preview must have shape [H+1]")
         xy = paths[..., list(self.state_spec.position_indices)]
-        tangent = reference_poses[None, :, 2]
-        delta = xy - reference_poses[None, :, :2]
-        lateral_error = (
-            -np.sin(tangent) * delta[..., 0]
-            + np.cos(tangent) * delta[..., 1]
+        starts = np.asarray(reference.points[:-1], dtype=np.float64)
+        vectors = np.diff(np.asarray(reference.points, dtype=np.float64), axis=0)
+        lengths = np.asarray(reference.segment_lengths, dtype=np.float64)
+        cumulative = np.asarray(reference.cumulative[:-1], dtype=np.float64)
+        floors = np.full(paths.shape[0], float(reference.progress), dtype=np.float64)
+        margins = np.empty(paths.shape[:2], dtype=np.float64)
+        profile = np.asarray(
+            getattr(reference, "corridor_half_width_profile", ()),
+            dtype=np.float64,
         )
-        margins = (
-            half_widths[None, :]
-            - float(footprint_radius)
-            - np.abs(lateral_error)
-        )
+        for step in range(paths.shape[1]):
+            positions = xy[:, step, :]
+            relative = positions[:, None, :] - starts[None, :, :]
+            fractions = np.sum(relative * vectors[None, :, :], axis=2)
+            fractions = np.clip(fractions / lengths[None, :] ** 2, 0.0, 1.0)
+            projections = starts[None, :, :] + fractions[..., None] * vectors[None, :, :]
+            squared_distances = np.sum(
+                (projections - positions[:, None, :]) ** 2, axis=2
+            )
+            candidate_progress = cumulative[None, :] + fractions * lengths[None, :]
+            admissible = (
+                candidate_progress
+                >= floors[:, None] - float(reference.projection_backtrack_distance)
+            ) & (
+                candidate_progress
+                <= floors[:, None] + float(reference.projection_forward_distance)
+            )
+            has_admissible = np.any(admissible, axis=1)
+            nearest = np.argmin(
+                np.where(admissible, squared_distances, np.inf), axis=1
+            )
+            projected = candidate_progress[np.arange(paths.shape[0]), nearest]
+            projected = np.where(has_admissible, projected, floors)
+            projected = np.maximum(floors, projected)
+            reference_poses = reference.poses_at_progress(projected)
+            tangent = reference_poses[:, 2]
+            delta = positions - reference_poses[:, :2]
+            lateral_error = (
+                -np.sin(tangent) * delta[:, 0]
+                + np.cos(tangent) * delta[:, 1]
+            )
+            if profile.size:
+                half_widths = np.interp(
+                    projected / float(reference.total_length),
+                    profile[:, 0],
+                    profile[:, 1],
+                )
+            else:
+                half_widths = np.full(
+                    paths.shape[0],
+                    float(reference.corridor_half_width),
+                    dtype=np.float64,
+                )
+            margins[:, step] = (
+                half_widths - float(footprint_radius) - np.abs(lateral_error)
+            )
+            floors = projected
         if not np.isfinite(margins).all():
             raise FloatingPointError("path boundary margins contain NaN or Inf")
         return margins

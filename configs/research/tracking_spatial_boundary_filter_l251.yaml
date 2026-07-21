@@ -1,0 +1,6 @@
+include: tracking_candidate_boundary_filter_l250.yaml
+
+final_benchmark:
+  status: development
+  preregistration: docs/experiments/post_l217/l251_spatial_boundary_projection_protocol.md
+

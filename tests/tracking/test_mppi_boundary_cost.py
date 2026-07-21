@@ -65,6 +65,40 @@ def test_mppi_boundary_cost_rejects_footprint_outside_corridor():
     assert costs[1] >= config.path_boundary_violation_penalty
 
 
+def test_boundary_margin_is_spatial_not_time_indexed_around_bend():
+    config = MppiConfig(
+        horizon=4,
+        num_samples=2,
+        dt=0.1,
+        noise_sigma=(0.1, 0.1),
+        path_preview_enabled=True,
+        path_boundary_enabled=True,
+        path_boundary_violation_penalty=10000.0,
+    )
+    controller = MppiController(
+        DynamicUnicyclePrediction(),
+        dynamic_unicycle_state(),
+        body_velocity_action((0.0, 0.65), 1.25),
+        config,
+    )
+    reference = PolylineReference(
+        [(0.0, 0.0), (1.0, 0.0), (1.0, 2.0)],
+        corridor_half_width=0.8,
+        footprint_radius=0.2,
+    )
+    reference.progress = 0.8
+    trajectories = np.zeros((2, 5, 5), dtype=np.float64)
+    trajectories[:, :, 0] = 0.8
+    trajectories[1, :, 1] = -0.7
+
+    margins = controller._path_boundary_margins(trajectories, reference)
+
+    # The stopped candidate remains 0.6 m inside the spatial corridor even
+    # though a time-indexed preview would already have advanced around the bend.
+    np.testing.assert_allclose(margins[0], 0.6)
+    assert np.all(margins[1] < 0.0)
+
+
 def test_boundary_enforcement_is_opt_in_for_baseline_compatibility():
     values = MppiConfig.from_mapping({}, action_dim=2)
 

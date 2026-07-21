@@ -1,0 +1,7 @@
+scene,method,l244_steps,l247_steps,l244_termination,l247_termination,l244_completion,l247_completion,completion_delta,l244_boundary_steps,l247_boundary_steps
+Hairpin,ICODE-MPPI,700,2210,max_steps,max_steps,0.11175435650700781,0.11216817373379162,0.00041381722678381083,0,0
+Hairpin,Full Proposed,700,885,max_steps,boundary_violation,0.34224255386288965,0.35261007906198993,0.01036752519910028,0,1
+S-Chicane,ICODE-MPPI,700,1405,max_steps,max_steps,0.18268351949304654,0.18322283729633207,0.0005393178032855328,0,0
+S-Chicane,Full Proposed,493,493,boundary_violation,boundary_violation,0.18772504356380956,0.18772504356380956,0.0,1,1
+Infinity,ICODE-MPPI,700,2030,max_steps,max_steps,0.10839636278932882,0.10873527291391415,0.000338910124585326,0,0
+Infinity,Full Proposed,530,530,boundary_violation,boundary_violation,0.10552052663862653,0.10552052663862653,0.0,1,1

@@ -1,0 +1,167 @@
+[
+  {
+    "path": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/rl/tracking_l244_bc_anchor_hairpin_seed923301001/progress.csv",
+    "sha256": "e8eccc072bd6d803432465d7bc4e6b5c28c6ec385d8f14d07cacf9dc81c434c4",
+    "bytes": 12138
+  },
+  {
+    "path": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/rl/tracking_l244_bc_anchor_infinity_seed923301001/progress.csv",
+    "sha256": "755a5927e689a623185870fe7bd1573716ad0ac37941606de04726e40ce15a76",
+    "bytes": 12145
+  },
+  {
+    "path": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/rl/tracking_l244_bc_anchor_s_chicane_seed923301001/progress.csv",
+    "sha256": "7ef7b99c272458e15a443d75bafc7980d837b1983967dbd9b08615231c9ba52b",
+    "bytes": 12103
+  },
+  {
+    "path": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/rl/tracking_l247_fair_budget_hairpin_seed923301001/progress.csv",
+    "sha256": "deb0b78034715ad4ca99956a2b25b307396de825abda7fa3efec4139b2365647",
+    "bytes": 12132
+  },
+  {
+    "path": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/rl/tracking_l247_fair_budget_hairpin_seed923301001/provenance.json",
+    "sha256": "ce54a97f7e3fa15247698ed14d9449888168337b373a8cd31b889c2723756038",
+    "bytes": 3622
+  },
+  {
+    "path": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/rl/tracking_l247_fair_budget_hairpin_seed923301001/runs/full_proposed/full_proposed__tracking_grand_hairpin_l234__nominal_seen__seed923301001/config_resolved.yaml",
+    "sha256": "fb01e733b89bccad89105786eb0cb1d3c2da2a192578b7602f9271319ec4a2d9",
+    "bytes": 9706
+  },
+  {
+    "path": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/rl/tracking_l247_fair_budget_hairpin_seed923301001/runs/full_proposed/full_proposed__tracking_grand_hairpin_l234__nominal_seen__seed923301001/metrics.json",
+    "sha256": "e5caa61f36909a0400ed36ce1f1a84d504c180923bfc369aca47b2278e69e069",
+    "bytes": 12573
+  },
+  {
+    "path": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/rl/tracking_l247_fair_budget_hairpin_seed923301001/runs/full_proposed/full_proposed__tracking_grand_hairpin_l234__nominal_seen__seed923301001/provenance.json",
+    "sha256": "bc8024a8508fb8d1e85eb8791f4c2df60f6489f29de173302b05122a3a1c48b7",
+    "bytes": 144
+  },
+  {
+    "path": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/rl/tracking_l247_fair_budget_hairpin_seed923301001/runs/full_proposed/full_proposed__tracking_grand_hairpin_l234__nominal_seen__seed923301001/trajectory.csv",
+    "sha256": "ce5bb03032c8c155ccd75974645bd9a20ba320427eee8bdf481adb79a087ce23",
+    "bytes": 1585677
+  },
+  {
+    "path": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/rl/tracking_l247_fair_budget_hairpin_seed923301001/runs/icode_mppi/icode_mppi__tracking_grand_hairpin_l234__nominal_seen__seed923301001/config_resolved.yaml",
+    "sha256": "35a073d7650d850c548500cfd01ca87990dca491c36be1a53d7516b797a28fa8",
+    "bytes": 7716
+  },
+  {
+    "path": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/rl/tracking_l247_fair_budget_hairpin_seed923301001/runs/icode_mppi/icode_mppi__tracking_grand_hairpin_l234__nominal_seen__seed923301001/metrics.json",
+    "sha256": "8d36239508a4879f86f347e88e469231afe3640b80ccaa9a99056d48e53f0cc4",
+    "bytes": 10236
+  },
+  {
+    "path": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/rl/tracking_l247_fair_budget_hairpin_seed923301001/runs/icode_mppi/icode_mppi__tracking_grand_hairpin_l234__nominal_seen__seed923301001/provenance.json",
+    "sha256": "f48033cf0618954c689ac6a0c74eeeedb719098ea44beedc82e0e2701d1546ea",
+    "bytes": 144
+  },
+  {
+    "path": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/rl/tracking_l247_fair_budget_hairpin_seed923301001/runs/icode_mppi/icode_mppi__tracking_grand_hairpin_l234__nominal_seen__seed923301001/trajectory.csv",
+    "sha256": "4b2c97c45e88aa03fb4f4ad5edf37b99482ea495bdae7251370456f2b817a901",
+    "bytes": 3182251
+  },
+  {
+    "path": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/rl/tracking_l247_fair_budget_infinity_seed923301001/progress.csv",
+    "sha256": "24a994ecb0e3789eee32dabdbf76ae244dc8b830263bbb2fa2d3de15c66c35e1",
+    "bytes": 12179
+  },
+  {
+    "path": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/rl/tracking_l247_fair_budget_infinity_seed923301001/provenance.json",
+    "sha256": "38b8f0c40038caa4281411463e03ff7b57a9043457fdac08b241997fcd8d607b",
+    "bytes": 3625
+  },
+  {
+    "path": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/rl/tracking_l247_fair_budget_infinity_seed923301001/runs/full_proposed/full_proposed__tracking_grand_infinity_l234__nominal_seen__seed923301001/config_resolved.yaml",
+    "sha256": "fd661a538233a12c1d9d5567725e3ad2557ad4c7339cf94e5249d4a1db2113f2",
+    "bytes": 9083
+  },
+  {
+    "path": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/rl/tracking_l247_fair_budget_infinity_seed923301001/runs/full_proposed/full_proposed__tracking_grand_infinity_l234__nominal_seen__seed923301001/metrics.json",
+    "sha256": "b3e7362ade441a0f01fe8c2b85b4ddd3236341ad91d9b26d79bea764567c7fd6",
+    "bytes": 12559
+  },
+  {
+    "path": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/rl/tracking_l247_fair_budget_infinity_seed923301001/runs/full_proposed/full_proposed__tracking_grand_infinity_l234__nominal_seen__seed923301001/provenance.json",
+    "sha256": "b19c8001642c613a29b8b11f1aefab20540c3c0a3351bfbe2e8d62a1c6f32d8a",
+    "bytes": 144
+  },
+  {
+    "path": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/rl/tracking_l247_fair_budget_infinity_seed923301001/runs/full_proposed/full_proposed__tracking_grand_infinity_l234__nominal_seen__seed923301001/trajectory.csv",
+    "sha256": "368d5cea19e67c48ecc413b0e9ba00bf6cb27fde1071f0a15979fb7baaeb91f6",
+    "bytes": 955808
+  },
+  {
+    "path": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/rl/tracking_l247_fair_budget_infinity_seed923301001/runs/icode_mppi/icode_mppi__tracking_grand_infinity_l234__nominal_seen__seed923301001/config_resolved.yaml",
+    "sha256": "86c51677d5438f12cad72bee5e3a232db7036a02fa355595388e5f75ba0a813f",
+    "bytes": 7093
+  },
+  {
+    "path": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/rl/tracking_l247_fair_budget_infinity_seed923301001/runs/icode_mppi/icode_mppi__tracking_grand_infinity_l234__nominal_seen__seed923301001/metrics.json",
+    "sha256": "6feaff5b9b00bd0bd2005bef332c540dd3db66e9098f28734254dee9a1f214d1",
+    "bytes": 10292
+  },
+  {
+    "path": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/rl/tracking_l247_fair_budget_infinity_seed923301001/runs/icode_mppi/icode_mppi__tracking_grand_infinity_l234__nominal_seen__seed923301001/provenance.json",
+    "sha256": "dfec4ac0f6a239ec088ccc73880f0ba40a6cb25f6b0ac268c8729b496c58db86",
+    "bytes": 144
+  },
+  {
+    "path": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/rl/tracking_l247_fair_budget_infinity_seed923301001/runs/icode_mppi/icode_mppi__tracking_grand_infinity_l234__nominal_seen__seed923301001/trajectory.csv",
+    "sha256": "6b4f4d77aa73e8e4ce41f91bf972208be9a65fab17227d884da57e23d148e64f",
+    "bytes": 2970419
+  },
+  {
+    "path": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/rl/tracking_l247_fair_budget_s_chicane_seed923301001/progress.csv",
+    "sha256": "ea291c2606efcfa787ec5c5bce01f1c5ce537e581402a848370605516c94134d",
+    "bytes": 12151
+  },
+  {
+    "path": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/rl/tracking_l247_fair_budget_s_chicane_seed923301001/provenance.json",
+    "sha256": "9b4c0ff5d41cf85984d3f0094a0b41b5c637afc8083716768e8ee66073376c50",
+    "bytes": 3628
+  },
+  {
+    "path": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/rl/tracking_l247_fair_budget_s_chicane_seed923301001/runs/full_proposed/full_proposed__tracking_grand_s_chicane_l234__nominal_seen__seed923301001/config_resolved.yaml",
+    "sha256": "4ac767124490c0cc528bbb50f90ae66b87fe46d6563f2274cccf85e991904913",
+    "bytes": 8996
+  },
+  {
+    "path": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/rl/tracking_l247_fair_budget_s_chicane_seed923301001/runs/full_proposed/full_proposed__tracking_grand_s_chicane_l234__nominal_seen__seed923301001/metrics.json",
+    "sha256": "c54825ce61c9de8931aed7275ff8656754a98e00a5df7e61821385a64506ce6e",
+    "bytes": 12508
+  },
+  {
+    "path": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/rl/tracking_l247_fair_budget_s_chicane_seed923301001/runs/full_proposed/full_proposed__tracking_grand_s_chicane_l234__nominal_seen__seed923301001/provenance.json",
+    "sha256": "8f775ec3f09aa05d8a8c00fc0103614e3b3e2d839e692f140a760ef60b190e03",
+    "bytes": 144
+  },
+  {
+    "path": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/rl/tracking_l247_fair_budget_s_chicane_seed923301001/runs/full_proposed/full_proposed__tracking_grand_s_chicane_l234__nominal_seen__seed923301001/trajectory.csv",
+    "sha256": "b684807eaaced560332bb9a27ba5906d716709be7f368f88d37590797e6e9357",
+    "bytes": 891050
+  },
+  {
+    "path": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/rl/tracking_l247_fair_budget_s_chicane_seed923301001/runs/icode_mppi/icode_mppi__tracking_grand_s_chicane_l234__nominal_seen__seed923301001/config_resolved.yaml",
+    "sha256": "5547c77b8e0a82cd7f6de597756825d93a68d3e56a38e50968990331c7740383",
+    "bytes": 7006
+  },
+  {
+    "path": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/rl/tracking_l247_fair_budget_s_chicane_seed923301001/runs/icode_mppi/icode_mppi__tracking_grand_s_chicane_l234__nominal_seen__seed923301001/metrics.json",
+    "sha256": "6596fd870c3e9bd78c8eb0bf2e96ad4401d013c51c0b39617d808d3f3623e1e8",
+    "bytes": 10307
+  },
+  {
+    "path": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/rl/tracking_l247_fair_budget_s_chicane_seed923301001/runs/icode_mppi/icode_mppi__tracking_grand_s_chicane_l234__nominal_seen__seed923301001/provenance.json",
+    "sha256": "76ce57088d1047135e53407532f33597a141f43ce371e70cd82934dbc50dc009",
+    "bytes": 144
+  },
+  {
+    "path": "/home/mapples/projects/mobile-robot-mppi-study/results/research_platform/rl/tracking_l247_fair_budget_s_chicane_seed923301001/runs/icode_mppi/icode_mppi__tracking_grand_s_chicane_l234__nominal_seen__seed923301001/trajectory.csv",
+    "sha256": "473639170a616d0abe2e715df64e2ef237f841aa9b9e002059501dd1d70e2caa",
+    "bytes": 2076111
+  }
+]

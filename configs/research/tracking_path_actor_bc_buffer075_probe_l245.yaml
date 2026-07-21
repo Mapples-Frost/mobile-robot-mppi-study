@@ -1,0 +1,7 @@
+include: tracking_path_actor_bc_gate_l244.yaml
+
+final_benchmark:
+  status: development
+  preregistration: docs/experiments/post_l217/l245_bc_actor_boundary_buffer_protocol.md
+  planner_overrides:
+    path_boundary_buffer: 0.075

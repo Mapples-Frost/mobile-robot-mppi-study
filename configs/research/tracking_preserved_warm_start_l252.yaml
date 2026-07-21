@@ -1,0 +1,7 @@
+include: tracking_spatial_boundary_filter_l251.yaml
+
+final_benchmark:
+  status: development
+  preregistration: docs/experiments/post_l217/l252_preserved_warm_start_protocol.md
+  treatment: preserve_exact_warm_start_with_braking_candidate
+

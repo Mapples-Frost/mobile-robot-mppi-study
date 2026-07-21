@@ -152,8 +152,8 @@ def test_candidate_filter_removes_infeasible_candidate_from_mppi_update(monkeypa
     state = np.zeros(5, dtype=np.float64)
     target = reference.target_at(0.0, state)
     samples = np.zeros((3, 2, 2), dtype=np.float64)
-    samples[1, :, 0] = 0.1  # Marked unsafe by the synthetic rollout.
-    samples[2, :, 0] = 0.2
+    samples[1, :, 0] = 0.2
+    samples[2, :, 0] = 0.1  # Marked unsafe by the synthetic rollout.
 
     def fake_rollout(_state, controls):
         controls = np.asarray(controls, dtype=np.float64)
@@ -169,7 +169,7 @@ def test_candidate_filter_removes_infeasible_candidate_from_mppi_update(monkeypa
     monkeypatch.setattr(
         controller,
         "_cost",
-        lambda *args, **kwargs: np.asarray([5.0, 0.0, 10.0]),
+        lambda *args, **kwargs: np.asarray([5.0, 10.0, 0.0]),
     )
     monkeypatch.setattr(
         controller,
@@ -191,3 +191,76 @@ def test_candidate_filter_removes_infeasible_candidate_from_mppi_update(monkeypa
     assert diagnostics["path_boundary_weighted_update_feasible"]
     assert np.max(np.abs(trajectory[:, 1])) == pytest.approx(0.0)
     assert not np.isclose(sequence[0, 0], 0.1)
+
+
+def test_candidate_filter_preserves_exact_prior_alongside_braking(monkeypatch):
+    config = MppiConfig(
+        horizon=2,
+        num_samples=3,
+        dt=0.1,
+        temperature=1.0,
+        noise_sigma=(0.1, 0.1),
+        goal_running_weight=0.0,
+        goal_terminal_weight=0.0,
+        path_preview_enabled=True,
+        path_boundary_enabled=True,
+        path_boundary_violation_penalty=1.0,
+        path_boundary_candidate_filter_enabled=True,
+        control_weight=0.0,
+        control_rate_weight=0.0,
+        previous_sequence_blend=0.0,
+    )
+    action_spec = ActionSpec(
+        ("v_cmd", "omega_cmd"),
+        lower=np.asarray((-1.0, -1.0)),
+        upper=np.asarray((1.0, 1.0)),
+    )
+    controller = MppiController(
+        DynamicUnicyclePrediction(),
+        dynamic_unicycle_state(),
+        action_spec,
+        config,
+    )
+    reference = PolylineReference(
+        [(0.0, 0.0), (10.0, 0.0)],
+        corridor_half_width=1.0,
+        footprint_radius=0.2,
+    )
+    prior_mean = np.asarray(((0.25, -0.1), (0.25, -0.1)))
+    sampled = np.zeros((3, 2, 2), dtype=np.float64)
+    sampled[0] = prior_mean
+    sampled[1, :, 0] = -0.5
+    sampled[2, :, 0] = 0.5
+    captured = {}
+
+    def fake_rollout(_state, controls):
+        controls = np.asarray(controls, dtype=np.float64)
+        if controls.ndim == 2:
+            controls = controls[None, ...]
+        captured.setdefault("samples", controls.copy())
+        return np.zeros((controls.shape[0], 3, 5), dtype=np.float64)
+
+    monkeypatch.setattr(controller, "_sample", lambda prior, rng: sampled.copy())
+    monkeypatch.setattr(controller, "rollout", fake_rollout)
+    monkeypatch.setattr(
+        controller,
+        "_cost",
+        lambda *args, **kwargs: np.asarray([10.0, 0.0, 20.0]),
+    )
+    monkeypatch.setattr(
+        controller,
+        "_importance_sampling_cost",
+        lambda *args, **kwargs: np.zeros(3, dtype=np.float64),
+    )
+
+    controller._solve_plan(
+        np.zeros(5, dtype=np.float64),
+        PriorOutput(prior_mean, None, {}),
+        reference.target_at(0.0, np.zeros(5)),
+        (),
+        np.random.RandomState(0),
+        reference=reference,
+    )
+
+    np.testing.assert_allclose(captured["samples"][0], 0.0)
+    np.testing.assert_allclose(captured["samples"][1], prior_mean)

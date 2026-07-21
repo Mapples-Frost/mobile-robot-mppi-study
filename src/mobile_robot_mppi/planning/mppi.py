@@ -956,6 +956,15 @@ class MppiController:
             # braking sequence.  This does not increase K and gives the
             # fail-closed branch a reproducible control sequence when every
             # stochastic proposal is footprint-infeasible.
+            #
+            # ``_sample`` reserves candidate zero for the exact prior mean.  Do
+            # not silently discard that sole unperturbed warm start: in a long
+            # control horizon, every Gaussian candidate can otherwise corrupt
+            # a coherent turn/drive sequence.  Preserve it in candidate one
+            # before installing the braking candidate.  Both candidates remain
+            # inside the original K budget.
+            if self.config.num_samples > 1:
+                samples[1] = samples[0]
             samples[0] = 0.0
             samples[0, 0] = self.action_spec.clip(
                 samples[0, 0], self.previous_action, self.config.dt

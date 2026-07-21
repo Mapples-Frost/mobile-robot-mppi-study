@@ -1616,6 +1616,14 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
                 # Keep K fixed while reserving one deterministic braking
                 # candidate.  Label -1 excludes it from guided/Gaussian source
                 # competence accounting.
+                # When no guided proposals are allocated, Gaussian candidate
+                # zero is the exact proposal mean.  Preserve that deterministic
+                # warm start before replacing slot zero with braking; otherwise
+                # boundary filtering removes the only unperturbed proposal in
+                # the high-dimensional sequence search.
+                if guided_count == 0 and self.config.num_samples > 1:
+                    samples[1] = samples[0]
+                    labels[1] = labels[0]
                 samples[0] = 0.0
                 samples[0, 0] = self.action_spec.clip(
                     samples[0, 0], self.previous_action, self.config.dt

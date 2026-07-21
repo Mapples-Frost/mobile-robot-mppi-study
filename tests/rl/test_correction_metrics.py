@@ -79,6 +79,40 @@ def test_episode_metrics_record_and_summarize_policy_correction():
     assert result["rl_target_positive_advantage_fraction"] == 0.5
 
 
+def test_episode_metrics_preserves_candidate_boundary_filter_diagnostics():
+    metrics = EpisodeMetrics(1.0, 0.0, 0.2, control_dt=0.1)
+    metrics.update(
+        _truth(0.1, 0.1),
+        _decision(),
+        {
+            "path_boundary_candidate_filter_enabled": True,
+            "path_boundary_candidate_feasible_fraction": 0.75,
+            "path_boundary_candidate_feasible_fraction_min": 0.5,
+            "path_boundary_no_feasible_candidates": True,
+            "path_boundary_no_feasible_iteration_fraction": 0.25,
+            "path_boundary_weighted_update_feasible": False,
+            "path_boundary_final_min_margin": 0.03,
+            "path_boundary_fallback_used": True,
+            "path_boundary_fallback_candidate_index": 7,
+        },
+    )
+
+    record = metrics.records[0]
+    result = metrics.summary()
+
+    assert record["path_boundary_candidate_filter_enabled"] == 1.0
+    assert record["path_boundary_fallback_candidate_index"] == 7
+    assert result["path_boundary_candidate_filter_enabled_fraction"] == 1.0
+    assert result["path_boundary_candidate_feasible_fraction_mean"] == 0.75
+    assert result["path_boundary_candidate_feasible_fraction_min"] == 0.5
+    assert result["path_boundary_no_feasible_decision_fraction"] == 1.0
+    assert result["path_boundary_no_feasible_iteration_fraction_mean"] == 0.25
+    assert result["path_boundary_weighted_update_infeasible_fraction"] == 1.0
+    assert result["path_boundary_fallback_steps"] == 1
+    assert result["path_boundary_fallback_fraction"] == 1.0
+    assert result["path_boundary_final_min_margin_min"] == 0.03
+
+
 def test_episode_metrics_reports_polyline_cross_track_error():
     metrics = EpisodeMetrics(
         2.0,

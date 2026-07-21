@@ -202,6 +202,52 @@ class EpisodeMetrics:
             "sample_saturation_fraction": float(
                 planner_diagnostics.get("sample_saturation_fraction", 0.0)
             ),
+            "path_boundary_candidate_filter_enabled": float(
+                planner_diagnostics.get(
+                    "path_boundary_candidate_filter_enabled", False
+                )
+            ),
+            "path_boundary_candidate_feasible_fraction": float(
+                planner_diagnostics.get(
+                    "path_boundary_candidate_feasible_fraction", 1.0
+                )
+            ),
+            "path_boundary_candidate_feasible_fraction_min": float(
+                planner_diagnostics.get(
+                    "path_boundary_candidate_feasible_fraction_min",
+                    planner_diagnostics.get(
+                        "path_boundary_candidate_feasible_fraction", 1.0
+                    ),
+                )
+            ),
+            "path_boundary_no_feasible_candidates": float(
+                planner_diagnostics.get(
+                    "path_boundary_no_feasible_candidates", False
+                )
+            ),
+            "path_boundary_no_feasible_iteration_fraction": float(
+                planner_diagnostics.get(
+                    "path_boundary_no_feasible_iteration_fraction", 0.0
+                )
+            ),
+            "path_boundary_weighted_update_feasible": float(
+                planner_diagnostics.get(
+                    "path_boundary_weighted_update_feasible", True
+                )
+            ),
+            "path_boundary_final_min_margin": float(
+                planner_diagnostics.get(
+                    "path_boundary_final_min_margin", float("inf")
+                )
+            ),
+            "path_boundary_fallback_used": float(
+                planner_diagnostics.get("path_boundary_fallback_used", False)
+            ),
+            "path_boundary_fallback_candidate_index": int(
+                planner_diagnostics.get(
+                    "path_boundary_fallback_candidate_index", -1
+                )
+            ),
             "residual_support_confidence_mean": float(
                 planner_diagnostics.get("residual_support_confidence_mean", 1.0)
             ),

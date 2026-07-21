@@ -1,0 +1,6 @@
+include: tracking_candidate_boundary_filter_l249.yaml
+
+final_benchmark:
+  status: development
+  preregistration: docs/experiments/post_l217/l250_boundary_diagnostics_rerun_protocol.md
+

@@ -192,6 +192,62 @@ def _controller(policy):
     )
 
 
+def test_paper_optimizer_applies_shared_boundary_candidate_filter(monkeypatch):
+    policy = AuditableDirectPolicy()
+    controller = PaperRLDrivenMppiController(
+        DynamicUnicyclePrediction(),
+        dynamic_unicycle_state(),
+        body_velocity_action((0.0, 0.5), 1.0),
+        MppiConfig(
+            horizon=5,
+            num_samples=20,
+            dt=0.1,
+            noise_sigma=(0.08, 0.20),
+            path_preview_enabled=True,
+            path_boundary_enabled=True,
+            path_boundary_violation_penalty=10000.0,
+            path_boundary_candidate_filter_enabled=True,
+            seed=20260718,
+        ),
+        sampling_prior=policy,
+        paper_rl_driven_config={
+            "iterations": 2,
+            "guided_fraction": 0.25,
+            "elite_fraction": 0.25,
+            "terminal_value_weight": 0.0,
+        },
+    )
+    reference = PolylineReference(
+        [(0.0, 0.0), (5.0, 0.0)],
+        corridor_half_width=0.5,
+        footprint_radius=0.2,
+    )
+
+    def synthetic_margins(trajectories, _reference, **kwargs):
+        del kwargs
+        count = np.asarray(trajectories).shape[0]
+        values = np.full((count, controller.config.horizon + 1), 0.1)
+        if count > 1:
+            values[-1, 1:] = -0.1
+        return values
+
+    monkeypatch.setattr(
+        controller, "_path_boundary_margins", synthetic_margins
+    )
+
+    result = controller.plan(_observation(), reference)
+
+    assert result.diagnostics["path_boundary_candidate_filter_enabled"]
+    assert result.diagnostics[
+        "path_boundary_candidate_feasible_fraction"
+    ] == 0.95
+    assert result.diagnostics[
+        "path_boundary_candidate_feasible_fraction_min"
+    ] == 0.95
+    assert not result.diagnostics["path_boundary_no_feasible_candidates"]
+    assert result.diagnostics["path_boundary_weighted_update_feasible"]
+
+
 def _reliable_controller(
     policy,
     conservative_terminal=False,

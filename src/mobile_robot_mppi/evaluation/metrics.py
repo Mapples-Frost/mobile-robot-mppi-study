@@ -960,6 +960,45 @@ class EpisodeMetrics:
             "sample_saturation_fraction_mean": float(
                 np.mean([row["sample_saturation_fraction"] for row in values])
             ),
+            "path_boundary_candidate_filter_enabled_fraction": float(np.mean([
+                row.get("path_boundary_candidate_filter_enabled", False)
+                for row in values
+            ])),
+            "path_boundary_candidate_feasible_fraction_mean": float(np.mean([
+                row.get("path_boundary_candidate_feasible_fraction", 1.0)
+                for row in values
+            ])),
+            "path_boundary_candidate_feasible_fraction_min": float(np.min([
+                row.get(
+                    "path_boundary_candidate_feasible_fraction_min",
+                    row.get("path_boundary_candidate_feasible_fraction", 1.0),
+                )
+                for row in values
+            ])),
+            "path_boundary_no_feasible_decision_fraction": float(np.mean([
+                row.get("path_boundary_no_feasible_candidates", False)
+                for row in values
+            ])),
+            "path_boundary_no_feasible_iteration_fraction_mean": float(np.mean([
+                row.get("path_boundary_no_feasible_iteration_fraction", 0.0)
+                for row in values
+            ])),
+            "path_boundary_weighted_update_infeasible_fraction": float(np.mean([
+                not row.get("path_boundary_weighted_update_feasible", True)
+                for row in values
+            ])),
+            "path_boundary_fallback_steps": int(sum(
+                row.get("path_boundary_fallback_used", False)
+                for row in values
+            )),
+            "path_boundary_fallback_fraction": float(np.mean([
+                row.get("path_boundary_fallback_used", False)
+                for row in values
+            ])),
+            "path_boundary_final_min_margin_min": float(np.min([
+                row.get("path_boundary_final_min_margin", 0.0)
+                for row in values
+            ])),
             "optimizer": str(values[-1].get("optimizer", "standard")),
             "rl_driven_total_rollouts_mean": float(np.mean([
                 row.get("rl_driven_total_rollouts", 0) for row in values

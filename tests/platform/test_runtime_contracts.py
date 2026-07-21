@@ -36,6 +36,8 @@ def test_runner_writes_reproducible_artifacts(tmp_path):
     assert result.summary["termination_reason"] == "max_steps"
     assert "planner_compute_ms_p95" in result.summary
     assert "planner_deadline_miss_rate" in result.summary
+    assert "path_boundary_candidate_feasible_fraction_mean" in result.summary
+    assert "path_boundary_fallback_fraction" in result.summary
 
 
 def test_gym_adapter_preserves_proposed_and_executed_actions():

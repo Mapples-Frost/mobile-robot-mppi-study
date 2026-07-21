@@ -1595,6 +1595,14 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
         terminal_diagnostics = {}
         constraints = None
         final_weights = None
+        hard_boundary_filter = bool(
+            self.config.path_boundary_candidate_filter_enabled
+        )
+        boundary_feasible_fractions = []
+        boundary_no_feasible_iterations = 0
+        boundary_last_feasible = None
+        boundary_last_samples = None
+        boundary_last_costs = None
         for _ in range(cfg.iterations):
             gaussian = self._gaussian_samples(
                 mean, variance, gaussian_count, rng
@@ -1604,9 +1612,22 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
                 np.ones(guided_count, dtype=np.int8),
                 np.zeros(gaussian_count, dtype=np.int8),
             ))
+            if hard_boundary_filter:
+                # Keep K fixed while reserving one deterministic braking
+                # candidate.  Label -1 excludes it from guided/Gaussian source
+                # competence accounting.
+                samples[0] = 0.0
+                samples[0, 0] = self.action_spec.clip(
+                    samples[0, 0], self.previous_action, self.config.dt
+                )
+                labels[0] = -1
             samples, constraints = self._terminal_constraints(
                 state, target, samples
             )
+            if hard_boundary_filter:
+                samples[:, 0, :] = self.action_spec.clip(
+                    samples[:, 0, :], self.previous_action, self.config.dt
+                )
             trajectories = self.rollout(state, samples)
             running = self._cost(
                 trajectories,
@@ -1638,16 +1659,41 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
                 raise FloatingPointError(
                     "paper RL-Driven MPPI cost contains NaN or Inf"
                 )
-            elite_count = max(
+            if hard_boundary_filter:
+                boundary_margins = self._path_boundary_margins(
+                    trajectories, reference
+                )
+                boundary_feasible = np.min(
+                    boundary_margins[:, 1:], axis=1
+                ) >= 0.0
+                feasible_indices = np.flatnonzero(boundary_feasible)
+                boundary_feasible_fractions.append(float(
+                    np.mean(boundary_feasible)
+                ))
+                if feasible_indices.size == 0:
+                    # Sample zero is the deterministic braking candidate.  It
+                    # remains the fail-closed optimizer update even when plant
+                    # momentum makes the full predicted horizon infeasible.
+                    feasible_indices = np.asarray([0], dtype=np.int64)
+                    boundary_no_feasible_iterations += 1
+                boundary_last_feasible = boundary_feasible
+                boundary_last_samples = samples.copy()
+                boundary_last_costs = costs.copy()
+            else:
+                feasible_indices = np.arange(
+                    self.config.num_samples, dtype=np.int64
+                )
+            requested_elites = max(
                 2,
-                min(
-                    self.config.num_samples,
-                    int(np.ceil(
-                        cfg.elite_fraction * self.config.num_samples
-                    )),
-                ),
+                int(np.ceil(
+                    cfg.elite_fraction * self.config.num_samples
+                )),
             )
-            elite_indices = np.argsort(costs, kind="stable")[:elite_count]
+            elite_count = min(int(feasible_indices.size), requested_elites)
+            ranked_feasible = np.argsort(
+                costs[feasible_indices], kind="stable"
+            )
+            elite_indices = feasible_indices[ranked_feasible[:elite_count]]
             elite_costs = costs[elite_indices]
             beta = float(np.min(elite_costs))
             exponent = np.clip(
@@ -1772,6 +1818,50 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
             self._finalize_terminal_action(sequence, constraints)
         )
         trajectory = self.rollout(state, sequence)[0]
+        boundary_fallback_used = False
+        boundary_fallback_candidate_index = -1
+        boundary_final_min_margin = 0.0
+        boundary_weighted_update_feasible = True
+        if hard_boundary_filter:
+            boundary_final_min_margin = float(np.min(
+                self._path_boundary_margins(
+                    trajectory[None, ...], reference
+                )[0, 1:]
+            ))
+            boundary_weighted_update_feasible = bool(
+                boundary_final_min_margin >= 0.0
+            )
+            if (
+                not boundary_weighted_update_feasible
+                and boundary_last_feasible is not None
+                and np.any(boundary_last_feasible)
+            ):
+                feasible_indices = np.flatnonzero(boundary_last_feasible)
+                boundary_fallback_candidate_index = int(
+                    feasible_indices[np.argmin(
+                        boundary_last_costs[feasible_indices]
+                    )]
+                )
+                sequence = boundary_last_samples[
+                    boundary_fallback_candidate_index
+                ].copy()
+                sequence, constraints = self._terminal_constraints(
+                    state, target, sequence[None, :, :]
+                )
+                sequence = sequence[0]
+                action, sequence, terminal_action_diagnostics = (
+                    self._finalize_terminal_action(sequence, constraints)
+                )
+                trajectory = self.rollout(state, sequence)[0]
+                boundary_fallback_used = True
+                boundary_final_min_margin = float(np.min(
+                    self._path_boundary_margins(
+                        trajectory[None, ...], reference
+                    )[0, 1:]
+                ))
+                boundary_weighted_update_feasible = bool(
+                    boundary_final_min_margin >= 0.0
+                )
         all_costs = np.concatenate(costs_by_iteration)
         effective_sample_size = float(
             1.0 / np.sum(np.asarray(final_weights) ** 2)
@@ -1803,6 +1893,30 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
             "cost_mean": float(np.mean(all_costs)),
             "cost_std": float(np.std(all_costs)),
             "effective_sample_size": effective_sample_size,
+            "path_boundary_candidate_filter_enabled": hard_boundary_filter,
+            "path_boundary_candidate_feasible_fraction": float(
+                np.mean(boundary_feasible_fractions)
+                if boundary_feasible_fractions else 1.0
+            ),
+            "path_boundary_candidate_feasible_fraction_min": float(
+                np.min(boundary_feasible_fractions)
+                if boundary_feasible_fractions else 1.0
+            ),
+            "path_boundary_no_feasible_candidates": bool(
+                boundary_no_feasible_iterations > 0
+            ),
+            "path_boundary_no_feasible_iteration_fraction": float(
+                boundary_no_feasible_iterations / cfg.iterations
+                if hard_boundary_filter else 0.0
+            ),
+            "path_boundary_weighted_update_feasible": (
+                boundary_weighted_update_feasible
+            ),
+            "path_boundary_final_min_margin": boundary_final_min_margin,
+            "path_boundary_fallback_used": boundary_fallback_used,
+            "path_boundary_fallback_candidate_index": (
+                boundary_fallback_candidate_index
+            ),
             "covariance_scale_mean": float(
                 np.mean(np.sqrt(variance / base_variance))
             ),

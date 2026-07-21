@@ -72,6 +72,11 @@ def _resume_scene_contract(config):
     """Remove only explicitly permitted continuation-only overrides."""
 
     result = copy.deepcopy(dict(config))
+    # ``load_yaml`` records the source file as an absolute path.  That path is
+    # useful provenance, but it is not part of the simulated environment or
+    # optimizer state and changes when an otherwise identical run is resumed
+    # on another operating system (for example WSL -> native Windows).
+    result.pop("_config_path", None)
     training = result.get("rl", {}).get("training", {})
     if isinstance(training, dict):
         for name in _RESUME_OVERRIDE_FIELDS:
@@ -93,6 +98,21 @@ def _contract_digest(contract):
         contract, sort_keys=True, separators=(",", ":"), allow_nan=False
     ).encode("utf-8")
     return hashlib.sha256(encoded).hexdigest()
+
+
+def _portable_resume_contract(contract):
+    """Normalize provenance-only scene paths on both sides of a resume."""
+
+    result = copy.deepcopy(_json_compatible(contract))
+    if not isinstance(result, dict):
+        return result
+    for collection_name in ("training_scenes", "validation_scenes"):
+        scenes = result.get(collection_name, ())
+        if isinstance(scenes, list):
+            result[collection_name] = [
+                _resume_scene_contract(scene) for scene in scenes
+            ]
+    return result
 
 
 @dataclass(frozen=True)
@@ -1320,7 +1340,9 @@ class SACTrainer:
                     "legacy RL checkpoint has no resume contract; pass the explicit "
                     "legacy override only for a documented non-exact continuation"
                 )
-        elif _json_compatible(saved_contract) != current_contract:
+        elif _portable_resume_contract(saved_contract) != (
+            _portable_resume_contract(current_contract)
+        ):
             raise ValueError(
                 "resume experiment contract does not match checkpoint "
                 "(only total_steps and checkpoint_interval may change)"

@@ -26,6 +26,8 @@ from mobile_robot_mppi.rl.trainer import (
     SACTrainer,
     TrainingConfig,
     ValidationCheckpointSelector,
+    _portable_resume_contract,
+    _resume_scene_contract,
     _validation_episode_seed,
 )
 
@@ -55,6 +57,35 @@ class _AnchorStub:
             "log_std_weight": 0.0,
             "target_log_std": -2.0,
         }
+
+
+def test_resume_scene_contract_ignores_platform_specific_source_path():
+    linux = {
+        "_config_path": "/home/research/configs/scene.yaml",
+        "scene": {"name": "same_scene"},
+        "experiment": {"output_dir": "/tmp/linux-output", "seed": 7},
+    }
+    windows = copy.deepcopy(linux)
+    windows["_config_path"] = r"D:\research\configs\scene.yaml"
+    windows["experiment"]["output_dir"] = r"D:\research\output"
+
+    assert _resume_scene_contract(linux) == _resume_scene_contract(windows)
+
+
+def test_portable_resume_contract_normalizes_saved_and_current_scene_paths():
+    common = {
+        "training": {"seed": 7},
+        "training_scenes": [{"scene": {"name": "same_scene"}}],
+        "validation_scenes": [{"scene": {"name": "same_scene"}}],
+    }
+    saved = copy.deepcopy(common)
+    current = copy.deepcopy(common)
+    saved["training_scenes"][0]["_config_path"] = "/home/config.yaml"
+    saved["validation_scenes"][0]["_config_path"] = "/home/config.yaml"
+    current["training_scenes"][0]["_config_path"] = r"D:\config.yaml"
+    current["validation_scenes"][0]["_config_path"] = r"D:\config.yaml"
+
+    assert _portable_resume_contract(saved) == _portable_resume_contract(current)
 
 
 def _checkpoint_trainer(tmp_path, save_replay=True, actor_update_after=0):

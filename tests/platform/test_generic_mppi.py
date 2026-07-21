@@ -618,3 +618,34 @@ def test_goal_prior_caps_translation_only_for_terminal_target():
     tracking = prior.propose(observation(), reference, 4, action)
     np.testing.assert_allclose(tracking.mean[:, 0], 0.7)
     assert not tracking.metadata["terminal_speed_cap_active"]
+
+
+def test_goal_prior_path_rollout_builds_a_structured_bend_sequence():
+    action = body_velocity_action((0.0, 0.7), 1.25)
+    prior = GoalWarmStartPrior(
+        v_gain=1.0,
+        yaw_gain=1.5,
+        path_rollout_enabled=True,
+        rollout_dt=0.1,
+    )
+    reference = PolylineReference(
+        ((0.0, 0.0), (1.0, 0.0), (1.0, 2.0)),
+        lookahead_distance=0.45,
+    )
+    obs = RobotObservation(
+        timestamp=0.0,
+        pose=Pose2D(0.75, 0.0, 0.0),
+        twist=Twist2D(0.0, 0.0),
+        local_obstacles=(),
+    )
+
+    output = prior.propose(obs, reference, 20, action)
+
+    assert output.metadata["type"] == "path_rollout_warm_start"
+    assert output.metadata["path_rollout_enabled"]
+    assert output.mean.shape == (20, 2)
+    assert np.isfinite(output.mean).all()
+    # A horizon-aware prior must evolve through the bend instead of repeating
+    # one current-target command over all 20 controls.
+    assert np.max(np.ptp(output.mean, axis=0)) > 0.1
+    assert np.max(output.mean[:, 1]) > 0.1

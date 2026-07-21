@@ -65,6 +65,8 @@ class GoalWarmStartPrior:
         translation_heading_gate_rad=None,
         translation_heading_gate_terminal_only=False,
         terminal_max_speed=None,
+        path_rollout_enabled=False,
+        rollout_dt=0.1,
     ):
         self.v_gain = float(v_gain)
         self.yaw_gain = float(yaw_gain)
@@ -89,21 +91,24 @@ class GoalWarmStartPrior:
             or self.terminal_max_speed <= 0.0
         ):
             raise ValueError("terminal_max_speed must be finite and positive")
+        self.path_rollout_enabled = bool(path_rollout_enabled)
+        self.rollout_dt = float(rollout_dt)
+        if not np.isfinite(self.rollout_dt) or self.rollout_dt <= 0.0:
+            raise ValueError("warm-start rollout dt must be finite and positive")
 
-    def propose(self, observation: RobotObservation, reference, horizon, action_spec):
-        state = observation.pose.as_array()
-        target = reference.target_at(observation.timestamp, state)
-        dx = target.pose.x - observation.pose.x
-        dy = target.pose.y - observation.pose.y
+    def _command(self, x, y, theta, target, action_spec):
+        dx = target.pose.x - float(x)
+        dy = target.pose.y - float(y)
         distance = float(np.hypot(dx, dy))
         desired = float(np.arctan2(dy, dx))
         yaw_error = float(np.arctan2(
-            np.sin(desired - observation.pose.theta),
-            np.cos(desired - observation.pose.theta),
+            np.sin(desired - float(theta)),
+            np.cos(desired - float(theta)),
         ))
         action = np.zeros(action_spec.dimension, dtype=np.float64)
         alignment = 0.0
         gate_active = False
+        terminal_speed_cap_active = False
         if "v_cmd" in action_spec.names:
             alignment = max(0.0, float(np.cos(yaw_error)))
             gate_active = (
@@ -118,27 +123,98 @@ class GoalWarmStartPrior:
                 if abs(yaw_error) >= self.translation_heading_gate_rad:
                     alignment = 0.0
                 else:
-                    # Smoothly recover translation after an in-place turn;
-                    # discontinuous on/off motion excites the actuator loop.
                     alignment = max(
                         0.0,
                         (float(np.cos(yaw_error)) - gate_cosine)
                         / max(1.0 - gate_cosine, 1e-12),
                     )
             v_value = self.v_gain * distance * alignment
-            if (
+            terminal_speed_cap_active = bool(
                 self.terminal_max_speed is not None
                 and target.phase in ("terminal_approach", "terminal")
-            ):
+            )
+            if terminal_speed_cap_active:
                 v_value = min(v_value, self.terminal_max_speed)
             action[action_spec.index("v_cmd")] = v_value
         if "omega_cmd" in action_spec.names:
             action[action_spec.index("omega_cmd")] = self.yaw_gain * yaw_error
-        action = action_spec.clip(action)
+        return (
+            action_spec.clip(action),
+            yaw_error,
+            alignment,
+            gate_active,
+            terminal_speed_cap_active,
+        )
+
+    def propose(self, observation: RobotObservation, reference, horizon, action_spec):
+        state = observation.pose.as_array()
+        target = reference.target_at(observation.timestamp, state)
+        action, yaw_error, alignment, gate_active, speed_cap = self._command(
+            observation.pose.x,
+            observation.pose.y,
+            observation.pose.theta,
+            target,
+            action_spec,
+        )
+        mean = np.repeat(action[None, :], int(horizon), axis=0)
+        supports_path_rollout = all(callable(getattr(reference, name, None)) for name in (
+            "preview_target_at", "project",
+        )) and hasattr(reference, "progress")
+        if self.path_rollout_enabled and supports_path_rollout:
+            mean = np.zeros(
+                (int(horizon), action_spec.dimension), dtype=np.float64
+            )
+            virtual = np.asarray((
+                observation.pose.x,
+                observation.pose.y,
+                observation.pose.theta,
+            ), dtype=np.float64)
+            progress_floor = float(reference.progress)
+            previous = np.zeros(action_spec.dimension, dtype=np.float64)
+            if "v_cmd" in action_spec.names:
+                previous[action_spec.index("v_cmd")] = observation.twist.v
+            if "omega_cmd" in action_spec.names:
+                previous[action_spec.index("omega_cmd")] = observation.twist.omega
+            for step in range(int(horizon)):
+                step_target = reference.preview_target_at(
+                    observation.timestamp + step * self.rollout_dt,
+                    virtual,
+                    progress_floor=progress_floor,
+                )
+                command = self._command(
+                    virtual[0], virtual[1], virtual[2], step_target, action_spec
+                )[0]
+                command = action_spec.clip(
+                    command, previous=previous, dt=self.rollout_dt
+                )
+                mean[step] = command
+                v_value = (
+                    command[action_spec.index("v_cmd")]
+                    if "v_cmd" in action_spec.names else 0.0
+                )
+                omega_value = (
+                    command[action_spec.index("omega_cmd")]
+                    if "omega_cmd" in action_spec.names else 0.0
+                )
+                midpoint_theta = virtual[2] + 0.5 * self.rollout_dt * omega_value
+                virtual[0] += self.rollout_dt * v_value * np.cos(midpoint_theta)
+                virtual[1] += self.rollout_dt * v_value * np.sin(midpoint_theta)
+                virtual[2] = np.arctan2(
+                    np.sin(virtual[2] + self.rollout_dt * omega_value),
+                    np.cos(virtual[2] + self.rollout_dt * omega_value),
+                )
+                progress_floor = reference.project(
+                    virtual[:2], minimum_progress=progress_floor
+                ).progress
+                previous = command
         return PriorOutput(
-            mean=np.repeat(action[None, :], int(horizon), axis=0),
+            mean=mean,
             metadata={
-                "type": "goal_warm_start",
+                "type": (
+                    "path_rollout_warm_start"
+                    if self.path_rollout_enabled and supports_path_rollout
+                    else "goal_warm_start"
+                ),
                 "yaw_error": yaw_error,
                 "translation_alignment": alignment,
                 "translation_heading_gate_rad": self.translation_heading_gate_rad,
@@ -146,10 +222,11 @@ class GoalWarmStartPrior:
                 "target_is_terminal": target.is_terminal,
                 "target_phase": target.phase,
                 "terminal_max_speed": self.terminal_max_speed,
-                "terminal_speed_cap_active": bool(
-                    self.terminal_max_speed is not None
-                    and target.phase in ("terminal_approach", "terminal")
+                "terminal_speed_cap_active": speed_cap,
+                "path_rollout_enabled": bool(
+                    self.path_rollout_enabled and supports_path_rollout
                 ),
+                "path_rollout_dt": self.rollout_dt,
             },
         )
 

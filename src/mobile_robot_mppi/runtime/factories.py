@@ -306,6 +306,8 @@ def make_components(config, project_root, rl_policy=None):
             planner_cfg.get("prior_translation_heading_gate_rad"),
             planner_cfg.get("prior_translation_heading_gate_terminal_only", False),
             planner_cfg.get("prior_terminal_max_speed"),
+            planner_cfg.get("prior_path_rollout_enabled", False),
+            mppi_config.dt,
         )
     elif prior_kind == "hybrid_baseline":
         prior = HybridBaselinePrior(GoalWarmStartPrior(
@@ -328,6 +330,8 @@ def make_components(config, project_root, rl_policy=None):
                 "prior_translation_heading_gate_terminal_only", False
             ),
             planner_cfg.get("prior_terminal_max_speed"),
+            planner_cfg.get("prior_path_rollout_enabled", False),
+            mppi_config.dt,
         )
         prior = FixedCovariancePrior(
             fallback,
@@ -357,6 +361,8 @@ def make_components(config, project_root, rl_policy=None):
                 "prior_translation_heading_gate_terminal_only", False
             ),
             planner_cfg.get("prior_terminal_max_speed"),
+            planner_cfg.get("prior_path_rollout_enabled", False),
+            mppi_config.dt,
         )
         from mobile_robot_mppi.rl.contextual_bandit import (
             ContextualBanditCovariancePrior,
@@ -435,6 +441,8 @@ def make_components(config, project_root, rl_policy=None):
                 "prior_translation_heading_gate_terminal_only", False
             ),
             planner_cfg.get("prior_terminal_max_speed"),
+            planner_cfg.get("prior_path_rollout_enabled", False),
+            mppi_config.dt,
         )
         if rl_policy is not None:
             prior = rl_policy

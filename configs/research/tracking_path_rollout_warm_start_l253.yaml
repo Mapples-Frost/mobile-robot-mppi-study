@@ -1,0 +1,9 @@
+include: tracking_preserved_warm_start_l252.yaml
+
+final_benchmark:
+  status: development
+  preregistration: docs/experiments/post_l217/l253_path_rollout_warm_start_protocol.md
+  treatment: horizon_aware_path_rollout_warm_start
+  planner_overrides:
+    prior_path_rollout_enabled: true
+

@@ -1561,6 +1561,7 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
             proposal_authority * actor_mean
             + (1.0 - proposal_authority) * baseline_mean
         )
+        initial_proposal_mean = mean.copy()
         base_variance = np.broadcast_to(
             np.asarray(self.config.noise_sigma, dtype=np.float64)[None, :] ** 2,
             mean.shape,
@@ -1871,6 +1872,108 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
                     boundary_final_min_margin >= 0.0
                 )
         all_costs = np.concatenate(costs_by_iteration)
+        optimizer_diagnostics = {
+            "optimizer_diagnostics_enabled": False,
+            "optimizer_best_candidate_cost": 0.0,
+            "optimizer_selected_sequence_cost": 0.0,
+            "optimizer_selected_cost_gap": 0.0,
+            "optimizer_best_first_v": 0.0,
+            "optimizer_best_first_omega": 0.0,
+            "optimizer_selected_first_v": 0.0,
+            "optimizer_selected_first_omega": 0.0,
+            "optimizer_first_action_cancellation_ratio": 1.0,
+            "optimizer_initial_proposal_first_v": 0.0,
+            "optimizer_initial_proposal_first_omega": 0.0,
+        }
+        if self.config.optimizer_diagnostics_enabled:
+            diagnostic_indices = (
+                np.flatnonzero(boundary_last_feasible)
+                if hard_boundary_filter
+                and boundary_last_feasible is not None
+                and np.any(boundary_last_feasible)
+                else np.arange(self.config.num_samples, dtype=np.int64)
+            )
+            best_index = int(diagnostic_indices[np.argmin(
+                boundary_last_costs[diagnostic_indices]
+                if hard_boundary_filter and boundary_last_costs is not None
+                else costs[diagnostic_indices]
+            )])
+            diagnostic_samples = (
+                boundary_last_samples
+                if hard_boundary_filter and boundary_last_samples is not None
+                else samples
+            )
+            diagnostic_costs = (
+                boundary_last_costs
+                if hard_boundary_filter and boundary_last_costs is not None
+                else costs
+            )
+            best_action = self.action_spec.clip(
+                diagnostic_samples[best_index, 0],
+                self.previous_action,
+                self.config.dt,
+            )
+            selected_running = float(self._cost(
+                trajectory[None, ...],
+                sequence[None, ...],
+                target,
+                obstacles,
+                reference=reference,
+            )[0])
+            selected_terminal = float(self._paper_terminal_cost(
+                trajectory[None, ...],
+                sequence[None, ...],
+                observation,
+                reference,
+            )[0][0]) * handover_authority
+            selected_cost = selected_running + selected_terminal
+            v_index_diag = (
+                self.action_spec.index("v_cmd")
+                if "v_cmd" in self.action_spec.names else None
+            )
+            omega_index_diag = (
+                self.action_spec.index("omega_cmd")
+                if "omega_cmd" in self.action_spec.names else None
+            )
+            best_norm = float(np.linalg.norm(best_action))
+            selected_norm = float(np.linalg.norm(action))
+            optimizer_diagnostics = {
+                "optimizer_diagnostics_enabled": True,
+                "optimizer_best_candidate_cost": float(
+                    diagnostic_costs[best_index]
+                ),
+                "optimizer_selected_sequence_cost": selected_cost,
+                "optimizer_selected_cost_gap": (
+                    selected_cost - float(diagnostic_costs[best_index])
+                ),
+                "optimizer_best_first_v": (
+                    float(best_action[v_index_diag])
+                    if v_index_diag is not None else 0.0
+                ),
+                "optimizer_best_first_omega": (
+                    float(best_action[omega_index_diag])
+                    if omega_index_diag is not None else 0.0
+                ),
+                "optimizer_selected_first_v": (
+                    float(action[v_index_diag])
+                    if v_index_diag is not None else 0.0
+                ),
+                "optimizer_selected_first_omega": (
+                    float(action[omega_index_diag])
+                    if omega_index_diag is not None else 0.0
+                ),
+                "optimizer_first_action_cancellation_ratio": (
+                    selected_norm / max(best_norm, 1e-12)
+                ),
+                "optimizer_initial_proposal_first_v": (
+                    float(initial_proposal_mean[0, v_index_diag])
+                    if v_index_diag is not None else 0.0
+                ),
+                "optimizer_initial_proposal_first_omega": (
+                    float(initial_proposal_mean[0, omega_index_diag])
+                    if omega_index_diag is not None else 0.0
+                ),
+            }
         effective_sample_size = float(
             1.0 / np.sum(np.asarray(final_weights) ** 2)
         )
@@ -1925,6 +2028,7 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
             "path_boundary_fallback_candidate_index": (
                 boundary_fallback_candidate_index
             ),
+            **optimizer_diagnostics,
             "covariance_scale_mean": float(
                 np.mean(np.sqrt(variance / base_variance))
             ),

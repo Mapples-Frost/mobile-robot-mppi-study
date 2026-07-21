@@ -1,0 +1,11 @@
+include: tracking_path_rollout_warm_start_l253.yaml
+
+final_benchmark:
+  status: development_diagnostic
+  preregistration: docs/experiments/post_l217/l254_optimizer_update_diagnostic_protocol.md
+  max_steps_by_scene:
+    tracking_grand_s_chicane_l234: 350
+  planner_overrides:
+    prior_path_rollout_enabled: true
+    optimizer_diagnostics_enabled: true
+

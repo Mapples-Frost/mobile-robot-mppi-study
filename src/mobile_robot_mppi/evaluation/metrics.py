@@ -199,6 +199,43 @@ class EpisodeMetrics:
             "effective_sample_size": float(
                 planner_diagnostics.get("effective_sample_size", 0.0)
             ),
+            "optimizer_diagnostics_enabled": float(
+                planner_diagnostics.get("optimizer_diagnostics_enabled", False)
+            ),
+            "optimizer_best_candidate_cost": float(
+                planner_diagnostics.get("optimizer_best_candidate_cost", 0.0)
+            ),
+            "optimizer_selected_sequence_cost": float(
+                planner_diagnostics.get("optimizer_selected_sequence_cost", 0.0)
+            ),
+            "optimizer_selected_cost_gap": float(
+                planner_diagnostics.get("optimizer_selected_cost_gap", 0.0)
+            ),
+            "optimizer_best_first_v": float(
+                planner_diagnostics.get("optimizer_best_first_v", 0.0)
+            ),
+            "optimizer_best_first_omega": float(
+                planner_diagnostics.get("optimizer_best_first_omega", 0.0)
+            ),
+            "optimizer_selected_first_v": float(
+                planner_diagnostics.get("optimizer_selected_first_v", 0.0)
+            ),
+            "optimizer_selected_first_omega": float(
+                planner_diagnostics.get("optimizer_selected_first_omega", 0.0)
+            ),
+            "optimizer_first_action_cancellation_ratio": float(
+                planner_diagnostics.get(
+                    "optimizer_first_action_cancellation_ratio", 1.0
+                )
+            ),
+            "optimizer_initial_proposal_first_v": float(
+                planner_diagnostics.get("optimizer_initial_proposal_first_v", 0.0)
+            ),
+            "optimizer_initial_proposal_first_omega": float(
+                planner_diagnostics.get(
+                    "optimizer_initial_proposal_first_omega", 0.0
+                )
+            ),
             "sample_saturation_fraction": float(
                 planner_diagnostics.get("sample_saturation_fraction", 0.0)
             ),

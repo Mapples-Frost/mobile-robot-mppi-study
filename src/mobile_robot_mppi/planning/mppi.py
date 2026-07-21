@@ -74,6 +74,7 @@ class MppiConfig:
     previous_sequence_blend: float = 0.5
     safety_recovery_prefix_steps: int = 0
     profile_components: bool = False
+    optimizer_diagnostics_enabled: bool = False
     seed: int = 0
 
     @classmethod
@@ -152,6 +153,9 @@ class MppiConfig:
             ),
             profile_components=bool(
                 values.get("profile_components", False)
+            ),
+            optimizer_diagnostics_enabled=bool(
+                values.get("optimizer_diagnostics_enabled", False)
             ),
             seed=int(values.get("seed", 0)),
         )
@@ -1159,6 +1163,77 @@ class MppiController:
                 boundary_weighted_update_feasible = bool(updated_margin >= 0.0)
         else:
             updated_margin = 0.0
+        optimizer_diagnostics = {
+            "optimizer_diagnostics_enabled": False,
+            "optimizer_best_candidate_cost": 0.0,
+            "optimizer_selected_sequence_cost": 0.0,
+            "optimizer_selected_cost_gap": 0.0,
+            "optimizer_best_first_v": 0.0,
+            "optimizer_best_first_omega": 0.0,
+            "optimizer_selected_first_v": 0.0,
+            "optimizer_selected_first_omega": 0.0,
+            "optimizer_first_action_cancellation_ratio": 1.0,
+        }
+        if self.config.optimizer_diagnostics_enabled:
+            eligible = (
+                np.flatnonzero(boundary_candidate_feasible)
+                if hard_boundary_filter and np.any(boundary_candidate_feasible)
+                else np.arange(self.config.num_samples, dtype=np.int64)
+            )
+            best_index = int(eligible[np.argmin(costs[eligible])])
+            best_action = self.action_spec.clip(
+                samples[best_index, 0], self.previous_action, self.config.dt
+            )
+            selected_running = float(self._cost(
+                updated_trajectory[None, ...],
+                sequence[None, ...],
+                target,
+                obstacles,
+                reference=reference,
+            )[0])
+            selected_correction = float(self._importance_sampling_cost(
+                prior.mean,
+                (sequence - prior.mean)[None, ...],
+                covariance,
+            )[0])
+            selected_cost = selected_running + selected_correction
+            best_norm = float(np.linalg.norm(best_action))
+            selected_norm = float(np.linalg.norm(action))
+            v_index_diag = (
+                self.action_spec.index("v_cmd")
+                if "v_cmd" in self.action_spec.names else None
+            )
+            omega_index_diag = (
+                self.action_spec.index("omega_cmd")
+                if "omega_cmd" in self.action_spec.names else None
+            )
+            optimizer_diagnostics = {
+                "optimizer_diagnostics_enabled": True,
+                "optimizer_best_candidate_cost": float(costs[best_index]),
+                "optimizer_selected_sequence_cost": selected_cost,
+                "optimizer_selected_cost_gap": (
+                    selected_cost - float(costs[best_index])
+                ),
+                "optimizer_best_first_v": (
+                    float(best_action[v_index_diag])
+                    if v_index_diag is not None else 0.0
+                ),
+                "optimizer_best_first_omega": (
+                    float(best_action[omega_index_diag])
+                    if omega_index_diag is not None else 0.0
+                ),
+                "optimizer_selected_first_v": (
+                    float(action[v_index_diag])
+                    if v_index_diag is not None else 0.0
+                ),
+                "optimizer_selected_first_omega": (
+                    float(action[omega_index_diag])
+                    if omega_index_diag is not None else 0.0
+                ),
+                "optimizer_first_action_cancellation_ratio": (
+                    selected_norm / max(best_norm, 1e-12)
+                ),
+            }
         mark("final_rollout")
         diagnostics = {
             "cost_min": float(costs.min()),
@@ -1193,6 +1268,7 @@ class MppiController:
             "path_boundary_fallback_candidate_index": (
                 boundary_fallback_candidate_index
             ),
+            **optimizer_diagnostics,
             "importance_sampling_correction": bool(
                 self.config.importance_sampling_correction
             ),

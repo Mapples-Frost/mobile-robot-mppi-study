@@ -22,6 +22,8 @@ l273:
     l263_states_sha256: c14f9be873f23d0bfd0fb5dccc73aa3f84c1bc2f0487c3ad7b6ba362c27adec2
     l263_returns: results/research_platform/rl/l263_counterfactual_actor_diagnosis/counterfactual_rollouts.csv
     l263_returns_sha256: 2d9d2ba2f366fa7524219ca2bcb43c3fdc300ef7ee34b6f15c406a144c6d2151
+    l263_actions: results/research_platform/rl/l263_counterfactual_actor_diagnosis/critic_actions.csv
+    l263_actions_sha256: e89e03089719fa0d521cbd19f2dab82fb85e06e9cdf472acd25da3c07d059d68
     continuation: constant
     horizon: 40
     training_role: train
@@ -96,4 +98,3 @@ l273:
     - hairpin_v1
     - s_chicane_v1
     - infinity_v1
-

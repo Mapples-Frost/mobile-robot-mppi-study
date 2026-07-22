@@ -16,9 +16,10 @@ unauthorized.
 
 ## Frozen data and leakage controls
 
-- Use only existing Windows-native L263 constant-continuation H40 rollouts and
-  the independently frozen L268 held-out recovery diagnostic. All files are
-  SHA256 pinned in the configuration.
+- Use only existing Windows-native L263 constant-continuation H40 rollouts,
+  their frozen normalized action table, and the independently frozen L268
+  held-out recovery diagnostic. All files are SHA256 pinned in the
+  configuration.
 - L263's 18 training-role states (27 actions each) are the only fitting data.
   Its eight validation-role states are never sampled for updates. State—not an
   action row—is the split unit.
@@ -71,4 +72,3 @@ Decisions use only the frozen thresholds in the configuration:
 No result authorizes Actor training automatically. All arms and failures are
 retained; there is no seed, checkpoint, or threshold selection after viewing
 outcomes.
-

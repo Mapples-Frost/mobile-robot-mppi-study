@@ -94,9 +94,9 @@ l274:
     minimum_scenes_improved: 4
     maximum_scene_pair_decrease: 0.166667
   decision_priority:
+    - combined_coverage_observation_limited
     - privileged_observation_limited
     - recovery_state_coverage_limited
-    - combined_coverage_observation_limited
     - temporal_or_target_dynamics_unresolved
   forbidden_tokens:
     - l258_tracking_curriculum
@@ -104,4 +104,3 @@ l274:
     - hairpin_v1
     - s_chicane_v1
     - infinity_v1
-

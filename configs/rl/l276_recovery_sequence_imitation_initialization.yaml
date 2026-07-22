@@ -1,0 +1,52 @@
+experiment:
+  name: l276_recovery_sequence_imitation_initialization
+  output_dir: results/research_platform/rl/l276_recovery_sequence_imitation_initialization
+
+l276:
+  protocol: L276
+  initialization_gate_only: true
+  sac_training_authorized: false
+  source_checkpoint: results/research_platform/rl/l262_coverage_gated_value_seed20262611_6k/checkpoints/step_000006000.pt
+  source_checkpoint_sha256: 48e662fd728c0d1d62b1ff79681e5cdd924b120d9411c8df6e062a814b4d42a7
+  recovery_dataset: results/research_platform/rl/l268_recovery_balanced_intervention/recovery_dataset
+  recovery_dataset_manifest_sha256: 6a67425a851f2c06023045a47747d2f7719ada011a30ba78c5f5fc25a051c192
+  l275_summary: results/research_platform/rl/l275_recovery_commitment_continuation_diagnosis/summary.json
+  l275_summary_sha256: 61da40c537442c3f4473cd00d783062a05fdb71f65b266f5a1911a85b1892660
+  split_counts: {train: 72, validation: 18, test: 18}
+  training:
+    seeds: [20263211, 20263212, 20263213]
+    updates: 3000
+    checkpoint_interval: 1000
+    selected_checkpoint_update: 3000
+    recovery_batch_size: 128
+    source_anchor_batch_size: 128
+    sampling: scene_then_chain_balanced_with_replacement
+    source_anchor_sampling: replay_uniform_with_replacement
+    log_std_weight: 0.001
+    target_log_std: -2.0
+  evaluation:
+    rollout_horizon: accepted_chain_length
+    validation_once_per_seed: true
+    test_after_all_seeds: true
+    source_actor_baseline: true
+    teacher_action_metric: rmse
+    source_replay_drift_metric: mean_absolute_action
+  gate:
+    require_all_three_test_rmse_directions_positive: true
+    minimum_median_relative_test_rmse_improvement: 0.20
+    minimum_median_validation_return_gain: 0.0
+    minimum_median_test_return_gain: 0.0
+    minimum_test_reentry_fraction_gain: 0.15
+    minimum_test_scenes_with_return_improvement: 4
+    maximum_source_replay_mean_absolute_action_drift: 0.10
+    maximum_collision_boundary_failure_increase: 0.0
+    require_frozen_nonactor_hashes: true
+    require_all_finite: true
+  forbidden_tokens:
+    - l258_tracking_curriculum
+    - l258_heldout_tracking_gate
+    - hairpin_v1
+    - s_chicane_v1
+    - infinity_v1
+    - sealed
+

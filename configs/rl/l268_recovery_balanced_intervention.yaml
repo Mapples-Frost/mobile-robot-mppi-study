@@ -58,6 +58,7 @@ l268:
     transitions_per_scene: 1000
     recovery_transitions_per_scene: 300
     original_transitions_per_scene: 700
+    recovery_sampling_strategy: scene_then_chain_balanced
     sampling_with_replacement: true
   critic_only:
     seeds: [20263071, 20263072, 20263073]

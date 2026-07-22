@@ -67,7 +67,10 @@ audit sidecars. Any quota failure stops L268 and is retained.
 Seeds `20263071/72/73` form paired blocks; arm order seed is `20263068`.
 Control is the original 6000-transition L262 replay. Treatment is also exactly
 6000 transitions: 1000 per scene, comprising 300 train-split complete-recovery
-transitions plus 700 original non-recovery transitions. Both arms use identical
+transitions plus 700 original non-recovery transitions. Recovery sampling is
+scene-then-chain-balanced so each of the 12 train chains in a scene contributes
+25 rows; replacement is allowed only within a chain that has fewer than 25
+rows, and all multiplicities are archived. Both arms use identical
 initialization, batch 256, scene-balanced sampling and exactly 6000 Critic
 updates. Actor, Actor optimizer, log alpha and alpha optimizer remain bitwise
 frozen.

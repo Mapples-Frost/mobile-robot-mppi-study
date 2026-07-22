@@ -1,0 +1,5 @@
+include: l279_recovery_retention_anchor_sac_6k.yaml
+experiment: {name: l279_recovery_retention_anchor_seed20263313_6k, output_dir: results/research_platform/rl/l279_recovery_retention_anchor_seed20263313_6k}
+rl:
+  training: {seed: 20263313, validation_seed_base: 20264313}
+

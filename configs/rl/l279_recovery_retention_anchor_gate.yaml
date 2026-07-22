@@ -1,0 +1,33 @@
+protocol: L279
+status: preregistered
+windows_native_only: true
+l277_summary: {path: results/research_platform/rl/l277_recovery_initialized_sac_probe/summary.json, sha256: 5faafdf0174f0da06feb17225abbd714e429d4a68f57a67c6b4aab14257ea1c4}
+l278_summary: {path: results/research_platform/rl/l278_recovery_retention_diagnosis/summary.json, sha256: 674b7a91a0e96b82dc27d9a9e44ce415a4d414bd947c05bf50da50063932bb4a}
+anchor_dataset_config: configs/rl/l279_recovery_retention_anchor_dataset.yaml
+anchor_dataset: results/research_platform/rl/l279_recovery_retention_anchor_dataset
+runs:
+  - {seed: 20263311, config: configs/rl/l279_recovery_retention_anchor_seed20263311.yaml, output_dir: results/research_platform/rl/l279_recovery_retention_anchor_seed20263311_6k, initialization: results/research_platform/rl/l276_recovery_sequence_imitation_initialization/seed_20263211/checkpoints/update_0003000.pt, initialization_sha256: 06f4bdb804d47f2461e8408b0e441da9ad42fcc7b173b68057045149a16f2a39}
+  - {seed: 20263312, config: configs/rl/l279_recovery_retention_anchor_seed20263312.yaml, output_dir: results/research_platform/rl/l279_recovery_retention_anchor_seed20263312_6k, initialization: results/research_platform/rl/l276_recovery_sequence_imitation_initialization/seed_20263212/checkpoints/update_0003000.pt, initialization_sha256: d0879d1d6bc0fe919e08e5205dec925d8835402b348a4e8c374517b96cb4adf0}
+  - {seed: 20263313, config: configs/rl/l279_recovery_retention_anchor_seed20263313.yaml, output_dir: results/research_platform/rl/l279_recovery_retention_anchor_seed20263313_6k, initialization: results/research_platform/rl/l276_recovery_sequence_imitation_initialization/seed_20263213/checkpoints/update_0003000.pt, initialization_sha256: 04e24899d1db3283ae54a75edafd51d930d2829987d68c33027dedfae0c95002}
+training:
+  total_steps: 6000
+  expected_checkpoints: [3000, 6000]
+  expected_validation_steps: [0, 3000, 6000]
+  expected_anchor_update_steps: 3001
+  dataset_format: recovery_retention_v1
+gate:
+  maximum_relative_test_rmse_increase: 0.20
+  minimum_relative_test_rmse_improvement_vs_l277: 0.20
+  maximum_test_return_loss: 0.50
+  maximum_test_reentry_loss: 0.10
+  minimum_test_scenes_nonnegative_return: 4
+  maximum_collision_boundary_failure_increase: 0
+  maximum_per_seed_mean_completion_regression: 0.02
+  minimum_median_completion_change: 0.0
+  minimum_median_cte_improvement: 0.05
+  minimum_median_goal_distance_improvement: 0.10
+  minimum_seeds_with_cte_or_goal_improvement: 2
+  minimum_scenes_with_cte_improvement: 2
+  maximum_collision_increase_per_seed: 0
+  maximum_success_loss_per_seed: 0
+

@@ -1,0 +1,18 @@
+include: l277_recovery_initialized_sac_6k.yaml
+
+experiment:
+  name: l279_recovery_retention_anchor_sac_6k
+  output_dir: results/research_platform/rl/l279_recovery_retention_anchor_sac_6k
+
+rl:
+  policy_id: l279_recovery_retention_anchor_sac_6k
+  training:
+    bc_anchor:
+      enabled: true
+      dataset_dir: results/research_platform/rl/l279_recovery_retention_anchor_dataset
+      dataset_format: recovery_retention_v1
+      batch_size: 256
+      mean_weight: 2.0
+      log_std_weight: 0.001
+      target_log_std: -2.0
+

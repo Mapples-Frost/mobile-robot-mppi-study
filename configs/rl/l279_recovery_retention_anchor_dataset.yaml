@@ -1,0 +1,28 @@
+protocol: L279
+status: preregistered
+schema: mobile_robot_mppi.recovery_retention_anchor
+schema_version: 1
+dataset_seed: 20267901
+output_dir: results/research_platform/rl/l279_recovery_retention_anchor_dataset
+source_checkpoint: results/research_platform/rl/l262_coverage_gated_value_seed20262611_6k/checkpoints/step_000006000.pt
+source_checkpoint_sha256: 48e662fd728c0d1d62b1ff79681e5cdd924b120d9411c8df6e062a814b4d42a7
+recovery_dataset: results/research_platform/rl/l268_recovery_balanced_intervention/recovery_dataset
+recovery_dataset_manifest_sha256: 6a67425a851f2c06023045a47747d2f7719ada011a30ba78c5f5fc25a051c192
+split_counts: {train: 72, validation: 18, test: 18}
+train:
+  samples_per_recovery_chain: 128
+  recovery_samples: 9216
+  source_samples: 9216
+  total_samples: 18432
+  mixture: {recovery: 0.5, source_distillation: 0.5}
+  source_sampling: replay_uniform_with_replacement
+  recovery_sampling: per_chain_uniform_with_replacement
+student_fields: [observation, teacher_action, source_kind, episode_id, step]
+forbidden_tokens:
+  - l258_tracking_curriculum
+  - l258_heldout_tracking_gate
+  - hairpin_v1
+  - s_chicane_v1
+  - infinity_v1
+  - sealed
+

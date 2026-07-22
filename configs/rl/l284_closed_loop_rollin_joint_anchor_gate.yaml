@@ -1,0 +1,28 @@
+protocol: L284
+status: preregistered
+windows_native_only: true
+l283_summary: {path: results/research_platform/rl/l283_closed_loop_component_counterfactual/summary.json, sha256: 1c38c12501a0e9bdad55a3cd43f7ee0df1a365140473025e89200525749edbb2}
+l281_summary: {path: results/research_platform/rl/l281_component_separated_anchor_sac_probe/summary.json, sha256: 37ace4f1df7b78418d24f4c2949e7f7be4eb3a7087dfa6b165310ca29adf22a9}
+anchor_dataset: results/research_platform/rl/l284_closed_loop_rollin_anchor_dataset
+anchor_dataset_manifest_sha256: pending_before_generation
+runs:
+  - {seed: 20263311, config: configs/rl/l284_closed_loop_rollin_joint_anchor_seed20263311.yaml, output_dir: results/research_platform/rl/l284_closed_loop_rollin_joint_anchor_seed20263311_6k, initialization: results/research_platform/rl/l276_recovery_sequence_imitation_initialization/seed_20263211/checkpoints/update_0003000.pt, initialization_sha256: 06f4bdb804d47f2461e8408b0e441da9ad42fcc7b173b68057045149a16f2a39}
+  - {seed: 20263312, config: configs/rl/l284_closed_loop_rollin_joint_anchor_seed20263312.yaml, output_dir: results/research_platform/rl/l284_closed_loop_rollin_joint_anchor_seed20263312_6k, initialization: results/research_platform/rl/l276_recovery_sequence_imitation_initialization/seed_20263212/checkpoints/update_0003000.pt, initialization_sha256: d0879d1d6bc0fe919e08e5205dec925d8835402b348a4e8c374517b96cb4adf0}
+  - {seed: 20263313, config: configs/rl/l284_closed_loop_rollin_joint_anchor_seed20263313.yaml, output_dir: results/research_platform/rl/l284_closed_loop_rollin_joint_anchor_seed20263313_6k, initialization: results/research_platform/rl/l276_recovery_sequence_imitation_initialization/seed_20263213/checkpoints/update_0003000.pt, initialization_sha256: 04e24899d1db3283ae54a75edafd51d930d2829987d68c33027dedfae0c95002}
+training: {total_steps: 6000, expected_checkpoints: [3000, 6000], expected_validation_steps: [0, 3000, 6000], expected_anchor_update_steps: 3001, source_kind_balanced: true, recovery_action_mean_weights: [1.0, 1.0], source_action_mean_weights: [0.0, 1.0]}
+gate:
+  maximum_relative_test_rmse_increase: 0.20
+  minimum_relative_test_rmse_improvement_vs_l277: 0.20
+  maximum_test_return_loss: 0.50
+  maximum_test_reentry_loss: 0.10
+  minimum_test_scenes_nonnegative_return: 4
+  minimum_median_recovery_return_gain_vs_l281: 0.0
+  maximum_collision_boundary_failure_increase: 0
+  maximum_per_seed_mean_completion_regression: 0.02
+  minimum_median_completion_change: 0.0
+  minimum_median_cte_improvement: 0.05
+  minimum_median_goal_distance_improvement: 0.10
+  minimum_seeds_with_cte_or_goal_improvement: 2
+  minimum_scenes_with_cte_improvement: 2
+  maximum_collision_increase_per_seed: 0
+  maximum_success_loss_per_seed: 0

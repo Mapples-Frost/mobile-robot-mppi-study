@@ -1,0 +1,4 @@
+include: l284_closed_loop_rollin_joint_anchor_sac_6k.yaml
+experiment: {name: l284_closed_loop_rollin_joint_anchor_seed20263312_6k, output_dir: results/research_platform/rl/l284_closed_loop_rollin_joint_anchor_seed20263312_6k}
+rl:
+  training: {seed: 20263312, validation_seed_base: 20264312}

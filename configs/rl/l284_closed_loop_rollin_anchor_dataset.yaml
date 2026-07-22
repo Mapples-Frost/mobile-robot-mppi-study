@@ -1,0 +1,24 @@
+protocol: L284
+status: preregistered
+schema: mobile_robot_mppi.recovery_retention_anchor
+schema_version: 1
+dataset_seed: 20268401
+output_dir: results/research_platform/rl/l284_closed_loop_rollin_anchor_dataset
+l283_summary: {path: results/research_platform/rl/l283_closed_loop_component_counterfactual/summary.json, sha256: 1c38c12501a0e9bdad55a3cd43f7ee0df1a365140473025e89200525749edbb2}
+source_anchor_dataset: results/research_platform/rl/l279_recovery_retention_anchor_dataset
+source_anchor_manifest_sha256: 61effe41e334fec71d55502bc2c48c11e9961891debce774e96665c9dabc4f95
+recovery_dataset: results/research_platform/rl/l268_recovery_balanced_intervention/recovery_dataset
+recovery_dataset_manifest_sha256: 6a67425a851f2c06023045a47747d2f7719ada011a30ba78c5f5fc25a051c192
+teacher_config: configs/rl/l267_recovery_balanced_intervention.yaml
+teacher_config_sha256: 42b46f8e715531cf0ab748beff0fc9e5f8a1e78fd4d49c99f31924fdb5f113b3
+base_config: configs/rl/l262_coverage_gated_value_6k.yaml
+reset_contract: l268
+rollin_checkpoints:
+  - {seed: 20263311, path: results/research_platform/rl/l281_component_separated_anchor_seed20263311_6k/checkpoints/step_000006000.pt, sha256: 7cfed219a101370b733c19e2b71a35047ee10e5c8b6caa2d7e58914cbc50fecd, samples_per_chain: 43}
+  - {seed: 20263312, path: results/research_platform/rl/l281_component_separated_anchor_seed20263312_6k/checkpoints/step_000006000.pt, sha256: ec806f39c969877dbdeb2c4bcd5d6e49cf28ff7c6cb772391bf7080504c2a6a1, samples_per_chain: 43}
+  - {seed: 20263313, path: results/research_platform/rl/l281_component_separated_anchor_seed20263313_6k/checkpoints/step_000006000.pt, sha256: 4ee14ff7ea1c6ff2fe18703b1798a9a6f2b7b40dec1ecf5e2bd33d03cb4cae88, samples_per_chain: 42}
+split_counts: {train: 72, validation: 18, test: 18}
+train: {recovery_samples: 9216, source_samples: 9216, total_samples: 18432}
+reset_tolerance: 1.0e-6
+student_fields: [observation, teacher_action, source_kind, episode_id, step]
+forbidden_tokens: [l258_tracking_curriculum, l258_heldout_tracking_gate, hairpin_v1, s_chicane_v1, infinity_v1, sealed]

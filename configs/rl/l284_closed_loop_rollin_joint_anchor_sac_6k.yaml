@@ -1,0 +1,11 @@
+include: l281_component_separated_anchor_sac_6k.yaml
+
+experiment:
+  name: l284_closed_loop_rollin_joint_anchor_sac_6k
+  output_dir: results/research_platform/rl/l284_closed_loop_rollin_joint_anchor_sac_6k
+
+rl:
+  policy_id: l284_closed_loop_rollin_joint_anchor_sac_6k
+  training:
+    bc_anchor:
+      dataset_dir: results/research_platform/rl/l284_closed_loop_rollin_anchor_dataset

@@ -1,0 +1,76 @@
+experiment:
+  name: l269_long_horizon_credit_propagation_diagnosis
+  output_dir: results/research_platform/rl/l269_long_horizon_credit_probe
+
+l269:
+  protocol: L269
+  source_checkpoint: results/research_platform/rl/l262_coverage_gated_value_seed20262611_6k/checkpoints/step_000006000.pt
+  source_checkpoint_sha256: 48e662fd728c0d1d62b1ff79681e5cdd924b120d9411c8df6e062a814b4d42a7
+  l263:
+    directory: results/research_platform/rl/l263_counterfactual_actor_diagnosis
+    state_manifest_sha256: c14f9be873f23d0bfd0fb5dccc73aa3f84c1bc2f0487c3ad7b6ba362c27adec2
+    critic_actions_sha256: e89e03089719fa0d521cbd19f2dab82fb85e06e9cdf472acd25da3c07d059d68
+    counterfactual_rollouts_sha256: 2d9d2ba2f366fa7524219ca2bcb43c3fdc300ef7ee34b6f15c406a144c6d2151
+  l268:
+    dataset: results/research_platform/rl/l268_recovery_balanced_intervention/recovery_dataset
+    dataset_manifest_sha256: 6a67425a851f2c06023045a47747d2f7719ada011a30ba78c5f5fc25a051c192
+    dataset_content_fingerprint: d1a0a79238d351dd98a309145d9f7724c31b78c07d814b043aa816006ec081c0
+    heldout_diagnostic: results/research_platform/rl/l268_recovery_balanced_intervention/heldout_recovery_diagnostic
+    heldout_summary_sha256: dd5ac217b679d596377f9b8c4a83a2c36f403fc39e19c4a968071d0ee63705e6
+    heldout_states_sha256: f18b3cbf1917250462dbd7c80202f21454e9778f72b17d3af2fb48901e68f9e2
+    heldout_h40_sha256: 0799926d2a84e4914d045c1ebb2593c1d15af26e4f713151819fb8539091eea7
+  forbidden_tokens:
+    - l258_tracking_curriculum
+    - l258_heldout_tracking_gate
+    - hairpin_v1
+    - s_chicane_v1
+    - infinity_v1
+  horizon_diagnostic:
+    horizons: [1, 5, 10, 20, 40]
+    candidate_continuation: actor_follow
+    full_chain_comparator: source_actor_policy
+    maximum_full_chain_steps: 600
+    reset_tolerance: 1.0e-6
+    gate:
+      minimum_h40_recovery_advantage_fraction: 0.60
+      minimum_positive_fraction_gain_h1_to_h40: 0.15
+      require_median_h40_greater_than_h1: true
+      minimum_late_first_positive_fraction: 0.20
+      late_first_positive_minimum_horizon: 10
+      minimum_full_chain_recovery_advantage_fraction: 0.60
+      minimum_scenes_with_h40_majority_positive: 4
+  critic_probe:
+    enabled_only_after_horizon_gate: true
+    arms:
+      - {name: one_step, target: n_step, horizon: 1}
+      - {name: five_step, target: n_step, horizon: 5}
+      - {name: ten_step, target: n_step, horizon: 10}
+      - {name: td_lambda, target: td_lambda, maximum_horizon: 10, lambda: 0.80}
+    seeds: [20263171, 20263172, 20263173]
+    arm_order_seed: 20263168
+    updates: 6000
+    batch_size: 256
+    checkpoint_interval: 3000
+    replay:
+      total_start_transitions: 6000
+      transitions_per_scene: 1000
+      recovery_starts_per_scene: 300
+      original_nonrecovery_starts_per_scene: 700
+      recovery_sampling: scene_then_chain_balanced
+      original_sampling: scene_balanced
+      sampling_with_replacement: true
+      trajectory_boundary: contiguous_source_sequence
+    gate:
+      minimum_aggregate_in_support_spearman: 0.05
+      minimum_paired_median_spearman_improvement: 0.15
+      require_all_three_seed_directions_positive: true
+      minimum_heldout_recovery_forward_accuracy: 0.65
+      minimum_paired_heldout_accuracy_improvement: 0.10
+      minimum_training_scenes_improved: 4
+      minimum_scene_change: -0.10
+      minimum_top3_improvement: 0.10
+      maximum_absolute_mean_q: 500.0
+      maximum_mean_quantile_spread: 100.0
+    selection_order: [five_step, ten_step, td_lambda]
+  conditional_actor_training: false
+

@@ -1,8 +1,19 @@
 # L267 Recovery-Balanced Replay Intervention Protocol
 
-Status: preregistered development intervention. This is not sealed or formal
-paper evidence. No L267 outcome has been inspected when this protocol is
-frozen.
+Status: preregistered development intervention, amended once after a geometry-
+only smoke audit and before any formal recovery dataset or method outcome was
+generated. This is not sealed or formal paper evidence.
+
+Amendment 1 (2026-07-22): the initial local-normal offset construction was
+rejected by engineering smoke. On self-near paths, a point displaced from one
+branch can be close to another branch; for example, nominal 1 m offsets in the
+offset-hairpin realized only 0.23--0.35 m global CTE. A geometry-only 121x121
+field audit also proved that absolute CTE >3 m is impossible in the unchanged
+8x8 offset-hairpin and near-double-loop scenes. The failed smoke is retained at
+`recovery_dataset_smoke_v1`; it contains no method-performance outcome. The
+amended construction below uses global nearest-path CTE, the same quantity used
+by the frozen observation/reward, and map-side-relative ordered severity. No
+quota, replay allocation, training seed, update budget or Gate was changed.
 
 ## Causal question
 
@@ -58,15 +69,25 @@ Critic-only phase. No arm is initialized from another L267 arm.
 - Total accepted chains: 108 (72/18/18 by split).
 - Split is assigned at the whole-chain level before collection. No transition
   from one chain may occur in more than one split.
-- Within each scene, the schedule blocks on side (left/right), severity
-  (mild/moderate/severe), heading error (small/large), and feasible curvature
+- Within each scene, the schedule blocks on globally projected side
+  (left/right), ordered map-side-relative severity (mild/moderate/severe),
+  heading error (small/large), and feasible curvature
   anchor. The seeded schedule is archived in the manifest.
 - Collection plan seed: `20262967`; collection episode seeds begin at
   `20264000` and are disjoint from L234--L266 and sealed seeds.
 
-Severity offsets are frozen at 1.0, 2.0 and 3.1 m. Heading-error magnitudes are
-0.15 and 0.65 rad, with signs balanced by the schedule. Feasible progress
-anchors are chosen from the interior 10--90% of the reference and recorded.
+Reset candidates are enumerated on a frozen 81x81 lattice inside the original
+field and projected against the complete reference polyline. For each scene and
+signed side, the feasible range begins at realized CTE 0.80 m and ends 0.03 m
+below that side's geometry-only maximum. Mild, moderate and severe targets are
+respectively 0%, 50% and 100% through that range. The MuJoCo reset CTE must be
+within 0.08 m of its frozen target. Thus severity is honestly relative to the
+available free space on each unchanged map; absolute CTE >3 m is reported where
+available but is not falsely claimed for compact/self-near maps. The exact
+side maxima and targets are archived before acceptance outcomes in the dataset
+manifest. Heading-error magnitudes remain 0.15 and 0.65 rad, with signs
+balanced by the schedule. Feasible progress anchors are selected from the
+interior 10--90% of the reference and recorded.
 
 ### Teacher and acceptance contract
 
@@ -172,4 +193,3 @@ outcome.
   large-scale or sealed experiment.
 - Preserve every failed chain, seed and arm. No seed filtering, deletion or
   outcome-based checkpoint selection is allowed.
-

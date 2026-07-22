@@ -25,7 +25,12 @@ l267:
     episode_seed_start: 20264000
     accepted_chains_per_scene: 18
     split_counts: {train: 12, validation: 3, test: 3}
-    severity_offsets_m: {mild: 1.0, moderate: 2.0, severe: 3.1}
+    severity_levels: [mild, moderate, severe]
+    severity_target_fractions: {mild: 0.0, moderate: 0.5, severe: 1.0}
+    minimum_realized_cte_m: 0.80
+    maximum_cte_margin_m: 0.03
+    realized_cte_tolerance_m: 0.08
+    geometry_grid_points_per_axis: 81
     heading_error_magnitudes_rad: {small: 0.15, large: 0.65}
     stable_cte_m: 0.25
     start_cte_m: 0.75

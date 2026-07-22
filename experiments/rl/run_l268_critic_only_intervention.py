@@ -27,6 +27,7 @@ from experiments.rl.run_l264_l266_critic_failure_diagnosis import (
     _support_metrics,
     _transition_diagnostics,
 )
+from experiments.rl.run_l263_counterfactual_actor_diagnosis import _spearman
 from mobile_robot_mppi.core.config import git_sha
 from mobile_robot_mppi.rl.checkpointing import load_sac_checkpoint
 from mobile_robot_mppi.rl.observation import RunningNormalizer
@@ -42,6 +43,10 @@ DEFAULT_DATASET = ROOT / (
 DEFAULT_OUTPUT = ROOT / (
     "results/research_platform/rl/l268_recovery_balanced_intervention/"
     "critic_only"
+)
+DEFAULT_HELDOUT = ROOT / (
+    "results/research_platform/rl/l268_recovery_balanced_intervention/"
+    "heldout_recovery_diagnostic"
 )
 AUDIT_CSV = ROOT / (
     "results/research_platform/rl/l264_l266_critic_failure_diagnosis/"
@@ -329,6 +334,122 @@ def _evaluate_l263(agent, config, output):
     return per_state, pairs, summary
 
 
+def _evaluate_heldout(agent, heldout: Path, output: Path):
+    summary_path = heldout / "summary.json"
+    states_path = heldout / "state_manifest.json"
+    returns_path = heldout / "action_returns_h40.csv"
+    frozen = json.loads(summary_path.read_text(encoding="utf-8"))
+    if frozen.get("protocol") != "L268" or frozen.get("status") != (
+        "heldout_recovery_diagnostic_complete"
+    ):
+        raise ValueError("L268 held-out recovery diagnostic is not complete")
+    if frozen.get("formal_critic_results_read_before_freeze") is not False:
+        raise ValueError("held-out returns were not frozen before Critic results")
+    if int(frozen.get("state_count", 0)) != 36:
+        raise ValueError("L268 held-out diagnostic must contain 36 states")
+
+    states = json.loads(states_path.read_text(encoding="utf-8"))
+    state_by_id = {row["state_id"]: row for row in states}
+    return_rows = _read_csv(returns_path)
+    grouped = defaultdict(list)
+    for row in return_rows:
+        grouped[row["state_id"]].append(row)
+    if set(grouped) != set(state_by_id):
+        raise ValueError("held-out state/action coverage mismatch")
+
+    ranking_rows = []
+    pair_rows = []
+    spearman_values = []
+    scene_accuracy = defaultdict(list)
+    agent.eval()
+    with torch.no_grad():
+        for state_id, rows in sorted(grouped.items()):
+            if {row["action_id"] for row in rows} != {
+                "recorded_recovery", "source_actor", "fast_forward"
+            }:
+                raise ValueError("held-out state action set drifted")
+            observation = np.asarray(
+                state_by_id[state_id]["normalized_observation"], dtype=np.float32,
+            )
+            observations = np.repeat(observation[None, :], len(rows), axis=0)
+            actions = np.asarray([
+                (float(row["normalized_v"]), float(row["normalized_omega"]))
+                for row in rows
+            ], dtype=np.float32)
+            ot = torch.as_tensor(observations, device=agent.device)
+            at = torch.as_tensor(actions, device=agent.device)
+            q1 = agent.target_critic1(ot, at).mean(dim=-1)
+            q2 = agent.target_critic2(ot, at).mean(dim=-1)
+            minimum = torch.minimum(q1, q2).cpu().numpy()
+            for row, value in zip(rows, minimum):
+                item = dict(row)
+                item["target_minimum_q"] = float(value)
+                ranking_rows.append(item)
+            returns = np.asarray([
+                float(row["discounted_return"]) for row in rows
+            ], dtype=np.float64)
+            correlation = _spearman(minimum, returns)
+            if correlation is not None:
+                spearman_values.append(correlation)
+            by_action = {
+                row["action_id"]: (float(row["discounted_return"]), float(value))
+                for row, value in zip(rows, minimum)
+            }
+            return_delta = (
+                by_action["recorded_recovery"][0] - by_action["fast_forward"][0]
+            )
+            q_delta = (
+                by_action["recorded_recovery"][1] - by_action["fast_forward"][1]
+            )
+            correct = bool(
+                (return_delta > 0.0 and q_delta > 0.0)
+                or (return_delta < 0.0 and q_delta < 0.0)
+                or (abs(return_delta) <= 1e-12 and abs(q_delta) <= 1e-12)
+            )
+            state = state_by_id[state_id]
+            scene_accuracy[state["scene"]].append(float(correct))
+            pair_rows.append({
+                "state_id": state_id,
+                "scene": state["scene"],
+                "split": state["split"],
+                "severity": state["severity"],
+                "side": state["side"],
+                "true_return_delta_recovery_minus_forward": return_delta,
+                "critic_q_delta_recovery_minus_forward": q_delta,
+                "ranking_correct": correct,
+                "true_recovery_preferred": return_delta > 0.0,
+                "critic_recovery_preferred": q_delta > 0.0,
+                "three_action_spearman": correlation,
+            })
+
+    summary = {
+        "state_count": len(grouped),
+        "mean_three_action_spearman": (
+            None if not spearman_values else float(np.mean(spearman_values))
+        ),
+        "recovery_forward_pair_accuracy": float(np.mean([
+            float(row["ranking_correct"]) for row in pair_rows
+        ])),
+        "true_recovery_preferred_fraction": float(np.mean([
+            float(row["true_recovery_preferred"]) for row in pair_rows
+        ])),
+        "critic_recovery_preferred_fraction": float(np.mean([
+            float(row["critic_recovery_preferred"]) for row in pair_rows
+        ])),
+        "scene_pair_accuracy": {
+            scene: float(np.mean(values))
+            for scene, values in sorted(scene_accuracy.items())
+        },
+        "heldout_summary_sha256": _sha256(summary_path),
+        "heldout_states_sha256": _sha256(states_path),
+        "heldout_returns_sha256": _sha256(returns_path),
+    }
+    _write_csv(output / "heldout_action_ranking.csv", ranking_rows)
+    _write_csv(output / "heldout_recovery_forward_pairs.csv", pair_rows)
+    _json_dump(output / "heldout_summary.json", summary)
+    return pair_rows, summary
+
+
 def _save_checkpoint(path, source_payload, agent, normalizer, buffer, state):
     payload = dict(source_payload)
     payload["created_utc"] = datetime.now(timezone.utc).isoformat()
@@ -342,7 +463,9 @@ def _save_checkpoint(path, source_payload, agent, normalizer, buffer, state):
     return _sha256(path)
 
 
-def run(config_path: Path, dataset: Path, output: Path, device: str):
+def run(
+    config_path: Path, dataset: Path, heldout: Path, output: Path, device: str,
+):
     _, config, checkpoint, manifest_path = _load_config(config_path)
     if dataset.resolve() != DEFAULT_DATASET.resolve():
         manifest_path = dataset / "manifest.json"
@@ -351,6 +474,11 @@ def run(config_path: Path, dataset: Path, output: Path, device: str):
         raise ValueError("L268 Critic intervention requires a complete formal dataset")
     if manifest["accepted_chain_count"] != 108:
         raise ValueError("L268 formal dataset must contain exactly 108 chains")
+    heldout_frozen = json.loads(
+        (heldout / "summary.json").read_text(encoding="utf-8")
+    )
+    if heldout_frozen.get("status") != "heldout_recovery_diagnostic_complete":
+        raise ValueError("formal Critic training requires frozen held-out H40 returns")
     source_payload = load_sac_checkpoint(checkpoint, map_location=device)
     replay = _replay_arrays(source_payload)
     recovery, chain_provenance = _recovery_pool(dataset, manifest)
@@ -428,6 +556,9 @@ def run(config_path: Path, dataset: Path, output: Path, device: str):
             if frozen_after != frozen_before:
                 raise RuntimeError("Actor or alpha mutation detected after Critic phase")
             per_state, pairs, support = _evaluate_l263(agent, config, run_dir)
+            heldout_pairs, heldout_summary = _evaluate_heldout(
+                agent, heldout, run_dir,
+            )
             diagnostics = _transition_diagnostics(agent, normalizer, arrays)
             stability = {
                 "finite": bool(all(np.isfinite(value).all() for value in diagnostics.values())),
@@ -444,6 +575,12 @@ def run(config_path: Path, dataset: Path, output: Path, device: str):
                 "in_support_spearman": in_support["mean_spearman"],
                 "in_support_top3": in_support["mean_top3_agreement"],
                 "in_support_pair_accuracy": in_support["recovery_forward_pair_accuracy"],
+                "heldout_pair_accuracy": heldout_summary[
+                    "recovery_forward_pair_accuracy"
+                ],
+                "heldout_mean_three_action_spearman": heldout_summary[
+                    "mean_three_action_spearman"
+                ],
                 **stability,
             })
             _write_csv(output / "progress.csv", results)
@@ -452,13 +589,16 @@ def run(config_path: Path, dataset: Path, output: Path, device: str):
                 torch.cuda.empty_cache()
     _write_csv(output / "results.csv", results)
     _json_dump(output / "integrity.json", {
-        "status": "critic_only_complete_l263_pending_heldout_gate",
+        "status": "critic_only_complete_pending_gate_aggregation",
         "protocol": "L268",
         "result_rows": len(results),
         "paired_seed_count": len(seeds),
         "source_checkpoint_sha256": config["source_checkpoint_sha256"],
         "config_sha256": _sha256(config_path),
         "dataset_manifest_sha256": _sha256(manifest_path),
+        "heldout_summary_sha256": _sha256(heldout / "summary.json"),
+        "heldout_states_sha256": _sha256(heldout / "state_manifest.json"),
+        "heldout_returns_sha256": _sha256(heldout / "action_returns_h40.csv"),
         "all_actor_alpha_unchanged": all(row["actor_alpha_unchanged"] for row in results),
     })
     return results
@@ -468,10 +608,14 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config", type=Path, default=DEFAULT_CONFIG)
     parser.add_argument("--dataset", type=Path, default=DEFAULT_DATASET)
+    parser.add_argument("--heldout-diagnostic", type=Path, default=DEFAULT_HELDOUT)
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT)
     parser.add_argument("--device", default="cuda")
     args = parser.parse_args()
-    run(args.config.resolve(), args.dataset.resolve(), args.output_dir.resolve(), args.device)
+    run(
+        args.config.resolve(), args.dataset.resolve(),
+        args.heldout_diagnostic.resolve(), args.output_dir.resolve(), args.device,
+    )
 
 
 if __name__ == "__main__":

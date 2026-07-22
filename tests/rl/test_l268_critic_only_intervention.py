@@ -3,6 +3,7 @@ import torch
 
 from experiments.rl.run_l268_critic_only_intervention import (
     _buffer_from_arrays,
+    _evaluate_heldout,
     _sample_chain_balanced,
     _tree_hash,
 )
@@ -49,3 +50,7 @@ def test_l268_tree_hash_detects_mutation_and_ignores_dict_order():
     changed = {"a": {"x": 3}, "b": [torch.tensor([1.0, 2.1])]}
     assert _tree_hash(first) == _tree_hash(reordered)
     assert _tree_hash(first) != _tree_hash(changed)
+
+
+def test_l268_heldout_evaluator_is_part_of_critic_runner():
+    assert callable(_evaluate_heldout)

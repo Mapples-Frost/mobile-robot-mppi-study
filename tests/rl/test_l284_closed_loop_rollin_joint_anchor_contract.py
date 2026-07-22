@@ -2,6 +2,11 @@ from pathlib import Path
 
 import yaml
 
+from experiments.rl.generate_l284_closed_loop_rollin_anchor import (
+    _episode,
+    _rollin,
+)
+
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -38,3 +43,11 @@ def test_l284_protocol_forbids_outcome_selection_and_final_maps():
     assert "never enter" in text
     assert "no seed, checkpoint, chain, threshold, or scene" in text
     assert "final hairpin/s-chicane/infinity" in text
+
+
+def test_l284_generator_exports_rollin_and_schema_helpers():
+    assert callable(_rollin)
+    row = _episode([[0.0] * 69], [[0.2, -0.3]], 0, 7)
+    assert row["observation"].shape == (1, 69)
+    assert row["teacher_action"].shape == (1, 2)
+    assert row["source_kind"].tolist() == [0]

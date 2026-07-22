@@ -1,0 +1,27 @@
+protocol: L283
+status: preregistered
+windows_native_only: true
+diagnostic_only: true
+actor_training_authorized: false
+l282_summary: {path: results/research_platform/rl/l282_recovery_component_counterfactual/summary.json, sha256: da92e89515faea9c94cb0203ed2fb5fd4b45e1a200ba982e72d76fd003c7648e}
+recovery_dataset: results/research_platform/rl/l268_recovery_balanced_intervention/recovery_dataset
+recovery_manifest_sha256: 6a67425a851f2c06023045a47747d2f7719ada011a30ba78c5f5fc25a051c192
+teacher_config: configs/rl/l267_recovery_balanced_intervention.yaml
+teacher_config_sha256: 42b46f8e715531cf0ab748beff0fc9e5f8a1e78fd4d49c99f31924fdb5f113b3
+base_config: configs/rl/l262_coverage_gated_value_6k.yaml
+reset_contract: l268
+split: test
+expected_chains: 18
+arms: [teacher_both, actor_both, teacher_v_actor_omega, actor_v_teacher_omega]
+checkpoints:
+  - {seed: 20263311, path: results/research_platform/rl/l281_component_separated_anchor_seed20263311_6k/checkpoints/step_000006000.pt, sha256: 7cfed219a101370b733c19e2b71a35047ee10e5c8b6caa2d7e58914cbc50fecd}
+  - {seed: 20263312, path: results/research_platform/rl/l281_component_separated_anchor_seed20263312_6k/checkpoints/step_000006000.pt, sha256: ec806f39c969877dbdeb2c4bcd5d6e49cf28ff7c6cb772391bf7080504c2a6a1}
+  - {seed: 20263313, path: results/research_platform/rl/l281_component_separated_anchor_seed20263313_6k/checkpoints/step_000006000.pt, sha256: 4ee14ff7ea1c6ff2fe18703b1798a9a6f2b7b40dec1ecf5e2bd33d03cb4cae88}
+reset_tolerance: 1.0e-6
+teacher_action_tolerance: 1.0e-5
+teacher_reward_tolerance: 1.0e-5
+gate:
+  minimum_recovered_loss_fraction: 0.50
+  minimum_attributed_scenes: 4
+  minimum_attributed_seeds: 2
+forbidden_tokens: [l258, hairpin_v1, s_chicane_v1, infinity_v1, sealed]

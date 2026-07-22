@@ -1,0 +1,30 @@
+protocol: L280
+status: preregistered
+windows_native_only: true
+l279_summary: {path: results/research_platform/rl/l279_recovery_retention_anchor_sac_probe/summary.json, sha256: a1e7860698609de2ae3e59f4d43398f755ad4896f5a9a9b3fffcbbbaa965f27f}
+anchor_dataset: results/research_platform/rl/l279_recovery_retention_anchor_dataset
+anchor_manifest_sha256: 61effe41e334fec71d55502bc2c48c11e9961891debce774e96665c9dabc4f95
+diagnostic_seed: 20268001
+batch_size: 256
+anchor_mean_weight: 2.0
+anchor_log_std_weight: 0.001
+anchor_target_log_std: -2.0
+checkpoints:
+  - seed: 20263311
+    step3000: {path: results/research_platform/rl/l279_recovery_retention_anchor_seed20263311_6k/checkpoints/step_000003000.pt, sha256: da1ea38436da6c1fd812c7b55b645a34ecfb13ee3efc58c230eaf6df8f7d2132}
+    step6000: {path: results/research_platform/rl/l279_recovery_retention_anchor_seed20263311_6k/checkpoints/step_000006000.pt, sha256: dc92483edc11230e2fee7eaa0eb2bd01535fbe37bb72a54a7e92393a910ef372}
+  - seed: 20263312
+    step3000: {path: results/research_platform/rl/l279_recovery_retention_anchor_seed20263312_6k/checkpoints/step_000003000.pt, sha256: 479090f39562520a420229a2fd54394924940bbfcf5a3d3d4e5b6a9fd13e10fd}
+    step6000: {path: results/research_platform/rl/l279_recovery_retention_anchor_seed20263312_6k/checkpoints/step_000006000.pt, sha256: 8d9850c2e1ef4ac089dc6930675700ba97ba4b180e82190e54d60b54b09e53a7}
+  - seed: 20263313
+    step3000: {path: results/research_platform/rl/l279_recovery_retention_anchor_seed20263313_6k/checkpoints/step_000003000.pt, sha256: 395c5d7cada893e7383cd754d50d48cb46ca5e5ad0ee0d92d0ebea9daf851cbb}
+    step6000: {path: results/research_platform/rl/l279_recovery_retention_anchor_seed20263313_6k/checkpoints/step_000006000.pt, sha256: c8eb00f1bb7aa3c04e97cccb3df40eb8bc30e3ad463444d21e1a97d5ea0bcc30}
+partitions: [trunk, v_mean, omega_mean, log_std, all]
+gate:
+  minimum_conflicted_scenes: 4
+  minimum_conflicted_seeds: 2
+  maximum_conflict_cosine: 0.0
+  minimum_conflict_norm_ratio: 1.0
+  minimum_dominance_norm_ratio: 4.0
+forbidden_tokens: [l258_tracking_curriculum, l258_heldout_tracking_gate, hairpin_v1, s_chicane_v1, infinity_v1, sealed]
+

@@ -1,0 +1,71 @@
+experiment:
+  name: l270_observation_aliasing_diagnosis
+  output_dir: results/research_platform/rl/l270_observation_aliasing_diagnosis
+
+l270:
+  protocol: L270
+  random_seed: 20263270
+  source_checkpoint: results/research_platform/rl/l262_coverage_gated_value_seed20262611_6k/checkpoints/step_000006000.pt
+  source_checkpoint_sha256: 48e662fd728c0d1d62b1ff79681e5cdd924b120d9411c8df6e062a814b4d42a7
+  l263:
+    directory: results/research_platform/rl/l263_counterfactual_actor_diagnosis
+    state_manifest_sha256: c14f9be873f23d0bfd0fb5dccc73aa3f84c1bc2f0487c3ad7b6ba362c27adec2
+    counterfactual_rollouts_sha256: 2d9d2ba2f366fa7524219ca2bcb43c3fdc300ef7ee34b6f15c406a144c6d2151
+  l268:
+    dataset: results/research_platform/rl/l268_recovery_balanced_intervention/recovery_dataset
+    dataset_manifest_sha256: 6a67425a851f2c06023045a47747d2f7719ada011a30ba78c5f5fc25a051c192
+    dataset_content_fingerprint: d1a0a79238d351dd98a309145d9f7724c31b78c07d814b043aa816006ec081c0
+    dataset_integrity: results/research_platform/rl/l268_recovery_balanced_intervention/heldout_recovery_diagnostic/dataset_integrity.json
+    dataset_integrity_sha256: ff0216c20c99c830f39667d3bacc01d1aa016958d0e2bdf6bb6fea3dc822827c
+  l269:
+    directory: results/research_platform/rl/l269_long_horizon_credit_probe/horizon_diagnostic
+    summary_sha256: 6560060a6ff68b3c512d0846c324f2e085249c5ee15609f01425a67f07312091
+    candidate_advantages_sha256: 92e3bb9900beae4cfee8876b86de9771277b3de14db4fa40ea6010244d729b43
+    required_status: horizon_gate_fail
+  forbidden_tokens:
+    - l258_tracking_curriculum
+    - l258_heldout_tracking_gate
+    - hairpin_v1
+    - s_chicane_v1
+    - infinity_v1
+  state_probe:
+    horizon: 40
+    continuation: actor_follow
+    nearest_neighbors: 3
+    close_pair_quantile: 0.25
+    omega_sign_minimum: 0.25
+    omega_conflict_delta: 0.75
+  recovery_probe:
+    samples_per_chain: 12
+    minimum_history_step: 2
+    far_preview_distances_m: [2.4, 3.2, 4.8]
+    far_preview_scale_m: 4.8
+    omega_sign_evaluation_minimum: 0.15
+    model_seeds: [20263271, 20263272, 20263273]
+    random_forest:
+      n_estimators: 128
+      max_depth: 12
+      min_samples_leaf: 4
+      max_features: 0.5
+      n_jobs: 4
+    ridge_alpha: 1.0
+    feature_arms:
+      - current_69d
+      - far_preview
+      - three_frame_history
+      - progress_segment
+      - all_privileged
+  gate:
+    minimum_close_pair_conflict_fraction: 0.15
+    minimum_test_omega_mae_relative_improvement: 0.15
+    minimum_test_omega_sign_accuracy_gain: 0.10
+    minimum_validation_omega_mae_relative_improvement: 0.10
+    minimum_scenes_improved: 4
+    maximum_scene_omega_mae_relative_regression: 0.10
+    require_all_model_seed_directions_positive: true
+  selection_order:
+    - far_preview
+    - three_frame_history
+    - progress_segment
+    - all_privileged
+  conditional_training: false

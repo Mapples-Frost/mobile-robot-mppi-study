@@ -56,7 +56,7 @@ recorded-prefix reward error. Report:
 
 If this Gate passes, the next intervention must explicitly address the
 Actor--Critic recovery coordination/option-continuation mismatch and must first
-pass a Critic-only or imitation-initialization preregistration. L275 does not
-authorize Actor training. If it fails, the next unique diagnosis is a
+pass a Critic-only or imitation-initialization preregistration. L275 does not authorize Actor training.
+If it fails, the next unique diagnosis is a
 temporal-history direct-return cross-fit. L258, final Hairpin/S-Chicane/Infinity
 maps, sealed seeds, and outcome-based selection are forbidden.

@@ -1,0 +1,92 @@
+experiment:
+  name: l268_recovery_balanced_replay_intervention
+  output_dir: results/research_platform/rl/l268_recovery_balanced_intervention
+
+l268:
+  protocol: L268
+  source_checkpoint: results/research_platform/rl/l262_coverage_gated_value_seed20262611_6k/checkpoints/step_000006000.pt
+  source_checkpoint_sha256: 48e662fd728c0d1d62b1ff79681e5cdd924b120d9411c8df6e062a814b4d42a7
+  source_replay_size: 6000
+  scene_configs:
+    - configs/research/l261_value_stability/train/l261_train_s_bend.yaml
+    - configs/research/l261_value_stability/train/l261_train_offset_hairpin.yaml
+    - configs/research/l261_value_stability/train/l261_train_near_double_loop.yaml
+    - configs/research/l261_value_stability/train/l261_train_curvature_ramp.yaml
+    - configs/research/l261_value_stability/train/l261_train_corridor_switchback.yaml
+    - configs/research/l261_value_stability/train/l261_train_compound_turns.yaml
+  forbidden_tokens:
+    - l258_tracking_curriculum
+    - l258_heldout_tracking_gate
+    - hairpin_v1
+    - s_chicane_v1
+    - infinity_v1
+  collection:
+    plan_seed: 20262969
+    episode_seed_start: 20265000
+    accepted_chains_per_scene: 18
+    split_counts: {train: 12, validation: 3, test: 3}
+    severity_levels: [mild, moderate, severe]
+    severity_target_fractions: {mild: 0.0, moderate: 0.5, severe: 1.0}
+    minimum_realized_cte_m: 0.80
+    maximum_target_cte_m: 3.50
+    maximum_cte_margin_m: 0.03
+    realized_cte_tolerance_m: 0.08
+    geometry_grid_points_per_axis: 81
+    boundary_inset_beyond_radius_m: 0.35
+    heading_error_magnitudes_rad: {small: 0.15, large: 0.65}
+    stable_cte_m: 0.25
+    start_cte_m: 0.75
+    stable_steps: 15
+    minimum_post_reentry_progress_m: 0.10
+    maximum_steps: 600
+    maximum_attempts_per_stratum: 16
+    anchor_progress_min_fraction: 0.10
+    anchor_progress_max_fraction: 0.90
+    teacher:
+      pose_source: ground_truth
+      lookahead_m: 0.35
+      cruise_speed_mps: 0.28
+      yaw_gain: 1.8
+    perturbation_profiles:
+      - {name: none, delta_v: 0.0, delta_omega: 0.0}
+      - {name: v_plus, delta_v: 0.08, delta_omega: 0.0}
+      - {name: v_minus, delta_v: -0.08, delta_omega: 0.0}
+      - {name: omega_plus, delta_v: 0.0, delta_omega: 0.10}
+      - {name: omega_minus, delta_v: 0.0, delta_omega: -0.10}
+  replay:
+    total_transitions_per_arm: 6000
+    transitions_per_scene: 1000
+    recovery_transitions_per_scene: 300
+    original_transitions_per_scene: 700
+    sampling_with_replacement: true
+  critic_only:
+    seeds: [20263071, 20263072, 20263073]
+    arm_order_seed: 20263068
+    updates: 6000
+    batch_size: 256
+    sampling_strategy: scene_balanced
+    checkpoint_interval: 3000
+  diagnostic:
+    l263_dir: results/research_platform/rl/l263_counterfactual_actor_diagnosis
+    l265_support_csv: results/research_platform/rl/l264_l266_critic_failure_diagnosis/l265_action_support.csv
+    continuation: actor_follow
+    horizon: 40
+  critic_gate:
+    maximum_absolute_mean_q: 500.0
+    maximum_mean_quantile_spread: 100.0
+    minimum_aggregate_in_support_spearman: 0.05
+    minimum_paired_median_spearman_improvement: 0.20
+    minimum_improving_seed_blocks: 2
+    minimum_recovery_forward_accuracy: 0.60
+    minimum_pair_accuracy_improvement: 0.15
+    maximum_other_set_pair_accuracy_decrease: 0.05
+    minimum_top3_improvement: 0.10
+    minimum_scene_spearman_change: -0.10
+  conditional_sac:
+    enabled_only_after_critic_gate: true
+    seeds: [20263081, 20263082, 20263083]
+    updates: 6000
+    validation_scene_configs:
+      - configs/research/l261_value_stability/validation/l261_validation_wave.yaml
+      - configs/research/l261_value_stability/validation/l261_validation_switchback.yaml
+      - configs/research/l261_value_stability/validation/l261_validation_loop_exit.yaml

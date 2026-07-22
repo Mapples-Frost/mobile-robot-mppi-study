@@ -70,7 +70,12 @@ def _json_dump(path: Path, payload):
 
 def _load_protocol(path: Path):
     payload = yaml.safe_load(path.read_text(encoding="utf-8"))
-    config = dict(payload["l267"])
+    protocol_keys = [key for key in ("l267", "l268") if key in payload]
+    if len(protocol_keys) != 1:
+        raise ValueError("recovery intervention config must contain exactly one protocol key")
+    protocol_key = protocol_keys[0]
+    config = dict(payload[protocol_key])
+    config["protocol_name"] = protocol_key.upper()
     checkpoint = ROOT / config["source_checkpoint"]
     if _sha256(checkpoint) != config["source_checkpoint_sha256"]:
         raise ValueError("L267 source checkpoint SHA256 mismatch")
@@ -95,8 +100,15 @@ def _schedule_for_scene(scene_index, config, smoke=False):
     ]
     rng.shuffle(cells)
     if smoke:
-        cells = [(1, "mild", "small")]
-        splits = ("smoke",)
+        cells = [
+            (1 if (scene_index + index) % 2 == 0 else -1, severity, heading)
+            for index, (severity, heading) in enumerate((
+                ("mild", "small"),
+                ("moderate", "small"),
+                ("severe", "large"),
+            ))
+        ]
+        splits = ("smoke",) * len(cells)
     else:
         train = list(cells)
         validation = []
@@ -146,9 +158,10 @@ def _geometry_lattice(reference, resolved, collection):
 
     width, height = (float(value) for value in resolved["scene"]["field_size"])
     radius = float(resolved["plant"]["robot"]["collision_radius"])
+    inset = radius + float(collection.get("boundary_inset_beyond_radius_m", 0.0))
     grid = int(collection["geometry_grid_points_per_axis"])
-    xs = np.linspace(radius, width - radius, grid)
-    ys = np.linspace(radius, height - radius, grid)
+    xs = np.linspace(inset, width - inset, grid)
+    ys = np.linspace(inset, height - inset, grid)
     minimum_progress = (
         float(collection["anchor_progress_min_fraction"]) * reference.total_length
     )
@@ -180,7 +193,10 @@ def _geometry_lattice(reference, resolved, collection):
         if not values:
             raise RuntimeError("L267 geometry lattice has no candidates for side %d" % side)
         maximum = float(max(values))
-        upper = maximum - margin
+        upper = min(
+            maximum - margin,
+            float(collection.get("maximum_target_cte_m", float("inf"))),
+        )
         if upper <= minimum_cte:
             raise RuntimeError(
                 "L267 geometry cannot realize off-path states for side %d: max CTE %.6f"
@@ -493,7 +509,10 @@ def generate(config_path: Path, output: Path, smoke=False):
                     )
         finally:
             environment.close()
-    expected_per_scene = 1 if smoke else int(collection["accepted_chains_per_scene"])
+    expected_per_scene = (
+        len(_schedule_for_scene(0, config, smoke=True))
+        if smoke else int(collection["accepted_chains_per_scene"])
+    )
     counts = {
         Path(scene).stem: sum(record["scene_config"] == scene for record in accepted_records)
         for scene in config["scene_configs"]
@@ -505,7 +524,7 @@ def generate(config_path: Path, output: Path, smoke=False):
         for split in sorted({record["split"] for record in accepted_records})
     }
     manifest = {
-        "protocol": "L267",
+        "protocol": config["protocol_name"],
         "status": "smoke_pass" if smoke else "complete",
         "git_sha": git_sha(ROOT),
         "config": str(config_path.resolve()),

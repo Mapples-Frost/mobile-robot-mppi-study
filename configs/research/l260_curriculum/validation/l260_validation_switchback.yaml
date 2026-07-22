@@ -1,0 +1,62 @@
+# l260_fixed_geometry: explicit start/path/field/obstacles
+include: ../../mujoco_l218_expanded_base.yaml
+experiment:
+  name: l260_validation_switchback
+  initial_state:
+  - 1.0
+  - 0.8
+  - 1.5541312030809558
+  - 0.0
+  - 0.0
+  max_steps: 1400
+  physics_domain_role: unseen
+task:
+  type: polyline
+  points:
+  - - 1.0
+    - 0.8
+  - - 1.1
+    - 6.8
+  - - 2.55
+    - 6.8
+  - - 3.0
+    - 1.35
+  - - 4.4
+    - 1.1
+  - - 4.9
+    - 6.65
+  - - 6.4
+    - 6.8
+  - - 7.0
+    - 1.0
+scene:
+  name: l260_validation_switchback
+  geometry_id: l260_validation_switchback
+  field_size:
+  - 8.0
+  - 8.0
+  obstacles:
+  - type: box
+    position:
+    - 1.82
+    - 4.0
+    size:
+    - 0.1
+    - 2.1
+    height: 0.32
+  - type: box
+    position:
+    - 3.7
+    - 3.9
+    size:
+    - 0.1
+    - 2.0
+    height: 0.32
+  - type: box
+    position:
+    - 5.7
+    - 4.0
+    size:
+    - 0.1
+    - 2.0
+    height: 0.32

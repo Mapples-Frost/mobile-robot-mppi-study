@@ -1,0 +1,54 @@
+# l260_fixed_geometry: explicit start/path/field/obstacles
+include: ../../mujoco_l218_expanded_base.yaml
+experiment:
+  name: l260_train_s_bend
+  initial_state:
+  - 0.9
+  - 1.2
+  - 0.16514867741462697
+  - 0.0
+  - 0.0
+  max_steps: 1400
+  physics_domain_role: seen
+task:
+  type: polyline
+  points:
+  - - 0.9
+    - 1.2
+  - - 1.8
+    - 1.35
+  - - 2.8
+    - 2.1
+  - - 3.8
+    - 3.25
+  - - 4.8
+    - 3.45
+  - - 5.8
+    - 2.55
+  - - 7.0
+    - 2.25
+scene:
+  name: l260_train_s_bend
+  geometry_id: l260_train_s_bend
+  field_size:
+  - 8.0
+  - 8.0
+  obstacles:
+  - type: cylinder
+    position:
+    - 2.0
+    - 3.2
+    radius: 0.28
+    height: 0.32
+  - type: cylinder
+    position:
+    - 4.6
+    - 1.7
+    radius: 0.28
+    height: 0.32
+  - type: cylinder
+    position:
+    - 6.4
+    - 3.55
+    radius: 0.28
+    height: 0.32

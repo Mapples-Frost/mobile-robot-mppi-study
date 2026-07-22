@@ -1,0 +1,58 @@
+# l260_fixed_geometry: explicit start/path/field/obstacles
+include: ../../mujoco_l218_expanded_base.yaml
+experiment:
+  name: l260_train_curvature_ramp
+  initial_state:
+  - 0.9
+  - 0.9
+  - 0.0499583957219427
+  - 0.0
+  - 0.0
+  max_steps: 1400
+  physics_domain_role: seen
+task:
+  type: polyline
+  points:
+  - - 0.9
+    - 0.9
+  - - 1.9
+    - 0.95
+  - - 2.9
+    - 1.15
+  - - 3.9
+    - 1.6
+  - - 4.8
+    - 2.35
+  - - 5.55
+    - 3.35
+  - - 6.0
+    - 4.55
+  - - 6.05
+    - 5.8
+  - - 5.55
+    - 6.9
+scene:
+  name: l260_train_curvature_ramp
+  geometry_id: l260_train_curvature_ramp
+  field_size:
+  - 8.0
+  - 8.0
+  obstacles:
+  - type: cylinder
+    position:
+    - 3.0
+    - 2.25
+    radius: 0.28
+    height: 0.32
+  - type: cylinder
+    position:
+    - 5.0
+    - 4.25
+    radius: 0.28
+    height: 0.32
+  - type: cylinder
+    position:
+    - 7.0
+    - 5.4
+    radius: 0.28
+    height: 0.32

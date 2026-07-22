@@ -1,0 +1,11 @@
+include: l260_corrected_tracking_20k.yaml
+
+experiment:
+  name: l260_corrected_tracking_seed20262501_20k
+  output_dir: results/research_platform/rl/l260_corrected_tracking_seed20262501_20k
+
+rl:
+  training:
+    seed: 20262501
+    validation_seed_base: 20263501
+

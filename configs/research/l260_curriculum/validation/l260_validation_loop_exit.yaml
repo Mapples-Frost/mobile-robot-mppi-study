@@ -1,0 +1,62 @@
+# l260_fixed_geometry: explicit start/path/field/obstacles
+include: ../../mujoco_l218_expanded_base.yaml
+experiment:
+  name: l260_validation_loop_exit
+  initial_state:
+  - 0.9
+  - 3.8
+  - -1.1583858851975093
+  - 0.0
+  - 0.0
+  max_steps: 1400
+  physics_domain_role: unseen
+task:
+  type: polyline
+  points:
+  - - 0.9
+    - 3.8
+  - - 1.6
+    - 2.2
+  - - 3.1
+    - 1.2
+  - - 5.0
+    - 1.4
+  - - 6.4
+    - 2.7
+  - - 6.6
+    - 4.5
+  - - 5.4
+    - 5.9
+  - - 3.7
+    - 6.4
+  - - 2.1
+    - 5.7
+  - - 1.25
+    - 4.4
+  - - 2.7
+    - 3.55
+  - - 4.5
+    - 3.75
+  - - 6.0
+    - 4.9
+  - - 7.1
+    - 6.4
+scene:
+  name: l260_validation_loop_exit
+  geometry_id: l260_validation_loop_exit
+  field_size:
+  - 8.0
+  - 8.0
+  obstacles:
+  - type: cylinder
+    position:
+    - 0.75
+    - 6.8
+    radius: 0.24
+    height: 0.32
+  - type: cylinder
+    position:
+    - 7.15
+    - 1.0
+    radius: 0.24
+    height: 0.32

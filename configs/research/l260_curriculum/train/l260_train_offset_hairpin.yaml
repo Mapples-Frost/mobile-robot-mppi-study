@@ -1,0 +1,62 @@
+# l260_fixed_geometry: explicit start/path/field/obstacles
+include: ../../mujoco_l218_expanded_base.yaml
+experiment:
+  name: l260_train_offset_hairpin
+  initial_state:
+  - 0.9
+  - 0.9
+  - 0.0
+  - 0.0
+  - 0.0
+  max_steps: 1400
+  physics_domain_role: seen
+task:
+  type: polyline
+  points:
+  - - 0.9
+    - 0.9
+  - - 6.8
+    - 0.9
+  - - 6.8
+    - 2.1
+  - - 1.5
+    - 2.5
+  - - 1.2
+    - 3.5
+  - - 6.6
+    - 4.0
+  - - 6.7
+    - 5.2
+  - - 1.0
+    - 6.3
+scene:
+  name: l260_train_offset_hairpin
+  geometry_id: l260_train_offset_hairpin
+  field_size:
+  - 8.0
+  - 8.0
+  obstacles:
+  - type: box
+    position:
+    - 3.9
+    - 1.65
+    size:
+    - 2.25
+    - 0.1
+    height: 0.32
+  - type: box
+    position:
+    - 4.5
+    - 3.0
+    size:
+    - 2.05
+    - 0.1
+    height: 0.32
+  - type: box
+    position:
+    - 3.9
+    - 4.75
+    size:
+    - 2.1
+    - 0.1
+    height: 0.32

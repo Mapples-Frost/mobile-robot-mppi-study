@@ -1,0 +1,124 @@
+include: residual_conditioned_path_preview_bc_anchor_l257_120k.yaml
+
+experiment:
+  name: l260_corrected_tracking_20k
+  output_dir: results/research_platform/rl/l260_corrected_tracking_20k
+
+rl:
+  policy_id: l260_corrected_tracking_20k
+  training:
+    # L260 is an RL-only continuation.  The initialization checkpoint retains
+    # its historical training provenance, but L260 performs no new supervised
+    # or behavior-cloning updates.
+    bc_anchor:
+      enabled: false
+    total_steps: 20000
+    evaluation_interval: 10000
+    checkpoint_interval: 10000
+    save_replay_buffer: true
+    # This small screen isolates geometry/data correctness.  Physics-domain
+    # expansion is deferred until the Actor shows a real validation signal.
+    physics_domain_config: null
+    training_domain_roles: [seen]
+    validation_domain_roles: [seen]
+    scene_configs:
+      - configs/research/l260_curriculum/train/l260_train_s_bend.yaml
+      - configs/research/l260_curriculum/train/l260_train_offset_hairpin.yaml
+      - configs/research/l260_curriculum/train/l260_train_near_double_loop.yaml
+      - configs/research/l260_curriculum/train/l260_train_curvature_ramp.yaml
+      - configs/research/l260_curriculum/train/l260_train_corridor_switchback.yaml
+      - configs/research/l260_curriculum/train/l260_train_compound_turns.yaml
+    validation_scene_configs:
+      - configs/research/l260_curriculum/validation/l260_validation_wave.yaml
+      - configs/research/l260_curriculum/validation/l260_validation_switchback.yaml
+      - configs/research/l260_curriculum/validation/l260_validation_loop_exit.yaml
+    # Two deterministic six-map blocks ensure every training geometry is seen
+    # before both the 10k and 20k checkpoints.  This avoids a small-budget run
+    # silently missing a map through episode-level random sampling.
+    curriculum:
+      enabled: true
+      phases:
+        - {name: cycle1_s_bend, until_step: 1666, scene_weights: [1, 0, 0, 0, 0, 0]}
+        - {name: cycle1_offset_hairpin, until_step: 3332, scene_weights: [0, 1, 0, 0, 0, 0]}
+        - {name: cycle1_near_double_loop, until_step: 4998, scene_weights: [0, 0, 1, 0, 0, 0]}
+        - {name: cycle1_curvature_ramp, until_step: 6664, scene_weights: [0, 0, 0, 1, 0, 0]}
+        - {name: cycle1_corridor_switchback, until_step: 8330, scene_weights: [0, 0, 0, 0, 1, 0]}
+        - {name: cycle1_compound_turns, until_step: 10000, scene_weights: [0, 0, 0, 0, 0, 1]}
+        - {name: cycle2_s_bend, until_step: 11666, scene_weights: [1, 0, 0, 0, 0, 0]}
+        - {name: cycle2_offset_hairpin, until_step: 13332, scene_weights: [0, 1, 0, 0, 0, 0]}
+        - {name: cycle2_near_double_loop, until_step: 14998, scene_weights: [0, 0, 1, 0, 0, 0]}
+        - {name: cycle2_curvature_ramp, until_step: 16664, scene_weights: [0, 0, 0, 1, 0, 0]}
+        - {name: cycle2_corridor_switchback, until_step: 18330, scene_weights: [0, 0, 0, 0, 1, 0]}
+        - {name: cycle2_compound_turns, until_step: 20000, scene_weights: [0, 0, 0, 0, 0, 1]}
+    # Training-only collision-free anchors cover the whole reference.  The
+    # policy receives ordinary sensors only; validation always uses the true
+    # configured start and never receives anchor identity.
+    initial_state_curriculum:
+      enabled: true
+      phases:
+        - name: broad_path_coverage
+          until_step: 10000
+          scenes:
+            l260_train_s_bend:
+              - {name: start, state: [0.9, 1.2, 0.165148677415, 0.0, 0.0], weight: 1}
+              - {name: quarter, state: [2.527765984, 1.895824488, 0.643501108793, 0.0, 0.0], weight: 1}
+              - {name: middle, state: [3.772344872, 3.218196603, 0.855052737126, 0.0, 0.0], weight: 1}
+              - {name: three_quarter, state: [5.365031570, 2.941471587, -0.732815101787, 0.0, 0.0], weight: 1}
+            l260_train_offset_hairpin:
+              - {name: start, state: [0.9, 0.9, 0.0, 0.0, 0.0], weight: 1}
+              - {name: quarter, state: [6.8, 1.472882967, 1.570796326795, 0.0, 0.0], weight: 1}
+              - {name: middle, state: [1.347506480, 3.008311732, 1.862253121273, 0.0, 0.0], weight: 1}
+              - {name: three_quarter, state: [6.644549465, 4.534593584, 1.487655094906, 0.0, 0.0], weight: 1}
+            l260_train_near_double_loop:
+              - {name: start, state: [0.9, 4.0, -1.107148717794, 0.0, 0.0], weight: 1}
+              - {name: quarter, state: [6.307438809, 2.359780301, 0.714090698612, 0.0, 0.0], weight: 1}
+              - {name: middle, state: [3.261561725, 6.391101688, -2.788602265763, 0.0, 0.0], weight: 1}
+              - {name: three_quarter, state: [4.704456226, 3.177781243, 0.286051441717, 0.0, 0.0], weight: 1}
+            l260_train_curvature_ramp:
+              - {name: start, state: [0.9, 0.9, 0.049958395722, 0.0, 0.0], weight: 1}
+              - {name: quarter, state: [3.172634540, 1.272685543, 0.422853926133, 0.0, 0.0], weight: 1}
+              - {name: middle, state: [5.010518573, 2.630691430, 0.927295218002, 0.0, 0.0], weight: 1}
+              - {name: three_quarter, state: [6.005566907, 4.689172668, 1.530817639672, 0.0, 0.0], weight: 1}
+            l260_train_corridor_switchback:
+              - {name: start, state: [0.9, 1.0, 0.0, 0.0, 0.0], weight: 1}
+              - {name: quarter, state: [6.285771292, 1.0, 0.0, 0.0, 0.0], weight: 1}
+              - {name: middle, state: [3.290185548, 2.637166637, 3.059956311461, 0.0, 0.0], weight: 1}
+              - {name: three_quarter, state: [3.228458708, 4.315964803, 0.081636342129, 0.0, 0.0], weight: 1}
+            l260_train_compound_turns:
+              - {name: start, state: [0.9, 6.8, -1.144168833668, 0.0, 0.0], weight: 1}
+              - {name: quarter, state: [2.458397670, 5.010617758, 0.179853499792, 0.0, 0.0], weight: 1}
+              - {name: middle, state: [4.101078749, 4.027966559, -1.919567330379, 0.0, 0.0], weight: 1}
+              - {name: three_quarter, state: [4.957652772, 2.324510994, 0.205395389190, 0.0, 0.0], weight: 1}
+        - name: start_weighted_refinement
+          until_step: 20000
+          scenes:
+            l260_train_s_bend:
+              - {name: start, state: [0.9, 1.2, 0.165148677415, 0.0, 0.0], weight: 3}
+              - {name: quarter, state: [2.527765984, 1.895824488, 0.643501108793, 0.0, 0.0], weight: 1}
+              - {name: middle, state: [3.772344872, 3.218196603, 0.855052737126, 0.0, 0.0], weight: 1}
+              - {name: three_quarter, state: [5.365031570, 2.941471587, -0.732815101787, 0.0, 0.0], weight: 1}
+            l260_train_offset_hairpin:
+              - {name: start, state: [0.9, 0.9, 0.0, 0.0, 0.0], weight: 3}
+              - {name: quarter, state: [6.8, 1.472882967, 1.570796326795, 0.0, 0.0], weight: 1}
+              - {name: middle, state: [1.347506480, 3.008311732, 1.862253121273, 0.0, 0.0], weight: 1}
+              - {name: three_quarter, state: [6.644549465, 4.534593584, 1.487655094906, 0.0, 0.0], weight: 1}
+            l260_train_near_double_loop:
+              - {name: start, state: [0.9, 4.0, -1.107148717794, 0.0, 0.0], weight: 3}
+              - {name: quarter, state: [6.307438809, 2.359780301, 0.714090698612, 0.0, 0.0], weight: 1}
+              - {name: middle, state: [3.261561725, 6.391101688, -2.788602265763, 0.0, 0.0], weight: 1}
+              - {name: three_quarter, state: [4.704456226, 3.177781243, 0.286051441717, 0.0, 0.0], weight: 1}
+            l260_train_curvature_ramp:
+              - {name: start, state: [0.9, 0.9, 0.049958395722, 0.0, 0.0], weight: 3}
+              - {name: quarter, state: [3.172634540, 1.272685543, 0.422853926133, 0.0, 0.0], weight: 1}
+              - {name: middle, state: [5.010518573, 2.630691430, 0.927295218002, 0.0, 0.0], weight: 1}
+              - {name: three_quarter, state: [6.005566907, 4.689172668, 1.530817639672, 0.0, 0.0], weight: 1}
+            l260_train_corridor_switchback:
+              - {name: start, state: [0.9, 1.0, 0.0, 0.0, 0.0], weight: 3}
+              - {name: quarter, state: [6.285771292, 1.0, 0.0, 0.0, 0.0], weight: 1}
+              - {name: middle, state: [3.290185548, 2.637166637, 3.059956311461, 0.0, 0.0], weight: 1}
+              - {name: three_quarter, state: [3.228458708, 4.315964803, 0.081636342129, 0.0, 0.0], weight: 1}
+            l260_train_compound_turns:
+              - {name: start, state: [0.9, 6.8, -1.144168833668, 0.0, 0.0], weight: 3}
+              - {name: quarter, state: [2.458397670, 5.010617758, 0.179853499792, 0.0, 0.0], weight: 1}
+              - {name: middle, state: [4.101078749, 4.027966559, -1.919567330379, 0.0, 0.0], weight: 1}
+              - {name: three_quarter, state: [4.957652772, 2.324510994, 0.205395389190, 0.0, 0.0], weight: 1}

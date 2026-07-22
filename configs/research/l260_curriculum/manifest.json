@@ -1,0 +1,168 @@
+{
+  "design": "fixed_maps_with_blocked_seed_and_physics_randomization",
+  "field_size": [
+    8.0,
+    8.0
+  ],
+  "generator": "generate_l260_fixed_tracking_curriculum.py",
+  "maps": [
+    {
+      "family": "s_bend",
+      "geometry_sha256": "bddb0b42233da2121534209cc151302512574ef5730d4543042025e96b5102c3",
+      "initial_state": [
+        0.9,
+        1.2,
+        0.16514867741462697,
+        0.0,
+        0.0
+      ],
+      "minimum_footprint_clearance": 0.5856639437482114,
+      "name": "l260_train_s_bend",
+      "obstacle_count": 3,
+      "path": "configs/research/l260_curriculum/train/l260_train_s_bend.yaml",
+      "reference_length": 7.288487440068776,
+      "role": "train"
+    },
+    {
+      "family": "offset_hairpin",
+      "geometry_sha256": "2e03dde5b39d3af1c1e68b716a05746773ef1124588f6d04826091356bc59f66",
+      "initial_state": [
+        0.9,
+        0.9,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "minimum_footprint_clearance": 0.14793210885024044,
+      "name": "l260_train_offset_hairpin",
+      "obstacle_count": 3,
+      "path": "configs/research/l260_curriculum/train/l260_train_offset_hairpin.yaml",
+      "reference_length": 25.891531869800104,
+      "role": "train"
+    },
+    {
+      "family": "near_double_loop",
+      "geometry_sha256": "f26449fa9a890a49671e769cf7aaeee6c98c7c33e4f05e8749e7335157b1bc3a",
+      "initial_state": [
+        0.9,
+        4.0,
+        -1.1071487177940906,
+        0.0,
+        0.0
+      ],
+      "minimum_footprint_clearance": 0.9416244562783844,
+      "name": "l260_train_near_double_loop",
+      "obstacle_count": 2,
+      "path": "configs/research/l260_curriculum/train/l260_train_near_double_loop.yaml",
+      "reference_length": 28.467716771289297,
+      "role": "train"
+    },
+    {
+      "family": "curvature_ramp",
+      "geometry_sha256": "a86270885068b085e7374fb29b1578d328a3dc41c2b9c53cbf6892f287147d99",
+      "initial_state": [
+        0.9,
+        0.9,
+        0.0499583957219427,
+        0.0,
+        0.0
+      ],
+      "minimum_footprint_clearance": 0.30100088218842735,
+      "name": "l260_train_curvature_ramp",
+      "obstacle_count": 3,
+      "path": "configs/research/l260_curriculum/train/l260_train_curvature_ramp.yaml",
+      "reference_length": 9.280080943279428,
+      "role": "train"
+    },
+    {
+      "family": "corridor_switchback",
+      "geometry_sha256": "196f4cd527f1da51e46def4fe41698413be573a938abb859ef7a74f09cb6ae94",
+      "initial_state": [
+        0.9,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "minimum_footprint_clearance": 0.24605309080922405,
+      "name": "l260_train_corridor_switchback",
+      "obstacle_count": 3,
+      "path": "configs/research/l260_curriculum/train/l260_train_corridor_switchback.yaml",
+      "reference_length": 21.543085166105755,
+      "role": "train"
+    },
+    {
+      "family": "compound_turns",
+      "geometry_sha256": "227fcdbbd1e3ebd4b08cbe4ccd74f14186598099ba11ef1f04560a44f5aad3e9",
+      "initial_state": [
+        0.9,
+        6.8,
+        -1.1441688336680205,
+        0.0,
+        0.0
+      ],
+      "minimum_footprint_clearance": 0.19487745573362647,
+      "name": "l260_train_compound_turns",
+      "obstacle_count": 4,
+      "path": "configs/research/l260_curriculum/train/l260_train_compound_turns.yaml",
+      "reference_length": 9.953260925514343,
+      "role": "train"
+    },
+    {
+      "family": "validation_wave",
+      "geometry_sha256": "534d43401354e866a34df92618941529f056095df223a542c3ec46b7b508dee9",
+      "initial_state": [
+        0.8,
+        2.0,
+        0.5404195002705843,
+        0.0,
+        0.0
+      ],
+      "minimum_footprint_clearance": 0.340651245692807,
+      "name": "l260_validation_wave",
+      "obstacle_count": 3,
+      "path": "configs/research/l260_curriculum/validation/l260_validation_wave.yaml",
+      "reference_length": 7.910888102835477,
+      "role": "validation"
+    },
+    {
+      "family": "validation_switchback",
+      "geometry_sha256": "eca12c0af717a067f75a62ee27f92bbc9a37987ae5e11f791c0e89ca9a43a393",
+      "initial_state": [
+        1.0,
+        0.8,
+        1.5541312030809558,
+        0.0,
+        0.0
+      ],
+      "minimum_footprint_clearance": 0.3815792610416796,
+      "name": "l260_validation_switchback",
+      "obstacle_count": 3,
+      "path": "configs/research/l260_curriculum/validation/l260_validation_switchback.yaml",
+      "reference_length": 27.252436211178896,
+      "role": "validation"
+    },
+    {
+      "family": "validation_loop_exit",
+      "geometry_sha256": "0ce90c1a0ee7fb8a225a6b74598831ee4e049dd55aef9416febd388a410a3e62",
+      "initial_state": [
+        0.9,
+        3.8,
+        -1.1583858851975093,
+        0.0,
+        0.0
+      ],
+      "minimum_footprint_clearance": 1.2514074767267998,
+      "name": "l260_validation_loop_exit",
+      "obstacle_count": 2,
+      "path": "configs/research/l260_curriculum/validation/l260_validation_loop_exit.yaml",
+      "reference_length": 23.33889700235111,
+      "role": "validation"
+    }
+  ],
+  "minimum_path_clearance": 0.08,
+  "protocol": "L260",
+  "robot_radius": 0.25,
+  "train_count": 6,
+  "validation_count": 3
+}

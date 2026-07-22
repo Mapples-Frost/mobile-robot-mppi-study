@@ -1,0 +1,60 @@
+# l260_fixed_geometry: explicit start/path/field/obstacles
+include: ../../mujoco_l218_expanded_base.yaml
+experiment:
+  name: l260_train_corridor_switchback
+  initial_state:
+  - 0.9
+  - 1.0
+  - 0.0
+  - 0.0
+  - 0.0
+  max_steps: 1400
+  physics_domain_role: seen
+task:
+  type: polyline
+  points:
+  - - 0.9
+    - 1.0
+  - - 6.8
+    - 1.0
+  - - 6.8
+    - 2.35
+  - - 1.3
+    - 2.8
+  - - 1.2
+    - 4.15
+  - - 6.7
+    - 4.6
+  - - 6.8
+    - 6.5
+scene:
+  name: l260_train_corridor_switchback
+  geometry_id: l260_train_corridor_switchback
+  field_size:
+  - 8.0
+  - 8.0
+  obstacles:
+  - type: box
+    position:
+    - 3.8
+    - 1.72
+    size:
+    - 2.25
+    - 0.04
+    height: 0.32
+  - type: box
+    position:
+    - 3.8
+    - 3.48
+    size:
+    - 2.05
+    - 0.04
+    height: 0.32
+  - type: box
+    position:
+    - 4.0
+    - 5.35
+    size:
+    - 2.15
+    - 0.04
+    height: 0.32

@@ -1,0 +1,59 @@
+experiment:
+  name: l271_critic_scene_interference_diagnosis
+  output_dir: results/research_platform/rl/l271_critic_scene_interference_diagnosis
+
+l271:
+  protocol: L271
+  conditional_training: false
+  source_checkpoint: results/research_platform/rl/l262_coverage_gated_value_seed20262611_6k/checkpoints/step_000006000.pt
+  source_checkpoint_sha256: 48e662fd728c0d1d62b1ff79681e5cdd924b120d9411c8df6e062a814b4d42a7
+  l268:
+    config: configs/rl/l268_recovery_balanced_intervention.yaml
+    config_sha256: 34779fcb89c13a62e6d75416c26794626481a22ede28adfc34d98a65ccc38820
+    dataset: results/research_platform/rl/l268_recovery_balanced_intervention/recovery_dataset
+    dataset_manifest_sha256: 6a67425a851f2c06023045a47747d2f7719ada011a30ba78c5f5fc25a051c192
+    critic_dir: results/research_platform/rl/l268_recovery_balanced_intervention/critic_only
+    critic_integrity_sha256: 833ef8df1aaedbcbf14db143a932ea41ce00e80b2e3a61e0d4a3e1714aef5a9f
+    critic_results_sha256: f7510a424ec25e8d0a876e651ba8c308eb5edac44a528e8641534dad123d7759
+    treatment_checkpoints:
+      - seed: 20263071
+        path: results/research_platform/rl/l268_recovery_balanced_intervention/critic_only/seed_20263071/recovery_balanced/checkpoints/critic_update_006000.pt
+        sha256: 3d08ae92d48a3673bad42bc20f1e43fd54b397357c44e2696bd58654a28ac4f0
+      - seed: 20263072
+        path: results/research_platform/rl/l268_recovery_balanced_intervention/critic_only/seed_20263072/recovery_balanced/checkpoints/critic_update_006000.pt
+        sha256: 43f630609d6ae6c3d40cc9abe3d5b82558bbd2394a7e862c0a529bb8eaf8df8d
+      - seed: 20263073
+        path: results/research_platform/rl/l268_recovery_balanced_intervention/critic_only/seed_20263073/recovery_balanced/checkpoints/critic_update_006000.pt
+        sha256: 86633936c245ab0a6d9add670d2e9e2fa80d05bb1f1377b4e07b29fb1e781d18
+  l270:
+    summary: results/research_platform/rl/l270_observation_aliasing_diagnosis/summary.json
+    summary_sha256: 8aad130a7f75c69f189fe07a11099a589a074b6d52f22d2915818bccb56d634b
+    required_decision: close_conflicts_but_privileged_probe_unresolved
+  forbidden_tokens:
+    - l258_tracking_curriculum
+    - l258_heldout_tracking_gate
+    - hairpin_v1
+    - s_chicane_v1
+    - infinity_v1
+  audit:
+    device: cuda
+    scene_count: 6
+    rows_per_scene: 128
+    sample_seed: 20263371
+    null_partitions: 24
+    null_seed: 20263372
+    actor_noise_seed: 20263373
+    layers:
+      - all_parameters
+      - input_observation_columns
+      - input_action_columns
+      - output_layer
+  gate:
+    null_lower_quantile: 0.05
+    null_upper_quantile: 0.95
+    minimum_action_input_median_cosine_effect: 0.05
+    minimum_all_parameter_cancellation_effect: 0.05
+    minimum_seed_blocks_both_extreme: 2
+    maximum_gradient_norm_ratio: 20.0
+  next_if_pass: preregister_equal_compute_shared_vs_per_scene_vs_scene_conditioned_critic_probe
+  next_if_fail: audit_critic_capacity_and_action_representation

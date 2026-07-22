@@ -3,13 +3,15 @@ status: preregistered
 windows_native_only: true
 l283_summary: {path: results/research_platform/rl/l283_closed_loop_component_counterfactual/summary.json, sha256: 1c38c12501a0e9bdad55a3cd43f7ee0df1a365140473025e89200525749edbb2}
 l281_summary: {path: results/research_platform/rl/l281_component_separated_anchor_sac_probe/summary.json, sha256: 37ace4f1df7b78418d24f4c2949e7f7be4eb3a7087dfa6b165310ca29adf22a9}
+l277_summary: {path: results/research_platform/rl/l277_recovery_initialized_sac_probe/summary.json, sha256: 5faafdf0174f0da06feb17225abbd714e429d4a68f57a67c6b4aab14257ea1c4}
+l278_summary: {path: results/research_platform/rl/l278_recovery_retention_diagnosis/summary.json, sha256: 674b7a91a0e96b82dc27d9a9e44ce415a4d414bd947c05bf50da50063932bb4a}
 anchor_dataset: results/research_platform/rl/l284_closed_loop_rollin_anchor_dataset
-anchor_dataset_manifest_sha256: pending_before_generation
+anchor_dataset_manifest_sha256: 20ed30258dd15931425508d44513f65935ce3752320eedd58c73068cd9de7c79
 runs:
   - {seed: 20263311, config: configs/rl/l284_closed_loop_rollin_joint_anchor_seed20263311.yaml, output_dir: results/research_platform/rl/l284_closed_loop_rollin_joint_anchor_seed20263311_6k, initialization: results/research_platform/rl/l276_recovery_sequence_imitation_initialization/seed_20263211/checkpoints/update_0003000.pt, initialization_sha256: 06f4bdb804d47f2461e8408b0e441da9ad42fcc7b173b68057045149a16f2a39}
   - {seed: 20263312, config: configs/rl/l284_closed_loop_rollin_joint_anchor_seed20263312.yaml, output_dir: results/research_platform/rl/l284_closed_loop_rollin_joint_anchor_seed20263312_6k, initialization: results/research_platform/rl/l276_recovery_sequence_imitation_initialization/seed_20263212/checkpoints/update_0003000.pt, initialization_sha256: d0879d1d6bc0fe919e08e5205dec925d8835402b348a4e8c374517b96cb4adf0}
   - {seed: 20263313, config: configs/rl/l284_closed_loop_rollin_joint_anchor_seed20263313.yaml, output_dir: results/research_platform/rl/l284_closed_loop_rollin_joint_anchor_seed20263313_6k, initialization: results/research_platform/rl/l276_recovery_sequence_imitation_initialization/seed_20263213/checkpoints/update_0003000.pt, initialization_sha256: 04e24899d1db3283ae54a75edafd51d930d2829987d68c33027dedfae0c95002}
-training: {total_steps: 6000, expected_checkpoints: [3000, 6000], expected_validation_steps: [0, 3000, 6000], expected_anchor_update_steps: 3001, source_kind_balanced: true, recovery_action_mean_weights: [1.0, 1.0], source_action_mean_weights: [0.0, 1.0]}
+training: {total_steps: 6000, expected_checkpoints: [3000, 6000], expected_validation_steps: [0, 3000, 6000], expected_anchor_update_steps: 3001, dataset_format: recovery_retention_v1, source_kind_balanced: true, recovery_action_mean_weights: [1.0, 1.0], source_action_mean_weights: [0.0, 1.0]}
 gate:
   maximum_relative_test_rmse_increase: 0.20
   minimum_relative_test_rmse_improvement_vs_l277: 0.20

@@ -6,6 +6,9 @@ from experiments.rl.generate_l284_closed_loop_rollin_anchor import (
     _episode,
     _rollin,
 )
+from experiments.rl.run_l284_closed_loop_rollin_joint_anchor_sac import (
+    _paired_recovery_return_gain,
+)
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -51,3 +54,19 @@ def test_l284_generator_exports_rollin_and_schema_helpers():
     assert row["observation"].shape == (1, 69)
     assert row["teacher_action"].shape == (1, 2)
     assert row["source_kind"].tolist() == [0]
+
+
+def test_l284_paired_return_gain_uses_loss_reduction():
+    baseline = {"retention_summary": {"seed_metrics": [
+        {"seed": 1, "median_test_return_loss_6k": 1.0},
+        {"seed": 2, "median_test_return_loss_6k": 2.0},
+        {"seed": 3, "median_test_return_loss_6k": 3.0},
+    ]}}
+    treatment = {"retention_summary": {"seed_metrics": [
+        {"seed": 1, "median_test_return_loss_6k": 0.5},
+        {"seed": 2, "median_test_return_loss_6k": 1.0},
+        {"seed": 3, "median_test_return_loss_6k": 2.5},
+    ]}}
+    gains, median = _paired_recovery_return_gain(baseline, treatment)
+    assert gains == [0.5, 1.0, 0.5]
+    assert median == 0.5

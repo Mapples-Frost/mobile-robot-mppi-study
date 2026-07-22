@@ -1,0 +1,16 @@
+include: l279_recovery_retention_anchor_seed20263311.yaml
+
+experiment:
+  name: l279_recovery_retention_anchor_smoke
+  output_dir: results/research_platform/rl/l279_recovery_retention_anchor_smoke_v2
+
+rl:
+  training:
+    total_steps: 60
+    update_after: 10
+    batch_size: 16
+    replay_require_all_scenes: false
+    actor_update_after: 30
+    evaluation_interval: 30
+    checkpoint_interval: 30
+    save_replay_buffer: true

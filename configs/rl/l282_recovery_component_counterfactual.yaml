@@ -6,6 +6,8 @@ actor_training_authorized: false
 l281_summary: {path: results/research_platform/rl/l281_component_separated_anchor_sac_probe/summary.json, sha256: 37ace4f1df7b78418d24f4c2949e7f7be4eb3a7087dfa6b165310ca29adf22a9}
 recovery_dataset: results/research_platform/rl/l268_recovery_balanced_intervention/recovery_dataset
 recovery_manifest_sha256: 6a67425a851f2c06023045a47747d2f7719ada011a30ba78c5f5fc25a051c192
+base_config: configs/rl/l262_coverage_gated_value_6k.yaml
+reset_contract: l268
 split: test
 expected_chains: 18
 arms: [teacher_both, actor_both, teacher_v_actor_omega, actor_v_teacher_omega]

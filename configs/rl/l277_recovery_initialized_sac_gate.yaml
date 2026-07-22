@@ -1,0 +1,49 @@
+protocol: L277
+status: preregistered
+windows_native_only: true
+
+l276_summary:
+  path: results/research_platform/rl/l276_recovery_sequence_imitation_initialization/summary.json
+  sha256: 25cac5de13c88a8be1be721ef75ea2564c28f5c8cd0ba8dd0429b33599a736a7
+
+runs:
+  - seed: 20263311
+    validation_seed_base: 20264311
+    config: configs/rl/l277_recovery_initialized_sac_seed20263311.yaml
+    output_dir: results/research_platform/rl/l277_recovery_initialized_sac_seed20263311_6k
+    initialization: results/research_platform/rl/l276_recovery_sequence_imitation_initialization/seed_20263211/checkpoints/update_0003000.pt
+    initialization_sha256: 06f4bdb804d47f2461e8408b0e441da9ad42fcc7b173b68057045149a16f2a39
+  - seed: 20263312
+    validation_seed_base: 20264312
+    config: configs/rl/l277_recovery_initialized_sac_seed20263312.yaml
+    output_dir: results/research_platform/rl/l277_recovery_initialized_sac_seed20263312_6k
+    initialization: results/research_platform/rl/l276_recovery_sequence_imitation_initialization/seed_20263212/checkpoints/update_0003000.pt
+    initialization_sha256: d0879d1d6bc0fe919e08e5205dec925d8835402b348a4e8c374517b96cb4adf0
+  - seed: 20263313
+    validation_seed_base: 20264313
+    config: configs/rl/l277_recovery_initialized_sac_seed20263313.yaml
+    output_dir: results/research_platform/rl/l277_recovery_initialized_sac_seed20263313_6k
+    initialization: results/research_platform/rl/l276_recovery_sequence_imitation_initialization/seed_20263213/checkpoints/update_0003000.pt
+    initialization_sha256: 04e24899d1db3283ae54a75edafd51d930d2829987d68c33027dedfae0c95002
+
+training:
+  total_steps: 6000
+  expected_checkpoints: [3000, 6000]
+  expected_validation_steps: [0, 3000, 6000]
+  expected_training_scenes: 6
+  expected_validation_scenes: 3
+  full_agent_initialization: true
+  import_optimizer_state: false
+  import_replay: false
+  reset_counters: true
+
+gate:
+  maximum_per_seed_mean_completion_regression: 0.02
+  minimum_median_completion_change: 0.0
+  minimum_median_cte_improvement: 0.05
+  minimum_median_goal_distance_improvement: 0.10
+  minimum_seeds_with_cte_or_goal_improvement: 2
+  minimum_scenes_with_cte_improvement: 2
+  maximum_collision_increase_per_seed: 0
+  maximum_success_loss_per_seed: 0
+

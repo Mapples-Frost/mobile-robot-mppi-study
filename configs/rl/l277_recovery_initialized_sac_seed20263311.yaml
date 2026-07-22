@@ -1,0 +1,11 @@
+include: l277_recovery_initialized_sac_6k.yaml
+
+experiment:
+  name: l277_recovery_initialized_sac_seed20263311_6k
+  output_dir: results/research_platform/rl/l277_recovery_initialized_sac_seed20263311_6k
+
+rl:
+  training:
+    seed: 20263311
+    validation_seed_base: 20264311
+

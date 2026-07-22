@@ -1,0 +1,24 @@
+include: tracking_fair_episode_budget_l247.yaml
+
+final_benchmark:
+  status: development
+  preregistration: docs/experiments/post_l217/l258_heldout_tracking_gate_protocol.md
+
+  # Selected strictly from the procedural L258 validation episodes using the
+  # frozen L222/L241 safety-first lexicographic selector. No Tracking outcome
+  # was read before freezing this checkpoint.
+  coupled_actor_checkpoint: results/research_platform/rl/l258_tracking_curriculum_seed20262441_60k/checkpoints/step_000060000.pt
+  coupled_rl_overrides:
+    policy_id: path_residual_conditioned_bc_anchor_l258_selected
+    device: cpu
+    torch_num_threads: 1
+    residual_context:
+      enabled: true
+      state_names: [v, omega]
+      residual_scales: [0.2438328117, 0.6734842658]
+      innovation_scales: [0.25, 0.60]
+      signed_clip: 5.0
+      disagreement_clip: 5.0
+
+  # Development seeds are new to the Tracking sequence and are not sealed.
+  development_seeds: [923301011, 923301012, 923301013]

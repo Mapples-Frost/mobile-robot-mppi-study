@@ -1726,6 +1726,76 @@ class SACTrainer:
         }
         self._write_run_metadata()
 
+    def initialize_agent_from(self, checkpoint_path):
+        """Warm-start all SAC numerical parameters without continuation state.
+
+        Unlike :meth:`resume`, this intentionally does not import optimizer
+        state, replay, RNG state, episode counters, or environment progress.
+        Unlike :meth:`initialize_actor_from`, it preserves a preregistered
+        Actor/Critic/alpha pairing.  The mode is fail-closed on every model and
+        observation contract field and is recorded in run provenance.
+        """
+
+        payload = load_sac_checkpoint(
+            checkpoint_path, map_location=self.agent.device
+        )
+        source_agent = payload["agent"]
+        if int(source_agent.get("observation_dim", -1)) != self.agent.observation_dim:
+            raise ValueError("full-agent initialization observation_dim mismatch")
+        if int(source_agent.get("action_dim", -1)) != self.agent.action_dim:
+            raise ValueError("full-agent initialization action_dim mismatch")
+        if dict(payload["encoder_config"]) != self.encoder_config.to_dict():
+            raise ValueError("full-agent initialization encoder_config mismatch")
+        if dict(payload["parameterization_config"]) != (
+            self.parameterization_config.to_dict()
+        ):
+            raise ValueError(
+                "full-agent initialization parameterization_config mismatch"
+            )
+        saved_action = payload["action_spec"]
+        if tuple(saved_action.get("names", ())) != tuple(self.action_spec.names):
+            raise ValueError("full-agent initialization action names mismatch")
+        if not np.array_equal(saved_action["lower"], self.action_spec.lower) or not (
+            np.array_equal(saved_action["upper"], self.action_spec.upper)
+        ):
+            raise ValueError("full-agent initialization action bounds mismatch")
+        source_config = dict(source_agent.get("config", {}))
+        target_config = self.agent.config.to_dict()
+        source_config["hidden_sizes"] = tuple(source_config.get("hidden_sizes", ()))
+        target_config["hidden_sizes"] = tuple(target_config.get("hidden_sizes", ()))
+        if source_config != target_config:
+            raise ValueError("full-agent initialization SAC config mismatch")
+
+        normalizer = RunningNormalizer.from_state_dict(payload["normalizer"])
+        if normalizer.dimension != self.agent.observation_dim:
+            raise ValueError("full-agent initialization normalizer mismatch")
+
+        # The target agent and its optimizers were freshly constructed.  Loading
+        # weights without optimizer state preserves that fresh optimizer
+        # contract, then explicitly clears source update counters carried in the
+        # serialized numerical state.
+        self.agent.load_state_dict(source_agent, load_optimizers=False)
+        self.agent.update_steps = 0
+        self.agent.bc_update_steps = 0
+        self.agent.bc_anchor_update_steps = 0
+        self.normalizer = normalizer
+        self.actor_initialization = {
+            "mode": "full_agent_parameters_and_normalizer_only",
+            "checkpoint": str(Path(checkpoint_path).resolve()),
+            "source_git_sha": payload.get("git_sha"),
+            "source_phase": payload.get("training_state", {}).get("phase"),
+            "source_protocol": payload.get("training_state", {}).get("protocol"),
+            "source_seed": payload.get("training_state", {}).get("seed"),
+            "source_actor_only_updates": payload.get(
+                "training_state", {}
+            ).get("actor_only_updates"),
+            "optimizer_state_imported": False,
+            "replay_imported": False,
+            "rng_state_imported": False,
+            "training_counters_reset": True,
+        }
+        self._write_run_metadata()
+
     def _update_normalizer(self, observations):
         if self.training_config.normalizer_update == "online":
             self.normalizer.update(observations)

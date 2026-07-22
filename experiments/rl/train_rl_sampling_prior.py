@@ -135,6 +135,15 @@ def main(argv=None):
             "counters remain fresh"
         ),
     )
+    checkpoint_group.add_argument(
+        "--initialize-agent-from",
+        help=(
+            "load compatible actor, critics, target critics, alpha, and fitted "
+            "observation normalizer while keeping optimizers, replay, RNG, and "
+            "all training counters fresh; intended for preregistered full-agent "
+            "warm starts, not interrupted-run resume"
+        ),
+    )
     parser.add_argument(
         "--allow-legacy-resume",
         action="store_true",
@@ -237,6 +246,7 @@ def main(argv=None):
             "smoke": bool(args.smoke),
             "resume": args.resume,
             "initialize_actor_from": args.initialize_actor_from,
+            "initialize_agent_from": args.initialize_agent_from,
             "bc_anchor_dataset": args.bc_anchor_dataset,
         },
     )
@@ -254,6 +264,8 @@ def main(argv=None):
         )
     elif args.initialize_actor_from:
         trainer.initialize_actor_from(_resolve_config(args.initialize_actor_from))
+    elif args.initialize_agent_from:
+        trainer.initialize_agent_from(_resolve_config(args.initialize_agent_from))
     result = trainer.run()
     print(json.dumps(result, indent=2, sort_keys=True))
     return 0

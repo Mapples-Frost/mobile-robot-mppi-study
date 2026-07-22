@@ -1,0 +1,7 @@
+include: ../../l260_curriculum/validation/l260_validation_switchback.yaml
+experiment:
+  max_steps: 700
+task:
+  projection_backtrack_distance: 0.15
+  projection_forward_distance: 0.25
+  completion_corridor: 0.75

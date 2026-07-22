@@ -26,7 +26,10 @@ class RewardConfig:
     cross_track_penalty_weight: float = 0.0
     path_progress_weight: float = 0.0
     path_progress_corridor: float = 0.0
+    path_progress_step_cap: float = 0.0
+    path_progress_hard_corridor: bool = False
     heading_error_penalty_weight: float = 0.0
+    cross_track_error_cap: float = 0.0
     step_penalty: float = 0.02
     goal_bonus: float = 100.0
     collision_penalty: float = 100.0
@@ -36,6 +39,7 @@ class RewardConfig:
     control_effort_weight: float = 0.02
     control_rate_weight: float = 0.04
     stuck_penalty: float = 0.03
+    reward_scale: float = 1.0
 
     @classmethod
     def from_mapping(cls, values: Optional[Mapping[str, Any]] = None):
@@ -43,10 +47,13 @@ class RewardConfig:
         numeric = {
             name: float(values.get(name, field.default))
             for name, field in cls.__dataclass_fields__.items()
-            if name != "progress_mode"
+            if name not in ("progress_mode", "path_progress_hard_corridor")
         }
         return cls(
             progress_mode=str(values.get("progress_mode", "discounted_potential")),
+            path_progress_hard_corridor=bool(
+                values.get("path_progress_hard_corridor", False)
+            ),
             **numeric
         )
 
@@ -56,10 +63,14 @@ class RewardConfig:
                 "RL progress_mode must be discounted_potential or distance_delta"
             )
         values = tuple(
-            value for name, value in asdict(self).items() if name != "progress_mode"
+            value
+            for name, value in asdict(self).items()
+            if name not in ("progress_mode", "path_progress_hard_corridor")
         )
         if not np.isfinite(values).all() or any(value < 0.0 for value in values):
             raise ValueError("RL reward weights and margins must be finite and non-negative")
+        if self.reward_scale <= 0.0:
+            raise ValueError("RL reward_scale must be finite and positive")
 
 
 def _progress_signal(previous_distance, distance, gamma, mode):
@@ -76,6 +87,33 @@ def _progress_signal(previous_distance, distance, gamma, mode):
     if mode == "distance_delta":
         return float(previous_distance - distance)
     raise ValueError("unknown RL progress mode: %s" % mode)
+
+
+def _validated_path_progress(previous, progress, cross_track_error, corridor):
+    """Advance completion only while the robot is inside the declared corridor."""
+
+    values = np.asarray(
+        (previous, progress, cross_track_error, corridor), dtype=np.float64
+    )
+    if not np.isfinite(values).all() or min(values) < 0.0 or corridor <= 0.0:
+        raise ValueError("validated path progress inputs must be finite and non-negative")
+    if cross_track_error > corridor:
+        return float(previous)
+    return float(max(previous, progress))
+
+
+def _initialize_reference_progress(reference, position):
+    """Place a reset polyline reference on the nearest branch without a stale floor."""
+
+    project = getattr(reference, "project", None)
+    if not callable(project) or not hasattr(reference, "progress"):
+        return None
+    projection = project(
+        np.asarray(position, dtype=np.float64).reshape(2),
+        minimum_progress=None,
+    )
+    reference.progress = float(projection.progress)
+    return float(reference.progress)
 
 
 def _final_target(reference, initial_pose):
@@ -351,6 +389,9 @@ class MppiPriorEnv:
         reset_reference = getattr(self.components["reference"], "reset", None)
         if callable(reset_reference):
             reset_reference()
+        _initialize_reference_progress(
+            self.components["reference"], initial[:2]
+        )
         # The episode seed owns every stochastic component, including MPPI
         # perturbation sampling.  Previously the controller silently reset to
         # the training-config seed, so nominally fixed validation seeds did
@@ -408,11 +449,25 @@ class MppiPriorEnv:
             path_progress = float(
                 path_state["progress"] - self.previous_path_progress
             )
+        if cfg.path_progress_step_cap > 0.0:
+            path_progress = float(np.clip(
+                path_progress, 0.0, cfg.path_progress_step_cap
+            ))
         corridor_weight = 1.0
         if cfg.path_progress_corridor > 0.0:
             corridor_weight = float(np.exp(
                 -(cross_track_error / cfg.path_progress_corridor) ** 2
             ))
+            if (
+                cfg.path_progress_hard_corridor
+                and cross_track_error > cfg.path_progress_corridor
+            ):
+                corridor_weight = 0.0
+        bounded_cross_track_error = cross_track_error
+        if cfg.cross_track_error_cap > 0.0:
+            bounded_cross_track_error = min(
+                bounded_cross_track_error, cfg.cross_track_error_cap
+            )
         terms = {
             "potential_progress": cfg.potential_progress_weight
             * progress,
@@ -421,7 +476,7 @@ class MppiPriorEnv:
             * abs(float(truth.twist.v))
             * control_dt,
             "cross_track": -cfg.cross_track_penalty_weight
-            * cross_track_error ** 2,
+            * bounded_cross_track_error ** 2,
             "path_progress": cfg.path_progress_weight
             * path_progress
             * corridor_weight,
@@ -447,6 +502,11 @@ class MppiPriorEnv:
             terms["clearance"] = -cfg.clearance_penalty_weight * violation ** 2
         if abs(truth.twist.v) < 0.02 and distance > float(self.config["task"].get("position_tolerance", 0.2)):
             terms["stuck"] = -cfg.stuck_penalty
+        if cfg.reward_scale != 1.0:
+            terms = {
+                name: float(cfg.reward_scale) * float(value)
+                for name, value in terms.items()
+            }
         reward = float(sum(terms.values()))
         if not np.isfinite(reward):
             raise FloatingPointError("RL reward produced NaN or Inf")

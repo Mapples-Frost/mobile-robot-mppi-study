@@ -16,7 +16,10 @@ if str(ROOT / "src") not in sys.path:
 
 from mobile_robot_mppi.core.config import deep_merge, git_sha, load_yaml
 from mobile_robot_mppi.rl.checkpointing import load_sac_checkpoint
-from mobile_robot_mppi.rl.environment import DirectControlEnv
+from mobile_robot_mppi.rl.environment import (
+    DirectControlEnv,
+    _validated_path_progress,
+)
 from mobile_robot_mppi.rl.observation import RunningNormalizer
 from mobile_robot_mppi.rl.sac import SACAgent, SACConfig
 
@@ -122,10 +125,12 @@ def _episode(config, checkpoint, agent, normalizer, seed, output_dir):
                 action
             )
             total_return += float(reward)
-            if float(info["cross_track_error"]) <= completion_corridor:
-                validated_progress = max(
-                    validated_progress, float(info["path_progress"])
-                )
+            validated_progress = _validated_path_progress(
+                validated_progress,
+                float(info["path_progress"]),
+                float(info["cross_track_error"]),
+                completion_corridor,
+            )
             rows.append({
                 "step": len(rows),
                 "time": float(environment.truth.timestamp),

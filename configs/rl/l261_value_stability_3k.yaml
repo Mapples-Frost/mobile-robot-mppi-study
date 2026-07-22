@@ -1,0 +1,55 @@
+include: l260_corrected_tracking_20k.yaml
+
+experiment:
+  name: l261_value_stability_3k
+  output_dir: results/research_platform/rl/l261_value_stability_seed20262601_3k
+
+rl:
+  policy_id: l261_value_stability_3k
+  reward:
+    # Engineering guards for the failure observed in L260. These affect only
+    # offline Actor training; online MPPI cost and safety remain unchanged.
+    path_progress_step_cap: 0.10
+    path_progress_hard_corridor: true
+    cross_track_error_cap: 1.50
+    reward_scale: 0.10
+  training:
+    seed: 20262601
+    validation_seed_base: 20263601
+    total_steps: 3000
+    update_after: 500
+    actor_update_after: 1000
+    evaluation_interval: 1500
+    checkpoint_interval: 1500
+    save_replay_buffer: true
+    device: cuda
+    bc_anchor:
+      enabled: false
+    checkpoint_selection:
+      mode: initial_noninferiority
+      maximum_success_losses: 0
+      maximum_collision_regressions: 0
+      minimum_success_gains: 1
+      minimum_mean_goal_distance_improvement: 0.02
+      maximum_mean_goal_distance_increase: 0.10
+      maximum_mean_cross_track_rmse: 1.00
+    scene_configs:
+      - configs/research/l261_value_stability/train/l261_train_s_bend.yaml
+      - configs/research/l261_value_stability/train/l261_train_offset_hairpin.yaml
+      - configs/research/l261_value_stability/train/l261_train_near_double_loop.yaml
+      - configs/research/l261_value_stability/train/l261_train_curvature_ramp.yaml
+      - configs/research/l261_value_stability/train/l261_train_corridor_switchback.yaml
+      - configs/research/l261_value_stability/train/l261_train_compound_turns.yaml
+    validation_scene_configs:
+      - configs/research/l261_value_stability/validation/l261_validation_wave.yaml
+      - configs/research/l261_value_stability/validation/l261_validation_switchback.yaml
+      - configs/research/l261_value_stability/validation/l261_validation_loop_exit.yaml
+    curriculum:
+      enabled: true
+      phases:
+        - {name: stability_s_bend, until_step: 500, scene_weights: [1, 0, 0, 0, 0, 0]}
+        - {name: stability_offset_hairpin, until_step: 1000, scene_weights: [0, 1, 0, 0, 0, 0]}
+        - {name: stability_near_double_loop, until_step: 1500, scene_weights: [0, 0, 1, 0, 0, 0]}
+        - {name: stability_curvature_ramp, until_step: 2000, scene_weights: [0, 0, 0, 1, 0, 0]}
+        - {name: stability_corridor_switchback, until_step: 2500, scene_weights: [0, 0, 0, 0, 1, 0]}
+        - {name: stability_compound_turns, until_step: 3000, scene_weights: [0, 0, 0, 0, 0, 1]}

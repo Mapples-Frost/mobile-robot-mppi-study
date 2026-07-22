@@ -19,7 +19,11 @@ from .demonstrations import (
     load_demonstration_manifest,
     load_demonstration_split,
 )
-from .environment import DirectControlEnv, MppiPriorEnv
+from .environment import (
+    DirectControlEnv,
+    MppiPriorEnv,
+    _validated_path_progress,
+)
 from .observation import ObservationEncoderConfig, RunningNormalizer
 from .parameterization import PriorParameterizationConfig
 from .replay import ReplayBuffer
@@ -1789,6 +1793,15 @@ class SACTrainer:
         covariance_scale_min = np.full_like(covariance_scale_sum, np.inf)
         covariance_scale_max = np.full_like(covariance_scale_sum, -np.inf)
         cross_track_square_sum = 0.0
+        completion_corridor = float(
+            config.get("task", {}).get("completion_corridor", 0.75)
+        )
+        if not np.isfinite(completion_corridor) or completion_corridor <= 0.0:
+            environment.close()
+            raise ValueError(
+                "validation completion_corridor must be finite and positive"
+            )
+        validated_progress = 0.0
         steps = 0
         last_info = {}
         try:
@@ -1877,6 +1890,12 @@ class SACTrainer:
                         "validation cross-track error is invalid"
                     )
                 cross_track_square_sum += cross_track_error ** 2
+                validated_progress = _validated_path_progress(
+                    validated_progress,
+                    float(last_info.get("path_progress", 0.0)),
+                    cross_track_error,
+                    completion_corridor,
+                )
                 steps += 1
                 if terminated or truncated:
                     break
@@ -1947,6 +1966,19 @@ class SACTrainer:
                 np.sqrt(cross_track_square_sum / max(steps, 1))
             ),
             "path_completion_ratio": float(np.clip(
+                validated_progress
+                / max(
+                    float(getattr(
+                        environment.components["reference"],
+                        "total_length",
+                        1.0,
+                    )),
+                    1e-12,
+                ),
+                0.0,
+                1.0,
+            )),
+            "raw_path_completion_ratio": float(np.clip(
                 float(last_info.get("path_progress", 0.0))
                 / max(
                     float(getattr(
@@ -1959,6 +1991,7 @@ class SACTrainer:
                 0.0,
                 1.0,
             )),
+            "completion_corridor": completion_corridor,
         }
         for index in range(environment.action_spec.dimension):
             result["covariance_scale_%d_mean" % index] = float(
@@ -2001,6 +2034,9 @@ class SACTrainer:
             "mean_goal_distance": mean_distance,
             "mean_path_completion_ratio": float(np.mean([
                 row["path_completion_ratio"] for row in rows
+            ])),
+            "mean_raw_path_completion_ratio": float(np.mean([
+                row["raw_path_completion_ratio"] for row in rows
             ])),
             "mean_cross_track_rmse": float(np.mean([
                 row["cross_track_rmse"] for row in rows

@@ -1,0 +1,7 @@
+include: ../../l260_curriculum/train/l260_train_s_bend.yaml
+experiment:
+  max_steps: 500
+task:
+  projection_backtrack_distance: 0.15
+  projection_forward_distance: 0.25
+  completion_corridor: 0.75

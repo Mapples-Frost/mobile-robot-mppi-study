@@ -3,6 +3,7 @@ import pytest
 
 from mobile_robot_mppi.core.spaces import ActionSpec
 from mobile_robot_mppi.rl.environment import DirectControlEnv, MppiPriorEnv
+from mobile_robot_mppi.rl.paper_policy import PaperDirectControlPolicy
 from mobile_robot_mppi.rl.trainer import environment_class_from_config
 
 
@@ -46,6 +47,17 @@ def test_direct_control_action_obeys_physical_rate_limits():
     physical = environment.normalized_to_physical_action((1.0, 1.0))
 
     np.testing.assert_allclose(physical, (0.1, 0.2))
+
+
+def test_offline_and_online_actor_use_the_same_normalized_action_mapping():
+    environment = _direct_environment_without_backend()
+    policy = PaperDirectControlPolicy.__new__(PaperDirectControlPolicy)
+    policy.action_spec = environment.action_spec
+    normalized = np.asarray((0.25, -0.40), dtype=np.float64)
+    np.testing.assert_allclose(
+        environment.normalized_to_physical_action(normalized),
+        policy.normalized_to_physical(normalized),
+    )
 
 
 @pytest.mark.parametrize(

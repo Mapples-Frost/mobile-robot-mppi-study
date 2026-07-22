@@ -1,0 +1,31 @@
+protocol: L278
+status: preregistered
+windows_native_only: true
+
+l277_summary:
+  path: results/research_platform/rl/l277_recovery_initialized_sac_probe/summary.json
+  sha256: 5faafdf0174f0da06feb17225abbd714e429d4a68f57a67c6b4aab14257ea1c4
+
+recovery_dataset: results/research_platform/rl/l268_recovery_balanced_intervention/recovery_dataset
+split_counts: {validation: 18, test: 18}
+checkpoints:
+  - seed: 20263311
+    initial: {path: results/research_platform/rl/l277_recovery_initialized_sac_seed20263311_6k/checkpoints/initial.pt, sha256: e99e3bf824c2bc0495610b71e3292c07584af060c74d1eee4490dd231d34580b}
+    step3000: {path: results/research_platform/rl/l277_recovery_initialized_sac_seed20263311_6k/checkpoints/step_000003000.pt, sha256: 1b236a31f9e48ce817146440b1a2992244168ff67ed5e2bc89e4e7913dfd9b9d}
+    step6000: {path: results/research_platform/rl/l277_recovery_initialized_sac_seed20263311_6k/checkpoints/step_000006000.pt, sha256: 20b83eaa50cb71bf54e98ce4d40d2c8bbec9877fbfac63fc1c18f7a50862a125}
+  - seed: 20263312
+    initial: {path: results/research_platform/rl/l277_recovery_initialized_sac_seed20263312_6k/checkpoints/initial.pt, sha256: 6c04c9955256299c655dad85b94e227659c1354f5c94380113752fd6c67b07ae}
+    step3000: {path: results/research_platform/rl/l277_recovery_initialized_sac_seed20263312_6k/checkpoints/step_000003000.pt, sha256: 0e4c0809de56a4a143d6d2666be504ea47a818caa4e45bf275c5b79892bac72e}
+    step6000: {path: results/research_platform/rl/l277_recovery_initialized_sac_seed20263312_6k/checkpoints/step_000006000.pt, sha256: 287a701c3cb9c9f845893452d9ed5e63fc8cac771f6a01741377865973ebfb39}
+  - seed: 20263313
+    initial: {path: results/research_platform/rl/l277_recovery_initialized_sac_seed20263313_6k/checkpoints/initial.pt, sha256: 6958963f3a35e95c43b02dc1b4b8ce0a09e41e546ff4de4aa83bd941037f7cc4}
+    step3000: {path: results/research_platform/rl/l277_recovery_initialized_sac_seed20263313_6k/checkpoints/step_000003000.pt, sha256: 87851eaf382ee35be67df8f8c0a2fe6343ccc23894f28f9282eea4c9bf3a8f09}
+    step6000: {path: results/research_platform/rl/l277_recovery_initialized_sac_seed20263313_6k/checkpoints/step_000006000.pt, sha256: c624af00f28274eb4b493eb1d3beb004f293132fd781eb42e6f32b01f006215e}
+
+gate:
+  maximum_median_relative_test_rmse_increase: 0.20
+  maximum_median_test_return_loss: 0.50
+  maximum_median_test_reentry_loss: 0.10
+  minimum_scenes_with_nonnegative_test_return_change: 4
+  maximum_collision_boundary_failure_increase: 0
+

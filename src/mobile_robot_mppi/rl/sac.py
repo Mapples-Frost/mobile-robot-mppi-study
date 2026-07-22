@@ -779,6 +779,61 @@ class SACAgent:
             "critic_source": source,
         }
 
+    def twin_q_distribution(self, observations, actions, critic_source="online"):
+        """Return unreduced twin-Critic outputs for offline diagnosis.
+
+        Scalar critics have a one-element final dimension; quantile critics
+        retain every configured quantile.  No risk or twin reduction is
+        applied, so an audit can distinguish spread from mean-Q ordering.
+        """
+
+        observation = np.asarray(observations, dtype=np.float32)
+        action = np.asarray(actions, dtype=np.float32)
+        if (
+            observation.ndim != 2
+            or observation.shape[1:] != (self.observation_dim,)
+            or observation.shape[0] <= 0
+            or not np.isfinite(observation).all()
+        ):
+            raise ValueError(
+                "critic observations must have shape [B, observation_dim]"
+            )
+        if (
+            action.ndim != 2
+            or action.shape != (observation.shape[0], self.action_dim)
+            or not np.isfinite(action).all()
+        ):
+            raise ValueError("critic actions must have shape [B, action_dim]")
+        source = str(critic_source)
+        if source == "online":
+            critic1, critic2 = self.critic1, self.critic2
+        elif source == "target":
+            critic1, critic2 = self.target_critic1, self.target_critic2
+        else:
+            raise ValueError("critic_source must be 'online' or 'target'")
+        with torch.no_grad():
+            observation_tensor = torch.as_tensor(
+                observation, dtype=torch.float32, device=self.device
+            )
+            action_tensor = torch.as_tensor(
+                action, dtype=torch.float32, device=self.device
+            )
+            q1 = critic1(observation_tensor, action_tensor)
+            q2 = critic2(observation_tensor, action_tensor)
+        if not bool(torch.isfinite(q1).all() and torch.isfinite(q2).all()):
+            raise FloatingPointError("SAC critic distribution produced NaN or Inf")
+        q1_array = q1.cpu().numpy().astype(np.float64)
+        q2_array = q2.cpu().numpy().astype(np.float64)
+        if q1_array.ndim == 1:
+            q1_array = q1_array[:, None]
+            q2_array = q2_array[:, None]
+        return {
+            "q1": q1_array,
+            "q2": q2_array,
+            "critic_source": source,
+            "distribution": self.config.critic_distribution,
+        }
+
     def critic_disagreement(self, observation, action):
         observation = torch.as_tensor(observation, dtype=torch.float32, device=self.device)
         action = torch.as_tensor(action, dtype=torch.float32, device=self.device)

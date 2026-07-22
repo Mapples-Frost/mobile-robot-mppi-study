@@ -1256,3 +1256,13 @@ def test_batched_policy_and_expected_quantile_q_are_finite():
         assert np.isfinite(values[key]).all()
     assert np.all(values["minimum"] <= values["mean"] + 1e-12)
     assert values["critic_source"] == "target"
+
+    distribution = agent.twin_q_distribution(
+        observations, actions, critic_source="target"
+    )
+    assert distribution["q1"].shape == (3, 7)
+    assert distribution["q2"].shape == (3, 7)
+    assert distribution["critic_source"] == "target"
+    assert distribution["distribution"] == "quantile"
+    assert np.isfinite(distribution["q1"]).all()
+    assert np.isfinite(distribution["q2"]).all()

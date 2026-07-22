@@ -1542,6 +1542,7 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
         baseline_mean = np.asarray(prior.mean, dtype=np.float64)
         if baseline_mean.shape != actor_mean.shape:
             raise ValueError("baseline and Actor proposal means disagree")
+        actor_baseline_abs_delta = np.abs(actor_mean - baseline_mean)
         counterfactual_authority, counterfactual_diagnostics = (
             self._counterfactual_proposal_gate(
                 state,
@@ -1618,6 +1619,12 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
 
         total_guided_elites = 0
         total_gaussian_elites = 0
+        total_guided_opportunities = 0
+        total_gaussian_opportunities = 0
+        guided_costs_by_iteration = []
+        gaussian_costs_by_iteration = []
+        guided_feasible_count = 0
+        gaussian_feasible_count = 0
         costs_by_iteration = []
         terminal_diagnostics = {}
         constraints = None
@@ -1721,9 +1728,28 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
                 boundary_last_samples = samples.copy()
                 boundary_last_costs = costs.copy()
             else:
+                boundary_feasible = np.ones(
+                    self.config.num_samples, dtype=bool
+                )
                 feasible_indices = np.arange(
                     self.config.num_samples, dtype=np.int64
                 )
+            guided_mask = labels == 1
+            gaussian_mask = labels == 0
+            guided_iteration_costs = costs[guided_mask]
+            gaussian_iteration_costs = costs[gaussian_mask]
+            if guided_iteration_costs.size:
+                guided_costs_by_iteration.append(guided_iteration_costs)
+            if gaussian_iteration_costs.size:
+                gaussian_costs_by_iteration.append(gaussian_iteration_costs)
+            total_guided_opportunities += int(np.sum(guided_mask))
+            total_gaussian_opportunities += int(np.sum(gaussian_mask))
+            guided_feasible_count += int(np.sum(
+                boundary_feasible & guided_mask
+            ))
+            gaussian_feasible_count += int(np.sum(
+                boundary_feasible & gaussian_mask
+            ))
             requested_elites = max(
                 2,
                 int(np.ceil(
@@ -1904,6 +1930,39 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
                     boundary_final_min_margin >= 0.0
                 )
         all_costs = np.concatenate(costs_by_iteration)
+        guided_costs = (
+            np.concatenate(guided_costs_by_iteration)
+            if guided_costs_by_iteration
+            else np.asarray([], dtype=np.float64)
+        )
+        gaussian_costs = (
+            np.concatenate(gaussian_costs_by_iteration)
+            if gaussian_costs_by_iteration
+            else np.asarray([], dtype=np.float64)
+        )
+        guided_cost_observed = bool(guided_costs.size)
+        gaussian_cost_observed = bool(gaussian_costs.size)
+        guided_cost_min = (
+            float(np.min(guided_costs)) if guided_cost_observed else 0.0
+        )
+        gaussian_cost_min = (
+            float(np.min(gaussian_costs))
+            if gaussian_cost_observed else 0.0
+        )
+        guided_cost_mean = (
+            float(np.mean(guided_costs)) if guided_cost_observed else 0.0
+        )
+        gaussian_cost_mean = (
+            float(np.mean(gaussian_costs))
+            if gaussian_cost_observed else 0.0
+        )
+        guided_cost_p50 = (
+            float(np.median(guided_costs)) if guided_cost_observed else 0.0
+        )
+        gaussian_cost_p50 = (
+            float(np.median(gaussian_costs))
+            if gaussian_cost_observed else 0.0
+        )
         optimizer_diagnostics = {
             "optimizer_diagnostics_enabled": False,
             "optimizer_best_candidate_cost": 0.0,
@@ -2030,6 +2089,46 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
             "paper_gaussian_samples_per_iteration": int(gaussian_count),
             "paper_guided_elite_count": int(total_guided_elites),
             "paper_gaussian_elite_count": int(total_gaussian_elites),
+            "paper_guided_opportunity_count": int(
+                total_guided_opportunities
+            ),
+            "paper_gaussian_opportunity_count": int(
+                total_gaussian_opportunities
+            ),
+            "paper_guided_cost_observed": guided_cost_observed,
+            "paper_gaussian_cost_observed": gaussian_cost_observed,
+            "paper_guided_cost_min": guided_cost_min,
+            "paper_gaussian_cost_min": gaussian_cost_min,
+            "paper_guided_cost_mean": guided_cost_mean,
+            "paper_gaussian_cost_mean": gaussian_cost_mean,
+            "paper_guided_cost_p50": guided_cost_p50,
+            "paper_gaussian_cost_p50": gaussian_cost_p50,
+            "paper_guided_minus_gaussian_cost_min": (
+                guided_cost_min - gaussian_cost_min
+                if guided_cost_observed and gaussian_cost_observed else 0.0
+            ),
+            "paper_guided_minus_gaussian_cost_mean": (
+                guided_cost_mean - gaussian_cost_mean
+                if guided_cost_observed and gaussian_cost_observed else 0.0
+            ),
+            "paper_guided_feasible_fraction": float(
+                guided_feasible_count / total_guided_opportunities
+                if total_guided_opportunities else 0.0
+            ),
+            "paper_gaussian_feasible_fraction": float(
+                gaussian_feasible_count / total_gaussian_opportunities
+                if total_gaussian_opportunities else 0.0
+            ),
+            "paper_actor_first_v": float(actor_mean[0, 0]),
+            "paper_actor_first_omega": float(actor_mean[0, 1]),
+            "paper_baseline_first_v": float(baseline_mean[0, 0]),
+            "paper_baseline_first_omega": float(baseline_mean[0, 1]),
+            "paper_actor_baseline_mean_abs_delta": float(
+                np.mean(actor_baseline_abs_delta)
+            ),
+            "paper_actor_baseline_first_action_l2_delta": float(
+                np.linalg.norm(actor_mean[0] - baseline_mean[0])
+            ),
             "paper_actor_mean_initialization": True,
             "paper_actor_covariance_initialization": True,
             "paper_actor_joint_batched": bool(joint_actor_batch),

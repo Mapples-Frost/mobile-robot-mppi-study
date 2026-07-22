@@ -540,6 +540,78 @@ class EpisodeMetrics:
             "paper_gaussian_elite_count": int(
                 planner_diagnostics.get("paper_gaussian_elite_count", 0)
             ),
+            "paper_guided_opportunity_count": int(
+                planner_diagnostics.get("paper_guided_opportunity_count", 0)
+            ),
+            "paper_gaussian_opportunity_count": int(
+                planner_diagnostics.get("paper_gaussian_opportunity_count", 0)
+            ),
+            "paper_guided_cost_observed": float(
+                planner_diagnostics.get("paper_guided_cost_observed", False)
+            ),
+            "paper_gaussian_cost_observed": float(
+                planner_diagnostics.get("paper_gaussian_cost_observed", False)
+            ),
+            "paper_guided_cost_min": float(
+                planner_diagnostics.get("paper_guided_cost_min", 0.0)
+            ),
+            "paper_gaussian_cost_min": float(
+                planner_diagnostics.get("paper_gaussian_cost_min", 0.0)
+            ),
+            "paper_guided_cost_mean": float(
+                planner_diagnostics.get("paper_guided_cost_mean", 0.0)
+            ),
+            "paper_gaussian_cost_mean": float(
+                planner_diagnostics.get("paper_gaussian_cost_mean", 0.0)
+            ),
+            "paper_guided_cost_p50": float(
+                planner_diagnostics.get("paper_guided_cost_p50", 0.0)
+            ),
+            "paper_gaussian_cost_p50": float(
+                planner_diagnostics.get("paper_gaussian_cost_p50", 0.0)
+            ),
+            "paper_guided_minus_gaussian_cost_min": float(
+                planner_diagnostics.get(
+                    "paper_guided_minus_gaussian_cost_min", 0.0
+                )
+            ),
+            "paper_guided_minus_gaussian_cost_mean": float(
+                planner_diagnostics.get(
+                    "paper_guided_minus_gaussian_cost_mean", 0.0
+                )
+            ),
+            "paper_guided_feasible_fraction": float(
+                planner_diagnostics.get(
+                    "paper_guided_feasible_fraction", 0.0
+                )
+            ),
+            "paper_gaussian_feasible_fraction": float(
+                planner_diagnostics.get(
+                    "paper_gaussian_feasible_fraction", 0.0
+                )
+            ),
+            "paper_actor_first_v": float(
+                planner_diagnostics.get("paper_actor_first_v", 0.0)
+            ),
+            "paper_actor_first_omega": float(
+                planner_diagnostics.get("paper_actor_first_omega", 0.0)
+            ),
+            "paper_baseline_first_v": float(
+                planner_diagnostics.get("paper_baseline_first_v", 0.0)
+            ),
+            "paper_baseline_first_omega": float(
+                planner_diagnostics.get("paper_baseline_first_omega", 0.0)
+            ),
+            "paper_actor_baseline_mean_abs_delta": float(
+                planner_diagnostics.get(
+                    "paper_actor_baseline_mean_abs_delta", 0.0
+                )
+            ),
+            "paper_actor_baseline_first_action_l2_delta": float(
+                planner_diagnostics.get(
+                    "paper_actor_baseline_first_action_l2_delta", 0.0
+                )
+            ),
             "rl_source_samples": int(
                 planner_diagnostics.get("rl_source_samples", 0)
             ),
@@ -1374,6 +1446,56 @@ class EpisodeMetrics:
                 row.get("paper_gaussian_elite_count", 0)
                 for row in values
             )),
+            "paper_guided_opportunity_count_total": int(sum(
+                row.get("paper_guided_opportunity_count", 0)
+                for row in values
+            )),
+            "paper_gaussian_opportunity_count_total": int(sum(
+                row.get("paper_gaussian_opportunity_count", 0)
+                for row in values
+            )),
+            "paper_guided_cost_observed_fraction": float(np.mean([
+                row.get("paper_guided_cost_observed", 0.0)
+                for row in values
+            ])),
+            "paper_guided_minus_gaussian_cost_min_mean": float(np.mean([
+                row.get("paper_guided_minus_gaussian_cost_min", 0.0)
+                for row in values
+                if row.get("paper_guided_cost_observed", 0.0)
+            ])) if any(
+                row.get("paper_guided_cost_observed", 0.0)
+                for row in values
+            ) else 0.0,
+            "paper_guided_minus_gaussian_cost_mean_mean": float(np.mean([
+                row.get("paper_guided_minus_gaussian_cost_mean", 0.0)
+                for row in values
+                if row.get("paper_guided_cost_observed", 0.0)
+            ])) if any(
+                row.get("paper_guided_cost_observed", 0.0)
+                for row in values
+            ) else 0.0,
+            "paper_guided_feasible_fraction_mean": float(np.mean([
+                row.get("paper_guided_feasible_fraction", 0.0)
+                for row in values
+                if row.get("paper_guided_cost_observed", 0.0)
+            ])) if any(
+                row.get("paper_guided_cost_observed", 0.0)
+                for row in values
+            ) else 0.0,
+            "paper_gaussian_feasible_fraction_mean": float(np.mean([
+                row.get("paper_gaussian_feasible_fraction", 0.0)
+                for row in values
+            ])),
+            "paper_actor_baseline_mean_abs_delta_mean": float(np.mean([
+                row.get("paper_actor_baseline_mean_abs_delta", 0.0)
+                for row in values
+            ])),
+            "paper_actor_baseline_first_action_l2_delta_mean": float(np.mean([
+                row.get(
+                    "paper_actor_baseline_first_action_l2_delta", 0.0
+                )
+                for row in values
+            ])),
             "rl_elite_fraction_mean": float(np.mean([
                 row.get("rl_elite_fraction", 0.0) for row in values
             ])),

@@ -498,11 +498,23 @@ def test_reliability_hss_applies_authority_on_next_control_cycle():
     assert first.diagnostics["reliability_proposal_fallback_fraction"] == 0.0
     assert second.diagnostics["paper_guided_unique_sequences"] == 12
     assert second.diagnostics["reliability_guided_fraction_applied"] == 0.6
+    assert second.diagnostics["paper_guided_cost_observed"]
+    assert second.diagnostics["paper_gaussian_cost_observed"]
+    assert second.diagnostics["paper_guided_opportunity_count"] > 0
+    assert second.diagnostics["paper_gaussian_opportunity_count"] > 0
+    assert np.isfinite(
+        second.diagnostics["paper_guided_minus_gaussian_cost_mean"]
+    )
+    assert np.isfinite(
+        second.diagnostics["paper_actor_baseline_mean_abs_delta"]
+    )
 
     low = _reliable_controller(ReliabilityDirectPolicy(8.0))
     low.plan(_observation(), PointGoal(1.0, 0.0))
     suppressed = low.plan(_observation(), PointGoal(1.0, 0.0))
     assert suppressed.diagnostics["paper_guided_unique_sequences"] == 0
+    assert not suppressed.diagnostics["paper_guided_cost_observed"]
+    assert suppressed.diagnostics["paper_guided_opportunity_count"] == 0
     assert suppressed.diagnostics["reliability_guided_fraction_applied"] == 0.0
     assert suppressed.diagnostics["reliability_proposal_authority"] == 0.0
     assert suppressed.diagnostics["reliability_proposal_fallback_fraction"] == 1.0

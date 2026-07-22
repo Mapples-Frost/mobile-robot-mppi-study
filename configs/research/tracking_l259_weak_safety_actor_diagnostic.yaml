@@ -1,0 +1,24 @@
+include: tracking_l258_heldout_gate.yaml
+
+final_benchmark:
+  status: development
+  preregistration: docs/experiments/post_l217/l259_weak_safety_actor_diagnostic_protocol.md
+
+  # MuJoCo development only.  This deliberately weak guard is never loaded by
+  # the hardware bridge or any real-robot launch configuration.
+  scan_guard_overrides:
+    near_body_stop_radius: 0.0
+    side_stop_distance: 0.0
+    front_stop_distance: 0.24
+    hard_stop_distance: 0.24
+    front_soft_block_distance: 0.30
+    front_soft_block_max_speed: 0.20
+    front_slow_distance: 0.50
+    front_slow_min_scale: 0.85
+    front_angle_deg: 20.0
+
+  # Short causal diagnostic only; no pass/fail method claim is permitted.
+  development_seeds: [923301021]
+  max_steps_by_scene:
+    tracking_grand_s_chicane_l234: 250
+

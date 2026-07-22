@@ -19,6 +19,11 @@ from .demonstrations import (
     load_demonstration_manifest,
     load_demonstration_split,
 )
+from .recovery_retention import (
+    load_manifest as load_recovery_retention_manifest,
+    load_split as load_recovery_retention_split,
+    manifest_fingerprint as recovery_retention_manifest_fingerprint,
+)
 from .environment import (
     DirectControlEnv,
     MppiPriorEnv,
@@ -654,6 +659,7 @@ class BehaviorCloningAnchorConfig:
     mean_weight: float = 1.0
     log_std_weight: float = 0.0
     target_log_std: float = -2.0
+    dataset_format: str = "demonstration_v3"
 
     @classmethod
     def from_mapping(cls, values=None):
@@ -680,6 +686,10 @@ class BehaviorCloningAnchorConfig:
             raise ValueError(
                 "BC anchor mean_weight must be positive and log_std_weight non-negative"
             )
+        if self.dataset_format not in (
+            "demonstration_v3", "recovery_retention_v1"
+        ):
+            raise ValueError("BC anchor dataset_format is unsupported")
 
 
 class BehaviorCloningAnchor:
@@ -713,16 +723,26 @@ class BehaviorCloningAnchor:
         if not path.is_absolute():
             path = Path(project_root) / path
         self.dataset_dir = path.resolve()
-        manifest = load_demonstration_manifest(self.dataset_dir)
-        dataset_action_mode = demonstration_action_mode(manifest)
+        if self.config.dataset_format == "recovery_retention_v1":
+            manifest = load_recovery_retention_manifest(self.dataset_dir)
+            dataset_action_mode = str(manifest["action_mode"])
+            arrays = load_recovery_retention_split(self.dataset_dir, "train")
+            self.manifest_fingerprint = (
+                recovery_retention_manifest_fingerprint(manifest)
+            )
+        else:
+            manifest = load_demonstration_manifest(self.dataset_dir)
+            dataset_action_mode = demonstration_action_mode(manifest)
+            arrays = load_demonstration_split(self.dataset_dir, "train")
+            self.manifest_fingerprint = demonstration_manifest_fingerprint(
+                manifest
+            )
         if dataset_action_mode != self.action_mode:
             raise ValueError(
                 "BC anchor action_mode does not match actor "
                 "(dataset=%s, actor=%s)"
                 % (dataset_action_mode, self.action_mode)
             )
-        arrays = load_demonstration_split(self.dataset_dir, "train")
-        self.manifest_fingerprint = demonstration_manifest_fingerprint(manifest)
         self.observations = arrays["observations"]
         self.actions = arrays["teacher_actions"]
         if (
@@ -752,6 +772,7 @@ class BehaviorCloningAnchor:
                 None if self.dataset_dir is None else str(self.dataset_dir)
             ),
             "dataset_manifest_sha256": self.manifest_fingerprint,
+            "dataset_format": self.config.dataset_format,
             "action_mode": self.action_mode,
             "batch_size": int(self.config.batch_size),
             "mean_weight": float(self.config.mean_weight),

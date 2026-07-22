@@ -1,0 +1,13 @@
+include: l279_recovery_retention_anchor_sac_6k.yaml
+
+experiment:
+  name: l281_component_separated_anchor_sac_6k
+  output_dir: results/research_platform/rl/l281_component_separated_anchor_sac_6k
+
+rl:
+  policy_id: l281_component_separated_anchor_sac_6k
+  training:
+    bc_anchor:
+      source_kind_balanced: true
+      recovery_action_mean_weights: [1.0, 1.0]
+      source_action_mean_weights: [0.0, 1.0]

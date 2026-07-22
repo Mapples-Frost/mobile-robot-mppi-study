@@ -1,4 +1,4 @@
-from experiments.rl.evaluate_l268_critic_gate import _gate_from_rows
+from experiments.rl.evaluate_l268_critic_gate import _gate_from_rows, _number
 
 
 THRESHOLDS = {
@@ -51,3 +51,9 @@ def test_l268_gate_fails_without_critic_ranking_repair():
     assert not checks["aggregate_in_support_spearman_positive"]
     assert not checks["recovery_forward_pair_accuracy"]
     assert not checks["no_scene_spearman_collapse"]
+
+
+def test_l268_gate_treats_nan_as_missing_not_a_numeric_scene_change():
+    assert _number("nan") is None
+    assert _number("inf") is None
+    assert _number("-inf") is None

@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import math
 import statistics
 import sys
 from collections import defaultdict
@@ -50,7 +51,8 @@ def _json_dump(path: Path, payload):
 def _number(value):
     if value in (None, "", "None", "null"):
         return None
-    return float(value)
+    result = float(value)
+    return result if math.isfinite(result) else None
 
 
 def _boolean(value):

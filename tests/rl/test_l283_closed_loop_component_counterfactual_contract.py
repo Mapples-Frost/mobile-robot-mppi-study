@@ -2,6 +2,11 @@ from pathlib import Path
 
 import yaml
 
+from experiments.rl.run_l283_closed_loop_component_counterfactual import (
+    _closed_loop_teacher_action,
+    _new_teacher,
+)
+
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -28,3 +33,8 @@ def test_l283_protocol_freezes_actual_state_teacher_and_attribution():
     assert "216 rollouts" in text
     assert "50%" in text
     assert "never authorizes" in text
+
+
+def test_l283_exports_closed_loop_teacher_helpers():
+    assert callable(_new_teacher)
+    assert callable(_closed_loop_teacher_action)

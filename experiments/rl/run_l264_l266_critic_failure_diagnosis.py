@@ -27,7 +27,6 @@ if str(ROOT / "src") not in sys.path:
 import mobile_robot_mppi.rl.sac as sac_module
 from experiments.rl.run_l263_counterfactual_actor_diagnosis import (
     _load_agent,
-    observation_feature_names,
 )
 from mobile_robot_mppi.rl.sac import SACAgent
 from mobile_robot_mppi.rl.trainer import SACTrainer
@@ -198,8 +197,11 @@ def _normalized_batch(replay, indices, normalizer):
 
 def _manual_target(agent, batch, seed):
     _set_torch_seed(seed)
-    reward = np.asarray(batch["rewards"], dtype=np.float64)
-    done = np.asarray(batch["dones"], dtype=np.float64)
+    # The training target is a float32 tensor.  Reproduce that dtype in the
+    # independent NumPy contract check; a float64 re-evaluation is retained
+    # separately to quantify harmless operation-order/rounding differences.
+    reward = np.asarray(batch["rewards"], dtype=np.float32)
+    done = np.asarray(batch["dones"], dtype=np.float32)
     with torch.no_grad():
         next_observation = torch.as_tensor(
             batch["next_observations"], dtype=torch.float32, device=agent.device
@@ -210,12 +212,22 @@ def _manual_target(agent, batch, seed):
         q1 = agent.target_critic1(next_observation, next_action)
         q2 = agent.target_critic2(next_observation, next_action)
         minimum = torch.minimum(q1, q2)
-    action_np = next_action.cpu().numpy().astype(np.float64)
-    logp_np = log_probability.cpu().numpy().astype(np.float64)
-    minimum_np = minimum.cpu().numpy().astype(np.float64)
-    alpha = float(agent.alpha.detach().cpu())
+    action_np = next_action.cpu().numpy().astype(np.float32)
+    logp_np = log_probability.cpu().numpy().astype(np.float32)
+    minimum_np = minimum.cpu().numpy().astype(np.float32)
+    alpha = np.float32(float(agent.alpha.detach().cpu()))
+    gamma = np.float32(float(agent.config.gamma))
     bootstrap = minimum_np - alpha * logp_np
-    target = reward + (1.0 - done) * float(agent.config.gamma) * bootstrap
+    target = reward + (np.float32(1.0) - done) * gamma * bootstrap
+    target_high_precision = (
+        reward.astype(np.float64)
+        + (1.0 - done.astype(np.float64))
+        * float(agent.config.gamma)
+        * (
+            minimum_np.astype(np.float64)
+            - float(alpha) * logp_np.astype(np.float64)
+        )
+    )
     return {
         "action": action_np,
         "log_probability": logp_np,
@@ -224,7 +236,8 @@ def _manual_target(agent, batch, seed):
         "minimum": minimum_np,
         "entropy_bonus": -alpha * logp_np,
         "bootstrap": bootstrap,
-        "target": target,
+        "target": target.astype(np.float64),
+        "target_high_precision": target_high_precision,
     }
 
 
@@ -584,10 +597,6 @@ def _continuity(replay):
 
 
 def _coverage_rows(replay, diagnostics, scene_names):
-    names = observation_feature_names({
-        **{},
-    }) if False else None
-    del names
     order, continuous_next, episode_ids = _continuity(replay)
     id_to_index = {
         int(identifier): int(index)
@@ -738,7 +747,7 @@ def _coverage_rows(replay, diagnostics, scene_names):
 
 def _static_contracts(payload):
     update_source = inspect.getsource(SACAgent.update)
-    trainer_source = inspect.getsource(SACTrainer.train)
+    trainer_source = inspect.getsource(SACTrainer.run)
     agent_state = payload["agent"]
     return {
         "reward_scale_in_environment_only": "reward_scale" not in update_source,
@@ -815,6 +824,10 @@ def _write_report(path, summary):
     l264 = summary["l264"]
     decision = summary["decision"]
     support = {row["support"]: row for row in summary["l265_support_summary"]}
+    stages = {
+        row["category"]: row for row in summary["l266"]["coverage_bins"]
+        if row["dimension"] == "stage"
+    }
     lines = [
         "# L264–L266 Critic 根因诊断",
         "",
@@ -825,6 +838,10 @@ def _write_report(path, summary):
         "- 根因分类：`%s`。" % decision["cause"],
         "- 唯一下一步建议：`%s`。" % decision["unique_recommendation"],
         "- Bellman 手工复算最大误差：`%.3g`（阈值 `1e-6`）。" % l264["maximum_absolute_target_error"],
+        "- float64 二次复算与 float32 训练张量的最大舍入差：`%.3g`。" % l264["float64_re_evaluation_maximum_error"],
+        "- 明确正向恢复 transition：`%d / %d`。" % (
+            stages["recovery"]["count"], summary["integrity"]["replay_rows"]
+        ),
         "- 完整离轨—恢复—回线链：`%d` 条。" % decision["complete_recovery_chains"],
         "",
         "## 动作支持域",
@@ -880,6 +897,9 @@ def main():
         checkpoint, args.device, batch, DIAGNOSTIC_SEED
     )
     target_error = float(np.max(np.abs(captured[0] - manual["target"])))
+    high_precision_target_error = float(np.max(np.abs(
+        captured[0] - manual["target_high_precision"]
+    )))
     twin_capture_error = float(np.max(np.abs(captured[0] - captured[1])))
     contracts = _static_contracts(payload)
     contract_pass = all(
@@ -903,6 +923,9 @@ def main():
             "entropy_bonus": float(manual["entropy_bonus"][local, 0]),
             "bootstrap_mean": float(np.mean(manual["bootstrap"][local])),
             "manual_target_mean": float(np.mean(manual["target"][local])),
+            "high_precision_target_mean": float(np.mean(
+                manual["target_high_precision"][local]
+            )),
             "captured_target_mean": float(np.mean(captured[0][local])),
             "maximum_quantile_error": float(np.max(np.abs(
                 captured[0][local] - manual["target"][local]
@@ -956,6 +979,7 @@ def main():
         "l264": {
             "pass": l264_pass,
             "maximum_absolute_target_error": target_error,
+            "float64_re_evaluation_maximum_error": high_precision_target_error,
             "critic1_vs_critic2_captured_target_error": twin_capture_error,
             "static_contracts": contracts,
             "scene_q_scales": scene_scale_rows,

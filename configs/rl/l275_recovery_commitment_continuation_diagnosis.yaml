@@ -1,0 +1,41 @@
+experiment:
+  name: l275_recovery_commitment_continuation_diagnosis
+  output_dir: results/research_platform/rl/l275_recovery_commitment_continuation_diagnosis
+
+l275:
+  protocol: L275
+  diagnostic_only: true
+  actor_training_authorized: false
+  source_checkpoint: results/research_platform/rl/l262_coverage_gated_value_seed20262611_6k/checkpoints/step_000006000.pt
+  source_checkpoint_sha256: 48e662fd728c0d1d62b1ff79681e5cdd924b120d9411c8df6e062a814b4d42a7
+  l268_dataset: results/research_platform/rl/l268_recovery_balanced_intervention/recovery_dataset
+  l268_dataset_manifest_sha256: 6a67425a851f2c06023045a47747d2f7719ada011a30ba78c5f5fc25a051c192
+  l268_heldout_states: results/research_platform/rl/l268_recovery_balanced_intervention/heldout_recovery_diagnostic/state_manifest.json
+  l268_heldout_states_sha256: f18b3cbf1917250462dbd7c80202f21454e9778f72b17d3af2fb48901e68f9e2
+  l269_summary: results/research_platform/rl/l269_long_horizon_credit_probe/horizon_diagnostic/summary.json
+  l269_summary_sha256: 6560060a6ff68b3c512d0846c324f2e085249c5ee15609f01425a67f07312091
+  l274_summary: results/research_platform/rl/l274_recovery_coverage_privileged_observation_diagnosis/summary.json
+  l274_summary_sha256: 8b5261dbddee411c811edac690172a28486d7b6cb4c1fc93c48acddddd9ce1d2
+  commitments: [1, 5, 10, 20, 40, full_chain]
+  evaluation_horizon: accepted_chain_length
+  intervention_continuation: recorded_recovery_then_source_actor
+  baseline_continuation: source_actor
+  reset_tolerance: 1.0e-6
+  recorded_prefix_reward_tolerance: 1.0e-5
+  expected_states: 36
+  expected_scenes: 6
+  gate:
+    minimum_full_chain_positive_fraction: 0.75
+    minimum_positive_fraction_gain_full_vs_one: 0.20
+    require_median_full_greater_than_one: true
+    minimum_late_first_positive_fraction: 0.25
+    late_commitment_minimum_steps: 5
+    minimum_scenes_with_full_chain_majority_positive: 4
+  forbidden_tokens:
+    - l258_tracking_curriculum
+    - l258_heldout_tracking_gate
+    - hairpin_v1
+    - s_chicane_v1
+    - infinity_v1
+    - sealed
+

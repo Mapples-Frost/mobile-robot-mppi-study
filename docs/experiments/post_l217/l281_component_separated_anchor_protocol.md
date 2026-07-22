@@ -20,6 +20,11 @@ routing:
 - both source kinds retain the frozen log-standard-deviation anchor;
 - the online SAC loss remains unchanged.
 
+The mean-loss denominator remains the original batch-size times action
+dimension; active terms are not renormalized after masking.  Thus the
+intervention deletes only the preregistered source/linear-speed contribution
+and does not amplify the remaining recovery or angular gradients.
+
 This is the minimal deployable realization of the L280-authorized separated
 anchor intervention: no new observation, router, parameter, or inference-time
 branch is introduced.  It removes only the source gradient from the conflicted

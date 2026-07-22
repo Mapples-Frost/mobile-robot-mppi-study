@@ -1,0 +1,4 @@
+include: l281_component_separated_anchor_sac_6k.yaml
+experiment: {name: l281_component_separated_anchor_seed20263313_6k, output_dir: results/research_platform/rl/l281_component_separated_anchor_seed20263313_6k}
+rl:
+  training: {seed: 20263313, validation_seed_base: 20264313}

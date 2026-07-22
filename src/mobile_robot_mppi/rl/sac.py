@@ -1126,7 +1126,13 @@ class SACAgent:
     def _clip(self, module):
         return float(nn.utils.clip_grad_norm_(module.parameters(), self.config.gradient_clip_norm))
 
-    def _behavior_cloning_losses(self, observations, expert_actions, target_log_std):
+    def _behavior_cloning_losses(
+        self,
+        observations,
+        expert_actions,
+        target_log_std,
+        action_mean_weights=None,
+    ):
         observation = np.asarray(observations, dtype=np.float32)
         target = np.asarray(expert_actions, dtype=np.float32)
         if (
@@ -1157,7 +1163,27 @@ class SACAgent:
         )
         mean, log_std = self.actor.distribution(observation_tensor)
         predicted = torch.tanh(mean)
-        mean_loss = F.mse_loss(predicted, target_tensor)
+        squared_error = (predicted - target_tensor).square()
+        if action_mean_weights is None:
+            mean_loss = squared_error.mean()
+        else:
+            weights = np.asarray(action_mean_weights, dtype=np.float32)
+            if (
+                weights.shape != target.shape
+                or not np.isfinite(weights).all()
+                or np.any(weights < 0.0)
+                or not np.any(weights > 0.0)
+            ):
+                raise ValueError(
+                    "BC action mean weights must be finite, non-negative, and match actions"
+                )
+            weight_tensor = torch.as_tensor(
+                weights, dtype=torch.float32, device=self.device
+            )
+            # Preserve the original batch-by-action denominator so masking one
+            # source/component removes only that gradient contribution instead
+            # of silently amplifying every remaining anchor term.
+            mean_loss = (squared_error * weight_tensor).mean()
         log_std_loss = F.mse_loss(
             log_std, torch.full_like(log_std, target_log_std)
         )
@@ -1345,6 +1371,7 @@ class SACAgent:
                 behavior_batch["observations"],
                 behavior_batch["actions"],
                 behavior_target_log_std,
+                behavior_batch.get("action_mean_weights"),
             )
             anchor_log_std = anchor_log_std_values.mean()
             actor_loss = (
@@ -1424,6 +1451,21 @@ class SACAgent:
             ),
             "bc_anchor_log_std_loss": float(anchor_log_std_loss.detach().cpu()),
             "bc_anchor_log_std_mean": float(anchor_log_std.detach().cpu()),
+            "bc_anchor_recovery_fraction": float(
+                np.mean(np.asarray(behavior_batch["source_kinds"]) == 0)
+                if behavior_batch is not None and "source_kinds" in behavior_batch
+                else -1.0
+            ),
+            "bc_anchor_velocity_weight_mean": float(
+                np.mean(np.asarray(behavior_batch["action_mean_weights"])[:, 0])
+                if behavior_batch is not None and "action_mean_weights" in behavior_batch
+                else -1.0
+            ),
+            "bc_anchor_angular_weight_mean": float(
+                np.mean(np.asarray(behavior_batch["action_mean_weights"])[:, 1])
+                if behavior_batch is not None and "action_mean_weights" in behavior_batch
+                else -1.0
+            ),
             "actor_update_applied": float(bool(update_actor)),
             "alpha_loss": float(alpha_loss.detach().cpu()),
             "alpha": float(self.alpha.detach().cpu()),

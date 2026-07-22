@@ -660,6 +660,9 @@ class BehaviorCloningAnchorConfig:
     log_std_weight: float = 0.0
     target_log_std: float = -2.0
     dataset_format: str = "demonstration_v3"
+    source_kind_balanced: bool = False
+    recovery_action_mean_weights: Optional[Sequence[float]] = None
+    source_action_mean_weights: Optional[Sequence[float]] = None
 
     @classmethod
     def from_mapping(cls, values=None):
@@ -690,6 +693,38 @@ class BehaviorCloningAnchorConfig:
             "demonstration_v3", "recovery_retention_v1"
         ):
             raise ValueError("BC anchor dataset_format is unsupported")
+        component_values = (
+            self.recovery_action_mean_weights,
+            self.source_action_mean_weights,
+        )
+        if any(value is not None for value in component_values):
+            if self.dataset_format != "recovery_retention_v1":
+                raise ValueError(
+                    "component-separated BC anchor requires recovery-retention data"
+                )
+            if not self.source_kind_balanced:
+                raise ValueError(
+                    "component-separated BC anchor requires source-kind balancing"
+                )
+            if any(value is None for value in component_values):
+                raise ValueError(
+                    "both recovery and source action weights are required"
+                )
+            for value in component_values:
+                weights = np.asarray(value, dtype=np.float64).reshape(-1)
+                if (
+                    weights.size == 0
+                    or not np.isfinite(weights).all()
+                    or np.any(weights < 0.0)
+                    or not np.any(weights > 0.0)
+                ):
+                    raise ValueError(
+                        "BC anchor action weights must be finite and non-negative"
+                    )
+        elif self.source_kind_balanced:
+            raise ValueError(
+                "source-kind balancing requires component action weights"
+            )
 
 
 class BehaviorCloningAnchor:
@@ -716,6 +751,7 @@ class BehaviorCloningAnchor:
         self.action_mode = str(action_mode)
         self.observations = None
         self.actions = None
+        self.source_kinds = None
         self.rng = np.random.RandomState(int(seed) + 7919)
         if not self.enabled:
             return
@@ -745,6 +781,7 @@ class BehaviorCloningAnchor:
             )
         self.observations = arrays["observations"]
         self.actions = arrays["teacher_actions"]
+        self.source_kinds = arrays.get("source_kinds")
         if (
             self.observations.shape[0] <= 0
             or self.observations.shape[1] != int(observation_dim)
@@ -752,18 +789,61 @@ class BehaviorCloningAnchor:
             raise ValueError("BC anchor observation contract does not match actor")
         if self.actions.shape[1] != int(action_dim):
             raise ValueError("BC anchor action contract does not match actor")
+        for value in (
+            self.config.recovery_action_mean_weights,
+            self.config.source_action_mean_weights,
+        ):
+            if value is not None and np.asarray(value).reshape(-1).size != int(action_dim):
+                raise ValueError(
+                    "BC anchor action weights must match actor action dimension"
+                )
+        if self.config.source_kind_balanced:
+            if (
+                self.source_kinds is None
+                or self.source_kinds.shape != (self.observations.shape[0],)
+                or set(np.unique(self.source_kinds)) != {0, 1}
+                or int(self.config.batch_size) % 2 != 0
+            ):
+                raise ValueError(
+                    "source-kind-balanced BC anchor requires two sources and an even batch"
+                )
 
     def sample(self, normalizer):
         if not self.enabled:
             return None
         count = int(self.observations.shape[0])
-        indices = self.rng.randint(
-            0, count, size=int(self.config.batch_size)
-        )
-        return {
+        if self.config.source_kind_balanced:
+            half = int(self.config.batch_size) // 2
+            recovery = np.flatnonzero(self.source_kinds == 0)
+            source = np.flatnonzero(self.source_kinds == 1)
+            indices = np.concatenate((
+                self.rng.choice(recovery, size=half, replace=True),
+                self.rng.choice(source, size=half, replace=True),
+            ))
+            self.rng.shuffle(indices)
+        else:
+            indices = self.rng.randint(
+                0, count, size=int(self.config.batch_size)
+            )
+        result = {
             "observations": normalizer.normalize(self.observations[indices]),
             "actions": self.actions[indices],
         }
+        if self.config.source_kind_balanced:
+            kinds = self.source_kinds[indices]
+            recovery_weights = np.asarray(
+                self.config.recovery_action_mean_weights, dtype=np.float32
+            )
+            source_weights = np.asarray(
+                self.config.source_action_mean_weights, dtype=np.float32
+            )
+            result["source_kinds"] = kinds.copy()
+            result["action_mean_weights"] = np.where(
+                kinds[:, None] == 0,
+                recovery_weights[None, :],
+                source_weights[None, :],
+            ).astype(np.float32, copy=False)
+        return result
 
     def metadata(self):
         return {
@@ -778,6 +858,15 @@ class BehaviorCloningAnchor:
             "mean_weight": float(self.config.mean_weight),
             "log_std_weight": float(self.config.log_std_weight),
             "target_log_std": float(self.config.target_log_std),
+            "source_kind_balanced": bool(self.config.source_kind_balanced),
+            "recovery_action_mean_weights": (
+                None if self.config.recovery_action_mean_weights is None
+                else list(self.config.recovery_action_mean_weights)
+            ),
+            "source_action_mean_weights": (
+                None if self.config.source_action_mean_weights is None
+                else list(self.config.source_action_mean_weights)
+            ),
         }
 
 

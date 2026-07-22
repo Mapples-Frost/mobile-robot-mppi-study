@@ -1,0 +1,99 @@
+experiment:
+  name: l273_critic_capacity_action_representation_diagnosis
+  output_dir: results/research_platform/rl/l273_critic_capacity_action_representation_diagnosis
+
+l273:
+  protocol: L273
+  actor_training_authorized: false
+  l272:
+    summary: results/research_platform/rl/l272_critic_architecture_causal_probe/summary.json
+    summary_sha256: ec3880abb127f3c52e2140b781766f78bfa183887aad25f71defb03ba66c57e2
+    required_decision: audit_critic_capacity_and_action_representation
+  source_architecture:
+    observation_dim: 69
+    action_dim: 2
+    hidden_sizes: [256, 256]
+    activation: relu
+    critic_distribution: quantile
+    critic_num_quantiles: 25
+    critic_quantile_huber_kappa: 1.0
+  oracle_fit:
+    l263_states: results/research_platform/rl/l263_counterfactual_actor_diagnosis/state_manifest.json
+    l263_states_sha256: c14f9be873f23d0bfd0fb5dccc73aa3f84c1bc2f0487c3ad7b6ba362c27adec2
+    l263_returns: results/research_platform/rl/l263_counterfactual_actor_diagnosis/counterfactual_rollouts.csv
+    l263_returns_sha256: 2d9d2ba2f366fa7524219ca2bcb43c3fdc300ef7ee34b6f15c406a144c6d2151
+    continuation: constant
+    horizon: 40
+    training_role: train
+    validation_role: validation
+    expected_train_states: 18
+    expected_validation_states: 8
+    expected_actions_per_state: 27
+    target: within_state_standardized_h40_advantage
+    target_std_floor: 1.0e-6
+  external_evaluation:
+    states: results/research_platform/rl/l268_recovery_balanced_intervention/heldout_recovery_diagnostic/state_manifest.json
+    states_sha256: f18b3cbf1917250462dbd7c80202f21454e9778f72b17d3af2fb48901e68f9e2
+    returns: results/research_platform/rl/l268_recovery_balanced_intervention/heldout_recovery_diagnostic/action_returns_h40.csv
+    returns_sha256: 0799926d2a84e4914d045c1ebb2593c1d15af26e4f713151819fb8539091eea7
+    expected_states: 36
+    expected_actions_per_state: 3
+    primary_pair: [recorded_recovery, fast_forward]
+  design:
+    device: cuda
+    paired_seeds: [20263111, 20263112, 20263113]
+    arm_order_seed: 20263110
+    updates: 3000
+    checkpoint_updates: [1000, 3000]
+    batch_size: 256
+    learning_rate: 0.0003
+    gradient_clip_norm: 10.0
+    sampling_unit: state_then_action_with_replacement
+    arms:
+      - name: baseline_raw
+        hidden_sizes: [256, 256]
+        action_encoding: raw
+      - name: capacity_wide_raw
+        hidden_sizes: [512, 512]
+        action_encoding: raw
+      - name: baseline_polynomial
+        hidden_sizes: [256, 256]
+        action_encoding: polynomial_degree3
+      - name: capacity_wide_polynomial
+        hidden_sizes: [512, 512]
+        action_encoding: polynomial_degree3
+  action_encoding:
+    raw_features: [v, omega]
+    polynomial_degree3_features: [v, omega, v2, omega2, v_omega, v3, omega3, v2_omega, v_omega2]
+  evaluation:
+    metrics:
+      - train_mean_state_spearman
+      - validation_mean_state_spearman
+      - validation_top1_agreement
+      - external_mean_state_spearman
+      - external_recovery_forward_accuracy
+      - scene_coverage
+    inference_unit: paired_seed
+  decision:
+    minimum_train_spearman_for_sufficiency: 0.80
+    minimum_validation_spearman_for_sufficiency: 0.20
+    minimum_external_pair_accuracy_for_sufficiency: 0.65
+    minimum_paired_median_train_spearman_gain: 0.15
+    minimum_paired_median_validation_spearman_gain: 0.10
+    minimum_paired_median_external_pair_gain: 0.10
+    minimum_consistent_seed_blocks: 2
+    minimum_external_scenes_improved: 4
+    maximum_external_scene_pair_decrease: 0.166667
+    priority_order:
+      - bellman_learning_not_function_class
+      - action_representation_limited
+      - capacity_limited
+      - combined_capacity_action_limited
+      - observation_or_target_generalization_limited
+  forbidden_tokens:
+    - l258_tracking_curriculum
+    - l258_heldout_tracking_gate
+    - hairpin_v1
+    - s_chicane_v1
+    - infinity_v1
+

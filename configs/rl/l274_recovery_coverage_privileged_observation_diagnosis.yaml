@@ -1,0 +1,107 @@
+experiment:
+  name: l274_recovery_coverage_privileged_observation_diagnosis
+  output_dir: results/research_platform/rl/l274_recovery_coverage_privileged_observation_diagnosis
+
+l274:
+  protocol: L274
+  actor_training_authorized: false
+  l273:
+    summary: results/research_platform/rl/l273_critic_capacity_action_representation_diagnosis/summary.json
+    summary_sha256: 7d8fc97faf73151fd5c3868a2500b4953740473719f94c0f683ad83f832c08f6
+    required_decision: observation_or_target_generalization_limited
+  source:
+    l263_states: results/research_platform/rl/l263_counterfactual_actor_diagnosis/state_manifest.json
+    l263_states_sha256: c14f9be873f23d0bfd0fb5dccc73aa3f84c1bc2f0487c3ad7b6ba362c27adec2
+    l263_returns: results/research_platform/rl/l263_counterfactual_actor_diagnosis/counterfactual_rollouts.csv
+    l263_returns_sha256: 2d9d2ba2f366fa7524219ca2bcb43c3fdc300ef7ee34b6f15c406a144c6d2151
+    l263_actions: results/research_platform/rl/l263_counterfactual_actor_diagnosis/critic_actions.csv
+    l263_actions_sha256: e89e03089719fa0d521cbd19f2dab82fb85e06e9cdf472acd25da3c07d059d68
+    train_role: train
+    continuation: constant
+    horizon: 40
+    expected_states: 18
+    expected_actions_per_state: 27
+  recovery:
+    states: results/research_platform/rl/l268_recovery_balanced_intervention/heldout_recovery_diagnostic/state_manifest.json
+    states_sha256: f18b3cbf1917250462dbd7c80202f21454e9778f72b17d3af2fb48901e68f9e2
+    returns: results/research_platform/rl/l268_recovery_balanced_intervention/heldout_recovery_diagnostic/action_returns_h40.csv
+    returns_sha256: 0799926d2a84e4914d045c1ebb2593c1d15af26e4f713151819fb8539091eea7
+    expected_states: 36
+    expected_scenes: 6
+    expected_states_per_scene: 6
+    expected_actions_per_state: 3
+    primary_pair: [recorded_recovery, fast_forward]
+  features:
+    base_observation_dim: 69
+    privileged_path_fields:
+      - signed_cross_track_error
+      - cross_track_error
+      - heading_error
+      - curvature
+      - progress_fraction
+      - remaining_fraction
+    privileged_dim: 6
+    normalization: train_fold_mean_std
+    std_floor: 1.0e-6
+  cross_fit:
+    folds: 3
+    assignment: within_scene_sorted_severity_side_chain_index_modulo_3
+    heldout_states_per_scene_per_fold: 2
+    heldout_states_per_fold: 12
+    each_recovery_state_evaluated_once: true
+  design:
+    device: cuda
+    paired_seeds: [20263121, 20263122, 20263123]
+    arm_order_seed: 20263120
+    updates: 3000
+    checkpoint_updates: [1000, 3000]
+    batch_size: 256
+    learning_rate: 0.0003
+    gradient_clip_norm: 10.0
+    hidden_sizes: [256, 256]
+    activation: relu
+    critic_distribution: quantile
+    critic_num_quantiles: 25
+    critic_quantile_huber_kappa: 1.0
+    target: within_state_standardized_h40_advantage
+    target_std_floor: 1.0e-6
+    sampling: uniform_state_then_uniform_action
+    arms:
+      - name: source_69d
+        recovery_training: false
+        privileged_features: false
+      - name: source_privileged75d
+        recovery_training: false
+        privileged_features: true
+      - name: recovery_augmented_69d
+        recovery_training: true
+        privileged_features: false
+      - name: recovery_augmented_privileged75d
+        recovery_training: true
+        privileged_features: true
+  evaluation:
+    unit: paired_seed_crossfit_aggregate
+    metrics:
+      - recovery_forward_accuracy
+      - three_action_spearman
+      - top1_agreement
+      - six_scene_coverage
+  gate:
+    minimum_aggregate_pair_accuracy: 0.65
+    minimum_paired_median_pair_gain: 0.10
+    minimum_paired_median_spearman_gain: 0.10
+    minimum_consistent_seed_blocks: 2
+    minimum_scenes_improved: 4
+    maximum_scene_pair_decrease: 0.166667
+  decision_priority:
+    - privileged_observation_limited
+    - recovery_state_coverage_limited
+    - combined_coverage_observation_limited
+    - temporal_or_target_dynamics_unresolved
+  forbidden_tokens:
+    - l258_tracking_curriculum
+    - l258_heldout_tracking_gate
+    - hairpin_v1
+    - s_chicane_v1
+    - infinity_v1
+

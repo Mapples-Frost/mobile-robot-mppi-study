@@ -1,0 +1,22 @@
+protocol: L282
+status: preregistered
+windows_native_only: true
+diagnostic_only: true
+actor_training_authorized: false
+l281_summary: {path: results/research_platform/rl/l281_component_separated_anchor_sac_probe/summary.json, sha256: 37ace4f1df7b78418d24f4c2949e7f7be4eb3a7087dfa6b165310ca29adf22a9}
+recovery_dataset: results/research_platform/rl/l268_recovery_balanced_intervention/recovery_dataset
+recovery_manifest_sha256: 6a67425a851f2c06023045a47747d2f7719ada011a30ba78c5f5fc25a051c192
+split: test
+expected_chains: 18
+arms: [teacher_both, actor_both, teacher_v_actor_omega, actor_v_teacher_omega]
+checkpoints:
+  - {seed: 20263311, path: results/research_platform/rl/l281_component_separated_anchor_seed20263311_6k/checkpoints/step_000006000.pt, sha256: 7cfed219a101370b733c19e2b71a35047ee10e5c8b6caa2d7e58914cbc50fecd}
+  - {seed: 20263312, path: results/research_platform/rl/l281_component_separated_anchor_seed20263312_6k/checkpoints/step_000006000.pt, sha256: ec806f39c969877dbdeb2c4bcd5d6e49cf28ff7c6cb772391bf7080504c2a6a1}
+  - {seed: 20263313, path: results/research_platform/rl/l281_component_separated_anchor_seed20263313_6k/checkpoints/step_000006000.pt, sha256: 4ee14ff7ea1c6ff2fe18703b1798a9a6f2b7b40dec1ecf5e2bd33d03cb4cae88}
+reset_tolerance: 1.0e-6
+teacher_reward_tolerance: 1.0e-5
+gate:
+  minimum_recovered_loss_fraction: 0.50
+  minimum_attributed_scenes: 4
+  minimum_attributed_seeds: 2
+forbidden_tokens: [l258, hairpin, s_chicane, infinity, sealed]

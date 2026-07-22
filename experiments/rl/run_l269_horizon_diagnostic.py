@@ -109,14 +109,22 @@ def _load_config(path: Path):
     return config, checkpoint, checks
 
 
-def _resolved_environment(base, scene_config, maximum_steps, seed):
+def _resolved_environment(base, scene_config, maximum_steps, seed, reset_contract):
     resolved = _scene_configs(base, [scene_config])[0]
     resolved = copy.deepcopy(resolved)
     resolved["experiment"]["max_steps"] = int(maximum_steps) + 1
-    resolved["experiment"]["initial_state_noise"] = [0.0] * len(
-        resolved["experiment"]["initial_state"]
-    )
-    resolved["rl"]["training"]["initial_state_curriculum"] = {"enabled": False}
+    zero_noise = [0.0] * len(resolved["experiment"]["initial_state"])
+    if reset_contract == "l263":
+        # Match run_l263_counterfactual_actor_diagnosis exactly.  L263 froze
+        # the training-level reset noise and left its curriculum mapping
+        # otherwise untouched.
+        resolved["rl"]["training"]["initial_state_noise"] = zero_noise
+    elif reset_contract == "l268":
+        # Match generate_l267_recovery_dataset as used by formal L268.
+        resolved["experiment"]["initial_state_noise"] = zero_noise
+        resolved["rl"]["training"]["initial_state_curriculum"] = {"enabled": False}
+    else:
+        raise ValueError("unknown frozen reset contract: %s" % reset_contract)
     return DirectControlEnv(resolved, ROOT, seed=int(seed))
 
 
@@ -282,7 +290,9 @@ def run(config_path: Path, output: Path, device: str):
     for state in l263_states:
         l263_by_scene[state["scene_config"]].append(state)
     for scene_config, states in sorted(l263_by_scene.items()):
-        environment = _resolved_environment(base, scene_config, 50, states[0]["seed"])
+        environment = _resolved_environment(
+            base, scene_config, 50, states[0]["seed"], "l263"
+        )
         try:
             for state in states:
                 candidate_rows.extend(_candidate_rows(
@@ -317,7 +327,9 @@ def run(config_path: Path, output: Path, device: str):
     full_chain_rows = []
     for scene_config, states in sorted(l268_by_scene.items()):
         maximum = max(int(chain_by_id[int(state["chain_id"])]["steps"]) for state in states)
-        environment = _resolved_environment(base, scene_config, maximum, states[0]["seed"])
+        environment = _resolved_environment(
+            base, scene_config, maximum, states[0]["seed"], "l268"
+        )
         try:
             for state in states:
                 chain = chain_by_id[int(state["chain_id"])]

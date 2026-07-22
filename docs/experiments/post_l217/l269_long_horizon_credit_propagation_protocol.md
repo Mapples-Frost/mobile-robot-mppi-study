@@ -6,6 +6,14 @@ negative Gate: balanced complete-recovery replay moved all three paired
 in-support Spearman estimates in the desired direction, but did not meet the
 frozen aggregate, magnitude, held-out, Top-3, or scene-stability thresholds.
 
+Engineering amendment before any L269 method outcome: the L263 replay contract
+was corrected to match the original L263 training-level reset-noise setting,
+rather than the distinct L268 collection reset contract. The failed first-state
+attempt is preserved as engineering-invalid raw. An all-state replay audit then
+reproduced all 62 accepted L263+L268 observations with maximum error 0.0. The
+text also corrects the L263 accepted-state count from planned 27 to actual 26;
+no horizon, return, threshold, or treatment arm changed.
+
 ## Question and frozen method
 
 L269 asks whether recovery value appears too late for the current one-step
@@ -25,7 +33,8 @@ All L263 and L268 diagnostic inputs are hash-pinned in the L269 config.
 The independent unit is a frozen simulator state, not a rollout row. Two fixed
 state blocks are used:
 
-1. all 27 L263 counterfactual states, comparing the geometric recovery action
+1. all 26 accepted L263 counterfactual states (one of the planned 27 was
+   rejected by L263 before rollout), comparing the geometric recovery action
    with the frozen source Actor action;
 2. all 36 L268 validation/test recovery-chain starts, comparing the recorded
    recovery action with the frozen source Actor action.
@@ -100,4 +109,3 @@ If multiple arms pass, selection is lexicographic by simplicity:
 5-step, then 10-step, then TD(lambda). There is no best-result selection.
 Regardless of outcome, L269 ends after this Gate. Actor remains frozen and no
 formal algorithm, reward, observation, fusion, or safety change is authorized.
-

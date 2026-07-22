@@ -1,0 +1,34 @@
+include: l261_value_stability_3k.yaml
+
+experiment:
+  name: l262_coverage_gated_value_6k
+  output_dir: results/research_platform/rl/l262_coverage_gated_value_seed20262611_6k
+
+rl:
+  policy_id: l262_coverage_gated_value_6k
+  training:
+    seed: 20262611
+    validation_seed_base: 20263611
+    total_steps: 6000
+    update_after: 500
+    # Fail closed until every training geometry has contributed replay.  The
+    # Actor starts only after the complete first six-map block.
+    replay_require_all_scenes: true
+    actor_update_after: 3000
+    evaluation_interval: 3000
+    checkpoint_interval: 3000
+    curriculum:
+      enabled: true
+      phases:
+        - {name: cycle1_s_bend, until_step: 500, scene_weights: [1, 0, 0, 0, 0, 0]}
+        - {name: cycle1_offset_hairpin, until_step: 1000, scene_weights: [0, 1, 0, 0, 0, 0]}
+        - {name: cycle1_near_double_loop, until_step: 1500, scene_weights: [0, 0, 1, 0, 0, 0]}
+        - {name: cycle1_curvature_ramp, until_step: 2000, scene_weights: [0, 0, 0, 1, 0, 0]}
+        - {name: cycle1_corridor_switchback, until_step: 2500, scene_weights: [0, 0, 0, 0, 1, 0]}
+        - {name: cycle1_compound_turns, until_step: 3000, scene_weights: [0, 0, 0, 0, 0, 1]}
+        - {name: cycle2_s_bend, until_step: 3500, scene_weights: [1, 0, 0, 0, 0, 0]}
+        - {name: cycle2_offset_hairpin, until_step: 4000, scene_weights: [0, 1, 0, 0, 0, 0]}
+        - {name: cycle2_near_double_loop, until_step: 4500, scene_weights: [0, 0, 1, 0, 0, 0]}
+        - {name: cycle2_curvature_ramp, until_step: 5000, scene_weights: [0, 0, 0, 1, 0, 0]}
+        - {name: cycle2_corridor_switchback, until_step: 5500, scene_weights: [0, 0, 0, 0, 1, 0]}
+        - {name: cycle2_compound_turns, until_step: 6000, scene_weights: [0, 0, 0, 0, 0, 1]}

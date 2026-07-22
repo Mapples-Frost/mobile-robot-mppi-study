@@ -1,0 +1,94 @@
+experiment:
+  name: l272_critic_architecture_causal_probe
+  output_dir: results/research_platform/rl/l272_critic_architecture_causal_probe
+
+l272:
+  protocol: L272
+  actor_training_authorized: false
+  source_checkpoint: results/research_platform/rl/l262_coverage_gated_value_seed20262611_6k/checkpoints/step_000006000.pt
+  source_checkpoint_sha256: 48e662fd728c0d1d62b1ff79681e5cdd924b120d9411c8df6e062a814b4d42a7
+  l271:
+    summary: results/research_platform/rl/l271_critic_scene_interference_diagnosis/summary.json
+    summary_sha256: 42407cd2d019ad953c9dc00193aeb1c7f181028df3980b42b9be1f87bf77f569
+    required_gate_pass: true
+  l268:
+    config: configs/rl/l268_recovery_balanced_intervention.yaml
+    config_sha256: 34779fcb89c13a62e6d75416c26794626481a22ede28adfc34d98a65ccc38820
+    dataset: results/research_platform/rl/l268_recovery_balanced_intervention/recovery_dataset
+    dataset_manifest_sha256: 6a67425a851f2c06023045a47747d2f7719ada011a30ba78c5f5fc25a051c192
+    heldout: results/research_platform/rl/l268_recovery_balanced_intervention/heldout_recovery_diagnostic
+    heldout_summary_sha256: dd5ac217b679d596377f9b8c4a83a2c36f403fc39e19c4a968071d0ee63705e6
+    heldout_states_sha256: f18b3cbf1917250462dbd7c80202f21454e9778f72b17d3af2fb48901e68f9e2
+    heldout_returns_sha256: 0799926d2a84e4914d045c1ebb2593c1d15af26e4f713151819fb8539091eea7
+    shared_checkpoints:
+      - seed: 20263071
+        path: results/research_platform/rl/l268_recovery_balanced_intervention/critic_only/seed_20263071/recovery_balanced/checkpoints/critic_update_006000.pt
+        sha256: 3d08ae92d48a3673bad42bc20f1e43fd54b397357c44e2696bd58654a28ac4f0
+      - seed: 20263072
+        path: results/research_platform/rl/l268_recovery_balanced_intervention/critic_only/seed_20263072/recovery_balanced/checkpoints/critic_update_006000.pt
+        sha256: 43f630609d6ae6c3d40cc9abe3d5b82558bbd2394a7e862c0a529bb8eaf8df8d
+      - seed: 20263073
+        path: results/research_platform/rl/l268_recovery_balanced_intervention/critic_only/seed_20263073/recovery_balanced/checkpoints/critic_update_006000.pt
+        sha256: 86633936c245ab0a6d9add670d2e9e2fa80d05bb1f1377b4e07b29fb1e781d18
+  forbidden_tokens:
+    - l258_tracking_curriculum
+    - l258_heldout_tracking_gate
+    - hairpin_v1
+    - s_chicane_v1
+    - infinity_v1
+  design:
+    device: cuda
+    paired_seeds: [20263071, 20263072, 20263073]
+    arm_order_seed: 20263470
+    scene_order_seed: 20263471
+    scene_count: 6
+    batch_size: 256
+    shared:
+      arm: shared_69d
+      updates: 6000
+      source: frozen_l268_recovery_balanced_checkpoint
+    per_scene:
+      arm: per_scene_equal_compute
+      critics: 6
+      updates_per_critic: 1000
+      checkpoint_interval: 500
+      sampling_strategy: uniform
+    scene_conditioned:
+      arm: scene_conditioned_equal_compute
+      context_dim: 6
+      context_encoding: one_hot
+      new_input_initialization: zeros
+      updates: 6000
+      checkpoint_interval: 3000
+      sampling_strategy: scene_balanced
+    arm_order:
+      - per_scene_equal_compute
+      - scene_conditioned_equal_compute
+  evaluation:
+    states: 36
+    actions_per_state: 3
+    horizon: 40
+    primary_pair: [recorded_recovery, fast_forward]
+    metrics:
+      - recovery_forward_pair_accuracy
+      - mean_three_action_spearman
+      - top1_action_agreement
+      - scene_pair_accuracy
+  gate:
+    minimum_aggregate_pair_accuracy: 0.65
+    minimum_paired_median_pair_accuracy_improvement: 0.10
+    minimum_aggregate_three_action_spearman: 0.15
+    minimum_paired_median_spearman_improvement: 0.10
+    minimum_aggregate_top1_agreement: 0.45
+    minimum_paired_median_top1_improvement: 0.05
+    minimum_jointly_improving_seed_blocks: 2
+    minimum_scenes_with_pair_accuracy_improvement: 4
+    maximum_scene_pair_accuracy_decrease: 0.166667
+    maximum_absolute_mean_q: 500.0
+    maximum_mean_quantile_spread: 100.0
+  selection_order:
+    - scene_conditioned_equal_compute
+    - per_scene_equal_compute
+  next_if_conditioned_pass: preregister_scene_conditioned_small_budget_actor_probe
+  next_if_only_per_scene_pass: design_deployable_scene_conditioning_before_actor_training
+  next_if_fail: audit_critic_capacity_and_action_representation

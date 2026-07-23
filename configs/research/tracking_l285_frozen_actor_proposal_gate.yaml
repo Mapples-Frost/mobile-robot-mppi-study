@@ -9,12 +9,11 @@ final_benchmark:
   schedule_seed: 202607285
   physics_domains: [nominal_seen]
   scene_configs:
-    # L261 wrappers add only the frozen 0.75 m corridor/projection metadata
-    # required by Full MPPI; their geometry is inherited byte-for-byte from
-    # the corresponding L260 development-validation scenes.
-    - configs/research/l261_value_stability/validation/l261_validation_wave.yaml
-    - configs/research/l261_value_stability/validation/l261_validation_switchback.yaml
-    - configs/research/l261_value_stability/validation/l261_validation_loop_exit.yaml
+    # L285 wrappers add only the Full-MPPI corridor contract; geometry and
+    # initial states are inherited from the corresponding L260 scenes.
+    - configs/research/l285_frozen_actor_proposal/l285_validation_wave.yaml
+    - configs/research/l285_frozen_actor_proposal/l285_validation_switchback.yaml
+    - configs/research/l285_frozen_actor_proposal/l285_validation_loop_exit.yaml
   max_steps_by_scene:
     l260_validation_wave: 1400
     l260_validation_switchback: 1400

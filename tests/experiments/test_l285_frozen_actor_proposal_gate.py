@@ -55,7 +55,12 @@ def test_l285_contract_is_frozen_and_final_maps_are_absent():
     assert tuple(config["l285_arms"]) == L285_ARMS
     assert config["development_seeds"] == [20264511, 20264512, 20264513]
     assert len(config["paired_blocks"]) == 3
-    assert all("l261_value_stability/validation" in path for path in config["scene_configs"])
+    assert all("l285_frozen_actor_proposal" in path for path in config["scene_configs"])
+    for path in config["scene_configs"]:
+        scene = yaml.safe_load((ROOT / path).read_text(encoding="utf-8"))
+        assert scene["task"]["corridor_half_width"] == 0.80
+        assert scene["task"]["footprint_radius"] == 0.20
+        assert scene["task"]["completion_corridor"] == 0.75
     assert "final Hairpin, S-Chicane, and Infinity" in protocol
     assert "mujoco_tracking_grand" not in raw
     assert "20264311" not in raw

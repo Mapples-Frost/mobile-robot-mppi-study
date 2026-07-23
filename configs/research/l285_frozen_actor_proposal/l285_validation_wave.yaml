@@ -1,0 +1,9 @@
+include: ../l260_curriculum/validation/l260_validation_wave.yaml
+
+# Full-MPPI corridor contract; geometry and initial state remain inherited.
+task:
+  completion_corridor: 0.75
+  corridor_half_width: 0.80
+  footprint_radius: 0.20
+  terminate_on_boundary_violation: true
+

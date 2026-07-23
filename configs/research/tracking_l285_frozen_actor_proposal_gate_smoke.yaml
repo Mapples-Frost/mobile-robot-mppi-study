@@ -1,0 +1,12 @@
+include: tracking_l285_frozen_actor_proposal_gate.yaml
+
+# Engineering-only smoke.  This file is never accepted as formal L285 output;
+# it shortens only the MuJoCo horizon and MPPI sample count so checkpoint and
+# runtime contracts can be verified before the frozen formal manifest runs.
+final_benchmark:
+  total_rollouts: 10
+  iterations: 1
+  max_steps_by_scene:
+    l260_validation_wave: 5
+    l260_validation_switchback: 5
+    l260_validation_loop_exit: 5

@@ -55,6 +55,7 @@ def test_l285_contract_is_frozen_and_final_maps_are_absent():
     assert tuple(config["l285_arms"]) == L285_ARMS
     assert config["development_seeds"] == [20264511, 20264512, 20264513]
     assert len(config["paired_blocks"]) == 3
+    assert all("l261_value_stability/validation" in path for path in config["scene_configs"])
     assert "final Hairpin, S-Chicane, and Infinity" in protocol
     assert "mujoco_tracking_grand" not in raw
     assert "20264311" not in raw
@@ -99,4 +100,3 @@ def test_l285_l281_cannot_rescue_failed_l276_primary_contrast():
     assert not result["gate_pass"]
     assert result["early_stopping_probe_authorized"]
     assert not result["larger_validation_preregistration_authorized"]
-

@@ -12,8 +12,10 @@ selected by their L285 outcome.
 
 - Platform: Windows native only; no WSL/Linux MuJoCo or benchmark execution.
 - Independent unit: one paired Actor/environment seed cluster (`n=3`).
-- Repeated strata: three L260 development-validation scenes in the nominal
-  seen physics domain.  Episodes are not treated as independent replicates.
+- Repeated strata: three L260 development-validation geometries in the nominal
+  seen physics domain, loaded through their L261 wrappers solely to supply the
+  already-frozen 0.75 m corridor/projection metadata required by Full MPPI.
+  Episodes are not treated as independent replicates.
 - Blocking: within every seed x scene block, all five arms use the same scene,
   environment seed, physics domain, rollout budget, and episode budget.  Arm
   order is generated from the committed schedule seed.
@@ -55,3 +57,13 @@ larger preregistered independent-seed development validation of the frozen
 L276 Actor.  A failure authorizes only the preregistered early-stopping study;
 neither outcome opens the final maps automatically.
 
+## Pre-outcome engineering amendment
+
+The first five-step engineering smoke failed before producing an episode at
+the path-boundary fail-closed check because the raw L260 validation manifests
+do not instantiate a corridor-aware planning reference.  Before any L285
+method outcome existed, the scene paths were amended to the corresponding L261
+wrappers.  These wrappers inherit the L260 geometry and add only the frozen
+`completion_corridor=0.75` and projection-window metadata previously used by
+the value-stability work.  No geometry, seed, checkpoint, cost, Gate threshold,
+or arm changed; the failed smoke output is retained.

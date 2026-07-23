@@ -9,9 +9,12 @@ final_benchmark:
   schedule_seed: 202607285
   physics_domains: [nominal_seen]
   scene_configs:
-    - configs/research/l260_curriculum/validation/l260_validation_wave.yaml
-    - configs/research/l260_curriculum/validation/l260_validation_switchback.yaml
-    - configs/research/l260_curriculum/validation/l260_validation_loop_exit.yaml
+    # L261 wrappers add only the frozen 0.75 m corridor/projection metadata
+    # required by Full MPPI; their geometry is inherited byte-for-byte from
+    # the corresponding L260 development-validation scenes.
+    - configs/research/l261_value_stability/validation/l261_validation_wave.yaml
+    - configs/research/l261_value_stability/validation/l261_validation_switchback.yaml
+    - configs/research/l261_value_stability/validation/l261_validation_loop_exit.yaml
   max_steps_by_scene:
     l260_validation_wave: 1400
     l260_validation_switchback: 1400
@@ -71,4 +74,3 @@ final_benchmark:
     minimum_median_rl_elite_fraction: 0.001
 
   forbidden_tokens: [l258_tracking_curriculum, l258_heldout_tracking_gate, hairpin_v1, s_chicane_v1, infinity_v1, sealed]
-

@@ -8,7 +8,7 @@ L276 versus the pre-imitation source Actor is the only confirmatory contrast.
 L281 and L284 are descriptive forgetting-trajectory controls and may not be
 selected by their L285 outcome.
 
-## Design
+## Original confirmatory design (superseded by the amendment below)
 
 - Platform: Windows native only; no WSL/Linux MuJoCo or benchmark execution.
 - Independent unit: one paired Actor/environment seed cluster (`n=3`).
@@ -34,7 +34,7 @@ The complete design is 3 seed blocks x 3 scenes x 5 arms = 45 episodes.  The
 runner writes the frozen schedule before MuJoCo starts and supports exact
 episode-level resume without replacing a completed experimental key.
 
-## Outcomes and frozen Gate
+## Original outcomes and frozen Gate (withdrawn for the shortened screen)
 
 Primary paired effects are L276 Full minus source Full.  The Gate requires:
 
@@ -69,3 +69,21 @@ and initial state and add the same 0.80/0.20 Full Tracking corridor/footprint
 contract used by the existing safety chain, plus the pre-existing 0.75
 completion corridor. No seed, checkpoint, MPPI cost weight, Gate threshold, or
 arm changed; both failed smoke outputs are retained.
+
+## Pre-outcome resource-budget amendment
+
+After exactly one of the originally scheduled 45 episodes completed, and
+before any episode metric or method effect was inspected, the user requested a
+substantially shorter run.  The original process was stopped; its completed
+episode and interrupted second-episode directory are retained as an aborted
+confirmatory raw run and are not used by the revised analysis.
+
+The revised L285 study is explicitly a **direction screen**, not a
+confirmatory Gate.  It uses the first schedule block fixed independently of
+outcomes: evaluation seed `20264511`, all three scenes, and all five arms (15
+episodes).  Its within-seed blocking, arm order, checkpoints, runtime budgets,
+costs, and safety contracts are unchanged.  A promising screen may authorize
+only a separately preregistered multi-seed confirmation; it cannot establish
+cross-seed stability, open final maps, or be reported as the original 45-run
+Gate.  A non-promising screen stops this frozen-Actor direction and authorizes
+only the already specified early-stopping diagnosis.

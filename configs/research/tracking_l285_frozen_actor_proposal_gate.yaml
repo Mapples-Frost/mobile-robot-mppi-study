@@ -3,9 +3,10 @@ include: tracking_path_actor_bc_gate_l244.yaml
 final_benchmark:
   status: preregistered
   protocol: L285
+  study_mode: resource_limited_direction_screen
   preregistration: docs/experiments/post_l217/l285_frozen_actor_proposal_gate_protocol.md
   metric_profile: path_tracking
-  development_seeds: [20264511, 20264512, 20264513]
+  development_seeds: [20264511]
   schedule_seed: 202607285
   physics_domains: [nominal_seen]
   scene_configs:
@@ -44,26 +45,13 @@ final_benchmark:
         l276: {path: results/research_platform/rl/l276_recovery_sequence_imitation_initialization/seed_20263211/checkpoints/update_0003000.pt, sha256: 06f4bdb804d47f2461e8408b0e441da9ad42fcc7b173b68057045149a16f2a39}
         l281: {path: results/research_platform/rl/l281_component_separated_anchor_seed20263311_6k/checkpoints/step_000006000.pt, sha256: 7cfed219a101370b733c19e2b71a35047ee10e5c8b6caa2d7e58914cbc50fecd}
         l284: {path: results/research_platform/rl/l284_closed_loop_rollin_joint_anchor_seed20263311_6k/checkpoints/step_000006000.pt, sha256: 12c975d2fed8c14b106c5460a2d8a863da42d9194be26aa2fc45c60f43f4ed76}
-    - evaluation_seed: 20264512
-      actor_seeds: {l276: 20263212, l281: 20263312, l284: 20263312}
-      checkpoints:
-        l276: {path: results/research_platform/rl/l276_recovery_sequence_imitation_initialization/seed_20263212/checkpoints/update_0003000.pt, sha256: d0879d1d6bc0fe919e08e5205dec925d8835402b348a4e8c374517b96cb4adf0}
-        l281: {path: results/research_platform/rl/l281_component_separated_anchor_seed20263312_6k/checkpoints/step_000006000.pt, sha256: ec806f39c969877dbdeb2c4bcd5d6e49cf28ff7c6cb772391bf7080504c2a6a1}
-        l284: {path: results/research_platform/rl/l284_closed_loop_rollin_joint_anchor_seed20263312_6k/checkpoints/step_000006000.pt, sha256: 94e9dbdf0f65020f9938810c65858549f88db2c89957b7443fa85eb128c02a91}
-    - evaluation_seed: 20264513
-      actor_seeds: {l276: 20263213, l281: 20263313, l284: 20263313}
-      checkpoints:
-        l276: {path: results/research_platform/rl/l276_recovery_sequence_imitation_initialization/seed_20263213/checkpoints/update_0003000.pt, sha256: 04e24899d1db3283ae54a75edafd51d930d2829987d68c33027dedfae0c95002}
-        l281: {path: results/research_platform/rl/l281_component_separated_anchor_seed20263313_6k/checkpoints/step_000006000.pt, sha256: 4ee14ff7ea1c6ff2fe18703b1798a9a6f2b7b40dec1ecf5e2bd33d03cb4cae88}
-        l284: {path: results/research_platform/rl/l284_closed_loop_rollin_joint_anchor_seed20263313_6k/checkpoints/step_000006000.pt, sha256: 2c4c771924c571c3038c16a1f8522e5eb79dd03ce3f7e3a027c08d6b872db12e}
-
   l285_arms: [icode_value_control, source_full, l276_full, l281_full, l284_full]
   gate:
     maximum_per_seed_mean_completion_regression: 0.02
     minimum_median_completion_change: 0.0
     minimum_median_cte_improvement: 0.05
     minimum_median_goal_distance_improvement: 0.10
-    minimum_seeds_with_cte_or_goal_improvement: 2
+    minimum_seeds_with_cte_or_goal_improvement: 1
     minimum_scenes_with_cte_improvement: 2
     maximum_collision_increase: 0
     maximum_boundary_violation_episode_increase: 0

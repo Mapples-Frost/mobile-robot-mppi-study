@@ -307,13 +307,19 @@ def evaluate(rows, frozen, engineering):
         "aggregates": aggregates,
     }
     passed = bool(all(checks.values()))
+    screen_only = frozen.get("study_mode") == "resource_limited_direction_screen"
     return {
         "protocol": "L285",
         "status": "complete",
-        "gate_pass": passed,
+        "study_mode": frozen.get("study_mode", "confirmatory_gate"),
+        "screen_pass": passed if screen_only else None,
+        "gate_pass": False if screen_only else passed,
         "decision": (
-            "frozen_l276_actor_proposal_gate_pass"
-            if passed else "frozen_l276_actor_proposal_gate_fail"
+            ("frozen_l276_actor_proposal_screen_promising" if passed
+             else "frozen_l276_actor_proposal_screen_not_promising")
+            if screen_only else
+            ("frozen_l276_actor_proposal_gate_pass" if passed
+             else "frozen_l276_actor_proposal_gate_fail")
         ),
         "checks": checks,
         "metrics": metrics,

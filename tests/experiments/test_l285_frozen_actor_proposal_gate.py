@@ -53,8 +53,9 @@ def test_l285_contract_is_frozen_and_final_maps_are_absent():
     config = yaml.safe_load(CONFIG.read_text(encoding="utf-8"))["final_benchmark"]
     assert config["status"] == "preregistered"
     assert tuple(config["l285_arms"]) == L285_ARMS
-    assert config["development_seeds"] == [20264511, 20264512, 20264513]
-    assert len(config["paired_blocks"]) == 3
+    assert config["study_mode"] == "resource_limited_direction_screen"
+    assert config["development_seeds"] == [20264511]
+    assert len(config["paired_blocks"]) == 1
     assert all("l285_frozen_actor_proposal" in path for path in config["scene_configs"])
     for path in config["scene_configs"]:
         scene = yaml.safe_load((ROOT / path).read_text(encoding="utf-8"))
@@ -85,6 +86,7 @@ def test_l285_schedule_is_blocked_randomized_and_complete():
 
 def test_l285_positive_gate_uses_l276_not_descriptive_arms():
     frozen = yaml.safe_load(CONFIG.read_text(encoding="utf-8"))["final_benchmark"]
+    frozen["study_mode"] = "confirmatory_gate"
     frozen["development_seeds"] = [1, 2, 3]
     result = evaluate(_positive_rows(), frozen, {"contract": True})
     assert result["gate_pass"]
@@ -94,6 +96,7 @@ def test_l285_positive_gate_uses_l276_not_descriptive_arms():
 
 def test_l285_l281_cannot_rescue_failed_l276_primary_contrast():
     frozen = yaml.safe_load(CONFIG.read_text(encoding="utf-8"))["final_benchmark"]
+    frozen["study_mode"] = "confirmatory_gate"
     frozen["development_seeds"] = [1, 2, 3]
     rows = _positive_rows()
     for row in rows:
@@ -105,3 +108,14 @@ def test_l285_l281_cannot_rescue_failed_l276_primary_contrast():
     assert not result["gate_pass"]
     assert result["early_stopping_probe_authorized"]
     assert not result["larger_validation_preregistration_authorized"]
+
+
+def test_l285_resource_limited_screen_never_claims_confirmatory_gate():
+    frozen = yaml.safe_load(CONFIG.read_text(encoding="utf-8"))["final_benchmark"]
+    frozen["development_seeds"] = [1]
+    frozen["gate"]["minimum_seeds_with_cte_or_goal_improvement"] = 1
+    rows = [row for row in _positive_rows() if row["seed"] == 1]
+    result = evaluate(rows, frozen, {"contract": True})
+    assert result["screen_pass"]
+    assert not result["gate_pass"]
+    assert result["decision"] == "frozen_l276_actor_proposal_screen_promising"

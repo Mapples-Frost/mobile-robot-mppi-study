@@ -1,0 +1,108 @@
+schema_version: 1
+status: frozen_before_held_out_qualification
+frozen_at: "2026-07-26T04:02:00+08:00"
+study_id: single_dynamic_obstacle_v5_held_out_qualification
+scope: engineering_held_out_qualification_not_effect_estimation
+
+source_protocol: configs/research/single_dynamic_obstacle_paper_v4.yaml
+source_protocol_sha256: c482dd3c8429768dd29bbc5836594d8842a567fe11591cc308b9eaede304cd33
+candidate_development_protocol: configs/research/single_dynamic_obstacle_v5_dual_horizon_development_c3.yaml
+candidate_development_pass_commit: eeb676e8b8bb60fdbe752270504e688d3b41a579
+candidate_development_result: research_artifacts/single_dynamic_obstacle_v5_dual_horizon_development_c3/development_result.json
+candidate_development_result_sha256: e6b9d565490bf4b8db7047fad8598ddcb3b989c7c5930c6ffe9dea9f4efaa9d1
+candidate_development_manifest: research_artifacts/single_dynamic_obstacle_v5_dual_horizon_development_c3/artifact_manifest.json
+candidate_development_manifest_sha256: a3c984ce8c538f5e278c3197ab4a96eecba0dd6e4efcf1028e0d0c0cd549cb5e
+candidate_development_bundle_sha256: a277f21b2ca344a56c792939c73fb88904ea19155368156761b13da32d35ead2
+
+sealed_registry: configs/seeds/single_dynamic_obstacle_v5_held_out_qualification_sealed.yaml
+output_dir: research_artifacts/single_dynamic_obstacle_v5_held_out_qualification
+
+design:
+  independent_unit: complete_episode_seed
+  paired_arms: [V4_full_frozen, V5_dual_horizon_full]
+  paired_blocks: 32
+  seeds_per_split: 16
+  common_random_numbers: true
+  same_seed_single_worker_block: true
+  arm_order: alternating_balanced_within_split_then_seeded_block_shuffle
+  schedule_seed: 752699041
+  model_block_assignment: balanced_by_split_and_certified_seed_order
+  total_rollouts_per_controller_decision: 600
+  horizon_steps: 36
+  control_period_s: 0.10
+  maximum_episode_steps: 400
+  formal_effect_estimation_authorized: false
+  workers: 4
+
+seed_selection:
+  rule: ascending_first_16_per_split_with_prefrozen_controller_independent_conflict_certificate
+  seeds_per_split: 16
+  candidate_start:
+    id: 750100001
+    ood: 750200001
+  candidate_count_per_split: 2000
+  outcome_fields_read_for_selection: []
+  controller_executed_during_selection: false
+  forbidden_seed_ranges:
+    - {label: all_prior_program_seeds, start: 730000000, end: 749999999}
+  reserved_future_formal_ranges:
+    - {label: future_v5_formal_id, start: 760200001, end: 760201999}
+    - {label: future_v5_formal_ood, start: 760300001, end: 760301999}
+  no_seed_replacement: true
+
+frozen_components:
+  change_aware_imm: unchanged_from_v4_full
+  collision_risk_v1: unchanged_from_v4_full
+  collision_probability_threshold: unchanged_from_v4_full
+  safety_margin: unchanged_from_v4_full
+  dynamic_obstacle_generator: unchanged_from_v4
+  actor_checkpoint: unchanged_from_v4
+  icode_checkpoints: unchanged_from_v4
+  hss_core: unchanged_from_v4
+  rollout_budget: 600
+  horizon_steps: 36
+  control_period_s: 0.10
+  maximum_episode_steps: 400
+  position_tolerance_m: 0.30
+  steering_policy: unchanged_from_v4_full
+  maximum_forward_speed_mps: 0.35
+
+candidate_overrides:
+  dynamic_deadline_supervisor_enabled: true
+  dynamic_deadline_episode_steps: 400
+  dynamic_deadline_control_period_s: 0.10
+  dynamic_deadline_position_tolerance_m: 0.30
+  dynamic_deadline_reserve_steps: 5
+  dynamic_deadline_authority_reserve_steps: 0
+  dynamic_deadline_clear_hold_steps: 5
+  dynamic_deadline_minimum_required_speed: 0.20
+  dynamic_deadline_speed_floor: 0.30
+  dynamic_deadline_speed_margin: 1.10
+  dynamic_deadline_trigger_margin_mps: 0.02
+  dynamic_deadline_heading_tolerance_rad: 0.20
+
+qualification_go_no_go:
+  minimum_paired_safe_success_net_gain: 2
+  minimum_safe_noncompletion_conversions: 2
+  maximum_lost_v4_successes: 0
+  maximum_new_paired_collisions: 0
+  require_collision_count_not_worse: true
+  require_each_split_safe_success_not_worse: true
+  maximum_mean_minimum_clearance_loss_m: 0.03
+  maximum_mean_conflict_q05_clearance_loss_m: 0.03
+  minimum_relative_zero_speed_risk_reduction: -0.10
+  minimum_relative_stuck_step_reduction: -0.10
+  maximum_total_direction_switch_increase: 0
+  maximum_total_three_phase_oscillation_increase: 0
+  require_every_decision_600_rollouts: true
+  interpretation: engineering_generalization_gate_not_formal_effect_estimation
+
+integrity:
+  registry_must_be_sealed_before_controller_execution: true
+  registry_sha256_sidecar_required: true
+  controller_independent_certificate_recomputed_at_preflight: true
+  no_interim_outcome_access: true
+  no_automatic_algorithm_failure_retry: true
+  infrastructure_retry_same_seed_arm_config_only: true
+  failed_bundle_must_be_preserved: true
+  formal_server_execution_authorized: false

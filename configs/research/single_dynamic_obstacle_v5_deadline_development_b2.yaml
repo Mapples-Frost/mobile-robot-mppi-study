@@ -1,0 +1,114 @@
+schema_version: 1
+status: frozen_before_development_execution
+frozen_at: "2026-07-26T02:22:23+08:00"
+study_id: single_dynamic_obstacle_v5_deadline_development_b2
+scope: targeted_mechanism_development_not_effect_estimation
+source_protocol: configs/research/single_dynamic_obstacle_paper_v4.yaml
+source_analysis: research_artifacts/single_dynamic_obstacle_paper_v4_analysis_20260725/analysis/episode_table.csv
+source_analysis_sha256: 125ce781c7afbbceb09875a8805565584316e76400d39fdd443108a8f1b5465e
+source_analysis_manifest: research_artifacts/single_dynamic_obstacle_paper_v4_analysis_20260725/analysis/analysis_bundle_manifest.json
+source_analysis_manifest_sha256: 354d42efef5b48dec7d5d4d3b81c68ad1049af965c00039bd5cab68d5dc83691
+parent_development_result: research_artifacts/single_dynamic_obstacle_v5_deadline_development_b1/development_result.json
+parent_development_result_sha256: 51c37dc9a40adca41b42f10533ef905f72fdd986d36b35e57c8950401d1bcf8e
+parent_development_manifest: research_artifacts/single_dynamic_obstacle_v5_deadline_development_b1/artifact_manifest.json
+parent_development_manifest_sha256: accb07f3941cd6d8a7e1804c34b62e5e5829d91029c8934007c773b748d283b5
+parent_development_bundle_sha256: 68f2856f75c61b6e6ff611b5a3c5678ce9c318ef9aa42895d3a14d2dd78b69ba
+output_dir: research_artifacts/single_dynamic_obstacle_v5_deadline_development_b2
+
+design:
+  development_attempt: B2
+  mechanism_family: online_deadline_feasibility_supervisor
+  mechanism_isolation_from: B1_with_inherited_a5_recovery_package
+  paired_arms: [V4_full_frozen, V5_deadline_isolated_full]
+  common_random_numbers: true
+  outcome_informed_development_selection: true
+  repeated_development_panel: true
+  formal_effect_estimation_authorized: false
+  future_v5_registry_seeds_must_be_disjoint: true
+  future_held_out_qualification_seeds_must_be_disjoint: true
+  total_rollouts_per_controller_decision: 600
+  horizon_steps: 36
+  control_period_s: 0.1
+  maximum_episode_steps: 400
+  workers: 4
+
+frozen_components:
+  change_aware_imm: unchanged
+  ordinary_imm: unchanged
+  collision_risk_v1: unchanged
+  collision_probability_threshold: unchanged
+  safety_margin: unchanged
+  dynamic_obstacle_generator: unchanged
+  actor_checkpoint: unchanged
+  icode_checkpoints: unchanged
+  hss_core: unchanged
+  rollout_budget: 600
+  horizon_steps: 36
+  control_period_s: 0.1
+  maximum_episode_steps: 400
+  position_tolerance_m: 0.3
+  safety_boundary: unchanged
+  stopping_feasibility: unchanged
+  v4_recovery_behavior: unchanged
+  a5_recovery_overrides: absent_from_candidate_for_mechanism_isolation
+
+# B2 changes experimental structure rather than tuning the observed B1
+# deadline parameters. The candidate starts from frozen V4 Full and adds only
+# the online deadline-feasibility supervisor. No dynamic_recovery_* override is
+# present; the candidate therefore inherits exactly the frozen V4 recovery
+# behavior, so any paired effect is attributable to the deadline mechanism.
+candidate_overrides:
+  dynamic_deadline_supervisor_enabled: true
+  dynamic_deadline_episode_steps: 400
+  dynamic_deadline_control_period_s: 0.10
+  dynamic_deadline_position_tolerance_m: 0.30
+  dynamic_deadline_reserve_steps: 2
+  dynamic_deadline_clear_hold_steps: 5
+  dynamic_deadline_minimum_required_speed: 0.20
+  dynamic_deadline_speed_floor: 0.30
+  dynamic_deadline_speed_margin: 1.10
+  dynamic_deadline_trigger_margin_mps: 0.02
+  dynamic_deadline_heading_tolerance_rad: 0.20
+
+deadline_supervisor_contract:
+  uses_truth_conflict_window: false
+  uses_future_obstacle_trajectory: false
+  uses_online_goal_distance_only: true
+  uses_frozen_episode_deadline: true
+  requires_prior_dynamic_escape: true
+  requires_consecutive_clear_cycles: 5
+  existing_risk_entry_threshold_reused: true
+  existing_ttc_and_closing_guards_reused: true
+  existing_front_clearance_guard_reused: true
+  existing_heading_gate_reused: true
+  renewed_hazard_has_immediate_priority: true
+  changes_steering_command: false
+  maximum_forward_speed_mps: 0.35
+  new_rollout_candidates_added: 0
+  total_rollouts_per_decision: 600
+
+# The repeated A1-B1 panel remains explicitly outcome-informed development.
+development_blocks:
+  - {split: id, seed: 740200252, model_block: 1, stratum: near_goal_safe_noncompletion, arm_order: [V4_full_frozen, V5_deadline_isolated_full]}
+  - {split: id, seed: 740200006, model_block: 2, stratum: long_stall_safe_noncompletion, arm_order: [V5_deadline_isolated_full, V4_full_frozen]}
+  - {split: id, seed: 740200191, model_block: 1, stratum: far_goal_safe_noncompletion, arm_order: [V4_full_frozen, V5_deadline_isolated_full]}
+  - {split: ood, seed: 740300251, model_block: 2, stratum: long_release_safe_noncompletion, arm_order: [V5_deadline_isolated_full, V4_full_frozen]}
+  - {split: id, seed: 740200011, model_block: 0, stratum: safety_gain_sentinel, arm_order: [V4_full_frozen, V5_deadline_isolated_full]}
+  - {split: ood, seed: 740300004, model_block: 1, stratum: safety_gain_sentinel, arm_order: [V5_deadline_isolated_full, V4_full_frozen]}
+  - {split: id, seed: 740200001, model_block: 0, stratum: success_preservation_sentinel, arm_order: [V4_full_frozen, V5_deadline_isolated_full]}
+  - {split: ood, seed: 740300001, model_block: 1, stratum: success_preservation_sentinel, arm_order: [V5_deadline_isolated_full, V4_full_frozen]}
+
+# Frozen unchanged from B1; no outcome-based relaxation is allowed.
+development_go_no_go:
+  minimum_challenge_conversions: 2
+  maximum_new_paired_collisions: 0
+  require_collision_count_not_worse: true
+  maximum_lost_v4_successes: 0
+  minimum_relative_zero_speed_risk_reduction: -0.10
+  minimum_relative_stuck_step_reduction: 0.00
+  maximum_mean_minimum_clearance_loss_m: 0.03
+  minimum_mean_final_goal_distance_reduction_m: 0.10
+  maximum_total_direction_switch_increase: 0
+  maximum_total_three_phase_oscillation_increase: 0
+  require_every_decision_600_rollouts: true
+  interpretation: engineering_gate_only_not_statistical_confirmation

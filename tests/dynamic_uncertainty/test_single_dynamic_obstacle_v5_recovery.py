@@ -28,6 +28,20 @@ def _deadline_protocols():
     return protocol, source
 
 
+def _deadline_b2_protocols():
+    path = (
+        development.ROOT
+        / "configs"
+        / "research"
+        / "single_dynamic_obstacle_v5_deadline_development_b2.yaml"
+    )
+    protocol = v4._load_yaml(path)
+    _, source, _, _, _ = v4.validate_protocol(
+        development._repo_path(protocol["source_protocol"])
+    )
+    return protocol, source
+
+
 def test_v5_development_is_outcome_informed_and_not_effect_estimation():
     protocol, _ = _protocols()
 
@@ -235,3 +249,64 @@ def test_v5_deadline_b1_gate_is_paired_safety_noninferiority():
     assert not contract["uses_future_obstacle_trajectory"]
     assert not contract["changes_steering_command"]
     assert contract["total_rollouts_per_decision"] == 600
+
+
+def test_v5_deadline_b2_isolates_deadline_supervisor_from_a5_recovery():
+    protocol, source = _deadline_b2_protocols()
+    assert protocol["design"]["development_attempt"] == "B2"
+    assert protocol["design"]["mechanism_family"] == (
+        "online_deadline_feasibility_supervisor"
+    )
+    assert protocol["design"]["paired_arms"] == [
+        "V4_full_frozen",
+        "V5_deadline_isolated_full",
+    ]
+    development._validate_parent_attempt(protocol)
+
+    overrides = protocol["candidate_overrides"]
+    assert len(overrides) == 11
+    assert all(key.startswith("dynamic_deadline_") for key in overrides)
+    assert not any(key.startswith("dynamic_recovery_") for key in overrides)
+
+    block = dict(protocol["development_blocks"][0])
+    v4_config, v4_changes = development._configure_arm(
+        protocol, source, block, "V4_full_frozen"
+    )
+    v5_config, v5_changes = development._configure_arm(
+        protocol, source, block, "V5_deadline_isolated_full"
+    )
+    assert not v4_changes
+    assert set(v5_changes) == {
+        "perception.scan_guard.%s" % key for key in overrides
+    }
+    v4_guard = v4_config["perception"]["scan_guard"]
+    v5_guard = v5_config["perception"]["scan_guard"]
+    assert v4_guard["dynamic_recovery_enabled"]
+    assert {
+        key: value
+        for key, value in v5_guard.items()
+        if key.startswith("dynamic_recovery_")
+    } == {
+        key: value
+        for key, value in v4_guard.items()
+        if key.startswith("dynamic_recovery_")
+    }
+    for section in ("planner", "rl"):
+        assert v5_config[section] == v4_config[section]
+    assert v5_config["experiment"]["max_steps"] == 400
+    assert v5_config["experiment"]["control_dt"] == 0.1
+    assert v5_config["task"]["position_tolerance"] == 0.3
+    assert (
+        int(v5_config["planner"]["num_samples"])
+        * int(v5_config["planner"]["paper_rl_driven"]["iterations"])
+        == 600
+    )
+
+
+def test_v5_deadline_b2_gate_is_identical_to_b1():
+    b1, _ = _deadline_protocols()
+    b2, _ = _deadline_b2_protocols()
+    assert b2["development_go_no_go"] == b1["development_go_no_go"]
+    assert b2["deadline_supervisor_contract"] == (
+        b1["deadline_supervisor_contract"]
+    )

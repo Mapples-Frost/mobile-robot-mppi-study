@@ -42,6 +42,20 @@ def _deadline_b2_protocols():
     return protocol, source
 
 
+def _deadline_b3_protocols():
+    path = (
+        development.ROOT
+        / "configs"
+        / "research"
+        / "single_dynamic_obstacle_v5_deadline_development_b3.yaml"
+    )
+    protocol = v4._load_yaml(path)
+    _, source, _, _, _ = v4.validate_protocol(
+        development._repo_path(protocol["source_protocol"])
+    )
+    return protocol, source
+
+
 def test_v5_development_is_outcome_informed_and_not_effect_estimation():
     protocol, _ = _protocols()
 
@@ -309,4 +323,42 @@ def test_v5_deadline_b2_gate_is_identical_to_b1():
     assert b2["development_go_no_go"] == b1["development_go_no_go"]
     assert b2["deadline_supervisor_contract"] == (
         b1["deadline_supervisor_contract"]
+    )
+
+
+def test_v5_deadline_b3_changes_only_terminal_reserve_from_b2():
+    b2, _ = _deadline_b2_protocols()
+    b3, source = _deadline_b3_protocols()
+    development._validate_parent_attempt(b3)
+    assert b3["design"]["development_attempt"] == "B3"
+    assert b3["design"]["final_local_attempt_in_family"]
+    assert b3["development_go_no_go"] == b2["development_go_no_go"]
+    assert b3["deadline_supervisor_contract"] == (
+        b2["deadline_supervisor_contract"]
+    )
+    left = dict(b2["candidate_overrides"])
+    right = dict(b3["candidate_overrides"])
+    assert left.pop("dynamic_deadline_reserve_steps") == 2
+    assert right.pop("dynamic_deadline_reserve_steps") == 0
+    assert right == left
+
+    block = dict(b3["development_blocks"][0])
+    v4_config, v4_changes = development._configure_arm(
+        b3, source, block, "V4_full_frozen"
+    )
+    v5_config, v5_changes = development._configure_arm(
+        b3, source, block, "V5_deadline_isolated_full"
+    )
+    assert not v4_changes
+    assert set(v5_changes) == {
+        "perception.scan_guard.%s" % key
+        for key in b3["candidate_overrides"]
+    }
+    assert v5_config["perception"]["scan_guard"][
+        "dynamic_deadline_reserve_steps"
+    ] == 0
+    assert (
+        int(v5_config["planner"]["num_samples"])
+        * int(v5_config["planner"]["paper_rl_driven"]["iterations"])
+        == 600
     )

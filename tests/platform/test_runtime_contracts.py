@@ -804,6 +804,77 @@ def test_dynamic_recovery_alignment_creep_moves_only_while_clear():
     assert not blocked.diagnostics["dynamic_recovery_alignment_creep_active"]
 
 
+def test_dynamic_recovery_alignment_creep_requires_clearance_trend():
+    action_spec = body_velocity_action((-0.35, 0.35), 0.9)
+    arbiter = ScanGuardArbiter(
+        action_spec,
+        {
+            "dynamic_escape_enabled": True,
+            "dynamic_escape_max_speed": 0.35,
+            "dynamic_escape_reactive_enabled": True,
+            "dynamic_escape_trigger_ttc_s": 1.50,
+            "dynamic_recovery_enabled": True,
+            "dynamic_recovery_entry_probability": 0.10,
+            "dynamic_recovery_abort_probability": 0.15,
+            "dynamic_recovery_clear_hold_steps": 1,
+            "dynamic_recovery_heading_tolerance_rad": 0.15,
+            "dynamic_recovery_minimum_heading_error_rad": 0.0,
+            "dynamic_recovery_min_speed": 0.30,
+            "dynamic_recovery_translation_enabled": True,
+            "dynamic_recovery_alignment_creep_enabled": True,
+            "dynamic_recovery_alignment_creep_speed": 0.20,
+            "dynamic_recovery_alignment_creep_minimum_heading_error_rad": 0.60,
+            "dynamic_recovery_alignment_creep_clearance_trend_enabled": True,
+            "dynamic_recovery_alignment_creep_clearance_tolerance_m": 0.01,
+            "dynamic_recovery_alignment_creep_clearance_hold_steps": 2,
+            "dynamic_recovery_alignment_creep_minimum_scan_clearance_m": 0.90,
+        },
+    )
+    arbiter._dynamic_escape_seen = True
+    context = {
+        "probabilistic_obstacle_active_avoidance_enabled": True,
+        "probabilistic_obstacle_maximum_step_probability": 0.05,
+        "target_bearing_error": 1.0,
+        "terminal_control_distance": 4.0,
+    }
+
+    speeds = []
+    for clearance in (1.00, 1.02, 1.04):
+        decision = arbiter.arbitrate(
+            ControlCommand(np.asarray((0.0, 0.0))),
+            {
+                "reason": "front_clear",
+                "temporal_scan_valid": False,
+                "min_front_range": clearance,
+                "min_side_range": clearance + 0.20,
+            },
+            context,
+        )
+        speeds.append(float(decision.executed_control.values[0]))
+
+    np.testing.assert_allclose(speeds, (0.0, 0.0, 0.20))
+    assert decision.diagnostics["dynamic_recovery_clearance_trend_ready"]
+    assert decision.diagnostics["dynamic_recovery_alignment_creep_active"]
+
+    decreasing = arbiter.arbitrate(
+        ControlCommand(np.asarray((0.0, 0.0))),
+        {
+            "reason": "front_clear",
+            "temporal_scan_valid": False,
+            "min_front_range": 0.95,
+            "min_side_range": 1.15,
+        },
+        context,
+    )
+    assert decreasing.executed_control.values[0] == 0.0
+    assert not decreasing.diagnostics[
+        "dynamic_recovery_clearance_trend_ready"
+    ]
+    assert not decreasing.diagnostics[
+        "dynamic_recovery_alignment_creep_active"
+    ]
+
+
 def test_rotation_only_recovery_never_forces_unevaluated_translation():
     action_spec = body_velocity_action((-0.35, 0.35), 0.9)
     arbiter = ScanGuardArbiter(

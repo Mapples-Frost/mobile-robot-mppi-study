@@ -99,6 +99,9 @@ def test_v5_recovery_contract_keeps_frozen_risk_thresholds_and_budget():
     assert contract["total_rollouts_per_decision"] == 600
     assert contract["alignment_creep_requires_front_clear"]
     assert contract["alignment_creep_aborts_on_existing_abort_conditions"]
+    assert contract[
+        "alignment_creep_requires_non_decreasing_scan_clearance"
+    ]
 
 
 def test_v5_analysis_uses_certificate_enriched_schedule_blocks(monkeypatch):

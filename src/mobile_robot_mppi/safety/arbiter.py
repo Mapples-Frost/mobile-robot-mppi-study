@@ -139,6 +139,35 @@ class ScanGuardArbiter:
         self.dynamic_recovery_alignment_creep_speed = float(
             self.config.get("dynamic_recovery_alignment_creep_speed", 0.0)
         )
+        self.dynamic_recovery_alignment_creep_minimum_heading_error_rad = float(
+            self.config.get(
+                "dynamic_recovery_alignment_creep_minimum_heading_error_rad",
+                0.0,
+            )
+        )
+        self.dynamic_recovery_alignment_creep_clearance_trend_enabled = bool(
+            self.config.get(
+                "dynamic_recovery_alignment_creep_clearance_trend_enabled",
+                False,
+            )
+        )
+        self.dynamic_recovery_alignment_creep_clearance_tolerance_m = float(
+            self.config.get(
+                "dynamic_recovery_alignment_creep_clearance_tolerance_m",
+                0.0,
+            )
+        )
+        self.dynamic_recovery_alignment_creep_clearance_hold_steps = int(
+            self.config.get(
+                "dynamic_recovery_alignment_creep_clearance_hold_steps", 1
+            )
+        )
+        self.dynamic_recovery_alignment_creep_minimum_scan_clearance_m = float(
+            self.config.get(
+                "dynamic_recovery_alignment_creep_minimum_scan_clearance_m",
+                0.0,
+            )
+        )
         self.dynamic_recovery_goal_release_distance_m = float(
             self.config.get(
                 "dynamic_recovery_goal_release_distance_m", 0.45
@@ -210,6 +239,14 @@ class ScanGuardArbiter:
             self.dynamic_recovery_alignment_creep_speed <= 0.0
             or self.dynamic_recovery_alignment_creep_speed
             > self.dynamic_recovery_min_speed
+            or not 0.0
+            <= self.dynamic_recovery_alignment_creep_minimum_heading_error_rad
+            < np.pi
+            or self.dynamic_recovery_alignment_creep_clearance_tolerance_m
+            < 0.0
+            or self.dynamic_recovery_alignment_creep_clearance_hold_steps < 1
+            or self.dynamic_recovery_alignment_creep_minimum_scan_clearance_m
+            < 0.0
         ):
             raise ValueError(
                 "dynamic recovery alignment creep parameters are invalid"
@@ -224,6 +261,9 @@ class ScanGuardArbiter:
         self._dynamic_recovery_clear_steps = 0
         self._dynamic_recovery_release_count = 0
         self._dynamic_recovery_advance_steps = 0
+        self._dynamic_recovery_alignment_creep_latched = False
+        self._dynamic_recovery_previous_scan_clearance = float("nan")
+        self._dynamic_recovery_clearance_trend_steps = 0
 
     def arbitrate(
         self,
@@ -345,6 +385,27 @@ class ScanGuardArbiter:
         recovery_risk_ramp_fraction = 0.0
         recovery_forward_commit_active = False
         recovery_alignment_creep_active = False
+        recovery_scan_clearance = float("nan")
+        scan_clearance_values = []
+        for key in (
+            "min_front_range",
+            "min_side_range",
+            "temporal_scan_clearance_m",
+        ):
+            raw_clearance = guard_result.get(key)
+            if raw_clearance is None:
+                continue
+            try:
+                candidate_clearance = float(raw_clearance)
+            except (TypeError, ValueError):
+                continue
+            if np.isfinite(candidate_clearance) and candidate_clearance >= 0.0:
+                scan_clearance_values.append(candidate_clearance)
+        if scan_clearance_values:
+            recovery_scan_clearance = float(min(scan_clearance_values))
+        recovery_clearance_trend_ready = bool(
+            not self.dynamic_recovery_alignment_creep_clearance_trend_enabled
+        )
         recovery_guard_clear = bool(
             not guard_result.get("emergency_stop", False)
             and reason == "front_clear"
@@ -367,6 +428,9 @@ class ScanGuardArbiter:
             self._dynamic_recovery_clear_steps = 0
             self._dynamic_recovery_release_count = 0
             self._dynamic_recovery_advance_steps = 0
+            self._dynamic_recovery_alignment_creep_latched = False
+            self._dynamic_recovery_previous_scan_clearance = float("nan")
+            self._dynamic_recovery_clearance_trend_steps = 0
         elif self.dynamic_recovery_enabled and self._dynamic_escape_seen:
             recovery_heading_error = float(
                 context.get(
@@ -393,6 +457,9 @@ class ScanGuardArbiter:
                 self._dynamic_recovery_clear_steps = 0
                 self._dynamic_recovery_release_count = 0
                 self._dynamic_recovery_advance_steps = 0
+                self._dynamic_recovery_alignment_creep_latched = False
+                self._dynamic_recovery_previous_scan_clearance = float("nan")
+                self._dynamic_recovery_clearance_trend_steps = 0
                 recovery_mode = "aborted"
             elif not self._dynamic_recovery_active:
                 if recovery_clear:
@@ -411,12 +478,49 @@ class ScanGuardArbiter:
                         self._dynamic_recovery_active = True
                         self._dynamic_recovery_release_count = 0
                         self._dynamic_recovery_advance_steps = 0
+                        self._dynamic_recovery_alignment_creep_latched = False
+                        self._dynamic_recovery_previous_scan_clearance = float(
+                            "nan"
+                        )
+                        self._dynamic_recovery_clearance_trend_steps = 0
                         recovery_mode = "entered"
                     else:
                         self._dynamic_escape_seen = False
                         self._dynamic_recovery_clear_steps = 0
                         self._dynamic_recovery_advance_steps = 0
+                        self._dynamic_recovery_alignment_creep_latched = False
+                        self._dynamic_recovery_previous_scan_clearance = float(
+                            "nan"
+                        )
+                        self._dynamic_recovery_clearance_trend_steps = 0
                         recovery_mode = "not_needed"
+        if self._dynamic_recovery_active:
+            if self.dynamic_recovery_alignment_creep_clearance_trend_enabled:
+                previous_clearance = (
+                    self._dynamic_recovery_previous_scan_clearance
+                )
+                if (
+                    np.isfinite(recovery_scan_clearance)
+                    and np.isfinite(previous_clearance)
+                    and recovery_scan_clearance
+                    + self.dynamic_recovery_alignment_creep_clearance_tolerance_m
+                    >= previous_clearance
+                ):
+                    self._dynamic_recovery_clearance_trend_steps += 1
+                else:
+                    self._dynamic_recovery_clearance_trend_steps = 0
+                self._dynamic_recovery_previous_scan_clearance = (
+                    recovery_scan_clearance
+                )
+                recovery_clearance_trend_ready = bool(
+                    np.isfinite(recovery_scan_clearance)
+                    and recovery_scan_clearance
+                    >= self.dynamic_recovery_alignment_creep_minimum_scan_clearance_m
+                    and self._dynamic_recovery_clearance_trend_steps
+                    >= self.dynamic_recovery_alignment_creep_clearance_hold_steps
+                )
+            else:
+                recovery_clearance_trend_ready = True
         reverse_escape = False
         if dynamic_escape_allowed:
             if self.dynamic_escape_use_vetted_planner_control:
@@ -524,19 +628,35 @@ class ScanGuardArbiter:
                 self._dynamic_recovery_clear_steps = 0
                 self._dynamic_recovery_release_count = 0
                 self._dynamic_recovery_advance_steps = 0
+                self._dynamic_recovery_alignment_creep_latched = False
+                self._dynamic_recovery_previous_scan_clearance = float("nan")
+                self._dynamic_recovery_clearance_trend_steps = 0
                 recovery_mode = "goal_release"
             elif not np.isfinite(heading_error):
                 self._dynamic_recovery_active = False
                 self._dynamic_recovery_clear_steps = 0
                 self._dynamic_recovery_release_count = 0
                 self._dynamic_recovery_advance_steps = 0
+                self._dynamic_recovery_alignment_creep_latched = False
+                self._dynamic_recovery_previous_scan_clearance = float("nan")
+                self._dynamic_recovery_clearance_trend_steps = 0
                 recovery_mode = "missing_heading_abort"
             elif abs(heading_error) > (
                 self.dynamic_recovery_heading_tolerance_rad
             ):
                 if "v_cmd" in self.action_spec.names:
                     v_index = self.action_spec.index("v_cmd")
-                    if self.dynamic_recovery_alignment_creep_enabled:
+                    creep_heading_eligible = bool(
+                        self._dynamic_recovery_alignment_creep_latched
+                        or abs(heading_error)
+                        >= self.dynamic_recovery_alignment_creep_minimum_heading_error_rad
+                    )
+                    if (
+                        self.dynamic_recovery_alignment_creep_enabled
+                        and creep_heading_eligible
+                        and recovery_clearance_trend_ready
+                    ):
+                        self._dynamic_recovery_alignment_creep_latched = True
                         values[v_index] = np.clip(
                             self.dynamic_recovery_alignment_creep_speed,
                             self.action_spec.lower[v_index],
@@ -574,6 +694,9 @@ class ScanGuardArbiter:
                 self._dynamic_recovery_clear_steps = 0
                 self._dynamic_recovery_release_count = 0
                 self._dynamic_recovery_advance_steps = 0
+                self._dynamic_recovery_alignment_creep_latched = False
+                self._dynamic_recovery_previous_scan_clearance = float("nan")
+                self._dynamic_recovery_clearance_trend_steps = 0
                 recovery_mode = "aligned_release"
             else:
                 self._dynamic_recovery_advance_steps += 1
@@ -649,6 +772,11 @@ class ScanGuardArbiter:
                     self._dynamic_recovery_clear_steps = 0
                     self._dynamic_recovery_release_count = 0
                     self._dynamic_recovery_advance_steps = 0
+                    self._dynamic_recovery_alignment_creep_latched = False
+                    self._dynamic_recovery_previous_scan_clearance = float(
+                        "nan"
+                    )
+                    self._dynamic_recovery_clearance_trend_steps = 0
                     recovery_mode = "planner_release"
         elif bool(guard_result.get("emergency_stop", False)):
             if "v_cmd" in self.action_spec.names:
@@ -737,6 +865,21 @@ class ScanGuardArbiter:
         diagnostics["dynamic_recovery_alignment_creep_speed"] = (
             self.dynamic_recovery_alignment_creep_speed
         )
+        diagnostics[
+            "dynamic_recovery_alignment_creep_minimum_heading_error_rad"
+        ] = self.dynamic_recovery_alignment_creep_minimum_heading_error_rad
+        diagnostics[
+            "dynamic_recovery_alignment_creep_clearance_trend_enabled"
+        ] = self.dynamic_recovery_alignment_creep_clearance_trend_enabled
+        diagnostics[
+            "dynamic_recovery_alignment_creep_clearance_tolerance_m"
+        ] = self.dynamic_recovery_alignment_creep_clearance_tolerance_m
+        diagnostics[
+            "dynamic_recovery_alignment_creep_clearance_hold_steps"
+        ] = self.dynamic_recovery_alignment_creep_clearance_hold_steps
+        diagnostics[
+            "dynamic_recovery_alignment_creep_minimum_scan_clearance_m"
+        ] = self.dynamic_recovery_alignment_creep_minimum_scan_clearance_m
         diagnostics["dynamic_recovery_minimum_heading_error_rad"] = (
             self.dynamic_recovery_minimum_heading_error_rad
         )
@@ -770,6 +913,15 @@ class ScanGuardArbiter:
         )
         diagnostics["dynamic_recovery_alignment_creep_active"] = (
             recovery_alignment_creep_active
+        )
+        diagnostics["dynamic_recovery_scan_clearance_m"] = (
+            recovery_scan_clearance
+        )
+        diagnostics["dynamic_recovery_clearance_trend_steps"] = (
+            self._dynamic_recovery_clearance_trend_steps
+        )
+        diagnostics["dynamic_recovery_clearance_trend_ready"] = (
+            recovery_clearance_trend_ready
         )
         return SafetyDecision(
             proposed, executed, overridden, reason, diagnostics

@@ -212,6 +212,24 @@ class EpisodeMetrics:
                     "dynamic_recovery_alignment_creep_speed", 0.0
                 )
             ),
+            "dynamic_recovery_alignment_creep_minimum_heading_error_rad": float(
+                safety_diagnostics.get(
+                    "dynamic_recovery_alignment_creep_minimum_heading_error_rad",
+                    0.0,
+                )
+            ),
+            "dynamic_recovery_alignment_creep_clearance_trend_enabled": float(
+                safety_diagnostics.get(
+                    "dynamic_recovery_alignment_creep_clearance_trend_enabled",
+                    False,
+                )
+            ),
+            "dynamic_recovery_alignment_creep_minimum_scan_clearance_m": float(
+                safety_diagnostics.get(
+                    "dynamic_recovery_alignment_creep_minimum_scan_clearance_m",
+                    0.0,
+                )
+            ),
             "dynamic_recovery_minimum_heading_error_rad": float(
                 safety_diagnostics.get(
                     "dynamic_recovery_minimum_heading_error_rad", 0.0
@@ -270,6 +288,21 @@ class EpisodeMetrics:
             "dynamic_recovery_alignment_creep_active": float(
                 safety_diagnostics.get(
                     "dynamic_recovery_alignment_creep_active", False
+                )
+            ),
+            "dynamic_recovery_scan_clearance_m": float(
+                safety_diagnostics.get(
+                    "dynamic_recovery_scan_clearance_m", float("nan")
+                )
+            ),
+            "dynamic_recovery_clearance_trend_steps": int(
+                safety_diagnostics.get(
+                    "dynamic_recovery_clearance_trend_steps", 0
+                )
+            ),
+            "dynamic_recovery_clearance_trend_ready": float(
+                safety_diagnostics.get(
+                    "dynamic_recovery_clearance_trend_ready", False
                 )
             ),
             "planner_temporal_escape_active": float(

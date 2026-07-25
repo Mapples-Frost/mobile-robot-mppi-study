@@ -1,0 +1,95 @@
+{
+  "arm": "V5_recovery_full",
+  "block": {
+    "arm_order": [
+      "V4_full_frozen",
+      "V5_recovery_full"
+    ],
+    "block_order": 1,
+    "certificate": {
+      "certificate_rule": "ghost_constant_speed_center_distance_le_sum_radii",
+      "collision_threshold_m": 0.5,
+      "conflict_window_threshold_m": 0.8,
+      "conflict_windows_s": [
+        [
+          0.0,
+          3.75
+        ],
+        [
+          31.700000000000003,
+          38.300000000000004
+        ]
+      ],
+      "minimum_distance_time_s": 1.55,
+      "minimum_ghost_obstacle_center_distance_m": 0.3584249892057627,
+      "noise_profile": "medium",
+      "obstacle_process": "hybrid_patrol",
+      "obstacle_truth_sha256": "0e3787b3fe29f96097157551ad373233b1b00003e24ad76cd9cac528a544ba7d",
+      "seed": 740200252,
+      "split": "id"
+    },
+    "model_block": 1,
+    "seed": 740200252,
+    "split": "id",
+    "stratum": "near_goal_safe_noncompletion"
+  },
+  "change_signature": {
+    "perception.scan_guard.dynamic_recovery_alignment_creep_clearance_hold_steps": [
+      "<MISSING>",
+      1
+    ],
+    "perception.scan_guard.dynamic_recovery_alignment_creep_clearance_tolerance_m": [
+      "<MISSING>",
+      0.01
+    ],
+    "perception.scan_guard.dynamic_recovery_alignment_creep_clearance_trend_enabled": [
+      "<MISSING>",
+      true
+    ],
+    "perception.scan_guard.dynamic_recovery_alignment_creep_enabled": [
+      "<MISSING>",
+      true
+    ],
+    "perception.scan_guard.dynamic_recovery_alignment_creep_minimum_heading_error_rad": [
+      "<MISSING>",
+      0.0
+    ],
+    "perception.scan_guard.dynamic_recovery_alignment_creep_minimum_scan_clearance_m": [
+      "<MISSING>",
+      0.65
+    ],
+    "perception.scan_guard.dynamic_recovery_alignment_creep_speed": [
+      "<MISSING>",
+      0.1
+    ],
+    "perception.scan_guard.dynamic_recovery_clear_hold_steps": [
+      5,
+      3
+    ],
+    "perception.scan_guard.dynamic_recovery_goal_release_distance_m": [
+      0.45,
+      0.3
+    ],
+    "perception.scan_guard.dynamic_recovery_minimum_forward_commit_steps": [
+      "<MISSING>",
+      80
+    ],
+    "perception.scan_guard.dynamic_recovery_minimum_heading_error_rad": [
+      0.8,
+      0.0
+    ],
+    "perception.scan_guard.dynamic_recovery_progressive_acceleration_enabled": [
+      "<MISSING>",
+      true
+    ],
+    "perception.scan_guard.dynamic_recovery_ramp_start_speed": [
+      "<MISSING>",
+      0.1
+    ],
+    "perception.scan_guard.dynamic_recovery_ramp_steps": [
+      "<MISSING>",
+      5
+    ]
+  },
+  "resolved_config_sha256": "40623fa1f288e395522ba4894d3089180ddd34dd2e592393f9492b926d3b7036"
+}

@@ -1,0 +1,87 @@
+{
+  "arm": "V5_dual_horizon_full",
+  "block": {
+    "arm_order": [
+      "V5_dual_horizon_full",
+      "V4_full_frozen"
+    ],
+    "block_order": 13,
+    "certificate": {
+      "certificate_rule": "ghost_constant_speed_center_distance_le_sum_radii",
+      "collision_threshold_m": 0.5,
+      "conflict_window_threshold_m": 0.8,
+      "conflict_windows_s": [
+        [
+          0.0,
+          2.95
+        ],
+        [
+          10.100000000000001,
+          13.700000000000001
+        ]
+      ],
+      "minimum_distance_time_s": 1.3,
+      "minimum_ghost_obstacle_center_distance_m": 0.41925911718992803,
+      "noise_profile": "process_shift",
+      "obstacle_process": "hybrid_patrol",
+      "obstacle_truth_sha256": "176dbdcd7cd2d18ef77027602e40daa9e937a28fd32aaa2d2a9094b632f886e7",
+      "seed": 750200011,
+      "split": "ood"
+    },
+    "model_block": 2,
+    "seed": 750200011,
+    "split": "ood",
+    "stratum": "controller_independent_conflict_certificate"
+  },
+  "change_signature": {
+    "perception.scan_guard.dynamic_deadline_authority_reserve_steps": [
+      "<MISSING>",
+      0
+    ],
+    "perception.scan_guard.dynamic_deadline_clear_hold_steps": [
+      "<MISSING>",
+      5
+    ],
+    "perception.scan_guard.dynamic_deadline_control_period_s": [
+      "<MISSING>",
+      0.1
+    ],
+    "perception.scan_guard.dynamic_deadline_episode_steps": [
+      "<MISSING>",
+      400
+    ],
+    "perception.scan_guard.dynamic_deadline_heading_tolerance_rad": [
+      "<MISSING>",
+      0.2
+    ],
+    "perception.scan_guard.dynamic_deadline_minimum_required_speed": [
+      "<MISSING>",
+      0.2
+    ],
+    "perception.scan_guard.dynamic_deadline_position_tolerance_m": [
+      "<MISSING>",
+      0.3
+    ],
+    "perception.scan_guard.dynamic_deadline_reserve_steps": [
+      "<MISSING>",
+      5
+    ],
+    "perception.scan_guard.dynamic_deadline_speed_floor": [
+      "<MISSING>",
+      0.3
+    ],
+    "perception.scan_guard.dynamic_deadline_speed_margin": [
+      "<MISSING>",
+      1.1
+    ],
+    "perception.scan_guard.dynamic_deadline_supervisor_enabled": [
+      "<MISSING>",
+      true
+    ],
+    "perception.scan_guard.dynamic_deadline_trigger_margin_mps": [
+      "<MISSING>",
+      0.02
+    ]
+  },
+  "resolved_config_sha256": "31a8ad60d0f6a594d8e0528bf2dd663615e69ce623b1e1cb6f3389f420dadd20"
+}

@@ -1,0 +1,51 @@
+[block 1/32] ood seed=750200009 complete
+[block 2/32] ood seed=750200016 complete
+[block 3/32] ood seed=750200045 complete
+[block 4/32] ood seed=750200020 complete
+[block 5/32] id seed=750100005 complete
+[block 6/32] ood seed=750200026 complete
+[block 7/32] id seed=750100038 complete
+[block 8/32] id seed=750100014 complete
+[block 9/32] id seed=750100009 complete
+[block 10/32] ood seed=750200023 complete
+[block 11/32] ood seed=750200035 complete
+[block 12/32] id seed=750100017 complete
+[block 13/32] ood seed=750200043 complete
+[block 14/32] ood seed=750200011 complete
+[block 15/32] id seed=750100029 complete
+[block 16/32] ood seed=750200042 complete
+[block 17/32] id seed=750100040 complete
+[block 18/32] ood seed=750200033 complete
+[block 19/32] id seed=750100026 complete
+[block 20/32] id seed=750100032 complete
+[block 21/32] id seed=750100016 complete
+[block 22/32] id seed=750100006 complete
+[block 23/32] id seed=750100025 complete
+[block 24/32] id seed=750100002 complete
+[block 25/32] ood seed=750200025 complete
+[block 26/32] ood seed=750200036 complete
+[block 27/32] ood seed=750200044 complete
+[block 28/32] ood seed=750200022 complete
+[block 29/32] ood seed=750200013 complete
+[block 30/32] id seed=750100015 complete
+[block 31/32] id seed=750100018 complete
+[block 32/32] id seed=750100033 complete
+{
+  "bundle_sha256": "a69c434c1bd3dd40ec9b42b1fa567545b3e46f99cb33d1e358e7287295c0ddd0",
+  "checks": {
+    "collision_count_not_worse": false,
+    "direction_switches_bounded": false,
+    "mean_conflict_q05_clearance_preserved": true,
+    "mean_minimum_clearance_preserved": true,
+    "minimum_paired_safe_success_net_gain": false,
+    "minimum_safe_noncompletion_conversions": false,
+    "no_lost_v4_successes": true,
+    "no_new_paired_collisions": false,
+    "rollout_budget_exact": true,
+    "split_safe_success_not_worse": true,
+    "stuck_steps_bounded": true,
+    "three_phase_oscillation_not_worse": true,
+    "zero_speed_risk_bounded": true
+  },
+  "status": "qualification_fail"
+}

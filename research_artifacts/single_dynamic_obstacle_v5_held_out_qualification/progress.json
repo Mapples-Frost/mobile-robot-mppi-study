@@ -1,0 +1,9 @@
+{
+  "completed_blocks": 32,
+  "completed_episode_jobs": 64,
+  "failures": [],
+  "outcomes_opened": true,
+  "status": "qualification_fail",
+  "total_blocks": 32,
+  "total_episode_jobs": 64
+}

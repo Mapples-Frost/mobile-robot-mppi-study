@@ -1,0 +1,16 @@
+Traceback (most recent call last):
+  File "D:\Projects\mobile-robot-mppi-study\experiments\dynamic_uncertainty\run_single_dynamic_obstacle_v5_recovery_development.py", line 523, in <module>
+    raise SystemExit(main())
+  File "D:\Projects\mobile-robot-mppi-study\experiments\dynamic_uncertainty\run_single_dynamic_obstacle_v5_recovery_development.py", line 513, in main
+    result, manifest = run(args.protocol, args.workers)
+  File "D:\Projects\mobile-robot-mppi-study\experiments\dynamic_uncertainty\run_single_dynamic_obstacle_v5_recovery_development.py", line 484, in run
+    result = _analyze(development, source_protocol, output)
+  File "D:\Projects\mobile-robot-mppi-study\experiments\dynamic_uncertainty\run_single_dynamic_obstacle_v5_recovery_development.py", line 242, in _analyze
+    arm_rows = {
+  File "D:\Projects\mobile-robot-mppi-study\experiments\dynamic_uncertainty\run_single_dynamic_obstacle_v5_recovery_development.py", line 243, in <dictcomp>
+    arm: _episode_row(output, block, arm, source_protocol)
+  File "D:\Projects\mobile-robot-mppi-study\experiments\dynamic_uncertainty\run_single_dynamic_obstacle_v5_recovery_development.py", line 187, in _episode_row
+    behavior = v4_analysis._behavior_metrics(
+  File "D:\Projects\mobile-robot-mppi-study\experiments\dynamic_uncertainty\analyze_single_dynamic_obstacle_paper_v4.py", line 622, in _behavior_metrics
+    windows = list(block["certificate"]["conflict_windows_s"])
+KeyError: 'certificate'

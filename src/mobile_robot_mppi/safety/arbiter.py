@@ -211,6 +211,12 @@ class ScanGuardArbiter:
         self.dynamic_deadline_reserve_steps = int(
             self.config.get("dynamic_deadline_reserve_steps", 2)
         )
+        self.dynamic_deadline_authority_reserve_steps = int(
+            self.config.get(
+                "dynamic_deadline_authority_reserve_steps",
+                self.dynamic_deadline_reserve_steps,
+            )
+        )
         self.dynamic_deadline_clear_hold_steps = int(
             self.config.get("dynamic_deadline_clear_hold_steps", 5)
         )
@@ -327,6 +333,9 @@ class ScanGuardArbiter:
             or self.dynamic_deadline_position_tolerance_m <= 0.0
             or self.dynamic_deadline_reserve_steps < 0
             or self.dynamic_deadline_reserve_steps
+            >= self.dynamic_deadline_episode_steps
+            or self.dynamic_deadline_authority_reserve_steps < 0
+            or self.dynamic_deadline_authority_reserve_steps
             >= self.dynamic_deadline_episode_steps
             or self.dynamic_deadline_clear_hold_steps < 1
             or self.dynamic_deadline_minimum_required_speed < 0.0
@@ -501,6 +510,12 @@ class ScanGuardArbiter:
             0,
             deadline_steps_remaining - self.dynamic_deadline_reserve_steps,
         )
+        deadline_authority_available_steps = max(
+            0,
+            deadline_steps_remaining
+            - self.dynamic_deadline_authority_reserve_steps,
+        )
+        deadline_urgency_exhausted = False
         recovery_scan_clearance = float("nan")
         scan_clearance_values = []
         for key in (
@@ -740,7 +755,12 @@ class ScanGuardArbiter:
                 )
             )
         elif deadline_distance_remaining > 0.0:
-            deadline_required_speed = float("inf")
+            # The urgency horizon is exhausted, but an independently frozen
+            # authority horizon may still allow a final guarded cycle.  Keep
+            # diagnostics finite and request only the existing bounded escape
+            # speed; the safety gates below retain higher priority.
+            deadline_required_speed = self.dynamic_escape_max_speed
+            deadline_urgency_exhausted = True
         deadline_supervisor_active = bool(
             self.dynamic_deadline_supervisor_enabled
             and self._dynamic_deadline_conflict_seen
@@ -757,7 +777,7 @@ class ScanGuardArbiter:
             and np.isfinite(recovery_heading_error)
             and abs(recovery_heading_error)
             <= self.dynamic_deadline_heading_tolerance_rad
-            and deadline_available_steps > 0
+            and deadline_authority_available_steps > 0
             and deadline_required_speed
             >= self.dynamic_deadline_minimum_required_speed
             and deadline_required_speed
@@ -1288,6 +1308,15 @@ class ScanGuardArbiter:
         )
         diagnostics["dynamic_deadline_available_steps"] = int(
             deadline_available_steps
+        )
+        diagnostics["dynamic_deadline_urgency_available_steps"] = int(
+            deadline_available_steps
+        )
+        diagnostics["dynamic_deadline_authority_available_steps"] = int(
+            deadline_authority_available_steps
+        )
+        diagnostics["dynamic_deadline_urgency_exhausted"] = (
+            deadline_urgency_exhausted
         )
         diagnostics["dynamic_deadline_required_speed"] = float(
             deadline_required_speed

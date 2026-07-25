@@ -373,6 +373,21 @@ class EpisodeMetrics:
                     "dynamic_deadline_available_steps", 0
                 )
             ),
+            "dynamic_deadline_urgency_available_steps": int(
+                safety_diagnostics.get(
+                    "dynamic_deadline_urgency_available_steps", 0
+                )
+            ),
+            "dynamic_deadline_authority_available_steps": int(
+                safety_diagnostics.get(
+                    "dynamic_deadline_authority_available_steps", 0
+                )
+            ),
+            "dynamic_deadline_urgency_exhausted": float(
+                safety_diagnostics.get(
+                    "dynamic_deadline_urgency_exhausted", False
+                )
+            ),
             "dynamic_deadline_required_speed": float(
                 safety_diagnostics.get(
                     "dynamic_deadline_required_speed", 0.0

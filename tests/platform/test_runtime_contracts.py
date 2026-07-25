@@ -886,6 +886,7 @@ def _deadline_supervisor_arbiter():
             "dynamic_deadline_control_period_s": 0.1,
             "dynamic_deadline_position_tolerance_m": 0.3,
             "dynamic_deadline_reserve_steps": 1,
+            "dynamic_deadline_authority_reserve_steps": 1,
             "dynamic_deadline_clear_hold_steps": 2,
             "dynamic_deadline_minimum_required_speed": 0.2,
             "dynamic_deadline_speed_floor": 0.3,
@@ -988,6 +989,63 @@ def test_dynamic_deadline_supervisor_relinquishes_on_renewed_hazard():
 
     assert not hazardous.diagnostics["dynamic_deadline_supervisor_active"]
     assert hazardous.diagnostics["dynamic_deadline_clear_steps"] == 0
+    assert hazardous.executed_control.values[0] == 0.1
+
+
+def test_dual_horizon_deadline_keeps_final_clear_cycle_authorized():
+    arbiter = _deadline_supervisor_arbiter()
+    arbiter.dynamic_deadline_clear_hold_steps = 1
+    arbiter.dynamic_deadline_authority_reserve_steps = 0
+    arbiter._dynamic_deadline_conflict_seen = True
+    arbiter._dynamic_deadline_decision_count = 99
+
+    final_clear = arbiter.arbitrate(
+        ControlCommand(np.asarray((0.1, 0.0))),
+        {"reason": "front_clear", "temporal_scan_valid": False},
+        {
+            "probabilistic_obstacle_maximum_step_probability": 0.05,
+            "target_bearing_error": 0.0,
+            "terminal_control_distance": 0.4,
+        },
+    )
+
+    assert final_clear.diagnostics[
+        "dynamic_deadline_urgency_available_steps"
+    ] == 0
+    assert final_clear.diagnostics[
+        "dynamic_deadline_authority_available_steps"
+    ] == 1
+    assert final_clear.diagnostics["dynamic_deadline_urgency_exhausted"]
+    assert final_clear.diagnostics["dynamic_deadline_supervisor_active"]
+    assert final_clear.executed_control.values[0] == 0.35
+
+
+def test_dual_horizon_deadline_final_cycle_still_yields_to_hazard():
+    arbiter = _deadline_supervisor_arbiter()
+    arbiter.dynamic_deadline_clear_hold_steps = 1
+    arbiter.dynamic_deadline_authority_reserve_steps = 0
+    arbiter._dynamic_deadline_conflict_seen = True
+    arbiter._dynamic_deadline_decision_count = 99
+
+    hazardous = arbiter.arbitrate(
+        ControlCommand(np.asarray((0.1, 0.0))),
+        {
+            "reason": "front_clear",
+            "temporal_scan_valid": True,
+            "dynamic_obstacle_scan_flow_match": True,
+            "temporal_scan_ttc_s": 1.0,
+        },
+        {
+            "probabilistic_obstacle_maximum_step_probability": 0.20,
+            "target_bearing_error": 0.0,
+            "terminal_control_distance": 0.4,
+        },
+    )
+
+    assert hazardous.diagnostics[
+        "dynamic_deadline_authority_available_steps"
+    ] == 1
+    assert not hazardous.diagnostics["dynamic_deadline_supervisor_active"]
     assert hazardous.executed_control.values[0] == 0.1
 
 

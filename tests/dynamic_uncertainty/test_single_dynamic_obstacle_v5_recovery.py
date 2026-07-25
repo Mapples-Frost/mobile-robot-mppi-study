@@ -56,6 +56,20 @@ def _deadline_b3_protocols():
     return protocol, source
 
 
+def _dual_horizon_c1_protocols():
+    path = (
+        development.ROOT
+        / "configs"
+        / "research"
+        / "single_dynamic_obstacle_v5_dual_horizon_development_c1.yaml"
+    )
+    protocol = v4._load_yaml(path)
+    _, source, _, _, _ = v4.validate_protocol(
+        development._repo_path(protocol["source_protocol"])
+    )
+    return protocol, source
+
+
 def test_v5_development_is_outcome_informed_and_not_effect_estimation():
     protocol, _ = _protocols()
 
@@ -357,6 +371,58 @@ def test_v5_deadline_b3_changes_only_terminal_reserve_from_b2():
     assert v5_config["perception"]["scan_guard"][
         "dynamic_deadline_reserve_steps"
     ] == 0
+    assert (
+        int(v5_config["planner"]["num_samples"])
+        * int(v5_config["planner"]["paper_rl_driven"]["iterations"])
+        == 600
+    )
+
+
+def test_v5_dual_horizon_c1_is_new_structural_family_with_same_gate():
+    b2, _ = _deadline_b2_protocols()
+    c1, source = _dual_horizon_c1_protocols()
+    development._validate_parent_attempt(c1)
+    assert c1["design"]["development_attempt"] == "C1"
+    assert c1["design"]["mechanism_family"] == (
+        "dual_horizon_deadline_supervisor"
+    )
+    assert c1["development_go_no_go"] == b2["development_go_no_go"]
+    assert len(c1["candidate_overrides"]) == 12
+    assert c1["candidate_overrides"][
+        "dynamic_deadline_reserve_steps"
+    ] == 2
+    assert c1["candidate_overrides"][
+        "dynamic_deadline_authority_reserve_steps"
+    ] == 0
+
+    block = dict(c1["development_blocks"][0])
+    v4_config, v4_changes = development._configure_arm(
+        c1, source, block, "V4_full_frozen"
+    )
+    v5_config, v5_changes = development._configure_arm(
+        c1, source, block, "V5_dual_horizon_full"
+    )
+    assert not v4_changes
+    assert set(v5_changes) == {
+        "perception.scan_guard.%s" % key
+        for key in c1["candidate_overrides"]
+    }
+    v4_guard = v4_config["perception"]["scan_guard"]
+    v5_guard = v5_config["perception"]["scan_guard"]
+    assert {
+        key: value
+        for key, value in v5_guard.items()
+        if key.startswith("dynamic_recovery_")
+    } == {
+        key: value
+        for key, value in v4_guard.items()
+        if key.startswith("dynamic_recovery_")
+    }
+    for section in ("planner", "rl"):
+        assert v5_config[section] == v4_config[section]
+    assert v5_config["experiment"]["max_steps"] == 400
+    assert v5_config["experiment"]["control_dt"] == 0.1
+    assert v5_config["task"]["position_tolerance"] == 0.3
     assert (
         int(v5_config["planner"]["num_samples"])
         * int(v5_config["planner"]["paper_rl_driven"]["iterations"])

@@ -183,6 +183,25 @@ class EpisodeMetrics:
                     "dynamic_recovery_translation_enabled", False
                 )
             ),
+            "dynamic_recovery_progressive_acceleration_enabled": float(
+                safety_diagnostics.get(
+                    "dynamic_recovery_progressive_acceleration_enabled",
+                    False,
+                )
+            ),
+            "dynamic_recovery_ramp_start_speed": float(
+                safety_diagnostics.get(
+                    "dynamic_recovery_ramp_start_speed", 0.0
+                )
+            ),
+            "dynamic_recovery_ramp_steps": int(
+                safety_diagnostics.get("dynamic_recovery_ramp_steps", 1)
+            ),
+            "dynamic_recovery_minimum_forward_commit_steps": int(
+                safety_diagnostics.get(
+                    "dynamic_recovery_minimum_forward_commit_steps", 0
+                )
+            ),
             "dynamic_recovery_minimum_heading_error_rad": float(
                 safety_diagnostics.get(
                     "dynamic_recovery_minimum_heading_error_rad", 0.0
@@ -216,6 +235,26 @@ class EpisodeMetrics:
             "dynamic_recovery_release_count": int(
                 safety_diagnostics.get(
                     "dynamic_recovery_release_count", 0
+                )
+            ),
+            "dynamic_recovery_advance_count": int(
+                safety_diagnostics.get(
+                    "dynamic_recovery_advance_count", 0
+                )
+            ),
+            "dynamic_recovery_speed_floor": float(
+                safety_diagnostics.get(
+                    "dynamic_recovery_speed_floor", 0.0
+                )
+            ),
+            "dynamic_recovery_risk_ramp_fraction": float(
+                safety_diagnostics.get(
+                    "dynamic_recovery_risk_ramp_fraction", 0.0
+                )
+            ),
+            "dynamic_recovery_forward_commit_active": float(
+                safety_diagnostics.get(
+                    "dynamic_recovery_forward_commit_active", False
                 )
             ),
             "planner_temporal_escape_active": float(
@@ -2221,6 +2260,35 @@ class EpisodeMetrics:
             )),
             "dynamic_recovery_abort_steps": int(sum(
                 row.get("dynamic_recovery_mode") == "aborted"
+                for row in values
+            )),
+            "dynamic_recovery_progressive_acceleration_enabled_fraction": float(
+                np.mean([
+                    row.get(
+                        "dynamic_recovery_progressive_acceleration_enabled",
+                        0.0,
+                    )
+                    for row in values
+                ])
+            ),
+            "dynamic_recovery_forward_commit_steps": int(sum(
+                row.get("dynamic_recovery_forward_commit_active", 0.0)
+                for row in values
+            )),
+            "dynamic_recovery_advance_count_max": int(max(
+                row.get("dynamic_recovery_advance_count", 0)
+                for row in values
+            )),
+            "dynamic_recovery_speed_floor_mean": float(np.mean([
+                row.get("dynamic_recovery_speed_floor", 0.0)
+                for row in values
+                if row.get("dynamic_recovery_mode") == "advance"
+            ])) if any(
+                row.get("dynamic_recovery_mode") == "advance"
+                for row in values
+            ) else 0.0,
+            "dynamic_recovery_speed_floor_max": float(max(
+                row.get("dynamic_recovery_speed_floor", 0.0)
                 for row in values
             )),
             "dynamic_escape_allowed_steps": int(sum(

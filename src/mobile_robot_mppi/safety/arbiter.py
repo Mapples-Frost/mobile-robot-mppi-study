@@ -115,6 +115,22 @@ class ScanGuardArbiter:
         self.dynamic_recovery_release_steps = int(
             self.config.get("dynamic_recovery_release_steps", 5)
         )
+        self.dynamic_recovery_progressive_acceleration_enabled = bool(
+            self.config.get(
+                "dynamic_recovery_progressive_acceleration_enabled", False
+            )
+        )
+        self.dynamic_recovery_ramp_start_speed = float(
+            self.config.get("dynamic_recovery_ramp_start_speed", 0.0)
+        )
+        self.dynamic_recovery_ramp_steps = int(
+            self.config.get("dynamic_recovery_ramp_steps", 1)
+        )
+        self.dynamic_recovery_minimum_forward_commit_steps = int(
+            self.config.get(
+                "dynamic_recovery_minimum_forward_commit_steps", 0
+            )
+        )
         self.dynamic_recovery_goal_release_distance_m = float(
             self.config.get(
                 "dynamic_recovery_goal_release_distance_m", 0.45
@@ -167,10 +183,20 @@ class ScanGuardArbiter:
             > self.dynamic_escape_max_speed
             or self.dynamic_recovery_turn_gain <= 0.0
             or self.dynamic_recovery_release_steps < 1
+            or self.dynamic_recovery_minimum_forward_commit_steps < 0
             or self.dynamic_recovery_goal_release_distance_m <= 0.0
         ):
             raise ValueError(
                 "dynamic recovery parameters are invalid"
+            )
+        if self.dynamic_recovery_progressive_acceleration_enabled and (
+            self.dynamic_recovery_ramp_steps < 1
+            or self.dynamic_recovery_ramp_start_speed < 0.0
+            or self.dynamic_recovery_ramp_start_speed
+            > self.dynamic_recovery_min_speed
+        ):
+            raise ValueError(
+                "dynamic recovery acceleration ramp parameters are invalid"
             )
         self.reset()
 
@@ -181,6 +207,7 @@ class ScanGuardArbiter:
         self._dynamic_recovery_active = False
         self._dynamic_recovery_clear_steps = 0
         self._dynamic_recovery_release_count = 0
+        self._dynamic_recovery_advance_steps = 0
 
     def arbitrate(
         self,
@@ -298,6 +325,9 @@ class ScanGuardArbiter:
             )
         )
         recovery_mode = "inactive"
+        recovery_speed_floor = 0.0
+        recovery_risk_ramp_fraction = 0.0
+        recovery_forward_commit_active = False
         recovery_guard_clear = bool(
             not guard_result.get("emergency_stop", False)
             and reason == "front_clear"
@@ -319,6 +349,7 @@ class ScanGuardArbiter:
             self._dynamic_recovery_active = False
             self._dynamic_recovery_clear_steps = 0
             self._dynamic_recovery_release_count = 0
+            self._dynamic_recovery_advance_steps = 0
         elif self.dynamic_recovery_enabled and self._dynamic_escape_seen:
             recovery_heading_error = float(
                 context.get(
@@ -344,6 +375,7 @@ class ScanGuardArbiter:
                 self._dynamic_recovery_active = False
                 self._dynamic_recovery_clear_steps = 0
                 self._dynamic_recovery_release_count = 0
+                self._dynamic_recovery_advance_steps = 0
                 recovery_mode = "aborted"
             elif not self._dynamic_recovery_active:
                 if recovery_clear:
@@ -361,10 +393,12 @@ class ScanGuardArbiter:
                     ):
                         self._dynamic_recovery_active = True
                         self._dynamic_recovery_release_count = 0
+                        self._dynamic_recovery_advance_steps = 0
                         recovery_mode = "entered"
                     else:
                         self._dynamic_escape_seen = False
                         self._dynamic_recovery_clear_steps = 0
+                        self._dynamic_recovery_advance_steps = 0
                         recovery_mode = "not_needed"
         reverse_escape = False
         if dynamic_escape_allowed:
@@ -472,11 +506,13 @@ class ScanGuardArbiter:
                 self._dynamic_escape_seen = False
                 self._dynamic_recovery_clear_steps = 0
                 self._dynamic_recovery_release_count = 0
+                self._dynamic_recovery_advance_steps = 0
                 recovery_mode = "goal_release"
             elif not np.isfinite(heading_error):
                 self._dynamic_recovery_active = False
                 self._dynamic_recovery_clear_steps = 0
                 self._dynamic_recovery_release_count = 0
+                self._dynamic_recovery_advance_steps = 0
                 recovery_mode = "missing_heading_abort"
             elif abs(heading_error) > (
                 self.dynamic_recovery_heading_tolerance_rad
@@ -491,6 +527,7 @@ class ScanGuardArbiter:
                         self.action_spec.upper[omega_index],
                     )
                 self._dynamic_recovery_release_count = 0
+                self._dynamic_recovery_advance_steps = 0
                 recovery_mode = "align"
                 reason = "dynamic_recovery_align"
             elif not self.dynamic_recovery_translation_enabled:
@@ -498,13 +535,50 @@ class ScanGuardArbiter:
                 self._dynamic_escape_seen = False
                 self._dynamic_recovery_clear_steps = 0
                 self._dynamic_recovery_release_count = 0
+                self._dynamic_recovery_advance_steps = 0
                 recovery_mode = "aligned_release"
             else:
+                self._dynamic_recovery_advance_steps += 1
+                recovery_speed_floor = self.dynamic_recovery_min_speed
+                recovery_risk_ramp_fraction = 1.0
+                if self.dynamic_recovery_progressive_acceleration_enabled:
+                    ramp_denominator = max(
+                        1, self.dynamic_recovery_ramp_steps - 1
+                    )
+                    time_fraction = float(np.clip(
+                        (self._dynamic_recovery_advance_steps - 1)
+                        / ramp_denominator,
+                        0.0,
+                        1.0,
+                    ))
+                    risk_denominator = (
+                        self.dynamic_recovery_abort_probability
+                        - self.dynamic_recovery_entry_probability
+                    )
+                    recovery_risk_ramp_fraction = float(np.clip(
+                        (
+                            self.dynamic_recovery_abort_probability
+                            - selected_probability
+                        ) / max(risk_denominator, 1.0e-12),
+                        0.0,
+                        1.0,
+                    ))
+                    ramp_fraction = min(
+                        time_fraction, recovery_risk_ramp_fraction
+                    )
+                    recovery_speed_floor = float(
+                        self.dynamic_recovery_ramp_start_speed
+                        + ramp_fraction
+                        * (
+                            self.dynamic_recovery_min_speed
+                            - self.dynamic_recovery_ramp_start_speed
+                        )
+                    )
                 if "v_cmd" in self.action_spec.names:
                     v_index = self.action_spec.index("v_cmd")
                     values[v_index] = min(
                         max(
-                            self.dynamic_recovery_min_speed,
+                            recovery_speed_floor,
                             values[v_index],
                         ),
                         self.dynamic_escape_max_speed,
@@ -522,14 +596,21 @@ class ScanGuardArbiter:
                     self._dynamic_recovery_release_count = 0
                 recovery_mode = "advance"
                 reason = "dynamic_recovery_advance"
+                recovery_forward_commit_active = bool(
+                    self._dynamic_recovery_advance_steps
+                    <= self.dynamic_recovery_minimum_forward_commit_steps
+                )
                 if (
                     self._dynamic_recovery_release_count
                     >= self.dynamic_recovery_release_steps
+                    and self._dynamic_recovery_advance_steps
+                    >= self.dynamic_recovery_minimum_forward_commit_steps
                 ):
                     self._dynamic_recovery_active = False
                     self._dynamic_escape_seen = False
                     self._dynamic_recovery_clear_steps = 0
                     self._dynamic_recovery_release_count = 0
+                    self._dynamic_recovery_advance_steps = 0
                     recovery_mode = "planner_release"
         elif bool(guard_result.get("emergency_stop", False)):
             if "v_cmd" in self.action_spec.names:
@@ -600,6 +681,18 @@ class ScanGuardArbiter:
         diagnostics["dynamic_recovery_translation_enabled"] = (
             self.dynamic_recovery_translation_enabled
         )
+        diagnostics[
+            "dynamic_recovery_progressive_acceleration_enabled"
+        ] = self.dynamic_recovery_progressive_acceleration_enabled
+        diagnostics["dynamic_recovery_ramp_start_speed"] = (
+            self.dynamic_recovery_ramp_start_speed
+        )
+        diagnostics["dynamic_recovery_ramp_steps"] = (
+            self.dynamic_recovery_ramp_steps
+        )
+        diagnostics["dynamic_recovery_minimum_forward_commit_steps"] = (
+            self.dynamic_recovery_minimum_forward_commit_steps
+        )
         diagnostics["dynamic_recovery_minimum_heading_error_rad"] = (
             self.dynamic_recovery_minimum_heading_error_rad
         )
@@ -618,6 +711,18 @@ class ScanGuardArbiter:
         )
         diagnostics["dynamic_recovery_release_count"] = (
             self._dynamic_recovery_release_count
+        )
+        diagnostics["dynamic_recovery_advance_count"] = (
+            self._dynamic_recovery_advance_steps
+        )
+        diagnostics["dynamic_recovery_speed_floor"] = (
+            recovery_speed_floor
+        )
+        diagnostics["dynamic_recovery_risk_ramp_fraction"] = (
+            recovery_risk_ramp_fraction
+        )
+        diagnostics["dynamic_recovery_forward_commit_active"] = (
+            recovery_forward_commit_active
         )
         return SafetyDecision(
             proposed, executed, overridden, reason, diagnostics

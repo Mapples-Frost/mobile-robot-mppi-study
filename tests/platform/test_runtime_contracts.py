@@ -635,6 +635,121 @@ def test_dynamic_recovery_advances_when_aligned_and_aborts_on_new_risk():
     assert not aborted.diagnostics["dynamic_recovery_active"]
 
 
+def test_dynamic_recovery_progressive_ramp_uses_clear_risk_and_resets():
+    action_spec = body_velocity_action((-0.35, 0.35), 0.9)
+    arbiter = ScanGuardArbiter(
+        action_spec,
+        {
+            "dynamic_escape_enabled": True,
+            "dynamic_escape_max_speed": 0.35,
+            "dynamic_escape_reactive_enabled": True,
+            "dynamic_escape_trigger_ttc_s": 1.50,
+            "dynamic_recovery_enabled": True,
+            "dynamic_recovery_entry_probability": 0.10,
+            "dynamic_recovery_abort_probability": 0.15,
+            "dynamic_recovery_clear_hold_steps": 1,
+            "dynamic_recovery_heading_tolerance_rad": 0.30,
+            "dynamic_recovery_minimum_heading_error_rad": 0.0,
+            "dynamic_recovery_min_speed": 0.30,
+            "dynamic_recovery_translation_enabled": True,
+            "dynamic_recovery_progressive_acceleration_enabled": True,
+            "dynamic_recovery_ramp_start_speed": 0.10,
+            "dynamic_recovery_ramp_steps": 3,
+            "dynamic_recovery_minimum_forward_commit_steps": 5,
+        },
+    )
+    arbiter._dynamic_escape_seen = True
+    clear_guard = {"reason": "front_clear", "temporal_scan_valid": False}
+    clear_context = {
+        "probabilistic_obstacle_active_avoidance_enabled": True,
+        "probabilistic_obstacle_maximum_step_probability": 0.05,
+        "target_bearing_error": 0.0,
+        "terminal_control_distance": 4.0,
+    }
+
+    speeds = []
+    for _ in range(3):
+        decision = arbiter.arbitrate(
+            ControlCommand(np.asarray((0.0, 0.0))),
+            clear_guard,
+            clear_context,
+        )
+        speeds.append(float(decision.executed_control.values[0]))
+
+    np.testing.assert_allclose(speeds, (0.10, 0.20, 0.30))
+    assert decision.diagnostics[
+        "dynamic_recovery_progressive_acceleration_enabled"
+    ]
+    assert decision.diagnostics["dynamic_recovery_advance_count"] == 3
+    assert decision.diagnostics["dynamic_recovery_forward_commit_active"]
+    assert decision.diagnostics["dynamic_recovery_risk_ramp_fraction"] == 1.0
+
+    arbiter.reset()
+    reset_decision = arbiter.arbitrate(
+        ControlCommand(np.asarray((0.0, 0.0))),
+        clear_guard,
+        clear_context,
+    )
+    assert not reset_decision.diagnostics["dynamic_recovery_pending"]
+    assert reset_decision.diagnostics["dynamic_recovery_advance_count"] == 0
+    np.testing.assert_allclose(reset_decision.executed_control.values, 0.0)
+
+
+def test_dynamic_recovery_minimum_forward_commit_delays_planner_release():
+    action_spec = body_velocity_action((-0.35, 0.35), 0.9)
+    arbiter = ScanGuardArbiter(
+        action_spec,
+        {
+            "dynamic_escape_enabled": True,
+            "dynamic_escape_max_speed": 0.35,
+            "dynamic_escape_reactive_enabled": True,
+            "dynamic_escape_trigger_ttc_s": 1.50,
+            "dynamic_recovery_enabled": True,
+            "dynamic_recovery_entry_probability": 0.10,
+            "dynamic_recovery_abort_probability": 0.15,
+            "dynamic_recovery_clear_hold_steps": 1,
+            "dynamic_recovery_heading_tolerance_rad": 0.30,
+            "dynamic_recovery_minimum_heading_error_rad": 0.0,
+            "dynamic_recovery_min_speed": 0.30,
+            "dynamic_recovery_translation_enabled": True,
+            "dynamic_recovery_release_steps": 1,
+            "dynamic_recovery_minimum_forward_commit_steps": 4,
+        },
+    )
+    arbiter._dynamic_escape_seen = True
+    clear_guard = {"reason": "front_clear", "temporal_scan_valid": False}
+    clear_context = {
+        "probabilistic_obstacle_active_avoidance_enabled": True,
+        "probabilistic_obstacle_maximum_step_probability": 0.05,
+        "target_bearing_error": 0.0,
+        "terminal_control_distance": 4.0,
+    }
+
+    decisions = [
+        arbiter.arbitrate(
+            ControlCommand(np.asarray((0.30, 0.0))),
+            clear_guard,
+            clear_context,
+        )
+        for _ in range(4)
+    ]
+
+    assert all(
+        item.diagnostics["dynamic_recovery_active"] for item in decisions[:3]
+    )
+    assert all(
+        item.diagnostics["dynamic_recovery_forward_commit_active"]
+        for item in decisions[:3]
+    )
+    assert decisions[-1].diagnostics["dynamic_recovery_mode"] == (
+        "planner_release"
+    )
+    assert not decisions[-1].diagnostics["dynamic_recovery_active"]
+    np.testing.assert_allclose(
+        [item.executed_control.values[0] for item in decisions], 0.30
+    )
+
+
 def test_rotation_only_recovery_never_forces_unevaluated_translation():
     action_spec = body_velocity_action((-0.35, 0.35), 0.9)
     arbiter = ScanGuardArbiter(

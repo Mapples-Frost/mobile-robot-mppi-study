@@ -202,6 +202,16 @@ class EpisodeMetrics:
                     "dynamic_recovery_minimum_forward_commit_steps", 0
                 )
             ),
+            "dynamic_recovery_alignment_creep_enabled": float(
+                safety_diagnostics.get(
+                    "dynamic_recovery_alignment_creep_enabled", False
+                )
+            ),
+            "dynamic_recovery_alignment_creep_speed": float(
+                safety_diagnostics.get(
+                    "dynamic_recovery_alignment_creep_speed", 0.0
+                )
+            ),
             "dynamic_recovery_minimum_heading_error_rad": float(
                 safety_diagnostics.get(
                     "dynamic_recovery_minimum_heading_error_rad", 0.0
@@ -255,6 +265,11 @@ class EpisodeMetrics:
             "dynamic_recovery_forward_commit_active": float(
                 safety_diagnostics.get(
                     "dynamic_recovery_forward_commit_active", False
+                )
+            ),
+            "dynamic_recovery_alignment_creep_active": float(
+                safety_diagnostics.get(
+                    "dynamic_recovery_alignment_creep_active", False
                 )
             ),
             "planner_temporal_escape_active": float(
@@ -2251,7 +2266,13 @@ class EpisodeMetrics:
                 for row in values
             )),
             "dynamic_recovery_align_steps": int(sum(
-                row.get("dynamic_recovery_mode") == "align"
+                row.get("dynamic_recovery_mode") in (
+                    "align", "align_creep"
+                )
+                for row in values
+            )),
+            "dynamic_recovery_alignment_creep_steps": int(sum(
+                row.get("dynamic_recovery_alignment_creep_active", 0.0)
                 for row in values
             )),
             "dynamic_recovery_advance_steps": int(sum(

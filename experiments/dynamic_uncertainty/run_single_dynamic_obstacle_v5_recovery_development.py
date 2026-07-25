@@ -31,7 +31,7 @@ DEFAULT_PROTOCOL = (
     ROOT
     / "configs"
     / "research"
-    / "single_dynamic_obstacle_v5_recovery_development.yaml"
+    / "single_dynamic_obstacle_v5_recovery_development_a2.yaml"
 )
 
 
@@ -66,6 +66,26 @@ def _load_json(path):
 def _repo_path(value):
     path = Path(value)
     return path if path.is_absolute() else ROOT / path
+
+
+def _validate_parent_attempt(development):
+    if "parent_development_result" not in development:
+        return
+    result_path = _repo_path(development["parent_development_result"])
+    manifest_path = _repo_path(development["parent_development_manifest"])
+    if _sha256(result_path) != development[
+        "parent_development_result_sha256"
+    ]:
+        raise RuntimeError("parent development result hash mismatch")
+    if _sha256(manifest_path) != development[
+        "parent_development_manifest_sha256"
+    ]:
+        raise RuntimeError("parent development manifest hash mismatch")
+    parent_manifest = _load_json(manifest_path)
+    if parent_manifest["bundle_sha256"] != development[
+        "parent_development_bundle_sha256"
+    ]:
+        raise RuntimeError("parent development bundle hash mismatch")
 
 
 def _configure_threads():
@@ -424,6 +444,7 @@ def run(protocol_path=DEFAULT_PROTOCOL, workers=None):
     development = v4._load_yaml(protocol_path)
     if development["status"] != "frozen_before_development_execution":
         raise ValueError("v5 development protocol is not frozen")
+    _validate_parent_attempt(development)
     source_path = _repo_path(development["source_protocol"])
     source_analysis = _repo_path(development["source_analysis"])
     source_analysis_manifest = _repo_path(
@@ -542,6 +563,7 @@ def analyze_existing(protocol_path=DEFAULT_PROTOCOL):
     development = v4._load_yaml(protocol_path)
     if development["status"] != "frozen_before_development_execution":
         raise ValueError("v5 development protocol is not frozen")
+    _validate_parent_attempt(development)
     source_path = _repo_path(development["source_protocol"])
     source_analysis = _repo_path(development["source_analysis"])
     source_analysis_manifest = _repo_path(

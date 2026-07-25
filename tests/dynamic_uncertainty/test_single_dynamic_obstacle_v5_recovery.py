@@ -23,6 +23,9 @@ def test_v5_development_is_outcome_informed_and_not_effect_estimation():
     assert protocol["design"]["outcome_informed_development_selection"]
     assert not protocol["design"]["formal_effect_estimation_authorized"]
     assert protocol["design"]["future_v5_registry_seeds_must_be_disjoint"]
+    assert protocol["design"][
+        "future_held_out_qualification_seeds_must_be_disjoint"
+    ]
     assert len(protocol["development_blocks"]) == 8
     assert len({
         int(block["seed"]) for block in protocol["development_blocks"]
@@ -33,6 +36,7 @@ def test_v5_development_is_outcome_informed_and_not_effect_estimation():
     assert development._sha256(
         development._repo_path(protocol["source_analysis_manifest"])
     ) == protocol["source_analysis_manifest_sha256"]
+    development._validate_parent_attempt(protocol)
 
 
 def test_v5_recovery_changes_only_declared_scan_guard_fields():
@@ -93,6 +97,8 @@ def test_v5_recovery_contract_keeps_frozen_risk_thresholds_and_budget():
     assert not contract["new_collision_probability_threshold_added"]
     assert contract["new_rollout_candidates_added"] == 0
     assert contract["total_rollouts_per_decision"] == 600
+    assert contract["alignment_creep_requires_front_clear"]
+    assert contract["alignment_creep_aborts_on_existing_abort_conditions"]
 
 
 def test_v5_analysis_uses_certificate_enriched_schedule_blocks(monkeypatch):

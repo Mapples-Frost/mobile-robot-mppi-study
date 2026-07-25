@@ -131,6 +131,14 @@ class ScanGuardArbiter:
                 "dynamic_recovery_minimum_forward_commit_steps", 0
             )
         )
+        self.dynamic_recovery_alignment_creep_enabled = bool(
+            self.config.get(
+                "dynamic_recovery_alignment_creep_enabled", False
+            )
+        )
+        self.dynamic_recovery_alignment_creep_speed = float(
+            self.config.get("dynamic_recovery_alignment_creep_speed", 0.0)
+        )
         self.dynamic_recovery_goal_release_distance_m = float(
             self.config.get(
                 "dynamic_recovery_goal_release_distance_m", 0.45
@@ -197,6 +205,14 @@ class ScanGuardArbiter:
         ):
             raise ValueError(
                 "dynamic recovery acceleration ramp parameters are invalid"
+            )
+        if self.dynamic_recovery_alignment_creep_enabled and (
+            self.dynamic_recovery_alignment_creep_speed <= 0.0
+            or self.dynamic_recovery_alignment_creep_speed
+            > self.dynamic_recovery_min_speed
+        ):
+            raise ValueError(
+                "dynamic recovery alignment creep parameters are invalid"
             )
         self.reset()
 
@@ -328,6 +344,7 @@ class ScanGuardArbiter:
         recovery_speed_floor = 0.0
         recovery_risk_ramp_fraction = 0.0
         recovery_forward_commit_active = False
+        recovery_alignment_creep_active = False
         recovery_guard_clear = bool(
             not guard_result.get("emergency_stop", False)
             and reason == "front_clear"
@@ -518,7 +535,20 @@ class ScanGuardArbiter:
                 self.dynamic_recovery_heading_tolerance_rad
             ):
                 if "v_cmd" in self.action_spec.names:
-                    values[self.action_spec.index("v_cmd")] = 0.0
+                    v_index = self.action_spec.index("v_cmd")
+                    if self.dynamic_recovery_alignment_creep_enabled:
+                        values[v_index] = np.clip(
+                            self.dynamic_recovery_alignment_creep_speed,
+                            self.action_spec.lower[v_index],
+                            min(
+                                self.action_spec.upper[v_index],
+                                self.dynamic_escape_max_speed,
+                            ),
+                        )
+                        recovery_speed_floor = float(values[v_index])
+                        recovery_alignment_creep_active = True
+                    else:
+                        values[v_index] = 0.0
                 if "omega_cmd" in self.action_spec.names:
                     omega_index = self.action_spec.index("omega_cmd")
                     values[omega_index] = np.clip(
@@ -528,8 +558,16 @@ class ScanGuardArbiter:
                     )
                 self._dynamic_recovery_release_count = 0
                 self._dynamic_recovery_advance_steps = 0
-                recovery_mode = "align"
-                reason = "dynamic_recovery_align"
+                recovery_mode = (
+                    "align_creep"
+                    if recovery_alignment_creep_active
+                    else "align"
+                )
+                reason = (
+                    "dynamic_recovery_align_creep"
+                    if recovery_alignment_creep_active
+                    else "dynamic_recovery_align"
+                )
             elif not self.dynamic_recovery_translation_enabled:
                 self._dynamic_recovery_active = False
                 self._dynamic_escape_seen = False
@@ -693,6 +731,12 @@ class ScanGuardArbiter:
         diagnostics["dynamic_recovery_minimum_forward_commit_steps"] = (
             self.dynamic_recovery_minimum_forward_commit_steps
         )
+        diagnostics["dynamic_recovery_alignment_creep_enabled"] = (
+            self.dynamic_recovery_alignment_creep_enabled
+        )
+        diagnostics["dynamic_recovery_alignment_creep_speed"] = (
+            self.dynamic_recovery_alignment_creep_speed
+        )
         diagnostics["dynamic_recovery_minimum_heading_error_rad"] = (
             self.dynamic_recovery_minimum_heading_error_rad
         )
@@ -723,6 +767,9 @@ class ScanGuardArbiter:
         )
         diagnostics["dynamic_recovery_forward_commit_active"] = (
             recovery_forward_commit_active
+        )
+        diagnostics["dynamic_recovery_alignment_creep_active"] = (
+            recovery_alignment_creep_active
         )
         return SafetyDecision(
             proposed, executed, overridden, reason, diagnostics

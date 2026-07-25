@@ -1,0 +1,35 @@
+include: mujoco_v3_probabilistic_crossing_smoke_amendment17.yaml
+
+experiment:
+  name: mujoco_v3_probabilistic_crossing_smoke_amendment18
+
+planner:
+  goal_terminal_weight: 35.0
+
+online_smoke:
+  output_dir: research_artifacts/mujoco_v3_probabilistic_crossing_smoke_amendment18
+
+design_amendment:
+  version: 18
+  status: bounded_progress_probe
+  reason: seed001_is_safe_and_aligned_but_short_horizon_mppi_overvalues_repeated_local_waiting
+  single_factor:
+    name: goal_terminal_weight
+    previous: 25.0
+    candidate: 35.0
+  acceptance:
+    seed001_risk_enabled_collision: false
+    maximum_clearance_loss_vs_amendment17_m: 0.02
+    minimum_final_goal_distance_improvement_vs_amendment17_m: 0.10
+  stopping_rule: reject_without_further_tuning_if_any_acceptance_condition_fails
+  obstacle_generator_changed: false
+  predictor_changed: false
+  risk_definition_changed: false
+  hard_probability_threshold_changed: false
+  recovery_changed: false
+  residual_model_changed: false
+  localization_changed: false
+  seeds_changed: false
+  route_changed: false
+  gate_changed: false
+

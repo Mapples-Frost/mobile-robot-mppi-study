@@ -1,0 +1,37 @@
+schema_version: 1
+registry: dynamic_uncertainty_probability_program
+created: '2026-07-23'
+platform: windows_native
+independent_unit: obstacle_trajectory_seed
+pairing:
+  predictors_share_truth_and_observations: true
+  noise_profiles_share_standard_normal_draws: true
+  process_and_observation_streams_are_separate: true
+splits:
+  development:
+    role: tuning_and_smoke
+    seed_start: 730100001
+    count: 300
+    smoke_seeds:
+      - 730100001
+      - 730100002
+      - 730100003
+      - 730100004
+      - 730100005
+  held_out_id:
+    role: frozen_in_distribution_evaluation
+    seed_start: 730200001
+    count: 300
+  held_out_ood:
+    role: frozen_distribution_shift_evaluation
+    seed_start: 730300001
+    count: 300
+sealed_registry:
+  path: configs/seeds/sealed_dynamic_seeds.yaml
+  status: reserved_not_opened
+  allowed_in_development: false
+rules:
+  split_by_complete_trajectory: true
+  windows_from_one_trajectory_must_not_cross_splits: true
+  smoke_may_use_only_development_smoke_seeds: true
+  sealed_seeds_forbidden_in_smoke_or_tuning: true

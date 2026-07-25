@@ -1,0 +1,38 @@
+include: mujoco_three_dynamic_crossing_development_amendment50.yaml
+
+experiment:
+  name: mujoco_three_dynamic_crossing_development_amendment51
+
+planner:
+  probabilistic_obstacle_traversal_window_commit_admission_exit_deadline_enabled: true
+
+three_obstacle_amendment:
+  version: 51
+  reason: >-
+    amendment50_eliminated_the_deadline_retreat_permission_leak_and_both_arms_remained_collision_free_but_candidate_released_nine_commits_whose_optimistic_forward_clear_time_already_exceeded_the_same_cycle_causal_laserscan_ttc;_all_nine_were_later_cancelled_and_none_completed_creating_a_safe_reentry_retreat_limit_cycle
+  intervention: >-
+    require_each_new_commit_or_rearm_release_to_accumulate_the_existing_two_cycle_short_and_full_certificate_streak_only_while_a_matched_causal_laserscan_closing_ttc_is_absent_or_strictly_longer_than_the_optimistic_polyline_forward_clear_time;_otherwise_keep_the_existing_zero_speed_admission_hold
+  obstacle_future_truth_used: false
+  obstacle_identity_used: false
+  crossing_geometry_source: online_forecast_plus_polyline_reference
+  behavior_parameter_changed: false
+  candidate_values_changed: false
+  certificate_threshold_changed: false
+  commit_admission_contract_changed: true
+  commit_admission_exit_deadline_contract_changed: true
+  pre_center_exit_deadline_contract_changed: false
+  pre_center_deadline_retreat_escape_transaction_changed: false
+  post_center_execution_arbitration_changed: false
+  post_center_emergency_lattice_binding_changed: false
+  post_center_escape_transaction_latch_changed: false
+  raw_temporal_signal_binding_changed: false
+  temporal_escape_authority_preserved: true
+  temporal_abort_direction_contract_changed: false
+  control_horizon_changed: false
+  control_limit_changed: false
+  deterministic_computation_reused: true
+  diagnostic_profiling_changed: false
+  rollout_budget_changed: false
+  total_rollouts_per_decision: 600
+  active_waiting_allowed: true
+  active_traversal_objective: true

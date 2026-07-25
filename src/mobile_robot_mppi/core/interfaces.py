@@ -42,5 +42,10 @@ class Controller(Protocol):
 
 
 class SafetyArbiter(Protocol):
-    def arbitrate(self, proposed: ControlCommand, guard_result: Mapping[str, Any]) -> SafetyDecision:
+    def arbitrate(
+        self,
+        proposed: ControlCommand,
+        guard_result: Mapping[str, Any],
+        planning_context: Mapping[str, Any] = None,
+    ) -> SafetyDecision:
         ...

@@ -1,0 +1,25 @@
+include: mujoco_three_dynamic_crossing_development_amendment30.yaml
+
+experiment:
+  name: mujoco_three_dynamic_crossing_development_amendment31
+
+planner:
+  profile_components: false
+
+three_obstacle_amendment:
+  version: 31
+  reason: >-
+    amendment30_achieved_collision_free_first_crossing_progress_3p713m_and_one_completed_commit_but_the_diagnostic_component_profiler_left_candidate_p95_at_100p220ms_just_above_the_strict_100ms_realtime_gate
+  intervention: disable_only_diagnostic_component_timing_for_realtime_qualification_while_preserving_controller_behavior_random_seed_rollout_budget_checkpoint_and_all_causal_safety_parameters
+  obstacle_future_truth_used: false
+  obstacle_identity_used: false
+  crossing_geometry_source: online_forecast_plus_polyline_reference
+  behavior_parameter_changed: false
+  certificate_threshold_changed: false
+  control_horizon_changed: false
+  control_limit_changed: false
+  diagnostic_profiling_changed: true
+  rollout_budget_changed: false
+  total_rollouts_per_decision: 600
+  active_waiting_allowed: true
+  active_traversal_objective: true

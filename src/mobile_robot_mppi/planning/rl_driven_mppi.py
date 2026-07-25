@@ -5,7 +5,7 @@ default, so existing MuJoCo, ROS, memory, perception and safety behavior is
 unchanged unless ``planner.optimizer`` is explicitly set to ``rl_driven``.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Any, Mapping
 
 import numpy as np
@@ -14,6 +14,7 @@ from mobile_robot_mppi.planning.mppi import MppiController, integrate_batch
 from mobile_robot_mppi.rl.reliability import (
     ConservativeTerminalReliability,
     HybridSamplingReliability,
+    ProposalAdvantageGate,
     SourceRelativeCompetence,
 )
 
@@ -225,24 +226,24 @@ class RLDrivenMppiController(MppiController):
             and "theta" in self.state_spec.names
         )
         bearing_error = 0.0
+        if "theta" in self.state_spec.names and distance > 1.0e-12:
+            theta = float(state[self.state_spec.index("theta")])
+            desired = float(np.arctan2(dy, dx))
+            bearing_error = float(np.arctan2(
+                np.sin(desired - theta), np.cos(desired - theta)
+            ))
         translation_scale = 1.0
         if heading_gate_active:
-            theta = float(state[self.state_spec.index("theta")])
-            if np.hypot(dx, dy) > 1e-12:
-                desired = float(np.arctan2(dy, dx))
-                bearing_error = float(np.arctan2(
-                    np.sin(desired - theta), np.cos(desired - theta)
-                ))
-                gate = float(self.config.terminal_translation_heading_gate_rad)
-                gate_cosine = float(np.cos(gate))
-                if abs(bearing_error) >= gate:
-                    translation_scale = 0.0
-                else:
-                    translation_scale = max(
-                        0.0,
-                        (float(np.cos(bearing_error)) - gate_cosine)
-                        / max(1.0 - gate_cosine, 1e-12),
-                    )
+            gate = float(self.config.terminal_translation_heading_gate_rad)
+            gate_cosine = float(np.cos(gate))
+            if abs(bearing_error) >= gate:
+                translation_scale = 0.0
+            else:
+                translation_scale = max(
+                    0.0,
+                    (float(np.cos(bearing_error)) - gate_cosine)
+                    / max(1.0 - gate_cosine, 1e-12),
+                )
         speed_limit_active = bool(
             self.config.terminal_translation_speed_limit is not None
             and target.phase in ("terminal_approach", "terminal")
@@ -263,6 +264,7 @@ class RLDrivenMppiController(MppiController):
             "terminal_speed_limit_active": speed_limit_active,
             "terminal_heading_gate_active": heading_gate_active,
             "terminal_bearing_error": bearing_error,
+            "target_bearing_error": bearing_error,
             "terminal_translation_scale": translation_scale,
             "terminal_control_distance": distance,
             "terminal_control_region_active": control_region_active,
@@ -321,6 +323,9 @@ class RLDrivenMppiController(MppiController):
             ),
             "terminal_bearing_error": float(
                 constraints["terminal_bearing_error"]
+            ),
+            "target_bearing_error": float(
+                constraints["target_bearing_error"]
             ),
             "terminal_translation_scale": float(
                 constraints["terminal_translation_scale"]
@@ -602,6 +607,10 @@ class PaperRLDrivenMppiConfig:
     counterfactual_progress_soft_m: float = 0.0
     counterfactual_progress_hard_m: float = -0.15
     counterfactual_cross_track_weight: float = 0.50
+    proposal_advantage_gate: Any = None
+    standard_fallback_on_advantage_veto: bool = False
+    same_cycle_guided_cost_filter: bool = False
+    same_cycle_guided_relative_margin: float = 0.0
 
     @classmethod
     def from_mapping(cls, values: Mapping[str, Any]):
@@ -626,6 +635,7 @@ class PaperRLDrivenMppiConfig:
             self.counterfactual_progress_soft_m,
             self.counterfactual_progress_hard_m,
             self.counterfactual_cross_track_weight,
+            self.same_cycle_guided_relative_margin,
         ), dtype=np.float64)
         if not np.isfinite(values).all():
             raise ValueError("paper RL-Driven MPPI settings must be finite")
@@ -686,8 +696,32 @@ class PaperRLDrivenMppiConfig:
             raise ValueError(
                 "counterfactual cross-track weight must be non-negative"
             )
+        if self.same_cycle_guided_relative_margin < 0.0:
+            raise ValueError(
+                "same-cycle guided relative margin must be non-negative"
+            )
         HybridSamplingReliability(self.reliability or {})
         ConservativeTerminalReliability(self.conservative_terminal or {})
+        proposal_advantage = ProposalAdvantageGate(
+            self.proposal_advantage_gate or {}
+        )
+        if (
+            proposal_advantage.config.enabled
+            and not HybridSamplingReliability(
+                self.reliability or {}
+            ).config.enabled
+        ):
+            raise ValueError(
+                "proposal advantage gate requires adaptive HSS"
+            )
+        if self.standard_fallback_on_advantage_veto and (
+            not proposal_advantage.config.enabled
+            or proposal_advantage.config.mode != "episode_latched_veto"
+        ):
+            raise ValueError(
+                "standard fallback requires an active episode-latched "
+                "proposal advantage veto"
+            )
         guided = int(round(float(samples) * self.guided_fraction))
         if guided >= int(samples):
             raise ValueError("at least one current-Gaussian sample is required")
@@ -711,8 +745,46 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
     remains subject to the unchanged external safety chain.
     """
 
-    def __init__(self, *args, paper_rl_driven_config=None, **kwargs):
+    def __init__(
+        self,
+        *args,
+        paper_rl_driven_config=None,
+        reliability_residual=None,
+        reliability_nominal_dynamics=None,
+        **kwargs,
+    ):
         MppiController.__init__(self, *args, **kwargs)
+        if (reliability_residual is None) != (
+            reliability_nominal_dynamics is None
+        ):
+            raise ValueError(
+                "paper HSS sidecar requires both residual and nominal dynamics"
+            )
+        self.reliability_residual = reliability_residual
+        self.reliability_nominal_dynamics = reliability_nominal_dynamics
+        if reliability_residual is not None:
+            if (
+                int(reliability_residual.state_dim)
+                != self.state_spec.dimension
+                or int(reliability_residual.control_dim)
+                != self.action_spec.dimension
+                or int(reliability_nominal_dynamics.state_dim)
+                != self.state_spec.dimension
+                or int(reliability_nominal_dynamics.control_dim)
+                != self.action_spec.dimension
+            ):
+                raise ValueError(
+                    "paper HSS sidecar dimensions do not match the controller"
+                )
+            missing = [
+                name
+                for name in ("disagreement", "support_confidence")
+                if not callable(getattr(reliability_residual, name, None))
+            ]
+            if missing:
+                raise ValueError(
+                    "paper HSS sidecar is missing: %s" % ", ".join(missing)
+                )
         self.paper_rl_driven_config = (
             paper_rl_driven_config
             if isinstance(
@@ -732,6 +804,26 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
         self.source_relative_competence = SourceRelativeCompetence(
             self.hybrid_sampling_reliability.config
         )
+        self.proposal_advantage_gate = ProposalAdvantageGate(
+            self.paper_rl_driven_config.proposal_advantage_gate or {}
+        )
+        self._standard_fallback_controller = None
+        if self.paper_rl_driven_config.standard_fallback_on_advantage_veto:
+            fallback_config = replace(
+                self.config,
+                num_samples=(
+                    int(self.config.num_samples)
+                    * int(self.paper_rl_driven_config.iterations)
+                ),
+                importance_sampling_correction=True,
+            )
+            self._standard_fallback_controller = MppiController(
+                dynamics=self.dynamics,
+                state_spec=self.state_spec,
+                action_spec=self.action_spec,
+                config=fallback_config,
+                memory_cost=self.memory_cost,
+            )
         self.conservative_terminal_reliability = (
             ConservativeTerminalReliability(
                 self.paper_rl_driven_config.conservative_terminal or {}
@@ -763,10 +855,139 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
 
     def reset(self, seed=None):
         super().reset(seed)
+        if self._standard_fallback_controller is not None:
+            self._standard_fallback_controller.reset(seed)
+        prediction_residual = getattr(self.dynamics, "residual", None)
+        if (
+            self.reliability_residual is not None
+            and self.reliability_residual is not prediction_residual
+        ):
+            reset = getattr(self.reliability_residual, "reset", None)
+            if callable(reset):
+                reset()
         self._applied_guided_fraction = float(
             self.paper_rl_driven_config.guided_fraction
         )
         self.source_relative_competence.reset()
+        self.proposal_advantage_gate.reset()
+
+    def _solve_standard_advantage_fallback(
+        self,
+        state,
+        prior,
+        target,
+        obstacles,
+        rng,
+        observation,
+        reference,
+    ):
+        """Execute the exact standard-MPPI solver after an Actor veto.
+
+        Paper MPPI normally splits the fixed rollout budget over refinement
+        iterations and adds learned terminal value.  Merely setting guided
+        authority to zero therefore does not reproduce RL/HSS-off.  This
+        opt-in path uses the same total rollout budget in one standard MPPI
+        update, restores its importance correction, and bypasses Actor/HSS
+        inference after the episode latch.
+        """
+
+        fallback = self._standard_fallback_controller
+        if fallback is None or self.proposal_advantage_gate.authority != 0.0:
+            raise RuntimeError("standard advantage fallback is not active")
+        fallback.previous_action = self.previous_action.copy()
+        action, sequence, trajectory, diagnostics = MppiController._solve_plan(
+            fallback,
+            state,
+            prior,
+            target,
+            obstacles,
+            rng,
+            observation,
+            reference,
+        )
+        gate_diagnostics = self.proposal_advantage_gate.update(
+            0.0,
+            0.0,
+            observed=False,
+            authority_applied=0.0,
+        )
+        total_rollouts = int(fallback.config.num_samples)
+        diagnostics.update({
+            "optimizer": "paper_standard_mppi_fallback",
+            "paper_faithful_gate1": True,
+            "paper_standard_fallback_active": True,
+            "paper_standard_fallback_contract": "standard_mppi_exact_v1",
+            "paper_iterations": 1,
+            "paper_candidates_per_iteration": total_rollouts,
+            "paper_total_rollouts": total_rollouts,
+            "paper_guided_unique_sequences": 0,
+            "paper_guided_reuses": 0,
+            "paper_guided_generation_calls": 0,
+            "paper_gaussian_samples_per_iteration": total_rollouts,
+            "paper_guided_elite_count": 0,
+            "paper_gaussian_elite_count": 0,
+            "paper_guided_opportunity_count": 0,
+            "paper_gaussian_opportunity_count": total_rollouts,
+            "paper_guided_cost_observed": False,
+            "paper_gaussian_cost_observed": True,
+            "paper_guided_cost_min": 0.0,
+            "paper_guided_cost_mean": 0.0,
+            "paper_guided_cost_p50": 0.0,
+            "paper_guided_minus_gaussian_cost_min": 0.0,
+            "paper_guided_minus_gaussian_cost_mean": 0.0,
+            "paper_actor_mean_initialization": False,
+            "paper_actor_covariance_initialization": False,
+            "paper_actor_joint_batched": False,
+            "paper_guided_set_persistent": False,
+            "reliability_hss_enabled": True,
+            "reliability_guided_fraction_applied": 0.0,
+            "reliability_guided_fraction_next": 0.0,
+            "reliability_guided_fraction_raw_applied": 0.0,
+            "reliability_proposal_authority": 0.0,
+            "reliability_proposal_fallback_fraction": 1.0,
+            "terminal_value_enabled": False,
+            **gate_diagnostics,
+        })
+        return action, sequence, trajectory, diagnostics
+
+    def observe_completed_transition(
+        self,
+        previous_state,
+        applied_control,
+        current_state,
+        residual_derivative=None,
+    ):
+        prediction_updated = super().observe_completed_transition(
+            previous_state,
+            applied_control,
+            current_state,
+            residual_derivative=residual_derivative,
+        )
+        if self.reliability_residual is None:
+            return prediction_updated
+        sidecar_updated = self._observe_residual_prediction_errors(
+            previous_state,
+            applied_control,
+            current_state,
+            residual=self.reliability_residual,
+            nominal=self.reliability_nominal_dynamics,
+        )
+        return bool(prediction_updated or sidecar_updated)
+
+    def _observe_residual_reliability(self, current_state):
+        if self.reliability_residual is None:
+            return super()._observe_residual_reliability(current_state)
+        if (
+            self._reliability_previous_state is None
+            or self._reliability_pending_control is None
+        ):
+            return
+        self.observe_completed_transition(
+            self._reliability_previous_state,
+            self._reliability_pending_control,
+            current_state,
+        )
+        self._reliability_pending_control = None
 
     def _delayed_control(self, current, preceding):
         fraction = float(self.config.command_delay_s / self.config.dt)
@@ -1241,6 +1462,8 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
         }
 
     def _residual_for_reliability(self):
+        if self.reliability_residual is not None:
+            return self.reliability_residual
         residual = getattr(self.dynamics, "residual", None)
         visited = set()
         while residual is not None and id(residual) not in visited:
@@ -1439,7 +1662,48 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
             raise ValueError(
                 "paper RL-Driven MPPI requires observation and reference"
             )
+        tracker_diagnostics = dict(
+            observation.auxiliary.get("dynamic_obstacle_tracker", {})
+        )
+        probabilistic_obstacles = ()
+        if self.config.probabilistic_obstacle_risk_enabled:
+            probabilistic_obstacles = tuple(
+                observation.auxiliary.get(
+                    self.config.probabilistic_obstacle_forecast_key, ()
+                )
+            )
+            if not probabilistic_obstacles:
+                # Standard MPPI owns the frozen missing-forecast fail-closed
+                # contract.  Its early return happens before sampling, so this
+                # delegates only the deterministic stop path and never swaps
+                # the Paper optimizer when a forecast is available.
+                return MppiController._solve_plan(
+                    self,
+                    state,
+                    prior,
+                    target,
+                    obstacles,
+                    rng,
+                    observation,
+                    reference,
+                )
         cfg = self.paper_rl_driven_config
+        if (
+            cfg.standard_fallback_on_advantage_veto
+            and self.proposal_advantage_gate.authority == 0.0
+        ):
+            return self._solve_standard_advantage_fallback(
+                state,
+                prior,
+                target,
+                obstacles,
+                rng,
+                observation,
+                reference,
+            )
+        proposal_advantage_authority_applied = float(
+            self.proposal_advantage_gate.authority
+        )
         raw_applied_guided_fraction = (
             self._applied_guided_fraction
             if self.hybrid_sampling_reliability.config.enabled
@@ -1456,6 +1720,7 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
         )
         applied_guided_fraction = (
             pre_handover_guided_fraction * handover_authority
+            * proposal_advantage_authority_applied
         )
         guided_count = int(round(
             self.config.num_samples * applied_guided_fraction
@@ -1538,6 +1803,16 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
                 **terminal_floor_diagnostics,
                 **handover_diagnostics,
             })
+        reliability_diagnostics.update({
+            "reliability_sidecar_enabled": bool(
+                self.reliability_residual is not None
+            ),
+            "reliability_sidecar_type": (
+                type(self.reliability_residual).__name__
+                if self.reliability_residual is not None
+                else "prediction_residual"
+            ),
+        })
         actor_mean = mean
         baseline_mean = np.asarray(prior.mean, dtype=np.float64)
         if baseline_mean.shape != actor_mean.shape:
@@ -1577,37 +1852,67 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
             if self.hybrid_sampling_reliability.config.enabled
             else 1.0
         )
-        proposal_authority = float(np.clip(
+        requested_proposal_authority = float(np.clip(
             handover_authority
             * proposal_reliability_authority
             * counterfactual_authority,
             0.0,
             1.0,
+        )) * proposal_advantage_authority_applied
+        requested_proposal_authority = float(np.clip(
+            requested_proposal_authority,
+            0.0,
+            1.0,
         ))
-        mean = (
-            proposal_authority * actor_mean
-            + (1.0 - proposal_authority) * baseline_mean
-        )
-        initial_proposal_mean = mean.copy()
         base_variance = np.broadcast_to(
             np.asarray(self.config.noise_sigma, dtype=np.float64)[None, :] ** 2,
-            mean.shape,
+            actor_mean.shape,
         ).copy()
         proposal_variance = (
-            proposal_authority * actor_variance
-            + (1.0 - proposal_authority) * base_variance
+            requested_proposal_authority * actor_variance
+            + (1.0 - requested_proposal_authority) * base_variance
         )
+        # The same-cycle comparator must be an Actor-free control arm.  Merely
+        # removing labelled guided elites is insufficient when the Gaussian
+        # population was itself sampled around an Actor-blended mean and
+        # covariance.  In filtered mode the learned policy therefore affects
+        # only the explicitly guided population; the Gaussian population
+        # starts from the trusted baseline proposal and may absorb guided
+        # elites only after they demonstrate a same-cycle cost advantage.
+        same_cycle_gaussian_actor_isolated = bool(
+            cfg.same_cycle_guided_cost_filter
+        )
+        proposal_authority = (
+            0.0
+            if same_cycle_gaussian_actor_isolated
+            else requested_proposal_authority
+        )
+        if same_cycle_gaussian_actor_isolated:
+            mean = baseline_mean.copy()
+            variance = base_variance.copy()
+        else:
+            mean = (
+                proposal_authority * actor_mean
+                + (1.0 - proposal_authority) * baseline_mean
+            )
+            variance = np.clip(
+                proposal_variance,
+                base_variance * cfg.covariance_min_scale ** 2,
+                base_variance * cfg.covariance_max_scale ** 2,
+            )
+        initial_proposal_mean = mean.copy()
         reliability_diagnostics.update({
             "reliability_proposal_authority": proposal_authority,
             "reliability_proposal_fallback_fraction": (
                 1.0 - proposal_authority
             ),
+            "reliability_requested_proposal_authority": (
+                requested_proposal_authority
+            ),
+            "paper_same_cycle_gaussian_actor_isolated": (
+                same_cycle_gaussian_actor_isolated
+            ),
         })
-        variance = np.clip(
-            proposal_variance,
-            base_variance * cfg.covariance_min_scale ** 2,
-            base_variance * cfg.covariance_max_scale ** 2,
-        )
         gaussian_count = self.config.num_samples - guided_count
         # Critical fidelity property: generated once, reused unchanged.
         minimum_variance = (
@@ -1632,11 +1937,190 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
         hard_boundary_filter = bool(
             self.config.path_boundary_candidate_filter_enabled
         )
+        risk_candidate_filter = bool(
+            self.config.probabilistic_obstacle_risk_enabled
+            and self.config.probabilistic_obstacle_candidate_filter_enabled
+        )
         boundary_feasible_fractions = []
         boundary_no_feasible_iterations = 0
         boundary_last_feasible = None
+        boundary_last_first_step_feasible = None
+        boundary_last_emergency_prefix_feasible = None
         boundary_last_samples = None
         boundary_last_costs = None
+        risk_feasible_fractions = []
+        risk_no_feasible_iterations = 0
+        risk_last_candidate = None
+        risk_last_feasible = None
+        risk_last_samples = None
+        risk_last_costs = None
+        emergency_context = self._probabilistic_emergency_context(
+            observation, state, probabilistic_obstacles
+        )
+        traversal_context = self._probabilistic_traversal_window_context(
+            state,
+            reference,
+            probabilistic_obstacles,
+            temporal_emergency_triggered=bool(
+                emergency_context["triggered"]
+            ),
+            temporal_emergency_raw_triggered=bool(
+                emergency_context.get("raw_triggered", False)
+            ),
+            temporal_emergency_closing_observed=bool(
+                emergency_context.get("closing_observed", False)
+            ),
+            temporal_emergency_ttc_s=float(
+                emergency_context.get("ttc_s", float("inf"))
+            ),
+            terminal_phase=bool(target.phase == "terminal"),
+        )
+        # Preserve the raw causal LaserScan warning separately from the
+        # one-shot emergency intent/rearm latch.  The post-center transaction
+        # must not interpret an exhausted intent hold as a cleared obstacle
+        # while the same scan flow still reports closing motion.
+        traversal_context["temporal_emergency_raw_triggered"] = bool(
+            emergency_context.get("raw_triggered", False)
+        )
+        traversal_context["temporal_emergency_closing_observed"] = bool(
+            emergency_context.get("closing_observed", False)
+        )
+        traversal_context["temporal_emergency_scan_valid"] = bool(
+            emergency_context.get("scan_valid", False)
+        )
+        traversal_context["temporal_emergency_scan_flow_match"] = bool(
+            emergency_context.get("scan_flow_match", False)
+        )
+        traversal_context["temporal_emergency_ttc_s"] = float(
+            emergency_context.get("ttc_s", float("inf"))
+        )
+        traversal_context[
+            "temporal_emergency_safety_hard_stop_ttc_s"
+        ] = float(
+            emergency_context.get("safety_hard_stop_ttc_s", 0.0)
+        )
+        traversal_context["temporal_emergency_rearm_ready"] = bool(
+            emergency_context.get("rearm_ready", True)
+        )
+        post_center_forward_exit_commit_requested = bool(
+            self.config
+            .probabilistic_obstacle_traversal_window_post_center_forward_exit_commit_enabled
+            and traversal_context.get(
+                "post_center_forward_exit_commit_active", False
+            )
+        )
+        emergency_context[
+            "post_center_forward_exit_commit_requested"
+        ] = post_center_forward_exit_commit_requested
+        traversal_context[
+            "post_center_forward_exit_commit_requested"
+        ] = post_center_forward_exit_commit_requested
+        post_center_low_ttc_nonforward_coverage_requested = bool(
+            self.config
+            .probabilistic_obstacle_traversal_window_post_center_low_ttc_nonforward_coverage_enabled
+            and self.config
+            .probabilistic_obstacle_traversal_window_post_center_low_ttc_continuity_guard_enabled
+            and traversal_context.get("candidate_requested", False)
+            and traversal_context.get("commit_started", False)
+            and not traversal_context.get("retreat_requested", False)
+            and not traversal_context.get("rearm_pending", False)
+            and float(traversal_context.get("current_progress", 0.0))
+            >= float(traversal_context.get("crossing_progress", 0.0))
+            - 1.0e-9
+            and float(traversal_context.get("current_progress", 0.0))
+            < float(traversal_context.get("clear_progress", 0.0))
+            - 1.0e-9
+            and emergency_context.get("scan_valid", False)
+            and float(
+                emergency_context.get("safety_hard_stop_ttc_s", 0.0)
+            ) > 0.0
+            and np.isfinite(float(
+                emergency_context.get("ttc_s", float("inf"))
+            ))
+            and 0.0 < float(
+                emergency_context.get("ttc_s", float("inf"))
+            ) <= float(
+                emergency_context.get("safety_hard_stop_ttc_s", 0.0)
+            )
+            and not emergency_context.get("closing_observed", False)
+            and not emergency_context.get("rearm_ready", True)
+            and not post_center_forward_exit_commit_requested
+        )
+        emergency_context[
+            "post_center_low_ttc_nonforward_coverage_requested"
+        ] = post_center_low_ttc_nonforward_coverage_requested
+        traversal_context[
+            "post_center_low_ttc_nonforward_coverage_requested"
+        ] = post_center_low_ttc_nonforward_coverage_requested
+        emergency_context, traversal_context = (
+            self._bind_probabilistic_traversal_exit_deadline_retreat_escape(
+                emergency_context, traversal_context, state
+            )
+        )
+        emergency_context, traversal_context = (
+            self._bind_probabilistic_traversal_post_center_temporal_escape(
+                emergency_context, traversal_context, state
+            )
+        )
+        exit_deadline_retreat_emergency_lattice_requested = bool(
+            traversal_context.get(
+                "exit_deadline_retreat_escape_transaction_active", False
+            )
+        )
+        admission_exit_deadline_emergency_lattice_requested = bool(
+            traversal_context.get(
+                "commit_admission_exit_deadline_hold_requested", False
+            )
+        )
+        uncommitted_temporal_staging_emergency_lattice_requested = bool(
+            traversal_context.get(
+                "uncommitted_temporal_staging_hold_requested", False
+            )
+        )
+        rearm_hard_risk_emergency_lattice_requested = bool(
+            self.config
+            .probabilistic_obstacle_traversal_window_rearm_hard_risk_temporal_lattice_override_enabled
+            and traversal_context.get("candidate_requested", False)
+            and traversal_context.get("rearm_pending", False)
+            and traversal_context.get(
+                "temporal_emergency_raw_triggered", False
+            )
+        )
+        temporal_retreat_raw_emergency_lattice_requested = bool(
+            self.config
+            .probabilistic_obstacle_traversal_window_temporal_retreat_raw_lattice_binding_enabled
+            and traversal_context.get("candidate_requested", False)
+            and traversal_context.get("retreat_requested", False)
+            and traversal_context.get(
+                "retreat_temporal_lattice_requested", False
+            )
+            and traversal_context.get(
+                "temporal_emergency_raw_triggered", False
+            )
+        )
+        traversal_context["temporal_retreat_raw_lattice_requested"] = bool(
+            temporal_retreat_raw_emergency_lattice_requested
+        )
+        post_center_emergency_lattice_requested = bool(
+            self.config
+            .probabilistic_obstacle_traversal_window_post_center_hard_risk_override_enabled
+            and traversal_context.get("candidate_requested", False)
+            and traversal_context.get("commit_started", False)
+            and not traversal_context.get("retreat_requested", False)
+            and not traversal_context.get("rearm_pending", False)
+            and float(traversal_context.get("current_progress", 0.0))
+            >= float(traversal_context.get("crossing_progress", 0.0))
+            - 1.0e-9
+            and float(traversal_context.get("current_progress", 0.0))
+            < float(traversal_context.get("clear_progress", 0.0))
+            - 1.0e-9
+        )
+        emergency_last_mask = np.zeros(
+            self.config.num_samples, dtype=bool
+        )
+        traversal_last_index = -1
+        same_cycle_guided_filter_iterations = 0
+        same_cycle_guided_filtered_candidates = 0
         for _ in range(cfg.iterations):
             gaussian = self._gaussian_samples(
                 mean, variance, gaussian_count, rng
@@ -1646,7 +2130,7 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
                 np.ones(guided_count, dtype=np.int8),
                 np.zeros(gaussian_count, dtype=np.int8),
             ))
-            if hard_boundary_filter:
+            if hard_boundary_filter or risk_candidate_filter:
                 # Keep K fixed while reserving one deterministic braking
                 # candidate.  Label -1 excludes it from guided/Gaussian source
                 # competence accounting.
@@ -1663,20 +2147,72 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
                     samples[0, 0], self.previous_action, self.config.dt
                 )
                 labels[0] = -1
+            emergency_mask = np.zeros(
+                self.config.num_samples, dtype=bool
+            )
+            if (
+                self.config.probabilistic_obstacle_risk_enabled
+                and self.config
+                .probabilistic_obstacle_emergency_candidates_enabled
+                and (
+                    emergency_context["triggered"]
+                    or post_center_emergency_lattice_requested
+                    or exit_deadline_retreat_emergency_lattice_requested
+                    or admission_exit_deadline_emergency_lattice_requested
+                    or uncommitted_temporal_staging_emergency_lattice_requested
+                    or rearm_hard_risk_emergency_lattice_requested
+                    or temporal_retreat_raw_emergency_lattice_requested
+                )
+            ):
+                emergency_mask = (
+                    self._inject_probabilistic_emergency_candidates(
+                        samples, mean, emergency_context
+                    )
+                )
+                # Emergency lattice slots are neither Actor-guided nor
+                # Gaussian evidence for the HSS competence estimator.
+                labels[emergency_mask] = -2
+            traversal_index = self._inject_probabilistic_traversal_candidate(
+                samples, traversal_context
+            )
+            protected_candidate_mask = emergency_mask.copy()
+            if traversal_index >= 0:
+                # The traversal proposal occupies its own fixed-budget slot.
+                # Protect it from first-action slew clipping without
+                # misreporting it as a member of the six-direction emergency
+                # lattice passed to the same-cycle action guard.
+                protected_candidate_mask[traversal_index] = True
+                labels[traversal_index] = -3
             samples, constraints = self._terminal_constraints(
                 state, target, samples
             )
-            if hard_boundary_filter:
-                samples[:, 0, :] = self.action_spec.clip(
-                    samples[:, 0, :], self.previous_action, self.config.dt
+            if hard_boundary_filter or risk_candidate_filter:
+                regular_candidates = ~protected_candidate_mask
+                samples[regular_candidates, 0, :] = self.action_spec.clip(
+                    samples[regular_candidates, 0, :],
+                    self.previous_action,
+                    self.config.dt,
                 )
             trajectories = self.rollout(state, samples)
+            boundary_margins = (
+                self._path_boundary_margins(trajectories, reference)
+                if hard_boundary_filter else None
+            )
+            candidate_risk = (
+                self._probabilistic_collision_risk(
+                    trajectories, probabilistic_obstacles
+                )
+                if risk_candidate_filter else None
+            )
             running = self._cost(
                 trajectories,
                 samples,
                 target,
                 obstacles,
                 reference=reference,
+                probabilistic_obstacles=probabilistic_obstacles,
+                path_boundary_margins=boundary_margins,
+                probabilistic_risk=candidate_risk,
             )
             terminal, terminal_diagnostics = self._paper_terminal_cost(
                 trajectories,
@@ -1708,34 +2244,95 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
                     "paper RL-Driven MPPI cost contains NaN or Inf"
                 )
             if hard_boundary_filter:
-                boundary_margins = self._path_boundary_margins(
-                    trajectories, reference
-                )
                 boundary_feasible = np.min(
                     boundary_margins[:, 1:], axis=1
                 ) >= 0.0
-                feasible_indices = np.flatnonzero(boundary_feasible)
                 boundary_feasible_fractions.append(float(
                     np.mean(boundary_feasible)
                 ))
-                if feasible_indices.size == 0:
-                    # Sample zero is the deterministic braking candidate.  It
-                    # remains the fail-closed optimizer update even when plant
-                    # momentum makes the full predicted horizon infeasible.
-                    feasible_indices = np.asarray([0], dtype=np.int64)
-                    boundary_no_feasible_iterations += 1
                 boundary_last_feasible = boundary_feasible
+                boundary_last_first_step_feasible = (
+                    boundary_margins[:, 1] >= 0.0
+                )
+                emergency_prefix_steps = max(1, min(
+                    int(
+                        self.config
+                        .probabilistic_obstacle_emergency_candidate_prefix_steps
+                    ),
+                    boundary_margins.shape[1] - 1,
+                ))
+                boundary_last_emergency_prefix_feasible = np.min(
+                    boundary_margins[:, 1:emergency_prefix_steps + 1],
+                    axis=1,
+                ) >= 0.0
                 boundary_last_samples = samples.copy()
                 boundary_last_costs = costs.copy()
             else:
                 boundary_feasible = np.ones(
                     self.config.num_samples, dtype=bool
                 )
-                feasible_indices = np.arange(
-                    self.config.num_samples, dtype=np.int64
+            risk_feasible = np.ones(
+                self.config.num_samples, dtype=bool
+            )
+            if risk_candidate_filter:
+                risk_feasible = ~candidate_risk.hard_violation
+                risk_feasible_fractions.append(float(
+                    np.mean(risk_feasible)
+                ))
+            jointly_feasible = boundary_feasible & risk_feasible
+            if not hard_boundary_filter and not risk_candidate_filter:
+                optimizer_feasible = jointly_feasible
+            elif (
+                hard_boundary_filter
+                and risk_candidate_filter
+                and np.any(jointly_feasible)
+            ):
+                optimizer_feasible = jointly_feasible
+            elif hard_boundary_filter and np.any(boundary_feasible):
+                optimizer_feasible = boundary_feasible
+            elif risk_candidate_filter and np.any(risk_feasible):
+                optimizer_feasible = risk_feasible
+            else:
+                # Candidate zero is the deterministic braking sequence.  It
+                # remains the fail-closed update if neither hard filter has a
+                # feasible stochastic candidate.
+                optimizer_feasible = np.zeros(
+                    self.config.num_samples, dtype=bool
                 )
+                optimizer_feasible[0] = True
+                if hard_boundary_filter and not np.any(boundary_feasible):
+                    boundary_no_feasible_iterations += 1
+                if risk_candidate_filter and not np.any(risk_feasible):
+                    risk_no_feasible_iterations += 1
+            risk_last_candidate = candidate_risk
+            risk_last_feasible = risk_feasible
+            risk_last_samples = samples.copy()
+            risk_last_costs = costs.copy()
+            emergency_last_mask = emergency_mask.copy()
+            traversal_last_index = int(traversal_index)
             guided_mask = labels == 1
             gaussian_mask = labels == 0
+            if cfg.same_cycle_guided_cost_filter:
+                guided_eligible = optimizer_feasible & guided_mask
+                gaussian_eligible = optimizer_feasible & gaussian_mask
+                if np.any(guided_eligible) and np.any(gaussian_eligible):
+                    guided_best = float(np.min(costs[guided_eligible]))
+                    gaussian_best = float(np.min(costs[gaussian_eligible]))
+                    relative_disadvantage = (
+                        (guided_best - gaussian_best)
+                        / max(abs(gaussian_best), 1.0)
+                    )
+                    if relative_disadvantage > float(
+                        cfg.same_cycle_guided_relative_margin
+                    ):
+                        same_cycle_guided_filter_iterations += 1
+                        same_cycle_guided_filtered_candidates += int(
+                            np.sum(guided_eligible)
+                        )
+                        optimizer_feasible = (
+                            optimizer_feasible & ~guided_mask
+                        )
+            feasible_indices = np.flatnonzero(optimizer_feasible)
             guided_iteration_costs = costs[guided_mask]
             gaussian_iteration_costs = costs[gaussian_mask]
             if guided_iteration_costs.size:
@@ -1745,10 +2342,10 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
             total_guided_opportunities += int(np.sum(guided_mask))
             total_gaussian_opportunities += int(np.sum(gaussian_mask))
             guided_feasible_count += int(np.sum(
-                boundary_feasible & guided_mask
+                jointly_feasible & guided_mask
             ))
             gaussian_feasible_count += int(np.sum(
-                boundary_feasible & gaussian_mask
+                jointly_feasible & gaussian_mask
             ))
             requested_elites = max(
                 2,
@@ -1929,6 +2526,75 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
                 boundary_weighted_update_feasible = bool(
                     boundary_final_min_margin >= 0.0
                 )
+        guard_candidate_eligible = (
+            boundary_last_feasible.copy()
+            if hard_boundary_filter
+            else np.ones(self.config.num_samples, dtype=bool)
+        )
+        boundary_handoff_scope = bool(
+            hard_boundary_filter
+            and traversal_context.get(
+                "post_center_low_ttc_nonforward_coverage_requested", False
+            )
+        )
+        prefix_boundary_handoff_requested = bool(
+            boundary_handoff_scope
+            and self.config
+            .probabilistic_obstacle_traversal_window_post_center_low_ttc_prefix_boundary_handoff_enabled
+        )
+        first_step_boundary_handoff_requested = bool(
+            boundary_handoff_scope
+            and self.config
+            .probabilistic_obstacle_traversal_window_post_center_low_ttc_first_step_boundary_handoff_enabled
+            and not prefix_boundary_handoff_requested
+        )
+        handoff_boundary_eligible = (
+            boundary_last_emergency_prefix_feasible
+            if prefix_boundary_handoff_requested
+            and boundary_last_emergency_prefix_feasible is not None
+            else boundary_last_first_step_feasible
+            if boundary_last_first_step_feasible is not None
+            else guard_candidate_eligible
+        )
+        guard_candidate_eligible, first_step_boundary_handoff_mask = (
+            self._emergency_first_step_boundary_handoff(
+                guard_candidate_eligible,
+                handoff_boundary_eligible,
+                emergency_last_mask,
+                enabled=(
+                    first_step_boundary_handoff_requested
+                    or prefix_boundary_handoff_requested
+                ),
+            )
+        )
+        traversal_context[
+            "post_center_low_ttc_first_step_boundary_handoff_requested"
+        ] = first_step_boundary_handoff_requested
+        traversal_context[
+            "_post_center_low_ttc_first_step_boundary_handoff_mask"
+        ] = first_step_boundary_handoff_mask
+        traversal_context[
+            "post_center_low_ttc_prefix_boundary_handoff_requested"
+        ] = prefix_boundary_handoff_requested
+        action, sequence, trajectory, probabilistic_risk_diagnostics = (
+            self._apply_probabilistic_obstacle_action_guard(
+                state,
+                action,
+                sequence,
+                trajectory,
+                risk_last_samples,
+                risk_last_costs,
+                probabilistic_obstacles,
+                candidate_eligible=guard_candidate_eligible,
+                candidate_risk=risk_last_candidate,
+                emergency_candidate_mask=emergency_last_mask,
+                temporal_emergency_triggered=bool(
+                    emergency_context["triggered"]
+                ),
+                traversal_context=traversal_context,
+                traversal_candidate_index=traversal_last_index,
+            )
+        )
         all_costs = np.concatenate(costs_by_iteration)
         guided_costs = (
             np.concatenate(guided_costs_by_iteration)
@@ -1962,6 +2628,21 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
         gaussian_cost_p50 = (
             float(np.median(gaussian_costs))
             if gaussian_cost_observed else 0.0
+        )
+        proposal_advantage_diagnostics = self.proposal_advantage_gate.update(
+            guided_cost_min,
+            gaussian_cost_min,
+            observed=(guided_cost_observed and gaussian_cost_observed),
+            authority_applied=proposal_advantage_authority_applied,
+        )
+        reliability_diagnostics["reliability_guided_fraction_next"] = float(
+            reliability_diagnostics.get(
+                "reliability_guided_fraction_next",
+                applied_guided_fraction,
+            )
+            * proposal_advantage_diagnostics[
+                "reliability_proposal_advantage_authority_next"
+            ]
         )
         optimizer_diagnostics = {
             "optimizer_diagnostics_enabled": False,
@@ -2010,6 +2691,7 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
                 target,
                 obstacles,
                 reference=reference,
+                probabilistic_obstacles=probabilistic_obstacles,
             )[0])
             selected_terminal = float(self._paper_terminal_cost(
                 trajectory[None, ...],
@@ -2073,6 +2755,54 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
         effective_sample_size = float(
             1.0 / np.sum(np.asarray(final_weights) ** 2)
         )
+        online_tracker_diagnostics = {
+            "dynamic_obstacle_tracker_enabled": bool(
+                tracker_diagnostics.get("enabled", False)
+            ),
+            "dynamic_obstacle_tracker_cluster_count": int(
+                tracker_diagnostics.get("cluster_count", 0)
+            ),
+            "dynamic_obstacle_tracker_associated": bool(
+                tracker_diagnostics.get("associated", False)
+            ),
+            "dynamic_obstacle_tracker_association_distance_m": float(
+                tracker_diagnostics.get("association_distance_m", 0.0)
+                or 0.0
+            ),
+            "dynamic_obstacle_tracker_measurement_x": float(
+                tracker_diagnostics.get("measurement_x", 0.0) or 0.0
+            ),
+            "dynamic_obstacle_tracker_measurement_y": float(
+                tracker_diagnostics.get("measurement_y", 0.0) or 0.0
+            ),
+            "dynamic_obstacle_tracker_support_beams": int(
+                tracker_diagnostics.get("support_beams", 0)
+            ),
+            "dynamic_obstacle_tracker_unobserved_duration_s": float(
+                tracker_diagnostics.get("unobserved_duration_s", 0.0)
+                or 0.0
+            ),
+            "dynamic_obstacle_tracker_forecast_valid": bool(
+                tracker_diagnostics.get("forecast_valid", False)
+            ),
+            "dynamic_obstacle_tracker_forecast_availability": float(
+                tracker_diagnostics.get("forecast_availability", 0.0)
+            ),
+            "dynamic_obstacle_tracker_innovation_nis": float(
+                tracker_diagnostics.get("innovation_nis", 0.0) or 0.0
+            ),
+            "dynamic_obstacle_tracker_change_triggered": bool(
+                tracker_diagnostics.get("change_triggered", False)
+            ),
+            "dynamic_obstacle_tracker_dropout_guard_triggered": bool(
+                tracker_diagnostics.get(
+                    "dropout_guard_triggered", False
+                )
+            ),
+            "dynamic_obstacle_tracker_recovery_active": bool(
+                tracker_diagnostics.get("recovery_active", False)
+            ),
+        }
         diagnostics = {
             "optimizer": "paper_rl_driven",
             "paper_faithful_gate1": True,
@@ -2129,8 +2859,21 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
             "paper_actor_baseline_first_action_l2_delta": float(
                 np.linalg.norm(actor_mean[0] - baseline_mean[0])
             ),
+            **proposal_advantage_diagnostics,
             "paper_actor_mean_initialization": True,
             "paper_actor_covariance_initialization": True,
+            "paper_same_cycle_guided_cost_filter_enabled": bool(
+                cfg.same_cycle_guided_cost_filter
+            ),
+            "paper_same_cycle_guided_cost_filter_iterations": int(
+                same_cycle_guided_filter_iterations
+            ),
+            "paper_same_cycle_guided_filtered_candidates": int(
+                same_cycle_guided_filtered_candidates
+            ),
+            "paper_same_cycle_guided_relative_margin": float(
+                cfg.same_cycle_guided_relative_margin
+            ),
             "paper_actor_joint_batched": bool(joint_actor_batch),
             "paper_actor_rollout_dynamics": type(self.dynamics).__name__,
             "paper_candidate_rollout_dynamics": type(self.dynamics).__name__,
@@ -2164,6 +2907,19 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
             "path_boundary_fallback_candidate_index": (
                 boundary_fallback_candidate_index
             ),
+            "probabilistic_obstacle_candidate_filter_enabled": (
+                risk_candidate_filter
+            ),
+            "probabilistic_obstacle_candidate_feasible_fraction_min": float(
+                np.min(risk_feasible_fractions)
+                if risk_feasible_fractions else 1.0
+            ),
+            "probabilistic_obstacle_no_feasible_iteration_fraction": float(
+                risk_no_feasible_iterations / cfg.iterations
+                if risk_candidate_filter else 0.0
+            ),
+            **probabilistic_risk_diagnostics,
+            **online_tracker_diagnostics,
             **optimizer_diagnostics,
             "covariance_scale_mean": float(
                 np.mean(np.sqrt(variance / base_variance))

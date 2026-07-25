@@ -1,0 +1,30 @@
+schema_version: 1
+study_id: dynamic_obstacle_process_v3_ood
+base_config_path: configs/research/dynamic_obstacle_process_v3.yaml
+generator_version: recurrent_semimarkov_v3
+platform: windows_native_only
+noise_profiles:
+  process_shift:
+    acceleration_std: 0.100
+    observation_std: 0.075
+  sensor_shift:
+    acceleration_std: 0.060
+    observation_std: 0.125
+navigation:
+  minimum_cruise_speed_mps: 0.62
+  maximum_cruise_speed_mps: 1.05
+  dwell_time_s: [0.20, 0.80]
+processes_config:
+  hybrid_patrol:
+    intervention_gap_s: [1.50, 4.00]
+    hesitation_duration_s: [0.40, 1.10]
+observation:
+  hybrid_dropout_count_range: [4, 7]
+  dropout_duration_s: [0.60, 1.20]
+  minimum_dropout_gap_s: 1.25
+scope_guards:
+  derived_from_frozen_v3: true
+  physical_limits_unchanged: true
+  predictor_parameters_unchanged: true
+  sealed_registry_imported: false
+

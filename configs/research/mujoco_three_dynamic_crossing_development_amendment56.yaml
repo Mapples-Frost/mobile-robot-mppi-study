@@ -1,0 +1,44 @@
+include: mujoco_three_dynamic_crossing_development_amendment55.yaml
+
+experiment:
+  name: mujoco_three_dynamic_crossing_development_amendment56
+
+planner:
+  probabilistic_obstacle_traversal_window_rearm_no_crossing_clear_enabled: true
+
+three_obstacle_amendment:
+  version: 56
+  reason: >-
+    amendment55_preserved_the_exit_deadline_escape_for_the_full_retreat_and_completed_two_collision_free_retreats_but_post_retreat_rearm_remained_zero_speed_for_193_and_28_cycles;_within_those_intervals_60_and_7_cycles_had_valid_online_forecasts_no_polyline_crossing_and_no_causal_laserscan_closing_yet_the_existing_rearm_latch_could_only_release_after_a_crossing_reappeared_and_passed_admission
+  intervention: >-
+    only_after_a_completed_retreat_allow_rearm_to_clear_when_valid_online_forecasts_show_no_polyline_crossing_and_no_raw_laserscan_closing_for_the_existing_two_cycle_commit_admission_safe_hold;_forecast_dropout_or_closing_resets_the_same_streak_and_other_rearm_admission_abort_and_retreat_behavior_is_unchanged
+  obstacle_future_truth_used: false
+  obstacle_identity_used: false
+  crossing_geometry_source: online_forecast_plus_polyline_reference
+  behavior_parameter_changed: false
+  candidate_values_changed: false
+  certificate_threshold_changed: false
+  commit_admission_contract_changed: false
+  commit_admission_exit_deadline_contract_changed: false
+  commit_admission_exit_deadline_hold_authority_changed: false
+  commit_admission_exit_deadline_hard_risk_override_changed: false
+  commit_admission_exit_deadline_forward_filter_changed: false
+  post_retreat_rearm_contract_changed: true
+  post_retreat_no_crossing_clearance_enabled: true
+  pre_center_exit_deadline_contract_changed: false
+  pre_center_deadline_retreat_escape_transaction_changed: false
+  pre_center_deadline_retreat_escape_transaction_lifetime_changed: false
+  post_center_execution_arbitration_changed: false
+  post_center_emergency_lattice_binding_changed: false
+  post_center_escape_transaction_latch_changed: false
+  raw_temporal_signal_binding_changed: false
+  temporal_escape_authority_preserved: true
+  temporal_abort_direction_contract_changed: false
+  control_horizon_changed: false
+  control_limit_changed: false
+  deterministic_computation_reused: true
+  diagnostic_profiling_changed: false
+  rollout_budget_changed: false
+  total_rollouts_per_decision: 600
+  active_waiting_allowed: true
+  active_traversal_objective: true

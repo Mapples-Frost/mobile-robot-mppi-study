@@ -1,0 +1,29 @@
+include: mujoco_three_dynamic_crossing_development_amendment38.yaml
+
+experiment:
+  name: mujoco_three_dynamic_crossing_development_amendment39
+
+planner:
+  probabilistic_obstacle_traversal_window_temporal_midpoint_guard_enabled: true
+
+three_obstacle_amendment:
+  version: 39
+  reason: >-
+    amendment38_correctly_preserved_forward_motion_at_progress_2p2264_when_forward_clear_was_0p140m_nearer_than_reverse_staging_but_the_obstacle_then_hit_the_robot_at_progress_2p5876;_one_cycle_earlier_at_progress_2p1490_raw_LaserScan_temporal_closing_was_already_active_and_reverse_was_still_0p0144m_nearer_while_the_full_horizon_mass_was_only_0p0031_below_the_probability_floor
+  intervention: add_a_causal_midpoint_decision_guard_that_uses_raw_LaserScan_temporal_closing_only_when_reverse_is_still_the_nearer_exit_and_the_two_online_polyline_exit_distances_differ_by_no_more_than_one_maximum_forward_control_step_0p60_times_0p10_equals_0p06m;_then_abort_one_cycle_before_the_exit_preference_flips
+  obstacle_future_truth_used: false
+  obstacle_identity_used: false
+  crossing_geometry_source: online_forecast_plus_polyline_reference
+  behavior_parameter_changed: true
+  candidate_values_changed: false
+  certificate_threshold_changed: false
+  commit_admission_contract_changed: false
+  temporal_abort_direction_contract_changed: true
+  control_horizon_changed: false
+  control_limit_changed: false
+  deterministic_computation_reused: true
+  diagnostic_profiling_changed: false
+  rollout_budget_changed: false
+  total_rollouts_per_decision: 600
+  active_waiting_allowed: true
+  active_traversal_objective: true

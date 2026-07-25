@@ -161,6 +161,9 @@ def test_terminal_heading_gate_is_backward_compatible_when_disabled():
     assert not result.diagnostics["terminal_heading_gate_active"]
     assert not result.diagnostics["terminal_alignment_active"]
     assert result.diagnostics["terminal_translation_scale"] == 1.0
+    assert np.isclose(
+        result.diagnostics["target_bearing_error"], -np.pi / 2.0
+    )
 
 
 def test_terminal_bearing_cost_prefers_heading_toward_goal():

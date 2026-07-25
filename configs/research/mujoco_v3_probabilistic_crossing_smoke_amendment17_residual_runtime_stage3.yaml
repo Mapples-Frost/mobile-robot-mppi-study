@@ -1,0 +1,9 @@
+include: mujoco_v3_probabilistic_crossing_smoke_amendment17.yaml
+
+experiment:
+  name: mujoco_v3_probabilistic_crossing_residual_runtime_stage3
+
+planner:
+  device: cuda
+  residual_device_rollout_enabled: true
+  residual_cuda_graph_enabled: true

@@ -1,3 +1,4 @@
+from copy import deepcopy
 from pathlib import Path
 
 from mobile_robot_mppi.core.references import reference_from_config
@@ -26,12 +27,106 @@ from mobile_robot_mppi.simulation.mujoco_plant import MujocoDiffDrivePlant
 from mobile_robot_mppi.simulation.sensors import SimulatedSensorSuite
 
 
+def _build_frozen_hss_sidecar(mapping, project_root, state_spec, action_spec):
+    """Load an explicit residual ensemble used only as causal HSS evidence."""
+
+    values = dict(mapping or {})
+    if not values:
+        return None
+    allowed = {
+        "contract",
+        "checkpoints",
+        "device",
+        "torch_num_threads",
+        "use_torchscript",
+        "ensemble",
+    }
+    unknown = sorted(set(values) - allowed)
+    if unknown:
+        raise ValueError(
+            "unknown frozen HSS sidecar fields: %s" % ", ".join(unknown)
+        )
+    if str(values.get("contract", "")) != "frozen_l217_value_hss_v1":
+        raise ValueError(
+            "paper HSS sidecar requires contract=frozen_l217_value_hss_v1"
+        )
+    checkpoints = values.get("checkpoints")
+    if not isinstance(checkpoints, (list, tuple)) or len(checkpoints) < 2:
+        raise ValueError("paper HSS sidecar requires at least two checkpoints")
+
+    import torch
+    from mobile_robot_mppi.learning.models import (
+        PlatformResidualDynamics,
+        PlatformResidualEnsemble,
+    )
+
+    requested_device = str(values.get("device", "cpu"))
+    if requested_device == "auto":
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+    else:
+        device = requested_device
+    if device == "cpu":
+        thread_count = int(values.get("torch_num_threads", 1))
+        if thread_count <= 0:
+            raise ValueError("HSS sidecar torch_num_threads must be positive")
+        torch.set_num_threads(thread_count)
+    paths = []
+    for checkpoint in checkpoints:
+        path = Path(str(checkpoint))
+        if not path.is_absolute():
+            path = Path(project_root) / path
+        path = path.resolve()
+        if not path.is_file():
+            raise FileNotFoundError("HSS sidecar checkpoint missing: %s" % path)
+        paths.append(path)
+    members = [
+        PlatformResidualDynamics.from_checkpoint(
+            path,
+            device=device,
+            use_torchscript=bool(values.get("use_torchscript", True)),
+        )
+        for path in paths
+    ]
+    if any(member.model.model_type != "icode_residual" for member in members):
+        raise ValueError("HSS sidecar checkpoints must be ICODE residual models")
+    if any(
+        int(member.state_dim) != state_spec.dimension
+        or int(member.control_dim) != action_spec.dimension
+        for member in members
+    ):
+        raise ValueError("HSS sidecar checkpoint dimensions do not match")
+    ensemble = dict(values.get("ensemble", {}))
+    return PlatformResidualEnsemble(
+        members,
+        state_scales=ensemble.get(
+            "state_scales", [1.0] * state_spec.dimension
+        ),
+        disagreement_scales=ensemble.get("disagreement_scales"),
+        innovation_scales=ensemble.get("innovation_scales"),
+        support_soft_z=float(ensemble.get("support_soft_z", 3.0)),
+        support_hard_z=float(ensemble.get("support_hard_z", 7.0)),
+        innovation_decay=float(ensemble.get("innovation_decay", 0.9)),
+        member_paths=paths,
+    )
+
+
 def make_components(config, project_root, rl_policy=None):
     state_spec = state_spec_from_config(config["state_space"])
     action_spec = action_spec_from_config(config["action_space"])
     reference = reference_from_config(config["task"])
     plant_cfg = dict(config["plant"])
-    scene = dict(config.get("scene", {}))
+    scene = deepcopy(dict(config.get("scene", {})))
+    for obstacle in scene.get("obstacles", ()):
+        motion = obstacle.get("motion")
+        if (
+            isinstance(motion, dict)
+            and str(motion.get("type"))
+            == "recurrent_semimarkov_v3"
+        ):
+            config_path = Path(str(motion["config_path"]))
+            if not config_path.is_absolute():
+                config_path = Path(project_root) / config_path
+            motion["config_path"] = str(config_path.resolve())
     backend = str(plant_cfg.get("backend", "legacy_kinematic"))
     if backend == "legacy_kinematic":
         kinematic_cfg = dict(plant_cfg)
@@ -61,6 +156,7 @@ def make_components(config, project_root, rl_policy=None):
             raise NotImplementedError("wheel_augmented_7 requires an explicit seven-state prediction model")
     else:
         raise ValueError("no default prediction model for state dimension %d" % state_spec.dimension)
+    nominal_dynamics = dynamics
     planner_cfg = dict(config["planner"])
     prediction_mode = str(planner_cfg.get("prediction_mode", "nominal"))
     if prediction_mode == "oracle_residual":
@@ -120,6 +216,7 @@ def make_components(config, project_root, rl_policy=None):
         checkpoint_path = checkpoint_paths[0]
         try:
             from mobile_robot_mppi.learning.models import (
+                CausalStallGatedResidualDynamics,
                 InnovationGatedResidualDynamics,
                 CanonicalizedStateResidualDynamics,
                 NormalizedSupportGatedResidualDynamics,
@@ -133,6 +230,16 @@ def make_components(config, project_root, rl_policy=None):
                     device=device,
                     use_torchscript=bool(
                         planner_cfg.get("residual_torchscript", False)
+                    ),
+                    device_rollout_enabled=bool(
+                        planner_cfg.get(
+                            "residual_device_rollout_enabled", False
+                        )
+                    ),
+                    cuda_graph_enabled=bool(
+                        planner_cfg.get(
+                            "residual_cuda_graph_enabled", False
+                        )
                     ),
                 )
                 for path in checkpoint_paths
@@ -273,6 +380,48 @@ def make_components(config, project_root, rl_policy=None):
                     ),
                     context_on_threshold=float(
                         delay_context.get("on_threshold", 0.8)
+                    ),
+                )
+            stall_guard = dict(
+                planner_cfg.get("residual_stall_guard", {})
+            )
+            if bool(stall_guard.get("enabled", False)):
+                required_names = ("x", "y", "v")
+                unknown = [
+                    name
+                    for name in required_names
+                    if name not in state_spec.names
+                ]
+                if unknown:
+                    raise ValueError(
+                        "residual stall guard state names are unavailable: %s"
+                        % unknown
+                    )
+                residual = CausalStallGatedResidualDynamics(
+                    residual,
+                    position_indices=(
+                        state_spec.index("x"),
+                        state_spec.index("y"),
+                    ),
+                    speed_index=state_spec.index("v"),
+                    speed_threshold_mps=float(
+                        stall_guard.get("speed_threshold_mps", 0.02)
+                    ),
+                    maximum_low_risk_probability=float(
+                        stall_guard.get(
+                            "maximum_low_risk_probability", 0.05
+                        )
+                    ),
+                    consecutive_steps=int(
+                        stall_guard.get("consecutive_steps", 10)
+                    ),
+                    goal_exclusion_distance_m=float(
+                        stall_guard.get(
+                            "goal_exclusion_distance_m", 0.45
+                        )
+                    ),
+                    latch_for_episode=bool(
+                        stall_guard.get("latch_for_episode", True)
                     ),
                 )
             dynamics = ResidualPrediction(dynamics, residual)
@@ -490,6 +639,9 @@ def make_components(config, project_root, rl_policy=None):
                 residual_correction_authority=rl_cfg.get(
                     "residual_correction_authority", {}
                 ),
+                allow_controller_action_superset=bool(
+                    rl_cfg.get("allow_actor_action_subspace", False)
+                ),
             )
     else:
         raise ValueError("unknown built-in sampling prior: %s" % prior_kind)
@@ -527,9 +679,19 @@ def make_components(config, project_root, rl_policy=None):
         )
 
         controller_type = PaperRLDrivenMppiController
-        controller_kwargs["paper_rl_driven_config"] = planner_cfg.get(
-            "paper_rl_driven", {}
+        paper_mapping = dict(planner_cfg.get("paper_rl_driven", {}))
+        controller_kwargs["paper_rl_driven_config"] = paper_mapping
+        sidecar = _build_frozen_hss_sidecar(
+            paper_mapping.get("reliability_sidecar", {}),
+            project_root,
+            state_spec,
+            action_spec,
         )
+        if sidecar is not None:
+            controller_kwargs["reliability_residual"] = sidecar
+            controller_kwargs["reliability_nominal_dynamics"] = (
+                nominal_dynamics
+            )
     elif optimizer == "anytime_bandit":
         if prior_kind not in (
             "fixed_covariance", "contextual_bandit_covariance"
@@ -562,6 +724,55 @@ def make_components(config, project_root, rl_policy=None):
         memory_cost=(None if memory is None else memory.trajectory_cost),
         **controller_kwargs
     )
+    shield_mapping = dict(
+        planner_cfg.get("residual_safety_shield", {})
+    )
+    if bool(shield_mapping.get("enabled", False)):
+        if prediction_mode not in ("mlp_residual", "icode_residual"):
+            raise ValueError(
+                "residual safety shield requires learned residual dynamics"
+            )
+        integration_contract = str(
+            shield_mapping.get("rl_hss_integration", "")
+        )
+        rl_enabled = bool(config.get("rl", {}).get("enabled", False))
+        matched_rl_hss = bool(
+            optimizer == "paper_rl_driven"
+            and rl_enabled
+            and integration_contract == "matched_controllers_v1"
+        )
+        if optimizer != "standard" and not matched_rl_hss:
+            raise ValueError(
+                "residual safety shield requires standard MPPI or the "
+                "explicit matched_controllers_v1 RL/HSS contract"
+            )
+        if rl_enabled and not matched_rl_hss:
+            raise ValueError(
+                "residual safety shield RL requires matched paper RL/HSS "
+                "controllers"
+            )
+        if integration_contract and not matched_rl_hss:
+            raise ValueError("residual shield RL/HSS contract is not active")
+        from mobile_robot_mppi.planning.residual_shield import (
+            ResidualSafetyShieldController,
+        )
+
+        nominal_controller = controller_type(
+            dynamics=nominal_dynamics,
+            state_spec=state_spec,
+            action_spec=action_spec,
+            config=mppi_config,
+            sampling_prior=deepcopy(prior),
+            memory_cost=(
+                None if memory is None else memory.trajectory_cost
+            ),
+            **deepcopy(controller_kwargs)
+        )
+        controller = ResidualSafetyShieldController(
+            residual_controller=controller,
+            nominal_controller=nominal_controller,
+            shield_config=shield_mapping,
+        )
     perception = LegacyScanPipeline(project_root, config.get("perception", {}))
     safety = ScanGuardArbiter(
         action_spec,

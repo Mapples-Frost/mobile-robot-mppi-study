@@ -1,0 +1,31 @@
+include: mujoco_three_dynamic_crossing_development_amendment46.yaml
+
+experiment:
+  name: mujoco_three_dynamic_crossing_development_amendment47
+
+three_obstacle_amendment:
+  version: 47
+  reason: >-
+    amendment46_executed_the_laserscan_preferred_reverse_turn_at_row314_but_only_for_one_cycle;_rows315_onward_still_had_valid_scan_closing_ttc0p945_then0p769_below2p0_yet_the_one_shot_intent_rearm_latch_reported_temporal_emergency_triggered_false_and_the_post_center_override_fell_back_to_forecast_ranked_forward_actions_until_collision
+  intervention: >-
+    for_the_post_center_transaction_only_carry_the_existing_raw_causal_laserscan_closing_bit_separately_from_the_one_shot_intent_latch_and_keep_scan_preferred_direction_authority_while_that_raw_warning_and_full_horizon_mass_floor_remain_active;_do_not_change_global_emergency_rearm_behavior
+  obstacle_future_truth_used: false
+  obstacle_identity_used: false
+  crossing_geometry_source: online_forecast_plus_polyline_reference
+  behavior_parameter_changed: false
+  candidate_values_changed: false
+  certificate_threshold_changed: false
+  commit_admission_contract_changed: false
+  post_center_execution_arbitration_changed: true
+  post_center_emergency_lattice_binding_changed: false
+  raw_temporal_signal_binding_changed: true
+  temporal_escape_authority_preserved: true
+  temporal_abort_direction_contract_changed: false
+  control_horizon_changed: false
+  control_limit_changed: false
+  deterministic_computation_reused: true
+  diagnostic_profiling_changed: false
+  rollout_budget_changed: false
+  total_rollouts_per_decision: 600
+  active_waiting_allowed: true
+  active_traversal_objective: true

@@ -1,0 +1,17 @@
+include: mujoco_three_dynamic_crossing_development_amendment7.yaml
+
+experiment:
+  name: mujoco_three_dynamic_crossing_development_amendment13
+
+three_obstacle_amendment:
+  version: 13
+  reason: >-
+    the_short_escape_was_selected_only_after_ttc_fell_below_1p5s_and_had_insufficient_lateral_clearance_time
+  intervention: earlier_2p0s_causal_scan_ttc_trigger_with_the_short_escape_lattice
+  obstacle_future_truth_used: false
+  obstacle_process_changed: false
+  tracker_association_changed: false
+  probability_risk_changed: false
+  rollout_budget_changed: false
+  active_waiting_allowed: true
+  active_traversal_objective: true

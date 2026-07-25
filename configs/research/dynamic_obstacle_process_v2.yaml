@@ -1,0 +1,86 @@
+schema_version: 2
+generator_version: constrained_multievent_v2
+study_id: dynamic_obstacle_generator_v2_qualification
+platform: windows_native_only
+seed_registry_path: configs/seeds/dynamic_uncertainty_splits.yaml
+output_dir: research_artifacts/dynamic_obstacle_generator_v2_qualification
+schedule_seed: 730199998
+development_seed_count: 20
+processes:
+  - noisy_cv
+  - speed_change
+  - direction_change
+  - combined_change
+noise_profiles:
+  low:
+    acceleration_std: 0.020
+    observation_std: 0.025
+  medium:
+    acceleration_std: 0.060
+    observation_std: 0.075
+trajectory:
+  duration_s: 16.0
+  dt: 0.05
+  obstacle_radius_m: 0.25
+physical_limits:
+  maximum_speed_mps: 1.10
+  maximum_acceleration_mps2: 0.65
+  maximum_braking_mps2: 0.90
+  maximum_moving_yaw_rate_radps: 1.20
+  yaw_rate_audit_minimum_speed_mps: 0.15
+  stopped_speed_threshold_mps: 0.05
+event_program:
+  minimum_group_separation_s: 2.20
+  time_jitter_s: 0.35
+  turn_duration_s:
+    - 0.65
+    - 1.60
+  turn_angles_deg:
+    - -90.0
+    - -45.0
+    - 45.0
+    - 90.0
+  speed_scales:
+    - 0.55
+    - 0.72
+    - 1.28
+    - 1.48
+  stop_dwell_s:
+    - 1.20
+    - 2.00
+  restart_speed_scale:
+    - 0.75
+    - 1.10
+  reverse_probability: 0.50
+observation:
+  combined_dropout_count: 2
+  dropout_duration_s:
+    - 0.40
+    - 0.80
+initial_conditions:
+  noisy_cv:
+    position_m: [-3.8, -2.0]
+    speed_mps: 0.58
+    heading_deg: 18.0
+  speed_change:
+    position_m: [-4.0, -0.8]
+    speed_mps: 0.62
+    heading_deg: 8.0
+  direction_change:
+    position_m: [-3.6, -2.6]
+    speed_mps: 0.66
+    heading_deg: 28.0
+  combined_change:
+    position_m: [-4.0, -2.2]
+    speed_mps: 0.70
+    heading_deg: 20.0
+qualification:
+  required_trajectories: 160
+  numerical_tolerance: 1.0e-8
+scope_guards:
+  predictors_enabled: false
+  imm_enabled: false
+  collision_risk_enabled: false
+  mppi_enabled: false
+  rl_icode_hss_enabled: false
+  sealed_registry_imported: false

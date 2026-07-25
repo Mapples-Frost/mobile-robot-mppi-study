@@ -1,0 +1,40 @@
+include: mujoco_three_dynamic_crossing_development_amendment63.yaml
+
+experiment:
+  name: mujoco_three_dynamic_crossing_development_amendment64
+
+planner:
+  # Use otherwise-idle admission time to align with the certified traversal
+  # route. Translation remains exactly zero until the ordinary certificate and
+  # stability/deadline gates release the commit.
+  probabilistic_obstacle_traversal_window_commit_admission_prealign_enabled: true
+
+three_obstacle_amendment:
+  version: 64
+  reason: >-
+    amendment63_seed730100252_opened_a_certified_first_crossing_window_at_row145_but_spent_six_control_cycles_rotating_in_place_after_commit_release;_path_progress_remained_1p2915m_until_row161_and_the_raw_closing_ttc_then_fell_to_1p258s_before_the_robot_had_reached_the_entry_boundary_1p494m
+  intervention: >-
+    while_a_crossing_is_detected_but_commit_admission_is_not_yet_released_and_no_raw_temporal_emergency_retreat_or_rearm_transaction_is_active_execute_only_the_zero_translation_steering_prefix_of_the_existing_certified_traversal_candidate;_all_translation_remains_forbidden_until_the_existing_certificate_stability_and_exit_deadline_gates_release_the_commit
+  obstacle_future_truth_used: false
+  obstacle_identity_used: false
+  crossing_geometry_source: online_forecast_plus_polyline_reference
+  behavior_parameter_changed: true
+  candidate_values_changed: false
+  certificate_threshold_changed: false
+  hard_risk_threshold_changed: false
+  commit_admission_contract_changed: true
+  commit_admission_prealign_changed: true
+  prealign_translation_mps: 0.0
+  rearm_contract_changed: false
+  low_risk_forward_authority_changed: false
+  active_commit_contract_changed: false
+  abort_contract_changed: false
+  retreat_contract_changed: false
+  post_center_execution_arbitration_changed: false
+  exit_deadline_transaction_changed: false
+  control_horizon_changed: false
+  control_limit_changed: false
+  checkpoint_changed: false
+  rollout_budget_changed: false
+  total_rollouts_per_decision: 600
+  development_only: true

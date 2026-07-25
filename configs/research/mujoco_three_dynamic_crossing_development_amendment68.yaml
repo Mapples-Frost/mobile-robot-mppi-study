@@ -1,0 +1,38 @@
+include: mujoco_three_dynamic_crossing_development_amendment67.yaml
+
+experiment:
+  name: mujoco_three_dynamic_crossing_development_amendment68
+  max_steps: 600
+
+three_obstacle_amendment:
+  version: 68
+  reason: >-
+    amendment65_increased_the_three_ping_pong_periods_from_7s_8s_9s_to_12s_13s_14s_to_make_each_strict_safe_crossing_physically_feasible_but_inherited_the_original_500_step_episode_limit;_the_sum_of_worst_half_cycle_waits_therefore_increased_by_7p5s_or_75_control_cycles_and_amendment67_exhausted_the_old_limit_0p572m_from_goal_while_still_advancing_safely
+  intervention: >-
+    preserve_the_complete_amendment67_controller_scene_success_tolerance_and_600_rollout_decision_contract_but_extend_the_development_episode_budget_from_500_to_600_cycles;_this_exceeds_the_period_derived_minimum_of_575_cycles_by_a_25_cycle_rounding_margin
+  obstacle_future_truth_used: false
+  obstacle_identity_used: false
+  behavior_parameter_changed: false
+  scene_geometry_changed: false
+  obstacle_motion_changed: false
+  success_tolerance_changed: false
+  episode_time_budget_changed: true
+  old_max_steps: 500
+  new_max_steps: 600
+  control_dt_s: 0.1
+  period_derived_additional_wait_s: 7.5
+  period_derived_minimum_steps: 575
+  checkpoint_changed: false
+  rollout_budget_changed: false
+  total_rollouts_per_decision: 600
+  development_only: true
+
+three_obstacle_time_budget_contract:
+  original_obstacle_periods_s: [7.0, 8.0, 9.0]
+  feasible_obstacle_periods_s: [12.0, 13.0, 14.0]
+  original_max_steps: 500
+  control_dt_s: 0.1
+  additional_worst_half_cycle_wait_s: 7.5
+  minimum_adjusted_max_steps: 575
+  selected_max_steps: 600
+  applies_before_new_seed_qualification: true

@@ -1,0 +1,55 @@
+include: mujoco_three_dynamic_crossing_development_amendment72.yaml
+
+experiment:
+  name: mujoco_three_dynamic_crossing_development_amendment73
+
+planner:
+  # After a pre-crossing retreat, move causally toward the already frozen
+  # entry point while the crossing certificate rearms.  The certified open-
+  # loop proposal stops at the entry and never enters the conflict region.
+  probabilistic_obstacle_traversal_window_rearm_staging_approach_enabled: true
+
+  # Crossing the conflict center is a one-way transaction.  Preserve the
+  # three existing forward emergency templates and rank only non-reverse
+  # exits until the robot clears the frozen conflict interval.
+  probabilistic_obstacle_traversal_window_post_center_forward_exit_commit_enabled: true
+
+three_obstacle_amendment:
+  version: 73
+  reason: >-
+    amendment71_seed730100253_exposed_two_behavioral_failures_independent_of_the_final_2p7mm_boundary_violation:_after_the_first_retreat_rearm_pending_held_zero_translation_for_30_consecutive_commands_from_steps116_through145_even_though_the_robot_remained_approximately_0p9m_before_the_frozen_entry;_after_crossing_the_first_conflict_center_at_step177_the_temporal_escape_transaction_selected_reverse_for_16_commands_and_moved_the_robot_from_x_minus2p32_back_to_x_minus2p70
+  intervention: >-
+    while_rearm_is_pending_certify_a_forward_candidate_that_stops_at_the_existing_frozen_entry_and_execute_only_its_first_cycle;_after_current_progress_reaches_the_existing_frozen_crossing_progress_reserve_the_three_existing_forward_emergency_templates_and_restrict_final_emergency_ranking_to_nonreverse_candidates_until_existing_clear_progress_is_reached
+  obstacle_future_truth_used: false
+  obstacle_identity_used: false
+  new_threshold_added: false
+  behavior_parameter_changed: true
+  scene_geometry_changed: false
+  obstacle_motion_changed: false
+  success_tolerance_changed: false
+  episode_time_budget_changed: false
+  checkpoint_changed: false
+  rollout_budget_changed: false
+  emergency_lattice_slots: 6
+  total_rollouts_per_decision: 600
+  development_only: true
+
+three_obstacle_rearm_staging_approach_contract:
+  activation_scope: post_retreat_rearm_pending_pre_entry
+  target: existing_frozen_crossing_entry_progress
+  open_loop_sequence_stops_at_target: true
+  complete_existing_probabilistic_horizon_certified: true
+  execute_first_control_cycle_then_replan: true
+  conflict_entry_may_be_crossed_while_rearm_pending: false
+  threshold_added: false
+
+three_obstacle_post_center_forward_exit_contract:
+  activation_scope: active_started_post_center_pre_clear
+  direction_transaction: nonreverse_until_existing_clear_progress
+  forward_templates_reserved: 3
+  emergency_templates_added: 0
+  total_emergency_slots: 6
+  existing_probability_risk_ranking_preserved_within_direction: true
+  existing_crossing_and_clear_geometry_reused: true
+  threshold_added: false
+  total_rollouts_per_decision: 600

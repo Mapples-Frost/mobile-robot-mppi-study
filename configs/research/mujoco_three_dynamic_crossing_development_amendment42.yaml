@@ -1,0 +1,30 @@
+include: mujoco_three_dynamic_crossing_development_amendment41.yaml
+
+experiment:
+  name: mujoco_three_dynamic_crossing_development_amendment42
+
+planner:
+  probabilistic_obstacle_traversal_window_commit_admission_safe_hold_steps: 2
+
+three_obstacle_amendment:
+  version: 42
+  reason: >-
+    amendment41_proved_that_a_three_cycle_admission_hold_is_over_conservative_for_the_causal_online_crossing_geometry;_both_observed_safe_windows_last_exactly_two_complete_cycles_before_the_forecast_geometry_no_longer_intersects_the_polyline_and_the_counter_correctly_resets_so_no_commit_is_ever_released_then_the_uncommitted_short_horizon_emergency_lattice_reenters_the_crossing_and_collides_at_progress_2p1026_despite_600_rollouts_and_84p375ms_p95
+  intervention: require_two_consecutive_complete_cycles_that_pass_both_the_short_and_same_candidate_full_horizon_0p08_over_1p50_certificates;_this_still_rejects_the_single_cycle_threshold_crossing_that_caused_amendment40_but_releases_within_the_empirically_observed_two_cycle_causal_safe_window
+  obstacle_future_truth_used: false
+  obstacle_identity_used: false
+  crossing_geometry_source: online_forecast_plus_polyline_reference
+  behavior_parameter_changed: true
+  candidate_values_changed: false
+  certificate_threshold_changed: false
+  commit_admission_contract_changed: true
+  commit_admission_safe_hold_steps: 2
+  temporal_abort_direction_contract_changed: false
+  control_horizon_changed: false
+  control_limit_changed: false
+  deterministic_computation_reused: true
+  diagnostic_profiling_changed: false
+  rollout_budget_changed: false
+  total_rollouts_per_decision: 600
+  active_waiting_allowed: true
+  active_traversal_objective: true

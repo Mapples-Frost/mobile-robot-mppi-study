@@ -1,0 +1,32 @@
+include: mujoco_v3_probabilistic_crossing_smoke_amendment9.yaml
+
+experiment:
+  name: mujoco_v3_probabilistic_crossing_smoke_amendment10
+
+perception:
+  scan_guard:
+    dynamic_escape_trigger_ttc_s: 1.50
+
+online_smoke:
+  output_dir: research_artifacts/mujoco_v3_probabilistic_crossing_smoke_amendment10
+
+design_amendment:
+  version: 10
+  reason: amendment9_triggered_after_the_physical_turning_envelope
+  timing_basis:
+    maximum_yaw_rate_rad_s: 0.9
+    time_to_turn_45_deg_s: 0.8726646259971648
+    nominal_yaw_time_constant_s: 0.12
+    command_delay_s: 0.04
+    control_interval_s: 0.10
+    robustness_margin_s: 0.30
+    selected_ttc_trigger_s: 1.50
+  obstacle_generator_changed: false
+  predictor_changed: false
+  risk_definition_changed: false
+  hard_probability_threshold_changed: false
+  residual_model_changed: false
+  localization_changed: false
+  seeds_changed: false
+  route_changed: false
+  gate_changed: false

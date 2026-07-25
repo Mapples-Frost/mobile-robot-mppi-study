@@ -1,0 +1,76 @@
+schema_version: 1
+study_id: change_aware_imm_v3_development
+stage: offline_change_aware_predictor
+platform: windows_native_only
+obstacle_config_path: configs/research/dynamic_obstacle_process_v3.yaml
+ordinary_config_path: configs/research/ordinary_imm_v3_development.yaml
+seed_registry_path: configs/seeds/dynamic_uncertainty_splits.yaml
+output_dir: research_artifacts/change_aware_imm_v3_development
+schedule_seed: 730199995
+worker_count: 4
+processes:
+  - stochastic_cruise
+  - stochastic_shuttle
+  - branching_patrol
+  - hybrid_patrol
+noise_profiles:
+  - low
+  - medium
+pilot_seeds: [730100041, 730100042, 730100043]
+confirmation_seeds:
+  - 730100044
+  - 730100045
+  - 730100046
+  - 730100047
+  - 730100048
+  - 730100049
+  - 730100050
+prediction:
+  horizon_s: 3.0
+  forecast_stride_steps: 4
+  warmup_s: 1.0
+change_response:
+  reset_mode_probabilities: [0.40, 0.20, 0.20, 0.20]
+  state_covariance_inflation: 6.0
+  recovery_process_noise_scale: 4.0
+  recovery_duration_s: 1.0
+  refractory_period_s: 1.0
+  dropout_guard_after_s: 0.25
+  dropout_covariance_inflation: 2.0
+pilot_candidates:
+  persistent_95:
+    nis_threshold: 5.991464547107979
+    required_exceedances: 2
+    window_observations: 3
+  single_99:
+    nis_threshold: 9.210340371976184
+    required_exceedances: 1
+    window_observations: 1
+  persistent_90:
+    nis_threshold: 4.605170185988092
+    required_exceedances: 2
+    window_observations: 3
+pilot_feasibility:
+  maximum_p1_false_triggers_per_minute: 3.0
+  maximum_p1_ade_ratio_to_ordinary: 1.10
+  maximum_area_ratio_to_ordinary: 2.50
+confirmation_gate:
+  maximum_p1_ade_ratio_to_ordinary: 1.10
+  maximum_change_process_nll_ratio_to_ordinary: 0.98
+  maximum_post_change_nll_ratio_to_ordinary: 0.98
+  minimum_change_process_coverage_ratio_to_ordinary: 1.0
+  maximum_area_ratio_to_ordinary: 2.0
+  maximum_p1_false_triggers_per_minute: 3.0
+  minimum_true_change_recall: 0.20
+  maximum_median_detection_delay_s: 1.25
+detection_evaluation:
+  maximum_match_delay_s: 1.5
+scope_guards:
+  obstacle_v3_frozen: true
+  ordinary_imm_frozen: true
+  development_seeds_only: true
+  sealed_registry_imported: false
+  change_aware_enabled: true
+  collision_risk_enabled: false
+  mppi_enabled: false
+  rl_icode_hss_enabled: false

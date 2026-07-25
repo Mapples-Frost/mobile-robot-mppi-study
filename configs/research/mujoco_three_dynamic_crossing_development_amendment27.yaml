@@ -1,0 +1,19 @@
+include: mujoco_three_dynamic_crossing_development_amendment26.yaml
+
+experiment:
+  name: mujoco_three_dynamic_crossing_development_amendment27
+
+three_obstacle_amendment:
+  version: 27
+  reason: >-
+    amendment26_completed_three_retreats_but_immediately_returned_authority_to_unrestricted_short_horizon_controls_and_kept_the_pre_retreat_monotonic_progress_floor_so_the_robot_reentered_without_a_fresh_full_horizon_certificate_and_both_arms_collided
+  intervention: transactionally_rebase_live_progress_to_the_physical_staging_position_and_hold_nonforward_authority_after_retreat_until_a_fresh_causal_full_horizon_certificate_rearms_traversal
+  obstacle_future_truth_used: false
+  obstacle_identity_used: false
+  crossing_geometry_source: online_forecast_plus_polyline_reference
+  certificate_threshold_changed: false
+  control_horizon_changed: false
+  rollout_budget_changed: false
+  total_rollouts_per_decision: 600
+  active_waiting_allowed: true
+  active_traversal_objective: true

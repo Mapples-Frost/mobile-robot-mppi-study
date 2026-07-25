@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "study_id": "single_dynamic_obstacle_paper_v4",
+  "status": "frozen_after_registry_seal_before_formal_execution",
+  "frozen_at": "2026-07-25T18:57:00+08:00",
+  "formal_experiment_started": false,
+  "formal_outcomes_exist": false,
+  "qualification": {
+    "attempt": 2,
+    "status": "pass",
+    "seed_blocks": 16,
+    "episode_jobs": 112,
+    "missing": [],
+    "integrity_failures": [],
+    "formal_registry_authorized": true
+  },
+  "sealed_registry": {
+    "path": "configs/seeds/single_dynamic_obstacle_paper_v4_sealed.yaml",
+    "sha256": "91cc59c6025296bcb4aa5f8839bd5bc129159c109730f52c5c9ac13d03b47b56",
+    "seed_blocks": 360,
+    "episode_jobs": 1860,
+    "id_seeds": 180,
+    "ood_seeds": 180,
+    "id_ablation_seeds": 70,
+    "ood_ablation_seeds": 70
+  },
+  "superseded_revision_2_hashes": {
+    "configs/research/single_dynamic_obstacle_paper_v4.yaml": "52f199874ec22431b4d36b650ac02b165e7696fd8355a5887329e513b45c33bc",
+    "docs/experiments/dynamic_uncertainty/SINGLE_DYNAMIC_OBSTACLE_PAPER_V4_PREREGISTRATION.md": "7b45d827b6e1c9f58aba11133b58fa05ad8aeeff5121efb8d781406d61800572",
+    "experiments/dynamic_uncertainty/analyze_single_dynamic_obstacle_paper_v4.py": "3cee867709c983c4828eacf32c7c62bb9752fcd09705d8df60dce2d8cbddf9c0",
+    "experiments/dynamic_uncertainty/run_single_dynamic_obstacle_paper_v4.py": "7a19f3530bc0f467339a06f433c288bf165f89016955dc113bfd05bd5e97bb0a"
+  },
+  "revision_3_hashes": {
+    "configs/research/single_dynamic_obstacle_paper_v4.yaml": "c482dd3c8429768dd29bbc5836594d8842a567fe11591cc308b9eaede304cd33",
+    "docs/experiments/dynamic_uncertainty/SINGLE_DYNAMIC_OBSTACLE_PAPER_V4_PREREGISTRATION.md": "bc14d0e3d12006d4956d2b76457f46ee9dc88e15e50238caad9e495c64e51193",
+    "experiments/dynamic_uncertainty/analyze_single_dynamic_obstacle_paper_v4.py": "7424485cd2730754ecbcd100e666e105e6cf571c435419f3385a1da2cb1bad46",
+    "experiments/dynamic_uncertainty/run_single_dynamic_obstacle_paper_v4.py": "edff7fa6e25e5b1b7fc180223268606c7f42e2c5f7c157d97fad50f255e73bab",
+    "tests/dynamic_uncertainty/test_single_dynamic_obstacle_paper_v4.py": "23b3353f00866ca68df6613c591beebb4fc442e0bbfa2e9251d9f526f5438490"
+  },
+  "changes": [
+    "complete the outcome-locked formal analysis program",
+    "freeze exact primary, mechanism, ablation, continuous and behavior estimands",
+    "hash the transitive Python execution closure and runtime inventory",
+    "add deterministic synthetic-matrix, directionality, multiplicity and outcome-lock tests"
+  ],
+  "unchanged": [
+    "controller and safety behavior",
+    "obstacle process and scene geometry",
+    "all model checkpoints",
+    "all seven arm resolved-configuration logic",
+    "600-rollout budget",
+    "qualification artifacts and decision",
+    "sealed seeds, certificates, ablation subset and arm schedule",
+    "360 seed blocks and 1860 formal episode jobs"
+  ],
+  "verification": {
+    "targeted_tests": "9 passed",
+    "seven_arm_one_step_preflight": "pass",
+    "factor_separability": "pass",
+    "synthetic_complete_matrix_analysis": "pass",
+    "qualification_rerun_required": false,
+    "reason_no_requalification": "runtime behavior is unchanged; the runner edit is confined to manifest construction and the analyzer is never called by an episode worker"
+  }
+}

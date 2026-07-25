@@ -1,0 +1,62 @@
+session:
+  id: "2026-07-23_034"
+  timestamp: "2026-07-23T16:10:00+08:00"
+  summary: "Retained Amendment 17's measured 8/9 gate as a user-authorized conditional pass, froze the dynamic-obstacle environment, rejected Amendment 18, and preregistered nominal-versus-frozen-ICODE Stage 1."
+
+events_logged:
+  - type: experiment
+    id: N144
+    provenance: ai-executed
+    summary: "Amendment 17 produced 3/3 collision-free risk-enabled runs and materially repaired seed 003, while retaining an honest 8/9 automatic gate."
+  - type: dead_end
+    id: N145
+    provenance: ai-executed
+    summary: "Amendment 18 terminal-weight escalation collided on its bounded seed-001 screen and was rejected by the stopping rule."
+  - type: decision
+    id: N146
+    provenance: user
+    summary: "The project lead conditionally accepted Amendment 17, froze environment tuning, and authorized residual-dynamics Stage 1."
+  - type: claim
+    id: C100
+    provenance: user-revised
+    summary: "Amendment 17 is a conditionally accepted development baseline, not an automatic 9/9 pass."
+  - type: claim
+    id: C101
+    provenance: ai-executed
+    summary: "Greater terminal progress pressure is not a safe repair for the remaining Amendment 17 completion loss."
+  - type: heuristic
+    id: H75
+    provenance: user-revised
+    summary: "Preserve the literal automatic gate when documenting a project-lead stage waiver."
+  - type: heuristic
+    id: H76
+    provenance: ai-suggested
+    summary: "Pair nominal and residual conditions inside obstacle-seed and checkpoint-seed blocks."
+
+ai_actions:
+  - action: "Recorded the conditional stage acceptance without changing the original automatic gate result."
+    provenance: ai-executed
+    files_changed:
+      - "docs/experiments/dynamic_uncertainty/ENVIRONMENT_STAGE_ACCEPTANCE.md"
+      - "docs/experiments/dynamic_uncertainty/POST_ESCAPE_RECOVERY_AMENDMENT17_REPORT.md"
+  - action: "Preregistered residual-dynamics Stage 1 and verified all three frozen L57 checkpoint hashes."
+    provenance: ai-executed
+    files_changed:
+      - "docs/experiments/dynamic_uncertainty/RESIDUAL_DYNAMICS_STAGE1_PREREGISTRATION.md"
+      - "configs/research/dynamic_uncertainty_residual_stage1_protocol.yaml"
+
+claims_touched:
+  - id: C100
+    action: created
+    provenance: user-revised
+  - id: C101
+    action: created
+    provenance: ai-executed
+
+open_threads:
+  - "Implement the paired Stage 1 runner that switches only nominal versus frozen ICODE prediction under Amendment 17."
+  - "Run development seeds only and require at least two of three residual-model blocks to improve H=36 velocity/yaw-rate rollout error without collision regression."
+  - "Keep sealed residual-stage seeds closed until all preregistered development gates pass."
+
+ai_suggestions_pending:
+  - "Do not retrain the residual models until the three existing L57 checkpoints complete the frozen-baseline compatibility comparison."

@@ -1,0 +1,14 @@
+include: mujoco_three_dynamic_crossing_development_amendment20.yaml
+
+experiment:
+  name: mujoco_three_dynamic_crossing_development_amendment21
+
+three_obstacle_amendment:
+  version: 21
+  reason: amendment20_completed_without_a_traversal_commit_and_did_not_record_the_new_certificate_diagnostics
+  intervention: diagnostic_only_record_full_traversal_window_certificate_and_route_progress_fields
+  obstacle_future_truth_used: false
+  obstacle_identity_used: false
+  behavior_parameter_changed: false
+  rollout_budget_changed: false
+  total_rollouts_per_decision: 600

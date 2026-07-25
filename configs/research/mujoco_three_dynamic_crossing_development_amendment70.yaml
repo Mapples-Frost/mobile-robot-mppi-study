@@ -1,0 +1,46 @@
+include: mujoco_three_dynamic_crossing_development_amendment69.yaml
+
+experiment:
+  name: mujoco_three_dynamic_crossing_development_amendment70
+
+planner:
+  # A69 can only filter a non-forward member if such a member survived the
+  # causal preference ordering. Reserve three existing reverse templates in
+  # the same six slots whenever the A69 continuity condition is pending.
+  probabilistic_obstacle_traversal_window_post_center_low_ttc_nonforward_coverage_enabled: true
+
+three_obstacle_amendment:
+  version: 70
+  reason: >-
+    amendment69_seed730100253_activated_the_low_ttc_continuity_guard_on_rows210_to213_and_reduced_collision_penetration_from_0p0171m_to_0p00114m_but_forward_forecast_and_latched_preferences_occupied_all_six_emergency_slots_on_three_of_four_guarded_cycles;_the_guard_could_filter_forward_only_on_row212_when_a_reverse_member_happened_to_survive
+  intervention: >-
+    under_the_existing_amendment69_activation_condition_reserve_the_existing_reverse_straight_reverse_left_and_reverse_right_templates_inside_the_same_six_emergency_slots_before_rollout_evaluation;_retain_three_preferred_slots_and_select_among_the_evaluated_nonforward_members_with_the_existing_risk_ordering_without_adding_candidates_rollouts_thresholds_identity_or_future_truth
+  obstacle_future_truth_used: false
+  obstacle_identity_used: false
+  new_threshold_added: false
+  behavior_parameter_changed: true
+  scene_geometry_changed: false
+  obstacle_motion_changed: false
+  success_tolerance_changed: false
+  episode_time_budget_changed: false
+  active_commit_contract_changed: true
+  retreat_contract_changed: false
+  rearm_contract_changed: false
+  emergency_lattice_values_changed: false
+  emergency_lattice_composition_coverage_changed: true
+  emergency_lattice_slots: 6
+  reverse_templates_reserved_within_existing_slots: 3
+  checkpoint_changed: false
+  rollout_budget_changed: false
+  total_rollouts_per_decision: 600
+  development_only: true
+
+three_obstacle_low_ttc_nonforward_coverage_contract:
+  parent_guard: amendment69_post_center_low_ttc_continuity
+  activation_scope: pending_active_post_center_pre_clear_low_ttc_dropout
+  preferred_slots_retained: 3
+  reverse_templates_reserved: 3
+  reverse_templates: [straight, left, right]
+  candidate_values_changed: false
+  total_emergency_slots: 6
+  total_rollouts_per_decision: 600

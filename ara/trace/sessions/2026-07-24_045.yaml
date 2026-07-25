@@ -1,0 +1,64 @@
+session:
+  id: "2026-07-24_045"
+  timestamp: "2026-07-24T23:45:00+08:00"
+  summary: "Froze and completed a 24-pair arm-order-balanced single-obstacle replication that preserved completion gains but rejected V5 Amendment 6 for a candidate-only collision, lost source success and final-distance regression."
+
+events_logged:
+  - type: decision
+    id: N184
+    provenance: user
+    summary: "Agreed to freeze the current candidate and run a larger fresh single-obstacle development matrix before sealed evaluation."
+  - type: experiment
+    id: N185
+    provenance: ai-executed
+    summary: "Completed 24/24 frozen pairs; success and steps improved, but one new collision, one lost success and worse mean distance failed the joint gate."
+  - type: claim
+    id: C122
+    provenance: ai-suggested
+    summary: "Weakened the initial 16-pair positive claim after failed expanded safety qualification."
+  - type: claim
+    id: C123
+    provenance: ai-suggested
+    summary: "Recorded the mixed completion gain and safety-distance failure under the frozen expanded protocol."
+  - type: heuristic
+    id: H98
+    provenance: ai-suggested
+    summary: "Require arm-order-balanced expanded safety replication before sealing an adapted Actor."
+
+ai_actions:
+  - action: "Froze 24 previously unused development seeds in three eight-pair batches with balanced source-first and candidate-first order and explicit safety/completion gates."
+    provenance: ai-executed
+    files_changed: ["configs/research/dynamic_actor_v5a6_samecycle_expanded_development.yaml", "docs/experiments/dynamic_uncertainty/DYNAMIC_ACTOR_EXPANDED_DEVELOPMENT_PREREGISTRATION.md"]
+  - action: "Added explicit arm-order control and same-cycle filter mechanism metrics to the paired MuJoCo probe."
+    provenance: ai-executed
+    files_changed: ["experiments/dynamic_uncertainty/run_dynamic_actor_mujoco_probe.py", "tests/dynamic_uncertainty/test_dynamic_actor_probe_protocol.py"]
+  - action: "Implemented a resumable, hash-bound expanded development runner and executed all 24 pairs without tuning or seed replacement."
+    provenance: ai-executed
+    files_changed: ["experiments/dynamic_uncertainty/run_dynamic_actor_expanded_development.py", "research_artifacts/dynamic_actor_v5a6_u000250_samecycle_expanded_development/"]
+  - action: "Created paired analysis and a raw-file/config/checkpoint integrity audit."
+    provenance: ai-executed
+    files_changed: ["experiments/dynamic_uncertainty/audit_dynamic_actor_expanded_development.py", "research_artifacts/dynamic_actor_v5a6_u000250_samecycle_expanded_development/paired_analysis.json", "research_artifacts/dynamic_actor_v5a6_u000250_samecycle_expanded_development/integrity_audit.json"]
+  - action: "Ran 100 focused regression tests, Python compilation and git whitespace validation."
+    provenance: ai-executed
+    files_changed: []
+  - action: "Revised the desktop Chinese Markdown report to replace the initial retained-candidate conclusion with the expanded gate failure."
+    provenance: ai-executed
+    files_changed: ["C:/Users/lenovo/Desktop/单障碍动态Actor与MPPI同周期过滤阶段实验报告_2026-07-24.md"]
+
+claims_touched:
+  - id: C122
+    action: weakened
+    provenance: ai-suggested
+  - id: C123
+    action: created
+    provenance: ai-suggested
+
+open_threads:
+  - "Perform observation-only time-aligned forensic analysis of candidate-only collision seed 730100208."
+  - "Explain why seed 730100206 changed from source success to a 400-step candidate failure."
+  - "Design one bounded Actor or safety-gate correction without using seeds 730100204--227 as confirmation data."
+  - "Requalify the corrected candidate on entirely new development seeds before any sealed test."
+  - "Return below the strict 100 ms planner P95 boundary after behavioral qualification."
+
+ai_suggestions_pending:
+  - "Do not open sealed seeds or call V5 Amendment 6 update 250 qualified; first isolate the two expanded failure mechanisms and preregister a bounded repair."

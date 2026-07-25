@@ -1,0 +1,49 @@
+include: mujoco_v3_probabilistic_crossing_smoke_amendment5.yaml
+
+experiment:
+  name: mujoco_v3_probabilistic_crossing_smoke_amendment6
+
+# Wheel encoders alone are not an absolute localization system.  This arm
+# represents the deployment assumption used by the navigation experiment:
+# wheel-speed translation + IMU yaw rate + a noisy 2 Hz SLAM-like pose fix.
+# Exact MuJoCo pose and twist are still unavailable to MPPI.
+sensors:
+  pose_source: wheel_imu_localized
+  twist_source: wheel_imu_localized
+  localization_update_period_s: 0.50
+  localization_pose_noise_std: [0.015, 0.015, 0.008726646259971648]
+  localization_correction_gain: [0.85, 0.85, 0.85]
+  imu_yaw_rate_noise_std: 0.003
+  imu_yaw_rate_bias_std: 0.001
+
+planner:
+  probabilistic_obstacle_hard_violation_action: stop
+
+online_smoke:
+  output_dir: research_artifacts/mujoco_v3_probabilistic_crossing_smoke_amendment6
+
+scope_guards:
+  simulator_truth_for_control: false
+  exact_ground_truth_pose_for_control: false
+  localization_assumption: noisy_external_pose_updates
+
+design_amendment:
+  version: 6
+  reason: amendment5_exposed_unbounded_raw_wheel_odometry_drift_as_a_navigation_confound
+  localization_change:
+    previous: raw_wheel_odometry
+    amended: wheel_imu_localized
+    external_pose_update_rate_hz: 2.0
+    exact_simulator_pose_exposed: false
+    rationale: navigation_requires_an_observable_absolute_pose_anchor
+  safety_contract_change:
+    previous: hard_risk_was_only_a_finite_candidate_cost
+    amended: selected_hard_risk_violation_commands_zero_velocity
+    threshold_changed: false
+  obstacle_generator_changed: false
+  predictor_changed: false
+  risk_definition_changed: false
+  residual_model_changed: false
+  seeds_changed: false
+  route_changed: false
+  gate_changed: false

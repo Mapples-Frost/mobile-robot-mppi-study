@@ -1,0 +1,27 @@
+include: mujoco_three_dynamic_crossing_development_amendment35.yaml
+
+experiment:
+  name: mujoco_three_dynamic_crossing_development_amendment36
+
+planner:
+  probabilistic_obstacle_traversal_window_temporal_abort_mass_floor: 0.05
+
+three_obstacle_amendment:
+  version: 36
+  reason: >-
+    amendment35_successfully_overrode_hard_risk_retreat_for_21_cycles_and_survived_the_first_late_abort_but_the_final_attempt_saw_causal_temporal_closing_with_full_horizon_mass_0p0526_one_cycle_before_the_0p10_floor_was_crossed_then_collided_by_0p0118m_while_the_observed_A28_false_trigger_mass_upper_bound_remains_0p0227
+  intervention: lower_only_the_temporal_full_horizon_corroboration_mass_floor_from_0p10_to_0p05_which_remains_above_the_recorded_false_trigger_upper_bound_and_starts_slew_limited_retreat_or_active_avoidance_one_cycle_earlier_in_the_new_0p60mps_regime
+  obstacle_future_truth_used: false
+  obstacle_identity_used: false
+  crossing_geometry_source: online_forecast_plus_polyline_reference
+  behavior_parameter_changed: true
+  candidate_values_changed: false
+  certificate_threshold_changed: true
+  control_horizon_changed: false
+  control_limit_changed: false
+  deterministic_computation_reused: true
+  diagnostic_profiling_changed: false
+  rollout_budget_changed: false
+  total_rollouts_per_decision: 600
+  active_waiting_allowed: true
+  active_traversal_objective: true

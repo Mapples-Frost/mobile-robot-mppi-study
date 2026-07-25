@@ -1,0 +1,14 @@
+{
+  "bundle_sha256": "196260f274983f41e4e5f9de959a210fd9ec41193248f0ab757b97ab5255e1bc",
+  "files": {
+    "analysis_integrity_audit.json": "83136361b6cd16bdafd9ecf6362d1454af4e50ccfcb4b75231744b15b01ddcc3",
+    "continuous_full_vs_baseline.csv": "ccc203d3f51fd5247b943fc3fbd94537ba967a3fdaa6d2c4425c0791a108244e",
+    "core_descriptive_table.csv": "9e981713f65364956dc875127dc63460a6a34b615c77fe196f8bba308f330354",
+    "episode_table.csv": "125ce781c7afbbceb09875a8805565584316e76400d39fdd443108a8f1b5465e",
+    "factorial_mechanism_effects.csv": "02c728cd488d09084e2d8dc3b41273d9f2713eb1ea119767654ddba2436e33c8",
+    "full_system_ablation_effects.csv": "dfd74eb46aef6f73c24cb96493ef15341c3e361427dc83b1cadfc6abc8a563e7",
+    "input_file_hashes.csv": "da4999d87bc543b8adb0d6d9ce70445b3723f9242d847e0bba8d83b2806bb187",
+    "paper_v4_result_summary.json": "36614490726677bb7837f61cd079fbebc3de16c3a38f4afae0fc518e4fdc00f5",
+    "primary_confirmatory_analysis.json": "25d916d260705b318b8e3ef595a6a64a2a76f3322a6bd09f8a3ef9782ca2d49a"
+  }
+}

@@ -1,0 +1,21 @@
+include: mujoco_three_dynamic_crossing_development_amendment13.yaml
+
+experiment:
+  name: mujoco_three_dynamic_crossing_development_amendment18
+
+planner:
+  horizon: 40
+
+three_obstacle_amendment:
+  version: 18
+  reason: >-
+    at_the_safe_staging_point_the_3p6s_horizon_ended_before_a_maximum_speed_candidate_could_clear_the_combined_collision_radius
+  intervention: minimally_extended_4p0s_causal_prediction_and_control_horizon
+  obstacle_future_truth_used: false
+  obstacle_process_changed: false
+  tracker_association_changed: false
+  probability_risk_changed: false
+  rollout_budget_changed: false
+  total_rollouts_per_decision: 600
+  active_waiting_allowed: true
+  active_traversal_objective: true

@@ -1,0 +1,22 @@
+include: mujoco_three_dynamic_crossing_development_amendment28.yaml
+
+experiment:
+  name: mujoco_three_dynamic_crossing_development_amendment29
+
+planner:
+  probabilistic_obstacle_traversal_window_temporal_abort_mass_floor: 0.10
+
+three_obstacle_amendment:
+  version: 29
+  reason: >-
+    amendment28_eliminated_collision_but_raw_front_scan_closing_aborted_every_commit_including_five_events_with_same_crossing_probability_mass_below_0p023_while_the_previously_dangerous_delayed_spike_had_already_reached_mass_0p26_during_the_temporal_warning
+  intervention: require_the_existing_temporal_closing_abort_to_be_corroborated_by_at_least_0p10_accumulated_probability_mass_from_the_same_online_crossing_certificate
+  obstacle_future_truth_used: false
+  obstacle_identity_used: false
+  crossing_geometry_source: online_forecast_plus_polyline_reference
+  certificate_threshold_changed: false
+  control_horizon_changed: false
+  rollout_budget_changed: false
+  total_rollouts_per_decision: 600
+  active_waiting_allowed: true
+  active_traversal_objective: true

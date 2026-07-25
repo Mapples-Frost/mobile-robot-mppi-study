@@ -1,0 +1,29 @@
+include: mujoco_v3_probabilistic_crossing_smoke.yaml
+
+experiment:
+  name: mujoco_v3_probabilistic_crossing_smoke_amendment1
+  initial_state: [-4.60, -1.50, 0.00, 0.00, 0.00]
+
+task:
+  position: [4.20, -1.50]
+
+online_smoke:
+  output_dir: research_artifacts/mujoco_v3_probabilistic_crossing_smoke_amendment1
+
+design_amendment:
+  version: 1
+  reason: original_route_failed_frozen_crossing_count_precheck
+  original_route:
+    start: [-3.60, 0.00]
+    goal: [3.60, 0.00]
+    crossing_counts_by_seed: [3, 2, 1]
+  amended_route:
+    start: [-4.60, -1.50]
+    goal: [4.20, -1.50]
+    crossing_counts_by_seed: [3, 4, 3]
+  obstacle_generator_changed: false
+  predictor_changed: false
+  risk_definition_changed: false
+  seeds_changed: false
+  gate_changed: false
+

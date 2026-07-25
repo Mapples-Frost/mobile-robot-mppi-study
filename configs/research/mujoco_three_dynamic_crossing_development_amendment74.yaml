@@ -1,0 +1,44 @@
+include: mujoco_three_dynamic_crossing_development_amendment73.yaml
+
+experiment:
+  name: mujoco_three_dynamic_crossing_development_amendment74
+
+planner:
+  # A73 requested a safe staging approach but certified the entire route to
+  # the crossing entry at once.  For seed 730100253 that long proposal was
+  # unsafe in all 60 requested cycles and therefore preserved the old hold.
+  # Advance only to the existing one-control-cycle reachable frontier, stop,
+  # and replan; the frozen crossing entry remains a hard upper bound.
+  probabilistic_obstacle_traversal_window_rearm_staging_frontier_enabled: true
+
+three_obstacle_amendment:
+  version: 74
+  reason: >-
+    amendment73_seed730100253_eliminated_all_post_center_reverse_commands_but_the_rearm_staging_approach_was_requested_for_60_cycles_and_never_certified_safe_because_it_required_the_complete_approach_to_the_crossing_entry_to_be_safe_at_once;_the_original_30_command_hold_was_unchanged
+  intervention: >-
+    replace_the_all_the_way_to_entry_staging_target_with_the_furthest_progress_reachable_in_one_existing_control_cycle_capped_by_the_same_frozen_entry;_the_candidate_stops_at_that_frontier_is_certified_over_the_same_probability_horizon_and_only_its_first_command_is_executed_before_replanning
+  obstacle_future_truth_used: false
+  obstacle_identity_used: false
+  new_threshold_added: false
+  behavior_parameter_changed: true
+  scene_geometry_changed: false
+  obstacle_motion_changed: false
+  success_tolerance_changed: false
+  episode_time_budget_changed: false
+  checkpoint_changed: false
+  rollout_budget_changed: false
+  emergency_lattice_slots: 6
+  total_rollouts_per_decision: 600
+  development_only: true
+
+three_obstacle_rearm_staging_frontier_contract:
+  activation_scope: post_retreat_rearm_pending_pre_entry
+  target: minimum_of_existing_frozen_entry_and_one_control_cycle_reachable_progress
+  control_cycle_s: 0.1
+  execute_first_control_cycle_then_replan: true
+  candidate_stops_at_frontier: true
+  complete_existing_probabilistic_horizon_certified: true
+  conflict_entry_may_be_crossed_while_rearm_pending: false
+  threshold_added: false
+  candidate_slots_added: 0
+  total_rollouts_per_decision: 600

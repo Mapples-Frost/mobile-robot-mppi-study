@@ -1,0 +1,31 @@
+include: mujoco_v3_probabilistic_crossing_smoke_amendment11.yaml
+
+experiment:
+  name: mujoco_v3_probabilistic_crossing_smoke_amendment12
+
+action_space:
+  lower: [-0.35, -0.90]
+
+perception:
+  scan_guard:
+    dynamic_escape_reverse_speed: 0.35
+
+online_smoke:
+  output_dir: research_artifacts/mujoco_v3_probabilistic_crossing_smoke_amendment12
+
+design_amendment:
+  version: 12
+  reason: amendment11_reverse_escape_was_directionally_correct_but_speed_asymmetric
+  intervention:
+    forward_escape_speed_mps: 0.35
+    reverse_escape_speed_mps: 0.35
+    rationale: symmetric_bounded_escape_authority
+  obstacle_generator_changed: false
+  predictor_changed: false
+  risk_definition_changed: false
+  hard_probability_threshold_changed: false
+  residual_model_changed: false
+  localization_changed: false
+  seeds_changed: false
+  route_changed: false
+  gate_changed: false

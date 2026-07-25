@@ -3,3 +3,7 @@
 # Some source CSVs use CRLF, so whitespace checking is intentionally disabled
 # inside immutable evidence packages.
 research_artifacts/** -text whitespace=-trailing-space,-space-before-tab
+
+# Frozen learned-model checkpoints are part of reproducible research
+# snapshots, but remain outside ordinary Git object storage.
+*.pt filter=lfs diff=lfs merge=lfs -text

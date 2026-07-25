@@ -1,0 +1,49 @@
+include: mujoco_three_dynamic_crossing_development_amendment59.yaml
+
+experiment:
+  name: mujoco_three_dynamic_crossing_development_amendment60
+
+planner:
+  probabilistic_obstacle_traversal_window_temporal_retreat_post_intent_all_hard_forward_filter_enabled: true
+
+three_obstacle_amendment:
+  version: 60
+  reason: >-
+    amendment59_kept_the_six_direction_lattice_for_all_33_raw_bound_temporal_retreat_cycles_but_after_global_intent_expiry_the_same_cycle_minimum_risk_ranking_switched_from_reverse_at_rows425_to428_to_forward_at_row429_while_all_candidates_were_hard_risk;_forward_then_persisted_until_collision_at_row434
+  intervention: >-
+    only_for_an_active_raw_bound_temporal_retreat_after_the_one_shot_global_intent_has_expired_and_all_six_members_are_hard_risk_keep_all_six_existing_budget_slots_but_choose_the_same_cycle_probability_minimum_from_the_three_existing_negative_velocity_members_and_block_forward_promotion;_the_original_global_intent_escape_and_all_other_transactions_remain_unchanged
+  obstacle_future_truth_used: false
+  obstacle_identity_used: false
+  crossing_geometry_source: online_forecast_plus_polyline_reference
+  behavior_parameter_changed: false
+  candidate_values_changed: false
+  certificate_threshold_changed: false
+  commit_admission_contract_changed: false
+  commit_admission_exit_deadline_contract_changed: false
+  commit_admission_exit_deadline_hold_authority_changed: false
+  commit_admission_exit_deadline_hard_risk_override_changed: false
+  commit_admission_exit_deadline_forward_filter_changed: false
+  post_retreat_rearm_contract_changed: false
+  post_retreat_no_crossing_clearance_enabled: true
+  post_retreat_no_crossing_certified_handoff_enabled: true
+  post_retreat_rearm_hard_risk_override_enabled: true
+  stale_crossing_geometry_retained: false
+  pre_center_exit_deadline_contract_changed: false
+  pre_center_deadline_retreat_escape_transaction_changed: false
+  pre_center_deadline_retreat_escape_transaction_lifetime_changed: false
+  ordinary_temporal_retreat_lattice_binding_changed: false
+  ordinary_temporal_retreat_post_intent_forward_filter_changed: true
+  post_center_execution_arbitration_changed: false
+  post_center_emergency_lattice_binding_changed: false
+  post_center_escape_transaction_latch_changed: false
+  raw_temporal_signal_binding_changed: false
+  temporal_escape_authority_preserved: true
+  temporal_abort_direction_contract_changed: false
+  control_horizon_changed: false
+  control_limit_changed: false
+  deterministic_computation_reused: true
+  diagnostic_profiling_changed: false
+  rollout_budget_changed: false
+  total_rollouts_per_decision: 600
+  active_waiting_allowed: true
+  active_traversal_objective: true

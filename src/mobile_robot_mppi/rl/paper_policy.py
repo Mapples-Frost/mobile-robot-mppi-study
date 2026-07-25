@@ -9,6 +9,7 @@ from pathlib import Path
 
 import numpy as np
 
+from mobile_robot_mppi.core.spaces import ActionSpec
 from mobile_robot_mppi.core.types import Pose2D, RobotObservation, Twist2D
 from mobile_robot_mppi.policies.priors import GoalWarmStartPrior
 
@@ -35,6 +36,7 @@ class PaperDirectControlPolicy:
         checkpoint_path=None,
         residual_context=None,
         residual_correction_authority=None,
+        controller_action_spec=None,
     ):
         if int(agent.action_dim) != int(action_spec.dimension):
             raise ValueError(
@@ -51,6 +53,18 @@ class PaperDirectControlPolicy:
         self.encoder = encoder
         self.normalizer = normalizer
         self.action_spec = action_spec
+        self.controller_action_spec = controller_action_spec or action_spec
+        if tuple(self.controller_action_spec.names) != tuple(action_spec.names):
+            raise ValueError("Actor and controller action names differ")
+        if (
+            np.any(action_spec.lower < self.controller_action_spec.lower)
+            or np.any(action_spec.upper > self.controller_action_spec.upper)
+        ):
+            raise ValueError("Actor action bounds exceed the controller bounds")
+        self.actor_action_subspace = bool(
+            not np.allclose(action_spec.lower, self.controller_action_spec.lower)
+            or not np.allclose(action_spec.upper, self.controller_action_spec.upper)
+        )
         self.fallback_prior = fallback_prior or GoalWarmStartPrior()
         self.checkpoint_path = (
             None
@@ -88,6 +102,8 @@ class PaperDirectControlPolicy:
             self.action_spec.dimension, dtype=np.float64
         )
         self.safety_override = False
+        self._scan_feature_source = None
+        self._scan_feature_cache = None
         if int(self.encoder.config.history_frames) != 1:
             raise ValueError(
                 "Gate 1 autoregressive policy currently requires "
@@ -105,6 +121,8 @@ class PaperDirectControlPolicy:
     def reset(self):
         self.previous_action.fill(0.0)
         self.safety_override = False
+        self._scan_feature_source = None
+        self._scan_feature_cache = None
         self.encoder.reset()
         if self.residual_context is not None:
             self.residual_context.reset()
@@ -141,7 +159,12 @@ class PaperDirectControlPolicy:
         fallback for diagnostics.
         """
 
-        if tuple(action_spec.names) != tuple(self.action_spec.names):
+        if (
+            tuple(action_spec.names)
+            != tuple(self.controller_action_spec.names)
+            or not np.allclose(action_spec.lower, self.controller_action_spec.lower)
+            or not np.allclose(action_spec.upper, self.controller_action_spec.upper)
+        ):
             raise ValueError("planner and direct Actor action spaces differ")
         output = self.fallback_prior.propose(
             observation, reference, horizon, action_spec
@@ -157,6 +180,11 @@ class PaperDirectControlPolicy:
             "type": "paper_direct_control",
             "checkpoint": self.checkpoint_path,
             "actor_action_semantics": "physical_low_level_control",
+            "actor_action_subspace": self.actor_action_subspace,
+            "actor_action_lower": self.action_spec.lower.tolist(),
+            "actor_action_upper": self.action_spec.upper.tolist(),
+            "controller_action_lower": self.controller_action_spec.lower.tolist(),
+            "controller_action_upper": self.controller_action_spec.upper.tolist(),
             "actor_support_ood_score": float(
                 self.normalizer.ood_score(raw)
             ),
@@ -265,7 +293,12 @@ class PaperDirectControlPolicy:
         # candidates and must be computed once, rather than once per state.
         # This preserves the paper-level observation semantics while avoiding
         # an O(batch_size * scan_rays) Python hot path.
-        scan_encoding = self.encoder._scan_features(observation.scan)
+        if observation.scan is self._scan_feature_source:
+            scan_encoding = self._scan_feature_cache
+        else:
+            scan_encoding = self.encoder._scan_features(observation.scan)
+            self._scan_feature_source = observation.scan
+            self._scan_feature_cache = scan_encoding
         x_index = state_spec.index("x")
         y_index = state_spec.index("y")
         theta_index = state_spec.index("theta")
@@ -300,32 +333,118 @@ class PaperDirectControlPolicy:
         )
         preview_target = getattr(reference, "preview_target_at", None)
         progress_floor = getattr(reference, "progress", None)
-        for index, (state, offset) in enumerate(zip(states, offsets)):
-            pose = state[[x_index, y_index, theta_index]]
-            if callable(preview_target):
-                target = preview_target(
-                    float(observation.timestamp) + float(offset),
-                    pose,
-                    progress_floor=progress_floor,
+        project_batch = getattr(reference, "project_batch", None)
+        target_poses_at_progress = getattr(
+            reference, "target_poses_at_progress", None
+        )
+        if callable(project_batch) and callable(target_poses_at_progress):
+            projections = project_batch(
+                poses[:, :2], minimum_progress=progress_floor
+            )
+            target_poses = np.asarray(
+                target_poses_at_progress(projections.progress),
+                dtype=np.float64,
+            )
+            if target_poses.shape != (states.shape[0], 3):
+                raise ValueError(
+                    "reference returned invalid batched target poses"
                 )
-            else:
-                target = reference.target_at(
-                    float(observation.timestamp) + float(offset), pose
-                )
-            targets[index] = (target.pose.x, target.pose.y)
+            targets[:] = target_poses[:, :2]
             if path_contexts is not None:
-                path_contexts[index] = self.encoder.path_context(
-                    reference,
-                    pose,
-                    target=target,
-                    progress_floor=progress_floor,
-                )
+                heading_error = poses[:, 2] - projections.tangent_heading
+                path_context_values = np.column_stack((
+                    np.clip(
+                        projections.signed_cross_track_error
+                        / self.encoder.config.path_cross_track_scale,
+                        -1.0,
+                        1.0,
+                    ),
+                    np.sin(heading_error),
+                    np.cos(heading_error),
+                    np.clip(
+                        projections.curvature
+                        / self.encoder.config.path_curvature_scale,
+                        -1.0,
+                        1.0,
+                    ),
+                    np.clip(
+                        projections.remaining
+                        / self.encoder.config.path_remaining_scale,
+                        0.0,
+                        1.0,
+                    ),
+                    np.ones(states.shape[0], dtype=np.float64),
+                )).astype(np.float32)
+                if not np.isfinite(path_context_values).all():
+                    raise FloatingPointError(
+                        "batched path context produced NaN or Inf"
+                    )
+                path_contexts[:] = path_context_values
             if path_previews is not None:
-                path_previews[index] = self.encoder.path_preview(
-                    reference,
-                    pose,
-                    progress_floor=progress_floor,
+                distances = np.asarray(
+                    self.encoder.config.path_preview_distances,
+                    dtype=np.float64,
                 )
+                preview_poses = np.asarray(
+                    reference.poses_at_progress(
+                        projections.progress[:, None]
+                        + distances[None, :]
+                    ),
+                    dtype=np.float64,
+                )
+                expected_shape = (
+                    states.shape[0], len(distances), 3
+                )
+                if preview_poses.shape != expected_shape:
+                    raise ValueError(
+                        "reference returned an invalid batched path preview"
+                    )
+                delta = preview_poses[:, :, :2] - poses[:, None, :2]
+                cosine = np.cos(poses[:, 2])[:, None]
+                sine = np.sin(poses[:, 2])[:, None]
+                body_x = cosine * delta[:, :, 0] + sine * delta[:, :, 1]
+                body_y = -sine * delta[:, :, 0] + cosine * delta[:, :, 1]
+                path_preview_values = np.stack(
+                    (body_x, body_y), axis=-1
+                ).reshape(states.shape[0], -1)
+                path_preview_values = np.clip(
+                    path_preview_values
+                    / float(self.encoder.config.path_preview_scale),
+                    -1.0,
+                    1.0,
+                ).astype(np.float32)
+                if not np.isfinite(path_preview_values).all():
+                    raise FloatingPointError(
+                        "batched path preview produced NaN or Inf"
+                    )
+                path_previews[:] = path_preview_values
+        else:
+            for index, (state, offset) in enumerate(zip(states, offsets)):
+                pose = state[[x_index, y_index, theta_index]]
+                if callable(preview_target):
+                    target = preview_target(
+                        float(observation.timestamp) + float(offset),
+                        pose,
+                        progress_floor=progress_floor,
+                    )
+                else:
+                    target = reference.target_at(
+                        float(observation.timestamp) + float(offset), pose
+                    )
+                targets[index] = (target.pose.x, target.pose.y)
+                if path_contexts is not None:
+                    path_contexts[index] = self.encoder.path_context(
+                        reference,
+                        pose,
+                        target=target,
+                        progress_floor=progress_floor,
+                    )
+                if path_previews is not None:
+                    path_previews[index] = self.encoder.path_preview(
+                        reference,
+                        pose,
+                        progress_floor=progress_floor,
+                    )
         raw = self.encoder.encode_kinematic_batch(
             poses,
             twists,
@@ -365,9 +484,28 @@ class PaperDirectControlPolicy:
             state_spec,
             time_offset,
         )
-        pre_tanh_mean, log_std = self.agent.policy_gaussian_parameters_batch(
-            normalized
+        joint_base_gaussian = getattr(
+            self.agent,
+            "policy_gaussian_parameters_with_base_batch",
+            None,
         )
+        base_pre_tanh = None
+        base_log_std = None
+        if (
+            self.residual_correction_authority is not None
+            and callable(joint_base_gaussian)
+        ):
+            (
+                pre_tanh_mean,
+                log_std,
+                base_pre_tanh,
+                base_log_std,
+            ) = joint_base_gaussian(normalized)
+        else:
+            (
+                pre_tanh_mean,
+                log_std,
+            ) = self.agent.policy_gaussian_parameters_batch(normalized)
         normalized_mean = np.tanh(pre_tanh_mean)
         correction_authority = None
         context_features = None
@@ -377,11 +515,12 @@ class PaperDirectControlPolicy:
                 raw[:, -dimension:], dtype=np.float64
             )
         if self.residual_correction_authority is not None:
-            base_pre_tanh, base_log_std = (
-                self.agent.correction_base_gaussian_parameters_batch(
-                    normalized
+            if base_pre_tanh is None or base_log_std is None:
+                base_pre_tanh, base_log_std = (
+                    self.agent.correction_base_gaussian_parameters_batch(
+                        normalized
+                    )
                 )
-            )
             base_mean = np.tanh(base_pre_tanh)
             correction_authority = self.residual_correction_authority.evaluate(
                 context_features
@@ -545,6 +684,7 @@ class PaperDirectControlPolicy:
         fallback_prior=None,
         residual_context=None,
         residual_correction_authority=None,
+        allow_controller_action_superset=False,
     ):
         payload = load_sac_checkpoint(checkpoint_path, map_location=device)
         action_mode = str(
@@ -562,15 +702,43 @@ class PaperDirectControlPolicy:
         saved_action = payload["action_spec"]
         if tuple(saved_action["names"]) != tuple(action_spec.names):
             raise ValueError("checkpoint physical action names do not match")
-        if (
-            not np.allclose(saved_action["lower"], action_spec.lower)
-            or not np.allclose(saved_action["upper"], action_spec.upper)
-        ):
-            raise ValueError("checkpoint physical action bounds do not match")
+        saved_lower = np.asarray(saved_action["lower"], dtype=np.float64)
+        saved_upper = np.asarray(saved_action["upper"], dtype=np.float64)
+        bounds_match = bool(
+            np.allclose(saved_lower, action_spec.lower)
+            and np.allclose(saved_upper, action_spec.upper)
+        )
+        if not bounds_match:
+            if not bool(allow_controller_action_superset):
+                raise ValueError("checkpoint physical action bounds do not match")
+            if (
+                saved_lower.shape != action_spec.lower.shape
+                or saved_upper.shape != action_spec.upper.shape
+                or np.any(saved_lower < action_spec.lower - 1.0e-12)
+                or np.any(saved_upper > action_spec.upper + 1.0e-12)
+            ):
+                raise ValueError(
+                    "checkpoint action bounds are not a controller subspace"
+                )
+        actor_action_spec = ActionSpec(
+            names=tuple(saved_action["names"]),
+            lower=saved_lower,
+            upper=saved_upper,
+        )
+        saved_encoder_action = payload.get("encoder_action_spec", saved_action)
+        if tuple(saved_encoder_action["names"]) != tuple(saved_action["names"]):
+            raise ValueError(
+                "checkpoint encoder and Actor action names do not match"
+            )
+        encoder_action_spec = ActionSpec(
+            names=tuple(saved_encoder_action["names"]),
+            lower=np.asarray(saved_encoder_action["lower"], dtype=np.float64),
+            upper=np.asarray(saved_encoder_action["upper"], dtype=np.float64),
+        )
         encoder_config = ObservationEncoderConfig.from_mapping(
             payload["encoder_config"]
         )
-        encoder = ObservationEncoder(encoder_config, action_spec)
+        encoder = ObservationEncoder(encoder_config, encoder_action_spec)
         agent_state = payload["agent"]
         agent = SACAgent(
             agent_state["observation_dim"],
@@ -580,7 +748,7 @@ class PaperDirectControlPolicy:
         )
         if encoder.dimension != agent.observation_dim:
             raise ValueError("checkpoint encoder and Actor dimensions differ")
-        if agent.action_dim != action_spec.dimension:
+        if agent.action_dim != actor_action_spec.dimension:
             raise ValueError(
                 "checkpoint Actor action is not low-level physical control"
             )
@@ -590,9 +758,10 @@ class PaperDirectControlPolicy:
             agent,
             encoder,
             normalizer,
-            action_spec,
+            actor_action_spec,
             fallback_prior=fallback_prior,
             checkpoint_path=checkpoint_path,
             residual_context=residual_context,
             residual_correction_authority=residual_correction_authority,
+            controller_action_spec=action_spec,
         )

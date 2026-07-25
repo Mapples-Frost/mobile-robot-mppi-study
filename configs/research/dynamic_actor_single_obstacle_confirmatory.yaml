@@ -1,0 +1,212 @@
+schema_version: 1
+status: frozen_before_execution
+protocol_revision: 1
+frozen_at: "2026-07-25T09:35:00+08:00"
+scope: single_dynamic_obstacle_publication_confirmatory
+sealed_seeds_opened: false
+
+preregistration: docs/experiments/dynamic_uncertainty/SINGLE_OBSTACLE_CONFIRMATORY_PREREGISTRATION_2026-07-25.md
+seed_registry_path: configs/seeds/dynamic_uncertainty_splits.yaml
+sealed_registry_path: configs/seeds/sealed_dynamic_seeds.yaml
+base_config: configs/research/mujoco_v3_probabilistic_crossing_smoke_amendment17_residual_runtime_stage3.yaml
+stage3_protocol: configs/research/dynamic_uncertainty_residual_runtime_stage3_parallel_development.yaml
+stage4_protocol: configs/research/dynamic_uncertainty_rl_hss_stage4_amendment1.yaml
+output_dir: research_artifacts/dynamic_actor_single_obstacle_confirmatory_held_out_v1
+
+design:
+  independent_unit: complete_paired_episode_seed
+  paired_primary_arms: [source_actor, dynamic_actor]
+  ablation_arms:
+    - ablation_no_same_cycle_filter
+    - ablation_no_pareto_commit
+    - ablation_no_temporal_escape_package
+  common_random_numbers: true
+  split_stratification: [held_out_id, held_out_ood]
+  block_unit: episode_seed
+  schedule_randomization_seed: 730299901
+  primary_pairs: 100
+  ablation_pairs_per_contrast: 50
+  total_episode_jobs: 350
+  total_rollouts_per_controller_decision: 600
+  horizon_steps: 36
+  control_period_s: 0.1
+  maximum_episode_steps: 400
+  single_dynamic_obstacle: true
+  arm_order_balance: latin_position_balance_within_each_split
+  tuning_during_matrix_authorized: false
+  seed_replacement_authorized: false
+  automatic_retry_authorized: false
+  artifact_overwrite_authorized: false
+  healthy_process_restart_authorized: false
+  splits:
+    held_out_id:
+      seed_start: 730200001
+      seed_count: 50
+      ablation_seed_count: 25
+    held_out_ood:
+      seed_start: 730300001
+      seed_count: 50
+      ablation_seed_count: 25
+
+domains:
+  held_out_id:
+    obstacle_process_config: configs/research/dynamic_obstacle_process_v3.yaml
+    obstacle_noise_profile: medium
+    interpretation: frozen_in_distribution
+  held_out_ood:
+    obstacle_process_config: configs/research/dynamic_obstacle_process_v3_ood_confirmatory.yaml
+    obstacle_noise_profile: process_shift
+    interpretation: faster_more_frequent_process_shift
+    sensor_shift_claimed: false
+
+arms:
+  source_actor:
+    checkpoint: research_artifacts/dynamic_actor_correction_development_v3_rollin/checkpoints/best.pt
+    controller_profile: full
+    role: paired_source_control
+  dynamic_actor:
+    checkpoint: research_artifacts/dynamic_actor_temporal_bidirectional_correction_v5_amendment6/checkpoints/improved_update_000250.pt
+    controller_profile: full
+    role: paired_candidate
+  ablation_no_same_cycle_filter:
+    checkpoint: research_artifacts/dynamic_actor_temporal_bidirectional_correction_v5_amendment6/checkpoints/improved_update_000250.pt
+    controller_profile: no_same_cycle_filter
+    role: mechanism_ablation
+  ablation_no_pareto_commit:
+    checkpoint: research_artifacts/dynamic_actor_temporal_bidirectional_correction_v5_amendment6/checkpoints/improved_update_000250.pt
+    controller_profile: no_pareto_commit
+    role: mechanism_ablation
+  ablation_no_temporal_escape_package:
+    checkpoint: research_artifacts/dynamic_actor_temporal_bidirectional_correction_v5_amendment6/checkpoints/improved_update_000250.pt
+    controller_profile: no_temporal_escape_package
+    role: mechanism_ablation
+
+controller_profiles:
+  full:
+    proposal_gate_mode: same_cycle_filter
+    completion_handover_full_fallback_distance: 0.4
+    completion_handover_full_rl_distance: 0.8
+    vetted_reactive_escape: true
+    dynamic_escape_min_probability_mass_relative_improvement: 0.1
+    probabilistic_emergency_trigger_ttc_s: 1.5
+    probabilistic_emergency_intent_hold_steps: 16
+    probabilistic_emergency_pareto_forward_commit: true
+  no_same_cycle_filter:
+    proposal_gate_mode: shadow
+    completion_handover_full_fallback_distance: 0.4
+    completion_handover_full_rl_distance: 0.8
+    vetted_reactive_escape: true
+    dynamic_escape_min_probability_mass_relative_improvement: 0.1
+    probabilistic_emergency_trigger_ttc_s: 1.5
+    probabilistic_emergency_intent_hold_steps: 16
+    probabilistic_emergency_pareto_forward_commit: true
+  no_pareto_commit:
+    proposal_gate_mode: same_cycle_filter
+    completion_handover_full_fallback_distance: 0.4
+    completion_handover_full_rl_distance: 0.8
+    vetted_reactive_escape: true
+    dynamic_escape_min_probability_mass_relative_improvement: 0.1
+    probabilistic_emergency_trigger_ttc_s: 1.5
+    probabilistic_emergency_intent_hold_steps: 16
+    probabilistic_emergency_pareto_forward_commit: false
+  no_temporal_escape_package:
+    proposal_gate_mode: same_cycle_filter
+    completion_handover_full_fallback_distance: 0.4
+    completion_handover_full_rl_distance: 0.8
+    vetted_reactive_escape: false
+    dynamic_escape_min_probability_mass_relative_improvement: 0.0
+    probabilistic_emergency_trigger_ttc_s: 0.0
+    probabilistic_emergency_intent_hold_steps: 0
+    probabilistic_emergency_pareto_forward_commit: false
+
+analysis:
+  primary_estimand: paired_outcome_aware_efficiency_delta_candidate_minus_source
+  failure_step_penalty: 400
+  efficiency_relative_noninferiority_margin: 0.01
+  safety_harm_estimands:
+    - candidate_only_collision_probability
+    - lost_source_success_probability
+  alpha_two_sided: 0.05
+  target_power: 0.90
+  sesoi_outcome_aware_steps: 10.0
+  development_sd_used_for_power_only: 29.725190605305446
+  standardized_sesoi_dz: 0.3364150000846477
+  achieved_approximate_power_at_100_pairs: 0.9148710808211763
+  bootstrap_seed: 730299902
+  bootstrap_replicates: 200000
+  binary_test: exact_mcnemar_two_sided
+  continuous_test: paired_t_two_sided_with_paired_bootstrap_ci
+  ablation_multiplicity: holm_across_three_efficiency_contrasts
+  missing_episode_policy: no_imputation_no_seed_replacement_report_incomplete
+
+gates:
+  require_complete_primary_pairs: 100
+  require_complete_ablation_pairs_per_contrast: 50
+  require_zero_candidate_only_collisions: true
+  require_zero_lost_source_successes: true
+  maximum_pooled_harm_probability: 0.05
+  maximum_split_harm_probability: 0.065
+  require_efficiency_noninferiority: true
+  require_at_least_one_strict_pooled_improvement: true
+  planner_deadline_ms: 100.0
+  minimum_forecast_availability: 0.95
+  require_all_decisions_exactly_600_rollouts: true
+  require_integrity_audit: true
+  formal_superiority_required_for_noninferiority_gate: false
+
+causal_observation_contract:
+  path_reference: Polyline
+  dynamic_observation: LaserScan
+  dynamic_tracking: online_multi_target_tracker
+  future_risk: online_probability_forecast
+  simulator_obstacle_identity_for_control: false
+  simulator_obstacle_trajectory_for_control: false
+  simulator_obstacle_future_truth_for_control: false
+  exact_ground_truth_pose_for_control: false
+
+bindings:
+  source_checkpoint:
+    path: research_artifacts/dynamic_actor_correction_development_v3_rollin/checkpoints/best.pt
+    sha256: 6e346e5e4fcc1eca029ee4495ca0ffd0c978c5ce11089ab8ebfaaee89236c63d
+  candidate_checkpoint:
+    path: research_artifacts/dynamic_actor_temporal_bidirectional_correction_v5_amendment6/checkpoints/improved_update_000250.pt
+    sha256: 714694f8d179f02b90c14e56c9e3e4f29a0101b70ad53f3cc795eb72dea7a1b5
+  confirmatory_runner:
+    path: experiments/dynamic_uncertainty/run_dynamic_actor_single_obstacle_confirmatory.py
+    sha256: 95e4edaff742f9b2ebe607e4f488fc540845b9a3ba966bdc61a65c6c70a6baa3
+  confirmatory_analysis:
+    path: experiments/dynamic_uncertainty/analyze_dynamic_actor_single_obstacle_confirmatory.py
+    sha256: 6d627fbd2587bb66e5f35c0a04f5ebf8bf0ab0369168ae6161303d5b62589f8a
+  dynamic_actor_probe:
+    path: experiments/dynamic_uncertainty/run_dynamic_actor_mujoco_probe.py
+    sha256: 127bffaf479a61df16c06d1c95da3c60129ba043a783f9e61c6942090c622728
+  id_obstacle_process:
+    path: configs/research/dynamic_obstacle_process_v3.yaml
+    sha256: e33e03ca7f4331354806e0a0adb98c080b3ed22642f3ca99456ff58539311215
+  ood_obstacle_process:
+    path: configs/research/dynamic_obstacle_process_v3_ood_confirmatory.yaml
+    sha256: e67db8e1b5c9d2b61648a49de419b57ba25e5df3594901e8127b98becf3e7f8d
+  base_config:
+    path: configs/research/mujoco_v3_probabilistic_crossing_smoke_amendment17_residual_runtime_stage3.yaml
+    sha256: 5d704f9039a93d6ed3348a7441713d28e79bc69a3d37ef3217508e02aed5c8b8
+  stage3_protocol:
+    path: configs/research/dynamic_uncertainty_residual_runtime_stage3_parallel_development.yaml
+    sha256: 1e9593c2c5d984ee14ed87d5846ef4806d27c26eea56488e32b37bd7b2c92348
+  stage4_protocol:
+    path: configs/research/dynamic_uncertainty_rl_hss_stage4_amendment1.yaml
+    sha256: d039047f9be1ba744a2d4171186e30d73f0eed1722d4559c8a3fbba8c9a68874
+  paper_planner:
+    path: src/mobile_robot_mppi/planning/rl_driven_mppi.py
+    sha256: 5e2e9d6ce465213bf8fd15a522f806d1e60ea0097d1a9d0a63887a7c83468a4b
+  mppi:
+    path: src/mobile_robot_mppi/planning/mppi.py
+    sha256: e8a394020d65c748747085bfbb249f3791a32bd24ea59aecf2c76a4891e39828
+  metrics:
+    path: src/mobile_robot_mppi/evaluation/metrics.py
+    sha256: dbbcef94a4cc5a744960d89efad7e6414653aebf590d48b570227f05b8a92f12
+  safety_arbiter:
+    path: src/mobile_robot_mppi/safety/arbiter.py
+    sha256: a8a269027bbd3686e5d6cf0aac6e4c92a8383fb4aef080319ac404774394b78f
+  mujoco_plant:
+    path: src/mobile_robot_mppi/simulation/mujoco_plant.py
+    sha256: 0daa6322d5bffd6c149fd651e7c52c884f13147eadcac6b2cb4692aee53c13d3

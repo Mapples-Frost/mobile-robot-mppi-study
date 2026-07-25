@@ -1,0 +1,46 @@
+include: mujoco_three_dynamic_crossing_development_amendment70.yaml
+
+experiment:
+  name: mujoco_three_dynamic_crossing_development_amendment71
+
+planner:
+  # Emergency candidates execute one control cycle before replanning. During
+  # an unresolved near-body TTC dropout, retain a covered reverse candidate
+  # if its immediate next state remains inside the frozen path boundary even
+  # when its later open-loop prefix leaves that corridor.
+  probabilistic_obstacle_traversal_window_post_center_low_ttc_first_step_boundary_handoff_enabled: true
+
+three_obstacle_amendment:
+  version: 71
+  reason: >-
+    amendment70_seed730100253_confirmed_nonforward_coverage_was_requested_and_applied_with_four_nonforward_candidates_on_each_failed_dropout_cycle_but_the_final_action_guard_received_none_of_them_as_eligible_on_rows210_211_and213_because_the_full_horizon_path_boundary_mask_rejected_their_later_open_loop_states;_only_row212_retained_a_reverse_candidate_and_executed_reverse
+  intervention: >-
+    only_during_the_existing_amendment70_low_ttc_post_center_dropout_handoff_allow_an_existing_emergency_candidate_rejected_by_the_full_horizon_reference_corridor_to_enter_final_risk_ranking_if_its_first_predicted_control_step_remains_inside_the_same_frozen_boundary;_execute_only_that_first_step_then_replan_and_never_admit_a_candidate_whose_immediate_step_is_boundary_infeasible
+  obstacle_future_truth_used: false
+  obstacle_identity_used: false
+  new_threshold_added: false
+  behavior_parameter_changed: true
+  scene_geometry_changed: false
+  obstacle_motion_changed: false
+  success_tolerance_changed: false
+  episode_time_budget_changed: false
+  full_horizon_boundary_contract_changed_globally: false
+  emergency_first_step_boundary_handoff_changed: true
+  first_step_boundary_threshold_m: 0.0
+  emergency_lattice_values_changed: false
+  emergency_lattice_slots: 6
+  checkpoint_changed: false
+  rollout_budget_changed: false
+  total_rollouts_per_decision: 600
+  development_only: true
+
+three_obstacle_first_step_boundary_handoff_contract:
+  parent_guard: amendment70_low_ttc_nonforward_coverage
+  activation_scope: pending_active_post_center_pre_clear_low_ttc_dropout
+  ordinary_full_horizon_boundary_filter_preserved: true
+  emergency_candidate_must_be_first_step_boundary_feasible: true
+  first_step_boundary_margin_floor_m: 0.0
+  later_open_loop_boundary_infeasibility_may_be_replanned: true
+  candidates_added: 0
+  total_emergency_slots: 6
+  total_rollouts_per_decision: 600

@@ -1382,3 +1382,504 @@ tree:
           - "Reliability-weighted terminal critic authority"
         evidence: >
           C81/C84/C90 provide sealed independent factorial main effects for both retained mechanisms, whereas C98/C99 and C87 are refuted.
+  - id: N143
+    type: question
+    title: "Is the probabilistic recurrent-obstacle environment mature enough to freeze before residual learning?"
+    provenance: user
+    timestamp: "2026-07-23T10:00:00+08:00"
+    description: >
+      Establish a dynamic crossing benchmark in which obstacles recurrently intersect the start-to-goal route, uncertainty is visualized, and the controller actively avoids rather than stopping indefinitely.
+    children:
+      - id: N144
+        type: experiment
+        title: "Amendment 17 stall-specific recovery qualification"
+        provenance: ai-executed
+        timestamp: "2026-07-23T15:00:00+08:00"
+        result: >
+          Three risk-enabled development episodes completed without collision. Seed 730100003 final distance improved from 1.3383 m under Amendment 12 to 0.3334 m, median clearance delta was +0.2437 m and planner p95 was 52.87 ms. The automatic gate remained 8/9 because one completion-regression value was 0.104309 against a 0.10 threshold.
+        evidence: [C100, H75, "docs/experiments/dynamic_uncertainty/POST_ESCAPE_RECOVERY_AMENDMENT17_REPORT.md"]
+        children:
+          - id: N145
+            type: dead_end
+            title: "Amendment 18 terminal progress-weight escalation"
+            provenance: ai-executed
+            timestamp: "2026-07-23T15:30:00+08:00"
+            hypothesis: >
+              Increasing only terminal goal weight from 25 to 35 can repair seed-001 completion without sacrificing safety.
+            failure_mode: >
+              The preregistered seed-730100001 screen collided after 198 steps, so the stopping rule rejected the amendment and prohibited a full three-seed run.
+            lesson: >
+              Do not repair long-horizon completion by increasing short-horizon progress pressure; preserve Amendment 17 and move the remaining model mismatch question into the residual-dynamics stage.
+            evidence: [C101, "research_artifacts/mujoco_v3_probabilistic_crossing_smoke_amendment18_probe/"]
+          - id: N146
+            type: decision
+            title: "Conditionally accept Amendment 17 and enter residual-dynamics Stage 1"
+            provenance: user
+            timestamp: "2026-07-23T16:00:00+08:00"
+            choice: >
+              Record Amendment 17 as passed for project progression, retain the literal 8/9 automatic gate and failed threshold, freeze all environment/controller settings, and preregister a paired nominal-versus-frozen-ICODE comparison before any further algorithm change.
+            alternatives:
+              - "Continue environment-level heuristic tuning"
+              - "Retroactively relax or overwrite the automatic gate"
+              - "Open sealed residual-stage seeds immediately"
+            evidence: [C100, H75, H76, "docs/experiments/dynamic_uncertainty/ENVIRONMENT_STAGE_ACCEPTANCE.md", "docs/experiments/dynamic_uncertainty/RESIDUAL_DYNAMICS_STAGE1_PREREGISTRATION.md"]
+            children:
+              - id: N147
+                type: experiment
+                title: "Frozen L57 residual-dynamics Stage 1 development comparison"
+                provenance: ai-executed
+                timestamp: "2026-07-23T19:27:00+08:00"
+                result: >
+                  Twelve complete episodes and nine nominal-versus-residual pairs were collected without sealed seeds. All three model blocks improved horizon-36 velocity/yaw-rate RMSE by 14.33%--16.91%, but collision counts increased by 1, 1 and 2, median clearance delta was -0.03018 m, and maximum residual planner p95 was 206.01 ms. Seed 003 collided at steps 226--227 under all three checkpoints while its nominal reference remained collision-free.
+                evidence: [C102, H77, "research_artifacts/dynamic_uncertainty_residual_stage1_development/gate.json", "docs/experiments/dynamic_uncertainty/RESIDUAL_DYNAMICS_STAGE1_RESULT.md"]
+                children:
+                  - id: N148
+                    type: dead_end
+                    title: "Checkpoint-mean x/y canonicalization remediation"
+                    provenance: ai-executed
+                    timestamp: "2026-07-23T19:33:00+08:00"
+                    hypothesis: >
+                      Removing absolute-position OOD from the translationally homogeneous residual input is sufficient to retain improved prediction while restoring collision-free seed-003 control.
+                    failure_mode: >
+                      The first scheduled residual checkpoint still collided near step 227, ended 6.1367 m from the goal and had planner p95 211.23 ms. The preregistered rule stopped the remaining two residual jobs.
+                    lesson: >
+                      Spatial OOD was real but not sufficient to explain the safety failure; average dynamics accuracy and coordinate cleanup do not qualify the current residual for chance-constrained obstacle avoidance.
+                    evidence: [C103, H77, "research_artifacts/dynamic_uncertainty_residual_stage1_amendment1_probe/early_stop.json", "docs/experiments/dynamic_uncertainty/RESIDUAL_DYNAMICS_STAGE1_AMENDMENT1_RESULT.md"]
+                    children:
+                      - id: N149
+                        type: dead_end
+                        title: "Causal post-stall residual shutdown"
+                        provenance: ai-executed
+                        timestamp: "2026-07-23T19:55:00+08:00"
+                        hypothesis: >
+                          Latching residual authority off after ten low-risk zero-speed transitions will return the controller to safe nominal behavior before the obstacle revisits the crossing.
+                        failure_mode: >
+                          The guard latched at step 171 but checkpoint block 2 still collided at step 224 with minimum clearance -0.0071 m and planner p95 359.75 ms, triggering the preregistered stop.
+                        lesson: >
+                          The residual had already produced roughly 0.26 m lateral displacement relative to nominal before the latch; late model shutdown cannot undo a closed-loop state error.
+                        evidence: [C104, H79, "docs/experiments/dynamic_uncertainty/RESIDUAL_DYNAMICS_STAGE1_AMENDMENT2_RESULT.md"]
+                        children:
+                          - id: N150
+                            type: dead_end
+                            title: "Cold-start causal innovation authority"
+                            provenance: ai-executed
+                            timestamp: "2026-07-23T20:03:00+08:00"
+                            hypothesis: >
+                              Starting at nominal authority and enabling residual dynamics only after completed-transition innovation favors them will prevent the early trajectory split while retaining learned-model use.
+                            failure_mode: >
+                              Checkpoint block 1 reached mean/max authority 0.551/1.000 but still collided and triggered early stop; planner p95 was 425.46 ms.
+                            lesson: >
+                              Causal prediction reliability is not sufficient to certify downstream obstacle-avoidance decisions.
+                            evidence: [C105, "docs/experiments/dynamic_uncertainty/RESIDUAL_DYNAMICS_STAGE1_AMENDMENT3_RESULT.md"]
+                            children:
+                              - id: N151
+                                type: dead_end
+                                title: "Structure-preserving residual integration"
+                                provenance: ai-executed
+                                timestamp: "2026-07-23T20:06:00+08:00"
+                                hypothesis: >
+                                  Restricting residual derivatives to v and omega removes unsafe pose-kinematic corruption while retaining model accuracy.
+                                failure_mode: >
+                                  The first structure-preserving residual block still collided with mean/max authority 0.551/1.000 and planner p95 409.61 ms.
+                                lesson: >
+                                  The pose mask is structurally correct but not a safety certificate. Masked models retain 15.83%--16.62% H36 active-RMSE gains, so predictive utility and direct control authority must be reported separately.
+                                evidence: [C106, H80, H81, "docs/experiments/dynamic_uncertainty/RESIDUAL_DYNAMICS_STAGE1_AMENDMENT4_RESULT.md"]
+                                children:
+                                  - id: N152
+                                    type: pivot
+                                    title: "Freeze direct residual dynamics before RL-prior evaluation"
+                                    provenance: ai-suggested
+                                    timestamp: "2026-07-23T20:10:00+08:00"
+                                    from: "Direct L57 residual insertion into Amendment 17 MPPI"
+                                    to: "Frozen nominal probabilistic MPPI plus separately identified RL sampling prior"
+                                    trigger: "Four bounded residual remediations retained collision failures while masked residual prediction remained measurably better than nominal."
+  - id: N153
+    type: question
+    title: "Can residual learning be repaired before connecting RL?"
+    provenance: user
+    timestamp: "2026-07-23T20:15:00+08:00"
+    description: >
+      The user requested a bounded attempt to remove residual-learning negative effects before retraining or connecting the RL component.
+    also_depends_on: [N152]
+    children:
+      - id: N154
+        type: dead_end
+        title: "Full-action dual-model residual noninterference shield"
+        provenance: ai-executed
+        timestamp: "2026-07-23T20:25:00+08:00"
+        hypothesis: >
+          Concurrent nominal and residual MPPI with exact nominal fallback can prevent residual-induced collision when both model views are hard-safe, risk-nonincreasing, progress-noninferior and within a 0.10 m position tube.
+        failure_mode: >
+          On seed 730100003 the shield accepted 50.0% of plans but the episode still collided; repeated locally accepted decisions accumulated route divergence and planner p95 reached 472.86 ms.
+        lesson: >
+          Step-local model-view noninterference is not a trajectory-level safety certificate when forecast error and receding-horizon state drift accumulate.
+        evidence: [C107, H84, "research_artifacts/dynamic_uncertainty_residual_stage1_amendment5_probe/"]
+        children:
+          - id: N155
+            type: dead_end
+            title: "Speed-only residual shield authority"
+            provenance: ai-executed
+            timestamp: "2026-07-23T20:35:00+08:00"
+            hypothesis: >
+              Preserving the exact nominal yaw plan while allowing residual speed timing will remove route drift without discarding useful learned dynamics.
+            failure_mode: >
+              The first preregistered block still collided with 53.1% shield acceptance and 510.86 ms planner p95.
+            lesson: >
+              The frozen L57 failure is not confined to steering; speed timing can also move the robot into a different obstacle-interaction mode.
+            evidence: [C108, "research_artifacts/dynamic_uncertainty_residual_stage1_amendment6_probe/"]
+            children:
+              - id: N156
+                type: decision
+                title: "Stop wrapper tuning and retrain on task-interaction data"
+                provenance: user
+                timestamp: "2026-07-23T20:40:00+08:00"
+                choice: >
+                  Apply the proposed residual-learning corrections: add obstacle-interaction data, retain the v/omega-only residual structure, use conservative fine-tuning and prevent forgetting before any further closed-loop claim.
+                alternatives:
+                  - "Continue adding shield thresholds to the frozen L57 checkpoints"
+                  - "Connect RL before residual dynamics are qualified"
+                  - "Open sealed residual seeds"
+                evidence: >
+                  Amendments 5 and 6 both collided, while the L57 provenance contained no task-specific dynamic-obstacle trajectories.
+                children:
+                  - id: N157
+                    type: experiment
+                    title: "Task-aware conservative residual offline qualification"
+                    provenance: ai-executed
+                    timestamp: "2026-07-23T20:55:00+08:00"
+                    result: >
+                      Three L57-initialized models were fine-tuned with episode-disjoint obstacle train/validation/test trajectories, proximity/risk importance weights and an original-data output anchor. All 3/3 blocks passed: task H36 position RMSE improved 13.3%, 1.3% and 2.4%, while maximum original test/unseen regression was 0.97%.
+                    evidence: [C109, H82, H83, "research_artifacts/dynamic_uncertainty_residual_stage2_offline/gate.json", "ara/evidence/tables/table18_stage2_task_aware_residual.md"]
+                    children:
+                      - id: N158
+                        type: experiment
+                        title: "Fresh-seed task-aware residual closed-loop pilot"
+                        provenance: ai-executed
+                        timestamp: "2026-07-23T21:10:00+08:00"
+                        result: >
+                          On newly registered development seed 730100006, nominal and all three revised residual blocks reached the goal with zero collisions and identical 0.39754 m minimum clearance. Residual shield acceptance was 67.6%--73.2%, completion was slightly better in median, and planner p95 remained high at 267--422 ms. The pilot automatic gate passed without opening sealed seeds.
+                        evidence: [C110, H85, "research_artifacts/dynamic_uncertainty_residual_stage2_task_aware_probe/gate.json", "ara/evidence/tables/table18_stage2_task_aware_residual.md"]
+                        children:
+                          - id: N159
+                            type: experiment
+                            title: "Three-seed task-aware residual development qualification"
+                            provenance: ai-executed
+                            timestamp: "2026-07-23T21:45:00+08:00"
+                            result: >
+                              The frozen 12-episode matrix completed with 12/12 goal reaches, zero collisions and zero safety interventions. All three residual blocks passed collision and completion noninferiority gates, but paired step deltas had median 0 and range -14 to +9, so no stable speed advantage or checkpoint selection was established. Median effective residual acceptance was 29.7%, while residual planner p95 remained 221.84--422.08 ms.
+                            evidence: [C111, C112, C113, H86, H87, "research_artifacts/dynamic_uncertainty_residual_stage2_task_aware_development/gate.json", "research_artifacts/dynamic_uncertainty_residual_stage2_task_aware_development/contribution_audit.json", "ara/evidence/tables/table19_stage2_residual_development.md"]
+                            children:
+                              - id: N160
+                                type: decision
+                                title: "Optimize qualified residual runtime before connecting RL"
+                                provenance: user
+                                timestamp: "2026-07-23T21:50:00+08:00"
+                                choice: >
+                                  Continue behavior-preserving runtime optimization and requalify the complete residual controller before starting frozen RL Actor/HSS integration.
+                                alternatives:
+                                  - "Accept the 221.84--422.08 ms residual runtime"
+                                  - "Connect RL before resolving residual compute"
+                                  - "Change obstacle or safety semantics to make the runtime target easier"
+                                evidence: >
+                                  Stage 2 passed safety/noninferiority but exceeded the 100 ms control period in every residual cell.
+                                children:
+                                  - id: N161
+                                    type: experiment
+                                    title: "Blocked CPU-thread and CUDA residual-rollout screen"
+                                    provenance: ai-executed
+                                    timestamp: "2026-07-23T21:54:00+08:00"
+                                    result: >
+                                      Worst-block rollout P95 was 302.03 ms on CPU-1 and became slower at 314.06, 325.48 and 355.10 ms with 2, 4 and 8 threads. Legacy CUDA reduced worst-block P95 to 163.58 ms, a 45.8% improvement, with maximum trajectory difference about 3.4e-8, but still missed 100 ms.
+                                    evidence: [C114, H88, "research_artifacts/dynamic_uncertainty_residual_runtime_stage3_screen/runtime_screen.json", "ara/evidence/tables/table20_residual_runtime_stage3.md"]
+                                    children:
+                                      - id: N162
+                                        type: dead_end
+                                        title: "Eager device-resident full RK4 rollout"
+                                        provenance: ai-executed
+                                        timestamp: "2026-07-23T21:56:00+08:00"
+                                        hypothesis: >
+                                          Keeping the complete residual trajectory on CUDA and removing repeated host-device transfers is sufficient to lower residual rollout latency.
+                                        failure_mode: >
+                                          Trajectories matched below 8e-16, but concurrent worst-block P95 worsened from 154.41 ms for legacy CUDA to 183.65 ms for eager device residency.
+                                        lesson: >
+                                          Device residency alone does not help a fixed small-network RK4 workload when it adds many small GPU kernel launches without eliminating CPU launch overhead.
+                                        evidence: [C115, H89, "research_artifacts/dynamic_uncertainty_residual_runtime_stage3_amendment1/runtime_screen.json", "ara/evidence/tables/table20_residual_runtime_stage3.md"]
+                                        children:
+                                          - id: N163
+                                            type: experiment
+                                            title: "Static-buffer CUDA Graph residual rollout"
+                                            provenance: ai-executed
+                                            timestamp: "2026-07-23T21:58:00+08:00"
+                                            result: >
+                                              Capturing and replaying the fixed H36/K600/RK4 workload reduced worst-block rollout P95 from 93.86 to 15.19 ms, an 83.8% paired speedup, while maximum trajectory difference remained 7.8e-16.
+                                            evidence: [C114, H89, "research_artifacts/dynamic_uncertainty_residual_runtime_stage3_amendment2/runtime_screen.json", "ara/evidence/tables/table20_residual_runtime_stage3.md"]
+                                            children:
+                                              - id: N164
+                                                type: experiment
+                                                title: "Sequential CUDA-Graph full-controller qualification"
+                                                provenance: ai-executed
+                                                timestamp: "2026-07-23T22:01:00+08:00"
+                                                result: >
+                                                  The 12-episode matrix retained 12/12 goal reaches and zero collisions, and median residual-controller P95 fell 55.8% from Stage 2. Maximum P95 remained 136.79 ms because the shield still waited for nominal planning before residual planning, so the frozen runtime gate alone failed.
+                                                evidence: [C114, H88, "research_artifacts/dynamic_uncertainty_residual_runtime_stage3_development/gate.json", "ara/evidence/tables/table20_residual_runtime_stage3.md"]
+                                                children:
+                                                  - id: N165
+                                                    type: experiment
+                                                    title: "Parallel nominal/residual shield qualification"
+                                                    provenance: ai-executed
+                                                    timestamp: "2026-07-23T22:05:00+08:00"
+                                                    result: >
+                                                      Persistent two-worker planning completed all 12 episodes with 12/12 goal reaches and zero collisions. Maximum residual-controller P95 was 97.19 ms, median was 90.03 ms, and median P95 fell 67.3% versus original Stage 2. An episode-by-episode audit found zero differences from sequential CUDA-Graph behavior in steps, positions, executed controls, shield acceptance and outcomes.
+                                                    evidence: [C114, H90, "research_artifacts/dynamic_uncertainty_residual_runtime_stage3_parallel_development/gate.json", "research_artifacts/dynamic_uncertainty_residual_runtime_stage3_parallel_development/sequential_equivalence_audit.json", "ara/evidence/tables/table20_residual_runtime_stage3.md"]
+                                                    children:
+                                                      - id: N166
+                                                        type: decision
+                                                        title: "Enter frozen RL/HSS Stage 4 integration"
+                                                        provenance: user
+                                                        timestamp: "2026-07-24T11:00:00+08:00"
+                                                        choice: >
+                                                          Proceed to the next project stage by integrating the frozen L217 Actor and role-aware HSS with both nominal and qualified Stage 3 residual prediction, while preserving the accepted environment, controller budget and safety chain.
+                                                        alternatives:
+                                                          - "Continue optimizing Stage 3 runtime after its development gate passed"
+                                                          - "Retune the environment or residual checkpoints before RL integration"
+                                                          - "Open sealed seeds before a development integration gate"
+                                                        evidence: [C114, "docs/experiments/dynamic_uncertainty/RL_HSS_STAGE4_PREREGISTRATION.md"]
+                                                        children:
+                                                          - id: N167
+                                                            type: dead_end
+                                                            title: "Load the L217 Actor under exact Stage 3 action-bound equality"
+                                                            provenance: ai-executed
+                                                            timestamp: "2026-07-24T11:15:00+08:00"
+                                                            hypothesis: >
+                                                              The frozen L217 direct-control Actor can be loaded unchanged by the Stage 3 controller's existing strict action-space equality check.
+                                                            failure_mode: >
+                                                              The loader failed closed because L217 was trained on forward speed `[0.0, 0.35]` while Stage 3 permits `[-0.35, 0.35]`; silently widening or rescaling the Actor would violate checkpoint semantics.
+                                                            lesson: >
+                                                              Preserve the checkpoint range as an explicitly validated proposal subspace while leaving reverse MPPI candidates and safety recovery available in the unchanged controller space.
+                                                            evidence: [H91, "tests/dynamic_uncertainty/test_rl_hss_stage4.py"]
+                                                          - id: N168
+                                                            type: experiment
+                                                            title: "Stage 4 protocol, interface and frozen-checkpoint preflight"
+                                                            provenance: ai-executed
+                                                            timestamp: "2026-07-24T11:40:00+08:00"
+                                                            result: >
+                                                              A protocol-hash-bound 24-episode schedule, resumable preflight-only runner, frozen Actor subspace adapter, independent value-aligned HSS sidecar and matched residual-shield RL controllers were implemented. Seven focused Stage 4 tests passed; broader relevant groups passed 27 and 65 tests, and the large repository run passed 922 tests with five unchanged missing historical L34/L70/L72 checkpoint failures. Real checkpoint construction succeeded without starting an episode, creating the formal output directory, opening sealed seeds or passing `--execute`.
+                                                            evidence: [C116, H91, "ara/evidence/tables/table21_stage4_rl_hss_preflight.md"]
+                                                            children:
+                                                              - id: N169
+                                                                type: dead_end
+                                                                title: "Original Stage 4 formal launch without Paper probability-risk parity"
+                                                                provenance: ai-executed
+                                                                timestamp: "2026-07-24T11:53:18+08:00"
+                                                                hypothesis: >
+                                                                  Frozen-checkpoint construction and configuration preflight are sufficient to show that Paper RL-MPPI can execute the accepted probabilistic-obstacle controller contract.
+                                                                failure_mode: >
+                                                                  The first cell's first planning call raised `ValueError: probabilistic obstacle risk is enabled but forecasts are absent` before any control command, metrics or trajectory existed. The custom optimizer had not forwarded forecasts or inherited the candidate filter, final action guard and diagnostics.
+                                                                lesson: >
+                                                                  Construction tests do not exercise runtime observation plumbing; every new optimizer needs a direct plan-call test for present and absent safety auxiliaries before formal launch.
+                                                                evidence: [H92, "research_artifacts/dynamic_uncertainty_rl_hss_stage4_development/", "stage4_rl_hss.stderr.log"]
+                                                                children:
+                                                                  - id: N170
+                                                                    type: decision
+                                                                    title: "Apply one bounded probability-interface amendment"
+                                                                    provenance: user
+                                                                    timestamp: "2026-07-24T12:18:41+08:00"
+                                                                    choice: >
+                                                                      Repair only Paper RL-MPPI's parity with the frozen probabilistic-risk path, retain the original failed launch, preserve the 24-cell schedule and all treatment/safety gates, and restart in a new Amendment 1 directory.
+                                                                    alternatives:
+                                                                      - "Abandon Stage 4 after the implementation-only failure"
+                                                                      - "Retune Actor, HSS, seeds, probability thresholds or candidate budget before observing outcomes"
+                                                                      - "Delete or overwrite the original failure evidence"
+                                                                    evidence: [C116, H92, "configs/research/dynamic_uncertainty_rl_hss_stage4_amendment1.yaml", "docs/experiments/dynamic_uncertainty/RL_HSS_STAGE4_AMENDMENT1_PREREGISTRATION.md"]
+                                                                    children:
+                                                                      - id: N171
+                                                                        type: experiment
+                                                                        title: "Stage 4 Amendment 1 early-stop matrix"
+                                                                        provenance: ai-executed
+                                                                        timestamp: "2026-07-24T12:37:14+08:00"
+                                                                        result: >
+                                                                          The formal run stopped by rule at 22/24 after `residual_block0::seed730100010::rl_hss_on` collided. All 12 RL/HSS-off episodes reached the goal without collision; completed RL/HSS-on episodes reached 0/10, with nine max-step terminations and one collision. Ten complete pairs had median final-distance delta +0.60898 m, completion delta -0.06920 and planner-P95 delta +208.66 ms. All configuration, HSS, 600-rollout, probability-risk, residual-shield, scan-guard and sealed-seed integrity checks passed, so the scientific safety gate failed without a treatment-integrity violation.
+                                                                        evidence: [C117, C118, H93, "research_artifacts/dynamic_uncertainty_rl_hss_stage4_amendment1_development/gate.json", "research_artifacts/dynamic_uncertainty_rl_hss_stage4_amendment1_development/paired_analysis.json", "ara/evidence/tables/table22_stage4_rl_hss_result.md"]
+                                                                        children:
+                                                                          - id: N172
+                                                                            type: decision
+                                                                            title: "Test the Actor-HSS coupling diagnosis before retraining the Actor"
+                                                                            provenance: user
+                                                                            timestamp: "2026-07-24T13:00:00+08:00"
+                                                                            choice: >
+                                                                              Continue with a bounded development study that first makes HSS safely reject persistently inferior Actor proposals, while retaining the frozen Actor, probability predictor, MPPI objective, safety chain and 600-rollout budget.
+                                                                            alternatives:
+                                                                              - "Immediately retrain or fine-tune the Actor before isolating the authority mechanism"
+                                                                              - "Attribute the regression to probability prediction, residual dynamics or disabled safety layers despite contrary integrity evidence"
+                                                                              - "Open sealed seeds after the failed Stage 4 development gate"
+                                                                            evidence: [C117, C118, H93, "docs/experiments/dynamic_uncertainty/RL_HSS_STAGE4_RESULT.md"]
+                                                                            children:
+                                                                              - id: N173
+                                                                                type: experiment
+                                                                                title: "Stage 4 proposal-advantage EDA and episode-latched veto design"
+                                                                                provenance: ai-executed
+                                                                                timestamp: "2026-07-24T13:22:52+08:00"
+                                                                                result: >
+                                                                                  Across all ten completed Stage 4 RL/HSS-on episodes, 3378/3395 comparable decisions (99.499%) had a higher best guided cost than best Gaussian cost, and every episode began with at least five consecutive disadvantages. These threshold-selection data froze a zero-margin, three-cycle, next-cycle-effective episode latch that simultaneously removes guided quota and Actor mean/variance authority while preserving 600 rollouts. Shadow mode records the same counterfactual evidence without applying the veto.
+                                                                                evidence: [H94, H95, "research_artifacts/dynamic_uncertainty_rl_hss_stage5_proposal_advantage_development/stage4_proposal_advantage_eda.json", "docs/experiments/dynamic_uncertainty/RL_HSS_STAGE5_PROPOSAL_ADVANTAGE_EDA.md", "docs/experiments/dynamic_uncertainty/RL_HSS_STAGE5_PROPOSAL_ADVANTAGE_PREREGISTRATION.md"]
+                                                                                children:
+                                                                                  - id: N174
+                                                                                    type: experiment
+                                                                                    title: "Stage 5 proposal-advantage veto mechanism probe"
+                                                                                    provenance: ai-executed
+                                                                                    timestamp: "2026-07-24T13:44:54+08:00"
+                                                                                    result: >
+                                                                                      The preregistered nominal-dynamics probe stopped at 7/9 after the shadow arm collided on seed 730100064, so the overall safety gate failed and the remaining RL-off and active-veto cells were not run. In the two complete fresh-seed blocks, active veto reached 2/2 goals versus shadow 0/2 and RL/HSS-off 2/2; active-minus-shadow median step and final-distance deltas were -86.5 and -0.5549 m. Both active episodes latched at zero-based step 12 and all 601 post-latch decisions preserved zero guided/Actor authority, full Gaussian fallback and the 600-rollout budget. The shadow collision ended with predicted collision probability near one and zero robot velocity, consistent with but not proving a stopping-feasibility defect.
+                                                                                    evidence: [C119, C120, H94, H95, "research_artifacts/dynamic_uncertainty_rl_hss_stage5_proposal_advantage_development/gate.json", "research_artifacts/dynamic_uncertainty_rl_hss_stage5_proposal_advantage_development/paired_analysis.json", "research_artifacts/dynamic_uncertainty_rl_hss_stage5_proposal_advantage_development/integrity_audit.json", "ara/evidence/tables/table23_stage5_proposal_advantage.md"]
+                                                                                    children:
+                                                                                      - id: N175
+                                                                                        type: decision
+                                                                                        title: "Retain safe rejection and separate the remaining failure mechanisms"
+                                                                                        provenance: ai-suggested
+                                                                                        timestamp: "2026-07-24T13:45:00+08:00"
+                                                                                        choice: >
+                                                                                          Preserve the stopped Stage 5 probe and active veto, then independently test Gaussian-only Paper fallback equivalence and dynamic-obstacle stopping feasibility before any new Actor training, broader active-veto matrix or sealed evaluation.
+                                                                                        alternatives:
+                                                                                          - "Treat two complete pairs as confirmatory evidence and open sealed seeds"
+                                                                                          - "Use minimum-cost proposal advantage to automatically restore Actor authority"
+                                                                                          - "Resume the two unrun Stage 5 cells after the registered collision stop"
+                                                                                        evidence: [C119, C120, H95, "docs/experiments/dynamic_uncertainty/RL_HSS_STAGE5_PROPOSAL_ADVANTAGE_RESULT.md"]
+
+  - id: N176
+    type: pivot
+    title: "Return from HSS diagnosis to dynamic-task Actor adaptation"
+    provenance: user
+    timestamp: "2026-07-24T18:00:00+08:00"
+    from: "Safe rejection of the frozen static Actor"
+    to: "CUDA-trained active-passage and bidirectional dynamic Actor correction"
+    trigger: "The user explicitly required repairing RL itself, including proactive low-risk passage and safe reverse behavior."
+    children:
+      - id: N177
+        type: dead_end
+        title: "Naive bidirectional imitation without temporal motion evidence"
+        provenance: ai-executed
+        timestamp: "2026-07-24T19:00:00+08:00"
+        hypothesis: "Oversampling reverse teacher actions in the original single-frame observation would add safe backing while retaining active passage."
+        failure_mode: "Offline reverse recall reached 90.48%, but paired MuJoCo screening showed no task gain and excessive reverse use; the 48-dimensional observation could not distinguish closing from receding obstacles."
+        lesson: "Reverse authority needs causal motion evidence and retention constraints, not only a wider action bound."
+      - id: N178
+        type: experiment
+        title: "Temporal bidirectional correction early V5 development screen"
+        provenance: ai-executed
+        timestamp: "2026-07-24T21:00:00+08:00"
+        result: "V5 Amendment 2 appended 36 causal lidar-sector deltas while preserving the old 48-feature frozen Actor prefix. Across paired seeds 730100157--164 it improved success 6/8 to 7/8, kept collisions at 0/8, reduced total steps 2756 to 2590 and mean final distance 0.36773 m to 0.32233 m. This was an early development screen only; N179 subsequently weakened the associated claim."
+        evidence: [C121, H96, "research_artifacts/dynamic_actor_v5a2_vs_v3_rollin_seed_pair_summary.json", "ara/evidence/tables/table24_dynamic_actor_temporal_correction.md"]
+        children:
+          - id: N179
+            type: dead_end
+            title: "V5 Amendment 2 failed fresh-seed safety replication"
+            provenance: ai-executed
+            timestamp: "2026-07-24T21:40:00+08:00"
+            hypothesis: "The zero-collision completion gain on seeds 730100157--164 would persist on previously unused development seeds."
+            failure_mode: "On fresh seeds 730100172--179, V5 Amendment 2 introduced candidate-only collisions on seeds 730100176, 730100177 and 730100179, so the early gain was not independently reproducible."
+            lesson: "Do not retain an adapted Actor from one favorable screen; require untouched-seed safety replication and preserve the original positive and failed artifacts."
+            children:
+              - id: N180
+                type: decision
+                title: "Continue single-obstacle Actor repair"
+                provenance: user
+                timestamp: "2026-07-24T21:45:00+08:00"
+                choice: "Keep the scope at one moving obstacle and continue direct RL adaptation until a reproducible positive result is obtained."
+                alternatives:
+                  - "Expand immediately to two or three obstacles"
+                  - "Stop Actor training and rely only on Gaussian fallback"
+                evidence: [C121, "research_artifacts/dynamic_actor_v5a2_vs_v3_fresh_shadow_seed730100176/result.json"]
+                children:
+                  - id: N181
+                    type: dead_end
+                    title: "DAgger Amendments 3 and 4 only partially repaired the Actor"
+                    provenance: ai-executed
+                    timestamp: "2026-07-24T22:10:00+08:00"
+                    hypothesis: "Fresh-state DAgger, stronger retention and collision-exposure critical sampling would remove the V5 Amendment 2 safety regression while preserving active passage."
+                    failure_mode: "With the corrected V3 source, V5 Amendment 3 changed success 3/8 to 4/8 but collisions 2/8 to 3/8 on seeds 730100172--179. Amendment 4 held collisions 2/8 to 2/8 on its training-related screen, then failed fresh seeds 730100180--187 with success 6/8 to 5/8 and collisions 1/8 to 2/8. Later checkpoint screens were also mostly collision-prone."
+                    lesson: "Offline imitation quality alone was insufficient; the controller needed a same-cycle fail-closed rule that prevents a currently inferior Actor subset from contaminating the MPPI update."
+                    children:
+                      - id: N182
+                        type: decision
+                        title: "Filter inferior guided candidates in the same MPPI cycle"
+                        provenance: ai-suggested
+                        timestamp: "2026-07-24T22:20:00+08:00"
+                        choice: "Keep proposal-only Actor integration, but exclude guided candidates from the current elite/update whenever their best current-cycle cost is worse than the best Gaussian cost; retain good guided candidates and preserve the 600-rollout budget."
+                        alternatives:
+                          - "Use the three-cycle episode-latched permanent veto"
+                          - "Allow all Actor candidates to influence the update"
+                          - "Enable the unqualified old Critic"
+                        evidence: [H97, "src/mobile_robot_mppi/planning/rl_driven_mppi.py", "tests/planners/test_paper_rl_driven_mppi.py"]
+                        children:
+                          - id: N183
+                            type: experiment
+                            title: "V5 Amendment 6 update 250 replicated with same-cycle filtering"
+                            provenance: ai-executed
+                            timestamp: "2026-07-24T22:50:00+08:00"
+                            result: "Across two independent batches of previously unused development seeds 730100188--203, the retained proposal-only candidate improved success 13/16 to 14/16, preserved collisions at 2/16 with zero new candidate collisions and zero lost source successes, reduced total steps 4994 to 4873 (-2.42%), and reduced mean final distance 0.75915 m to 0.68454 m (-9.83%). Fresh and replication batches were separately nonregressive; seed 730100194 changed from failure to success. Sealed seeds remained unopened."
+                            evidence: [C122, H97, "research_artifacts/dynamic_actor_v5a6_u000250_samecycle_fresh_replication_summary.json", "ara/evidence/tables/table24_dynamic_actor_temporal_correction.md"]
+                            children:
+                              - id: N184
+                                type: decision
+                                title: "Freeze the candidate and expand fresh single-obstacle replication"
+                                provenance: user
+                                timestamp: "2026-07-24T23:05:00+08:00"
+                                choice: "Keep the scope at one dynamic obstacle, freeze V5 Amendment 6 update 250, the same-cycle filter, 600-rollout budget and safety stack, and run 24 additional paired development seeds before any sealed evaluation."
+                                alternatives:
+                                  - "Continue training before testing generalization"
+                                  - "Treat the initial 16 pairs as sufficient and open sealed seeds"
+                                  - "Expand immediately to multiple obstacles"
+                                evidence: [C122, H98, "configs/research/dynamic_actor_v5a6_samecycle_expanded_development.yaml", "docs/experiments/dynamic_uncertainty/DYNAMIC_ACTOR_EXPANDED_DEVELOPMENT_PREREGISTRATION.md"]
+                                children:
+                                  - id: N185
+                                    type: experiment
+                                    title: "Frozen 24-pair expanded dynamic Actor qualification"
+                                    provenance: ai-executed
+                                    timestamp: "2026-07-24T23:35:00+08:00"
+                                    result: "All 24 pairs completed with zero integrity issues and both arms using proposal-only same-cycle filtering and 600 rollouts. Candidate success improved 18/24 to 20/24 and total steps fell 7845 to 7611 (-2.98%), but collisions increased 2/24 to 3/24 through candidate-only collision seed 730100208, seed 730100206 lost a source success, and mean final distance worsened 0.77807 m to 0.81760 m (+5.08%). Candidate planner P95 reached 100.36 ms. Seven registered checks passed and three failed, so the overall expanded gate failed and sealed seeds remained closed."
+                                    evidence: [C123, H98, "research_artifacts/dynamic_actor_v5a6_u000250_samecycle_expanded_development/summary.json", "research_artifacts/dynamic_actor_v5a6_u000250_samecycle_expanded_development/gate.json", "research_artifacts/dynamic_actor_v5a6_u000250_samecycle_expanded_development/paired_analysis.json", "research_artifacts/dynamic_actor_v5a6_u000250_samecycle_expanded_development/integrity_audit.json", "ara/evidence/tables/table24_dynamic_actor_temporal_correction.md"]
+                                    children:
+                                      - id: N186
+                                        type: dead_end
+                                        title: "Pareto active-traversal Amendment 1 repaired safety but missed efficiency gates"
+                                        provenance: ai-executed
+                                        timestamp: "2026-07-24T23:15:00+08:00"
+                                        hypothesis: "A world-frame Pareto forward commit would remove the diagnosed Candidate-only collision without sacrificing the expanded completion and efficiency gains."
+                                        failure_mode: "The 24-pair rerun had zero new Candidate collisions and zero lost Source successes, but uncensored total steps rose 2.75% and only one batch was nonregressive, so the frozen gate still failed."
+                                        lesson: "Collision-shortened episodes make raw step totals censoring-sensitive; retain raw steps but add a prospectively frozen failure penalty for outcome-aware efficiency."
+                                        children:
+                                          - id: N187
+                                            type: experiment
+                                            title: "Amendment 2 passed the bounded 24-pair single-obstacle gate"
+                                            provenance: ai-executed
+                                            timestamp: "2026-07-25T00:05:00+08:00"
+                                            result: "On new seeds 730100228--251, success improved 20/24 to 22/24, collisions fell 3/24 to 1/24, no Source success was lost, outcome-aware efficiency improved 7741 to 7615 and mean final distance fell 0.77326 m to 0.52357 m. All 11 registered gates and the 220-file integrity audit passed; sealed seeds remained closed."
+                                            evidence: [C124, H99, "research_artifacts/dynamic_actor_v5a6_u000250_pareto_forward_commit_expanded_development_amendment2/gate.json", "research_artifacts/dynamic_actor_v5a6_u000250_pareto_forward_commit_expanded_development_amendment2/integrity_audit.json", "ara/evidence/tables/table26_single_obstacle_final_validation.md"]
+                                            children:
+                                              - id: N188
+                                                type: dead_end
+                                                title: "Three-obstacle extension did not generalize across the paired hard seed"
+                                                provenance: ai-executed
+                                                timestamp: "2026-07-25T08:40:00+08:00"
+                                                hypothesis: "The retained single-obstacle Actor and bounded causal traversal repairs would preserve completion and collision safety with three crossing obstacles."
+                                                failure_mode: "A32 passed seed730100252, but seed730100253 stalled; A33--A60 produced mechanism-level repairs without a full pass, ending in collisions, stalls or boundary violation. A61 was stopped before qualification."
+                                                lesson: "One successful multi-obstacle seed and local mechanism validations do not establish cross-seed multi-obstacle robustness."
+                                                children:
+                                                  - id: N189
+                                                    type: decision
+                                                    title: "Pause multi-obstacle work and finish single-obstacle validation"
+                                                    provenance: user
+                                                    timestamp: "2026-07-25T08:50:00+08:00"
+                                                    choice: "Stop the active three-obstacle thread and complete the single-obstacle evidence, real-time confirmation, integrity audit and report first."
+                                                    alternatives:
+                                                      - "Continue A61 and later three-obstacle amendments"
+                                                      - "Treat mechanism-level three-obstacle results as a completed positive result"
+                                                    evidence: [N188]
+                                                    children:
+                                                      - id: N190
+                                                        type: experiment
+                                                        title: "Fresh causal single-obstacle real-time confirmation"
+                                                        provenance: ai-executed
+                                                        timestamp: "2026-07-25T09:15:00+08:00"
+                                                        result: "Unused seed730100255 reached the goal without collision in both arms. Candidate used 300 steps versus Source 316, triggered and vetted temporal escape for 17 cycles, retained exactly 600 rollouts on all 300 decisions, and achieved planner P95 83.54 ms. Nine raw files, checkpoint/config/code bindings, 156 regressions, compilation and git diff checks passed."
+                                                        evidence: [C124, "research_artifacts/dynamic_actor_v5a6_single_obstacle_final_confirmation_seed730100255/result.json", "research_artifacts/dynamic_actor_v5a6_single_obstacle_final_confirmation_seed730100255/integrity_audit.json", "research_artifacts/dynamic_actor_v5a6_single_obstacle_final_confirmation_seed730100255/validation_report.md"]

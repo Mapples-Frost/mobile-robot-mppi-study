@@ -1,0 +1,73 @@
+session:
+  id: "2026-07-24_042"
+  timestamp: "2026-07-24T13:48:20+08:00"
+  summary: "Implemented and prospectively tested an episode-latched proposal-advantage veto; the Stage 5 gate failed on a shadow collision, while two complete fresh blocks supported safe Actor rejection."
+
+events_logged:
+  - type: decision
+    id: N172
+    provenance: user
+    summary: "Test the Actor-HSS coupling diagnosis by first making HSS reject persistently inferior proposals, without retraining the Actor or opening sealed seeds."
+  - type: experiment
+    id: N173
+    provenance: ai-executed
+    summary: "Stage 4 EDA found guided minima cost-inferior in 3378/3395 comparable decisions and froze a zero-margin three-cycle episode veto for prospective Stage 5."
+  - type: experiment
+    id: N174
+    provenance: ai-executed
+    summary: "Stage 5 stopped at 7/9 after a shadow collision; active veto reached 2/2 versus shadow 0/2 and RL/HSS-off 2/2 in the two complete fresh blocks."
+  - type: decision
+    id: N175
+    provenance: ai-suggested
+    summary: "Preserve the active veto, then isolate Gaussian-only fallback equivalence and moving-obstacle stopping feasibility before broader Actor work."
+  - type: claim
+    id: C119
+    provenance: ai-suggested
+    summary: "Two complete fresh blocks support a bounded claim that episode-latched bad-proposal rejection recovered baseline-level completion."
+  - type: claim
+    id: C120
+    provenance: ai-suggested
+    summary: "The shadow collision is consistent with, but does not prove, a zero-velocity stopping-feasibility defect against a closing obstacle."
+  - type: heuristic
+    id: H94
+    provenance: ai-suggested
+    summary: "A bad-proposal latch must remove both guided quota and Actor distribution authority while preserving the fixed budget."
+  - type: heuristic
+    id: H95
+    provenance: ai-suggested
+    summary: "Unequal-source minimum cost is suitable for one-way rejection, not calibrated competence or automatic authority restoration."
+
+ai_actions:
+  - action: "Implemented episode-latched proposal-advantage evidence, shadow/application separation, dual proposal-authority withdrawal and audit metrics."
+    provenance: ai-executed
+    files_changed: ["src/mobile_robot_mppi/rl/reliability.py", "src/mobile_robot_mppi/planning/rl_driven_mppi.py", "src/mobile_robot_mppi/evaluation/metrics.py", "tests/rl/test_cross_layer_reliability.py", "tests/planners/test_paper_rl_driven_mppi.py"]
+  - action: "Analyzed Stage 4 per-decision proposal costs, froze the Stage 5 threshold, preregistered a fresh three-arm blocked design and executed it to the first-collision stop without running the remaining cells."
+    provenance: ai-executed
+    files_changed: ["experiments/dynamic_uncertainty/analyze_stage4_proposal_advantage.py", "configs/research/dynamic_uncertainty_rl_hss_stage5_proposal_advantage_development.yaml", "docs/experiments/dynamic_uncertainty/RL_HSS_STAGE5_PROPOSAL_ADVANTAGE_EDA.md", "docs/experiments/dynamic_uncertainty/RL_HSS_STAGE5_PROPOSAL_ADVANTAGE_PREREGISTRATION.md", "experiments/dynamic_uncertainty/run_rl_hss_stage5_proposal_advantage.py", "research_artifacts/dynamic_uncertainty_rl_hss_stage5_proposal_advantage_development/"]
+  - action: "Produced paired descriptive analysis, treatment-integrity audit, collision forensics, failed gate report and 49-binding SHA-256 result manifest."
+    provenance: ai-executed
+    files_changed: ["experiments/dynamic_uncertainty/analyze_rl_hss_stage5_proposal_advantage.py", "docs/experiments/dynamic_uncertainty/RL_HSS_STAGE5_PROPOSAL_ADVANTAGE_RESULT.md", "research_artifacts/dynamic_uncertainty_rl_hss_stage5_proposal_advantage_development/analysis.json", "research_artifacts/dynamic_uncertainty_rl_hss_stage5_proposal_advantage_development/paired_analysis.json", "research_artifacts/dynamic_uncertainty_rl_hss_stage5_proposal_advantage_development/integrity_audit.json", "research_artifacts/dynamic_uncertainty_rl_hss_stage5_proposal_advantage_development/gate.json", "research_artifacts/dynamic_uncertainty_rl_hss_stage5_proposal_advantage_development/result_manifest.json"]
+  - action: "Ran 65 targeted tests and the 1158-test repository suite, retaining eight explained historical/environment failures without weakening checks or fabricating missing artifacts."
+    provenance: ai-executed
+    files_changed: []
+
+claims_touched:
+  - id: C118
+    action: advanced
+    provenance: ai-suggested
+  - id: C119
+    action: created
+    provenance: ai-suggested
+  - id: C120
+    action: created
+    provenance: ai-suggested
+
+open_threads:
+  - "Do not run or impute the two missing Stage 5 cells, resume the two missing Stage 4 cells, or open sealed seeds under either failed protocol."
+  - "Establish Gaussian-only Paper fallback equivalence to standard RL/HSS-off MPPI; authority zero is not currently bitwise RL-off equivalence."
+  - "Add observation-only geometric tests and a bounded amendment for moving-obstacle stopping feasibility."
+  - "After those separable mechanisms pass, preregister a fresh adequately powered active-veto safety matrix before considering dynamic Actor adaptation."
+
+ai_suggestions_pending:
+  - "Retain the active veto as a one-way safety mechanism, but do not use minimum-cost proposal advantage to restore Actor authority."
+  - "Defer Actor retraining and sealed evaluation until fallback equivalence and dynamic stopping feasibility are independently qualified."

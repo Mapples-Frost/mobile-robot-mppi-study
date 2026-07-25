@@ -1,0 +1,34 @@
+include: mujoco_three_dynamic_crossing_development_amendment13.yaml
+
+experiment:
+  name: mujoco_three_dynamic_crossing_development_amendment20
+
+planner:
+  probabilistic_obstacle_traversal_window_enabled: true
+  probabilistic_obstacle_traversal_window_horizon_steps: 64
+  probabilistic_obstacle_traversal_window_activation_distance_m: 1.20
+  probabilistic_obstacle_traversal_window_cross_track_m: 0.45
+  probabilistic_obstacle_traversal_window_clearance_margin_m: 0.10
+  probabilistic_obstacle_traversal_window_probability_ceiling: 0.05
+  probabilistic_obstacle_traversal_window_mass_ceiling: 0.50
+  probabilistic_obstacle_traversal_window_clear_hold_steps: 3
+
+perception:
+  dynamic_obstacle_tracker:
+    forecast_horizon_steps: 64
+
+three_obstacle_amendment:
+  version: 20
+  reason: >-
+    finite_horizon_mppi_ranked_retreat_below_traversal_because_the_3p6s_control_horizon_ended_before_the_robot_could_clear_the_first_crossing
+  intervention: causal_long_horizon_fixed_budget_traversal_window_certificate_with_persistent_commit_until_route_clearance
+  obstacle_future_truth_used: false
+  obstacle_identity_used: false
+  crossing_geometry_source: online_forecast_plus_polyline_reference
+  control_horizon_changed: false
+  probability_forecast_horizon_changed: true
+  probability_risk_changed: false
+  rollout_budget_changed: false
+  total_rollouts_per_decision: 600
+  active_waiting_allowed: true
+  active_traversal_objective: true

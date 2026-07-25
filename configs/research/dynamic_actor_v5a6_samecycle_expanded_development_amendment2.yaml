@@ -1,0 +1,131 @@
+schema_version: 1
+status: frozen_before_execution
+protocol_revision: 3
+frozen_at: "2026-07-24T23:39:00+08:00"
+scope: single_dynamic_obstacle_expanded_development_amendment2
+sealed_seeds_opened: false
+
+preregistration: docs/experiments/dynamic_uncertainty/DYNAMIC_ACTOR_EXPANDED_DEVELOPMENT_AMENDMENT2_PREREGISTRATION.md
+probe_script: experiments/dynamic_uncertainty/run_dynamic_actor_mujoco_probe.py
+output_dir: research_artifacts/dynamic_actor_v5a6_u000250_pareto_forward_commit_expanded_development_amendment2
+
+design:
+  independent_unit: complete_paired_episode_seed
+  paired_arms: [source_actor, dynamic_actor]
+  common_random_numbers: true
+  single_dynamic_obstacle: true
+  total_pairs: 24
+  batch_count: 3
+  pairs_per_batch: 8
+  schedule_randomization_seed: 730199025
+  arm_order_balance_per_batch:
+    source_first: 4
+    candidate_first: 4
+  proposal_gate_mode_both_arms: same_cycle_filter
+  proposal_only_both_arms: true
+  total_rollouts_per_controller_decision: 600
+  tuning_during_matrix_authorized: false
+  stop_on_collision: false
+
+probe_settings:
+  completion_handover_full_fallback_distance: 0.4
+  completion_handover_full_rl_distance: 0.8
+  vetted_reactive_escape: true
+  dynamic_escape_min_probability_mass_relative_improvement: 0.1
+  probabilistic_emergency_trigger_ttc_s: 1.5
+  probabilistic_emergency_intent_hold_steps: 16
+  probabilistic_emergency_pareto_forward_commit: true
+
+gates:
+  require_complete_pairs: 24
+  require_zero_new_candidate_collisions: true
+  require_zero_lost_source_successes: true
+  require_candidate_success_noninferiority: true
+  require_total_steps_noninferiority: true
+  failure_step_penalty: 400
+  efficiency_relative_noninferiority_margin: 0.01
+  require_mean_final_distance_noninferiority: true
+  require_at_least_one_strict_pooled_improvement: true
+  require_nonregressive_batches: 2
+  require_same_cycle_filter_all_arms: true
+  require_same_cycle_filter_exercised: true
+  require_protocol_binding_integrity: true
+
+batches:
+  - name: batch1
+    schedule:
+      - {seed: 730100228, arm_order: source_first}
+      - {seed: 730100235, arm_order: source_first}
+      - {seed: 730100229, arm_order: candidate_first}
+      - {seed: 730100234, arm_order: source_first}
+      - {seed: 730100230, arm_order: candidate_first}
+      - {seed: 730100233, arm_order: candidate_first}
+      - {seed: 730100231, arm_order: source_first}
+      - {seed: 730100232, arm_order: candidate_first}
+  - name: batch2
+    schedule:
+      - {seed: 730100238, arm_order: candidate_first}
+      - {seed: 730100236, arm_order: candidate_first}
+      - {seed: 730100243, arm_order: source_first}
+      - {seed: 730100241, arm_order: source_first}
+      - {seed: 730100237, arm_order: source_first}
+      - {seed: 730100239, arm_order: candidate_first}
+      - {seed: 730100242, arm_order: candidate_first}
+      - {seed: 730100240, arm_order: source_first}
+  - name: batch3
+    schedule:
+      - {seed: 730100246, arm_order: candidate_first}
+      - {seed: 730100244, arm_order: source_first}
+      - {seed: 730100250, arm_order: candidate_first}
+      - {seed: 730100249, arm_order: source_first}
+      - {seed: 730100251, arm_order: candidate_first}
+      - {seed: 730100247, arm_order: candidate_first}
+      - {seed: 730100248, arm_order: source_first}
+      - {seed: 730100245, arm_order: source_first}
+
+bindings:
+  source_checkpoint:
+    path: research_artifacts/dynamic_actor_correction_development_v3_rollin/checkpoints/best.pt
+    sha256: 6e346e5e4fcc1eca029ee4495ca0ffd0c978c5ce11089ab8ebfaaee89236c63d
+  candidate_checkpoint:
+    path: research_artifacts/dynamic_actor_temporal_bidirectional_correction_v5_amendment6/checkpoints/improved_update_000250.pt
+    sha256: 714694f8d179f02b90c14e56c9e3e4f29a0101b70ad53f3cc795eb72dea7a1b5
+  probe_script:
+    path: experiments/dynamic_uncertainty/run_dynamic_actor_mujoco_probe.py
+    sha256: c5892b12d1e259eea826956b5ddd77dd5422aedc6f18973804868a4357862b95
+  batch_runner:
+    path: experiments/dynamic_uncertainty/run_dynamic_actor_expanded_development.py
+    sha256: a7ad3b0187d0ecc8111baced82be961bd998c5ac2ea3e2faa6d12e4173627b2a
+  paper_planner:
+    path: src/mobile_robot_mppi/planning/rl_driven_mppi.py
+    sha256: a932f2332bb3c0c7b2ddf886bb7cfbea1aa1824f12ffc8e9d3e4c663850c8eaa
+  mppi:
+    path: src/mobile_robot_mppi/planning/mppi.py
+    sha256: 5ec0b4606068ea9a83a9b132cb6675d32ab9c338ad3c5bc515a4b05957c595df
+  metrics:
+    path: src/mobile_robot_mppi/evaluation/metrics.py
+    sha256: db24087c8cd52ece98fef6994d693a02b7a746b2b5691d3e52ffbb9becf93075
+  safety_arbiter:
+    path: src/mobile_robot_mppi/safety/arbiter.py
+    sha256: a8a269027bbd3686e5d6cf0aac6e4c92a8383fb4aef080319ac404774394b78f
+  stage5_protocol:
+    path: configs/research/dynamic_uncertainty_rl_hss_stage5_proposal_advantage_development.yaml
+    sha256: a8a7c8577e87fd465f6f0f1bc288ae08f299f91b92b469e80964d61befcb4bed
+  base_config:
+    path: configs/research/mujoco_v3_probabilistic_crossing_smoke_amendment17_residual_runtime_stage3.yaml
+    sha256: 5d704f9039a93d6ed3348a7441713d28e79bc69a3d37ef3217508e02aed5c8b8
+  stage3_protocol:
+    path: configs/research/dynamic_uncertainty_residual_runtime_stage3_parallel_development.yaml
+    sha256: 1e9593c2c5d984ee14ed87d5846ef4806d27c26eea56488e32b37bd7b2c92348
+  stage4_protocol:
+    path: configs/research/dynamic_uncertainty_rl_hss_stage4_amendment1.yaml
+    sha256: d039047f9be1ba744a2d4171186e30d73f0eed1722d4559c8a3fbba8c9a68874
+  combined_safety_probe:
+    path: experiments/dynamic_uncertainty/run_rl_hss_combined_safety_probe.py
+    sha256: 63424a2881d620a36948a0a014a3bdd13220b6bb25c790098f10966a6262edb6
+  exact_fallback_probe:
+    path: experiments/dynamic_uncertainty/run_rl_hss_exact_fallback_probe.py
+    sha256: b5687c59a97cf33db05e7e35735a56480ca59f12f21ac2ac60a985b57aa64c53
+  stage4_runner:
+    path: experiments/dynamic_uncertainty/run_rl_hss_stage4.py
+    sha256: aa9b91e30c39130011ecefdb1f4e0864c1a0d573a65ff0f3e60d786adbc97ccc

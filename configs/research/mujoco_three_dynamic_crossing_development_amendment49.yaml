@@ -1,0 +1,36 @@
+include: mujoco_three_dynamic_crossing_development_amendment48.yaml
+
+experiment:
+  name: mujoco_three_dynamic_crossing_development_amendment49
+
+planner:
+  probabilistic_obstacle_traversal_window_temporal_exit_deadline_guard_enabled: true
+
+three_obstacle_amendment:
+  version: 49
+  reason: >-
+    amendment48_correctly_latched_and_reused_the_row314_reverse_turn_through_collision_but_the_transaction_started_only_after_crossing_center;_at_precenter_row311_raw_laserscan_ttc_was1p253s_while_even_optimistic_forward_and_reverse_exit_times_were1p419s_and1p997s_so_neither_exit_was_reachable_before_contact_yet_probability_mass0p04793_remained_just_below_the_frozen0p05_floor
+  intervention: >-
+    add_a_precenter_causal_exit_deadline_guard_for_started_commits;_when_raw_laserscan_closing_is_active_and_both_polyline_exit_distances_divided_by_the_existing_forward_and_reverse_control_limits_are_not_less_than_raw_ttc_cancel_into_the_existing_temporal_retreat_lattice_without_changing_any_probability_threshold
+  obstacle_future_truth_used: false
+  obstacle_identity_used: false
+  crossing_geometry_source: online_forecast_plus_polyline_reference
+  behavior_parameter_changed: false
+  candidate_values_changed: false
+  certificate_threshold_changed: false
+  commit_admission_contract_changed: false
+  pre_center_exit_deadline_contract_changed: true
+  post_center_execution_arbitration_changed: false
+  post_center_emergency_lattice_binding_changed: false
+  post_center_escape_transaction_latch_changed: false
+  raw_temporal_signal_binding_changed: false
+  temporal_escape_authority_preserved: true
+  temporal_abort_direction_contract_changed: false
+  control_horizon_changed: false
+  control_limit_changed: false
+  deterministic_computation_reused: true
+  diagnostic_profiling_changed: false
+  rollout_budget_changed: false
+  total_rollouts_per_decision: 600
+  active_waiting_allowed: true
+  active_traversal_objective: true

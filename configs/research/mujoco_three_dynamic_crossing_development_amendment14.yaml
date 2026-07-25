@@ -1,0 +1,17 @@
+include: mujoco_three_dynamic_crossing_development_amendment13.yaml
+
+experiment:
+  name: mujoco_three_dynamic_crossing_development_amendment14
+
+three_obstacle_amendment:
+  version: 14
+  reason: >-
+    early_escape_prevented_collision_but_repeatedly_retained_the_reverse_intent_after_low_risk_crossing_windows_reopened
+  intervention: bounded_low_risk_forward_commit_under_online_probability_ceilings
+  obstacle_future_truth_used: false
+  obstacle_process_changed: false
+  tracker_association_changed: false
+  probability_risk_changed: false
+  rollout_budget_changed: false
+  active_waiting_allowed: true
+  active_traversal_objective: true

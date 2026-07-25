@@ -1,0 +1,108 @@
+include: mujoco_strong_mppi_baseline.yaml
+
+experiment:
+  name: mujoco_v3_probabilistic_crossing_smoke
+  seed: 730100101
+  control_dt: 0.10
+  max_steps: 400
+  initial_state: [-3.60, 0.00, 0.00, 0.00, 0.00]
+  terminate_on_collision: true
+
+task:
+  type: point_goal
+  position: [3.60, 0.00]
+  position_tolerance: 0.30
+
+scene:
+  name: v3_hybrid_recurrent_crossing
+  obstacles:
+    - type: cylinder
+      position: [-3.80, -2.20]
+      radius: 0.25
+      height: 0.50
+      motion:
+        type: recurrent_semimarkov_v3
+        process: hybrid_patrol
+        noise_profile: medium
+        config_path: configs/research/dynamic_obstacle_process_v3.yaml
+        use_episode_seed: true
+
+sensors:
+  lidar_beams: 181
+  lidar_range_max: 6.0
+  lidar_noise_std: 0.002
+  lidar_dropout_probability: 0.0
+
+perception:
+  scan_guard:
+    front_stop_distance: 0.35
+    hard_stop_distance: 0.35
+    front_soft_block_distance: 0.45
+    front_soft_block_max_speed: 0.04
+    front_slow_distance: 0.85
+    front_slow_min_scale: 0.45
+    front_angle_deg: 35.0
+    side_stop_distance: 0.35
+    side_angle_deg: 125.0
+    near_body_stop_radius: 0.35
+  local_obstacle_layer:
+    downsample_step: 1
+    fallback_downsample_step: 3
+    obstacle_radius: 0.08
+    max_obstacle_count: 80
+    planner_max_obstacles: 24
+  dynamic_obstacle_tracker:
+    enabled: true
+    forecast_auxiliary_key: probabilistic_obstacle_forecasts
+    obstacle_radius_m: 0.25
+    sensor_forward_offset_m: 0.10
+    minimum_cluster_beams: 3
+    maximum_cluster_point_gap_m: 0.20
+    association_gate_m: 0.90
+    maximum_unobserved_duration_s: 1.50
+    observation_std_m: 0.075
+    forecast_horizon_steps: 36
+    forecast_dt_s: 0.10
+    ordinary_config_path: configs/research/ordinary_imm_v3_development.yaml
+    change_config_path: configs/research/change_aware_imm_v3_development_amendment2.yaml
+    change_candidate: dual_975_999
+
+planner:
+  horizon: 36
+  num_samples: 600
+  probabilistic_obstacle_risk_enabled: true
+  probabilistic_obstacle_risk_weight: 75.0
+  probabilistic_obstacle_hard_threshold: 0.20
+  probabilistic_obstacle_hard_penalty: 10000.0
+  probabilistic_obstacle_safety_margin: 0.10
+  probabilistic_obstacle_minimum_std: 0.01
+  probabilistic_obstacle_forecast_key: probabilistic_obstacle_forecasts
+  profile_components: true
+
+online_smoke:
+  schedule_seed: 730199988
+  development_seeds: [730100101, 730100102, 730100103]
+  arms: [risk_disabled, risk_enabled]
+  paired_by_complete_episode: true
+  use_common_random_numbers: true
+  output_dir: research_artifacts/mujoco_v3_probabilistic_crossing_smoke
+  gate:
+    minimum_route_crossings_per_episode: 3
+    minimum_tracker_forecast_availability: 0.90
+    maximum_visible_measurement_rmse_m: 0.12
+    maximum_enabled_collision_regressions: 0
+    maximum_enabled_completion_regression: 0.10
+    minimum_enabled_median_clearance_delta_m: -0.02
+    minimum_behaviorally_divergent_pairs: 1
+    maximum_enabled_planner_p95_compute_ms: 150.0
+
+scope_guards:
+  obstacle_v3_frozen: true
+  change_aware_imm_frozen: true
+  collision_risk_v1_frozen: true
+  development_seeds_only: true
+  paired_complete_episodes: true
+  simulator_truth_for_control: false
+  sealed_registry_imported: false
+  rl_icode_hss_enabled: false
+

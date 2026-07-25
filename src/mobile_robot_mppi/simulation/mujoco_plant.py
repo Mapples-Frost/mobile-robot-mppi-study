@@ -8,11 +8,19 @@ import math
 from copy import deepcopy
 from collections import deque
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Mapping
 
 import numpy as np
+import yaml
 
 from mobile_robot_mppi.core.types import ControlCommand, GroundTruth, PlantStep, Pose2D, Twist2D
+from mobile_robot_mppi.obstacles.motion import noise_profiles_from_mapping
+from mobile_robot_mppi.obstacles.patrol import (
+    V3_PROCESS_NAMES,
+    generate_patrol_trajectory,
+    validate_v3_config,
+)
 from .model_factory import build_diff_drive_mjcf, model_hash
 
 
@@ -115,8 +123,59 @@ class MujocoDiffDrivePlant:
             if not isinstance(motion, Mapping):
                 raise TypeError("obstacle motion must be a mapping")
             motion_type = str(motion.get("type", "linear_ping_pong"))
-            if motion_type != "linear_ping_pong":
+            if motion_type not in (
+                "linear_ping_pong",
+                "recurrent_semimarkov_v3",
+            ):
                 raise ValueError("unknown obstacle motion type: %s" % motion_type)
+            if motion_type == "recurrent_semimarkov_v3":
+                config_path = Path(str(motion.get("config_path", "")))
+                if not config_path.is_absolute() or not config_path.is_file():
+                    raise ValueError(
+                        "V3 obstacle config path must be an existing "
+                        "absolute file"
+                    )
+                with config_path.open("r", encoding="utf-8") as handle:
+                    obstacle_config = yaml.safe_load(handle)
+                validate_v3_config(obstacle_config)
+                process = str(motion.get("process", "hybrid_patrol"))
+                if process not in V3_PROCESS_NAMES:
+                    raise ValueError("unknown V3 obstacle process")
+                profile = str(motion.get("noise_profile", "medium"))
+                if profile not in obstacle_config["noise_profiles"]:
+                    raise ValueError("unknown V3 obstacle noise profile")
+                use_episode_seed = bool(
+                    motion.get("use_episode_seed", True)
+                )
+                fixed_seed = int(motion.get("seed", 0))
+                if not use_episode_seed and fixed_seed <= 0:
+                    raise ValueError(
+                        "fixed V3 obstacle seed must be positive"
+                    )
+                body_id = self._id(
+                    self.mujoco.mjtObj.mjOBJ_BODY,
+                    "dynamic_obstacle_%d" % index,
+                )
+                mocap_id = int(self.model.body_mocapid[body_id])
+                if mocap_id < 0:
+                    raise RuntimeError(
+                        "dynamic obstacle body is not a mocap body"
+                    )
+                resolved.append(
+                    {
+                        "index": index,
+                        "mocap_id": mocap_id,
+                        "motion_type": motion_type,
+                        "process": process,
+                        "noise_profile": profile,
+                        "use_episode_seed": use_episode_seed,
+                        "fixed_seed": fixed_seed,
+                        "obstacle_config": obstacle_config,
+                        "config_path": str(config_path),
+                        "yaw": float(obstacle.get("yaw", 0.0)),
+                    }
+                )
+                continue
             start = self._finite_pair(
                 motion.get("start", obstacle.get("position", (0.0, 0.0))),
                 "dynamic obstacle start",
@@ -160,6 +219,7 @@ class MujocoDiffDrivePlant:
             resolved.append({
                 "index": index,
                 "mocap_id": mocap_id,
+                "motion_type": motion_type,
                 "start": start,
                 "end": end,
                 "period_s": period,
@@ -183,6 +243,25 @@ class MujocoDiffDrivePlant:
         sampled = []
         for base in self._dynamic_obstacles:
             item = dict(base)
+            if base["motion_type"] == "recurrent_semimarkov_v3":
+                trajectory_seed = (
+                    int(seed)
+                    if bool(base["use_episode_seed"])
+                    else int(base["fixed_seed"])
+                )
+                profiles = noise_profiles_from_mapping(
+                    base["obstacle_config"]["noise_profiles"]
+                )
+                item["trajectory_seed"] = trajectory_seed
+                item["trajectory"] = generate_patrol_trajectory(
+                    base["process"],
+                    trajectory_seed,
+                    profiles[base["noise_profile"]],
+                    base["obstacle_config"],
+                )
+                item["current_yaw"] = float(base["yaw"])
+                sampled.append(item)
+                continue
             phase_jitter = float(base["phase_jitter_s"])
             item["phase_s"] = float(base["phase_s"]) + (
                 rng.uniform(-phase_jitter, phase_jitter)
@@ -216,6 +295,58 @@ class MujocoDiffDrivePlant:
 
     def _set_dynamic_obstacles(self, time_value):
         for item in self._episode_dynamic_obstacles:
+            if item["motion_type"] == "recurrent_semimarkov_v3":
+                trajectory = item["trajectory"]
+                timestamp = float(
+                    np.clip(
+                        float(time_value),
+                        float(trajectory.times[0]),
+                        float(trajectory.times[-1]),
+                    )
+                )
+                upper = int(
+                    np.searchsorted(
+                        trajectory.times, timestamp, side="right"
+                    )
+                )
+                if upper <= 0:
+                    state = trajectory.states[0]
+                elif upper >= trajectory.times.size:
+                    state = trajectory.states[-1]
+                else:
+                    lower = upper - 1
+                    interval = float(
+                        trajectory.times[upper]
+                        - trajectory.times[lower]
+                    )
+                    alpha = (
+                        timestamp - float(trajectory.times[lower])
+                    ) / interval
+                    state = (
+                        (1.0 - alpha) * trajectory.states[lower]
+                        + alpha * trajectory.states[upper]
+                    )
+                position = state[:2]
+                speed = float(np.linalg.norm(state[2:4]))
+                yaw = (
+                    float(np.arctan2(state[3], state[2]))
+                    if speed > 1.0e-4
+                    else float(item["current_yaw"])
+                )
+                item["current_yaw"] = yaw
+                mocap_id = item["mocap_id"]
+                self.data.mocap_pos[mocap_id] = (
+                    position[0],
+                    position[1],
+                    0.0,
+                )
+                self.data.mocap_quat[mocap_id] = (
+                    math.cos(0.5 * yaw),
+                    0.0,
+                    0.0,
+                    math.sin(0.5 * yaw),
+                )
+                continue
             fraction = self._ping_pong_fraction(
                 time_value, item["period_s"], item["phase_s"]
             )
@@ -234,11 +365,25 @@ class MujocoDiffDrivePlant:
         for item in self._episode_dynamic_obstacles:
             geom_id = self._obstacle_geom_by_index[item["index"]]
             position = self.data.geom_xpos[geom_id]
+            if item["motion_type"] == "recurrent_semimarkov_v3":
+                output.append({
+                    "index": int(item["index"]),
+                    "x": float(position[0]),
+                    "y": float(position[1]),
+                    "motion_type": item["motion_type"],
+                    "process": item["process"],
+                    "noise_profile": item["noise_profile"],
+                    "trajectory_seed": int(item["trajectory_seed"]),
+                    "trajectory_duration_s": float(
+                        item["trajectory"].times[-1]
+                    ),
+                })
+                continue
             output.append({
                 "index": int(item["index"]),
                 "x": float(position[0]),
                 "y": float(position[1]),
-                "motion_type": "linear_ping_pong",
+                "motion_type": item["motion_type"],
                 "period_s": float(item["period_s"]),
                 "phase_s": float(item["phase_s"]),
                 "start": [float(value) for value in item["start"]],

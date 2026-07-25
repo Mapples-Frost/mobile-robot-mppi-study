@@ -109,6 +109,120 @@ class EpisodeMetrics:
             "applied_omega": applied.omega,
             "safety_override": float(safety_decision.overridden),
             "safety_reason": str(safety_decision.reason),
+            "dynamic_escape_allowed": float(
+                safety_diagnostics.get(
+                    "dynamic_escape_allowed", False
+                )
+            ),
+            "dynamic_escape_reactive": float(
+                safety_diagnostics.get(
+                    "dynamic_escape_reactive", False
+                )
+            ),
+            "dynamic_escape_held": float(
+                safety_diagnostics.get("dynamic_escape_held", False)
+            ),
+            "dynamic_escape_hold_remaining": int(
+                safety_diagnostics.get(
+                    "dynamic_escape_hold_remaining", 0
+                )
+            ),
+            "dynamic_escape_reverse": float(
+                safety_diagnostics.get(
+                    "dynamic_escape_reverse", False
+                )
+            ),
+            "dynamic_escape_selected_probability": float(
+                safety_diagnostics.get(
+                    "dynamic_escape_selected_probability", 0.0
+                )
+            ),
+            "dynamic_escape_stop_probability": float(
+                safety_diagnostics.get(
+                    "dynamic_escape_stop_probability", 0.0
+                )
+            ),
+            "dynamic_escape_selected_probability_mass": float(
+                safety_diagnostics.get(
+                    "dynamic_escape_selected_probability_mass", 0.0
+                )
+            ),
+            "dynamic_escape_stop_probability_mass": float(
+                safety_diagnostics.get(
+                    "dynamic_escape_stop_probability_mass", 0.0
+                )
+            ),
+            "dynamic_escape_probability_mass_enabled": float(
+                safety_diagnostics.get(
+                    "dynamic_escape_probability_mass_enabled", False
+                )
+            ),
+            "dynamic_escape_probability_mass_fallback": float(
+                safety_diagnostics.get(
+                    "dynamic_escape_probability_mass_fallback", False
+                )
+            ),
+            "dynamic_escape_probability_mass_relative_threshold": float(
+                safety_diagnostics.get(
+                    "dynamic_escape_probability_mass_relative_threshold",
+                    0.0,
+                )
+            ),
+            "dynamic_escape_vetted_planner_control": float(
+                safety_diagnostics.get(
+                    "dynamic_escape_vetted_planner_control", False
+                )
+            ),
+            "dynamic_recovery_enabled": float(
+                safety_diagnostics.get(
+                    "dynamic_recovery_enabled", False
+                )
+            ),
+            "dynamic_recovery_translation_enabled": float(
+                safety_diagnostics.get(
+                    "dynamic_recovery_translation_enabled", False
+                )
+            ),
+            "dynamic_recovery_minimum_heading_error_rad": float(
+                safety_diagnostics.get(
+                    "dynamic_recovery_minimum_heading_error_rad", 0.0
+                )
+            ),
+            "dynamic_recovery_active": float(
+                safety_diagnostics.get(
+                    "dynamic_recovery_active", False
+                )
+            ),
+            "dynamic_recovery_pending": float(
+                safety_diagnostics.get(
+                    "dynamic_recovery_pending", False
+                )
+            ),
+            "dynamic_recovery_mode": str(
+                safety_diagnostics.get(
+                    "dynamic_recovery_mode", "inactive"
+                )
+            ),
+            "dynamic_recovery_guard_clear": float(
+                safety_diagnostics.get(
+                    "dynamic_recovery_guard_clear", False
+                )
+            ),
+            "dynamic_recovery_clear_steps": int(
+                safety_diagnostics.get(
+                    "dynamic_recovery_clear_steps", 0
+                )
+            ),
+            "dynamic_recovery_release_count": int(
+                safety_diagnostics.get(
+                    "dynamic_recovery_release_count", 0
+                )
+            ),
+            "planner_temporal_escape_active": float(
+                safety_diagnostics.get(
+                    "planner_temporal_escape_active", False
+                )
+            ),
             "temporal_scan_valid": float(
                 safety_diagnostics.get("temporal_scan_valid", False)
             ),
@@ -150,6 +264,9 @@ class EpisodeMetrics:
             "terminal_bearing_error": float(
                 planner_diagnostics.get("terminal_bearing_error", 0.0)
             ),
+            "target_bearing_error": float(
+                planner_diagnostics.get("target_bearing_error", 0.0)
+            ),
             "terminal_translation_scale": float(
                 planner_diagnostics.get("terminal_translation_scale", 1.0)
             ),
@@ -160,6 +277,841 @@ class EpisodeMetrics:
                 planner_diagnostics.get("terminal_alignment_omega", 0.0)
             ),
             "planner_compute_ms": float(planner_diagnostics.get("compute_ms", 0.0)),
+            "planner_observation_x": float(
+                planner_diagnostics.get("planner_observation_x", 0.0)
+            ),
+            "planner_observation_y": float(
+                planner_diagnostics.get("planner_observation_y", 0.0)
+            ),
+            "planner_observation_theta": float(
+                planner_diagnostics.get(
+                    "planner_observation_theta", 0.0
+                )
+            ),
+            "probabilistic_obstacle_risk_enabled": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_risk_enabled", False
+                )
+            ),
+            "probabilistic_obstacle_forecast_count": int(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_forecast_count", 0
+                )
+            ),
+            "probabilistic_obstacle_probability_mass": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_probability_mass", 0.0
+                )
+            ),
+            "probabilistic_obstacle_union_bound": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_union_bound", 0.0
+                )
+            ),
+            "probabilistic_obstacle_maximum_step_probability": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_maximum_step_probability",
+                    0.0,
+                )
+            ),
+            "probabilistic_obstacle_hard_violation": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_hard_violation", False
+                )
+            ),
+            "probabilistic_obstacle_fail_closed": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_fail_closed", False
+                )
+            ),
+            "probabilistic_obstacle_speed_scale": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_speed_scale", 1.0
+                )
+            ),
+            "probabilistic_obstacle_initial_hard_violation": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_initial_hard_violation",
+                    False,
+                )
+            ),
+            "probabilistic_obstacle_candidate_feasible_fraction": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_candidate_feasible_fraction",
+                    1.0,
+                )
+            ),
+            "probabilistic_obstacle_active_fallback_used": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_active_fallback_used",
+                    False,
+                )
+            ),
+            "probabilistic_obstacle_active_fallback_index": int(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_active_fallback_index", -1
+                )
+            ),
+            "probabilistic_obstacle_active_fallback_kind": str(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_active_fallback_kind", "none"
+                )
+            ),
+            "probabilistic_obstacle_stop_maximum_probability": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_stop_maximum_probability",
+                    0.0,
+                )
+            ),
+            "probabilistic_obstacle_stop_probability_mass": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_stop_probability_mass", 0.0
+                )
+            ),
+            "probabilistic_obstacle_stopping_feasibility_enabled": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_stopping_feasibility_enabled",
+                    False,
+                )
+            ),
+            "probabilistic_obstacle_emergency_candidate_count": int(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_emergency_candidate_count", 0
+                )
+            ),
+            "probabilistic_obstacle_emergency_candidate_selected": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_emergency_candidate_selected",
+                    False,
+                )
+            ),
+            "probabilistic_obstacle_temporal_emergency_triggered": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_temporal_emergency_triggered",
+                    False,
+                )
+            ),
+            "probabilistic_obstacle_temporal_emergency_vetted": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_temporal_emergency_vetted",
+                    False,
+                )
+            ),
+            "probabilistic_obstacle_traversal_window_enabled": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_window_enabled", False
+                )
+            ),
+            "probabilistic_obstacle_traversal_window_safe": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_window_safe", False
+                )
+            ),
+            "probabilistic_obstacle_traversal_forecast_sufficient": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_forecast_sufficient",
+                    False,
+                )
+            ),
+            "probabilistic_obstacle_traversal_commit_active": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_commit_active", False
+                )
+            ),
+            "probabilistic_obstacle_traversal_commit_started": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_commit_started", False
+                )
+            ),
+            "probabilistic_obstacle_traversal_commit_completed": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_commit_completed", False
+                )
+            ),
+            "probabilistic_obstacle_traversal_commit_cancelled": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_commit_cancelled", False
+                )
+            ),
+            "probabilistic_obstacle_traversal_commit_cancelled_by_temporal_closing": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_commit_cancelled_by_temporal_closing",
+                    False,
+                )
+            ),
+            "probabilistic_obstacle_traversal_commit_cancelled_by_temporal_midpoint_guard": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_commit_cancelled_by_temporal_midpoint_guard",
+                    False,
+                )
+            ),
+            "probabilistic_obstacle_traversal_commit_cancelled_by_temporal_exit_deadline_guard": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_commit_cancelled_by_temporal_exit_deadline_guard",
+                    False,
+                )
+            ),
+            "probabilistic_obstacle_traversal_retreat_requested": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_retreat_requested", False
+                )
+            ),
+            "probabilistic_obstacle_traversal_retreat_temporal_lattice_requested": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_retreat_temporal_lattice_requested",
+                    False,
+                )
+            ),
+            "probabilistic_obstacle_traversal_retreat_completed": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_retreat_completed", False
+                )
+            ),
+            "probabilistic_obstacle_traversal_rearm_pending": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_rearm_pending", False
+                )
+            ),
+            "probabilistic_obstacle_traversal_rearm_no_crossing_safe_streak": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_rearm_no_crossing_safe_streak",
+                    0,
+                )
+            ),
+            "probabilistic_obstacle_traversal_rearm_released_by_no_crossing_clearance": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_rearm_released_by_no_crossing_clearance",
+                    False,
+                )
+            ),
+            "probabilistic_obstacle_traversal_rearm_no_crossing_certified_handoff_active": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_rearm_no_crossing_certified_handoff_active",
+                    False,
+                )
+            ),
+            "probabilistic_obstacle_traversal_rearm_no_crossing_certified_handoff_safe": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_rearm_no_crossing_certified_handoff_safe",
+                    False,
+                )
+            ),
+            "probabilistic_obstacle_traversal_rearm_staging_approach_requested": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_rearm_staging_approach_requested",
+                    False,
+                )
+            ),
+            "probabilistic_obstacle_traversal_rearm_staging_approach_safe": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_rearm_staging_approach_safe",
+                    False,
+                )
+            ),
+            "probabilistic_obstacle_traversal_rearm_staging_target_progress": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_rearm_staging_target_progress",
+                    0.0,
+                )
+            ),
+            "probabilistic_obstacle_traversal_rearm_hold_overridden_by_hard_risk": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_rearm_hold_overridden_by_hard_risk",
+                    False,
+                )
+            ),
+            "probabilistic_obstacle_traversal_rearm_hold_overridden_by_temporal_closing": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_rearm_hold_overridden_by_temporal_closing",
+                    False,
+                )
+            ),
+            "probabilistic_obstacle_traversal_temporal_retreat_raw_lattice_requested": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_temporal_retreat_raw_lattice_requested",
+                    False,
+                )
+            ),
+            "probabilistic_obstacle_traversal_temporal_retreat_post_intent_forward_lattice_filtered": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_temporal_retreat_post_intent_forward_lattice_filtered",
+                    False,
+                )
+            ),
+            "probabilistic_obstacle_traversal_temporal_midpoint_retreat_forward_lattice_filtered": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_temporal_midpoint_retreat_forward_lattice_filtered",
+                    False,
+                )
+            ),
+            "probabilistic_obstacle_traversal_retreat_progress": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_retreat_progress", 0.0
+                )
+            ),
+            "probabilistic_obstacle_traversal_candidate_selected": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_candidate_selected", False
+                )
+            ),
+            "probabilistic_obstacle_traversal_crossing_progress": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_crossing_progress", 0.0
+                )
+            ),
+            "probabilistic_obstacle_traversal_entry_progress": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_entry_progress", 0.0
+                )
+            ),
+            "probabilistic_obstacle_traversal_clear_progress": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_clear_progress", 0.0
+                )
+            ),
+            "probabilistic_obstacle_traversal_current_progress": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_current_progress", 0.0
+                )
+            ),
+            "probabilistic_obstacle_traversal_maximum_probability": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_maximum_probability", 0.0
+                )
+            ),
+            "probabilistic_obstacle_traversal_probability_mass": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_probability_mass", 0.0
+                )
+            ),
+            "probabilistic_obstacle_traversal_temporal_corroboration_enabled": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_temporal_corroboration_enabled",
+                    False,
+                )
+            ),
+            "probabilistic_obstacle_traversal_temporal_corroboration_maximum_probability": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_temporal_corroboration_maximum_probability",
+                    0.0,
+                )
+            ),
+            "probabilistic_obstacle_traversal_temporal_corroboration_probability_mass": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_temporal_corroboration_probability_mass",
+                    0.0,
+                )
+            ),
+            "probabilistic_obstacle_traversal_commit_admission_full_horizon_enabled": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_commit_admission_full_horizon_enabled",
+                    False,
+                )
+            ),
+            "probabilistic_obstacle_traversal_commit_admission_full_horizon_safe": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_commit_admission_full_horizon_safe",
+                    False,
+                )
+            ),
+            "probabilistic_obstacle_traversal_commit_admission_rejected": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_commit_admission_rejected",
+                    False,
+                )
+            ),
+            "probabilistic_obstacle_traversal_commit_admission_exit_deadline_safe": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_commit_admission_exit_deadline_safe",
+                    True,
+                )
+            ),
+            "probabilistic_obstacle_traversal_commit_admission_exit_deadline_rejected": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_commit_admission_exit_deadline_rejected",
+                    False,
+                )
+            ),
+            "probabilistic_obstacle_traversal_commit_admission_exit_deadline_hold_requested": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_commit_admission_exit_deadline_hold_requested",
+                    False,
+                )
+            ),
+            "probabilistic_obstacle_traversal_commit_admission_prealign_requested": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_commit_admission_prealign_requested",
+                    False,
+                )
+            ),
+            "probabilistic_obstacle_traversal_uncommitted_temporal_staging_hold_requested": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_uncommitted_temporal_staging_hold_requested",
+                    False,
+                )
+            ),
+            "probabilistic_obstacle_traversal_uncommitted_temporal_staging_hold_selected": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_uncommitted_temporal_staging_hold_selected",
+                    False,
+                )
+            ),
+            "probabilistic_obstacle_traversal_uncommitted_temporal_staging_hold_hard_risk_override": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_uncommitted_temporal_staging_hold_hard_risk_override",
+                    False,
+                )
+            ),
+            "probabilistic_obstacle_traversal_uncommitted_temporal_staging_terminal_release_active": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_uncommitted_temporal_staging_terminal_release_active",
+                    False,
+                )
+            ),
+            "probabilistic_obstacle_traversal_commit_admission_exit_deadline_hold_hard_risk_override": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_commit_admission_exit_deadline_hold_hard_risk_override",
+                    False,
+                )
+            ),
+            "probabilistic_obstacle_traversal_commit_admission_exit_deadline_forward_lattice_filtered": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_commit_admission_exit_deadline_forward_lattice_filtered",
+                    False,
+                )
+            ),
+            "probabilistic_obstacle_traversal_commit_admission_exit_deadline_margin_s": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_commit_admission_exit_deadline_margin_s",
+                    0.0,
+                )
+            ),
+            "probabilistic_obstacle_traversal_commit_admission_safe_streak": int(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_commit_admission_safe_streak",
+                    0,
+                )
+            ),
+            "probabilistic_obstacle_traversal_commit_admission_required_streak": int(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_commit_admission_required_streak",
+                    1,
+                )
+            ),
+            "probabilistic_obstacle_traversal_commit_admission_waiting": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_commit_admission_waiting",
+                    False,
+                )
+            ),
+            "probabilistic_obstacle_traversal_commit_admission_released": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_commit_admission_released",
+                    False,
+                )
+            ),
+            "probabilistic_obstacle_traversal_commit_preserved_for_nearest_safe_exit": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_commit_preserved_for_nearest_safe_exit",
+                    False,
+                )
+            ),
+            "probabilistic_obstacle_traversal_forward_exit_distance_m": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_forward_exit_distance_m",
+                    0.0,
+                )
+            ),
+            "probabilistic_obstacle_traversal_retreat_exit_distance_m": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_retreat_exit_distance_m",
+                    0.0,
+                )
+            ),
+            "probabilistic_obstacle_traversal_forward_exit_optimistic_time_s": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_forward_exit_optimistic_time_s",
+                    0.0,
+                )
+            ),
+            "probabilistic_obstacle_traversal_retreat_exit_optimistic_time_s": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_retreat_exit_optimistic_time_s",
+                    0.0,
+                )
+            ),
+            "probabilistic_obstacle_traversal_temporal_exit_deadline_ttc_s": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_temporal_exit_deadline_ttc_s",
+                    0.0,
+                )
+            ),
+            "probabilistic_obstacle_traversal_temporal_exit_deadline_guard_triggered": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_temporal_exit_deadline_guard_triggered",
+                    False,
+                )
+            ),
+            "probabilistic_obstacle_traversal_exit_deadline_retreat_escape_transaction_active": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_exit_deadline_retreat_escape_transaction_active",
+                    False,
+                )
+            ),
+            "probabilistic_obstacle_traversal_exit_deadline_retreat_escape_latched": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_exit_deadline_retreat_escape_latched",
+                    False,
+                )
+            ),
+            "probabilistic_obstacle_traversal_exit_deadline_retreat_escape_reused": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_exit_deadline_retreat_escape_reused",
+                    False,
+                )
+            ),
+            "probabilistic_obstacle_traversal_exit_deadline_retreat_escape_pattern_v": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_exit_deadline_retreat_escape_pattern_v",
+                    0.0,
+                )
+            ),
+            "probabilistic_obstacle_traversal_exit_deadline_retreat_escape_pattern_omega": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_exit_deadline_retreat_escape_pattern_omega",
+                    0.0,
+                )
+            ),
+            "probabilistic_obstacle_traversal_retreat_overridden_by_hard_risk": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_retreat_overridden_by_hard_risk",
+                    False,
+                )
+            ),
+            "probabilistic_obstacle_traversal_retreat_overridden_by_temporal_midpoint_guard": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_retreat_overridden_by_temporal_midpoint_guard",
+                    False,
+                )
+            ),
+            "probabilistic_obstacle_traversal_commit_overridden_by_post_center_hard_risk": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_commit_overridden_by_post_center_hard_risk",
+                    False,
+                )
+            ),
+            "probabilistic_obstacle_traversal_commit_overridden_by_post_center_temporal_risk": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_commit_overridden_by_post_center_temporal_risk",
+                    False,
+                )
+            ),
+            "probabilistic_obstacle_traversal_post_center_forward_exit_commit_requested": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_post_center_forward_exit_commit_requested",
+                    False,
+                )
+            ),
+            "probabilistic_obstacle_traversal_post_center_forward_exit_coverage_applied": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_post_center_forward_exit_coverage_applied",
+                    False,
+                )
+            ),
+            "probabilistic_obstacle_traversal_post_center_forward_exit_candidate_count": int(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_post_center_forward_exit_candidate_count",
+                    0,
+                )
+            ),
+            "probabilistic_obstacle_traversal_post_center_forward_exit_lattice_filtered": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_post_center_forward_exit_lattice_filtered",
+                    False,
+                )
+            ),
+            "probabilistic_obstacle_traversal_post_center_low_ttc_continuity_requested": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_post_center_low_ttc_continuity_requested",
+                    False,
+                )
+            ),
+            "probabilistic_obstacle_traversal_post_center_low_ttc_continuity_forward_lattice_filtered": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_post_center_low_ttc_continuity_forward_lattice_filtered",
+                    False,
+                )
+            ),
+            "probabilistic_obstacle_traversal_post_center_low_ttc_continuity_hard_risk_fallback": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_post_center_low_ttc_continuity_hard_risk_fallback",
+                    False,
+                )
+            ),
+            "probabilistic_obstacle_traversal_post_center_low_ttc_continuity_release_condition_met": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_post_center_low_ttc_continuity_release_condition_met",
+                    False,
+                )
+            ),
+            "probabilistic_obstacle_traversal_post_center_low_ttc_nonforward_coverage_requested": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_post_center_low_ttc_nonforward_coverage_requested",
+                    False,
+                )
+            ),
+            "probabilistic_obstacle_traversal_post_center_low_ttc_nonforward_coverage_applied": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_post_center_low_ttc_nonforward_coverage_applied",
+                    False,
+                )
+            ),
+            "probabilistic_obstacle_traversal_post_center_low_ttc_nonforward_candidate_count": int(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_post_center_low_ttc_nonforward_candidate_count",
+                    0,
+                )
+            ),
+            "probabilistic_obstacle_traversal_post_center_low_ttc_first_step_boundary_handoff_requested": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_post_center_low_ttc_first_step_boundary_handoff_requested",
+                    False,
+                )
+            ),
+            "probabilistic_obstacle_traversal_post_center_low_ttc_first_step_boundary_handoff_admitted_count": int(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_post_center_low_ttc_first_step_boundary_handoff_admitted_count",
+                    0,
+                )
+            ),
+            "probabilistic_obstacle_traversal_post_center_low_ttc_first_step_boundary_handoff_selected": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_post_center_low_ttc_first_step_boundary_handoff_selected",
+                    False,
+                )
+            ),
+            "probabilistic_obstacle_traversal_post_center_low_ttc_prefix_boundary_handoff_requested": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_post_center_low_ttc_prefix_boundary_handoff_requested",
+                    False,
+                )
+            ),
+            "probabilistic_obstacle_traversal_post_center_low_ttc_prefix_boundary_handoff_admitted_count": int(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_post_center_low_ttc_prefix_boundary_handoff_admitted_count",
+                    0,
+                )
+            ),
+            "probabilistic_obstacle_traversal_post_center_low_ttc_prefix_boundary_handoff_selected": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_post_center_low_ttc_prefix_boundary_handoff_selected",
+                    False,
+                )
+            ),
+            "probabilistic_obstacle_traversal_post_center_temporal_raw_triggered": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_post_center_temporal_raw_triggered",
+                    False,
+                )
+            ),
+            "probabilistic_obstacle_traversal_temporal_closing_observed": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_temporal_closing_observed",
+                    False,
+                )
+            ),
+            "probabilistic_obstacle_traversal_post_center_temporal_escape_latched": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_post_center_temporal_escape_latched",
+                    False,
+                )
+            ),
+            "probabilistic_obstacle_traversal_post_center_temporal_escape_reused": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_post_center_temporal_escape_reused",
+                    False,
+                )
+            ),
+            "probabilistic_obstacle_traversal_post_center_temporal_escape_pattern_v": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_post_center_temporal_escape_pattern_v",
+                    0.0,
+                )
+            ),
+            "probabilistic_obstacle_traversal_post_center_temporal_escape_pattern_omega": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_post_center_temporal_escape_pattern_omega",
+                    0.0,
+                )
+            ),
+            "probabilistic_obstacle_traversal_required_steps": int(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_required_steps", 0
+                )
+            ),
+            "probabilistic_obstacle_traversal_forecast_index": int(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_traversal_forecast_index", -1
+                )
+            ),
+            "probabilistic_obstacle_pareto_forward_commit_applied": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_pareto_forward_commit_applied",
+                    False,
+                )
+            ),
+            "probabilistic_obstacle_low_risk_forward_commit_applied": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_low_risk_forward_commit_applied",
+                    False,
+                )
+            ),
+            "probabilistic_obstacle_preferred_emergency_probability": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_preferred_emergency_probability",
+                    0.0,
+                )
+            ),
+            "probabilistic_obstacle_preferred_emergency_probability_mass": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_preferred_emergency_probability_mass",
+                    0.0,
+                )
+            ),
+            "probabilistic_obstacle_preferred_emergency_hard_violation": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_preferred_emergency_hard_violation",
+                    False,
+                )
+            ),
+            "probabilistic_obstacle_best_cost_emergency_index": int(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_best_cost_emergency_index", -1
+                )
+            ),
+            "probabilistic_obstacle_best_cost_emergency_v": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_best_cost_emergency_v", 0.0
+                )
+            ),
+            "probabilistic_obstacle_best_cost_emergency_omega": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_best_cost_emergency_omega", 0.0
+                )
+            ),
+            "probabilistic_obstacle_best_cost_emergency_probability": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_best_cost_emergency_probability",
+                    0.0,
+                )
+            ),
+            "probabilistic_obstacle_best_cost_emergency_probability_mass": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_best_cost_emergency_probability_mass",
+                    0.0,
+                )
+            ),
+            "probabilistic_obstacle_minimum_risk_emergency_index": int(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_minimum_risk_emergency_index", -1
+                )
+            ),
+            "probabilistic_obstacle_minimum_risk_emergency_v": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_minimum_risk_emergency_v", 0.0
+                )
+            ),
+            "probabilistic_obstacle_minimum_risk_emergency_omega": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_minimum_risk_emergency_omega", 0.0
+                )
+            ),
+            "probabilistic_obstacle_minimum_risk_emergency_probability": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_minimum_risk_emergency_probability",
+                    0.0,
+                )
+            ),
+            "probabilistic_obstacle_minimum_risk_emergency_probability_mass": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_minimum_risk_emergency_probability_mass",
+                    0.0,
+                )
+            ),
+            "dynamic_obstacle_tracker_enabled": float(
+                planner_diagnostics.get(
+                    "dynamic_obstacle_tracker_enabled", False
+                )
+            ),
+            "dynamic_obstacle_tracker_cluster_count": int(
+                planner_diagnostics.get(
+                    "dynamic_obstacle_tracker_cluster_count", 0
+                )
+            ),
+            "dynamic_obstacle_tracker_associated": float(
+                planner_diagnostics.get(
+                    "dynamic_obstacle_tracker_associated", False
+                )
+            ),
+            "dynamic_obstacle_tracker_association_distance_m": float(
+                planner_diagnostics.get(
+                    "dynamic_obstacle_tracker_association_distance_m",
+                    0.0,
+                )
+            ),
+            "dynamic_obstacle_tracker_measurement_x": float(
+                planner_diagnostics.get(
+                    "dynamic_obstacle_tracker_measurement_x", 0.0
+                )
+            ),
+            "dynamic_obstacle_tracker_measurement_y": float(
+                planner_diagnostics.get(
+                    "dynamic_obstacle_tracker_measurement_y", 0.0
+                )
+            ),
+            "dynamic_obstacle_tracker_support_beams": int(
+                planner_diagnostics.get(
+                    "dynamic_obstacle_tracker_support_beams", 0
+                )
+            ),
+            "dynamic_obstacle_tracker_unobserved_duration_s": float(
+                planner_diagnostics.get(
+                    "dynamic_obstacle_tracker_unobserved_duration_s",
+                    0.0,
+                )
+            ),
+            "dynamic_obstacle_tracker_forecast_valid": float(
+                planner_diagnostics.get(
+                    "dynamic_obstacle_tracker_forecast_valid", False
+                )
+            ),
+            "dynamic_obstacle_tracker_forecast_availability": float(
+                planner_diagnostics.get(
+                    "dynamic_obstacle_tracker_forecast_availability",
+                    0.0,
+                )
+            ),
+            "dynamic_obstacle_tracker_innovation_nis": float(
+                planner_diagnostics.get(
+                    "dynamic_obstacle_tracker_innovation_nis", 0.0
+                )
+            ),
+            "dynamic_obstacle_tracker_change_triggered": float(
+                planner_diagnostics.get(
+                    "dynamic_obstacle_tracker_change_triggered", False
+                )
+            ),
+            "dynamic_obstacle_tracker_dropout_guard_triggered": float(
+                planner_diagnostics.get(
+                    "dynamic_obstacle_tracker_dropout_guard_triggered",
+                    False,
+                )
+            ),
+            "dynamic_obstacle_tracker_recovery_active": float(
+                planner_diagnostics.get(
+                    "dynamic_obstacle_tracker_recovery_active", False
+                )
+            ),
             "profile_planner_state_reference_ms": float(
                 planner_diagnostics.get(
                     "profile_planner_state_reference_ms", 0.0
@@ -355,6 +1307,96 @@ class EpisodeMetrics:
             "residual_reliability_residual_error": float(
                 planner_diagnostics.get("residual_reliability_residual_error", 0.0)
             ),
+            "residual_stall_guard_enabled": float(
+                planner_diagnostics.get(
+                    "residual_stall_guard_enabled", False
+                )
+            ),
+            "residual_stall_guard_authority": float(
+                planner_diagnostics.get(
+                    "residual_stall_guard_authority", 1.0
+                )
+            ),
+            "residual_stall_guard_latched": float(
+                planner_diagnostics.get(
+                    "residual_stall_guard_latched", False
+                )
+            ),
+            "residual_stall_guard_qualifying_steps": int(
+                planner_diagnostics.get(
+                    "residual_stall_guard_qualifying_steps", 0
+                )
+            ),
+            "residual_stall_guard_latch_step": int(
+                planner_diagnostics.get(
+                    "residual_stall_guard_latch_step", -1
+                )
+            ),
+            "residual_stall_guard_speed_mps": float(
+                planner_diagnostics.get(
+                    "residual_stall_guard_speed_mps", 0.0
+                )
+            ),
+            "residual_stall_guard_previous_probability": float(
+                planner_diagnostics.get(
+                    "residual_stall_guard_previous_probability", 1.0
+                )
+            ),
+            "residual_stall_guard_goal_distance_m": float(
+                planner_diagnostics.get(
+                    "residual_stall_guard_goal_distance_m", 0.0
+                )
+            ),
+            "residual_safety_shield_enabled": float(
+                planner_diagnostics.get(
+                    "residual_safety_shield_enabled", False
+                )
+            ),
+            "residual_safety_shield_accepted": float(
+                planner_diagnostics.get(
+                    "residual_safety_shield_accepted", False
+                )
+            ),
+            "residual_safety_shield_fallback_used": float(
+                planner_diagnostics.get(
+                    "residual_safety_shield_fallback_used", False
+                )
+            ),
+            "residual_safety_shield_selected_source": str(
+                planner_diagnostics.get(
+                    "residual_safety_shield_selected_source", "none"
+                )
+            ),
+            "residual_safety_shield_nominal_baseline_maximum_probability": float(
+                planner_diagnostics.get(
+                    "residual_safety_shield_nominal_baseline_maximum_probability",
+                    0.0,
+                )
+            ),
+            "residual_safety_shield_candidate_nominal_maximum_probability": float(
+                planner_diagnostics.get(
+                    "residual_safety_shield_candidate_nominal_maximum_probability",
+                    0.0,
+                )
+            ),
+            "residual_safety_shield_candidate_residual_maximum_probability": float(
+                planner_diagnostics.get(
+                    "residual_safety_shield_candidate_residual_maximum_probability",
+                    0.0,
+                )
+            ),
+            "residual_safety_shield_maximum_position_deviation_m": float(
+                planner_diagnostics.get(
+                    "residual_safety_shield_maximum_position_deviation_m",
+                    0.0,
+                )
+            ),
+            "residual_safety_shield_nominal_progress_noninferior": float(
+                planner_diagnostics.get(
+                    "residual_safety_shield_nominal_progress_noninferior",
+                    False,
+                )
+            ),
             "optimizer": str(planner_diagnostics.get("optimizer", "standard")),
             "rl_driven_total_rollouts": int(
                 planner_diagnostics.get("rl_driven_total_rollouts", 0)
@@ -365,6 +1407,16 @@ class EpisodeMetrics:
             "paper_candidates_per_iteration": int(
                 planner_diagnostics.get(
                     "paper_candidates_per_iteration", 0
+                )
+            ),
+            "paper_standard_fallback_active": float(
+                planner_diagnostics.get(
+                    "paper_standard_fallback_active", False
+                )
+            ),
+            "paper_standard_fallback_contract": str(
+                planner_diagnostics.get(
+                    "paper_standard_fallback_contract", "disabled"
                 )
             ),
             "paper_guided_unique_sequences": int(
@@ -389,9 +1441,90 @@ class EpisodeMetrics:
                     "reliability_proposal_authority", 1.0
                 )
             ),
+            "reliability_requested_proposal_authority": float(
+                planner_diagnostics.get(
+                    "reliability_requested_proposal_authority",
+                    planner_diagnostics.get(
+                        "reliability_proposal_authority", 1.0
+                    ),
+                )
+            ),
             "reliability_proposal_fallback_fraction": float(
                 planner_diagnostics.get(
                     "reliability_proposal_fallback_fraction", 0.0
+                )
+            ),
+            "reliability_proposal_advantage_gate_enabled": float(
+                planner_diagnostics.get(
+                    "reliability_proposal_advantage_gate_enabled", False
+                )
+            ),
+            "reliability_proposal_advantage_gate_mode": str(
+                planner_diagnostics.get(
+                    "reliability_proposal_advantage_gate_mode", "disabled"
+                )
+            ),
+            "reliability_proposal_advantage_gate_shadow": float(
+                planner_diagnostics.get(
+                    "reliability_proposal_advantage_gate_shadow", False
+                )
+            ),
+            "reliability_proposal_advantage_updated": float(
+                planner_diagnostics.get(
+                    "reliability_proposal_advantage_updated", False
+                )
+            ),
+            "reliability_proposal_advantage_disadvantage": float(
+                planner_diagnostics.get(
+                    "reliability_proposal_advantage_disadvantage", False
+                )
+            ),
+            "reliability_proposal_advantage_relative": float(
+                planner_diagnostics.get(
+                    "reliability_proposal_advantage_relative", 0.0
+                )
+            ),
+            "reliability_proposal_advantage_observations": int(
+                planner_diagnostics.get(
+                    "reliability_proposal_advantage_observations", 0
+                )
+            ),
+            "reliability_proposal_advantage_consecutive_disadvantages": int(
+                planner_diagnostics.get(
+                    "reliability_proposal_advantage_consecutive_disadvantages",
+                    0,
+                )
+            ),
+            "reliability_proposal_advantage_latched": float(
+                planner_diagnostics.get(
+                    "reliability_proposal_advantage_latched", False
+                )
+            ),
+            "reliability_proposal_advantage_authority_applied": float(
+                planner_diagnostics.get(
+                    "reliability_proposal_advantage_authority_applied", 1.0
+                )
+            ),
+            "reliability_proposal_advantage_authority_next": float(
+                planner_diagnostics.get(
+                    "reliability_proposal_advantage_authority_next", 1.0
+                )
+            ),
+            "reliability_proposal_advantage_would_authority_next": float(
+                planner_diagnostics.get(
+                    "reliability_proposal_advantage_would_authority_next", 1.0
+                )
+            ),
+            "reliability_proposal_advantage_relative_disadvantage_margin": (
+                float(planner_diagnostics.get(
+                    "reliability_proposal_advantage_"
+                    "relative_disadvantage_margin",
+                    0.0,
+                ))
+            ),
+            "reliability_proposal_advantage_patience": int(
+                planner_diagnostics.get(
+                    "reliability_proposal_advantage_patience", 0
                 )
             ),
             "reliability_counterfactual_enabled": float(
@@ -545,6 +1678,31 @@ class EpisodeMetrics:
             ),
             "paper_gaussian_opportunity_count": int(
                 planner_diagnostics.get("paper_gaussian_opportunity_count", 0)
+            ),
+            "paper_same_cycle_guided_cost_filter_enabled": float(
+                planner_diagnostics.get(
+                    "paper_same_cycle_guided_cost_filter_enabled", False
+                )
+            ),
+            "paper_same_cycle_gaussian_actor_isolated": float(
+                planner_diagnostics.get(
+                    "paper_same_cycle_gaussian_actor_isolated", False
+                )
+            ),
+            "paper_same_cycle_guided_cost_filter_iterations": int(
+                planner_diagnostics.get(
+                    "paper_same_cycle_guided_cost_filter_iterations", 0
+                )
+            ),
+            "paper_same_cycle_guided_filtered_candidates": int(
+                planner_diagnostics.get(
+                    "paper_same_cycle_guided_filtered_candidates", 0
+                )
+            ),
+            "paper_same_cycle_guided_relative_margin": float(
+                planner_diagnostics.get(
+                    "paper_same_cycle_guided_relative_margin", 0.0
+                )
             ),
             "paper_guided_cost_observed": float(
                 planner_diagnostics.get("paper_guided_cost_observed", False)
@@ -1049,6 +2207,553 @@ class EpisodeMetrics:
             "mean_slip_ratio": float(np.mean([row["slip_ratio"] for row in values])),
             "safety_interventions": int(sum(row["safety_override"] for row in values)),
             "safety_reason_counts": dict(sorted(safety_reason_counts.items())),
+            "dynamic_recovery_active_steps": int(sum(
+                row.get("dynamic_recovery_active", 0.0)
+                for row in values
+            )),
+            "dynamic_recovery_align_steps": int(sum(
+                row.get("dynamic_recovery_mode") == "align"
+                for row in values
+            )),
+            "dynamic_recovery_advance_steps": int(sum(
+                row.get("dynamic_recovery_mode") == "advance"
+                for row in values
+            )),
+            "dynamic_recovery_abort_steps": int(sum(
+                row.get("dynamic_recovery_mode") == "aborted"
+                for row in values
+            )),
+            "dynamic_escape_allowed_steps": int(sum(
+                row.get("dynamic_escape_allowed", 0.0) for row in values
+            )),
+            "dynamic_escape_held_steps": int(sum(
+                row.get("dynamic_escape_held", 0.0) for row in values
+            )),
+            "dynamic_escape_probability_mass_enabled_fraction": float(
+                np.mean([
+                    row.get(
+                        "dynamic_escape_probability_mass_enabled", 0.0
+                    )
+                    for row in values
+                ])
+            ),
+            "dynamic_escape_probability_mass_fallback_steps": int(sum(
+                row.get("dynamic_escape_probability_mass_fallback", 0.0)
+                for row in values
+            )),
+            "dynamic_escape_vetted_planner_control_steps": int(sum(
+                row.get("dynamic_escape_vetted_planner_control", 0.0)
+                for row in values
+            )),
+            "probabilistic_obstacle_active_fallback_steps": int(sum(
+                row.get("probabilistic_obstacle_active_fallback_used", 0.0)
+                for row in values
+            )),
+            "probabilistic_obstacle_mass_fallback_steps": int(sum(
+                row.get("probabilistic_obstacle_active_fallback_kind")
+                == "minimum_accumulated_risk_active_candidate"
+                for row in values
+            )),
+            "probabilistic_obstacle_emergency_candidate_selected_steps": int(
+                sum(
+                    row.get(
+                        "probabilistic_obstacle_emergency_candidate_selected",
+                        0.0,
+                    )
+                    for row in values
+                )
+            ),
+            "probabilistic_obstacle_temporal_emergency_triggered_steps": int(
+                sum(
+                    row.get(
+                        "probabilistic_obstacle_temporal_emergency_triggered",
+                        0.0,
+                    )
+                    for row in values
+                )
+            ),
+            "probabilistic_obstacle_temporal_emergency_vetted_steps": int(
+                sum(
+                    row.get(
+                        "probabilistic_obstacle_temporal_emergency_vetted",
+                        0.0,
+                    )
+                    for row in values
+                )
+            ),
+            "probabilistic_obstacle_traversal_window_safe_steps": int(sum(
+                row.get("probabilistic_obstacle_traversal_window_safe", 0.0)
+                for row in values
+            )),
+            "probabilistic_obstacle_traversal_forecast_sufficient_steps": int(sum(
+                row.get(
+                    "probabilistic_obstacle_traversal_forecast_sufficient", 0.0
+                )
+                for row in values
+            )),
+            "probabilistic_obstacle_traversal_commit_active_steps": int(sum(
+                row.get("probabilistic_obstacle_traversal_commit_active", 0.0)
+                for row in values
+            )),
+            "probabilistic_obstacle_traversal_commit_started_steps": int(sum(
+                row.get("probabilistic_obstacle_traversal_commit_started", 0.0)
+                for row in values
+            )),
+            "probabilistic_obstacle_traversal_commit_completed_steps": int(sum(
+                row.get("probabilistic_obstacle_traversal_commit_completed", 0.0)
+                for row in values
+            )),
+            "probabilistic_obstacle_traversal_commit_cancelled_steps": int(sum(
+                row.get("probabilistic_obstacle_traversal_commit_cancelled", 0.0)
+                for row in values
+            )),
+            "probabilistic_obstacle_traversal_commit_cancelled_by_temporal_closing_steps": int(sum(
+                row.get(
+                    "probabilistic_obstacle_traversal_commit_cancelled_by_temporal_closing",
+                    0.0,
+                )
+                for row in values
+            )),
+            "probabilistic_obstacle_traversal_commit_cancelled_by_temporal_midpoint_guard_steps": int(sum(
+                row.get(
+                    "probabilistic_obstacle_traversal_commit_cancelled_by_temporal_midpoint_guard",
+                    0.0,
+                )
+                for row in values
+            )),
+            "probabilistic_obstacle_traversal_commit_cancelled_by_temporal_exit_deadline_guard_steps": int(sum(
+                row.get(
+                    "probabilistic_obstacle_traversal_commit_cancelled_by_temporal_exit_deadline_guard",
+                    0.0,
+                )
+                for row in values
+            )),
+            "probabilistic_obstacle_traversal_exit_deadline_retreat_escape_transaction_active_steps": int(sum(
+                row.get(
+                    "probabilistic_obstacle_traversal_exit_deadline_retreat_escape_transaction_active",
+                    0.0,
+                )
+                for row in values
+            )),
+            "probabilistic_obstacle_traversal_exit_deadline_retreat_escape_latched_steps": int(sum(
+                row.get(
+                    "probabilistic_obstacle_traversal_exit_deadline_retreat_escape_latched",
+                    0.0,
+                )
+                for row in values
+            )),
+            "probabilistic_obstacle_traversal_exit_deadline_retreat_escape_reused_steps": int(sum(
+                row.get(
+                    "probabilistic_obstacle_traversal_exit_deadline_retreat_escape_reused",
+                    0.0,
+                )
+                for row in values
+            )),
+            "probabilistic_obstacle_traversal_commit_admission_rejected_steps": int(sum(
+                row.get(
+                    "probabilistic_obstacle_traversal_commit_admission_rejected",
+                    0.0,
+                )
+                for row in values
+            )),
+            "probabilistic_obstacle_traversal_commit_admission_exit_deadline_rejected_steps": int(sum(
+                row.get(
+                    "probabilistic_obstacle_traversal_commit_admission_exit_deadline_rejected",
+                    0.0,
+                )
+                for row in values
+            )),
+            "probabilistic_obstacle_traversal_commit_admission_exit_deadline_hold_requested_steps": int(sum(
+                row.get(
+                    "probabilistic_obstacle_traversal_commit_admission_exit_deadline_hold_requested",
+                    0.0,
+                )
+                for row in values
+            )),
+            "probabilistic_obstacle_traversal_commit_admission_prealign_requested_steps": int(sum(
+                row.get(
+                    "probabilistic_obstacle_traversal_commit_admission_prealign_requested",
+                    0.0,
+                )
+                for row in values
+            )),
+            "probabilistic_obstacle_traversal_uncommitted_temporal_staging_hold_requested_steps": int(sum(
+                row.get(
+                    "probabilistic_obstacle_traversal_uncommitted_temporal_staging_hold_requested",
+                    0.0,
+                )
+                for row in values
+            )),
+            "probabilistic_obstacle_traversal_uncommitted_temporal_staging_hold_selected_steps": int(sum(
+                row.get(
+                    "probabilistic_obstacle_traversal_uncommitted_temporal_staging_hold_selected",
+                    0.0,
+                )
+                for row in values
+            )),
+            "probabilistic_obstacle_traversal_uncommitted_temporal_staging_hold_hard_risk_override_steps": int(sum(
+                row.get(
+                    "probabilistic_obstacle_traversal_uncommitted_temporal_staging_hold_hard_risk_override",
+                    0.0,
+                )
+                for row in values
+            )),
+            "probabilistic_obstacle_traversal_uncommitted_temporal_staging_terminal_release_active_steps": int(sum(
+                row.get(
+                    "probabilistic_obstacle_traversal_uncommitted_temporal_staging_terminal_release_active",
+                    0.0,
+                )
+                for row in values
+            )),
+            "probabilistic_obstacle_traversal_commit_admission_exit_deadline_hold_hard_risk_override_steps": int(sum(
+                row.get(
+                    "probabilistic_obstacle_traversal_commit_admission_exit_deadline_hold_hard_risk_override",
+                    0.0,
+                )
+                for row in values
+            )),
+            "probabilistic_obstacle_traversal_commit_admission_exit_deadline_forward_lattice_filtered_steps": int(sum(
+                row.get(
+                    "probabilistic_obstacle_traversal_commit_admission_exit_deadline_forward_lattice_filtered",
+                    0.0,
+                )
+                for row in values
+            )),
+            "probabilistic_obstacle_traversal_post_center_low_ttc_continuity_requested_steps": int(sum(
+                row.get(
+                    "probabilistic_obstacle_traversal_post_center_low_ttc_continuity_requested",
+                    0.0,
+                )
+                for row in values
+            )),
+            "probabilistic_obstacle_traversal_post_center_low_ttc_continuity_forward_lattice_filtered_steps": int(sum(
+                row.get(
+                    "probabilistic_obstacle_traversal_post_center_low_ttc_continuity_forward_lattice_filtered",
+                    0.0,
+                )
+                for row in values
+            )),
+            "probabilistic_obstacle_traversal_post_center_low_ttc_continuity_hard_risk_fallback_steps": int(sum(
+                row.get(
+                    "probabilistic_obstacle_traversal_post_center_low_ttc_continuity_hard_risk_fallback",
+                    0.0,
+                )
+                for row in values
+            )),
+            "probabilistic_obstacle_traversal_post_center_low_ttc_continuity_release_condition_met_steps": int(sum(
+                row.get(
+                    "probabilistic_obstacle_traversal_post_center_low_ttc_continuity_release_condition_met",
+                    0.0,
+                )
+                for row in values
+            )),
+            "probabilistic_obstacle_traversal_post_center_low_ttc_nonforward_coverage_requested_steps": int(sum(
+                row.get(
+                    "probabilistic_obstacle_traversal_post_center_low_ttc_nonforward_coverage_requested",
+                    0.0,
+                )
+                for row in values
+            )),
+            "probabilistic_obstacle_traversal_post_center_low_ttc_nonforward_coverage_applied_steps": int(sum(
+                row.get(
+                    "probabilistic_obstacle_traversal_post_center_low_ttc_nonforward_coverage_applied",
+                    0.0,
+                )
+                for row in values
+            )),
+            "probabilistic_obstacle_traversal_post_center_low_ttc_nonforward_candidate_count_max": int(max(
+                (
+                    row.get(
+                        "probabilistic_obstacle_traversal_post_center_low_ttc_nonforward_candidate_count",
+                        0,
+                    )
+                    for row in values
+                ),
+                default=0,
+            )),
+            "probabilistic_obstacle_traversal_post_center_low_ttc_first_step_boundary_handoff_requested_steps": int(sum(
+                row.get(
+                    "probabilistic_obstacle_traversal_post_center_low_ttc_first_step_boundary_handoff_requested",
+                    0.0,
+                )
+                for row in values
+            )),
+            "probabilistic_obstacle_traversal_post_center_low_ttc_first_step_boundary_handoff_admitted_count_max": int(max(
+                (
+                    row.get(
+                        "probabilistic_obstacle_traversal_post_center_low_ttc_first_step_boundary_handoff_admitted_count",
+                        0,
+                    )
+                    for row in values
+                ),
+                default=0,
+            )),
+            "probabilistic_obstacle_traversal_post_center_low_ttc_first_step_boundary_handoff_selected_steps": int(sum(
+                row.get(
+                    "probabilistic_obstacle_traversal_post_center_low_ttc_first_step_boundary_handoff_selected",
+                    0.0,
+                )
+                for row in values
+            )),
+            "probabilistic_obstacle_traversal_post_center_low_ttc_prefix_boundary_handoff_requested_steps": int(sum(
+                row.get(
+                    "probabilistic_obstacle_traversal_post_center_low_ttc_prefix_boundary_handoff_requested",
+                    0.0,
+                )
+                for row in values
+            )),
+            "probabilistic_obstacle_traversal_post_center_low_ttc_prefix_boundary_handoff_admitted_count_max": int(max(
+                (
+                    row.get(
+                        "probabilistic_obstacle_traversal_post_center_low_ttc_prefix_boundary_handoff_admitted_count",
+                        0,
+                    )
+                    for row in values
+                ),
+                default=0,
+            )),
+            "probabilistic_obstacle_traversal_post_center_low_ttc_prefix_boundary_handoff_selected_steps": int(sum(
+                row.get(
+                    "probabilistic_obstacle_traversal_post_center_low_ttc_prefix_boundary_handoff_selected",
+                    0.0,
+                )
+                for row in values
+            )),
+            "probabilistic_obstacle_traversal_commit_admission_waiting_steps": int(sum(
+                row.get(
+                    "probabilistic_obstacle_traversal_commit_admission_waiting",
+                    0.0,
+                )
+                for row in values
+            )),
+            "probabilistic_obstacle_traversal_commit_admission_released_steps": int(sum(
+                row.get(
+                    "probabilistic_obstacle_traversal_commit_admission_released",
+                    0.0,
+                )
+                for row in values
+            )),
+            "probabilistic_obstacle_traversal_commit_preserved_for_nearest_safe_exit_steps": int(sum(
+                row.get(
+                    "probabilistic_obstacle_traversal_commit_preserved_for_nearest_safe_exit",
+                    0.0,
+                )
+                for row in values
+            )),
+            "probabilistic_obstacle_traversal_retreat_requested_steps": int(sum(
+                row.get("probabilistic_obstacle_traversal_retreat_requested", 0.0)
+                for row in values
+            )),
+            "probabilistic_obstacle_traversal_retreat_temporal_lattice_requested_steps": int(sum(
+                row.get(
+                    "probabilistic_obstacle_traversal_retreat_temporal_lattice_requested",
+                    0.0,
+                )
+                for row in values
+            )),
+            "probabilistic_obstacle_traversal_retreat_completed_steps": int(sum(
+                row.get("probabilistic_obstacle_traversal_retreat_completed", 0.0)
+                for row in values
+            )),
+            "probabilistic_obstacle_traversal_commit_overridden_by_post_center_hard_risk_steps": int(sum(
+                row.get(
+                    "probabilistic_obstacle_traversal_commit_overridden_by_post_center_hard_risk",
+                    0.0,
+                )
+                for row in values
+            )),
+            "probabilistic_obstacle_traversal_commit_overridden_by_post_center_temporal_risk_steps": int(sum(
+                row.get(
+                    "probabilistic_obstacle_traversal_commit_overridden_by_post_center_temporal_risk",
+                    0.0,
+                )
+                for row in values
+            )),
+            "probabilistic_obstacle_traversal_post_center_forward_exit_commit_requested_steps": int(sum(
+                row.get(
+                    "probabilistic_obstacle_traversal_post_center_forward_exit_commit_requested",
+                    0.0,
+                )
+                for row in values
+            )),
+            "probabilistic_obstacle_traversal_post_center_forward_exit_coverage_applied_steps": int(sum(
+                row.get(
+                    "probabilistic_obstacle_traversal_post_center_forward_exit_coverage_applied",
+                    0.0,
+                )
+                for row in values
+            )),
+            "probabilistic_obstacle_traversal_post_center_forward_exit_candidate_count_max": int(max(
+                (
+                    row.get(
+                        "probabilistic_obstacle_traversal_post_center_forward_exit_candidate_count",
+                        0,
+                    )
+                    for row in values
+                ),
+                default=0,
+            )),
+            "probabilistic_obstacle_traversal_post_center_forward_exit_lattice_filtered_steps": int(sum(
+                row.get(
+                    "probabilistic_obstacle_traversal_post_center_forward_exit_lattice_filtered",
+                    0.0,
+                )
+                for row in values
+            )),
+            "probabilistic_obstacle_traversal_post_center_temporal_escape_latched_steps": int(sum(
+                row.get(
+                    "probabilistic_obstacle_traversal_post_center_temporal_escape_latched",
+                    0.0,
+                )
+                for row in values
+            )),
+            "probabilistic_obstacle_traversal_post_center_temporal_escape_reused_steps": int(sum(
+                row.get(
+                    "probabilistic_obstacle_traversal_post_center_temporal_escape_reused",
+                    0.0,
+                )
+                for row in values
+            )),
+            "probabilistic_obstacle_traversal_rearm_pending_steps": int(sum(
+                row.get("probabilistic_obstacle_traversal_rearm_pending", 0.0)
+                for row in values
+            )),
+            "probabilistic_obstacle_traversal_rearm_no_crossing_safe_streak_max": int(max(
+                (
+                    row.get(
+                        "probabilistic_obstacle_traversal_rearm_no_crossing_safe_streak",
+                        0.0,
+                    )
+                    for row in values
+                ),
+                default=0.0,
+            )),
+            "probabilistic_obstacle_traversal_rearm_released_by_no_crossing_clearance_steps": int(sum(
+                row.get(
+                    "probabilistic_obstacle_traversal_rearm_released_by_no_crossing_clearance",
+                    0.0,
+                )
+                for row in values
+            )),
+            "probabilistic_obstacle_traversal_rearm_no_crossing_certified_handoff_active_steps": int(sum(
+                row.get(
+                    "probabilistic_obstacle_traversal_rearm_no_crossing_certified_handoff_active",
+                    0.0,
+                )
+                for row in values
+            )),
+            "probabilistic_obstacle_traversal_rearm_no_crossing_certified_handoff_safe_steps": int(sum(
+                row.get(
+                    "probabilistic_obstacle_traversal_rearm_no_crossing_certified_handoff_safe",
+                    0.0,
+                )
+                for row in values
+            )),
+            "probabilistic_obstacle_traversal_rearm_staging_approach_requested_steps": int(sum(
+                row.get(
+                    "probabilistic_obstacle_traversal_rearm_staging_approach_requested",
+                    0.0,
+                )
+                for row in values
+            )),
+            "probabilistic_obstacle_traversal_rearm_staging_approach_safe_steps": int(sum(
+                row.get(
+                    "probabilistic_obstacle_traversal_rearm_staging_approach_safe",
+                    0.0,
+                )
+                for row in values
+            )),
+            "probabilistic_obstacle_traversal_rearm_hold_overridden_by_hard_risk_steps": int(sum(
+                row.get(
+                    "probabilistic_obstacle_traversal_rearm_hold_overridden_by_hard_risk",
+                    0.0,
+                )
+                > 0.5
+                for row in values
+            )),
+            "probabilistic_obstacle_traversal_rearm_hold_overridden_by_temporal_closing_steps": int(sum(
+                row.get(
+                    "probabilistic_obstacle_traversal_rearm_hold_overridden_by_temporal_closing",
+                    0.0,
+                )
+                > 0.5
+                for row in values
+            )),
+            "probabilistic_obstacle_traversal_temporal_retreat_raw_lattice_requested_steps": int(sum(
+                row.get(
+                    "probabilistic_obstacle_traversal_temporal_retreat_raw_lattice_requested",
+                    0.0,
+                )
+                > 0.5
+                for row in values
+            )),
+            "probabilistic_obstacle_traversal_temporal_retreat_post_intent_forward_lattice_filtered_steps": int(sum(
+                row.get(
+                    "probabilistic_obstacle_traversal_temporal_retreat_post_intent_forward_lattice_filtered",
+                    0.0,
+                )
+                > 0.5
+                for row in values
+            )),
+            "probabilistic_obstacle_traversal_temporal_midpoint_retreat_forward_lattice_filtered_steps": int(sum(
+                row.get(
+                    "probabilistic_obstacle_traversal_temporal_midpoint_retreat_forward_lattice_filtered",
+                    0.0,
+                )
+                > 0.5
+                for row in values
+            )),
+            "probabilistic_obstacle_traversal_candidate_selected_steps": int(sum(
+                row.get(
+                    "probabilistic_obstacle_traversal_candidate_selected", 0.0
+                )
+                for row in values
+            )),
+            "probabilistic_obstacle_traversal_maximum_probability_max": float(max(
+                row.get(
+                    "probabilistic_obstacle_traversal_maximum_probability", 0.0
+                )
+                for row in values
+            )),
+            "probabilistic_obstacle_traversal_probability_mass_min": float(min(
+                row.get("probabilistic_obstacle_traversal_probability_mass", 0.0)
+                for row in values
+            )),
+            "probabilistic_obstacle_traversal_required_steps_max": int(max(
+                row.get("probabilistic_obstacle_traversal_required_steps", 0)
+                for row in values
+            )),
+            "probabilistic_obstacle_pareto_forward_commit_steps": int(
+                sum(
+                    row.get(
+                        "probabilistic_obstacle_pareto_forward_commit_applied",
+                        0.0,
+                    )
+                    for row in values
+                )
+            ),
+            "probabilistic_obstacle_low_risk_forward_commit_steps": int(
+                sum(
+                    row.get(
+                        "probabilistic_obstacle_low_risk_forward_commit_applied",
+                        0.0,
+                    )
+                    for row in values
+                )
+            ),
+            "planner_temporal_escape_active_steps": int(sum(
+                row.get("planner_temporal_escape_active", 0.0)
+                for row in values
+            )),
+            "probabilistic_obstacle_stopping_feasibility_enabled_fraction": (
+                float(np.mean([
+                    row.get(
+                        "probabilistic_obstacle_stopping_feasibility_enabled",
+                        0.0,
+                    )
+                    for row in values
+                ]))
+            ),
             "temporal_scan_valid_fraction": float(np.mean([
                 row.get("temporal_scan_valid", 0.0) for row in values
             ])),
@@ -1088,6 +2793,67 @@ class EpisodeMetrics:
             "residual_support_disabled_fraction_mean": float(np.mean([
                 row.get("residual_support_disabled_fraction", 0.0) for row in values
             ])),
+            "residual_reliability_enabled_fraction": float(np.mean([
+                row.get("residual_reliability_enabled", 0.0)
+                for row in values
+            ])),
+            "residual_reliability_alpha_mean": float(np.mean([
+                row.get("residual_reliability_alpha", 0.0)
+                for row in values
+            ])),
+            "residual_reliability_alpha_max": float(np.max([
+                row.get("residual_reliability_alpha", 0.0)
+                for row in values
+            ])),
+            "residual_reliability_samples_max": int(np.max([
+                row.get("residual_reliability_samples", 0)
+                for row in values
+            ])),
+            "residual_stall_guard_enabled_fraction": float(np.mean([
+                row.get("residual_stall_guard_enabled", 0.0)
+                for row in values
+            ])),
+            "residual_stall_guard_latched_fraction": float(np.mean([
+                row.get("residual_stall_guard_latched", 0.0)
+                for row in values
+            ])),
+            "residual_stall_guard_latched": bool(any(
+                row.get("residual_stall_guard_latched", 0.0)
+                for row in values
+            )),
+            "residual_stall_guard_latch_step": int(next(
+                (
+                    row.get("residual_stall_guard_latch_step", -1)
+                    for row in values
+                    if row.get("residual_stall_guard_latched", 0.0)
+                ),
+                -1,
+            )),
+            "residual_stall_guard_minimum_authority": float(np.min([
+                row.get("residual_stall_guard_authority", 1.0)
+                for row in values
+            ])),
+            "residual_safety_shield_enabled_fraction": float(np.mean([
+                row.get("residual_safety_shield_enabled", 0.0)
+                for row in values
+            ])),
+            "residual_safety_shield_acceptance_fraction": float(np.mean([
+                row.get("residual_safety_shield_accepted", 0.0)
+                for row in values
+            ])),
+            "residual_safety_shield_fallback_fraction": float(np.mean([
+                row.get("residual_safety_shield_fallback_used", 0.0)
+                for row in values
+            ])),
+            "residual_safety_shield_maximum_position_deviation_m": float(
+                np.max([
+                    row.get(
+                        "residual_safety_shield_maximum_position_deviation_m",
+                        0.0,
+                    )
+                    for row in values
+                ])
+            ),
             "profile_planner_state_reference_ms_mean": float(np.mean([
                 row.get("profile_planner_state_reference_ms", 0.0)
                 for row in values
@@ -1180,6 +2946,19 @@ class EpisodeMetrics:
                 row.get("paper_candidates_per_iteration", 0)
                 for row in values
             ])),
+            "paper_standard_fallback_active_fraction": float(np.mean([
+                row.get("paper_standard_fallback_active", 0.0)
+                for row in values
+            ])),
+            "paper_standard_fallback_contract": str(
+                next((
+                    row.get(
+                        "paper_standard_fallback_contract", "disabled"
+                    )
+                    for row in reversed(values)
+                    if row.get("paper_standard_fallback_active", 0.0)
+                ), "disabled")
+            ),
             "paper_guided_unique_sequences_mean": float(np.mean([
                 row.get("paper_guided_unique_sequences", 0)
                 for row in values
@@ -1215,6 +2994,10 @@ class EpisodeMetrics:
                 row.get("reliability_proposal_authority", 1.0)
                 for row in values
             ])),
+            "reliability_requested_proposal_authority_mean": float(np.mean([
+                row.get("reliability_requested_proposal_authority", 1.0)
+                for row in values
+            ])),
             "reliability_proposal_fallback_fraction_mean": float(
                 np.mean([
                     row.get(
@@ -1223,6 +3006,120 @@ class EpisodeMetrics:
                     for row in values
                 ])
             ),
+            "reliability_proposal_advantage_gate_enabled_fraction": float(
+                np.mean([
+                    row.get(
+                        "reliability_proposal_advantage_gate_enabled", 0.0
+                    )
+                    for row in values
+                ])
+            ),
+            "reliability_proposal_advantage_gate_mode": str(
+                values[-1].get(
+                    "reliability_proposal_advantage_gate_mode", "disabled"
+                )
+            ),
+            "reliability_proposal_advantage_gate_shadow_fraction": float(
+                np.mean([
+                    row.get(
+                        "reliability_proposal_advantage_gate_shadow", 0.0
+                    )
+                    for row in values
+                ])
+            ),
+            "reliability_proposal_advantage_observed_fraction": float(
+                np.mean([
+                    row.get(
+                        "reliability_proposal_advantage_updated", 0.0
+                    )
+                    for row in values
+                ])
+            ),
+            "reliability_proposal_advantage_disadvantage_fraction": float(
+                sum(
+                    row.get(
+                        "reliability_proposal_advantage_disadvantage", 0.0
+                    )
+                    for row in values
+                )
+                / max(
+                    sum(
+                        row.get(
+                            "reliability_proposal_advantage_updated", 0.0
+                        )
+                        for row in values
+                    ),
+                    1.0,
+                )
+            ),
+            "reliability_proposal_advantage_relative_mean": float(np.mean([
+                row.get("reliability_proposal_advantage_relative", 0.0)
+                for row in values
+                if row.get("reliability_proposal_advantage_updated", 0.0)
+            ])) if any(
+                row.get("reliability_proposal_advantage_updated", 0.0)
+                for row in values
+            ) else 0.0,
+            "reliability_proposal_advantage_relative_min": float(np.min([
+                row.get("reliability_proposal_advantage_relative", 0.0)
+                for row in values
+                if row.get("reliability_proposal_advantage_updated", 0.0)
+            ])) if any(
+                row.get("reliability_proposal_advantage_updated", 0.0)
+                for row in values
+            ) else 0.0,
+            "reliability_proposal_advantage_relative_max": float(np.max([
+                row.get("reliability_proposal_advantage_relative", 0.0)
+                for row in values
+                if row.get("reliability_proposal_advantage_updated", 0.0)
+            ])) if any(
+                row.get("reliability_proposal_advantage_updated", 0.0)
+                for row in values
+            ) else 0.0,
+            "reliability_proposal_advantage_authority_applied_mean": float(
+                np.mean([
+                    row.get(
+                        "reliability_proposal_advantage_authority_applied",
+                        1.0,
+                    )
+                    for row in values
+                ])
+            ),
+            "reliability_proposal_advantage_authority_applied_min": float(
+                np.min([
+                    row.get(
+                        "reliability_proposal_advantage_authority_applied",
+                        1.0,
+                    )
+                    for row in values
+                ])
+            ),
+            "reliability_proposal_advantage_would_authority_next_min": float(
+                np.min([
+                    row.get(
+                        "reliability_proposal_advantage_would_authority_next",
+                        1.0,
+                    )
+                    for row in values
+                ])
+            ),
+            "reliability_proposal_advantage_latched_fraction": float(
+                np.mean([
+                    row.get(
+                        "reliability_proposal_advantage_latched", 0.0
+                    )
+                    for row in values
+                ])
+            ),
+            "reliability_proposal_advantage_latch_step": next((
+                int(index)
+                for index, row in enumerate(values)
+                if row.get("reliability_proposal_advantage_latched", 0.0)
+            ), -1),
+            "reliability_proposal_advantage_observations_max": int(np.max([
+                row.get("reliability_proposal_advantage_observations", 0)
+                for row in values
+            ])),
             "reliability_counterfactual_enabled_fraction": float(
                 np.mean([
                     row.get("reliability_counterfactual_enabled", 0.0)
@@ -1452,6 +3349,42 @@ class EpisodeMetrics:
             )),
             "paper_gaussian_opportunity_count_total": int(sum(
                 row.get("paper_gaussian_opportunity_count", 0)
+                for row in values
+            )),
+            "paper_same_cycle_guided_cost_filter_enabled_fraction": float(
+                np.mean([
+                    row.get(
+                        "paper_same_cycle_guided_cost_filter_enabled", 0.0
+                    )
+                    for row in values
+                ])
+            ),
+            "paper_same_cycle_gaussian_actor_isolated_fraction": float(
+                np.mean([
+                    row.get(
+                        "paper_same_cycle_gaussian_actor_isolated", 0.0
+                    )
+                    for row in values
+                ])
+            ),
+            "paper_same_cycle_guided_cost_filter_active_fraction": float(
+                np.mean([
+                    row.get(
+                        "paper_same_cycle_guided_cost_filter_iterations", 0
+                    ) > 0
+                    for row in values
+                ])
+            ),
+            "paper_same_cycle_guided_cost_filter_iterations_total": int(sum(
+                row.get(
+                    "paper_same_cycle_guided_cost_filter_iterations", 0
+                )
+                for row in values
+            )),
+            "paper_same_cycle_guided_filtered_candidates_total": int(sum(
+                row.get(
+                    "paper_same_cycle_guided_filtered_candidates", 0
+                )
                 for row in values
             )),
             "paper_guided_cost_observed_fraction": float(np.mean([
@@ -1888,6 +3821,12 @@ class EpisodeMetrics:
                 row["minimum_footprint_boundary_margin"] for row in values
             ], dtype=np.float64)
             result.update({
+                "path_progress_m_max": float(max(
+                    row["path_arc_length"] for row in values
+                )),
+                "path_progress_ratio_max": float(max(
+                    row["path_progress_ratio"] for row in values
+                )),
                 "signed_cross_track_error_mean": float(np.mean(signed)),
                 "cross_track_p95": float(np.percentile(np.abs(signed), 95)),
                 "integrated_deviation_area": float(

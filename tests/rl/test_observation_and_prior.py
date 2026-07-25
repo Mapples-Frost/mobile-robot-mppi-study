@@ -104,6 +104,46 @@ def test_residual_context_is_appended_without_changing_legacy_prefix():
     np.testing.assert_allclose(new[old.size:], context)
 
 
+def test_temporal_scan_delta_is_causal_and_preserves_legacy_prefix():
+    action_spec = body_velocity_action((0.0, 0.4), 1.0)
+    legacy = ObservationEncoder(
+        ObservationEncoderConfig(lidar_sectors=4), action_spec
+    )
+    temporal = ObservationEncoder(
+        ObservationEncoderConfig(
+            lidar_sectors=4,
+            include_temporal_scan_delta=True,
+            temporal_scan_delta_scale=0.10,
+        ),
+        action_spec,
+    )
+    first = _observation()
+    previous = np.asarray((0.2, -0.1))
+    old_first = legacy.encode(first, PointGoal(0.0, 2.0), previous)
+    new_first = temporal.encode(first, PointGoal(0.0, 2.0), previous)
+    np.testing.assert_array_equal(new_first[:old_first.size], old_first)
+    np.testing.assert_array_equal(new_first[old_first.size:], 0.0)
+
+    scan = first.scan
+    second = RobotObservation(
+        0.1,
+        first.pose,
+        first.twist,
+        scan=LaserScan(
+            ranges=np.asarray(scan.ranges) - 0.2,
+            angle_min=scan.angle_min,
+            angle_increment=scan.angle_increment,
+            range_min=scan.range_min,
+            range_max=scan.range_max,
+            timestamp=0.1,
+        ),
+    )
+    old_second = legacy.encode(second, PointGoal(0.0, 2.0), previous)
+    new_second = temporal.encode(second, PointGoal(0.0, 2.0), previous)
+    np.testing.assert_array_equal(new_second[:old_second.size], old_second)
+    assert np.all(new_second[old_second.size:] < 0.0)
+
+
 def test_cached_scan_encoding_is_numerically_identical():
     action_spec = body_velocity_action((0.0, 0.4), 1.0)
     encoder = ObservationEncoder({"lidar_sectors": 5}, action_spec)
@@ -330,6 +370,84 @@ def test_hypothetical_path_actor_batch_does_not_advance_live_reference():
     assert raw.shape == normalized.shape == (2, encoder.dimension)
     assert np.isfinite(raw).all()
     assert reference.progress == pytest.approx(progress_before)
+
+
+def test_hypothetical_polyline_batch_matches_scalar_feature_semantics():
+    class DummyAgent:
+        action_dim = 2
+        is_correction_policy = False
+
+        def eval(self):
+            return None
+
+    action_spec = body_velocity_action((0.0, 0.4), 1.0)
+    encoder = ObservationEncoder(
+        {
+            "lidar_sectors": 5,
+            "include_path_context": True,
+            "include_path_preview": True,
+            "path_preview_distances": [0.25, 0.6, 1.0],
+            "path_preview_scale": 2.0,
+        },
+        action_spec,
+    )
+    normalizer = RunningNormalizer(encoder.dimension)
+    normalizer.update(np.zeros((2, encoder.dimension)))
+    policy = PaperDirectControlPolicy(
+        DummyAgent(), encoder, normalizer, action_spec
+    )
+    reference = PolylineReference(
+        ((0.0, 0.0), (1.0, 0.0), (1.0, 1.5), (2.0, 1.5)),
+        lookahead_distance=0.3,
+    )
+    reference.target_at(0.0, np.asarray((0.15, 0.0, 0.0)))
+    states = np.asarray((
+        (0.3, 0.1, 0.0, 0.2, 0.0),
+        (0.9, 0.4, 0.6, 0.1, -0.1),
+        (1.1, 1.2, 1.2, 0.3, 0.2),
+    ))
+    previous_controls = np.asarray((
+        (0.1, 0.0),
+        (0.2, -0.1),
+        (0.15, 0.2),
+    ))
+    observation = _observation()
+    state_spec = dynamic_unicycle_state()
+    scan_encoding = encoder._scan_features(observation.scan)
+    scalar_rows = []
+    for state, previous in zip(states, previous_controls):
+        pose = state[:3]
+        target = reference.preview_target_at(
+            0.0, pose, progress_floor=reference.progress
+        )
+        context = encoder.path_context(
+            reference, pose, target=target, progress_floor=reference.progress
+        )
+        preview = encoder.path_preview(
+            reference, pose, progress_floor=reference.progress
+        )
+        scalar_rows.append(encoder.encode_kinematic_batch(
+            pose[None, :],
+            state[None, 3:5],
+            np.asarray(((target.pose.x, target.pose.y),)),
+            previous[None, :],
+            scan_encoding,
+            path_context_features=context[None, :],
+            path_preview_features=preview[None, :],
+        )[0])
+
+    raw, _ = policy._encoded_batch(
+        states,
+        previous_controls,
+        observation,
+        reference,
+        state_spec,
+        np.asarray((0.0, 0.1, 0.2)),
+    )
+
+    np.testing.assert_allclose(
+        raw, np.asarray(scalar_rows), rtol=0.0, atol=1.0e-7
+    )
 
 
 def test_observation_history_stacks_oldest_to_newest_and_resets():

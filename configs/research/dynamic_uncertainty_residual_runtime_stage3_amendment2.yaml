@@ -1,0 +1,56 @@
+schema_version: 1
+status: preregistered_amendment
+protocol_revision: 3
+
+base_config: configs/research/mujoco_v3_probabilistic_crossing_smoke_amendment17.yaml
+source_screen: research_artifacts/dynamic_uncertainty_residual_runtime_stage3_amendment1/runtime_screen.json
+output_dir: research_artifacts/dynamic_uncertainty_residual_runtime_stage3_amendment2
+
+design:
+  independent_runtime_block: residual_checkpoint_seed
+  checkpoint_seeds: [20261201, 20261202, 20261203]
+  schedule_seed: 730199910
+  warmup_rollouts: 5
+  measured_rollouts: 30
+  common_control_seed: 730199908
+  arms:
+    - name: cuda_legacy_transfer
+      device: cuda
+      torch_num_threads: 1
+      residual_device_rollout_enabled: false
+      residual_cuda_graph_enabled: false
+    - name: cuda_graph
+      device: cuda
+      torch_num_threads: 1
+      residual_device_rollout_enabled: true
+      residual_cuda_graph_enabled: true
+
+residual_component_mask: [0.0, 0.0, 0.0, 1.0, 1.0]
+torchscript: true
+
+residual_model_blocks:
+  - seed: 20261201
+    checkpoint: results/research_platform/stage2_task_aware_seed20261201_v1/best.pt
+    sha256: 8103887469dcaa0b21aa0140162f445614988d4a5e8b3d5d1f040e9411d2778c
+  - seed: 20261202
+    checkpoint: results/research_platform/stage2_task_aware_seed20261202_v1/best.pt
+    sha256: 56174361d31d316f33bebbe4bcef259e0adeece062b5e864ebfab38915618349
+  - seed: 20261203
+    checkpoint: results/research_platform/stage2_task_aware_seed20261203_v1/best.pt
+    sha256: 246a3a27ee1da6491bdafd3ed7c963211e973f7b98920371bdc90c729d30d7eb
+
+screen_gate:
+  baseline_arm: cuda_legacy_transfer
+  maximum_trajectory_absolute_difference: 1.0e-5
+  minimum_worst_block_p95_speedup_fraction: 0.30
+  maximum_selected_worst_block_p95_ms: 100.0
+  selection_rule:
+    - finite_output_on_all_blocks
+    - trajectory_equivalence_on_all_blocks
+    - rollout_p95_within_control_period
+
+deployment_targets:
+  control_period_ms: 100.0
+  full_episode_seeds: [730100006, 730100008, 730100010]
+  sealed_seeds_authorized: false
+  rl_enabled: false

@@ -8,6 +8,12 @@ from typing import Any, Dict, Mapping, Tuple
 import numpy as np
 
 from mobile_robot_mppi.core.types import RobotObservation
+from mobile_robot_mppi.obstacles.online_tracking import (
+    SingleObstacleChangeAwareTracker,
+)
+from mobile_robot_mppi.obstacles.multi_online_tracking import (
+    MultiObstacleChangeAwareTracker,
+)
 from mobile_robot_mppi.perception.scan_flow import RobustScanFlowEstimator
 
 
@@ -37,15 +43,67 @@ class LegacyScanPipeline:
         self.temporal_scan_flow = RobustScanFlowEstimator(
             self.config.get("temporal_scan_guard", {})
         )
+        tracker_config = self.config.get(
+            "dynamic_obstacle_tracker", {}
+        )
+        maximum_tracks = int(tracker_config.get("maximum_tracks", 1))
+        tracker_type = (
+            MultiObstacleChangeAwareTracker
+            if maximum_tracks > 1
+            else SingleObstacleChangeAwareTracker
+        )
+        self.dynamic_obstacle_tracker = (
+            tracker_type.from_mapping(root, tracker_config)
+            if bool(tracker_config.get("enabled", False))
+            else None
+        )
+
+    @staticmethod
+    def _forecast_sequence(forecast):
+        """Normalize single- and multi-track forecasts for the planner API."""
+
+        if forecast is None:
+            return ()
+        if isinstance(forecast, tuple):
+            return forecast
+        return (forecast,)
 
     def reset(self):
         """Reset episode-local temporal state without touching legacy assets."""
 
         self.temporal_scan_flow.reset()
+        if self.dynamic_obstacle_tracker is not None:
+            self.dynamic_obstacle_tracker.reset()
 
     def process(self, observation: RobotObservation) -> PerceptionResult:
         if observation.scan is None:
-            return PerceptionResult(observation, {"emergency_stop": False, "reason": "no_scan"}, {"mode": "none"})
+            tracker_update = (
+                None
+                if self.dynamic_obstacle_tracker is None
+                else self.dynamic_obstacle_tracker.update(observation)
+            )
+            auxiliary = dict(observation.auxiliary)
+            diagnostics = {"mode": "none"}
+            if tracker_update is not None:
+                auxiliary["dynamic_obstacle_tracker"] = dict(
+                    tracker_update.diagnostics
+                )
+                diagnostics["dynamic_obstacle_tracker"] = dict(
+                    tracker_update.diagnostics
+                )
+                if tracker_update.forecast is not None:
+                    key = (
+                        self.dynamic_obstacle_tracker.config
+                        .forecast_auxiliary_key
+                    )
+                    auxiliary[key] = self._forecast_sequence(
+                        tracker_update.forecast
+                    )
+            return PerceptionResult(
+                replace(observation, auxiliary=auxiliary),
+                {"emergency_stop": False, "reason": "no_scan"},
+                diagnostics,
+            )
         scan = observation.scan
         guard_cfg = self.config.get("scan_guard", {})
         guard = dict(self.scan_guard.analyze_scan_front_sector(
@@ -150,6 +208,144 @@ class LegacyScanPipeline:
         auxiliary["temporal_scan_flow"] = flow_values
         diagnostics = dict(debug)
         diagnostics["temporal_scan_flow"] = flow_values
+        if self.dynamic_obstacle_tracker is not None:
+            tracker_update = self.dynamic_obstacle_tracker.update(
+                observation
+            )
+            tracker_diagnostics = dict(tracker_update.diagnostics)
+            auxiliary["dynamic_obstacle_tracker"] = tracker_diagnostics
+            diagnostics["dynamic_obstacle_tracker"] = tracker_diagnostics
+            guard["dynamic_obstacle_associated"] = bool(
+                tracker_diagnostics.get("associated", False)
+            )
+            measurement_x = tracker_diagnostics.get("measurement_x")
+            measurement_y = tracker_diagnostics.get("measurement_y")
+            if (
+                guard["dynamic_obstacle_associated"]
+                and measurement_x is not None
+                and measurement_y is not None
+            ):
+                tracker_cfg = self.dynamic_obstacle_tracker.config
+                sensor_x = (
+                    observation.pose.x
+                    + tracker_cfg.sensor_forward_offset_m
+                    * np.cos(observation.pose.theta)
+                )
+                sensor_y = (
+                    observation.pose.y
+                    + tracker_cfg.sensor_forward_offset_m
+                    * np.sin(observation.pose.theta)
+                )
+                expected_surface_range = max(
+                    0.0,
+                    float(np.hypot(
+                        float(measurement_x) - sensor_x,
+                        float(measurement_y) - sensor_y,
+                    ))
+                    - tracker_cfg.obstacle_radius_m,
+                )
+                guard["dynamic_obstacle_surface_range_m"] = (
+                    expected_surface_range
+                )
+                obstacle_bearing = float(np.arctan2(
+                    float(measurement_y) - sensor_y,
+                    float(measurement_x) - sensor_x,
+                ) - observation.pose.theta)
+                obstacle_bearing = float(np.arctan2(
+                    np.sin(obstacle_bearing),
+                    np.cos(obstacle_bearing),
+                ))
+                away_heading_error = float(np.arctan2(
+                    np.sin(obstacle_bearing + np.pi),
+                    np.cos(obstacle_bearing + np.pi),
+                ))
+                guard["dynamic_obstacle_bearing_rad"] = (
+                    obstacle_bearing
+                )
+                guard["dynamic_obstacle_away_heading_error_rad"] = (
+                    away_heading_error
+                )
+                near_body_value = guard.get("min_near_body_range")
+                near_body_range = (
+                    float(near_body_value)
+                    if near_body_value is not None
+                    else float("inf")
+                )
+                match_tolerance = float(
+                    self.config.get("scan_guard", {}).get(
+                        "dynamic_escape_match_tolerance_m", 0.12
+                    )
+                )
+                guard["dynamic_obstacle_near_body_match"] = bool(
+                    np.isfinite(near_body_range)
+                    and abs(
+                        near_body_range - expected_surface_range
+                    )
+                    <= match_tolerance
+                )
+                angle_tolerance = np.deg2rad(float(
+                    self.config.get("scan_guard", {}).get(
+                        "dynamic_escape_flow_angle_tolerance_deg",
+                        20.0,
+                    )
+                ))
+                flow_angle_error = float(np.arctan2(
+                    np.sin(
+                        flow.center_angle_rad - obstacle_bearing
+                    ),
+                    np.cos(
+                        flow.center_angle_rad - obstacle_bearing
+                    ),
+                ))
+                guard["dynamic_obstacle_scan_flow_match"] = bool(
+                    flow.valid
+                    and abs(flow_angle_error) <= angle_tolerance
+                )
+            if tracker_update.forecast is not None:
+                key = (
+                    self.dynamic_obstacle_tracker.config
+                    .forecast_auxiliary_key
+                )
+                auxiliary[key] = self._forecast_sequence(
+                    tracker_update.forecast
+                )
+        auxiliary["dynamic_obstacle_escape_context"] = {
+            "temporal_scan_valid": bool(flow.valid),
+            "temporal_scan_ttc_s": float(flow.ttc_s),
+            "temporal_scan_safety_hard_stop_ttc_s": float(
+                flow_cfg.safety_hard_stop_ttc_s
+            ),
+            "dynamic_obstacle_scan_flow_match": bool(
+                guard.get("dynamic_obstacle_scan_flow_match", False)
+            ),
+            "dynamic_obstacle_away_heading_error_rad": guard.get(
+                "dynamic_obstacle_away_heading_error_rad"
+            ),
+            "dynamic_obstacle_measurement_velocity_x_mps": (
+                None
+                if self.dynamic_obstacle_tracker is None
+                else tracker_diagnostics.get(
+                    "measurement_velocity_x_mps"
+                )
+            ),
+            "dynamic_obstacle_measurement_velocity_y_mps": (
+                None
+                if self.dynamic_obstacle_tracker is None
+                else tracker_diagnostics.get(
+                    "measurement_velocity_y_mps"
+                )
+            ),
+            "dynamic_obstacle_forecast_index": (
+                0
+                if self.dynamic_obstacle_tracker is None
+                else int(
+                    tracker_diagnostics.get(
+                        "nearest_forecast_index", 0
+                    )
+                    or 0
+                )
+            ),
+        }
         return PerceptionResult(
             replace(
                 observation,

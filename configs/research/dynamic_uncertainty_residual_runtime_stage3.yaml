@@ -1,0 +1,59 @@
+schema_version: 1
+status: preregistered_screen
+protocol_revision: 1
+
+base_config: configs/research/mujoco_v3_probabilistic_crossing_smoke_amendment17.yaml
+source_development_gate: research_artifacts/dynamic_uncertainty_residual_stage2_task_aware_development/gate.json
+output_dir: research_artifacts/dynamic_uncertainty_residual_runtime_stage3_screen
+
+design:
+  independent_runtime_block: residual_checkpoint_seed
+  checkpoint_seeds: [20261201, 20261202, 20261203]
+  schedule_seed: 730199907
+  warmup_rollouts: 3
+  measured_rollouts: 20
+  common_control_seed: 730199908
+  arms:
+    - name: cpu_1_thread
+      device: cpu
+      torch_num_threads: 1
+    - name: cpu_2_threads
+      device: cpu
+      torch_num_threads: 2
+    - name: cpu_4_threads
+      device: cpu
+      torch_num_threads: 4
+    - name: cpu_8_threads
+      device: cpu
+      torch_num_threads: 8
+    - name: cuda
+      device: cuda
+      torch_num_threads: 1
+
+residual_component_mask: [0.0, 0.0, 0.0, 1.0, 1.0]
+torchscript: true
+
+residual_model_blocks:
+  - seed: 20261201
+    checkpoint: results/research_platform/stage2_task_aware_seed20261201_v1/best.pt
+    sha256: 8103887469dcaa0b21aa0140162f445614988d4a5e8b3d5d1f040e9411d2778c
+  - seed: 20261202
+    checkpoint: results/research_platform/stage2_task_aware_seed20261202_v1/best.pt
+    sha256: 56174361d31d316f33bebbe4bcef259e0adeece062b5e864ebfab38915618349
+  - seed: 20261203
+    checkpoint: results/research_platform/stage2_task_aware_seed20261203_v1/best.pt
+    sha256: 246a3a27ee1da6491bdafd3ed7c963211e973f7b98920371bdc90c729d30d7eb
+
+screen_gate:
+  maximum_trajectory_absolute_difference: 1.0e-5
+  minimum_worst_block_p95_speedup_fraction: 0.20
+  selection_rule:
+    - finite_output_on_all_blocks
+    - trajectory_equivalence_on_all_blocks
+    - lowest_worst_block_p95_ms
+
+deployment_targets:
+  control_period_ms: 100.0
+  full_episode_seeds: [730100006, 730100008, 730100010]
+  sealed_seeds_authorized: false
+  rl_enabled: false

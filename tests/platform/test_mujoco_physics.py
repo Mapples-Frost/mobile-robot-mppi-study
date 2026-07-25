@@ -53,12 +53,41 @@ def test_sensor_state_source_is_explicit_and_backward_compatible():
     assert localized_observation.auxiliary["pose_source"] == "ground_truth"
 
 
+def test_wheel_imu_localized_odometry_bounds_accumulated_wheel_slip():
+    config = {
+        "pose_source": "wheel_imu_localized",
+        "twist_source": "wheel_imu_localized",
+        "localization_update_period_s": 1.0,
+        "localization_pose_noise_std": [0.0, 0.0, 0.0],
+        "localization_correction_gain": [1.0, 1.0, 1.0],
+        "imu_yaw_rate_noise_std": 0.0,
+        "imu_yaw_rate_bias_std": 0.0,
+    }
+    sensors = SimulatedSensorSuite(FakePlant(), config, 7)
+    sensors.reset(truth_sample(0.0, 0.0, 0.0, 0.0), 7)
+    midpoint = sensors.observe(
+        truth_sample(0.5, 0.05, 0.10, 2.5)
+    )
+    assert midpoint.pose.x == pytest.approx(0.10)
+    corrected = sensors.observe(
+        truth_sample(1.0, 0.10, 0.10, 2.5)
+    )
+    assert corrected.pose.x == pytest.approx(0.10)
+    assert corrected.twist.v == pytest.approx(0.20)
+    assert corrected.auxiliary["pose_source"] == "wheel_imu_localized"
+
+
 @pytest.mark.parametrize(
     "config",
-    ({"pose_source": "magic"}, {"twist_source": "magic"}),
+    (
+        {"pose_source": "magic"},
+        {"twist_source": "magic"},
+        {"localization_update_period_s": 0.0},
+        {"localization_correction_gain": [1.1, 0.5, 0.5]},
+    ),
 )
 def test_sensor_rejects_unknown_state_source(config):
-    with pytest.raises(ValueError, match="source"):
+    with pytest.raises(ValueError):
         SimulatedSensorSuite(FakePlant(), config, 0)
 
 

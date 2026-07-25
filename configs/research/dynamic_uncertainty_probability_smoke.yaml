@@ -1,0 +1,36 @@
+schema_version: 1
+study_id: dynamic_uncertainty_probability_smoke
+stage: probability_sandbox_smoke
+platform: windows_native_only
+seed_registry_path: configs/seeds/dynamic_uncertainty_splits.yaml
+output_dir: research_artifacts/dynamic_uncertainty_probability_smoke
+schedule_seed: 730199999
+processes:
+  - noisy_cv
+  - speed_change
+  - direction_change
+  - combined_change
+noise_profiles:
+  low:
+    acceleration_std: 0.025
+    observation_std: 0.025
+  medium:
+    acceleration_std: 0.075
+    observation_std: 0.075
+trajectory:
+  dt: 0.1
+  steps: 80
+prediction:
+  horizon: 12
+  initial_velocity_std: 1.0
+  kalman_process_std_scale: 1.0
+  kalman_observation_std_scale: 1.0
+scope_guards:
+  use_only_development_smoke_seeds: true
+  import_sealed_registry: false
+  enable_imm: false
+  enable_mppi: false
+  enable_rl: false
+  enable_icode: false
+  enable_hss: false
+

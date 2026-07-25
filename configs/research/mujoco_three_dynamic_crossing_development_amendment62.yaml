@@ -1,0 +1,39 @@
+include: mujoco_three_dynamic_crossing_development_amendment61.yaml
+
+experiment:
+  name: mujoco_three_dynamic_crossing_development_amendment62
+
+planner:
+  # Reuse the already-frozen traversal certificate as the absolute permission
+  # bound for a positive-velocity emergency-lattice member.  This changes no
+  # candidate, rollout, forecast, or hard-risk threshold.
+  probabilistic_obstacle_emergency_candidate_forward_risk_ceiling: 0.08
+  probabilistic_obstacle_emergency_candidate_forward_mass_ceiling: 1.50
+
+three_obstacle_amendment:
+  version: 62
+  reason: >-
+    visual_review_and_saved_trajectory_eda_of_amendment32_seed730100252_found_16_forward_reverse_direction_switches_12_three_phase_oscillation_patterns_and_9_of_10_reverse_segments_starting_with_at_least_0p8m_clearance;_seven_causal_closing_release_delays_reached_1p8s_and_the_smoke_gate_passed_without_goal_completion
+  intervention: >-
+    only_for_an_ordinary_temporal_emergency_outside_post_center_override_exit_deadline_retreat_rearm_and_midpoint_retreat_transactions_allow_the_existing_best_cost_positive_velocity_member_of_the_existing_six_slot_lattice_to_replace_the_preferred_reverse_member_when_its_same_cycle_causal_probability_max_and_mass_both_pass_the_already_frozen_0p08_and_1p50_traversal_certificate;_otherwise_keep_the_existing_direction_and_all_safety_transactions
+  obstacle_future_truth_used: false
+  obstacle_identity_used: false
+  crossing_geometry_source: online_forecast_plus_polyline_reference
+  behavior_parameter_changed: true
+  candidate_values_changed: false
+  certificate_threshold_changed: false
+  commit_admission_contract_changed: false
+  active_commit_contract_changed: false
+  abort_contract_changed: false
+  retreat_contract_changed: false
+  rearm_contract_changed: false
+  post_center_execution_arbitration_changed: false
+  exit_deadline_transaction_changed: false
+  ordinary_temporal_low_risk_forward_authority_changed: true
+  control_horizon_changed: false
+  control_limit_changed: false
+  checkpoint_changed: false
+  rollout_budget_changed: false
+  total_rollouts_per_decision: 600
+  development_only: true
+

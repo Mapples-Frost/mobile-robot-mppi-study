@@ -891,3 +891,228 @@
 - **Proof**: [`docs/rl/210_value_ranked_icode_prereg_2026-07-19.md`, `docs/rl/211_two_coupling_mechanisms_frozen_2026-07-19.md`, `results/research_platform/value_ranked_icode_member1_l210/training_summary.json`, `ara/evidence/tables/table17_l204_l210_coupling_selection.md`]
 - **Dependencies**: [C97]
 - **Tags**: value-ranking, ICODE, path-policy, ceiling-effect, negative-result
+
+## C100: Amendment 17 is a conditionally accepted dynamic-obstacle baseline
+- **Statement**: On the three registered development seeds, the Amendment 17 risk-enabled controller completed all runs with zero collision, improved seed 730100003 final goal distance from 1.3383 m to 0.3334 m relative to Amendment 12, retained a +0.2437 m median-clearance delta, and met 8 of 9 automatic gates; the project lead accepted the remaining 0.004309 completion-threshold excess as a documented stage waiver.
+- **Status**: supported
+- **Provenance**: user-revised
+- **Falsification criteria**: Artifact reanalysis does not reproduce the stated collision, distance, clearance or 8/9 gate results, or the acceptance record is changed to withdraw the project-lead waiver.
+- **Proof**: [`docs/experiments/dynamic_uncertainty/POST_ESCAPE_RECOVERY_AMENDMENT17_REPORT.md`, `docs/experiments/dynamic_uncertainty/ENVIRONMENT_STAGE_ACCEPTANCE.md`, `research_artifacts/mujoco_v3_probabilistic_crossing_smoke_amendment17/`]
+- **Dependencies**: []
+- **Tags**: dynamic-obstacle, probabilistic-prediction, MPPI, conditional-pass, development
+
+## C101: Increasing terminal progress pressure is not a safe Amendment 17 completion remedy
+- **Statement**: Raising only `goal_terminal_weight` from 25 to 35 caused a collision on the preregistered seed-730100001 Amendment 18 screen, so progress-weight escalation was rejected without opening a full three-seed run.
+- **Status**: supported
+- **Provenance**: ai-executed
+- **Falsification criteria**: The retained Amendment 18 probe artifact does not reproduce the collision, or the recorded configurations differ in another controller/environment factor.
+- **Proof**: [`docs/experiments/dynamic_uncertainty/POST_ESCAPE_RECOVERY_AMENDMENT17_REPORT.md`, `configs/research/mujoco_v3_probabilistic_crossing_smoke_amendment18_probe.yaml`, `research_artifacts/mujoco_v3_probabilistic_crossing_smoke_amendment18_probe/`]
+- **Dependencies**: [C100]
+- **Tags**: MPPI, terminal-cost, collision, negative-result, stopping-rule
+
+## C102: L57 residual prediction accuracy does not transfer safely to Amendment 17 obstacle avoidance
+- **Statement**: On the three Amendment 17 development obstacle seeds, all three frozen L57 ICODE checkpoints improve shared-trajectory horizon-36 velocity/yaw-rate rollout RMSE by 14.33%--16.91% over nominal dynamics, yet each model block increases collision count, aggregate median clearance falls by 0.03018 m, and residual planner p95 reaches 206.01 ms.
+- **Status**: supported
+- **Provenance**: ai-suggested
+- **Falsification criteria**: Artifact reanalysis fails to reproduce the three positive prediction effects, per-block collision increases `[1,1,2]`, clearance gate failure, or compute gate failure.
+- **Proof**: [`research_artifacts/dynamic_uncertainty_residual_stage1_development/gate.json`, `research_artifacts/dynamic_uncertainty_residual_stage1_development/prediction_block_summary.csv`, `research_artifacts/dynamic_uncertainty_residual_stage1_development/closed_loop_pairs.csv`, `docs/experiments/dynamic_uncertainty/RESIDUAL_DYNAMICS_STAGE1_RESULT.md`]
+- **Dependencies**: [C100]
+- **Tags**: ICODE, residual-dynamics, prediction-control-gap, dynamic-obstacle, negative-result
+
+## C103: Global-coordinate canonicalization is sufficient to repair Stage 1 safety
+- **Statement**: Replacing residual inputs `x,y` by checkpoint training means removes the relevant spatial OOD and restores zero-collision Amendment 17 control under the frozen L57 checkpoints.
+- **Status**: refuted
+- **Provenance**: ai-suggested
+- **Falsification criteria**: The preregistered first residual probe collides or exceeds the 150 ms planner p95 threshold.
+- **Proof**: [`research_artifacts/dynamic_uncertainty_residual_stage1_amendment1_probe/early_stop.json`, `docs/experiments/dynamic_uncertainty/RESIDUAL_DYNAMICS_STAGE1_AMENDMENT1_RESULT.md`]
+- **Dependencies**: [C102]
+- **Tags**: canonicalization, spatial-OOD, ICODE, collision, negative-result
+
+## C104: Post-stall residual shutdown is sufficient to repair Stage 1 safety
+- **Statement**: Causally latching residual authority to zero after ten completed low-risk near-zero-speed transitions prevents the seed-730100003 collision without future truth.
+- **Status**: refuted
+- **Provenance**: ai-suggested
+- **Falsification criteria**: The preregistered first residual block latches but still collides.
+- **Proof**: [`research_artifacts/dynamic_uncertainty_residual_stage1_amendment2_probe/early_stop.json`, `docs/experiments/dynamic_uncertainty/RESIDUAL_DYNAMICS_STAGE1_AMENDMENT2_RESULT.md`]
+- **Dependencies**: [C102, C103]
+- **Tags**: residual-authority, causal-gate, stall, collision, negative-result
+
+## C105: Causal innovation routing makes direct L57 residual dynamics safe in the crossing task
+- **Statement**: Starting residual authority at zero and increasing it only when completed-transition velocity/yaw-rate innovations favor the residual restores zero-collision Amendment 17 control.
+- **Status**: refuted
+- **Provenance**: ai-suggested
+- **Falsification criteria**: A preregistered residual block reaches nondegenerate authority and still collides.
+- **Proof**: [`research_artifacts/dynamic_uncertainty_residual_stage1_amendment3_probe/early_stop.json`, `docs/experiments/dynamic_uncertainty/RESIDUAL_DYNAMICS_STAGE1_AMENDMENT3_RESULT.md`]
+- **Dependencies**: [C102, C104]
+- **Tags**: innovation, reliability, residual-authority, collision, negative-result
+
+## C106: L57 remains predictively useful under structure preservation but is unsafe as direct crossing-task dynamics
+- **Statement**: On saved nominal seed-730100003 data, masking pose-derivative residuals and retaining only velocity/yaw-rate corrections improves horizon-36 active RMSE by 15.83%--16.62% across all three checkpoints, but the preregistered first structure-preserving closed-loop block still collides.
+- **Status**: supported
+- **Provenance**: ai-suggested
+- **Falsification criteria**: The masked offline replay fails to reproduce three positive improvements, or the retained Amendment 4 artifact is collision-free.
+- **Proof**: [`docs/experiments/dynamic_uncertainty/RESIDUAL_DYNAMICS_STAGE1_AMENDMENT4_RESULT.md`, `research_artifacts/dynamic_uncertainty_residual_stage1_amendment4_probe/early_stop.json`]
+- **Dependencies**: [C102, C105]
+- **Tags**: structure-preserving, prediction-control-gap, ICODE, scope-boundary
+
+## C107: Step-local dual-model noninterference is sufficient to repair frozen L57 safety
+- **Statement**: Accepting an L57 residual plan only when nominal and residual model views are hard-safe, nominal-view probability does not exceed the exact nominal plan, progress is noninferior and predicted positions stay within 0.10 m prevents the seed-730100003 collision.
+- **Status**: refuted
+- **Provenance**: ai-suggested
+- **Falsification criteria**: The preregistered shield accepts a nonzero fraction of residual plans and the episode still collides.
+- **Proof**: [`research_artifacts/dynamic_uncertainty_residual_stage1_amendment5_probe/`, `docs/experiments/dynamic_uncertainty/RESIDUAL_DYNAMICS_STAGE1_AMENDMENT5_RESULT.md`]
+- **Dependencies**: [C102, C106]
+- **Tags**: residual-shield, noninterference, chance-constraint, negative-result
+
+## C108: Speed-only L57 residual authority preserves safe obstacle avoidance
+- **Statement**: Keeping the exact nominal yaw sequence while allowing the frozen L57 residual to alter only forward-speed timing prevents route divergence and collision.
+- **Status**: refuted
+- **Provenance**: ai-suggested
+- **Falsification criteria**: A preregistered speed-only residual block accepts nonzero residual authority and still collides.
+- **Proof**: [`research_artifacts/dynamic_uncertainty_residual_stage1_amendment6_probe/`, `docs/experiments/dynamic_uncertainty/RESIDUAL_DYNAMICS_STAGE1_AMENDMENT6_PREREGISTRATION.md`]
+- **Dependencies**: [C107]
+- **Tags**: residual-shield, speed-authority, collision, negative-result
+
+## C109: Task-aware conservative fine-tuning improves obstacle-region residual prediction without material forgetting
+- **Statement**: Fine-tuning each L57 model on an episode-disjoint mixture with proximity-weighted dynamic-obstacle transitions and an original-data output anchor improves held-out task H36 position RMSE while limiting original test/unseen H36 position regression to at most 2%.
+- **Status**: supported
+- **Provenance**: ai-suggested
+- **Falsification criteria**: Fewer than two of three blocks improve task-test H36 position RMSE, fail to beat nominal active derivative error, or exceed 2% original test/unseen regression.
+- **Proof**: [`research_artifacts/dynamic_uncertainty_residual_stage2_offline/gate.json`, `docs/experiments/dynamic_uncertainty/RESIDUAL_DYNAMICS_STAGE2_TASK_AWARE_RESULT.md`, `ara/evidence/tables/table18_stage2_task_aware_residual.md`]
+- **Dependencies**: [C102, C108]
+- **Tags**: task-aware-training, importance-weighting, anti-forgetting, ICODE
+
+## C110: Stage 2 residuals avoid the observed closed-loop safety regression on fresh seed 730100006
+- **Statement**: On the preregistered fresh development obstacle seed 730100006, nominal and all three task-aware residual blocks reach the goal with zero collisions and identical 0.39754 m minimum clearance; the shield accepts 67.6%--73.2% of residual plans.
+- **Status**: supported
+- **Provenance**: ai-suggested
+- **Falsification criteria**: Artifact reanalysis finds a collision, a failed goal reach, lower residual minimum clearance, permanent nominal fallback, or use of a task-data/sealed seed.
+- **Proof**: [`research_artifacts/dynamic_uncertainty_residual_stage2_task_aware_probe/gate.json`, `research_artifacts/dynamic_uncertainty_residual_stage2_task_aware_probe/episode_summary.csv`, `docs/experiments/dynamic_uncertainty/RESIDUAL_DYNAMICS_STAGE2_TASK_AWARE_RESULT.md`, `ara/evidence/tables/table18_stage2_task_aware_residual.md`]
+- **Dependencies**: [C100, C109]
+- **Tags**: residual-dynamics, dynamic-obstacle, fresh-seed, development-only, scope-boundary
+
+## C111: Task-aware residuals pass the frozen three-seed development safety and noninferiority gate
+- **Statement**: Across obstacle seeds 730100006, 730100008 and 730100010, nominal and all three task-aware residual blocks reach the goal without collision or safety-layer intervention; every block has zero collision-count increase, and the aggregate median completion delta remains above the frozen -0.02 limit.
+- **Status**: supported
+- **Provenance**: ai-suggested
+- **Falsification criteria**: Artifact reanalysis finds any residual collision or failed goal reach, a positive per-block collision increase, median completion delta below -0.02, invalid checkpoint/forecast artifacts, or use of sealed seeds.
+- **Proof**: [`research_artifacts/dynamic_uncertainty_residual_stage2_task_aware_development/gate.json`, `research_artifacts/dynamic_uncertainty_residual_stage2_task_aware_development/episode_summary.csv`, `docs/experiments/dynamic_uncertainty/RESIDUAL_DYNAMICS_STAGE2_TASK_AWARE_DEVELOPMENT_RESULT.md`, `ara/evidence/tables/table19_stage2_residual_development.md`]
+- **Dependencies**: [C100, C109, C110]
+- **Tags**: residual-dynamics, dynamic-obstacle, development-gate, noninferiority, scope-boundary
+
+## C112: Offline H36 improvement does not select the fastest Stage 2 checkpoint
+- **Statement**: In the frozen three-seed matrix, the checkpoint with the largest offline task H36 position improvement does not have the best closed-loop median step delta, and the three block medians of 0, -2 and +5 steps do not establish a consistent completion-time benefit.
+- **Status**: supported
+- **Provenance**: ai-suggested
+- **Falsification criteria**: Reanalysis shows the offline-improvement ordering matches a preregistered, consistently favorable episode-level completion ordering or that a checkpoint satisfies a previously frozen selection rule.
+- **Proof**: [`research_artifacts/dynamic_uncertainty_residual_stage2_offline/gate.json`, `research_artifacts/dynamic_uncertainty_residual_stage2_task_aware_development/closed_loop_pairs.csv`, `docs/experiments/dynamic_uncertainty/RESIDUAL_DYNAMICS_STAGE2_TASK_AWARE_DEVELOPMENT_RESULT.md`]
+- **Dependencies**: [C109, C111]
+- **Tags**: prediction-control-gap, checkpoint-selection, completion-time, scope-boundary
+
+## C113: Stage 2 safety is not explained by permanent nominal fallback
+- **Statement**: In the nine paired development comparisons, the residual shield has nonzero acceptance in every episode, median paired-realized effective acceptance is 29.7%, and the median fraction of executed controls differing from nominal by more than 0.01 is 52.0%.
+- **Status**: supported
+- **Provenance**: ai-suggested
+- **Falsification criteria**: Trace reanalysis finds permanent nominal fallback, zero effective residual participation, mismatched episode pairing, or a different executed-control threshold.
+- **Proof**: [`research_artifacts/dynamic_uncertainty_residual_stage2_task_aware_development/contribution_audit.json`, `experiments/dynamic_uncertainty/analyze_task_aware_residual_contribution.py`, `ara/evidence/tables/table19_stage2_residual_development.md`]
+- **Dependencies**: [C111]
+- **Tags**: residual-shield, effective-authority, paired-audit, nondegeneracy
+
+## C114: Optimized Stage 3 residual control meets the development-machine 100 ms P95 gate without behavior change
+- **Statement**: On the current RTX 5060 Laptop GPU and the frozen seeds 730100006/008/010, static-buffer CUDA Graph residual rollout plus parallel nominal/residual shield planning preserves 12/12 goal reaches and zero collisions while reducing the maximum residual-controller P95 to 97.19 ms; all 12 cells exactly match the sequential CUDA-Graph controller in steps, positions, executed controls, shield acceptance and outcomes.
+- **Status**: supported
+- **Provenance**: ai-suggested
+- **Falsification criteria**: Artifact reanalysis finds maximum residual-controller P95 above 100 ms, any collision or failed goal reach, any sequential-equivalence difference, a changed safety/controller protocol, or use of sealed seeds.
+- **Proof**: [`research_artifacts/dynamic_uncertainty_residual_runtime_stage3_parallel_development/gate.json`, `research_artifacts/dynamic_uncertainty_residual_runtime_stage3_parallel_development/sequential_equivalence_audit.json`, `docs/experiments/dynamic_uncertainty/RESIDUAL_RUNTIME_STAGE3_RESULT.md`, `ara/evidence/tables/table20_residual_runtime_stage3.md`]
+- **Dependencies**: [C111, C113]
+- **Tags**: residual-dynamics, CUDA-Graph, parallel-planning, runtime, behavior-equivalence, development-only
+
+## C115: Eager CUDA device residency alone is sufficient for residual real-time qualification
+- **Statement**: Keeping the full H36/K600/RK4 residual rollout on CUDA without graph capture reduces concurrent worst-block P95 relative to the legacy-transfer CUDA implementation and is sufficient to meet the 100 ms budget.
+- **Status**: refuted
+- **Provenance**: ai-suggested
+- **Falsification criteria**: The preregistered Amendment 1 screen shows eager device-resident P95 below legacy-transfer P95 and at or below 100 ms while satisfying trajectory equivalence.
+- **Proof**: [`research_artifacts/dynamic_uncertainty_residual_runtime_stage3_amendment1/runtime_screen.json`, `docs/experiments/dynamic_uncertainty/RESIDUAL_RUNTIME_STAGE3_RESULT.md`, `ara/evidence/tables/table20_residual_runtime_stage3.md`]
+- **Dependencies**: [C111]
+- **Tags**: CUDA, device-residency, kernel-launch-overhead, negative-result
+
+## C116: Stage 4 RL/HSS treatment construction preserves the frozen controller contracts at preflight
+- **Statement**: The preregistered 24-episode Stage 4 development schedule constructs RL-off cells through the exact Stage 3 path and RL-on cells with the frozen L217 Actor/HSS at an unchanged 600-candidate budget; residual cells use independent matched nominal/residual RL controllers, retain the residual shield and scan guard, and do not open sealed seeds.
+- **Status**: supported
+- **Provenance**: ai-suggested
+- **Falsification criteria**: Preflight or construction tests find a non-24-cell schedule, an RL-off configuration difference, more than 600 candidates per controller decision, shared mutable Actor/HSS/RNG state inside a residual shield, a missing shield or scan guard, an unregistered Actor action remap, or any sealed seed access.
+- **Proof**: [`configs/research/dynamic_uncertainty_rl_hss_stage4_preregistered.yaml`, `configs/research/dynamic_uncertainty_rl_hss_stage4_amendment1.yaml`, `docs/experiments/dynamic_uncertainty/RL_HSS_STAGE4_PREREGISTRATION.md`, `tests/dynamic_uncertainty/test_rl_hss_stage4.py`, `research_artifacts/dynamic_uncertainty_rl_hss_stage4_amendment1_development/gate.json`, `ara/evidence/tables/table21_stage4_rl_hss_preflight.md`]
+- **Dependencies**: [C114]
+- **Tags**: RL, HSS, preregistration, treatment-integrity, action-subspace, development-only
+
+## C117: Frozen L217 Actor/HSS integration preserves dynamic-obstacle navigation safety and completion
+- **Statement**: Adding the frozen L217 Actor and role-aware HSS to the accepted nominal or qualified Stage 3 residual controller at equal 600-candidate budget preserves collision-free goal reaching on the registered Stage 4 development seeds.
+- **Status**: refuted
+- **Provenance**: ai-suggested
+- **Falsification criteria**: Any completed RL/HSS-on cell collides, or paired goal-reaching and final-distance outcomes consistently regress relative to RL/HSS-off under the frozen common-random-number schedule.
+- **Proof**: [`research_artifacts/dynamic_uncertainty_rl_hss_stage4_amendment1_development/gate.json`, `research_artifacts/dynamic_uncertainty_rl_hss_stage4_amendment1_development/paired_analysis.json`, `docs/experiments/dynamic_uncertainty/RL_HSS_STAGE4_RESULT.md`, `ara/evidence/tables/table22_stage4_rl_hss_result.md`]
+- **Dependencies**: [C89, C114, C116]
+- **Tags**: RL, HSS, dynamic-obstacle, negative-result, collision, development
+
+## C118: Policy-rescue authority explains the Stage 4 RL/HSS regression
+- **Statement**: The Stage 4 completion and safety regression is principally caused by `policy_rescue` retaining high Actor proposal authority when dynamics confidence is near zero and Actor-guided candidates are cost-inferior to Gaussian candidates.
+- **Status**: hypothesis
+- **Provenance**: ai-suggested
+- **Falsification criteria**: A separately preregistered advantage-gated or policy-rescue-disabled ablation fails to improve paired completion/safety, or controlled replay shows that the regression persists with identical proposal authority and is instead attributable to another isolated mechanism.
+- **Proof**: [`research_artifacts/dynamic_uncertainty_rl_hss_stage4_amendment1_development/episode_summary.csv`, `research_artifacts/dynamic_uncertainty_rl_hss_stage4_amendment1_development/paired_analysis.json`, `docs/experiments/dynamic_uncertainty/RL_HSS_STAGE4_RESULT.md`, `research_artifacts/dynamic_uncertainty_rl_hss_stage5_proposal_advantage_development/paired_analysis.json`, `docs/experiments/dynamic_uncertainty/RL_HSS_STAGE5_PROPOSAL_ADVANTAGE_RESULT.md`]
+- **Dependencies**: [C117]
+- **Tags**: HSS, policy-rescue, proposal-authority, mechanism-hypothesis, development
+
+## C119: Episode-latched proposal-advantage veto can recover baseline-level completion from the frozen bad Actor treatment
+- **Statement**: On the two complete fresh nominal-dynamics Stage 5 development blocks, causally applying a three-cycle episode-latched veto to persistently cost-inferior Actor proposals recovers goal completion to the RL/HSS-off level while preserving the 600-rollout budget and unchanged safety stack.
+- **Status**: supported
+- **Provenance**: ai-suggested
+- **Falsification criteria**: Reanalysis finds that shadow and active arms did not share the same evidence stream, that veto application changed the rollout budget or safety stack, that either active episode did not reach the goal, or a separately preregistered adequately powered fresh-seed matrix fails to reproduce the completion recovery.
+- **Proof**: [`research_artifacts/dynamic_uncertainty_rl_hss_stage5_proposal_advantage_development/paired_analysis.json`, `research_artifacts/dynamic_uncertainty_rl_hss_stage5_proposal_advantage_development/integrity_audit.json`, `research_artifacts/dynamic_uncertainty_rl_hss_stage5_proposal_advantage_development/gate.json`, `docs/experiments/dynamic_uncertainty/RL_HSS_STAGE5_PROPOSAL_ADVANTAGE_RESULT.md`, `ara/evidence/tables/table23_stage5_proposal_advantage.md`]
+- **Dependencies**: [C116, C117, C118]
+- **Tags**: RL, HSS, proposal-advantage, safety-veto, bounded-support, two-pairs, development-only
+
+## C120: Zero-velocity hard stop may be unsafe against a still-closing dynamic obstacle
+- **Statement**: The Stage 5 shadow collision is consistent with a stopping-feasibility defect: predicted collision probability approached one while proposed, executed and applied robot velocities were zero, after which the moving obstacle contacted the stationary robot.
+- **Status**: hypothesis
+- **Provenance**: ai-suggested
+- **Falsification criteria**: Time-aligned replay shows that the obstacle was not closing during the zero-velocity interval, that a nonzero escape action had no lower predicted risk under observation-only information, or isolated geometric tests show that the current hard-stop rule already selects the minimum-risk feasible action in all registered closing-obstacle cases.
+- **Proof**: [`research_artifacts/dynamic_uncertainty_rl_hss_stage5_proposal_advantage_development/runs/rl_hss_shadow/seed_730100064/metrics.json`, `research_artifacts/dynamic_uncertainty_rl_hss_stage5_proposal_advantage_development/runs/rl_hss_shadow/seed_730100064/trajectory.csv`, `docs/experiments/dynamic_uncertainty/RL_HSS_STAGE5_PROPOSAL_ADVANTAGE_RESULT.md`, `ara/evidence/tables/table23_stage5_proposal_advantage.md`]
+- **Dependencies**: [C117]
+- **Tags**: dynamic-obstacle, stopping-feasibility, hard-stop, collision, mechanism-hypothesis
+
+## C121: Initial V5 Amendment 2 development improvement did not independently replicate
+- **Statement**: V5 Amendment 2 improved success from 6/8 to 7/8 without collisions on paired development seeds 730100157--730100164, but this early screen did not generalize to fresh seeds 730100172--730100179: the candidate introduced collisions on seeds 730100176, 730100177 and 730100179. The original improvement therefore remains a valid bounded observation but no longer supports retaining V5 Amendment 2 as the dynamic Actor candidate.
+- **Status**: weakened
+- **Provenance**: ai-suggested
+- **Falsification criteria**: Reanalysis fails to reproduce either the original eight-pair improvement or the three fresh-seed candidate-only collisions, or a prospectively frozen independent replication establishes noninferior collision incidence and completion for this exact checkpoint.
+- **Proof**: [`research_artifacts/dynamic_actor_v5a2_vs_v3_rollin_seed_pair_summary.json`, `research_artifacts/dynamic_actor_v5a2_vs_v3_rollin_seed_pair_730100162/result.json`, `research_artifacts/dynamic_actor_v5a2_vs_v3_fresh_shadow_seed730100176/result.json`, `research_artifacts/dynamic_actor_v5a2_vs_v3_fresh_shadow_seed730100177/result.json`, `research_artifacts/dynamic_actor_v5a2_vs_v3_fresh_shadow_seed730100179/result.json`, `ara/evidence/tables/table24_dynamic_actor_temporal_correction.md`]
+- **Dependencies**: [C117, C118]
+- **Tags**: RL, Actor, temporal-lidar, bidirectional-control, dynamic-obstacle, safety-regression, development-only
+
+## C122: The initial V5 Amendment 6 same-cycle-filtered gain did not survive expanded safety qualification
+- **Statement**: V5 Amendment 6 update 250 improved success from 13/16 to 14/16 with no new collision on seeds 730100188--730100203, but a separately frozen 24-pair expansion on seeds 730100204--730100227 introduced one candidate-only collision and lost one source success. The original two-batch gain therefore remains a valid bounded observation but does not qualify this checkpoint for sealed evaluation.
+- **Status**: weakened
+- **Provenance**: ai-suggested
+- **Falsification criteria**: Reanalysis fails to reproduce either the initial 16-pair result or the expanded candidate-only collision/lost-success outcomes, a frozen binding mismatch is found, or an independently frozen fresh matrix for the exact same checkpoint passes all registered safety and completion gates.
+- **Proof**: [`research_artifacts/dynamic_actor_v5a6_u000250_samecycle_fresh_replication_summary.json`, `research_artifacts/dynamic_actor_v5a6_u000250_samecycle_expanded_development/summary.json`, `research_artifacts/dynamic_actor_v5a6_u000250_samecycle_expanded_development/gate.json`, `research_artifacts/dynamic_actor_v5a6_u000250_samecycle_expanded_development/integrity_audit.json`, `ara/evidence/tables/table24_dynamic_actor_temporal_correction.md`]
+- **Dependencies**: [C117, C118, C121]
+- **Tags**: RL, Actor, temporal-lidar, bidirectional-control, same-cycle-filter, safety-regression, single-obstacle, development-only
+
+## C123: Expanded V5 Amendment 6 development improves completion and steps but fails the joint safety-distance gate
+- **Statement**: Under a frozen, arm-order-balanced 24-pair single-obstacle development protocol in which both arms use proposal-only same-cycle filtering and 600 rollouts, V5 Amendment 6 update 250 improves success from 18/24 to 20/24 and reduces total steps from 7845 to 7611, but increases collisions from 2/24 to 3/24 through candidate-only collision seed 730100208, loses source success seed 730100206, worsens mean final distance from 0.77807 m to 0.81760 m, and reaches candidate planner P95 100.36 ms. The preregistered expanded gate therefore fails.
+- **Status**: supported
+- **Provenance**: ai-suggested
+- **Falsification criteria**: Artifact reanalysis does not reproduce the 24 paired outcomes, protocol/config/checkpoint hashes do not match, the same-cycle filter or 600-rollout budget was not active in both arms, the run order was not balanced as registered, or the recorded gate result differs from the frozen criteria.
+- **Proof**: [`research_artifacts/dynamic_actor_v5a6_u000250_samecycle_expanded_development/summary.json`, `research_artifacts/dynamic_actor_v5a6_u000250_samecycle_expanded_development/gate.json`, `research_artifacts/dynamic_actor_v5a6_u000250_samecycle_expanded_development/paired_analysis.json`, `research_artifacts/dynamic_actor_v5a6_u000250_samecycle_expanded_development/integrity_audit.json`, `configs/research/dynamic_actor_v5a6_samecycle_expanded_development.yaml`, `ara/evidence/tables/table24_dynamic_actor_temporal_correction.md`]
+- **Dependencies**: [C117, C118, C122]
+- **Tags**: RL, Actor, expanded-replication, paired-development, collision, completion-gain, gate-failure, single-obstacle
+
+## C124: Pareto-repaired V5 Amendment 6 passes the bounded single-obstacle development gate
+- **Statement**: Under the prospectively frozen Amendment 2 protocol on 24 new arm-order-balanced single-dynamic-obstacle development seeds, V5 Amendment 6 update 250 plus same-cycle filtering and Pareto active traversal improves success from 20/24 to 22/24, reduces collisions from 3/24 to 1/24, introduces zero Candidate-only collisions, loses zero Source successes, and improves preregistered outcome-aware efficiency from 7741 to 7615 while preserving exactly 600 rollouts. A separate unused seed730100255 then reaches the goal without collision with 17 causal temporal-escape cycles and Candidate planner P95 83.54 ms.
+- **Status**: supported
+- **Provenance**: ai-suggested
+- **Falsification criteria**: Reanalysis fails any registered Amendment 2 gate, any of the 220 bound matrix files or nine fresh-confirmation raw files fails SHA256 verification, Candidate-only collision or lost Source success is found, any valid decision does not use exactly 600 rollouts, the online LaserScan tracker/forecast is not causal and active, or seed730100255 does not reproduce the stated success/collision/runtime result.
+- **Proof**: [`research_artifacts/dynamic_actor_v5a6_u000250_pareto_forward_commit_expanded_development_amendment2/gate.json`, `research_artifacts/dynamic_actor_v5a6_u000250_pareto_forward_commit_expanded_development_amendment2/summary.json`, `research_artifacts/dynamic_actor_v5a6_u000250_pareto_forward_commit_expanded_development_amendment2/integrity_audit.json`, `research_artifacts/dynamic_actor_v5a6_u000250_pareto_forward_commit_expanded_development_amendment2/formal_statistics.json`, `research_artifacts/dynamic_actor_v5a6_single_obstacle_final_confirmation_seed730100255/result.json`, `research_artifacts/dynamic_actor_v5a6_single_obstacle_final_confirmation_seed730100255/integrity_audit.json`, `ara/evidence/tables/table26_single_obstacle_final_validation.md`]
+- **Dependencies**: [C122, C123]
+- **Tags**: RL, Actor, Pareto-traversal, paired-development, single-obstacle, runtime, bounded-support, development-only

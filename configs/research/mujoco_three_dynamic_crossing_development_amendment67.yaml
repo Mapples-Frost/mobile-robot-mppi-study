@@ -1,0 +1,36 @@
+include: mujoco_three_dynamic_crossing_development_amendment66.yaml
+
+experiment:
+  name: mujoco_three_dynamic_crossing_development_amendment67
+
+planner:
+  # Once the public online reference enters terminal control, every designed
+  # route crossing has already been traversed. Do not reinterpret a closing
+  # object behind the robot as an unknown entrance ahead.
+  probabilistic_obstacle_traversal_window_uncommitted_temporal_staging_terminal_release_enabled: true
+
+three_obstacle_amendment:
+  version: 67
+  reason: >-
+    amendment66_seed730100252_completed_two_crossing_transactions_reached_8p1348m_path_progress_without_collision_and_entered_terminal_control_but_the_uncommitted_staging_hold_reactivated_during_the_final_six_cycles_from_a_closing_object_after_all_designed_crossings_were_behind_the_robot;_the_episode_timed_out_0p752m_from_goal
+  intervention: >-
+    retain_amendment66_unknown_crossing_staging_during_online_tracking_but_release_only_that_uncommitted_staging_authority_when_the_public_online_reference_phase_is_terminal;_all_probability_risk_emergency_lattice_scan_guard_and_active_crossing_transaction_safety_contracts_remain_unchanged
+  obstacle_future_truth_used: false
+  obstacle_identity_used: false
+  terminal_release_signal: online_reference_target_phase
+  behavior_parameter_changed: true
+  candidate_values_changed: false
+  certificate_threshold_changed: false
+  hard_risk_threshold_changed: false
+  entrance_staging_contract_changed: true
+  active_commit_contract_changed: false
+  retreat_contract_changed: false
+  rearm_contract_changed: false
+  emergency_lattice_changed: false
+  scan_guard_changed: false
+  control_horizon_changed: false
+  control_limit_changed: false
+  checkpoint_changed: false
+  rollout_budget_changed: false
+  total_rollouts_per_decision: 600
+  development_only: true

@@ -1,0 +1,115 @@
+session:
+  id: "2026-07-23_037"
+  timestamp: "2026-07-23T21:15:00+08:00"
+  summary: "Rejected two frozen-L57 safety shields, implemented task-aware conservative residual retraining, passed a 3/3 offline gate and a zero-collision fresh-seed MuJoCo pilot."
+
+events_logged:
+  - type: question
+    id: N153
+    provenance: user
+    summary: "The user requested that residual learning be repaired before RL integration."
+  - type: dead_end
+    id: N154
+    provenance: ai-executed
+    summary: "A full-action dual-model shield accepted 50% of residual plans but still collided."
+  - type: dead_end
+    id: N155
+    provenance: ai-executed
+    summary: "Speed-only residual authority preserved nominal yaw but still collided."
+  - type: decision
+    id: N156
+    provenance: user
+    summary: "Stop wrapper tuning and retrain residual dynamics on task-interaction data with conservative retention."
+  - type: experiment
+    id: N157
+    provenance: ai-executed
+    summary: "All three task-aware checkpoints passed obstacle-test prediction and original-data retention gates."
+  - type: experiment
+    id: N158
+    provenance: ai-executed
+    summary: "Nominal and all three revised residual blocks reached the goal without collision on fresh development seed 730100006."
+  - type: claim
+    id: C107
+    provenance: ai-suggested
+    summary: "Step-local dual-model shielding as a sufficient frozen-L57 repair was refuted."
+  - type: claim
+    id: C108
+    provenance: ai-suggested
+    summary: "Speed-only frozen-L57 residual authority as a sufficient repair was refuted."
+  - type: claim
+    id: C109
+    provenance: ai-suggested
+    summary: "Task-aware anchored fine-tuning improved held-out obstacle prediction without material original-data forgetting."
+  - type: claim
+    id: C110
+    provenance: ai-suggested
+    summary: "The three revised blocks avoided the observed safety regression on one fresh development seed."
+  - type: heuristic
+    id: H82
+    provenance: ai-suggested
+    summary: "Weight rare hazard transitions while retaining complete-episode split integrity."
+  - type: heuristic
+    id: H83
+    provenance: ai-suggested
+    summary: "Functionally anchor task fine-tuning on original-source residual outputs."
+  - type: heuristic
+    id: H84
+    provenance: ai-suggested
+    summary: "Publish conservative risk diagnostics for the actual shield-selected sequence."
+  - type: heuristic
+    id: H85
+    provenance: ai-suggested
+    summary: "Require a new paired development seed after offline residual qualification."
+
+ai_actions:
+  - action: "Implemented dual-controller residual shielding, full-action and speed-only authority modes, diagnostics, runtime wiring and tests."
+    provenance: ai-executed
+    files_changed:
+      - "src/mobile_robot_mppi/planning/residual_shield.py"
+      - "src/mobile_robot_mppi/runtime/factories.py"
+      - "src/mobile_robot_mppi/evaluation/metrics.py"
+      - "tests/platform/test_residual_safety_shield.py"
+  - action: "Implemented task-aware dataset construction, transition weighting, checkpoint initialization and original-source output anchoring."
+    provenance: ai-executed
+    files_changed:
+      - "experiments/dynamic_uncertainty/build_task_aware_residual_dataset.py"
+      - "src/mobile_robot_mppi/learning/trainer.py"
+      - "experiments/train_platform_residual.py"
+      - "tests/learning/test_weighted_multistep_loss.py"
+  - action: "Trained three CUDA checkpoints deterministically and evaluated all contiguous task/original H1/H5/H10/H20/H36 windows."
+    provenance: ai-executed
+    files_changed:
+      - "results/research_platform/stage2_task_aware_seed20261201_v1/"
+      - "results/research_platform/stage2_task_aware_seed20261202_v1/"
+      - "results/research_platform/stage2_task_aware_seed20261203_v1/"
+      - "research_artifacts/dynamic_uncertainty_residual_stage2_offline/"
+  - action: "Ran the preregistered fresh-seed nominal plus three-block MuJoCo pilot and recorded the passing gate."
+    provenance: ai-executed
+    files_changed:
+      - "research_artifacts/dynamic_uncertainty_residual_stage2_task_aware_probe/"
+  - action: "Ran 96 relevant learning, dynamic-uncertainty and residual-shield tests on Windows."
+    provenance: ai-executed
+    files_changed: []
+
+claims_touched:
+  - id: C107
+    action: created
+    provenance: ai-suggested
+  - id: C108
+    action: created
+    provenance: ai-suggested
+  - id: C109
+    action: created
+    provenance: ai-suggested
+  - id: C110
+    action: created
+    provenance: ai-suggested
+
+open_threads:
+  - "Run the frozen paired development matrix on obstacle seeds 730100008 and 730100010 in addition to completed seed 730100006."
+  - "Do not open sealed residual seeds until the multi-seed development matrix passes."
+  - "Reduce dual-planner p95 from 267--422 ms toward the 100 ms control interval without changing the qualified residual model."
+  - "Keep RL disabled until the residual multi-seed development gate is resolved."
+
+ai_suggestions_pending:
+  - "If the three-seed safety matrix passes, optimize shield compute using shared sampling or shortlist replay, then separately preregister RL integration."

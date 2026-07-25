@@ -1,0 +1,29 @@
+include: mujoco_three_dynamic_crossing_development_amendment43.yaml
+
+experiment:
+  name: mujoco_three_dynamic_crossing_development_amendment44
+
+three_obstacle_amendment:
+  version: 44
+  reason: >-
+    amendment43_correctly_yielded_post_center_commit_authority_for_11_cycles_but_the_rl_driven_optimizer_only_injected_the_six_member_emergency_lattice_when_raw_temporal_closing_was_active;_after_center_the_runtime_mask_therefore_contained_only_the_separately_reserved_traversal_candidate_and_every_override_reselected_the_same_0p60mps_hard_risk_action
+  intervention: >-
+    while_an_active_started_commit_is_between_the_online_crossing_center_and_clear_exit_keep_the_existing_six_direction_emergency_lattice_in_the_fixed_600_candidate_budget_even_without_a_raw_temporal_trigger;_keep_the_k_minus_7_traversal_slot_separate_from_the_emergency_mask_so_post_center_hard_risk_override_cannot_reselect_the_hard_traversal_candidate
+  obstacle_future_truth_used: false
+  obstacle_identity_used: false
+  crossing_geometry_source: online_forecast_plus_polyline_reference
+  behavior_parameter_changed: false
+  candidate_values_changed: true
+  certificate_threshold_changed: false
+  commit_admission_contract_changed: false
+  post_center_execution_arbitration_changed: false
+  post_center_emergency_lattice_binding_changed: true
+  temporal_abort_direction_contract_changed: false
+  control_horizon_changed: false
+  control_limit_changed: false
+  deterministic_computation_reused: true
+  diagnostic_profiling_changed: false
+  rollout_budget_changed: false
+  total_rollouts_per_decision: 600
+  active_waiting_allowed: true
+  active_traversal_objective: true

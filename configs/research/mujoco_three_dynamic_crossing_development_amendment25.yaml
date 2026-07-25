@@ -1,0 +1,22 @@
+include: mujoco_three_dynamic_crossing_development_amendment24.yaml
+
+experiment:
+  name: mujoco_three_dynamic_crossing_development_amendment25
+
+planner:
+  probabilistic_obstacle_traversal_window_retreat_margin_m: 0.15
+
+three_obstacle_amendment:
+  version: 25
+  reason: >-
+    amendment24_cancelled_two_unsafe_commits_but_released_authority_to_a_short_horizon_optimizer_that_still_selected_forward_controls_and_collided_at_progress_2p144m
+  intervention: latch_route_aligned_reverse_retreat_to_0p15m_behind_the_staging_entry_after_a_pre_center_abort
+  obstacle_future_truth_used: false
+  obstacle_identity_used: false
+  crossing_geometry_source: online_forecast_plus_polyline_reference
+  certificate_threshold_changed: false
+  control_horizon_changed: false
+  rollout_budget_changed: false
+  total_rollouts_per_decision: 600
+  active_waiting_allowed: true
+  active_traversal_objective: true

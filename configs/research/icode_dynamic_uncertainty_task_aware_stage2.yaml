@@ -1,0 +1,22 @@
+include: icode_high_dynamic_h36_l57.yaml
+
+experiment:
+  name: icode_dynamic_uncertainty_task_aware_stage2
+
+training:
+  epochs: 60
+  batch_size: 512
+  learning_rate: 0.00005
+  early_stopping_patience: 12
+  anchor_output_weight: 0.5
+  anchor_data_sources: [nominal_mppi_onpolicy]
+
+stage2_protocol:
+  preregistration: docs/experiments/dynamic_uncertainty/RESIDUAL_DYNAMICS_STAGE2_TASK_AWARE_PREREGISTRATION.md
+  dataset_dir: results/research_platform/datasets/dynamic_uncertainty_task_aware_v1
+  base_checkpoints:
+    20261201: results/research_platform/l57_icode_high_dynamic_h36_seed20261201_v1/best.pt
+    20261202: results/research_platform/l57_icode_high_dynamic_h36_seed20261202_v1/best.pt
+    20261203: results/research_platform/l57_icode_high_dynamic_h36_seed20261203_v1/best.pt
+  maximum_original_h36_position_regression: 0.02
+  minimum_passing_blocks: 2

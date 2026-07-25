@@ -1,0 +1,34 @@
+include: mujoco_v3_probabilistic_crossing_smoke_amendment6.yaml
+
+experiment:
+  name: mujoco_v3_probabilistic_crossing_smoke_amendment7
+
+planner:
+  probabilistic_obstacle_speed_governor_enabled: true
+  probabilistic_obstacle_speed_governor_start_ratio: 0.50
+
+online_smoke:
+  output_dir: research_artifacts/mujoco_v3_probabilistic_crossing_smoke_amendment7
+
+design_amendment:
+  version: 7
+  reason: amendment6_seed730100001_crossed_the_frozen_0p20_hard_threshold_within_one_control_interval
+  observed_precursor:
+    time_s: 19.8
+    maximum_step_probability: 0.19523432349144149
+    next_time_s: 19.9
+    next_maximum_step_probability: 0.35446413034602947
+    commanded_speed_mps: 0.3482468684693205
+  safety_contract_change:
+    hard_probability_threshold_changed: false
+    probability_model_changed: false
+    response: linearly_reduce_forward_speed_from_half_the_hard_threshold
+    hard_violation_response: zero_velocity
+  obstacle_generator_changed: false
+  predictor_changed: false
+  risk_definition_changed: false
+  residual_model_changed: false
+  localization_changed: false
+  seeds_changed: false
+  route_changed: false
+  gate_changed: false

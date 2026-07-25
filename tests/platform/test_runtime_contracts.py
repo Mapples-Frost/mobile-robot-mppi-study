@@ -107,6 +107,660 @@ def test_soft_block_creep_is_strictly_capped_and_preserves_turning():
     np.testing.assert_allclose(decision.executed_control.values, (0.04, -0.5))
 
 
+def test_dynamic_escape_requires_matched_obstacle_and_lower_risk_than_stop():
+    action_spec = body_velocity_action((0.0, 0.4), 0.9)
+    arbiter = ScanGuardArbiter(
+        action_spec,
+        {
+            "dynamic_escape_enabled": True,
+            "dynamic_escape_max_speed": 0.20,
+            "dynamic_escape_min_risk_improvement": 0.05,
+        },
+    )
+    proposed = ControlCommand(np.asarray((0.30, 0.40)))
+    context = {
+        "probabilistic_obstacle_active_fallback_used": True,
+        "probabilistic_obstacle_active_fallback_index": 12,
+        "probabilistic_obstacle_maximum_step_probability": 0.30,
+        "probabilistic_obstacle_stop_maximum_probability": 0.90,
+    }
+    escaped = arbiter.arbitrate(
+        proposed,
+        {
+            "emergency_stop": True,
+            "reason": "near_body_hard_stop",
+            "dynamic_obstacle_near_body_match": True,
+        },
+        context,
+    )
+    np.testing.assert_allclose(
+        escaped.executed_control.values, (0.20, 0.40)
+    )
+    assert escaped.reason == "dynamic_active_escape"
+    assert escaped.diagnostics["dynamic_escape_allowed"]
+
+    stopped = arbiter.arbitrate(
+        proposed,
+        {
+            "emergency_stop": True,
+            "reason": "near_body_hard_stop",
+            "dynamic_obstacle_near_body_match": False,
+        },
+        context,
+    )
+    np.testing.assert_allclose(
+        stopped.executed_control.values, (0.0, 0.40)
+    )
+    assert not stopped.diagnostics["dynamic_escape_allowed"]
+
+
+def test_dynamic_escape_accepts_lower_mass_when_maximum_risk_is_saturated():
+    action_spec = body_velocity_action((0.0, 0.4), 0.9)
+    arbiter = ScanGuardArbiter(
+        action_spec,
+        {
+            "dynamic_escape_enabled": True,
+            "dynamic_escape_max_speed": 0.20,
+            "dynamic_escape_min_risk_improvement": 0.05,
+            "dynamic_escape_min_probability_mass_improvement": 0.05,
+            "dynamic_escape_probability_mass_enabled": True,
+        },
+    )
+    decision = arbiter.arbitrate(
+        ControlCommand(np.asarray((0.30, 0.40))),
+        {
+            "emergency_stop": True,
+            "reason": "near_body_hard_stop",
+            "dynamic_obstacle_near_body_match": True,
+        },
+        {
+            "probabilistic_obstacle_active_fallback_used": True,
+            "probabilistic_obstacle_active_fallback_index": 12,
+            "probabilistic_obstacle_maximum_step_probability": 1.0,
+            "probabilistic_obstacle_stop_maximum_probability": 1.0,
+            "probabilistic_obstacle_probability_mass": 2.0,
+            "probabilistic_obstacle_stop_probability_mass": 3.0,
+        },
+    )
+
+    np.testing.assert_allclose(
+        decision.executed_control.values, (0.20, 0.40)
+    )
+    assert decision.reason == "dynamic_active_escape"
+    assert decision.diagnostics["dynamic_escape_probability_mass_fallback"]
+
+
+def test_dynamic_escape_rejects_small_relative_mass_improvement():
+    action_spec = body_velocity_action((0.0, 0.4), 0.9)
+    arbiter = ScanGuardArbiter(
+        action_spec,
+        {
+            "dynamic_escape_enabled": True,
+            "dynamic_escape_max_speed": 0.20,
+            "dynamic_escape_min_risk_improvement": 0.05,
+            "dynamic_escape_min_probability_mass_improvement": 0.05,
+            "dynamic_escape_min_probability_mass_relative_improvement": 0.10,
+            "dynamic_escape_probability_mass_enabled": True,
+        },
+    )
+    decision = arbiter.arbitrate(
+        ControlCommand(np.asarray((0.20, 0.40))),
+        {
+            "emergency_stop": True,
+            "reason": "near_body_hard_stop",
+            "dynamic_obstacle_near_body_match": True,
+        },
+        {
+            "probabilistic_obstacle_active_fallback_used": True,
+            "probabilistic_obstacle_active_fallback_index": 12,
+            "probabilistic_obstacle_maximum_step_probability": 1.0,
+            "probabilistic_obstacle_stop_maximum_probability": 1.0,
+            "probabilistic_obstacle_probability_mass": 18.1,
+            "probabilistic_obstacle_stop_probability_mass": 19.3,
+        },
+    )
+
+    np.testing.assert_allclose(
+        decision.executed_control.values, (0.0, 0.40)
+    )
+    assert not decision.diagnostics["dynamic_escape_allowed"]
+    assert not decision.diagnostics[
+        "dynamic_escape_probability_mass_fallback"
+    ]
+
+
+def test_dynamic_escape_probability_mass_order_is_opt_in():
+    action_spec = body_velocity_action((0.0, 0.4), 0.9)
+    arbiter = ScanGuardArbiter(
+        action_spec,
+        {
+            "dynamic_escape_enabled": True,
+            "dynamic_escape_max_speed": 0.20,
+            "dynamic_escape_min_risk_improvement": 0.05,
+            "dynamic_escape_min_probability_mass_improvement": 0.05,
+        },
+    )
+    decision = arbiter.arbitrate(
+        ControlCommand(np.asarray((0.30, 0.40))),
+        {
+            "emergency_stop": True,
+            "reason": "near_body_hard_stop",
+            "dynamic_obstacle_near_body_match": True,
+        },
+        {
+            "probabilistic_obstacle_active_fallback_used": True,
+            "probabilistic_obstacle_active_fallback_index": 12,
+            "probabilistic_obstacle_maximum_step_probability": 1.0,
+            "probabilistic_obstacle_stop_maximum_probability": 1.0,
+            "probabilistic_obstacle_probability_mass": 2.0,
+            "probabilistic_obstacle_stop_probability_mass": 3.0,
+        },
+    )
+
+    np.testing.assert_allclose(
+        decision.executed_control.values, (0.0, 0.40)
+    )
+    assert not decision.diagnostics["dynamic_escape_allowed"]
+    assert not decision.diagnostics[
+        "dynamic_escape_probability_mass_enabled"
+    ]
+
+
+def test_reactive_dynamic_escape_turns_away_before_near_body_stop():
+    action_spec = body_velocity_action((0.0, 0.4), 0.9)
+    arbiter = ScanGuardArbiter(
+        action_spec,
+        {
+            "dynamic_escape_enabled": True,
+            "dynamic_escape_max_speed": 0.35,
+            "dynamic_escape_reactive_enabled": True,
+            "dynamic_escape_trigger_ttc_s": 1.20,
+            "dynamic_escape_turn_gain": 1.50,
+            "dynamic_escape_min_speed": 0.20,
+        },
+    )
+    decision = arbiter.arbitrate(
+        ControlCommand(np.asarray((0.10, -0.20))),
+        {
+            "emergency_stop": False,
+            "reason": "front_clear",
+            "dynamic_obstacle_scan_flow_match": True,
+            "dynamic_obstacle_away_heading_error_rad": 0.80,
+            "temporal_scan_valid": True,
+            "temporal_scan_ttc_s": 0.90,
+        },
+        {
+            "probabilistic_obstacle_active_avoidance_enabled": True
+        },
+    )
+    np.testing.assert_allclose(
+        decision.executed_control.values, (0.20, 0.90)
+    )
+    assert decision.reason == "dynamic_active_escape"
+    assert decision.diagnostics["dynamic_escape_reactive"]
+
+
+def test_reactive_dynamic_escape_can_preserve_vetted_planner_control():
+    action_spec = body_velocity_action((-0.35, 0.35), 0.9)
+    arbiter = ScanGuardArbiter(
+        action_spec,
+        {
+            "dynamic_escape_enabled": True,
+            "dynamic_escape_max_speed": 0.35,
+            "dynamic_escape_reactive_enabled": True,
+            "dynamic_escape_trigger_ttc_s": 1.50,
+            "dynamic_escape_turn_gain": 1.50,
+            "dynamic_escape_min_speed": 0.20,
+            "dynamic_escape_reverse_speed": 0.35,
+            "dynamic_escape_hold_enabled": True,
+            "dynamic_escape_use_vetted_planner_control": True,
+        },
+    )
+    proposed = ControlCommand(np.asarray((0.01, 0.11)))
+    context = {
+        "probabilistic_obstacle_active_avoidance_enabled": True,
+        "probabilistic_obstacle_maximum_step_probability": 0.0,
+    }
+    fresh = arbiter.arbitrate(
+        proposed,
+        {
+            "reason": "front_clear",
+            "dynamic_obstacle_scan_flow_match": True,
+            "dynamic_obstacle_away_heading_error_rad": -2.20,
+            "temporal_scan_valid": True,
+            "temporal_scan_ttc_s": 1.00,
+        },
+        context,
+    )
+    dropout = arbiter.arbitrate(
+        ControlCommand(np.asarray((0.02, -0.05))),
+        {
+            "reason": "front_clear",
+            "dynamic_obstacle_scan_flow_match": False,
+            "temporal_scan_valid": True,
+            "temporal_scan_ttc_s": 3.0,
+        },
+        context,
+    )
+
+    np.testing.assert_allclose(fresh.executed_control.values, proposed.values)
+    np.testing.assert_allclose(
+        dropout.executed_control.values, (0.02, -0.05)
+    )
+    assert fresh.reason == "dynamic_active_escape"
+    assert fresh.diagnostics["dynamic_escape_vetted_planner_control"]
+    assert not fresh.diagnostics["dynamic_escape_held"]
+    assert not dropout.diagnostics["dynamic_escape_allowed"]
+
+
+def test_reactive_dynamic_escape_hold_bridges_scan_flow_dropout():
+    action_spec = body_velocity_action((0.0, 0.4), 0.9)
+    arbiter = ScanGuardArbiter(
+        action_spec,
+        {
+            "dynamic_escape_enabled": True,
+            "dynamic_escape_max_speed": 0.35,
+            "dynamic_escape_reactive_enabled": True,
+            "dynamic_escape_trigger_ttc_s": 1.20,
+            "dynamic_escape_turn_gain": 1.50,
+            "dynamic_escape_min_speed": 0.20,
+            "dynamic_escape_hold_enabled": True,
+            "dynamic_escape_hold_steps": 3,
+            "dynamic_escape_hold_min_probability": 0.20,
+        },
+    )
+    active_context = {
+        "probabilistic_obstacle_active_avoidance_enabled": True,
+        "probabilistic_obstacle_maximum_step_probability": 0.90,
+    }
+    fresh = arbiter.arbitrate(
+        ControlCommand(np.asarray((0.10, -0.20))),
+        {
+            "reason": "front_clear",
+            "dynamic_obstacle_scan_flow_match": True,
+            "dynamic_obstacle_away_heading_error_rad": 0.80,
+            "temporal_scan_valid": True,
+            "temporal_scan_ttc_s": 0.90,
+        },
+        active_context,
+    )
+    held = arbiter.arbitrate(
+        ControlCommand(np.asarray((0.0, 0.0))),
+        {
+            "reason": "front_clear",
+            "dynamic_obstacle_scan_flow_match": False,
+            "temporal_scan_valid": True,
+            "temporal_scan_ttc_s": 3.0,
+        },
+        active_context,
+    )
+
+    np.testing.assert_allclose(
+        held.executed_control.values,
+        fresh.executed_control.values,
+    )
+    assert held.reason == "dynamic_active_escape"
+    assert held.diagnostics["dynamic_escape_held"]
+    assert held.diagnostics["dynamic_escape_hold_remaining"] == 2
+
+    released = arbiter.arbitrate(
+        ControlCommand(np.asarray((0.10, -0.20))),
+        {
+            "reason": "front_clear",
+            "dynamic_obstacle_scan_flow_match": False,
+            "temporal_scan_valid": True,
+            "temporal_scan_ttc_s": 3.0,
+        },
+        {
+            "probabilistic_obstacle_active_avoidance_enabled": True,
+            "probabilistic_obstacle_maximum_step_probability": 0.10,
+        },
+    )
+    np.testing.assert_allclose(
+        released.executed_control.values, (0.10, -0.20)
+    )
+    assert not released.diagnostics["dynamic_escape_held"]
+
+
+def test_reactive_dynamic_escape_reverses_for_rear_half_plane():
+    action_spec = body_velocity_action((-0.2, 0.4), 0.9)
+    arbiter = ScanGuardArbiter(
+        action_spec,
+        {
+            "dynamic_escape_enabled": True,
+            "dynamic_escape_max_speed": 0.35,
+            "dynamic_escape_reactive_enabled": True,
+            "dynamic_escape_trigger_ttc_s": 1.50,
+            "dynamic_escape_turn_gain": 1.50,
+            "dynamic_escape_min_speed": 0.20,
+            "dynamic_escape_reverse_speed": 0.20,
+        },
+    )
+    decision = arbiter.arbitrate(
+        ControlCommand(np.asarray((0.10, -0.20))),
+        {
+            "emergency_stop": False,
+            "reason": "front_clear",
+            "dynamic_obstacle_scan_flow_match": True,
+            "dynamic_obstacle_away_heading_error_rad": -2.20,
+            "temporal_scan_valid": True,
+            "temporal_scan_ttc_s": 1.00,
+        },
+        {
+            "probabilistic_obstacle_active_avoidance_enabled": True
+        },
+    )
+    assert np.isclose(decision.executed_control.values[0], -0.20)
+    assert decision.executed_control.values[1] > 0.0
+    assert decision.diagnostics["dynamic_escape_reverse"]
+
+
+def test_dynamic_recovery_waits_for_clear_hold_then_aligns_to_goal():
+    action_spec = body_velocity_action((-0.35, 0.35), 0.9)
+    arbiter = ScanGuardArbiter(
+        action_spec,
+        {
+            "dynamic_escape_enabled": True,
+            "dynamic_escape_max_speed": 0.35,
+            "dynamic_escape_reactive_enabled": True,
+            "dynamic_escape_trigger_ttc_s": 1.50,
+            "dynamic_escape_turn_gain": 1.50,
+            "dynamic_escape_min_speed": 0.20,
+            "dynamic_escape_reverse_speed": 0.35,
+            "dynamic_recovery_enabled": True,
+            "dynamic_recovery_entry_probability": 0.10,
+            "dynamic_recovery_abort_probability": 0.15,
+            "dynamic_recovery_clear_hold_steps": 2,
+            "dynamic_recovery_heading_tolerance_rad": 0.30,
+            "dynamic_recovery_min_speed": 0.30,
+            "dynamic_recovery_turn_gain": 1.50,
+            "dynamic_recovery_release_steps": 3,
+        },
+    )
+    escaped = arbiter.arbitrate(
+        ControlCommand(np.asarray((0.10, 0.0))),
+        {
+            "reason": "front_clear",
+            "dynamic_obstacle_scan_flow_match": True,
+            "dynamic_obstacle_away_heading_error_rad": 0.80,
+            "temporal_scan_valid": True,
+            "temporal_scan_ttc_s": 1.00,
+        },
+        {
+            "probabilistic_obstacle_active_avoidance_enabled": True,
+            "probabilistic_obstacle_maximum_step_probability": 0.18,
+        },
+    )
+    assert escaped.reason == "dynamic_active_escape"
+
+    clear_guard = {
+        "reason": "front_clear",
+        "temporal_scan_valid": False,
+    }
+    recovery_context = {
+        "probabilistic_obstacle_active_avoidance_enabled": True,
+        "probabilistic_obstacle_maximum_step_probability": 0.05,
+        "terminal_bearing_error": 0.80,
+        "terminal_control_distance": 4.0,
+    }
+    waiting = arbiter.arbitrate(
+        ControlCommand(np.asarray((0.0, 0.0))),
+        clear_guard,
+        recovery_context,
+    )
+    assert waiting.diagnostics["dynamic_recovery_pending"]
+    assert not waiting.diagnostics["dynamic_recovery_active"]
+
+    aligning = arbiter.arbitrate(
+        ControlCommand(np.asarray((0.0, 0.0))),
+        clear_guard,
+        recovery_context,
+    )
+    np.testing.assert_allclose(
+        aligning.executed_control.values, (0.0, 0.9)
+    )
+    assert aligning.reason == "dynamic_recovery_align"
+    assert aligning.diagnostics["dynamic_recovery_active"]
+
+
+def test_dynamic_recovery_does_not_override_vetted_temporal_escape():
+    action_spec = body_velocity_action((-0.35, 0.35), 0.9)
+    arbiter = ScanGuardArbiter(
+        action_spec,
+        {
+            "dynamic_escape_enabled": True,
+            "dynamic_escape_max_speed": 0.35,
+            "dynamic_escape_reactive_enabled": True,
+            "dynamic_escape_trigger_ttc_s": 1.50,
+            "dynamic_recovery_enabled": True,
+            "dynamic_recovery_entry_probability": 0.10,
+            "dynamic_recovery_abort_probability": 0.15,
+            "dynamic_recovery_clear_hold_steps": 1,
+            "dynamic_recovery_heading_tolerance_rad": 0.30,
+            "dynamic_recovery_minimum_heading_error_rad": 0.80,
+            "dynamic_recovery_translation_enabled": False,
+        },
+    )
+    arbiter._dynamic_escape_seen = True
+    proposed = ControlCommand(np.asarray((0.35, 0.90)))
+
+    decision = arbiter.arbitrate(
+        proposed,
+        {
+            "reason": "front_clear",
+            "temporal_scan_valid": False,
+        },
+        {
+            "probabilistic_obstacle_active_avoidance_enabled": True,
+            "probabilistic_obstacle_maximum_step_probability": 0.05,
+            "probabilistic_obstacle_temporal_emergency_vetted": True,
+            "probabilistic_obstacle_emergency_candidate_selected": True,
+            "target_bearing_error": -1.20,
+            "terminal_control_distance": 4.0,
+        },
+    )
+
+    np.testing.assert_allclose(
+        decision.executed_control.values, proposed.values
+    )
+    assert decision.diagnostics["planner_temporal_escape_active"]
+    assert not decision.diagnostics["dynamic_recovery_active"]
+
+
+def test_dynamic_recovery_advances_when_aligned_and_aborts_on_new_risk():
+    action_spec = body_velocity_action((-0.35, 0.35), 0.9)
+    arbiter = ScanGuardArbiter(
+        action_spec,
+        {
+            "dynamic_escape_enabled": True,
+            "dynamic_escape_max_speed": 0.35,
+            "dynamic_escape_reactive_enabled": True,
+            "dynamic_escape_trigger_ttc_s": 1.50,
+            "dynamic_escape_turn_gain": 1.50,
+            "dynamic_escape_min_speed": 0.20,
+            "dynamic_escape_reverse_speed": 0.35,
+            "dynamic_recovery_enabled": True,
+            "dynamic_recovery_entry_probability": 0.10,
+            "dynamic_recovery_abort_probability": 0.15,
+            "dynamic_recovery_clear_hold_steps": 1,
+            "dynamic_recovery_heading_tolerance_rad": 0.30,
+            "dynamic_recovery_min_speed": 0.30,
+            "dynamic_recovery_turn_gain": 1.50,
+            "dynamic_recovery_release_steps": 3,
+        },
+    )
+    arbiter.arbitrate(
+        ControlCommand(np.asarray((0.10, 0.0))),
+        {
+            "reason": "front_clear",
+            "dynamic_obstacle_scan_flow_match": True,
+            "dynamic_obstacle_away_heading_error_rad": -2.20,
+            "temporal_scan_valid": True,
+            "temporal_scan_ttc_s": 1.00,
+        },
+        {
+            "probabilistic_obstacle_active_avoidance_enabled": True,
+            "probabilistic_obstacle_maximum_step_probability": 0.18,
+        },
+    )
+    advancing = arbiter.arbitrate(
+        ControlCommand(np.asarray((0.0, -0.2))),
+        {"reason": "front_clear", "temporal_scan_valid": False},
+        {
+            "probabilistic_obstacle_active_avoidance_enabled": True,
+            "probabilistic_obstacle_maximum_step_probability": 0.05,
+            "terminal_bearing_error": 0.10,
+            "terminal_control_distance": 4.0,
+        },
+    )
+    np.testing.assert_allclose(
+        advancing.executed_control.values, (0.30, 0.15)
+    )
+    assert advancing.reason == "dynamic_recovery_advance"
+
+    aborted = arbiter.arbitrate(
+        ControlCommand(np.asarray((0.10, 0.20))),
+        {"reason": "front_clear", "temporal_scan_valid": False},
+        {
+            "probabilistic_obstacle_active_avoidance_enabled": True,
+            "probabilistic_obstacle_maximum_step_probability": 0.16,
+            "terminal_bearing_error": 0.05,
+            "terminal_control_distance": 3.0,
+        },
+    )
+    np.testing.assert_allclose(
+        aborted.executed_control.values, (0.10, 0.20)
+    )
+    assert aborted.diagnostics["dynamic_recovery_mode"] == "aborted"
+    assert not aborted.diagnostics["dynamic_recovery_active"]
+
+
+def test_rotation_only_recovery_never_forces_unevaluated_translation():
+    action_spec = body_velocity_action((-0.35, 0.35), 0.9)
+    arbiter = ScanGuardArbiter(
+        action_spec,
+        {
+            "dynamic_escape_enabled": True,
+            "dynamic_escape_max_speed": 0.35,
+            "dynamic_escape_reactive_enabled": True,
+            "dynamic_escape_trigger_ttc_s": 1.50,
+            "dynamic_escape_turn_gain": 1.50,
+            "dynamic_escape_min_speed": 0.20,
+            "dynamic_escape_reverse_speed": 0.35,
+            "dynamic_recovery_enabled": True,
+            "dynamic_recovery_entry_probability": 0.10,
+            "dynamic_recovery_abort_probability": 0.15,
+            "dynamic_recovery_clear_hold_steps": 1,
+            "dynamic_recovery_heading_tolerance_rad": 0.20,
+            "dynamic_recovery_translation_enabled": False,
+            "dynamic_recovery_turn_gain": 1.50,
+        },
+    )
+    arbiter.arbitrate(
+        ControlCommand(np.asarray((0.10, 0.0))),
+        {
+            "reason": "front_clear",
+            "dynamic_obstacle_scan_flow_match": True,
+            "dynamic_obstacle_away_heading_error_rad": 0.80,
+            "temporal_scan_valid": True,
+            "temporal_scan_ttc_s": 1.00,
+        },
+        {
+            "probabilistic_obstacle_active_avoidance_enabled": True,
+            "probabilistic_obstacle_maximum_step_probability": 0.18,
+        },
+    )
+    aligning = arbiter.arbitrate(
+        ControlCommand(np.asarray((0.25, -0.20))),
+        {"reason": "front_clear", "temporal_scan_valid": False},
+        {
+            "probabilistic_obstacle_active_avoidance_enabled": True,
+            "probabilistic_obstacle_maximum_step_probability": 0.05,
+            "terminal_bearing_error": 0.60,
+            "terminal_control_distance": 4.0,
+        },
+    )
+    np.testing.assert_allclose(
+        aligning.executed_control.values, (0.0, 0.9)
+    )
+    assert aligning.reason == "dynamic_recovery_align"
+
+    released = arbiter.arbitrate(
+        ControlCommand(np.asarray((0.0, 0.0))),
+        {"reason": "front_clear", "temporal_scan_valid": False},
+        {
+            "probabilistic_obstacle_active_avoidance_enabled": True,
+            "probabilistic_obstacle_maximum_step_probability": 0.05,
+            "terminal_bearing_error": 0.10,
+            "terminal_control_distance": 4.0,
+        },
+    )
+    np.testing.assert_allclose(
+        released.executed_control.values, (0.0, 0.0)
+    )
+    assert (
+        released.diagnostics["dynamic_recovery_mode"]
+        == "aligned_release"
+    )
+    assert not released.diagnostics["dynamic_recovery_active"]
+    assert not released.diagnostics["dynamic_recovery_pending"]
+
+
+def test_rotation_only_recovery_does_not_perturb_small_heading_error():
+    action_spec = body_velocity_action((-0.35, 0.35), 0.9)
+    arbiter = ScanGuardArbiter(
+        action_spec,
+        {
+            "dynamic_escape_enabled": True,
+            "dynamic_escape_max_speed": 0.35,
+            "dynamic_escape_reactive_enabled": True,
+            "dynamic_escape_trigger_ttc_s": 1.50,
+            "dynamic_escape_turn_gain": 1.50,
+            "dynamic_escape_min_speed": 0.20,
+            "dynamic_escape_reverse_speed": 0.35,
+            "dynamic_recovery_enabled": True,
+            "dynamic_recovery_entry_probability": 0.10,
+            "dynamic_recovery_abort_probability": 0.15,
+            "dynamic_recovery_clear_hold_steps": 1,
+            "dynamic_recovery_heading_tolerance_rad": 0.20,
+            "dynamic_recovery_minimum_heading_error_rad": 0.80,
+            "dynamic_recovery_translation_enabled": False,
+        },
+    )
+    arbiter.arbitrate(
+        ControlCommand(np.asarray((0.10, 0.0))),
+        {
+            "reason": "front_clear",
+            "dynamic_obstacle_scan_flow_match": True,
+            "dynamic_obstacle_away_heading_error_rad": 0.80,
+            "temporal_scan_valid": True,
+            "temporal_scan_ttc_s": 1.00,
+        },
+        {
+            "probabilistic_obstacle_active_avoidance_enabled": True,
+            "probabilistic_obstacle_maximum_step_probability": 0.18,
+        },
+    )
+    unchanged = arbiter.arbitrate(
+        ControlCommand(np.asarray((0.25, -0.20))),
+        {"reason": "front_clear", "temporal_scan_valid": False},
+        {
+            "probabilistic_obstacle_active_avoidance_enabled": True,
+            "probabilistic_obstacle_maximum_step_probability": 0.05,
+            "target_bearing_error": 0.34,
+            "terminal_control_distance": 4.0,
+        },
+    )
+    np.testing.assert_allclose(
+        unchanged.executed_control.values, (0.25, -0.20)
+    )
+    assert (
+        unchanged.diagnostics["dynamic_recovery_mode"]
+        == "not_needed"
+    )
+    assert not unchanged.diagnostics["dynamic_recovery_pending"]
+
+
 def test_strong_mujoco_guard_envelope_exceeds_collision_radius():
     config = load_yaml(ROOT / "configs/research/mujoco_strong_mppi_baseline.yaml")
     radius = float(config["plant"]["robot"]["collision_radius"])

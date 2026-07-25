@@ -1,0 +1,49 @@
+include: mujoco_three_dynamic_crossing_development_amendment68.yaml
+
+experiment:
+  name: mujoco_three_dynamic_crossing_development_amendment69
+
+planner:
+  # Keep the existing six-slot emergency lattice, but do not let a brief
+  # tracker/scan angle mismatch turn an unresolved near-body hard-stop event
+  # into forward translation before an active crossing is physically clear.
+  probabilistic_obstacle_traversal_window_post_center_low_ttc_continuity_guard_enabled: true
+
+three_obstacle_amendment:
+  version: 69
+  reason: >-
+    amendment68_seed730100253_collided_after_the_first_crossing_center_when_the_temporal_scan_remained_a_valid_closing_consensus_with_ttc_0p36s_to_0p21s_but_dynamic_obstacle_scan_flow_match_dropped;_the_post_center_all_hard_lattice_ranking_then_changed_a_near_body_stop_into_forward_0p6mps_for_three_cycles
+  intervention: >-
+    while_a_crossing_commit_is_past_its_center_but_not_yet_clear_and_the_previous_matched_temporal_emergency_has_not_rearmed_if_the_current_causal_scan_remains_valid_below_the_existing_frozen_temporal_scan_safety_hard_stop_ttc_then_exclude_forward_members_only_from_the_existing_six_slot_emergency_lattice_ranking_until_scan_clearance_or_rearm;_do_not_add_candidates_rollouts_thresholds_obstacle_identity_or_future_truth
+  obstacle_future_truth_used: false
+  obstacle_identity_used: false
+  continuity_signal_source: causal_temporal_scan_plus_existing_emergency_rearm_state
+  continuity_ttc_threshold_source: temporal_scan_guard_safety_hard_stop_ttc_s
+  new_threshold_added: false
+  behavior_parameter_changed: true
+  scene_geometry_changed: false
+  obstacle_motion_changed: false
+  success_tolerance_changed: false
+  episode_time_budget_changed: false
+  active_commit_contract_changed: true
+  retreat_contract_changed: false
+  rearm_contract_changed: false
+  emergency_lattice_values_changed: false
+  emergency_lattice_slots: 6
+  checkpoint_changed: false
+  rollout_budget_changed: false
+  total_rollouts_per_decision: 600
+  development_only: true
+
+three_obstacle_low_ttc_continuity_contract:
+  activation_scope: active_post_center_pre_clear_commit
+  requires_current_temporal_scan_valid: true
+  requires_current_ttc_below_frozen_safety_hard_stop_threshold: true
+  requires_scan_flow_match_dropout: true
+  requires_prior_matched_encounter_unrearmed: true
+  forward_lattice_members_filtered: true
+  nonforward_lattice_members_retained: true
+  release_on_scan_clearance_or_emergency_rearm: true
+  applies_to_retreat_transaction: false
+  applies_to_rearm_transaction: false
+  total_rollouts_per_decision: 600

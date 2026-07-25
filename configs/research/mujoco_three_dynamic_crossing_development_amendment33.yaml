@@ -1,0 +1,27 @@
+include: mujoco_three_dynamic_crossing_development_amendment32.yaml
+
+experiment:
+  name: mujoco_three_dynamic_crossing_development_amendment33
+
+action_space:
+  upper: [0.60, 0.90]
+
+three_obstacle_amendment:
+  version: 33
+  reason: >-
+    amendment32_seed730100253_remained_collision_free_and_realtime_but_nine_causally_corroborated_pre_center_aborts_left_the_robot_0p22_to_0p32m_short_of_the_online_crossing_center_after_1p9_to_2p0s_commits_while_the_historical_true_hazard_requires_abort_at_probability_mass_about_0p26_so_relaxing_the_abort_threshold_is_not_safe
+  intervention: raise_only_the_three_obstacle_development_forward_action_limit_from_0p45_to_0p60mps_so_a_full_horizon_causally_certified_commit_has_enough_slew_limited_translation_to_reach_the_crossing_center_before_the_online_window_closes
+  obstacle_future_truth_used: false
+  obstacle_identity_used: false
+  crossing_geometry_source: online_forecast_plus_polyline_reference
+  behavior_parameter_changed: true
+  candidate_values_changed: true
+  certificate_threshold_changed: false
+  control_horizon_changed: false
+  control_limit_changed: true
+  deterministic_computation_reused: true
+  diagnostic_profiling_changed: false
+  rollout_budget_changed: false
+  total_rollouts_per_decision: 600
+  active_waiting_allowed: true
+  active_traversal_objective: true

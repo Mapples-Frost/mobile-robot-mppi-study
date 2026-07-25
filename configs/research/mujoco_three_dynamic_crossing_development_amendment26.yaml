@@ -1,0 +1,19 @@
+include: mujoco_three_dynamic_crossing_development_amendment25.yaml
+
+experiment:
+  name: mujoco_three_dynamic_crossing_development_amendment26
+
+three_obstacle_amendment:
+  version: 26
+  reason: >-
+    amendment25_latched_reverse_retreat_but_checked_completion_against_the_monotonic_online_path_progress_floor_so_retreat_could_never_finish
+  intervention: use_an_unfloored_physical_polyline_projection_only_for_retreat_completion_while_preserving_monotonic_progress_for_normal_forward_planning_and_crossing_commit
+  obstacle_future_truth_used: false
+  obstacle_identity_used: false
+  crossing_geometry_source: online_forecast_plus_polyline_reference
+  certificate_threshold_changed: false
+  control_horizon_changed: false
+  rollout_budget_changed: false
+  total_rollouts_per_decision: 600
+  active_waiting_allowed: true
+  active_traversal_objective: true

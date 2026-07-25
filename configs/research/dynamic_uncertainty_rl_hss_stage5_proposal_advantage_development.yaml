@@ -1,0 +1,78 @@
+schema_version: 1
+status: preregistered_development_not_started
+protocol_revision: 1
+
+preregistration: docs/experiments/dynamic_uncertainty/RL_HSS_STAGE5_PROPOSAL_ADVANTAGE_PREREGISTRATION.md
+threshold_selection_report: docs/experiments/dynamic_uncertainty/RL_HSS_STAGE5_PROPOSAL_ADVANTAGE_EDA.md
+base_config: configs/research/mujoco_v3_probabilistic_crossing_smoke_amendment17_residual_runtime_stage3.yaml
+stage3_protocol: configs/research/dynamic_uncertainty_residual_runtime_stage3_parallel_development.yaml
+stage4_protocol: configs/research/dynamic_uncertainty_rl_hss_stage4_amendment1.yaml
+output_dir: research_artifacts/dynamic_uncertainty_rl_hss_stage5_proposal_advantage_development
+
+design:
+  independent_unit: complete_episode
+  scope: nominal_dynamics_mechanism_probe
+  arms: [rl_hss_off, rl_hss_shadow, rl_hss_advantage_veto]
+  blocking: [obstacle_process_seed]
+  obstacle_process_seeds: [730100064, 730100066, 730100068]
+  common_random_numbers: true
+  schedule_seed: 730199915
+  expected_episode_count: 9
+  sealed_seeds_authorized: false
+  stop_on_first_collision: true
+
+candidate_budget:
+  total_rollouts_per_controller_decision: 600
+  rl_iterations: 2
+  rl_candidates_per_iteration: 300
+  standard_iterations: 1
+  standard_candidates_per_iteration: 600
+  additional_candidates_authorized: false
+
+proposal_advantage_gate:
+  shadow:
+    enabled: true
+    mode: shadow
+    relative_disadvantage_margin: 0.0
+    consecutive_disadvantages: 3
+  active:
+    enabled: true
+    mode: episode_latched_veto
+    relative_disadvantage_margin: 0.0
+    consecutive_disadvantages: 3
+
+gates:
+  maximum_collision_count: 0
+  require_fixed_candidate_budget: true
+  require_shadow_nonintervention: true
+  require_active_dual_channel_veto: true
+  require_active_success_equal_rl_off: true
+  require_active_final_distance_better_than_shadow_pairs: 2
+  planner_p95_deadline_ms: 100.0
+  sealed_seeds_opened: false
+
+frozen_sources:
+  - path: configs/research/mujoco_v3_probabilistic_crossing_smoke_amendment17_residual_runtime_stage3.yaml
+    sha256: 5d704f9039a93d6ed3348a7441713d28e79bc69a3d37ef3217508e02aed5c8b8
+  - path: configs/research/dynamic_uncertainty_residual_runtime_stage3_parallel_development.yaml
+    sha256: 1e9593c2c5d984ee14ed87d5846ef4806d27c26eea56488e32b37bd7b2c92348
+  - path: configs/research/dynamic_uncertainty_rl_hss_stage4_amendment1.yaml
+    sha256: d039047f9be1ba744a2d4171186e30d73f0eed1722d4559c8a3fbba8c9a68874
+  - path: docs/experiments/dynamic_uncertainty/RL_HSS_STAGE4_RESULT.md
+    sha256: 47bd77e764c6a5af07f05d6726e6c0ebf583c6da20603cae264dcf8481b3ed5d
+  - path: research_artifacts/dynamic_uncertainty_rl_hss_stage4_amendment1_development/result_manifest.json
+    sha256: a9fd4cf071695318efa0a9295a1b0b051ba7fdd0fd18444f7b41bb7c35d21dc8
+
+implementation_contract:
+  contract: proposal_advantage_episode_latched_veto_v1
+  files:
+    - path: src/mobile_robot_mppi/rl/reliability.py
+      sha256: 7c1ab1a4548ac46e06bec7f94d58b458fe3d8a05b92668ab84b473d92d753977
+    - path: src/mobile_robot_mppi/planning/rl_driven_mppi.py
+      sha256: 5b814cdd2f0a73ad40346b1a3e4fd6a399a27564a3a065cfe097c8920e3196a9
+    - path: src/mobile_robot_mppi/evaluation/metrics.py
+      sha256: e7643879690765410abb3d04ee037262656ff12062fcf90e4b2c93ce58c7f32d
+    - path: experiments/dynamic_uncertainty/analyze_stage4_proposal_advantage.py
+      sha256: 96298c7c631db14f79c7a04de333e7cc9420d4a5da0c3188a8ded3dbb0e7f8c8
+    - path: experiments/dynamic_uncertainty/run_rl_hss_stage5_proposal_advantage.py
+      sha256: 7e4afb606bbb18ae92c8ff2cf313c35b744dab61d077f10fe7c6472874624c27

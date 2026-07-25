@@ -1,0 +1,17 @@
+include: mujoco_three_dynamic_crossing_development_amendment5.yaml
+
+experiment:
+  name: mujoco_three_dynamic_crossing_development_amendment6
+
+three_obstacle_amendment:
+  version: 6
+  reason: >-
+    unassigned_free_tracks_received_the_full_scan_and_duplicated_one_cluster_into_three_probabilistic_forecasts
+  intervention: empty_scan_for_unassigned_tracks_preserving_one_to_one_causal_association
+  obstacle_future_truth_used: false
+  obstacle_process_changed: false
+  tracker_association_changed: true
+  probability_risk_changed: false
+  rollout_budget_changed: false
+  active_waiting_allowed: true
+  active_traversal_objective: true

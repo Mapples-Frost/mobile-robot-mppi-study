@@ -13,6 +13,18 @@ def test_state_mse_supports_positive_component_weights():
     assert weighted > unweighted
 
 
+def test_state_mse_supports_transition_sample_weights():
+    predicted = torch.tensor(
+        [[1.0, 0.0, 0.0], [3.0, 0.0, 0.0]], dtype=torch.float32
+    )
+    target = torch.zeros_like(predicted)
+    unweighted = state_mse(predicted, target)
+    weighted = state_mse(
+        predicted, target, sample_weights=torch.tensor([4.0, 1.0])
+    )
+    assert weighted < unweighted
+
+
 def test_linear_rollout_weights_reach_frozen_terminal_ratio():
     values = rollout_step_weights(
         {"rollout_step_weighting": "linear", "rollout_terminal_weight": 4.0}, 36
@@ -25,3 +37,12 @@ def test_linear_rollout_weights_reach_frozen_terminal_ratio():
 def test_invalid_state_weights_fail_closed():
     with pytest.raises(ValueError, match="positive"):
         state_mse(torch.zeros((1, 5)), torch.zeros((1, 5)), [1, 1, 0, 1, 1])
+
+
+def test_invalid_sample_weights_fail_closed():
+    with pytest.raises(ValueError, match="sample_weights"):
+        state_mse(
+            torch.zeros((2, 5)),
+            torch.zeros((2, 5)),
+            sample_weights=[1.0, 0.0],
+        )

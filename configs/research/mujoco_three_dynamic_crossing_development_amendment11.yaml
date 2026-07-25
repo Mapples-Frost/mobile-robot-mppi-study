@@ -1,0 +1,20 @@
+include: mujoco_three_dynamic_crossing_development_amendment9.yaml
+
+experiment:
+  name: mujoco_three_dynamic_crossing_development_amendment11
+
+planner:
+  probabilistic_obstacle_emergency_candidate_prefix_steps: 8
+
+three_obstacle_amendment:
+  version: 11
+  reason: >-
+    three_prefix_steps_were_unsafe_at_the_active_lookahead_while_fifteen_steps_reversed_before_the_crossing
+  intervention: intermediate_0p8s_fixed_budget_escape_prefix
+  obstacle_future_truth_used: false
+  obstacle_process_changed: false
+  tracker_association_changed: false
+  probability_risk_changed: false
+  rollout_budget_changed: false
+  active_waiting_allowed: true
+  active_traversal_objective: true

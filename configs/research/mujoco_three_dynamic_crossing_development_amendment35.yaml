@@ -1,0 +1,27 @@
+include: mujoco_three_dynamic_crossing_development_amendment34.yaml
+
+experiment:
+  name: mujoco_three_dynamic_crossing_development_amendment35
+
+planner:
+  probabilistic_obstacle_traversal_window_retreat_hard_risk_override_enabled: true
+
+three_obstacle_amendment:
+  version: 35
+  reason: >-
+    amendment34_correctly_cancelled_the_last_commit_at_progress_2p012_before_the_2p198_crossing_center_but_the_transactional_retreat_candidate_remained_unconditionally_selected_as_its_online_risk_rose_from_max_0p145_to_1p0_and_the_closing_obstacle_hit_the_reversing_robot
+  intervention: retain_the_transactional_reverse_retreat_only_while_its_latest_causal_forecast_remains_below_the_existing_hard_probability_threshold_then_yield_to_the_already_budgeted_temporal_emergency_or_minimum_risk_active_avoidance_lattice_without_adding_rollouts
+  obstacle_future_truth_used: false
+  obstacle_identity_used: false
+  crossing_geometry_source: online_forecast_plus_polyline_reference
+  behavior_parameter_changed: true
+  candidate_values_changed: false
+  certificate_threshold_changed: false
+  control_horizon_changed: false
+  control_limit_changed: false
+  deterministic_computation_reused: true
+  diagnostic_profiling_changed: false
+  rollout_budget_changed: false
+  total_rollouts_per_decision: 600
+  active_waiting_allowed: true
+  active_traversal_objective: true

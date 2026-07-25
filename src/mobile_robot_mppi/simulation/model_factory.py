@@ -45,9 +45,16 @@ def _obstacle_element(index, obstacle):
     if not isinstance(motion, Mapping):
         raise TypeError("obstacle motion must be a mapping")
     motion_type = str(motion.get("type", "linear_ping_pong"))
-    if motion_type != "linear_ping_pong":
+    if motion_type not in (
+        "linear_ping_pong",
+        "recurrent_semimarkov_v3",
+    ):
         raise ValueError("unknown obstacle motion type: %s" % motion_type)
-    position = motion.get("start", obstacle.get("position", (0.0, 0.0)))
+    position = (
+        motion.get("start", obstacle.get("position", (0.0, 0.0)))
+        if motion_type == "linear_ping_pong"
+        else obstacle.get("position", (0.0, 0.0))
+    )
     if len(position) != 2:
         raise ValueError("dynamic obstacle start must contain x and y")
     return (

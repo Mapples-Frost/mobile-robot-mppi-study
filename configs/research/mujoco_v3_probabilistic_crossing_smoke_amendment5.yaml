@@ -1,0 +1,33 @@
+include: mujoco_v3_probabilistic_crossing_smoke_amendment4.yaml
+
+experiment:
+  name: mujoco_v3_probabilistic_crossing_smoke_amendment5
+
+perception:
+  dynamic_obstacle_tracker:
+    minimum_cluster_beams: 1
+    minimum_initial_cluster_beams: 3
+
+online_smoke:
+  output_dir: research_artifacts/mujoco_v3_probabilistic_crossing_smoke_amendment5
+
+design_amendment:
+  version: 5
+  reason: amendment4_development_smoke_failed_tracking_availability_and_used_wrong_rmse_frame
+  association_change:
+    initialization_minimum_beams: 3
+    tracked_minimum_beams: 1
+    prediction_gate_m: 0.90
+    rationale: far_target_subtends_one_or_two_beams_after_track_identity_is_established
+  audit_change:
+    previous: direct_world_truth_minus_odometry_frame_measurement
+    amended: truth_projected_into_the_online_odometry_frame
+    deterministic_replay_max_position_error_m: 0.0
+    amendment4_odometry_frame_rmse_range_m: [0.0229, 0.0312]
+  obstacle_generator_changed: false
+  predictor_changed: false
+  risk_definition_changed: false
+  seeds_changed: false
+  route_changed: false
+  gate_changed: false
+

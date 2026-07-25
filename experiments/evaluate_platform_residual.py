@@ -47,6 +47,14 @@ def main(argv=None):
     parser.add_argument("--horizons", default="1,5,10,20")
     parser.add_argument("--split", choices=("validation", "test", "unseen"), default="test")
     parser.add_argument(
+        "--data-source",
+        help="evaluate only complete episodes whose rows use this data_source",
+    )
+    parser.add_argument(
+        "--exclude-data-source",
+        help="exclude rows using this data_source",
+    )
+    parser.add_argument(
         "--max-windows", type=int, default=0,
         help="maximum contiguous windows per horizon; 0 evaluates all windows",
     )
@@ -56,6 +64,14 @@ def main(argv=None):
     max_windows = None if args.max_windows == 0 else int(args.max_windows)
     model, payload = load_platform_checkpoint(args.checkpoint, args.device)
     dataset = load_split(args.dataset_dir, args.split)
+    if args.data_source and args.exclude_data_source:
+        parser.error("--data-source and --exclude-data-source are mutually exclusive")
+    if args.data_source:
+        mask = np.asarray(dataset["data_source"]) == str(args.data_source)
+        dataset = {key: value[mask] for key, value in dataset.items()}
+    elif args.exclude_data_source:
+        mask = np.asarray(dataset["data_source"]) != str(args.exclude_data_source)
+        dataset = {key: value[mask] for key, value in dataset.items()}
     if len(dataset["state_t"]) == 0:
         raise ValueError("dataset split is empty: %s" % args.split)
     state = torch.as_tensor(dataset["state_t"], dtype=torch.float32, device=args.device)
@@ -85,6 +101,10 @@ def main(argv=None):
         "checkpoint": str(Path(args.checkpoint).resolve()),
         "model_type": model.model_type,
         "split": args.split,
+        "data_source": args.data_source,
+        "exclude_data_source": args.exclude_data_source,
+        "transition_count": int(len(dataset["state_t"])),
+        "episode_count": int(np.unique(dataset["episode_id"]).size),
         "parameter_count": model.parameter_count(),
         "window_selection": "all" if max_windows is None else "prefix",
         "max_windows": max_windows,

@@ -1,0 +1,122 @@
+schema_version: 1
+status: preregistered_development_not_started
+protocol_revision: 1
+
+preregistration: docs/experiments/dynamic_uncertainty/RL_HSS_STAGE4_PREREGISTRATION.md
+base_config: configs/research/mujoco_v3_probabilistic_crossing_smoke_amendment17_residual_runtime_stage3.yaml
+stage3_protocol: configs/research/dynamic_uncertainty_residual_runtime_stage3_parallel_development.yaml
+output_dir: research_artifacts/dynamic_uncertainty_rl_hss_stage4_development
+
+frozen_sources:
+  base_config_sha256: 5d704f9039a93d6ed3348a7441713d28e79bc69a3d37ef3217508e02aed5c8b8
+  stage3_protocol_sha256: 1e9593c2c5d984ee14ed87d5846ef4806d27c26eea56488e32b37bd7b2c92348
+  stage3_gate:
+    path: research_artifacts/dynamic_uncertainty_residual_runtime_stage3_parallel_development/gate.json
+    sha256: 4f96e5d25f97b0aef60eb95ad42ec7ae305e85014f56ddc193f8656a97aa13b7
+  stage3_sequential_equivalence:
+    path: research_artifacts/dynamic_uncertainty_residual_runtime_stage3_parallel_development/sequential_equivalence_audit.json
+    sha256: 0aa7bcf7018a03463582022e262e02116c1a1aaf93c2620971773c857aaadefa
+
+design:
+  independent_unit: complete_episode
+  factors:
+    prediction_dynamics: [nominal, stage3_residual]
+    rl_hss: [off, on]
+  blocking: [obstacle_process_seed, residual_checkpoint_seed]
+  obstacle_process_seeds: [730100006, 730100008, 730100010]
+  common_random_numbers: true
+  schedule_seed: 730199913
+  expected_episode_count: 24
+  sealed_seeds_authorized: false
+  stop_on_first_collision: true
+
+candidate_budget:
+  total_rollouts_per_controller_decision: 600
+  rl_iterations: 2
+  rl_candidates_per_iteration: 300
+  standard_iterations: 1
+  standard_candidates_per_iteration: 600
+  residual_shield_controller_count: 2
+  additional_candidates_authorized: false
+
+actor:
+  source: l217_frozen_point_goal_actor
+  checkpoint: results/research_platform/rl/gate1_direct_control_multidomain_screen_l175/checkpoints/best.pt
+  sha256: eaea2e2975de0794da4ad6876fbff3e6e85e53427e5471982e857585fff97ae4
+  policy_id: l217_frozen_point_goal_actor_stage4
+  device: cpu
+  torch_num_threads: 1
+  action_adapter: frozen_actor_subspace_v1
+  checkpoint_action_lower: [0.0, -0.9]
+  checkpoint_action_upper: [0.35, 0.9]
+
+hss:
+  source: l217_full_proposed_value_aligned_hss
+  calibration_summary:
+    path: results/research_platform/rl/gate3_reliability_calibration_l193/calibration_summary.json
+    sha256: acc1449e5cad92326711faf755b2b8d94534a01b3748d29d7da26b0d9e7b3fba
+  calibration_config:
+    path: configs/rl/gate3_reliability_calibration_l193.yaml
+    sha256: 81d5efa50010accf4b10788c040fbd79764d5e4753885c2ac2fa84e88227c8a6
+  stress_gate:
+    path: results/research_platform/rl/gate3_reliability_stress_evaluation_l194/stress_summary.json
+    sha256: 020f4e8861f2f979f24a6e02f498349852efbbbcc49c75e68aa9ad4524558eb5
+  sidecar:
+    contract: frozen_l217_value_hss_v1
+    device: cpu
+    torch_num_threads: 1
+    use_torchscript: true
+    members:
+      - checkpoint: results/research_platform/gate3_value_aligned_ensemble_member1_l192/best.pt
+        sha256: c43af62cbd96d8b3ab9d2283175ff278df9b396a911609798a8dd7a41047c6f9
+      - checkpoint: results/research_platform/gate3_value_aligned_ensemble_member2_l192/best.pt
+        sha256: e39065703214f5b3c8e9dfa2d16bb3c0be82e9340e54c017c40e5254c420acb8
+      - checkpoint: results/research_platform/gate3_value_aligned_ensemble_member3_l192/best.pt
+        sha256: 296159d7b7ae7780a6e7225f20d7e158c43acdd9bf0d4ab8254a07002b779e99
+    ensemble:
+      disagreement_scales: [0.0192860868, 0.0061503653, 0.0276655704, 0.2438328117, 0.6734842658]
+      innovation_scales: [0.25, 0.25, 0.35, 0.25, 0.60]
+      innovation_decay: 0.90
+      support_soft_z: 3.0
+      support_hard_z: 7.0
+  runtime:
+    enabled: true
+    actor_ood_soft: 3.0
+    actor_ood_hard: 7.0
+    ensemble_disagreement_soft: 0.01809636916077508
+    ensemble_disagreement_hard: 0.029740063775983316
+    innovation_error_soft: 0.04740944258503671
+    innovation_error_hard: 0.07152732870917881
+    innovation_minimum_samples: 3
+    medium_confidence: 0.33
+    high_confidence: 0.67
+    low_guided_fraction: 0.0
+    medium_guided_fraction: 0.3
+    high_guided_fraction: 0.6
+    dynamics_power: 1.0
+    dynamics_routing_mode: policy_rescue
+    policy_rescue_floor: 0.50
+
+paper_rl_driven:
+  iterations: 2
+  guided_fraction: 0.30
+  elite_fraction: 0.20
+  covariance_smoothing: 0.50
+  covariance_min_scale: 0.25
+  covariance_max_scale: 2.00
+  terminal_value_weight: 1.0
+  terminal_critic_source: target
+  terminal_guidance_radius: 0.0
+  terminal_guided_fraction_floor: 0.0
+  completion_handover_full_fallback_distance: 0.0
+  completion_handover_full_rl_distance: 0.0
+
+gates:
+  maximum_collision_count: 0
+  require_stage3_rl_off_exact_config_reproduction: true
+  require_hss_enabled_in_every_rl_on_episode: true
+  require_scan_guard_present: true
+  require_residual_shield_in_residual_cells: true
+  require_fixed_candidate_budget: true
+  require_all_three_residual_model_blocks: true
+  sealed_seeds_opened: false

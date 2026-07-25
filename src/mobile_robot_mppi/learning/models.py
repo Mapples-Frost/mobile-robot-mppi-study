@@ -185,12 +185,29 @@ def load_platform_checkpoint(path, device="cpu"):
 
 
 class PlatformResidualDynamics:
-    def __init__(self, model, device="cpu", use_torchscript=False):
+    def __init__(
+        self,
+        model,
+        device="cpu",
+        use_torchscript=False,
+        device_rollout_enabled=False,
+        cuda_graph_enabled=False,
+    ):
         self.model = model.to(device).eval()
         self.device = torch.device(device)
         self.state_dim = int(model.state_dim)
         self.control_dim = int(model.control_dim)
         self.use_torchscript = bool(use_torchscript)
+        self.device_rollout_enabled = bool(device_rollout_enabled)
+        self.cuda_graph_enabled = bool(cuda_graph_enabled)
+        if self.cuda_graph_enabled and (
+            self.device.type != "cuda" or not self.device_rollout_enabled
+        ):
+            raise ValueError(
+                "CUDA Graph residual rollout requires CUDA and the "
+                "device-resident rollout path"
+            )
+        self._rollout_graph_cache = {}
         self.inference_model = self.model
         if self.use_torchscript:
             example_state = torch.zeros((1, self.state_dim), device=self.device)
@@ -208,9 +225,259 @@ class PlatformResidualDynamics:
                 self.model.check_finite = True
 
     @classmethod
-    def from_checkpoint(cls, path, device="cpu", use_torchscript=False):
+    def from_checkpoint(
+        cls,
+        path,
+        device="cpu",
+        use_torchscript=False,
+        device_rollout_enabled=False,
+        cuda_graph_enabled=False,
+    ):
         model, _ = load_platform_checkpoint(path, device)
-        return cls(model, device, use_torchscript=use_torchscript)
+        return cls(
+            model,
+            device,
+            use_torchscript=use_torchscript,
+            device_rollout_enabled=device_rollout_enabled,
+            cuda_graph_enabled=cuda_graph_enabled,
+        )
+
+    @property
+    def supports_combined_rollout(self):
+        return self.device_rollout_enabled
+
+    def _combined_rollout_torch(
+        self,
+        nominal,
+        initial_state,
+        controls,
+        dt,
+        periodic_indices,
+        method,
+        mask,
+    ):
+        batch, horizon = controls.shape[:2]
+        state = initial_state.expand(batch, -1).clone()
+        trajectory = torch.empty(
+            (batch, horizon + 1, self.state_dim),
+            dtype=torch.float64,
+            device=self.device,
+        )
+        trajectory[:, 0, :] = state
+
+        def derivative(current, control):
+            theta = current[..., 2]
+            velocity = current[..., 3]
+            yaw_rate = current[..., 4]
+            nominal_value = torch.stack(
+                (
+                    velocity * torch.cos(theta),
+                    velocity * torch.sin(theta),
+                    yaw_rate,
+                    (control[..., 0] - velocity)
+                    / float(nominal.velocity_time_constant),
+                    (control[..., 1] - yaw_rate)
+                    / float(nominal.yaw_time_constant),
+                ),
+                dim=-1,
+            )
+            learned = self.inference_model(
+                current.to(dtype=torch.float32),
+                control.to(dtype=torch.float32),
+            ).to(dtype=torch.float64)
+            return nominal_value + learned * mask
+
+        for step in range(horizon):
+            control = controls[:, step, :]
+            if method == "euler":
+                state = state + float(dt) * derivative(state, control)
+            else:
+                k1 = derivative(state, control)
+                k2 = derivative(state + 0.5 * float(dt) * k1, control)
+                k3 = derivative(state + 0.5 * float(dt) * k2, control)
+                k4 = derivative(state + float(dt) * k3, control)
+                state = state + float(dt) * (
+                    k1 + 2.0 * k2 + 2.0 * k3 + k4
+                ) / 6.0
+            for index in periodic_indices:
+                state[..., index] = torch.atan2(
+                    torch.sin(state[..., index]),
+                    torch.cos(state[..., index]),
+                )
+            trajectory[:, step + 1, :] = state
+        return trajectory
+
+    def _cuda_graph_rollout(
+        self,
+        nominal,
+        state_value,
+        control_value,
+        dt,
+        periodic_indices,
+        method,
+        mask_value,
+    ):
+        key = (
+            tuple(control_value.shape),
+            float(dt),
+            str(method),
+            tuple(periodic_indices),
+            tuple(float(value) for value in mask_value),
+        )
+        cached = self._rollout_graph_cache.get(key)
+        if cached is None:
+            static_state = torch.empty(
+                state_value.shape, dtype=torch.float64, device=self.device
+            )
+            static_controls = torch.empty(
+                control_value.shape,
+                dtype=torch.float64,
+                device=self.device,
+            )
+            static_mask = torch.as_tensor(
+                mask_value, dtype=torch.float64, device=self.device
+            )
+            static_state.copy_(torch.from_numpy(state_value))
+            static_controls.copy_(torch.from_numpy(control_value))
+
+            # CUDA Graph capture requires allocator/model warm-up on a side
+            # stream. The captured graph then reuses fixed tensor addresses.
+            current_stream = torch.cuda.current_stream(self.device)
+            warmup_stream = torch.cuda.Stream(device=self.device)
+            warmup_stream.wait_stream(current_stream)
+            with torch.cuda.stream(warmup_stream), torch.inference_mode():
+                for _ in range(3):
+                    self._combined_rollout_torch(
+                        nominal,
+                        static_state,
+                        static_controls,
+                        dt,
+                        periodic_indices,
+                        method,
+                        static_mask,
+                    )
+            current_stream.wait_stream(warmup_stream)
+            torch.cuda.synchronize(self.device)
+            graph = torch.cuda.CUDAGraph()
+            with torch.inference_mode(), torch.cuda.graph(graph):
+                static_output = self._combined_rollout_torch(
+                    nominal,
+                    static_state,
+                    static_controls,
+                    dt,
+                    periodic_indices,
+                    method,
+                    static_mask,
+                )
+            cached = {
+                "state": static_state,
+                "controls": static_controls,
+                "output": static_output,
+                "graph": graph,
+            }
+            self._rollout_graph_cache[key] = cached
+        cached["state"].copy_(torch.from_numpy(state_value))
+        cached["controls"].copy_(torch.from_numpy(control_value))
+        cached["graph"].replay()
+        trajectory = cached["output"]
+        if not bool(torch.isfinite(trajectory).all().item()):
+            raise FloatingPointError(
+                "CUDA Graph residual rollout produced NaN or Inf"
+            )
+        return trajectory.cpu().numpy()
+
+    def combined_rollout(
+        self,
+        nominal,
+        initial_state,
+        controls,
+        dt,
+        state_spec,
+        method,
+        residual_mask=None,
+    ):
+        """Integrate a complete residual rollout without per-stage host copies.
+
+        The legacy adapter casts every neural input to float32, returns its
+        output as float64 and performs nominal/RK4 arithmetic in float64. This
+        path preserves that numerical contract while retaining all intermediate
+        tensors on one Torch device until the completed trajectory is copied
+        back to NumPy.
+        """
+        if not self.device_rollout_enabled:
+            raise RuntimeError("device-resident residual rollout is disabled")
+        if (
+            self.state_dim != 5
+            or not hasattr(nominal, "velocity_time_constant")
+            or not hasattr(nominal, "yaw_time_constant")
+        ):
+            raise TypeError(
+                "device-resident residual rollout requires dynamic-unicycle "
+                "nominal dynamics"
+            )
+        if method not in ("euler", "rk4"):
+            raise ValueError("unknown integration method: %s" % method)
+        state_value = np.asarray(initial_state, dtype=np.float64).reshape(-1)
+        control_value = np.asarray(controls, dtype=np.float64)
+        if (
+            state_value.shape != (self.state_dim,)
+            or control_value.ndim != 3
+            or control_value.shape[-1] != self.control_dim
+            or not np.isfinite(state_value).all()
+            or not np.isfinite(control_value).all()
+            or not np.isfinite(dt)
+            or float(dt) <= 0.0
+        ):
+            raise ValueError(
+                "device-resident rollout inputs must be finite and aligned"
+            )
+        mask_value = (
+            np.ones(self.state_dim, dtype=np.float64)
+            if residual_mask is None
+            else np.asarray(residual_mask, dtype=np.float64).reshape(-1)
+        )
+        if (
+            mask_value.shape != (self.state_dim,)
+            or not np.isfinite(mask_value).all()
+        ):
+            raise ValueError("residual rollout mask must match state dimension")
+        batch, horizon = control_value.shape[:2]
+        periodic_indices = tuple(int(i) for i in state_spec.periodic_indices)
+        del batch, horizon
+        if self.cuda_graph_enabled:
+            return self._cuda_graph_rollout(
+                nominal,
+                state_value,
+                control_value,
+                dt,
+                periodic_indices,
+                method,
+                mask_value,
+            )
+        with torch.inference_mode():
+            controls_tensor = torch.as_tensor(
+                control_value, dtype=torch.float64, device=self.device
+            )
+            state_tensor = torch.as_tensor(
+                state_value, dtype=torch.float64, device=self.device
+            )
+            mask = torch.as_tensor(
+                mask_value, dtype=torch.float64, device=self.device
+            )
+            trajectory = self._combined_rollout_torch(
+                nominal,
+                state_tensor,
+                controls_tensor,
+                dt,
+                periodic_indices,
+                method,
+                mask,
+            )
+            if not bool(torch.isfinite(trajectory).all().item()):
+                raise FloatingPointError(
+                    "device-resident residual rollout produced NaN or Inf"
+                )
+            return trajectory.cpu().numpy()
 
     def derivative(self, state, control, time=None):
         del time
@@ -586,9 +853,20 @@ class CanonicalizedStateResidualDynamics:
         )
 
     def support_confidence(self, state, control):
-        return self.residual.support_confidence(
-            self._canonical_state(state), control
-        )
+        canonical_state = self._canonical_state(state)
+        evaluator = getattr(self.residual, "support_confidence", None)
+        if callable(evaluator):
+            return evaluator(canonical_state, control)
+        control_value = np.asarray(control, dtype=np.float64)
+        if (
+            control_value.shape[-1] != self.control_dim
+            or control_value.shape[:-1] != canonical_state.shape[:-1]
+            or not np.isfinite(control_value).all()
+        ):
+            raise ValueError(
+                "canonical residual control has invalid dimensions"
+            )
+        return np.ones(canonical_state.shape[:-1], dtype=np.float64)
 
     def confidence(self, state, control):
         evaluator = getattr(self.residual, "confidence", None)
@@ -678,6 +956,190 @@ class NormalizedSupportGatedResidualDynamics:
         return value * confidence[..., None]
 
 
+class CausalStallGatedResidualDynamics:
+    """Latch learned residual authority off after a causal low-risk stall.
+
+    The gate uses only the current measured state, current target, and the
+    previous completed plan's collision-risk diagnostic. Once latched, the
+    nominal model remains active and the residual stays disabled until reset.
+    """
+
+    def __init__(
+        self,
+        residual,
+        position_indices,
+        speed_index,
+        speed_threshold_mps=0.02,
+        maximum_low_risk_probability=0.05,
+        consecutive_steps=10,
+        goal_exclusion_distance_m=0.45,
+        latch_for_episode=True,
+    ):
+        self.residual = residual
+        self.model = getattr(residual, "model", None)
+        self.state_dim = int(residual.state_dim)
+        self.control_dim = int(residual.control_dim)
+        self.position_indices = np.asarray(
+            position_indices, dtype=np.int64
+        ).reshape(-1)
+        self.speed_index = int(speed_index)
+        self.speed_threshold_mps = float(speed_threshold_mps)
+        self.maximum_low_risk_probability = float(
+            maximum_low_risk_probability
+        )
+        self.consecutive_steps = int(consecutive_steps)
+        self.goal_exclusion_distance_m = float(
+            goal_exclusion_distance_m
+        )
+        self.latch_for_episode = bool(latch_for_episode)
+        if (
+            self.position_indices.shape != (2,)
+            or len(set(self.position_indices.tolist())) != 2
+            or np.any(self.position_indices < 0)
+            or np.any(self.position_indices >= self.state_dim)
+            or not 0 <= self.speed_index < self.state_dim
+            or self.speed_index in set(self.position_indices.tolist())
+        ):
+            raise ValueError(
+                "stall guard requires two valid position indices and one "
+                "distinct speed index"
+            )
+        numeric = (
+            self.speed_threshold_mps,
+            self.maximum_low_risk_probability,
+            self.goal_exclusion_distance_m,
+        )
+        if (
+            not np.isfinite(numeric).all()
+            or self.speed_threshold_mps < 0.0
+            or not 0.0
+            <= self.maximum_low_risk_probability
+            <= 1.0
+            or self.consecutive_steps <= 0
+            or self.goal_exclusion_distance_m <= 0.0
+            or not self.latch_for_episode
+        ):
+            raise ValueError(
+                "stall guard thresholds must be finite and valid; the "
+                "current safety contract requires an episode latch"
+            )
+        self.reset()
+
+    def __getattr__(self, name):
+        return getattr(self.residual, name)
+
+    def reset(self):
+        self.authority = 1.0
+        self.latched = False
+        self.qualifying_steps = 0
+        self.context_steps = 0
+        self.latch_step = -1
+        self.last_speed_mps = 0.0
+        self.last_probability = 1.0
+        self.last_goal_distance_m = float("inf")
+        self.last_qualifying = False
+        reset = getattr(self.residual, "reset", None)
+        if callable(reset):
+            reset()
+
+    def observe_context(self, state, target_position, previous_probability):
+        state_value = np.asarray(state, dtype=np.float64).reshape(-1)
+        target_value = np.asarray(
+            target_position, dtype=np.float64
+        ).reshape(-1)
+        probability = float(previous_probability)
+        if (
+            state_value.shape != (self.state_dim,)
+            or target_value.shape != (2,)
+            or not np.isfinite(state_value).all()
+            or not np.isfinite(target_value).all()
+        ):
+            raise ValueError("stall guard context state/target is invalid")
+        self.context_steps += 1
+        speed = abs(float(state_value[self.speed_index]))
+        goal_distance = float(
+            np.linalg.norm(
+                state_value[self.position_indices] - target_value
+            )
+        )
+        probability_valid = math.isfinite(probability)
+        qualifying = bool(
+            not self.latched
+            and probability_valid
+            and speed <= self.speed_threshold_mps
+            and probability <= self.maximum_low_risk_probability
+            and goal_distance > self.goal_exclusion_distance_m
+        )
+        self.qualifying_steps = (
+            self.qualifying_steps + 1 if qualifying else 0
+        )
+        if (
+            not self.latched
+            and self.qualifying_steps >= self.consecutive_steps
+        ):
+            self.latched = True
+            self.authority = 0.0
+            self.latch_step = self.context_steps - 1
+        self.last_speed_mps = speed
+        self.last_probability = (
+            probability if probability_valid else 1.0
+        )
+        self.last_goal_distance_m = goal_distance
+        self.last_qualifying = qualifying
+        return self.authority
+
+    def ungated_derivative(self, state, control, time=None):
+        evaluator = getattr(self.residual, "ungated_derivative", None)
+        if not callable(evaluator):
+            evaluator = self.residual.derivative
+        return np.asarray(
+            evaluator(state, control, time), dtype=np.float64
+        )
+
+    def derivative(self, state, control, time=None):
+        return self.authority * self.ungated_derivative(
+            state, control, time
+        )
+
+    def confidence(self, state, control):
+        evaluator = getattr(self.residual, "confidence", None)
+        if callable(evaluator):
+            return evaluator(state, control)
+        state_value = np.asarray(state)
+        return np.ones(state_value.shape[:-1], dtype=np.float64)
+
+    def diagnostics(self):
+        evaluator = getattr(self.residual, "diagnostics", None)
+        values = dict(evaluator() if callable(evaluator) else {})
+        values.update(
+            {
+                "residual_stall_guard_enabled": True,
+                "residual_stall_guard_authority": float(self.authority),
+                "residual_stall_guard_latched": bool(self.latched),
+                "residual_stall_guard_qualifying_steps": int(
+                    self.qualifying_steps
+                ),
+                "residual_stall_guard_context_steps": int(
+                    self.context_steps
+                ),
+                "residual_stall_guard_latch_step": int(self.latch_step),
+                "residual_stall_guard_speed_mps": float(
+                    self.last_speed_mps
+                ),
+                "residual_stall_guard_previous_probability": float(
+                    self.last_probability
+                ),
+                "residual_stall_guard_goal_distance_m": float(
+                    self.last_goal_distance_m
+                ),
+                "residual_stall_guard_qualifying": bool(
+                    self.last_qualifying
+                ),
+            }
+        )
+        return values
+
+
 class ResidualComponentMaskedDynamics:
     """Apply a documented structural mask to residual derivative channels.
 
@@ -704,6 +1166,27 @@ class ResidualComponentMaskedDynamics:
             self.residual.derivative(state, control, time), dtype=np.float64
         )
         return value * self.mask
+
+    @property
+    def supports_combined_rollout(self):
+        return bool(
+            getattr(self.residual, "supports_combined_rollout", False)
+        )
+
+    def combined_rollout(
+        self, nominal, initial_state, controls, dt, state_spec, method
+    ):
+        if not self.supports_combined_rollout:
+            raise RuntimeError("masked residual has no combined rollout")
+        return self.residual.combined_rollout(
+            nominal,
+            initial_state,
+            controls,
+            dt,
+            state_spec,
+            method,
+            residual_mask=self.mask,
+        )
 
 
 class InnovationGatedResidualDynamics:

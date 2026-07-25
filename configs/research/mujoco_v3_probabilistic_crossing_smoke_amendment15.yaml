@@ -1,0 +1,53 @@
+include: mujoco_v3_probabilistic_crossing_smoke_amendment12.yaml
+
+experiment:
+  name: mujoco_v3_probabilistic_crossing_smoke_amendment15
+
+perception:
+  scan_guard:
+    dynamic_recovery_enabled: true
+    dynamic_recovery_entry_probability: 0.10
+    dynamic_recovery_abort_probability: 0.15
+    dynamic_recovery_clear_hold_steps: 5
+    dynamic_recovery_heading_tolerance_rad: 0.20
+    dynamic_recovery_translation_enabled: false
+    dynamic_recovery_min_speed: 0.30
+    dynamic_recovery_turn_gain: 1.50
+    dynamic_recovery_release_steps: 5
+    dynamic_recovery_goal_release_distance_m: 0.45
+
+online_smoke:
+  output_dir: research_artifacts/mujoco_v3_probabilistic_crossing_smoke_amendment15
+
+design_amendment:
+  version: 15
+  reason: amendment14_used_the_stopped_trajectory_probability_to_authorize_an_unevaluated_forward_recovery_command
+  amendment14_result:
+    retained_as_negative_result: true
+    risk_enabled_collisions: 2
+    conclusion: forced_translation_without_rerollout_is_not_authorized
+  intervention:
+    name: rotation_only_post_escape_reorientation
+    activation:
+      - a_dynamic_active_escape_has_occurred
+      - scan_guard_is_clear
+      - lidar_ttc_does_not_require_escape
+      - selected_stopped_trajectory_probability_is_at_most_0p10_for_0p5_seconds
+    action:
+      - command_zero_translation
+      - rotate_using_estimated_pose_until_goal_bearing_error_is_within_0p20_rad
+      - release_all_translation_authority_back_to_risk_evaluated_mppi
+    forced_translation: false
+    simulator_truth_used: false
+  independent_unit: complete_episode
+  blocking_factor: obstacle_process_seed
+  paired_seeds: [730100001, 730100003, 730100005]
+  obstacle_generator_changed: false
+  predictor_changed: false
+  risk_definition_changed: false
+  hard_probability_threshold_changed: false
+  residual_model_changed: false
+  localization_changed: false
+  seeds_changed: false
+  route_changed: false
+  gate_changed: false

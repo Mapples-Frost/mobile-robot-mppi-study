@@ -1,0 +1,25 @@
+include: mujoco_three_dynamic_crossing_development.yaml
+
+experiment:
+  name: mujoco_three_dynamic_crossing_development_amendment1
+
+task:
+  type: polyline
+  position_tolerance: 0.30
+  lookahead_distance: 0.80
+  terminal_approach_distance: 1.10
+  points:
+    - [-4.60, -1.80]
+    - [4.20, -1.80]
+
+three_obstacle_amendment:
+  version: 1
+  reason: point_goal_permitted_repeated_cross_track_escape_and_failed_to_recover_route_progress
+  intervention: causal_spatial_route_reference
+  obstacle_future_truth_used: false
+  obstacle_process_changed: false
+  tracker_changed: false
+  probability_risk_changed: false
+  rollout_budget_changed: false
+  active_waiting_allowed: true
+  active_traversal_objective: true

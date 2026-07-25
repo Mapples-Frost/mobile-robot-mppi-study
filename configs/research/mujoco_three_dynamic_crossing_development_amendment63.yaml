@@ -1,0 +1,40 @@
+include: mujoco_three_dynamic_crossing_development_amendment62.yaml
+
+experiment:
+  name: mujoco_three_dynamic_crossing_development_amendment63
+
+planner:
+  # A62 waited for the probabilistic hold trajectory to cross the hard-risk
+  # threshold even while the independent raw LaserScan reported a rapidly
+  # closing obstacle. Reuse the existing six-slot causal emergency lattice as
+  # soon as that warning appears during rearm; no candidate or rollout is added.
+  probabilistic_obstacle_traversal_window_rearm_temporal_closing_lattice_override_enabled: true
+
+three_obstacle_amendment:
+  version: 63
+  reason: >-
+    amendment62_seed730100252_held_or_advanced_for_four_cycles_after_raw_laserscan_closing_became_valid_at_clearance_0p929m_and_ttc_1p30s_because_the_rearm_handoff_forecast_remained_below_the_hard_threshold;_the_lattice_received_authority_only_at_clearance_0p672m_and_the_obstacle_collision_became_unavoidable_despite_subsequent_reverse_commands
+  intervention: >-
+    only_during_rearm_pending_when_the_existing_raw_causal_laserscan_closing_bit_is_active_yield_the_certified_handoff_or_hold_to_the_existing_six_slot_emergency_lattice_before_the_forecast_becomes_hard_risk;_when_the_hold_is_already_hard_risk_keep_the_existing_hard_risk_override_path;_all_other_transactions_and_low_risk_forward_authority_remain_unchanged
+  obstacle_future_truth_used: false
+  obstacle_identity_used: false
+  crossing_geometry_source: online_forecast_plus_polyline_reference
+  behavior_parameter_changed: true
+  candidate_values_changed: false
+  certificate_threshold_changed: false
+  hard_risk_threshold_changed: false
+  rearm_contract_changed: true
+  rearm_temporal_closing_lattice_override_changed: true
+  low_risk_forward_authority_changed: false
+  commit_admission_contract_changed: false
+  active_commit_contract_changed: false
+  abort_contract_changed: false
+  retreat_contract_changed: false
+  post_center_execution_arbitration_changed: false
+  exit_deadline_transaction_changed: false
+  control_horizon_changed: false
+  control_limit_changed: false
+  checkpoint_changed: false
+  rollout_budget_changed: false
+  total_rollouts_per_decision: 600
+  development_only: true

@@ -1,0 +1,31 @@
+include: mujoco_three_dynamic_crossing_development_amendment1.yaml
+
+experiment:
+  name: mujoco_three_dynamic_crossing_development_amendment4
+
+task:
+  corridor_half_width: 1.00
+  footprint_radius: 0.25
+  terminate_on_boundary_violation: true
+  projection_backtrack_distance: 0.80
+  projection_forward_distance: 2.00
+
+planner:
+  path_boundary_enabled: true
+  path_boundary_buffer: 0.05
+  path_boundary_weight: 100.0
+  path_boundary_violation_penalty: 10000.0
+  path_boundary_candidate_filter_enabled: true
+
+three_obstacle_amendment:
+  version: 4
+  reason: >-
+    vectorized_polyline_features_remove_candidate_loop_latency_and_a_hard_route_corridor_prevents_endpoint_detours
+  intervention: vectorized_causal_route_reference_plus_shared_candidate_corridor_filter
+  obstacle_future_truth_used: false
+  obstacle_process_changed: false
+  tracker_changed: false
+  probability_risk_changed: false
+  rollout_budget_changed: false
+  active_waiting_allowed: true
+  active_traversal_objective: true

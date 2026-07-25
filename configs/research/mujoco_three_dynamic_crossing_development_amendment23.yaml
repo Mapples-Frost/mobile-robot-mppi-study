@@ -1,0 +1,22 @@
+include: mujoco_three_dynamic_crossing_development_amendment22.yaml
+
+experiment:
+  name: mujoco_three_dynamic_crossing_development_amendment23
+
+planner:
+  probabilistic_obstacle_traversal_window_translation_heading_gate_rad: 0.15
+
+three_obstacle_amendment:
+  version: 23
+  reason: >-
+    amendment22_selected_the_certified_candidate_for_356_cycles_but_commanded_zero_translation_because_any_nonzero_heading_error_was_rounded_up_to_one_full_in_place_turn_step_each_replan
+  intervention: allow_forward_translation_with_bounded_heading_correction_inside_0p15_rad_after_large_error_alignment
+  obstacle_future_truth_used: false
+  obstacle_identity_used: false
+  crossing_geometry_source: online_forecast_plus_polyline_reference
+  certificate_threshold_changed: false
+  control_horizon_changed: false
+  rollout_budget_changed: false
+  total_rollouts_per_decision: 600
+  active_waiting_allowed: true
+  active_traversal_objective: true

@@ -3,6 +3,7 @@ import pytest
 
 from mobile_robot_mppi.rl.reliability import (
     HybridSamplingReliability,
+    ProposalAdvantageGate,
     SourceRelativeCompetence,
     decreasing_linear_confidence,
     fuse_hybrid_confidence,
@@ -259,3 +260,80 @@ def test_policy_rescue_keeps_actor_ood_veto_and_confident_model_floor():
     assert result["model_routing_factor"] == 0.5
     assert result["reliability_authority"] == 0.5
     assert result["guided_fraction"] == 0.3
+
+
+def test_proposal_advantage_gate_latches_after_consecutive_disadvantages():
+    gate = ProposalAdvantageGate({
+        "enabled": True,
+        "mode": "episode_latched_veto",
+        "relative_disadvantage_margin": 0.01,
+        "consecutive_disadvantages": 3,
+    })
+
+    for expected in (1, 2):
+        result = gate.update(110.0, 100.0, observed=True)
+        assert result[
+            "reliability_proposal_advantage_consecutive_disadvantages"
+        ] == expected
+        assert result[
+            "reliability_proposal_advantage_authority_next"
+        ] == 1.0
+
+    result = gate.update(110.0, 100.0, observed=True)
+    assert result["reliability_proposal_advantage_relative"] == pytest.approx(
+        -0.1
+    )
+    assert result["reliability_proposal_advantage_latched"]
+    assert result["reliability_proposal_advantage_authority_next"] == 0.0
+    assert gate.authority == 0.0
+
+    gate.update(90.0, 100.0, observed=True)
+    assert gate.authority == 0.0
+    gate.reset()
+    assert gate.authority == 1.0
+    assert gate.observations == 0
+
+
+def test_proposal_advantage_gate_requires_one_consecutive_run():
+    gate = ProposalAdvantageGate({
+        "enabled": True,
+        "consecutive_disadvantages": 2,
+    })
+    gate.update(110.0, 100.0, observed=True)
+    result = gate.update(90.0, 100.0, observed=True)
+    assert result[
+        "reliability_proposal_advantage_consecutive_disadvantages"
+    ] == 0
+    assert not result["reliability_proposal_advantage_latched"]
+
+
+def test_proposal_advantage_shadow_records_veto_without_applying_it():
+    gate = ProposalAdvantageGate({
+        "enabled": True,
+        "mode": "shadow",
+        "consecutive_disadvantages": 1,
+    })
+    result = gate.update(110.0, 100.0, observed=True)
+
+    assert result["reliability_proposal_advantage_gate_shadow"]
+    assert result["reliability_proposal_advantage_latched"]
+    assert result[
+        "reliability_proposal_advantage_would_authority_next"
+    ] == 0.0
+    assert result["reliability_proposal_advantage_authority_next"] == 1.0
+    assert gate.authority == 1.0
+
+
+@pytest.mark.parametrize(
+    "overrides",
+    (
+        {"mode": "recover_without_evidence"},
+        {"relative_disadvantage_margin": -0.1},
+        {"consecutive_disadvantages": 0},
+    ),
+)
+def test_proposal_advantage_gate_rejects_invalid_configuration(overrides):
+    config = {"enabled": True}
+    config.update(overrides)
+    with pytest.raises(ValueError):
+        ProposalAdvantageGate(config)

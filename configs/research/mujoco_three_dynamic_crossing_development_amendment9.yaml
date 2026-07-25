@@ -1,0 +1,16 @@
+include: mujoco_three_dynamic_crossing_development_amendment8.yaml
+
+experiment:
+  name: mujoco_three_dynamic_crossing_development_amendment9
+
+three_obstacle_amendment:
+  version: 9
+  reason: amendment8_was_overridden_by_a_legacy_probe_runner_constant_and_remained_at_three_prefix_steps
+  intervention: preserve_the_explicit_base_protocol_emergency_prefix_in_combined_safety_configuration
+  obstacle_future_truth_used: false
+  obstacle_process_changed: false
+  tracker_association_changed: false
+  probability_risk_changed: false
+  rollout_budget_changed: false
+  active_waiting_allowed: true
+  active_traversal_objective: true

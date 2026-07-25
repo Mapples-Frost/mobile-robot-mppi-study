@@ -1,0 +1,56 @@
+schema_version: 1
+status: preregistered_probe
+protocol_revision: 3
+
+base_config: configs/research/mujoco_v3_probabilistic_crossing_smoke_amendment17.yaml
+acceptance_record: docs/experiments/dynamic_uncertainty/ENVIRONMENT_STAGE_ACCEPTANCE.md
+preregistration: docs/experiments/dynamic_uncertainty/RESIDUAL_DYNAMICS_STAGE1_AMENDMENT1_PREREGISTRATION.md
+parent_result: docs/experiments/dynamic_uncertainty/RESIDUAL_DYNAMICS_STAGE1_RESULT.md
+
+design:
+  independent_unit: complete_episode
+  blocking:
+    - obstacle_process_seed
+    - residual_checkpoint_seed
+  common_random_numbers: true
+  conditions: [nominal, icode_residual]
+  development_episode_seeds: [730100003]
+  sealed_seeds_authorized: false
+  shared_nominal_reference_per_episode_seed: true
+  schedule_seed: 730199990
+  output_dir: research_artifacts/dynamic_uncertainty_residual_stage1_amendment1_probe
+
+residual_input_canonicalization:
+  enabled: true
+  state_names: [x, y]
+  values: [3.245218276977539, 0.3136115074157715]
+  source: common_checkpoint_feature_means
+  physical_scope: translationally_homogeneous_floor_and_actuator_dynamics
+
+residual_model_blocks:
+  - seed: 20261201
+    checkpoint: results/research_platform/l57_icode_high_dynamic_h36_seed20261201_v1/best.pt
+    sha256: a63891a2bcadd08c29d6207878510a9a5927c87b045597edc1b4c1119fd156ab
+  - seed: 20261202
+    checkpoint: results/research_platform/l57_icode_high_dynamic_h36_seed20261202_v1/best.pt
+    sha256: a5c91ea951843c3a61bd7552b893e7cde655327d1629008ffe1cbbb4a97bf5aa
+  - seed: 20261203
+    checkpoint: results/research_platform/l57_icode_high_dynamic_h36_seed20261203_v1/best.pt
+    sha256: 4274f30614af38deb31f60484b7f79919083c7e8838511e10d6798550fd931f9
+
+frozen:
+  environment_amendment: 17
+  obstacle_generator: v3_recurrent_semimarkov
+  predictor: change_aware_imm
+  hard_collision_probability_threshold: 0.20
+  localization: wheel_imu_localized
+  mppi_horizon: 36
+  mppi_candidates: 600
+  rl_enabled: false
+
+gate:
+  minimum_positive_h36_model_blocks: 3
+  maximum_collision_count_increase_per_block: 0
+  minimum_median_completion_delta: -0.02
+  minimum_median_clearance_delta_m: -0.02
+  maximum_enabled_planner_p95_compute_ms: 150.0

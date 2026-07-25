@@ -1,0 +1,46 @@
+include: mujoco_three_dynamic_crossing_development_amendment56.yaml
+
+experiment:
+  name: mujoco_three_dynamic_crossing_development_amendment57
+
+planner:
+  probabilistic_obstacle_traversal_window_rearm_no_crossing_certified_handoff_enabled: true
+
+three_obstacle_amendment:
+  version: 57
+  reason: >-
+    amendment56_released_post_retreat_rearm_after_two_causal_no_crossing_clear_cycles_but_then_returned_authority_to_the_uncommitted_generic_optimizer;_candidate_releases_at_rows227_and347_were_followed_by_forward_yaw_motion_without_an_active_commit_crossing_reappeared_only_after_the_robot_entered_the_new_window_and_later_admitted_commits_spent_their_safe_window_realigning
+  intervention: >-
+    after_the_existing_two_cycle_no_crossing_clear_hold_keep_the_rearm_transaction_and_use_the_existing_k_minus_7_traversal_slot_for_a_one_control_step_polyline_tangent_target_only_when_the_same_candidate_passes_the_frozen_short_and_full_horizon_certificates;_dropout_raw_closing_or_unsafe_certificate_holds_and_crossing_reappearance_returns_to_the_existing_two_cycle_admission_contract
+  obstacle_future_truth_used: false
+  obstacle_identity_used: false
+  crossing_geometry_source: online_forecast_plus_polyline_reference
+  behavior_parameter_changed: false
+  candidate_values_changed: true
+  certificate_threshold_changed: false
+  commit_admission_contract_changed: false
+  commit_admission_exit_deadline_contract_changed: false
+  commit_admission_exit_deadline_hold_authority_changed: false
+  commit_admission_exit_deadline_hard_risk_override_changed: false
+  commit_admission_exit_deadline_forward_filter_changed: false
+  post_retreat_rearm_contract_changed: true
+  post_retreat_no_crossing_clearance_enabled: true
+  post_retreat_no_crossing_certified_handoff_enabled: true
+  stale_crossing_geometry_retained: false
+  pre_center_exit_deadline_contract_changed: false
+  pre_center_deadline_retreat_escape_transaction_changed: false
+  pre_center_deadline_retreat_escape_transaction_lifetime_changed: false
+  post_center_execution_arbitration_changed: false
+  post_center_emergency_lattice_binding_changed: false
+  post_center_escape_transaction_latch_changed: false
+  raw_temporal_signal_binding_changed: false
+  temporal_escape_authority_preserved: true
+  temporal_abort_direction_contract_changed: false
+  control_horizon_changed: false
+  control_limit_changed: false
+  deterministic_computation_reused: true
+  diagnostic_profiling_changed: false
+  rollout_budget_changed: false
+  total_rollouts_per_decision: 600
+  active_waiting_allowed: true
+  active_traversal_objective: true

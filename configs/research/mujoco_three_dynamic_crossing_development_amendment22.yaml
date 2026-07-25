@@ -1,0 +1,23 @@
+include: mujoco_three_dynamic_crossing_development_amendment21.yaml
+
+experiment:
+  name: mujoco_three_dynamic_crossing_development_amendment22
+
+planner:
+  probabilistic_obstacle_traversal_window_probability_ceiling: 0.08
+  probabilistic_obstacle_traversal_window_mass_ceiling: 1.50
+
+three_obstacle_amendment:
+  version: 22
+  reason: >-
+    amendment21_found_209_complete_certificates_but_the_best_causal_window_was_rejected_at_max_probability_0p0627_and_accumulated_mass_1p1134_by_the_0p05_0p50_development_bounds
+  intervention: >-
+    evidence_bounded_0p08_1p50_certificate_plus_commit_start_latched_only_after_the_certified_candidate_is_actually_selected
+  obstacle_future_truth_used: false
+  obstacle_identity_used: false
+  crossing_geometry_source: online_forecast_plus_polyline_reference
+  control_horizon_changed: false
+  rollout_budget_changed: false
+  total_rollouts_per_decision: 600
+  active_waiting_allowed: true
+  active_traversal_objective: true

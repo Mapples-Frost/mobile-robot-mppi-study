@@ -1,0 +1,48 @@
+schema_version: 1
+protocol: dynamic_actor_bidirectional_correction_development_v1
+
+source_checkpoint: results/research_platform/rl/gate1_direct_control_multidomain_screen_l175/checkpoints/best.pt
+source_checkpoint_sha256: eaea2e2975de0794da4ad6876fbff3e6e85e53427e5471982e857585fff97ae4
+
+collection:
+  output_dir: research_artifacts/dynamic_actor_teacher_development_v1
+  maximum_steps: 400
+  low_risk_maximum_probability: 0.15
+  minimum_motion_speed_mps: 0.10
+  minimum_candidate_feasible_fraction: 0.10
+
+training:
+  output_dir: research_artifacts/dynamic_actor_bidirectional_correction_v4
+  seed: 730200104
+  device: cuda
+  updates: 12000
+  batch_size: 1024
+  learning_rate: 0.0003
+  action_lower: [-0.35, -0.9]
+  action_upper: [0.35, 0.9]
+  correction_scale: [2.0, 1.0]
+  opportunity_fraction: 0.35
+  intervention_fraction: 0.20
+  reverse_fraction: 0.25
+  retention_fraction: 0.20
+  velocity_loss_weight: 2.0
+  yaw_loss_weight: 1.0
+  reverse_velocity_loss_multiplier: 3.0
+  anti_freeze_weight: 1.5
+  anti_freeze_minimum_speed_mps: 0.12
+  retention_weight: 1.0
+  correction_weight: 0.05
+  selection_reverse_weight: 0.30
+  selection_retention_weight: 0.20
+  log_interval: 250
+  validation_interval: 250
+  target_log_std: -2.5
+  log_std_weight: 0.001
+
+offline_gate:
+  minimum_relative_teacher_rmse_improvement: 0.20
+  minimum_opportunity_active_passage_gain: 0.00
+  minimum_reverse_recall: 0.50
+  maximum_opportunity_unnecessary_stop_fraction: 0.20
+  maximum_retention_mean_absolute_drift: 0.12
+

@@ -1,0 +1,51 @@
+include: mujoco_v3_probabilistic_crossing_smoke_amendment12.yaml
+
+experiment:
+  name: mujoco_v3_probabilistic_crossing_smoke_amendment14
+
+perception:
+  scan_guard:
+    dynamic_recovery_enabled: true
+    dynamic_recovery_entry_probability: 0.10
+    dynamic_recovery_abort_probability: 0.15
+    dynamic_recovery_clear_hold_steps: 5
+    dynamic_recovery_heading_tolerance_rad: 0.30
+    dynamic_recovery_min_speed: 0.30
+    dynamic_recovery_turn_gain: 1.50
+    dynamic_recovery_release_steps: 5
+    dynamic_recovery_goal_release_distance_m: 0.45
+
+online_smoke:
+  output_dir: research_artifacts/mujoco_v3_probabilistic_crossing_smoke_amendment14
+
+design_amendment:
+  version: 14
+  reason: amendment12_avoided_all_collisions_but_two_episodes_timed_out_after_post_escape_optimizer_stagnation
+  intervention:
+    name: guarded_post_escape_route_recovery
+    activation:
+      - a_dynamic_active_escape_has_occurred
+      - scan_guard_is_clear
+      - lidar_ttc_does_not_require_escape
+      - selected_maximum_collision_probability_is_at_most_0p10_for_0p5_seconds
+    hysteresis:
+      entry_probability: 0.10
+      abort_probability: 0.15
+      hard_probability_threshold_unchanged: 0.20
+    action:
+      - align_estimated_robot_heading_with_the_registered_route_goal
+      - advance_at_a_bounded_minimum_0p30_mps_after_alignment
+      - return_authority_to_mppi_after_stable_forward_recovery
+    simulator_truth_used: false
+  independent_unit: complete_episode
+  blocking_factor: obstacle_process_seed
+  paired_seeds: [730100001, 730100003, 730100005]
+  obstacle_generator_changed: false
+  predictor_changed: false
+  risk_definition_changed: false
+  hard_probability_threshold_changed: false
+  residual_model_changed: false
+  localization_changed: false
+  seeds_changed: false
+  route_changed: false
+  gate_changed: false

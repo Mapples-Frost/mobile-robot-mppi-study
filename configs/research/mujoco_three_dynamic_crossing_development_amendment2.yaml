@@ -1,0 +1,27 @@
+include: mujoco_three_dynamic_crossing_development.yaml
+
+experiment:
+  name: mujoco_three_dynamic_crossing_development_amendment2
+
+task:
+  type: waypoints
+  position_tolerance: 0.30
+  waypoint_tolerance: 0.55
+  terminal_approach_count: 1
+  waypoints:
+    - [-1.50, -1.80]
+    - [0.90, -1.80]
+    - [3.20, -1.80]
+    - [4.20, -1.80]
+
+three_obstacle_amendment:
+  version: 2
+  reason: straight_polyline_preserved_route_geometry_but_caused_unqualified_per_candidate_projection_latency
+  intervention: sparse_static_route_waypoints
+  obstacle_future_truth_used: false
+  obstacle_process_changed: false
+  tracker_changed: false
+  probability_risk_changed: false
+  rollout_budget_changed: false
+  active_waiting_allowed: true
+  active_traversal_objective: true

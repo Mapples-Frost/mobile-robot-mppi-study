@@ -1,0 +1,29 @@
+include: mujoco_three_dynamic_crossing_development_amendment39.yaml
+
+experiment:
+  name: mujoco_three_dynamic_crossing_development_amendment40
+
+planner:
+  probabilistic_obstacle_traversal_window_temporal_midpoint_lattice_override_enabled: true
+
+three_obstacle_amendment:
+  version: 40
+  reason: >-
+    amendment39_fired_the_midpoint_guard_at_the_earliest_causal_LaserScan_warning_and_gained_one_control_cycle_but_the_fixed_straight_reverse_transaction_remained_selected_for_six_cycles_until_its_forecast_crossed_the_0p20_hard_threshold_then_the_existing_lattice_override_arrived_too_late_and_collision_followed_at_progress_2p1532
+  intervention: latch_midpoint_guard_retreat_as_a_temporal_escape_transaction_and_immediately_route_it_through_the_existing_six_member_forward_reverse_and_turning_emergency_lattice_for_the_whole_retreat_instead_of_waiting_for_the_fixed_reverse_candidate_to_become_hard_risk;_no_new_candidates_or_rollouts_are_added
+  obstacle_future_truth_used: false
+  obstacle_identity_used: false
+  crossing_geometry_source: online_forecast_plus_polyline_reference
+  behavior_parameter_changed: true
+  candidate_values_changed: false
+  certificate_threshold_changed: false
+  commit_admission_contract_changed: false
+  temporal_abort_direction_contract_changed: true
+  control_horizon_changed: false
+  control_limit_changed: false
+  deterministic_computation_reused: true
+  diagnostic_profiling_changed: false
+  rollout_budget_changed: false
+  total_rollouts_per_decision: 600
+  active_waiting_allowed: true
+  active_traversal_objective: true

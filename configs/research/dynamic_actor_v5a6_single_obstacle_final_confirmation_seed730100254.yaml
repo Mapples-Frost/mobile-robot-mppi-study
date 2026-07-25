@@ -1,0 +1,57 @@
+schema_version: 1
+status: frozen_before_execution
+frozen_at: "2026-07-25T08:00:00+08:00"
+scope: single_dynamic_obstacle_final_realtime_confirmation
+episode_seed: 730100254
+sealed_seed: false
+arm_order: candidate_first
+
+design:
+  paired_arms: [dynamic_actor, source_actor]
+  common_random_numbers: true
+  single_dynamic_obstacle: true
+  proposal_gate_mode_both_arms: same_cycle_filter
+  proposal_only_both_arms: true
+  total_rollouts_per_controller_decision: 600
+  tuning_during_confirmation_authorized: false
+
+probe_settings:
+  base_config: configs/research/mujoco_v3_probabilistic_crossing_smoke_amendment17_residual_runtime_stage3.yaml
+  completion_handover_full_fallback_distance: 0.4
+  completion_handover_full_rl_distance: 0.8
+  vetted_reactive_escape: true
+  dynamic_escape_min_probability_mass_relative_improvement: 0.1
+  probabilistic_emergency_trigger_ttc_s: 1.5
+  probabilistic_emergency_intent_hold_steps: 16
+  probabilistic_emergency_pareto_forward_commit: true
+
+candidate_acceptance:
+  success: true
+  collision: false
+  termination_reason: goal_reached
+  planner_p95_ms_max_exclusive: 100.0
+  paper_total_rollouts_mean: 600.0
+  same_cycle_filter_enabled_fraction: 1.0
+  require_same_cycle_filter_exercised: true
+
+output_dir: research_artifacts/dynamic_actor_v5a6_single_obstacle_final_confirmation_seed730100254
+
+bindings:
+  candidate_checkpoint:
+    path: research_artifacts/dynamic_actor_temporal_bidirectional_correction_v5_amendment6/checkpoints/improved_update_000250.pt
+    sha256: 714694f8d179f02b90c14e56c9e3e4f29a0101b70ad53f3cc795eb72dea7a1b5
+  source_checkpoint:
+    path: research_artifacts/dynamic_actor_correction_development_v3_rollin/checkpoints/best.pt
+    sha256: 6e346e5e4fcc1eca029ee4495ca0ffd0c978c5ce11089ab8ebfaaee89236c63d
+  base_config:
+    sha256: 5d704f9039a93d6ed3348a7441713d28e79bc69a3d37ef3217508e02aed5c8b8
+  probe_script:
+    sha256: 127bffaf479a61df16c06d1c95da3c60129ba043a783f9e61c6942090c622728
+  paper_planner:
+    sha256: 5e2e9d6ce465213bf8fd15a522f806d1e60ea0097d1a9d0a63887a7c83468a4b
+  mppi:
+    sha256: e8a394020d65c748747085bfbb249f3791a32bd24ea59aecf2c76a4891e39828
+  metrics:
+    sha256: dbbcef94a4cc5a744960d89efad7e6414653aebf590d48b570227f05b8a92f12
+  safety_arbiter:
+    sha256: a8a269027bbd3686e5d6cf0aac6e4c92a8383fb4aef080319ac404774394b78f

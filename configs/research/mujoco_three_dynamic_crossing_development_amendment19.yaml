@@ -1,0 +1,19 @@
+include: mujoco_three_dynamic_crossing_development_amendment18.yaml
+
+experiment:
+  name: mujoco_three_dynamic_crossing_development_amendment19
+
+perception:
+  dynamic_obstacle_tracker:
+    forecast_horizon_steps: 40
+
+three_obstacle_amendment:
+  version: 19
+  reason: amendment18_failed_preflight_because_the_causal_forecast_remained_at_36_steps
+  intervention: align_online_forecast_and_control_horizons_at_40_steps
+  obstacle_future_truth_used: false
+  obstacle_process_changed: false
+  tracker_association_changed: false
+  probability_risk_changed: false
+  rollout_budget_changed: false
+  total_rollouts_per_decision: 600

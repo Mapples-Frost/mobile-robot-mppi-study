@@ -1,0 +1,53 @@
+session:
+  id: "2026-07-24_043"
+  timestamp: "2026-07-24T21:30:00+08:00"
+  summary: "Added causal temporal lidar and bidirectional correction support, retained failed reverse-only variants, and obtained a zero-collision paired V5 development improvement over V3."
+
+events_logged:
+  - type: pivot
+    id: N176
+    provenance: user
+    summary: "Returned from HSS-only diagnosis to direct dynamic-task RL adaptation."
+  - type: dead_end
+    id: N177
+    provenance: ai-executed
+    summary: "Single-frame reverse oversampling learned reverse recall but not reliable closed-loop timing."
+  - type: experiment
+    id: N178
+    provenance: ai-executed
+    summary: "V5 Amendment 2 improved paired success 6/8 to 7/8 with zero collisions and 6.02% fewer steps."
+  - type: claim
+    id: C121
+    provenance: ai-suggested
+    summary: "Causal temporal bidirectional correction improves V3 on the retained development matrix."
+  - type: heuristic
+    id: H96
+    provenance: ai-suggested
+    summary: "Append causal scan deltas while preserving the frozen Actor input prefix."
+
+ai_actions:
+  - action: "Implemented temporal scan-delta encoding and frozen-base observation projection."
+    provenance: ai-executed
+    files_changed: ["src/mobile_robot_mppi/rl/observation.py", "src/mobile_robot_mppi/rl/sac.py"]
+  - action: "Extended CUDA imitation training with multi-dataset temporal reconstruction, reverse strata, V3 retention and false-reverse loss."
+    provenance: ai-executed
+    files_changed: ["experiments/dynamic_uncertainty/train_dynamic_actor_correction.py", "configs/research/dynamic_actor_temporal_bidirectional_correction_development_amendment2.yaml"]
+  - action: "Collected an eight-episode temporal roll-in teacher dataset and ran paired MuJoCo development probes."
+    provenance: ai-executed
+    files_changed: ["research_artifacts/dynamic_actor_temporal_rollin_teacher_v2/", "research_artifacts/dynamic_actor_v5a2_vs_v3_rollin_seed_pair_summary.json"]
+  - action: "Ran focused RL and dynamic-Actor regression tests."
+    provenance: ai-executed
+    files_changed: []
+
+claims_touched:
+  - id: C121
+    action: created
+    provenance: ai-suggested
+
+open_threads:
+  - "Repeat the paired gain on untouched development seeds before any sealed evaluation."
+  - "Retrain and qualify a Critic for the 84-dimensional observation and bidirectional action space before enabling terminal value."
+  - "Keep proposal-advantage veto available until Actor candidate cost is consistently noninferior to Gaussian candidates."
+
+ai_suggestions_pending:
+  - "Treat V5 Amendment 2 as the current development Actor candidate, not as a formal qualified model."

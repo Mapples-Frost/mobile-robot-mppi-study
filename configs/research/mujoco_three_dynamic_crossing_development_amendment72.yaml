@@ -1,0 +1,53 @@
+include: mujoco_three_dynamic_crossing_development_amendment71.yaml
+
+experiment:
+  name: mujoco_three_dynamic_crossing_development_amendment72
+
+planner:
+  # A71 proved that admitting an emergency maneuver from only its immediate
+  # next state can avoid the moving obstacle but still steer the physical
+  # footprint out of the corridor two cycles later.  Replace that handoff
+  # with the already frozen three-step emergency prefix certificate.
+  probabilistic_obstacle_traversal_window_post_center_low_ttc_first_step_boundary_handoff_enabled: false
+  probabilistic_obstacle_traversal_window_post_center_low_ttc_prefix_boundary_handoff_enabled: true
+  # This is the existing MppiConfig default used by A71.  Record it explicitly
+  # so the sealed A72 certificate does not depend on an implicit code default.
+  probabilistic_obstacle_emergency_candidate_prefix_steps: 3
+
+three_obstacle_amendment:
+  version: 72
+  reason: >-
+    amendment71_seed730100253_removed_the_dynamic_obstacle_collision_with_positive_0p046356m_clearance_but_terminated_at_step214_after_the_selected_reverse_turn_prefix_crossed_the_frozen_path_boundary_by_0p002727m;_the_first_step_only_handoff_was_therefore_insufficient
+  intervention: >-
+    replace_the_amendment71_first_step_boundary_handoff_with_a_certificate_over_all_three_already_frozen_emergency_prefix_steps;_admit_only_existing_emergency_candidates_whose_complete_executed_prefix_remains_inside_the_same_path_corridor_then_replan_each_cycle
+  obstacle_future_truth_used: false
+  obstacle_identity_used: false
+  new_threshold_added: false
+  behavior_parameter_changed: true
+  scene_geometry_changed: false
+  obstacle_motion_changed: false
+  success_tolerance_changed: false
+  episode_time_budget_changed: false
+  full_horizon_boundary_contract_changed_globally: false
+  emergency_prefix_boundary_handoff_changed: true
+  emergency_prefix_steps: 3
+  prefix_boundary_threshold_m: 0.0
+  emergency_lattice_values_changed: false
+  emergency_lattice_slots: 6
+  checkpoint_changed: false
+  rollout_budget_changed: false
+  total_rollouts_per_decision: 600
+  development_only: true
+
+three_obstacle_prefix_boundary_handoff_contract:
+  parent_guard: amendment70_low_ttc_nonforward_coverage
+  activation_scope: pending_active_post_center_pre_clear_low_ttc_dropout
+  amendment71_first_step_handoff_disabled: true
+  ordinary_full_horizon_boundary_filter_preserved: true
+  emergency_candidate_must_be_complete_prefix_boundary_feasible: true
+  prefix_steps: 3
+  prefix_boundary_margin_floor_m: 0.0
+  later_open_loop_boundary_infeasibility_may_be_replanned: true
+  candidates_added: 0
+  total_emergency_slots: 6
+  total_rollouts_per_decision: 600

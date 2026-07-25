@@ -1,0 +1,60 @@
+schema_version: 1
+study_id: ordinary_imm_v3_development
+stage: offline_predictor_baseline
+platform: windows_native_only
+obstacle_config_path: configs/research/dynamic_obstacle_process_v3.yaml
+seed_registry_path: configs/seeds/dynamic_uncertainty_splits.yaml
+output_dir: research_artifacts/ordinary_imm_v3_development
+schedule_seed: 730199996
+worker_count: 4
+development_seed_start: 730100041
+development_seed_count: 10
+processes:
+  - stochastic_cruise
+  - stochastic_shuttle
+  - branching_patrol
+  - hybrid_patrol
+noise_profiles:
+  - low
+  - medium
+prediction:
+  horizon_s: 3.0
+  forecast_stride_steps: 4
+  warmup_s: 1.0
+  initial_velocity_std: 1.0
+  gaussian_cv_process_acceleration_std: 0.18
+ordinary_imm:
+  model_names:
+    - cv
+    - turn_left
+    - turn_right
+    - brake_stop
+  initial_mode_probabilities: [0.55, 0.15, 0.15, 0.15]
+  transition_matrix:
+    - [0.94, 0.02, 0.02, 0.02]
+    - [0.04, 0.92, 0.01, 0.03]
+    - [0.04, 0.01, 0.92, 0.03]
+    - [0.05, 0.02, 0.02, 0.91]
+  turn_rate_radps: 0.65
+  brake_decay_rate_per_s: 1.80
+  process_acceleration_std:
+    cv: 0.10
+    turn_left: 0.14
+    turn_right: 0.14
+    brake_stop: 0.18
+event_windows_s:
+  pre_change: [-2.0, 0.0]
+  post_change_0_1: [0.0, 1.0]
+  post_change_1_3: [1.0, 3.0]
+gate:
+  minimum_macro_coverage_90: 0.55
+  maximum_macro_coverage_90: 0.995
+  maximum_imm_to_gaussian_macro_ade_ratio: 1.25
+scope_guards:
+  obstacle_v3_frozen: true
+  development_seeds_only: true
+  sealed_registry_imported: false
+  change_aware_enabled: false
+  collision_risk_enabled: false
+  mppi_enabled: false
+  rl_icode_hss_enabled: false

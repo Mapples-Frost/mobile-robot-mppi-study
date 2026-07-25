@@ -8,6 +8,11 @@ import numpy as np
 
 from mobile_robot_mppi.core.spaces import ActionSpec, StateSpec
 from mobile_robot_mppi.core.types import ControlCommand, PlanResult, RobotObservation
+from mobile_robot_mppi.obstacles.collision_risk import (
+    CollisionRiskConfig,
+    GaussianMixtureObstacleForecast,
+    evaluate_collision_risk,
+)
 from mobile_robot_mppi.policies.priors import GoalWarmStartPrior, PriorOutput
 
 
@@ -70,6 +75,72 @@ class MppiConfig:
     obstacle_influence: float = 0.55
     robot_radius: float = 0.25
     collision_penalty: float = 5000.0
+    probabilistic_obstacle_risk_enabled: bool = False
+    probabilistic_obstacle_risk_weight: float = 0.0
+    probabilistic_obstacle_hard_threshold: float = 0.20
+    probabilistic_obstacle_hard_penalty: float = 10000.0
+    probabilistic_obstacle_safety_margin: float = 0.10
+    probabilistic_obstacle_minimum_std: float = 0.01
+    probabilistic_obstacle_forecast_key: str = (
+        "probabilistic_obstacle_forecasts"
+    )
+    probabilistic_obstacle_missing_forecast_action: str = "raise"
+    probabilistic_obstacle_hard_violation_action: str = "penalize"
+    probabilistic_obstacle_candidate_filter_enabled: bool = False
+    probabilistic_obstacle_stopping_feasibility_enabled: bool = False
+    probabilistic_obstacle_emergency_candidates_enabled: bool = False
+    probabilistic_obstacle_emergency_candidate_prefix_steps: int = 5
+    probabilistic_obstacle_emergency_candidate_trigger_ttc_s: float = 0.0
+    probabilistic_obstacle_emergency_candidate_intent_hold_steps: int = 0
+    probabilistic_obstacle_emergency_candidate_pareto_forward_commit_enabled: bool = False
+    probabilistic_obstacle_emergency_candidate_forward_risk_ceiling: float = 0.0
+    probabilistic_obstacle_emergency_candidate_forward_mass_ceiling: float = 0.0
+    probabilistic_obstacle_emergency_candidate_rearm_ttc_s: float = 0.0
+    probabilistic_obstacle_emergency_candidate_rearm_clear_steps: int = 1
+    probabilistic_obstacle_traversal_window_enabled: bool = False
+    probabilistic_obstacle_traversal_window_horizon_steps: int = 60
+    probabilistic_obstacle_traversal_window_activation_distance_m: float = 1.2
+    probabilistic_obstacle_traversal_window_cross_track_m: float = 0.45
+    probabilistic_obstacle_traversal_window_clearance_margin_m: float = 0.10
+    probabilistic_obstacle_traversal_window_probability_ceiling: float = 0.05
+    probabilistic_obstacle_traversal_window_mass_ceiling: float = 0.50
+    probabilistic_obstacle_traversal_window_clear_hold_steps: int = 3
+    probabilistic_obstacle_traversal_window_translation_heading_gate_rad: float = 0.0
+    probabilistic_obstacle_traversal_window_abort_probability: float = 0.0
+    probabilistic_obstacle_traversal_window_temporal_abort_mass_floor: float = 0.0
+    probabilistic_obstacle_traversal_window_temporal_abort_full_horizon_corroboration_enabled: bool = False
+    probabilistic_obstacle_traversal_window_commit_admission_full_horizon_enabled: bool = False
+    probabilistic_obstacle_traversal_window_commit_admission_safe_hold_steps: int = 1
+    probabilistic_obstacle_traversal_window_commit_admission_prealign_enabled: bool = False
+    probabilistic_obstacle_traversal_window_uncommitted_temporal_staging_hold_enabled: bool = False
+    probabilistic_obstacle_traversal_window_uncommitted_temporal_staging_terminal_release_enabled: bool = False
+    probabilistic_obstacle_traversal_window_commit_admission_exit_deadline_enabled: bool = False
+    probabilistic_obstacle_traversal_window_temporal_abort_nearest_exit_enabled: bool = False
+    probabilistic_obstacle_traversal_window_temporal_midpoint_guard_enabled: bool = False
+    probabilistic_obstacle_traversal_window_temporal_midpoint_lattice_override_enabled: bool = False
+    probabilistic_obstacle_traversal_window_temporal_exit_deadline_guard_enabled: bool = False
+    probabilistic_obstacle_traversal_window_temporal_exit_deadline_escape_latch_enabled: bool = False
+    probabilistic_obstacle_traversal_window_rearm_no_crossing_clear_enabled: bool = False
+    probabilistic_obstacle_traversal_window_rearm_no_crossing_certified_handoff_enabled: bool = False
+    probabilistic_obstacle_traversal_window_rearm_staging_approach_enabled: bool = False
+    probabilistic_obstacle_traversal_window_rearm_staging_frontier_enabled: bool = False
+    probabilistic_obstacle_traversal_window_rearm_hard_risk_temporal_lattice_override_enabled: bool = False
+    probabilistic_obstacle_traversal_window_rearm_temporal_closing_lattice_override_enabled: bool = False
+    probabilistic_obstacle_traversal_window_temporal_retreat_raw_lattice_binding_enabled: bool = False
+    probabilistic_obstacle_traversal_window_temporal_retreat_post_intent_all_hard_forward_filter_enabled: bool = False
+    probabilistic_obstacle_traversal_window_temporal_midpoint_retreat_reverse_filter_enabled: bool = False
+    probabilistic_obstacle_traversal_window_post_center_hard_risk_override_enabled: bool = False
+    probabilistic_obstacle_traversal_window_post_center_temporal_override_enabled: bool = False
+    probabilistic_obstacle_traversal_window_post_center_temporal_escape_latch_enabled: bool = False
+    probabilistic_obstacle_traversal_window_post_center_low_ttc_continuity_guard_enabled: bool = False
+    probabilistic_obstacle_traversal_window_post_center_low_ttc_nonforward_coverage_enabled: bool = False
+    probabilistic_obstacle_traversal_window_post_center_low_ttc_first_step_boundary_handoff_enabled: bool = False
+    probabilistic_obstacle_traversal_window_post_center_low_ttc_prefix_boundary_handoff_enabled: bool = False
+    probabilistic_obstacle_traversal_window_post_center_forward_exit_commit_enabled: bool = False
+    probabilistic_obstacle_traversal_window_retreat_margin_m: float = 0.0
+    probabilistic_obstacle_traversal_window_retreat_hard_risk_override_enabled: bool = False
+    probabilistic_obstacle_speed_governor_enabled: bool = False
+    probabilistic_obstacle_speed_governor_start_ratio: float = 0.50
     importance_sampling_correction: bool = False
     previous_sequence_blend: float = 0.5
     safety_recovery_prefix_steps: int = 0
@@ -144,6 +215,367 @@ class MppiConfig:
             obstacle_influence=float(values.get("obstacle_influence", 0.55)),
             robot_radius=float(values.get("robot_radius", 0.25)),
             collision_penalty=float(values.get("collision_penalty", 5000.0)),
+            probabilistic_obstacle_risk_enabled=bool(
+                values.get("probabilistic_obstacle_risk_enabled", False)
+            ),
+            probabilistic_obstacle_risk_weight=float(
+                values.get("probabilistic_obstacle_risk_weight", 0.0)
+            ),
+            probabilistic_obstacle_hard_threshold=float(
+                values.get("probabilistic_obstacle_hard_threshold", 0.20)
+            ),
+            probabilistic_obstacle_hard_penalty=float(
+                values.get("probabilistic_obstacle_hard_penalty", 10000.0)
+            ),
+            probabilistic_obstacle_safety_margin=float(
+                values.get("probabilistic_obstacle_safety_margin", 0.10)
+            ),
+            probabilistic_obstacle_minimum_std=float(
+                values.get("probabilistic_obstacle_minimum_std", 0.01)
+            ),
+            probabilistic_obstacle_forecast_key=str(
+                values.get(
+                    "probabilistic_obstacle_forecast_key",
+                    "probabilistic_obstacle_forecasts",
+                )
+            ),
+            probabilistic_obstacle_missing_forecast_action=str(
+                values.get(
+                    "probabilistic_obstacle_missing_forecast_action",
+                    "raise",
+                )
+            ),
+            probabilistic_obstacle_hard_violation_action=str(
+                values.get(
+                    "probabilistic_obstacle_hard_violation_action",
+                    "penalize",
+                )
+            ),
+            probabilistic_obstacle_candidate_filter_enabled=bool(
+                values.get(
+                    "probabilistic_obstacle_candidate_filter_enabled",
+                    False,
+                )
+            ),
+            probabilistic_obstacle_stopping_feasibility_enabled=bool(
+                values.get(
+                    "probabilistic_obstacle_stopping_feasibility_enabled",
+                    False,
+                )
+            ),
+            probabilistic_obstacle_emergency_candidates_enabled=bool(
+                values.get(
+                    "probabilistic_obstacle_emergency_candidates_enabled",
+                    False,
+                )
+            ),
+            probabilistic_obstacle_emergency_candidate_prefix_steps=int(
+                values.get(
+                    "probabilistic_obstacle_emergency_candidate_prefix_steps",
+                    5,
+                )
+            ),
+            probabilistic_obstacle_emergency_candidate_trigger_ttc_s=float(
+                values.get(
+                    "probabilistic_obstacle_emergency_candidate_trigger_ttc_s",
+                    0.0,
+                )
+            ),
+            probabilistic_obstacle_emergency_candidate_intent_hold_steps=int(
+                values.get(
+                    "probabilistic_obstacle_emergency_candidate_intent_hold_steps",
+                    0,
+                )
+            ),
+            probabilistic_obstacle_emergency_candidate_pareto_forward_commit_enabled=bool(
+                values.get(
+                    "probabilistic_obstacle_emergency_candidate_pareto_forward_commit_enabled",
+                    False,
+                )
+            ),
+            probabilistic_obstacle_emergency_candidate_forward_risk_ceiling=float(
+                values.get(
+                    'probabilistic_obstacle_emergency_candidate_forward_risk_ceiling',
+                    0.0,
+                )
+            ),
+            probabilistic_obstacle_emergency_candidate_forward_mass_ceiling=float(
+                values.get(
+                    'probabilistic_obstacle_emergency_candidate_forward_mass_ceiling',
+                    0.0,
+                )
+            ),
+            probabilistic_obstacle_emergency_candidate_rearm_ttc_s=float(
+                values.get(
+                    "probabilistic_obstacle_emergency_candidate_rearm_ttc_s",
+                    0.0,
+                )
+            ),
+            probabilistic_obstacle_emergency_candidate_rearm_clear_steps=int(
+                values.get(
+                    "probabilistic_obstacle_emergency_candidate_rearm_clear_steps",
+                    1,
+                )
+            ),
+            probabilistic_obstacle_traversal_window_enabled=bool(
+                values.get(
+                    "probabilistic_obstacle_traversal_window_enabled", False
+                )
+            ),
+            probabilistic_obstacle_traversal_window_horizon_steps=int(
+                values.get(
+                    "probabilistic_obstacle_traversal_window_horizon_steps", 60
+                )
+            ),
+            probabilistic_obstacle_traversal_window_activation_distance_m=float(
+                values.get(
+                    "probabilistic_obstacle_traversal_window_activation_distance_m",
+                    1.2,
+                )
+            ),
+            probabilistic_obstacle_traversal_window_cross_track_m=float(
+                values.get(
+                    "probabilistic_obstacle_traversal_window_cross_track_m", 0.45
+                )
+            ),
+            probabilistic_obstacle_traversal_window_clearance_margin_m=float(
+                values.get(
+                    "probabilistic_obstacle_traversal_window_clearance_margin_m",
+                    0.10,
+                )
+            ),
+            probabilistic_obstacle_traversal_window_probability_ceiling=float(
+                values.get(
+                    "probabilistic_obstacle_traversal_window_probability_ceiling",
+                    0.05,
+                )
+            ),
+            probabilistic_obstacle_traversal_window_mass_ceiling=float(
+                values.get(
+                    "probabilistic_obstacle_traversal_window_mass_ceiling", 0.50
+                )
+            ),
+            probabilistic_obstacle_traversal_window_clear_hold_steps=int(
+                values.get(
+                    "probabilistic_obstacle_traversal_window_clear_hold_steps", 3
+                )
+            ),
+            probabilistic_obstacle_traversal_window_translation_heading_gate_rad=float(
+                values.get(
+                    "probabilistic_obstacle_traversal_window_translation_heading_gate_rad",
+                    0.0,
+                )
+            ),
+            probabilistic_obstacle_traversal_window_abort_probability=float(
+                values.get(
+                    "probabilistic_obstacle_traversal_window_abort_probability",
+                    0.0,
+                )
+            ),
+            probabilistic_obstacle_traversal_window_temporal_abort_mass_floor=float(
+                values.get(
+                    "probabilistic_obstacle_traversal_window_temporal_abort_mass_floor",
+                    0.0,
+                )
+            ),
+            probabilistic_obstacle_traversal_window_temporal_abort_full_horizon_corroboration_enabled=bool(
+                values.get(
+                    "probabilistic_obstacle_traversal_window_temporal_abort_full_horizon_corroboration_enabled",
+                    False,
+                )
+            ),
+            probabilistic_obstacle_traversal_window_commit_admission_full_horizon_enabled=bool(
+                values.get(
+                    "probabilistic_obstacle_traversal_window_commit_admission_full_horizon_enabled",
+                    False,
+                )
+            ),
+            probabilistic_obstacle_traversal_window_commit_admission_safe_hold_steps=int(
+                values.get(
+                    "probabilistic_obstacle_traversal_window_commit_admission_safe_hold_steps",
+                    1,
+                )
+            ),
+            probabilistic_obstacle_traversal_window_commit_admission_prealign_enabled=bool(
+                values.get(
+                    "probabilistic_obstacle_traversal_window_commit_admission_prealign_enabled",
+                    False,
+                )
+            ),
+            probabilistic_obstacle_traversal_window_uncommitted_temporal_staging_hold_enabled=bool(
+                values.get(
+                    "probabilistic_obstacle_traversal_window_uncommitted_temporal_staging_hold_enabled",
+                    False,
+                )
+            ),
+            probabilistic_obstacle_traversal_window_uncommitted_temporal_staging_terminal_release_enabled=bool(
+                values.get(
+                    "probabilistic_obstacle_traversal_window_uncommitted_temporal_staging_terminal_release_enabled",
+                    False,
+                )
+            ),
+            probabilistic_obstacle_traversal_window_commit_admission_exit_deadline_enabled=bool(
+                values.get(
+                    "probabilistic_obstacle_traversal_window_commit_admission_exit_deadline_enabled",
+                    False,
+                )
+            ),
+            probabilistic_obstacle_traversal_window_temporal_abort_nearest_exit_enabled=bool(
+                values.get(
+                    "probabilistic_obstacle_traversal_window_temporal_abort_nearest_exit_enabled",
+                    False,
+                )
+            ),
+            probabilistic_obstacle_traversal_window_temporal_midpoint_guard_enabled=bool(
+                values.get(
+                    "probabilistic_obstacle_traversal_window_temporal_midpoint_guard_enabled",
+                    False,
+                )
+            ),
+            probabilistic_obstacle_traversal_window_temporal_midpoint_lattice_override_enabled=bool(
+                values.get(
+                    "probabilistic_obstacle_traversal_window_temporal_midpoint_lattice_override_enabled",
+                    False,
+                )
+            ),
+            probabilistic_obstacle_traversal_window_temporal_exit_deadline_guard_enabled=bool(
+                values.get(
+                    "probabilistic_obstacle_traversal_window_temporal_exit_deadline_guard_enabled",
+                    False,
+                )
+            ),
+            probabilistic_obstacle_traversal_window_temporal_exit_deadline_escape_latch_enabled=bool(
+                values.get(
+                    "probabilistic_obstacle_traversal_window_temporal_exit_deadline_escape_latch_enabled",
+                    False,
+                )
+            ),
+            probabilistic_obstacle_traversal_window_rearm_no_crossing_clear_enabled=bool(
+                values.get(
+                    "probabilistic_obstacle_traversal_window_rearm_no_crossing_clear_enabled",
+                    False,
+                )
+            ),
+            probabilistic_obstacle_traversal_window_rearm_no_crossing_certified_handoff_enabled=bool(
+                values.get(
+                    "probabilistic_obstacle_traversal_window_rearm_no_crossing_certified_handoff_enabled",
+                    False,
+                )
+            ),
+            probabilistic_obstacle_traversal_window_rearm_staging_approach_enabled=bool(
+                values.get(
+                    "probabilistic_obstacle_traversal_window_rearm_staging_approach_enabled",
+                    False,
+                )
+            ),
+            probabilistic_obstacle_traversal_window_rearm_staging_frontier_enabled=bool(
+                values.get(
+                    "probabilistic_obstacle_traversal_window_rearm_staging_frontier_enabled",
+                    False,
+                )
+            ),
+            probabilistic_obstacle_traversal_window_rearm_hard_risk_temporal_lattice_override_enabled=bool(
+                values.get(
+                    "probabilistic_obstacle_traversal_window_rearm_hard_risk_temporal_lattice_override_enabled",
+                    False,
+                )
+            ),
+            probabilistic_obstacle_traversal_window_rearm_temporal_closing_lattice_override_enabled=bool(
+                values.get(
+                    "probabilistic_obstacle_traversal_window_rearm_temporal_closing_lattice_override_enabled",
+                    False,
+                )
+            ),
+            probabilistic_obstacle_traversal_window_temporal_retreat_raw_lattice_binding_enabled=bool(
+                values.get(
+                    "probabilistic_obstacle_traversal_window_temporal_retreat_raw_lattice_binding_enabled",
+                    False,
+                )
+            ),
+            probabilistic_obstacle_traversal_window_temporal_retreat_post_intent_all_hard_forward_filter_enabled=bool(
+                values.get(
+                    "probabilistic_obstacle_traversal_window_temporal_retreat_post_intent_all_hard_forward_filter_enabled",
+                    False,
+                )
+            ),
+            probabilistic_obstacle_traversal_window_temporal_midpoint_retreat_reverse_filter_enabled=bool(
+                values.get(
+                    "probabilistic_obstacle_traversal_window_temporal_midpoint_retreat_reverse_filter_enabled",
+                    False,
+                )
+            ),
+            probabilistic_obstacle_traversal_window_post_center_hard_risk_override_enabled=bool(
+                values.get(
+                    "probabilistic_obstacle_traversal_window_post_center_hard_risk_override_enabled",
+                    False,
+                )
+            ),
+            probabilistic_obstacle_traversal_window_post_center_temporal_override_enabled=bool(
+                values.get(
+                    "probabilistic_obstacle_traversal_window_post_center_temporal_override_enabled",
+                    False,
+                )
+            ),
+            probabilistic_obstacle_traversal_window_post_center_temporal_escape_latch_enabled=bool(
+                values.get(
+                    "probabilistic_obstacle_traversal_window_post_center_temporal_escape_latch_enabled",
+                    False,
+                )
+            ),
+            probabilistic_obstacle_traversal_window_post_center_low_ttc_continuity_guard_enabled=bool(
+                values.get(
+                    "probabilistic_obstacle_traversal_window_post_center_low_ttc_continuity_guard_enabled",
+                    False,
+                )
+            ),
+            probabilistic_obstacle_traversal_window_post_center_low_ttc_nonforward_coverage_enabled=bool(
+                values.get(
+                    "probabilistic_obstacle_traversal_window_post_center_low_ttc_nonforward_coverage_enabled",
+                    False,
+                )
+            ),
+            probabilistic_obstacle_traversal_window_post_center_low_ttc_first_step_boundary_handoff_enabled=bool(
+                values.get(
+                    "probabilistic_obstacle_traversal_window_post_center_low_ttc_first_step_boundary_handoff_enabled",
+                    False,
+                )
+            ),
+            probabilistic_obstacle_traversal_window_post_center_low_ttc_prefix_boundary_handoff_enabled=bool(
+                values.get(
+                    "probabilistic_obstacle_traversal_window_post_center_low_ttc_prefix_boundary_handoff_enabled",
+                    False,
+                )
+            ),
+            probabilistic_obstacle_traversal_window_post_center_forward_exit_commit_enabled=bool(
+                values.get(
+                    "probabilistic_obstacle_traversal_window_post_center_forward_exit_commit_enabled",
+                    False,
+                )
+            ),
+            probabilistic_obstacle_traversal_window_retreat_margin_m=float(
+                values.get(
+                    "probabilistic_obstacle_traversal_window_retreat_margin_m",
+                    0.0,
+                )
+            ),
+            probabilistic_obstacle_traversal_window_retreat_hard_risk_override_enabled=bool(
+                values.get(
+                    "probabilistic_obstacle_traversal_window_retreat_hard_risk_override_enabled",
+                    False,
+                )
+            ),
+            probabilistic_obstacle_speed_governor_enabled=bool(
+                values.get(
+                    "probabilistic_obstacle_speed_governor_enabled",
+                    False,
+                )
+            ),
+            probabilistic_obstacle_speed_governor_start_ratio=float(
+                values.get(
+                    "probabilistic_obstacle_speed_governor_start_ratio",
+                    0.50,
+                )
+            ),
             importance_sampling_correction=bool(
                 values.get("importance_sampling_correction", False)
             ),
@@ -192,6 +624,11 @@ class MppiConfig:
             self.obstacle_influence,
             self.robot_radius,
             self.collision_penalty,
+            self.probabilistic_obstacle_risk_weight,
+            self.probabilistic_obstacle_hard_threshold,
+            self.probabilistic_obstacle_hard_penalty,
+            self.probabilistic_obstacle_safety_margin,
+            self.probabilistic_obstacle_minimum_std,
         )
         if not np.isfinite(numeric_costs).all() or any(value < 0.0 for value in numeric_costs):
             raise ValueError("MPPI cost and geometry parameters must be finite and non-negative")
@@ -216,6 +653,52 @@ class MppiConfig:
             )
         if self.integrator not in ("euler", "rk4"):
             raise ValueError("MPPI integrator must be 'euler' or 'rk4'")
+        if not 0.0 < self.probabilistic_obstacle_hard_threshold <= 1.0:
+            raise ValueError(
+                "probabilistic obstacle hard threshold must be in (0,1]"
+            )
+        if self.probabilistic_obstacle_minimum_std <= 0.0:
+            raise ValueError(
+                "probabilistic obstacle minimum std must be positive"
+            )
+        if (
+            self.probabilistic_obstacle_risk_enabled
+            and self.probabilistic_obstacle_risk_weight <= 0.0
+            and self.probabilistic_obstacle_hard_penalty <= 0.0
+        ):
+            raise ValueError(
+                "enabled probabilistic obstacle risk requires a positive cost"
+            )
+        if not self.probabilistic_obstacle_forecast_key:
+            raise ValueError(
+                "probabilistic obstacle forecast key must be nonempty"
+            )
+        if self.probabilistic_obstacle_missing_forecast_action not in (
+            "raise",
+            "stop",
+        ):
+            raise ValueError(
+                "probabilistic obstacle missing-forecast action must be "
+                "'raise' or 'stop'"
+            )
+        if self.probabilistic_obstacle_hard_violation_action not in (
+            "penalize",
+            "stop",
+            "active_avoidance",
+        ):
+            raise ValueError(
+                "probabilistic obstacle hard-violation action must be "
+                "'penalize', 'stop', or 'active_avoidance'"
+            )
+        if not (
+            0.0
+            < self.probabilistic_obstacle_speed_governor_start_ratio
+            < 1.0
+        ):
+            raise ValueError(
+                "probabilistic obstacle speed-governor start ratio must "
+                "be in (0,1)"
+            )
         if not 0.0 <= self.previous_sequence_blend <= 1.0:
             raise ValueError("previous_sequence_blend must be between zero and one")
         if self.terminal_translation_speed_limit is not None and (
@@ -248,6 +731,127 @@ class MppiConfig:
             )
         if not 0 <= self.safety_recovery_prefix_steps <= self.horizon:
             raise ValueError("safety_recovery_prefix_steps must be within the horizon")
+        if (
+            self.probabilistic_obstacle_emergency_candidates_enabled
+            and not (
+                1
+                <= self.probabilistic_obstacle_emergency_candidate_prefix_steps
+                <= self.horizon
+            )
+        ):
+            raise ValueError(
+                "probabilistic emergency candidate prefix must be within the horizon"
+            )
+        if (
+            self.probabilistic_obstacle_emergency_candidates_enabled
+            and self.num_samples < 8
+        ):
+            raise ValueError(
+                "probabilistic emergency candidates require at least 8 samples"
+            )
+        if (
+            not np.isfinite(
+                self.probabilistic_obstacle_emergency_candidate_trigger_ttc_s
+            )
+            or self.probabilistic_obstacle_emergency_candidate_trigger_ttc_s
+            < 0.0
+        ):
+            raise ValueError(
+                "probabilistic emergency candidate trigger TTC must be "
+                "finite and non-negative"
+            )
+        if self.probabilistic_obstacle_emergency_candidate_intent_hold_steps < 0:
+            raise ValueError(
+                "probabilistic emergency candidate intent hold must be "
+                "non-negative"
+            )
+        forward_risk_ceiling = (
+            self.probabilistic_obstacle_emergency_candidate_forward_risk_ceiling
+        )
+        forward_mass_ceiling = (
+            self.probabilistic_obstacle_emergency_candidate_forward_mass_ceiling
+        )
+        if (
+            not np.isfinite(forward_risk_ceiling)
+            or not 0.0 <= forward_risk_ceiling <= 1.0
+            or not np.isfinite(forward_mass_ceiling)
+            or forward_mass_ceiling < 0.0
+        ):
+            raise ValueError(
+                'probabilistic emergency forward risk ceilings must be '
+                'finite and non-negative'
+            )
+        if (forward_risk_ceiling > 0.0) != (forward_mass_ceiling > 0.0):
+            raise ValueError(
+                'probabilistic emergency forward risk and mass ceilings '
+                'must be enabled together'
+            )
+        rearm_ttc = (
+            self.probabilistic_obstacle_emergency_candidate_rearm_ttc_s
+        )
+        if not np.isfinite(rearm_ttc) or rearm_ttc < 0.0:
+            raise ValueError(
+                "probabilistic emergency candidate rearm TTC must be "
+                "finite and non-negative"
+            )
+        if (
+            rearm_ttc > 0.0
+            and rearm_ttc
+            < self.probabilistic_obstacle_emergency_candidate_trigger_ttc_s
+        ):
+            raise ValueError(
+                "probabilistic emergency candidate rearm TTC must not be "
+                "smaller than the trigger TTC"
+            )
+        if (
+            self.probabilistic_obstacle_emergency_candidate_rearm_clear_steps
+            < 1
+        ):
+            raise ValueError(
+                "probabilistic emergency candidate rearm clear steps must be "
+                "positive"
+            )
+        traversal_values = (
+            self.probabilistic_obstacle_traversal_window_activation_distance_m,
+            self.probabilistic_obstacle_traversal_window_cross_track_m,
+            self.probabilistic_obstacle_traversal_window_clearance_margin_m,
+            self.probabilistic_obstacle_traversal_window_probability_ceiling,
+            self.probabilistic_obstacle_traversal_window_mass_ceiling,
+            self.probabilistic_obstacle_traversal_window_translation_heading_gate_rad,
+            self.probabilistic_obstacle_traversal_window_abort_probability,
+            self.probabilistic_obstacle_traversal_window_temporal_abort_mass_floor,
+            self.probabilistic_obstacle_traversal_window_retreat_margin_m,
+        )
+        if (
+            not np.isfinite(traversal_values).all()
+            or any(value < 0.0 for value in traversal_values)
+            or self.probabilistic_obstacle_traversal_window_horizon_steps
+            < self.horizon
+            or self.probabilistic_obstacle_traversal_window_clear_hold_steps < 0
+            or self.probabilistic_obstacle_traversal_window_commit_admission_safe_hold_steps
+            < 1
+            or self.probabilistic_obstacle_traversal_window_probability_ceiling
+            > 1.0
+            or self.probabilistic_obstacle_traversal_window_translation_heading_gate_rad
+            > 0.5 * np.pi
+            or self.probabilistic_obstacle_traversal_window_abort_probability
+            > 1.0
+        ):
+            raise ValueError("probabilistic traversal-window settings are invalid")
+        if self.probabilistic_obstacle_traversal_window_enabled and (
+            not self.probabilistic_obstacle_risk_enabled
+            or not self.probabilistic_obstacle_emergency_candidates_enabled
+            or self.probabilistic_obstacle_traversal_window_activation_distance_m
+            <= 0.0
+            or self.probabilistic_obstacle_traversal_window_cross_track_m <= 0.0
+            or self.probabilistic_obstacle_traversal_window_probability_ceiling
+            <= 0.0
+            or self.probabilistic_obstacle_traversal_window_mass_ceiling <= 0.0
+        ):
+            raise ValueError(
+                "enabled traversal-window certification requires probability "
+                "risk, emergency candidates, and positive bounds"
+            )
 
 
 @dataclass(frozen=True)
@@ -300,6 +904,27 @@ class MppiController:
         self._reliability_previous_state = None
         self._reliability_pending_control = None
         self._delay_preceding_action = self.previous_action.copy()
+        self._previous_probabilistic_risk = 1.0
+        self._probabilistic_emergency_intent_remaining = 0
+        self._probabilistic_emergency_direction = None
+        self._probabilistic_emergency_latched_pattern = None
+        self._probabilistic_emergency_latched_heading = None
+        self._probabilistic_emergency_rearm_ready = True
+        self._probabilistic_emergency_rearm_clear_count = 0
+        self._probabilistic_traversal_crossing_progress = None
+        self._probabilistic_traversal_entry_progress = None
+        self._probabilistic_traversal_clear_progress = None
+        self._probabilistic_traversal_commit_started = False
+        self._probabilistic_traversal_retreat_progress = None
+        self._probabilistic_traversal_rearm_pending = False
+        self._probabilistic_traversal_retreat_temporal_lattice = False
+        self._probabilistic_traversal_admission_safe_streak = 0
+        self._probabilistic_traversal_admission_signature = None
+        self._probabilistic_traversal_exit_deadline_retreat_active = False
+        self._probabilistic_traversal_exit_deadline_retreat_pattern = None
+        self._probabilistic_traversal_exit_deadline_retreat_heading = None
+        self._probabilistic_traversal_post_center_temporal_pattern = None
+        self._probabilistic_traversal_post_center_temporal_heading = None
 
     def reset(self, seed=None):
         """Reset receding-horizon state and optionally reseed sampling.
@@ -319,6 +944,27 @@ class MppiController:
         self._reliability_previous_state = None
         self._reliability_pending_control = None
         self._delay_preceding_action = self.previous_action.copy()
+        self._previous_probabilistic_risk = 1.0
+        self._probabilistic_emergency_intent_remaining = 0
+        self._probabilistic_emergency_direction = None
+        self._probabilistic_emergency_latched_pattern = None
+        self._probabilistic_emergency_latched_heading = None
+        self._probabilistic_emergency_rearm_ready = True
+        self._probabilistic_emergency_rearm_clear_count = 0
+        self._probabilistic_traversal_crossing_progress = None
+        self._probabilistic_traversal_entry_progress = None
+        self._probabilistic_traversal_clear_progress = None
+        self._probabilistic_traversal_commit_started = False
+        self._probabilistic_traversal_retreat_progress = None
+        self._probabilistic_traversal_rearm_pending = False
+        self._probabilistic_traversal_retreat_temporal_lattice = False
+        self._probabilistic_traversal_admission_safe_streak = 0
+        self._probabilistic_traversal_admission_signature = None
+        self._probabilistic_traversal_exit_deadline_retreat_active = False
+        self._probabilistic_traversal_exit_deadline_retreat_pattern = None
+        self._probabilistic_traversal_exit_deadline_retreat_heading = None
+        self._probabilistic_traversal_post_center_temporal_pattern = None
+        self._probabilistic_traversal_post_center_temporal_heading = None
         residual_reset = getattr(
             getattr(self.dynamics, "residual", None), "reset", None
         )
@@ -438,6 +1084,17 @@ class MppiController:
         )
         self._reliability_pending_control = None
 
+    def _observe_residual_context(self, state, target):
+        residual = getattr(self.dynamics, "residual", None)
+        observer = getattr(residual, "observe_context", None)
+        if not callable(observer):
+            return
+        observer(
+            state,
+            np.asarray((target.pose.x, target.pose.y), dtype=np.float64),
+            self._previous_probabilistic_risk,
+        )
+
     def observe_completed_transition(
         self,
         previous_state,
@@ -457,6 +1114,33 @@ class MppiController:
         nominal = getattr(self.dynamics, "nominal", None)
         if residual is None or nominal is None:
             return False
+        return self._observe_residual_prediction_errors(
+            previous_state,
+            applied_control,
+            current_state,
+            residual=residual,
+            nominal=nominal,
+            residual_derivative=residual_derivative,
+        )
+
+    def _observe_residual_prediction_errors(
+        self,
+        previous_state,
+        applied_control,
+        current_state,
+        *,
+        residual,
+        nominal,
+        residual_derivative=None,
+    ):
+        """Update one explicit causal residual evidence source.
+
+        The normal controller passes its prediction residual.  Controllers
+        with a preregistered reliability sidecar may call the same helper for
+        that independent source, keeping prediction dynamics and HSS evidence
+        separate without changing either model's error definition.
+        """
+
         observers = []
         seen = set()
         current = residual
@@ -548,6 +1232,1926 @@ class MppiController:
             raise ValueError("prior covariance must be positive definite") from exc
         return covariance
 
+    def _probabilistic_emergency_context(
+        self, observation, state=None, probabilistic_obstacles=()
+    ):
+        """Return causal scan evidence used to activate the escape lattice."""
+
+        threshold = float(
+            self.config
+            .probabilistic_obstacle_emergency_candidate_trigger_ttc_s
+        )
+        if observation is None or threshold <= 0.0:
+            self._probabilistic_emergency_intent_remaining = 0
+            self._probabilistic_emergency_direction = None
+            self._probabilistic_emergency_latched_pattern = None
+            self._probabilistic_emergency_latched_heading = None
+            self._probabilistic_emergency_rearm_ready = True
+            self._probabilistic_emergency_rearm_clear_count = 0
+            return {
+                "triggered": False,
+                "raw_triggered": False,
+                "closing_observed": False,
+                "scan_valid": False,
+                "scan_flow_match": False,
+                "intent_held": False,
+                "away_heading_error_rad": None,
+                "ttc_s": float("inf"),
+                "safety_hard_stop_ttc_s": 0.0,
+                "rearm_ready": True,
+                "rearm_clear_count": 0,
+            }
+        context = dict(
+            observation.auxiliary.get(
+                "dynamic_obstacle_escape_context", {}
+            )
+        )
+        ttc_s = float(context.get("temporal_scan_ttc_s", float("inf")))
+        scan_valid = bool(context.get("temporal_scan_valid", False))
+        scan_flow_match = bool(
+            context.get("dynamic_obstacle_scan_flow_match", False)
+        )
+        safety_hard_stop_ttc_s = float(
+            context.get("temporal_scan_safety_hard_stop_ttc_s", 0.0)
+        )
+        closing_observed = bool(
+            scan_valid
+            and scan_flow_match
+            and np.isfinite(ttc_s)
+            and ttc_s > 0.0
+        )
+        raw_triggered = bool(
+            closing_observed
+            and ttc_s <= threshold
+        )
+        start_intent = bool(
+            raw_triggered and self._probabilistic_emergency_rearm_ready
+        )
+        intent_held = bool(
+            not start_intent
+            and self._probabilistic_emergency_intent_remaining > 0
+        )
+        triggered = bool(start_intent or intent_held)
+        away_heading_error = context.get(
+            "dynamic_obstacle_away_heading_error_rad"
+        )
+        if away_heading_error is not None:
+            away_heading_error = float(away_heading_error)
+            if not np.isfinite(away_heading_error):
+                away_heading_error = None
+        result = {
+            "triggered": triggered,
+            "raw_triggered": raw_triggered,
+            "closing_observed": closing_observed,
+            "scan_valid": scan_valid,
+            "scan_flow_match": scan_flow_match,
+            "intent_held": intent_held,
+            "away_heading_error_rad": away_heading_error,
+            "ttc_s": ttc_s,
+            "safety_hard_stop_ttc_s": safety_hard_stop_ttc_s,
+        }
+        if (
+            start_intent
+            and self._probabilistic_emergency_latched_pattern is None
+            and away_heading_error is not None
+            and "v_cmd" in self.action_spec.names
+            and "omega_cmd" in self.action_spec.names
+        ):
+            v_index = self.action_spec.index("v_cmd")
+            omega_index = self.action_spec.index("omega_cmd")
+            reverse = abs(away_heading_error) > 0.5 * np.pi
+            motion_heading_error = away_heading_error
+            if reverse:
+                motion_heading_error = float(np.arctan2(
+                    np.sin(away_heading_error - np.pi),
+                    np.cos(away_heading_error - np.pi),
+                ))
+            # If maximum translation already carries the robot broadly away
+            # from the obstacle, preserve that separation rate instead of
+            # spending the short TTC window on a tight arc.  Large heading
+            # errors still receive a saturated turn.
+            yaw_rate = 0.0
+            if abs(motion_heading_error) > 1.0:
+                yaw_rate = (
+                    self.action_spec.upper[omega_index]
+                    if motion_heading_error >= 0.0
+                    else self.action_spec.lower[omega_index]
+                )
+            self._probabilistic_emergency_latched_pattern = (
+                float(
+                    self.action_spec.lower[v_index]
+                    if reverse else self.action_spec.upper[v_index]
+                ),
+                float(yaw_rate),
+            )
+        if (
+            triggered
+            and self._probabilistic_emergency_latched_pattern is not None
+        ):
+            latched_pattern = self._probabilistic_emergency_latched_pattern
+            if (
+                self._probabilistic_emergency_latched_heading is not None
+                and state is not None
+                and "theta" in self.state_spec.names
+                and "omega_cmd" in self.action_spec.names
+            ):
+                theta = float(
+                    np.asarray(state, dtype=np.float64)[
+                        self.state_spec.index("theta")
+                    ]
+                )
+                heading_error = float(np.arctan2(
+                    np.sin(
+                        self._probabilistic_emergency_latched_heading - theta
+                    ),
+                    np.cos(
+                        self._probabilistic_emergency_latched_heading - theta
+                    ),
+                ))
+                omega_index = self.action_spec.index("omega_cmd")
+                latched_pattern = (
+                    float(latched_pattern[0]),
+                    float(np.clip(
+                        1.5 * heading_error,
+                        self.action_spec.lower[omega_index],
+                        self.action_spec.upper[omega_index],
+                    )),
+                )
+            result["latched_escape_pattern"] = latched_pattern
+        if (
+            triggered
+            and state is not None
+            and probabilistic_obstacles
+            and "theta" in self.state_spec.names
+            and "v_cmd" in self.action_spec.names
+            and "omega_cmd" in self.action_spec.names
+        ):
+            forecasts = tuple(probabilistic_obstacles)
+            forecast_index = int(
+                context.get("dynamic_obstacle_forecast_index", 0) or 0
+            )
+            if not 0 <= forecast_index < len(forecasts):
+                forecast_index = 0
+            forecast = forecasts[forecast_index]
+            result["escape_forecast_index"] = forecast_index
+            component_means = np.asarray(
+                forecast.component_means, dtype=np.float64
+            )
+            component_weights = np.asarray(
+                forecast.component_weights, dtype=np.float64
+            )
+            mixture_means = np.sum(
+                component_weights[..., None] * component_means, axis=1
+            )
+            lookahead = min(4, mixture_means.shape[0] - 1)
+            measured_velocity = np.asarray((
+                context.get(
+                    "dynamic_obstacle_measurement_velocity_x_mps",
+                    np.nan,
+                ),
+                context.get(
+                    "dynamic_obstacle_measurement_velocity_y_mps",
+                    np.nan,
+                ),
+            ), dtype=np.float64)
+            if (
+                np.isfinite(measured_velocity).all()
+                and float(np.linalg.norm(measured_velocity)) > 0.05
+            ):
+                # A short causal regression over associated LaserScan centers
+                # supplies direction when the IMM has not yet adapted to a
+                # maneuver change.  Probability certification below still
+                # uses the full frozen tracker forecast.
+                obstacle_motion = measured_velocity
+                result["escape_direction_source"] = (
+                    "causal_scan_measurement_regression"
+                )
+            else:
+                obstacle_motion = (
+                    mixture_means[lookahead] - mixture_means[0]
+                )
+                result["escape_direction_source"] = "tracker_forecast"
+            motion_norm = float(np.linalg.norm(obstacle_motion))
+            if motion_norm > 1.0e-6:
+                tangent = obstacle_motion / motion_norm
+                perpendicular = np.asarray(
+                    (-tangent[1], tangent[0]), dtype=np.float64
+                )
+                robot_xy = np.asarray(state, dtype=np.float64)[
+                    list(self.state_spec.position_indices)
+                ]
+                lateral_side = float(np.dot(
+                    robot_xy - mixture_means[0], perpendicular
+                ))
+                if abs(lateral_side) <= 1.0e-9:
+                    lateral_side = 1.0
+                measured_preferred_direction = (
+                    np.sign(lateral_side) * perpendicular
+                )
+                if self._probabilistic_emergency_direction is None:
+                    self._probabilistic_emergency_direction = (
+                        measured_preferred_direction.copy()
+                    )
+                preferred_direction = np.asarray(
+                    self._probabilistic_emergency_direction,
+                    dtype=np.float64,
+                )
+                theta = float(
+                    np.asarray(state, dtype=np.float64)[
+                        self.state_spec.index("theta")
+                    ]
+                )
+                v_index = self.action_spec.index("v_cmd")
+                omega_index = self.action_spec.index("omega_cmd")
+
+                def motion_pattern(direction):
+                    desired_heading = float(np.arctan2(
+                        direction[1], direction[0]
+                    ))
+                    forward_error = float(np.arctan2(
+                        np.sin(desired_heading - theta),
+                        np.cos(desired_heading - theta),
+                    ))
+                    reverse_error = float(np.arctan2(
+                        np.sin(desired_heading - np.pi - theta),
+                        np.cos(desired_heading - np.pi - theta),
+                    ))
+                    reverse = abs(reverse_error) < abs(forward_error)
+                    heading_error = reverse_error if reverse else forward_error
+                    return (
+                        float(
+                            self.action_spec.lower[v_index]
+                            if reverse else self.action_spec.upper[v_index]
+                        ),
+                        float(np.clip(
+                            1.5 * heading_error,
+                            self.action_spec.lower[omega_index],
+                            self.action_spec.upper[omega_index],
+                        )),
+                    )
+
+                result["forecast_escape_patterns"] = (
+                    motion_pattern(preferred_direction),
+                    motion_pattern(-preferred_direction),
+                )
+        if start_intent:
+            self._probabilistic_emergency_intent_remaining = int(
+                self.config
+                .probabilistic_obstacle_emergency_candidate_intent_hold_steps
+            )
+            self._probabilistic_emergency_rearm_ready = False
+            self._probabilistic_emergency_rearm_clear_count = 0
+        elif self._probabilistic_emergency_intent_remaining > 0:
+            self._probabilistic_emergency_intent_remaining -= 1
+            if self._probabilistic_emergency_intent_remaining == 0:
+                self._probabilistic_emergency_direction = None
+                self._probabilistic_emergency_latched_pattern = None
+                self._probabilistic_emergency_latched_heading = None
+        else:
+            self._probabilistic_emergency_direction = None
+            self._probabilistic_emergency_latched_pattern = None
+            self._probabilistic_emergency_latched_heading = None
+            rearm_ttc = float(
+                self.config
+                .probabilistic_obstacle_emergency_candidate_rearm_ttc_s
+            )
+            if rearm_ttc <= 0.0:
+                rearm_ttc = threshold
+            rearm_clear = bool(
+                not raw_triggered
+                and (
+                    not np.isfinite(ttc_s)
+                    or ttc_s >= rearm_ttc
+                )
+            )
+            if rearm_clear:
+                self._probabilistic_emergency_rearm_clear_count += 1
+            else:
+                self._probabilistic_emergency_rearm_clear_count = 0
+            if self._probabilistic_emergency_rearm_clear_count >= int(
+                self.config
+                .probabilistic_obstacle_emergency_candidate_rearm_clear_steps
+            ):
+                self._probabilistic_emergency_rearm_ready = True
+                self._probabilistic_emergency_rearm_clear_count = 0
+        result["rearm_ready"] = bool(
+            self._probabilistic_emergency_rearm_ready
+        )
+        result["rearm_clear_count"] = int(
+            self._probabilistic_emergency_rearm_clear_count
+        )
+        return result
+
+    def _inject_probabilistic_emergency_candidates(
+        self, samples, prior, emergency_context=None
+    ):
+        """Replace six budgeted samples with deterministic escape maneuvers."""
+
+        self._probabilistic_emergency_nonforward_coverage_applied = False
+        self._probabilistic_emergency_forward_exit_coverage_applied = False
+        mask = np.zeros(self.config.num_samples, dtype=bool)
+        if not self.config.probabilistic_obstacle_emergency_candidates_enabled:
+            return mask
+        if (
+            "v_cmd" not in self.action_spec.names
+            or "omega_cmd" not in self.action_spec.names
+        ):
+            return mask
+        v_index = self.action_spec.index("v_cmd")
+        omega_index = self.action_spec.index("omega_cmd")
+        prefix = self.config.probabilistic_obstacle_emergency_candidate_prefix_steps
+        base_patterns = (
+            (self.action_spec.upper[v_index], 0.0),
+            (self.action_spec.lower[v_index], 0.0),
+            (self.action_spec.upper[v_index], self.action_spec.upper[omega_index]),
+            (self.action_spec.upper[v_index], self.action_spec.lower[omega_index]),
+            (self.action_spec.lower[v_index], self.action_spec.upper[omega_index]),
+            (self.action_spec.lower[v_index], self.action_spec.lower[omega_index]),
+        )
+        patterns = base_patterns
+        emergency_context = dict(emergency_context or {})
+        forecast_patterns = tuple(
+            emergency_context.get("forecast_escape_patterns", ())
+        )
+        latched_pattern = emergency_context.get("latched_escape_pattern")
+        away_heading_error = emergency_context.get("away_heading_error_rad")
+        away_pattern = None
+        if away_heading_error is not None and np.isfinite(away_heading_error):
+            away_heading_error = float(away_heading_error)
+            reverse = abs(away_heading_error) > 0.5 * np.pi
+            motion_heading_error = away_heading_error
+            if reverse:
+                motion_heading_error = float(np.arctan2(
+                    np.sin(away_heading_error - np.pi),
+                    np.cos(away_heading_error - np.pi),
+                ))
+            away_pattern = (
+                self.action_spec.lower[v_index]
+                if reverse else self.action_spec.upper[v_index],
+                float(np.clip(
+                    1.5 * motion_heading_error,
+                    self.action_spec.lower[omega_index],
+                    self.action_spec.upper[omega_index],
+                )),
+            )
+        if (
+            latched_pattern is not None
+            or away_pattern is not None
+            or forecast_patterns
+        ):
+            ordered = (
+                ([] if latched_pattern is None else [latched_pattern])
+                + ([] if away_pattern is None else [away_pattern])
+                + list(forecast_patterns)
+                + list(patterns)
+            )
+            unique = []
+            for pattern in ordered:
+                pattern = tuple(float(value) for value in pattern)
+                if not any(np.allclose(
+                    pattern, existing, atol=1.0e-12, rtol=0.0
+                ) for existing in unique):
+                    unique.append(pattern)
+            if emergency_context.get(
+                "post_center_forward_exit_commit_requested", False
+            ):
+                self._probabilistic_emergency_forward_exit_coverage_applied = True
+                # Once the robot has crossed the frozen conflict center,
+                # reversing prolongs occupancy and can re-enter the obstacle
+                # path.  Preserve straight/left/right forward templates in
+                # the same six slots so the final risk guard can enforce the
+                # already committed exit direction without adding rollouts.
+                forward_templates = [
+                    tuple(float(value) for value in pattern)
+                    for pattern in base_patterns
+                    if pattern[0] > 0.0
+                ]
+                preferred_capacity = max(0, 6 - len(forward_templates))
+                preferred = []
+                for pattern in unique:
+                    if any(np.allclose(
+                        pattern,
+                        forward,
+                        atol=1.0e-12,
+                        rtol=0.0,
+                    ) for forward in forward_templates):
+                        continue
+                    preferred.append(pattern)
+                    if len(preferred) >= preferred_capacity:
+                        break
+                patterns = tuple(preferred + forward_templates)
+            elif emergency_context.get(
+                "post_center_low_ttc_nonforward_coverage_requested", False
+            ):
+                self._probabilistic_emergency_nonforward_coverage_applied = True
+                # Forecast, away-heading and latched preferences can otherwise
+                # occupy all six fixed lattice slots with forward patterns.
+                # During an unresolved post-center hard-stop TTC dropout,
+                # reserve the three existing reverse templates so the action
+                # guard has straight/left/right non-forward evidence every
+                # cycle.  Candidate values, slot count and rollout budget do
+                # not change.
+                reverse_templates = [
+                    tuple(float(value) for value in pattern)
+                    for pattern in base_patterns
+                    if pattern[0] <= 0.0
+                ]
+                preferred_capacity = max(0, 6 - len(reverse_templates))
+                preferred = []
+                for pattern in unique:
+                    if any(np.allclose(
+                        pattern,
+                        reverse,
+                        atol=1.0e-12,
+                        rtol=0.0,
+                    ) for reverse in reverse_templates):
+                        continue
+                    preferred.append(pattern)
+                    if len(preferred) >= preferred_capacity:
+                        break
+                patterns = tuple(preferred + reverse_templates)
+            else:
+                patterns = tuple(unique[:6])
+        start = self.config.num_samples - len(patterns)
+        proposal_mean = getattr(prior, "mean", None)
+        if proposal_mean is None or callable(proposal_mean):
+            proposal_mean = prior
+        proposal_mean = np.asarray(proposal_mean, dtype=np.float64)
+        for offset, (speed, yaw_rate) in enumerate(patterns):
+            index = start + offset
+            samples[index] = proposal_mean
+            samples[index, :prefix, v_index] = speed
+            samples[index, :prefix, omega_index] = yaw_rate
+            mask[index] = True
+        return mask
+
+    def _clear_probabilistic_traversal_commit(self):
+        self._probabilistic_traversal_crossing_progress = None
+        self._probabilistic_traversal_entry_progress = None
+        self._probabilistic_traversal_clear_progress = None
+        self._probabilistic_traversal_commit_started = False
+        self._probabilistic_traversal_admission_safe_streak = 0
+        self._probabilistic_traversal_admission_signature = None
+        self._clear_probabilistic_traversal_post_center_temporal_escape()
+
+    def _clear_probabilistic_traversal_exit_deadline_retreat_escape(self):
+        """Release the causal escape bound to one deadline retreat."""
+
+        self._probabilistic_traversal_exit_deadline_retreat_active = False
+        self._probabilistic_traversal_exit_deadline_retreat_pattern = None
+        self._probabilistic_traversal_exit_deadline_retreat_heading = None
+
+    def _start_probabilistic_traversal_exit_deadline_retreat_escape(self):
+        """Start a fresh deadline-retreat transaction before action choice."""
+
+        self._probabilistic_traversal_exit_deadline_retreat_active = bool(
+            self.config
+            .probabilistic_obstacle_traversal_window_temporal_exit_deadline_escape_latch_enabled
+        )
+        self._probabilistic_traversal_exit_deadline_retreat_pattern = None
+        self._probabilistic_traversal_exit_deadline_retreat_heading = None
+
+    def _probabilistic_traversal_exit_deadline_retreat_escape_pattern(
+        self, state
+    ):
+        """Return the deadline-retreat escape with heading stabilization."""
+
+        pattern = self._probabilistic_traversal_exit_deadline_retreat_pattern
+        if pattern is None:
+            return None
+        pattern = tuple(float(value) for value in pattern)
+        if (
+            self._probabilistic_traversal_exit_deadline_retreat_heading is None
+            or state is None
+            or "theta" not in self.state_spec.names
+            or "omega_cmd" not in self.action_spec.names
+        ):
+            return pattern
+        theta = float(
+            np.asarray(state, dtype=np.float64)[
+                self.state_spec.index("theta")
+            ]
+        )
+        heading_error = float(np.arctan2(
+            np.sin(
+                self._probabilistic_traversal_exit_deadline_retreat_heading
+                - theta
+            ),
+            np.cos(
+                self._probabilistic_traversal_exit_deadline_retreat_heading
+                - theta
+            ),
+        ))
+        omega_index = self.action_spec.index("omega_cmd")
+        return (
+            float(pattern[0]),
+            float(np.clip(
+                1.5 * heading_error,
+                self.action_spec.lower[omega_index],
+                self.action_spec.upper[omega_index],
+            )),
+        )
+
+    def _latch_probabilistic_traversal_exit_deadline_retreat_escape(
+        self, pattern, state
+    ):
+        """Latch the first selected causal escape for one deadline retreat."""
+
+        if (
+            not self.config
+            .probabilistic_obstacle_traversal_window_temporal_exit_deadline_escape_latch_enabled
+            or not self._probabilistic_traversal_exit_deadline_retreat_active
+            or self._probabilistic_traversal_exit_deadline_retreat_pattern
+            is not None
+        ):
+            return False
+        pattern = tuple(float(value) for value in pattern)
+        if len(pattern) != 2 or not np.isfinite(pattern).all():
+            return False
+        self._probabilistic_traversal_exit_deadline_retreat_pattern = pattern
+        self._probabilistic_traversal_exit_deadline_retreat_heading = None
+        if (
+            state is not None
+            and "theta" in self.state_spec.names
+            and "omega_cmd" in self.action_spec.names
+        ):
+            theta = float(
+                np.asarray(state, dtype=np.float64)[
+                    self.state_spec.index("theta")
+                ]
+            )
+            target_heading = theta + pattern[1] * float(
+                self.config
+                .probabilistic_obstacle_emergency_candidate_prefix_steps
+            ) * float(self.config.dt)
+            self._probabilistic_traversal_exit_deadline_retreat_heading = float(
+                np.arctan2(np.sin(target_heading), np.cos(target_heading))
+            )
+        return True
+
+    def _bind_probabilistic_traversal_exit_deadline_retreat_escape(
+        self, emergency_context, traversal_context, state
+    ):
+        """Keep one deadline-retreat escape authoritative for its retreat."""
+
+        emergency_context = dict(emergency_context or {})
+        traversal_context = dict(traversal_context or {})
+        active = bool(
+            self.config
+            .probabilistic_obstacle_traversal_window_temporal_exit_deadline_escape_latch_enabled
+            and self._probabilistic_traversal_exit_deadline_retreat_active
+            and traversal_context.get("retreat_requested", False)
+            and traversal_context.get(
+                "retreat_temporal_lattice_requested", False
+            )
+        )
+        pattern = (
+            self._probabilistic_traversal_exit_deadline_retreat_escape_pattern(
+                state
+            )
+            if active
+            else None
+        )
+        if not active:
+            self._clear_probabilistic_traversal_exit_deadline_retreat_escape()
+        elif pattern is not None:
+            emergency_context["latched_escape_pattern"] = pattern
+        traversal_context[
+            "exit_deadline_retreat_escape_transaction_active"
+        ] = active
+        traversal_context["exit_deadline_retreat_escape_reused"] = bool(
+            active and pattern is not None
+        )
+        return emergency_context, traversal_context
+
+    def _clear_probabilistic_traversal_post_center_temporal_escape(self):
+        """Release the causal post-center escape transaction."""
+
+        self._probabilistic_traversal_post_center_temporal_pattern = None
+        self._probabilistic_traversal_post_center_temporal_heading = None
+
+    def _probabilistic_traversal_post_center_temporal_escape_pattern(
+        self, state
+    ):
+        """Return the latched escape with one-turn heading stabilization."""
+
+        pattern = self._probabilistic_traversal_post_center_temporal_pattern
+        if pattern is None:
+            return None
+        pattern = tuple(float(value) for value in pattern)
+        if (
+            self._probabilistic_traversal_post_center_temporal_heading is None
+            or state is None
+            or "theta" not in self.state_spec.names
+            or "omega_cmd" not in self.action_spec.names
+        ):
+            return pattern
+        theta = float(
+            np.asarray(state, dtype=np.float64)[
+                self.state_spec.index("theta")
+            ]
+        )
+        heading_error = float(np.arctan2(
+            np.sin(
+                self._probabilistic_traversal_post_center_temporal_heading
+                - theta
+            ),
+            np.cos(
+                self._probabilistic_traversal_post_center_temporal_heading
+                - theta
+            ),
+        ))
+        omega_index = self.action_spec.index("omega_cmd")
+        return (
+            float(pattern[0]),
+            float(np.clip(
+                1.5 * heading_error,
+                self.action_spec.lower[omega_index],
+                self.action_spec.upper[omega_index],
+            )),
+        )
+
+    def _latch_probabilistic_traversal_post_center_temporal_escape(
+        self, pattern, state
+    ):
+        """Latch the first selected causal escape for one active commit."""
+
+        if (
+            not self.config
+            .probabilistic_obstacle_traversal_window_post_center_temporal_escape_latch_enabled
+            or self._probabilistic_traversal_post_center_temporal_pattern
+            is not None
+        ):
+            return False
+        pattern = tuple(float(value) for value in pattern)
+        if len(pattern) != 2 or not np.isfinite(pattern).all():
+            return False
+        self._probabilistic_traversal_post_center_temporal_pattern = pattern
+        self._probabilistic_traversal_post_center_temporal_heading = None
+        if (
+            state is not None
+            and "theta" in self.state_spec.names
+            and "omega_cmd" in self.action_spec.names
+        ):
+            theta = float(
+                np.asarray(state, dtype=np.float64)[
+                    self.state_spec.index("theta")
+                ]
+            )
+            target_heading = theta + pattern[1] * float(
+                self.config
+                .probabilistic_obstacle_emergency_candidate_prefix_steps
+            ) * float(self.config.dt)
+            self._probabilistic_traversal_post_center_temporal_heading = float(
+                np.arctan2(np.sin(target_heading), np.cos(target_heading))
+            )
+        return True
+
+    def _bind_probabilistic_traversal_post_center_temporal_escape(
+        self, emergency_context, traversal_context, state
+    ):
+        """Bind one escape transaction while the same causal warning holds."""
+
+        emergency_context = dict(emergency_context or {})
+        traversal_context = dict(traversal_context or {})
+        active = bool(
+            self.config
+            .probabilistic_obstacle_traversal_window_post_center_temporal_escape_latch_enabled
+            and self.config
+            .probabilistic_obstacle_traversal_window_post_center_temporal_override_enabled
+            and traversal_context.get("candidate_requested", False)
+            and traversal_context.get("commit_started", False)
+            and not traversal_context.get("retreat_requested", False)
+            and not traversal_context.get("rearm_pending", False)
+            and traversal_context.get("temporal_emergency_raw_triggered", False)
+            and float(traversal_context.get(
+                "temporal_corroboration_probability_mass", 0.0
+            )) >= float(
+                self.config
+                .probabilistic_obstacle_traversal_window_temporal_abort_mass_floor
+            )
+            and float(traversal_context.get("current_progress", 0.0))
+            >= float(traversal_context.get("crossing_progress", 0.0))
+            - 1.0e-9
+            and float(traversal_context.get("current_progress", 0.0))
+            < float(traversal_context.get("clear_progress", 0.0))
+            - 1.0e-9
+        )
+        pattern = (
+            self._probabilistic_traversal_post_center_temporal_escape_pattern(
+                state
+            )
+            if active
+            else None
+        )
+        if not active:
+            self._clear_probabilistic_traversal_post_center_temporal_escape()
+        elif pattern is not None:
+            # The transaction-specific causal maneuver outranks the ordinary
+            # short intent latch, which is intentionally free to expire and
+            # rearm independently.
+            emergency_context["latched_escape_pattern"] = pattern
+        traversal_context["post_center_temporal_escape_transaction_active"] = (
+            active
+        )
+        traversal_context["post_center_temporal_escape_reused"] = bool(
+            active and pattern is not None
+        )
+        return emergency_context, traversal_context
+
+    def _update_probabilistic_traversal_admission_streak(
+        self,
+        *,
+        safe,
+        forecast_index,
+        crossing_progress,
+        entry_progress,
+        clear_progress,
+    ):
+        """Track consecutive safe certificates for one causal crossing geometry."""
+
+        if not safe:
+            self._probabilistic_traversal_admission_safe_streak = 0
+            self._probabilistic_traversal_admission_signature = None
+            return 0
+        signature = (
+            int(forecast_index),
+            float(crossing_progress),
+            float(entry_progress),
+            float(clear_progress),
+        )
+        previous = self._probabilistic_traversal_admission_signature
+        v_index = self.action_spec.index("v_cmd")
+        geometry_tolerance = max(
+            1.0e-9,
+            float(self.action_spec.upper[v_index]) * float(self.config.dt),
+        )
+        same_geometry = bool(
+            previous is not None
+            and int(previous[0]) == signature[0]
+            and np.allclose(
+                np.asarray(previous[1:], dtype=np.float64),
+                np.asarray(signature[1:], dtype=np.float64),
+                atol=geometry_tolerance,
+                rtol=0.0,
+            )
+        )
+        self._probabilistic_traversal_admission_safe_streak = (
+            self._probabilistic_traversal_admission_safe_streak + 1
+            if same_geometry
+            else 1
+        )
+        self._probabilistic_traversal_admission_signature = signature
+        return int(self._probabilistic_traversal_admission_safe_streak)
+
+    def _probabilistic_traversal_retreat_candidate(self, state, reference):
+        v_index = self.action_spec.index("v_cmd")
+        omega_index = self.action_spec.index("omega_cmd")
+        theta_index = self.state_spec.index("theta")
+        commands = np.zeros(
+            (self.config.horizon, self.action_spec.dimension),
+            dtype=np.float64,
+        )
+        commands[:, v_index] = float(self.action_spec.lower[v_index])
+        current_progress = float(getattr(reference, "progress", 0.0))
+        tangent = float(np.asarray(reference.poses_at_progress(
+            np.asarray([current_progress], dtype=np.float64)
+        ))[0, 2])
+        heading_error = float(np.arctan2(
+            np.sin(tangent - state[theta_index]),
+            np.cos(tangent - state[theta_index]),
+        ))
+        commands[0, omega_index] = float(np.clip(
+            1.5 * heading_error,
+            self.action_spec.lower[omega_index],
+            self.action_spec.upper[omega_index],
+        ))
+        return commands
+
+    def _probabilistic_traversal_hold_candidate(self):
+        return np.zeros(
+            (self.config.horizon, self.action_spec.dimension),
+            dtype=np.float64,
+        )
+
+    def _probabilistic_traversal_prealign_candidate(self, sequence):
+        """Keep a traversal candidate's steering while forbidding translation."""
+
+        if sequence is None:
+            return self._probabilistic_traversal_hold_candidate()
+        result = np.asarray(sequence, dtype=np.float64).copy()
+        expected = (self.config.horizon, self.action_spec.dimension)
+        if result.shape != expected or not np.isfinite(result).all():
+            return self._probabilistic_traversal_hold_candidate()
+        result[:, self.action_spec.index("v_cmd")] = 0.0
+        return result
+
+    def _probabilistic_traversal_crossing(
+        self, reference, probabilistic_obstacles, current_progress
+    ):
+        """Infer the nearest route crossing from causal forecast geometry."""
+
+        candidates = []
+        cross_track_limit = float(
+            self.config.probabilistic_obstacle_traversal_window_cross_track_m
+        )
+        activation_distance = float(
+            self.config
+            .probabilistic_obstacle_traversal_window_activation_distance_m
+        )
+        for forecast_index, forecast in enumerate(probabilistic_obstacles):
+            means = np.asarray(forecast.component_means, dtype=np.float64)
+            weights = np.asarray(forecast.component_weights, dtype=np.float64)
+            mixture_mean = np.sum(weights[..., None] * means, axis=1)
+            projection = reference.project_batch(mixture_mean)
+            closest_index = int(np.argmin(projection.cross_track_error))
+            cross_track = float(projection.cross_track_error[closest_index])
+            crossing_progress = float(projection.progress[closest_index])
+            clearance = float(
+                self.config.robot_radius
+                + forecast.radius_m
+                + self.config.probabilistic_obstacle_safety_margin
+                + self.config
+                .probabilistic_obstacle_traversal_window_clearance_margin_m
+            )
+            distance_ahead = crossing_progress - float(current_progress)
+            if (
+                cross_track <= cross_track_limit
+                and distance_ahead >= -clearance
+                and distance_ahead <= activation_distance
+            ):
+                candidates.append((
+                    max(0.0, distance_ahead),
+                    crossing_progress,
+                    clearance,
+                    int(forecast_index),
+                    cross_track,
+                ))
+        if not candidates:
+            return None
+        return min(candidates, key=lambda item: (item[0], item[4]))
+
+    def _probabilistic_traversal_candidate(
+        self,
+        state,
+        reference,
+        probabilistic_obstacles,
+        current_progress,
+        clear_progress,
+        stop_at_target=False,
+    ):
+        """Build and certify one fixed-budget route traversal proposal.
+
+        The longer certificate is evaluated only for this deterministic
+        proposal.  The main MPPI horizon and rollout count remain unchanged.
+        """
+
+        horizon = min(
+            int(
+                self.config
+                .probabilistic_obstacle_traversal_window_horizon_steps
+            ),
+            *(forecast.horizon for forecast in probabilistic_obstacles),
+        )
+        result = {
+            "safe": False,
+            "forecast_sufficient": False,
+            "maximum_probability": 1.0,
+            "probability_mass": float(horizon),
+            "temporal_corroboration_maximum_probability": 1.0,
+            "temporal_corroboration_probability_mass": float(horizon),
+            "commit_admission_full_horizon_safe": False,
+            "required_steps": 0,
+            "sequence": None,
+        }
+        if horizon < self.config.horizon:
+            return result
+        v_index = self.action_spec.index("v_cmd")
+        omega_index = self.action_spec.index("omega_cmd")
+        theta_index = self.state_spec.index("theta")
+        commands = np.zeros(
+            (horizon, self.action_spec.dimension), dtype=np.float64
+        )
+        commands[:, v_index] = float(self.action_spec.upper[v_index])
+        target_pose = np.asarray(
+            reference.poses_at_progress(np.asarray([clear_progress]))[0],
+            dtype=np.float64,
+        )
+        heading_error = float(np.arctan2(
+            np.sin(target_pose[2] - state[theta_index]),
+            np.cos(target_pose[2] - state[theta_index]),
+        ))
+        maximum_yaw_rate = float(
+            self.action_spec.upper[omega_index]
+            if heading_error >= 0.0
+            else -self.action_spec.lower[omega_index]
+        )
+        translation_heading_gate = float(
+            self.config
+            .probabilistic_obstacle_traversal_window_translation_heading_gate_rad
+        )
+        turn_steps = 0
+        if abs(heading_error) > translation_heading_gate:
+            turn_steps = int(np.ceil(
+                (abs(heading_error) - translation_heading_gate)
+                / max(maximum_yaw_rate * self.config.dt, 1.0e-12)
+            ))
+            turn_steps = max(1, min(turn_steps, horizon))
+        if turn_steps:
+            commands[:turn_steps, v_index] = 0.0
+            commands[:turn_steps, omega_index] = float(np.clip(
+                heading_error / max(turn_steps * self.config.dt, 1.0e-12),
+                self.action_spec.lower[omega_index],
+                self.action_spec.upper[omega_index],
+            ))
+        elif abs(heading_error) > 1.0e-9:
+            commands[0, omega_index] = float(np.clip(
+                1.5 * heading_error,
+                self.action_spec.lower[omega_index],
+                self.action_spec.upper[omega_index],
+            ))
+        def rollout_candidate(candidate_commands):
+            prediction_controls = self._prediction_controls(
+                candidate_commands[None, ...]
+            )
+            if bool(getattr(self.dynamics, "supports_rollout_batch", False)):
+                return np.asarray(
+                    self.dynamics.rollout_batch(
+                        np.asarray(state, dtype=np.float64),
+                        prediction_controls,
+                        self.config.dt,
+                        self.state_spec,
+                        self.config.integrator,
+                    ),
+                    dtype=np.float64,
+                )[0]
+            candidate_trajectory = np.empty(
+                (horizon + 1, self.state_spec.dimension), dtype=np.float64
+            )
+            candidate_trajectory[0] = state
+            for step in range(horizon):
+                candidate_trajectory[step + 1] = integrate_batch(
+                    self.dynamics,
+                    candidate_trajectory[step],
+                    prediction_controls[0, step],
+                    self.config.dt,
+                    self.state_spec,
+                    self.config.integrator,
+                )
+            return candidate_trajectory
+
+        trajectory = rollout_candidate(commands)
+        positions = trajectory[1:, list(self.state_spec.position_indices)]
+        projected = reference.project_batch(
+            positions, minimum_progress=float(current_progress)
+        ).progress
+        cleared = np.flatnonzero(projected >= float(clear_progress) - 1.0e-9)
+        if not cleared.size:
+            return result
+        if stop_at_target:
+            # Rearm staging may advance to the already frozen crossing entry,
+            # but its open-loop certificate must not continue through the
+            # conflict region.  Stop after the first predicted state reaches
+            # that target, then re-evaluate the unchanged probabilistic
+            # horizon.  Only the first command is executed before replanning.
+            reach_index = int(cleared[0])
+            commands[reach_index + 1:, :] = 0.0
+
+            # The first maximum-speed command that reaches the entry can
+            # overshoot it by one control interval.  Fit that one already
+            # budgeted command to the greatest non-crossing speed.  The
+            # existing 1e-9 geometric tolerance is used only for numerical
+            # bisection; no behavioral threshold or rollout candidate is
+            # introduced.
+            maximum_reach_speed = float(commands[reach_index, v_index])
+            lower_speed = 0.0
+            upper_speed = maximum_reach_speed
+            fitted_commands = commands.copy()
+            for _ in range(40):
+                trial_speed = 0.5 * (lower_speed + upper_speed)
+                fitted_commands[reach_index, v_index] = trial_speed
+                trial_trajectory = rollout_candidate(fitted_commands)
+                trial_positions = trial_trajectory[
+                    1:, list(self.state_spec.position_indices)
+                ]
+                trial_progress = reference.project_batch(
+                    trial_positions,
+                    minimum_progress=float(current_progress),
+                ).progress
+                if float(np.max(trial_progress)) <= (
+                    float(clear_progress) + 1.0e-9
+                ):
+                    lower_speed = trial_speed
+                else:
+                    upper_speed = trial_speed
+            fitted_commands[reach_index, v_index] = lower_speed
+            commands = fitted_commands
+            trajectory = rollout_candidate(commands)
+            positions = trajectory[
+                1:, list(self.state_spec.position_indices)
+            ]
+            projected = reference.project_batch(
+                positions, minimum_progress=float(current_progress)
+            ).progress
+            cleared = np.flatnonzero(
+                projected >= float(clear_progress) - 1.0e-9
+            )
+            if (
+                not cleared.size
+                or float(np.max(projected))
+                > float(clear_progress) + 1.0e-9
+            ):
+                return result
+        end_step = min(
+            horizon,
+            int(cleared[0])
+            + 1
+            + int(
+                self.config
+                .probabilistic_obstacle_traversal_window_clear_hold_steps
+            ),
+        )
+        risk_end_step = end_step
+        if (
+            self.config
+            .probabilistic_obstacle_traversal_window_temporal_abort_full_horizon_corroboration_enabled
+            or self.config
+            .probabilistic_obstacle_traversal_window_commit_admission_full_horizon_enabled
+        ):
+            risk_end_step = max(
+                end_step,
+                min(horizon, int(self.config.horizon)),
+            )
+        risk = evaluate_collision_risk(
+            positions[None, :risk_end_step, :],
+            probabilistic_obstacles,
+            CollisionRiskConfig(
+                robot_radius_m=self.config.robot_radius,
+                safety_margin_m=(
+                    self.config.probabilistic_obstacle_safety_margin
+                ),
+                minimum_position_std_m=(
+                    self.config.probabilistic_obstacle_minimum_std
+                ),
+                hard_probability_threshold=(
+                    self.config.probabilistic_obstacle_hard_threshold
+                ),
+            ),
+        )
+        short_step_probability = np.asarray(
+            risk.step_probability_upper_bound[0, :end_step],
+            dtype=np.float64,
+        )
+        maximum_probability = float(np.max(short_step_probability))
+        probability_mass = float(np.sum(short_step_probability))
+        temporal_corroboration_maximum_probability = float(
+            risk.maximum_step_probability[0]
+        )
+        temporal_corroboration_probability_mass = float(
+            risk.accumulated_probability_mass[0]
+        )
+        safe = bool(
+            maximum_probability
+            <= self.config
+            .probabilistic_obstacle_traversal_window_probability_ceiling
+            and probability_mass
+            <= self.config
+            .probabilistic_obstacle_traversal_window_mass_ceiling
+        )
+        commit_admission_full_horizon_safe = bool(
+            temporal_corroboration_maximum_probability
+            <= self.config
+            .probabilistic_obstacle_traversal_window_probability_ceiling
+            and temporal_corroboration_probability_mass
+            <= self.config
+            .probabilistic_obstacle_traversal_window_mass_ceiling
+        )
+        result.update({
+            "safe": safe,
+            "forecast_sufficient": True,
+            "maximum_probability": maximum_probability,
+            "probability_mass": probability_mass,
+            "temporal_corroboration_maximum_probability": (
+                temporal_corroboration_maximum_probability
+            ),
+            "temporal_corroboration_probability_mass": (
+                temporal_corroboration_probability_mass
+            ),
+            "commit_admission_full_horizon_safe": (
+                commit_admission_full_horizon_safe
+            ),
+            "required_steps": int(end_step),
+            "sequence": commands[: self.config.horizon].copy(),
+        })
+        return result
+
+    def _probabilistic_traversal_window_context(
+        self,
+        state,
+        reference,
+        probabilistic_obstacles,
+        temporal_emergency_triggered=False,
+        temporal_emergency_raw_triggered=False,
+        temporal_emergency_closing_observed=False,
+        temporal_emergency_ttc_s=float("inf"),
+        terminal_phase=False,
+    ):
+        """Certify, start, and persist a causal crossing-window commit."""
+
+        result = {
+            "enabled": bool(
+                self.config.probabilistic_obstacle_traversal_window_enabled
+            ),
+            "candidate_requested": False,
+            "window_safe": False,
+            "commit_active": False,
+            "commit_started": False,
+            "commit_completed": False,
+            "commit_cancelled": False,
+            "commit_cancelled_by_temporal_closing": False,
+            "commit_cancelled_by_temporal_midpoint_guard": False,
+            "commit_cancelled_by_temporal_exit_deadline_guard": False,
+            "commit_admission_full_horizon_safe": False,
+            "commit_admission_rejected": False,
+            "commit_admission_exit_deadline_safe": True,
+            "commit_admission_exit_deadline_rejected": False,
+            "commit_admission_exit_deadline_hold_requested": False,
+            "commit_admission_prealign_requested": False,
+            "uncommitted_temporal_staging_hold_requested": False,
+            "uncommitted_temporal_staging_terminal_release_active": bool(
+                self.config
+                .probabilistic_obstacle_traversal_window_uncommitted_temporal_staging_terminal_release_enabled
+                and terminal_phase
+            ),
+            "commit_admission_exit_deadline_margin_s": 0.0,
+            "commit_admission_safe_streak": 0,
+            "commit_admission_required_streak": int(
+                self.config
+                .probabilistic_obstacle_traversal_window_commit_admission_safe_hold_steps
+            ),
+            "commit_admission_waiting": False,
+            "commit_admission_released": False,
+            "commit_preserved_for_nearest_safe_exit": False,
+            "forward_exit_distance_m": 0.0,
+            "retreat_exit_distance_m": 0.0,
+            "forward_exit_optimistic_time_s": 0.0,
+            "retreat_exit_optimistic_time_s": 0.0,
+            "temporal_exit_deadline_ttc_s": float("inf"),
+            "temporal_exit_deadline_guard_triggered": False,
+            "temporal_closing_observed": bool(
+                temporal_emergency_closing_observed
+            ),
+            "exit_deadline_retreat_escape_transaction_active": bool(
+                self._probabilistic_traversal_exit_deadline_retreat_active
+            ),
+            "exit_deadline_retreat_escape_reused": False,
+            "retreat_requested": False,
+            "retreat_temporal_lattice_requested": bool(
+                self._probabilistic_traversal_retreat_temporal_lattice
+            ),
+            "retreat_completed": False,
+            "rearm_pending": bool(
+                self._probabilistic_traversal_rearm_pending
+            ),
+            "rearm_no_crossing_safe_streak": 0,
+            "rearm_released_by_no_crossing_clearance": False,
+            "rearm_no_crossing_certified_handoff_active": False,
+            "rearm_no_crossing_certified_handoff_safe": False,
+            "rearm_staging_approach_requested": False,
+            "rearm_staging_approach_safe": False,
+            "rearm_staging_target_progress": 0.0,
+            "post_center_forward_exit_commit_active": False,
+            "retreat_progress": 0.0,
+            "forecast_sufficient": False,
+            "crossing_progress": 0.0,
+            "entry_progress": 0.0,
+            "clear_progress": 0.0,
+            "current_progress": 0.0,
+            "maximum_probability": 0.0,
+            "probability_mass": 0.0,
+            "required_steps": 0,
+            "forecast_index": -1,
+            "sequence": None,
+        }
+        if not result["enabled"]:
+            self._clear_probabilistic_traversal_commit()
+            self._probabilistic_traversal_retreat_progress = None
+            self._probabilistic_traversal_rearm_pending = False
+            self._probabilistic_traversal_retreat_temporal_lattice = False
+            self._clear_probabilistic_traversal_exit_deadline_retreat_escape()
+            return result
+        if (
+            self._probabilistic_traversal_rearm_pending
+            and not probabilistic_obstacles
+        ):
+            self._probabilistic_traversal_admission_safe_streak = 0
+            self._probabilistic_traversal_admission_signature = None
+            result.update({
+                "candidate_requested": True,
+                "rearm_pending": True,
+                "sequence": self._probabilistic_traversal_hold_candidate(),
+            })
+            return result
+        required_contract = (
+            probabilistic_obstacles
+            and hasattr(reference, "project")
+            and hasattr(reference, "project_batch")
+            and hasattr(reference, "poses_at_progress")
+            and hasattr(reference, "total_length")
+            and "v_cmd" in self.action_spec.names
+            and "omega_cmd" in self.action_spec.names
+            and "theta" in self.state_spec.names
+        )
+        if not required_contract:
+            if self._probabilistic_traversal_clear_progress is None:
+                self._probabilistic_traversal_admission_safe_streak = 0
+                self._probabilistic_traversal_admission_signature = None
+            return result
+        position = np.asarray(state, dtype=np.float64)[
+            list(self.state_spec.position_indices)
+        ]
+        current_progress = float(reference.project(
+            position,
+            minimum_progress=float(getattr(reference, "progress", 0.0)),
+        ).progress)
+        result["current_progress"] = current_progress
+        if self._probabilistic_traversal_retreat_progress is not None:
+            # Retreat is the one traversal phase where physical motion is
+            # intentionally allowed to move behind the monotonic online
+            # reference progress.  Using ``current_progress`` here would pin
+            # the completion check to that forward-only floor and latch the
+            # controller in reverse forever after a pre-crossing abort.
+            physical_progress = float(reference.project(position).progress)
+            retreat_progress = float(
+                self._probabilistic_traversal_retreat_progress
+            )
+            result["retreat_progress"] = retreat_progress
+            if physical_progress <= retreat_progress + 1.0e-9:
+                self._probabilistic_traversal_retreat_progress = None
+                self._probabilistic_traversal_retreat_temporal_lattice = False
+                self._clear_probabilistic_traversal_exit_deadline_retreat_escape()
+                # The controller intentionally moved behind the otherwise
+                # monotonic live path reference.  Rebase only at this explicit
+                # retreat transaction boundary so the next certificate uses
+                # the robot's real staging position and traversal duration.
+                reference.progress = physical_progress
+                current_progress = physical_progress
+                result["current_progress"] = current_progress
+                self._probabilistic_traversal_rearm_pending = True
+                result["retreat_completed"] = True
+                result["rearm_pending"] = True
+            else:
+                result.update({
+                    "candidate_requested": True,
+                    "retreat_requested": True,
+                    "sequence": self._probabilistic_traversal_retreat_candidate(
+                        state, reference
+                    ),
+                })
+                return result
+        active = self._probabilistic_traversal_clear_progress is not None
+        if active and current_progress >= (
+            float(self._probabilistic_traversal_clear_progress) - 1.0e-9
+        ):
+            result["commit_completed"] = True
+            self._clear_probabilistic_traversal_commit()
+            active = False
+        crossing = None
+        if active:
+            crossing = (
+                0.0,
+                float(self._probabilistic_traversal_crossing_progress),
+                float(
+                    self._probabilistic_traversal_clear_progress
+                    - self._probabilistic_traversal_crossing_progress
+                ),
+                -1,
+                0.0,
+            )
+        else:
+            crossing = self._probabilistic_traversal_crossing(
+                reference, probabilistic_obstacles, current_progress
+            )
+        if crossing is None:
+            if self._probabilistic_traversal_rearm_pending:
+                no_crossing_clear_streak = 0
+                no_crossing_handoff = None
+                no_crossing_handoff_safe = False
+                if (
+                    self.config
+                    .probabilistic_obstacle_traversal_window_rearm_no_crossing_clear_enabled
+                ):
+                    certified_handoff_enabled = bool(
+                        self.config
+                        .probabilistic_obstacle_traversal_window_rearm_no_crossing_certified_handoff_enabled
+                    )
+                    if certified_handoff_enabled:
+                        v_index = self.action_spec.index("v_cmd")
+                        handoff_progress = min(
+                            float(reference.total_length),
+                            current_progress
+                            + max(
+                                0.0, float(self.action_spec.upper[v_index])
+                            ) * float(self.config.dt),
+                        )
+                        no_crossing_handoff = (
+                            self._probabilistic_traversal_candidate(
+                                state,
+                                reference,
+                                probabilistic_obstacles,
+                                current_progress,
+                                handoff_progress,
+                            )
+                        )
+                        no_crossing_handoff_safe = bool(
+                            not temporal_emergency_closing_observed
+                            and no_crossing_handoff["safe"]
+                            and no_crossing_handoff[
+                                "commit_admission_full_horizon_safe"
+                            ]
+                        )
+                    no_crossing_clear_streak = (
+                        self._update_probabilistic_traversal_admission_streak(
+                            safe=(
+                                no_crossing_handoff_safe
+                                if certified_handoff_enabled
+                                else not temporal_emergency_closing_observed
+                            ),
+                            forecast_index=-1,
+                            crossing_progress=current_progress,
+                            entry_progress=current_progress,
+                            clear_progress=(
+                                handoff_progress
+                                if certified_handoff_enabled
+                                else current_progress
+                            ),
+                        )
+                    )
+                    required_streak = int(
+                        self.config
+                        .probabilistic_obstacle_traversal_window_commit_admission_safe_hold_steps
+                    )
+                    if no_crossing_clear_streak >= required_streak:
+                        if certified_handoff_enabled:
+                            result.update({
+                                "candidate_requested": True,
+                                "window_safe": bool(
+                                    no_crossing_handoff["safe"]
+                                ),
+                                "commit_admission_full_horizon_safe": bool(
+                                    no_crossing_handoff[
+                                        "commit_admission_full_horizon_safe"
+                                    ]
+                                ),
+                                "rearm_pending": True,
+                                "rearm_no_crossing_safe_streak": int(
+                                    no_crossing_clear_streak
+                                ),
+                                "rearm_no_crossing_certified_handoff_active": True,
+                                "rearm_no_crossing_certified_handoff_safe": True,
+                                "forecast_sufficient": bool(
+                                    no_crossing_handoff[
+                                        "forecast_sufficient"
+                                    ]
+                                ),
+                                "maximum_probability": float(
+                                    no_crossing_handoff[
+                                        "maximum_probability"
+                                    ]
+                                ),
+                                "probability_mass": float(
+                                    no_crossing_handoff["probability_mass"]
+                                ),
+                                "temporal_corroboration_maximum_probability": float(
+                                    no_crossing_handoff[
+                                        "temporal_corroboration_maximum_probability"
+                                    ]
+                                ),
+                                "temporal_corroboration_probability_mass": float(
+                                    no_crossing_handoff[
+                                        "temporal_corroboration_probability_mass"
+                                    ]
+                                ),
+                                "required_steps": int(
+                                    no_crossing_handoff["required_steps"]
+                                ),
+                                "sequence": no_crossing_handoff["sequence"],
+                            })
+                            return result
+                        self._probabilistic_traversal_rearm_pending = False
+                        self._probabilistic_traversal_admission_safe_streak = 0
+                        self._probabilistic_traversal_admission_signature = None
+                        result.update({
+                            "rearm_pending": False,
+                            "rearm_no_crossing_safe_streak": int(
+                                no_crossing_clear_streak
+                            ),
+                            "rearm_released_by_no_crossing_clearance": True,
+                        })
+                        return result
+                result.update({
+                    "candidate_requested": True,
+                    "rearm_pending": True,
+                    "rearm_no_crossing_safe_streak": int(
+                        no_crossing_clear_streak
+                    ),
+                    "rearm_no_crossing_certified_handoff_safe": bool(
+                        no_crossing_handoff_safe
+                    ),
+                    "sequence": self._probabilistic_traversal_hold_candidate(),
+                })
+            elif not active:
+                self._probabilistic_traversal_admission_safe_streak = 0
+                self._probabilistic_traversal_admission_signature = None
+                if (
+                    self.config
+                    .probabilistic_obstacle_traversal_window_uncommitted_temporal_staging_hold_enabled
+                    and temporal_emergency_closing_observed
+                    and not result[
+                        "uncommitted_temporal_staging_terminal_release_active"
+                    ]
+                    and self._probabilistic_traversal_retreat_progress is None
+                    and not self._probabilistic_traversal_exit_deadline_retreat_active
+                ):
+                    # A causal LaserScan closing signal may precede the
+                    # constant-velocity forecast's recognition of a future
+                    # route crossing after an obstacle reverses.  Preserve the
+                    # route entrance by staging in place until online geometry
+                    # either exposes a certifiable crossing or the closing
+                    # signal clears.  This uses the existing traversal slot;
+                    # no future plant truth, obstacle identity, or extra
+                    # rollout is introduced.
+                    result.update({
+                        "candidate_requested": True,
+                        "uncommitted_temporal_staging_hold_requested": True,
+                        "sequence": (
+                            self._probabilistic_traversal_hold_candidate()
+                        ),
+                    })
+            return result
+        _, crossing_progress, clearance, forecast_index, _ = crossing
+        entry_progress = max(0.0, crossing_progress - clearance)
+        clear_progress = min(
+            float(reference.total_length), crossing_progress + clearance
+        )
+        if active:
+            entry_progress = float(
+                self._probabilistic_traversal_entry_progress
+            )
+            clear_progress = float(
+                self._probabilistic_traversal_clear_progress
+            )
+        certificate = self._probabilistic_traversal_candidate(
+            state,
+            reference,
+            probabilistic_obstacles,
+            current_progress,
+            clear_progress,
+        )
+        rearm_staging_approach_requested = bool(
+            self.config
+            .probabilistic_obstacle_traversal_window_rearm_staging_approach_enabled
+            and self._probabilistic_traversal_rearm_pending
+            and not active
+            and current_progress < entry_progress - 1.0e-9
+        )
+        rearm_staging_candidate = None
+        rearm_staging_approach_safe = False
+        rearm_staging_target_progress = entry_progress
+        if rearm_staging_approach_requested:
+            if (
+                self.config
+                .probabilistic_obstacle_traversal_window_rearm_staging_frontier_enabled
+            ):
+                staging_v_index = self.action_spec.index("v_cmd")
+                rearm_staging_target_progress = min(
+                    entry_progress,
+                    current_progress
+                    + max(
+                        0.0,
+                        float(self.action_spec.upper[staging_v_index]),
+                    ) * float(self.config.dt),
+                )
+            rearm_staging_candidate = (
+                self._probabilistic_traversal_candidate(
+                    state,
+                    reference,
+                    probabilistic_obstacles,
+                    current_progress,
+                    rearm_staging_target_progress,
+                    stop_at_target=True,
+                )
+            )
+            rearm_staging_approach_safe = bool(
+                rearm_staging_candidate["safe"]
+                and rearm_staging_candidate[
+                    "commit_admission_full_horizon_safe"
+                ]
+                and rearm_staging_candidate["sequence"] is not None
+            )
+        started = bool(
+            active
+            and (
+                self._probabilistic_traversal_commit_started
+                or current_progress >= entry_progress - 1.0e-9
+            )
+        )
+        abort_probability = float(
+            self.config
+            .probabilistic_obstacle_traversal_window_abort_probability
+        )
+        temporal_abort_mass_floor = float(
+            self.config
+            .probabilistic_obstacle_traversal_window_temporal_abort_mass_floor
+        )
+        temporal_abort = bool(
+            temporal_emergency_triggered
+            and certificate["forecast_sufficient"]
+            and certificate["temporal_corroboration_probability_mass"]
+            >= temporal_abort_mass_floor
+        )
+        full_horizon_admission_enabled = bool(
+            self.config
+            .probabilistic_obstacle_traversal_window_commit_admission_full_horizon_enabled
+        )
+        admission_certificate_safe = bool(
+            certificate["safe"]
+            and (
+                not full_horizon_admission_enabled
+                or certificate["commit_admission_full_horizon_safe"]
+            )
+        )
+        admission_v_index = self.action_spec.index("v_cmd")
+        admission_forward_speed = max(
+            1.0e-12, float(self.action_spec.upper[admission_v_index])
+        )
+        admission_forward_exit_optimistic_time = max(
+            0.0, clear_progress - current_progress
+        ) / admission_forward_speed
+        admission_exit_deadline_rejected = bool(
+            not active
+            and self.config
+            .probabilistic_obstacle_traversal_window_commit_admission_exit_deadline_enabled
+            and temporal_emergency_closing_observed
+            and np.isfinite(temporal_emergency_ttc_s)
+            and temporal_emergency_ttc_s > 0.0
+            and admission_forward_exit_optimistic_time
+            >= temporal_emergency_ttc_s
+        )
+        admission_exit_deadline_safe = bool(
+            not admission_exit_deadline_rejected
+        )
+        admission_exit_deadline_margin = (
+            float(temporal_emergency_ttc_s)
+            - admission_forward_exit_optimistic_time
+            if temporal_emergency_closing_observed
+            and np.isfinite(temporal_emergency_ttc_s)
+            else 0.0
+        )
+        admission_safe = bool(
+            admission_certificate_safe and admission_exit_deadline_safe
+        )
+        admission_rejected = bool(
+            certificate["safe"]
+            and (
+                (
+                    full_horizon_admission_enabled
+                    and not certificate["commit_admission_full_horizon_safe"]
+                )
+                or admission_exit_deadline_rejected
+            )
+        )
+        admission_required_streak = int(
+            self.config
+            .probabilistic_obstacle_traversal_window_commit_admission_safe_hold_steps
+        )
+        admission_safe_streak = 0
+        if not active:
+            admission_safe_streak = (
+                self._update_probabilistic_traversal_admission_streak(
+                    safe=admission_safe,
+                    forecast_index=forecast_index,
+                    crossing_progress=crossing_progress,
+                    entry_progress=entry_progress,
+                    clear_progress=clear_progress,
+                )
+            )
+        admission_stable = bool(
+            admission_safe
+            and (
+                active
+                or admission_safe_streak >= admission_required_streak
+            )
+        )
+        admission_waiting = bool(
+            not active
+            and admission_certificate_safe
+            and not admission_stable
+        )
+        admission_exit_deadline_hold_requested = bool(
+            not active and admission_exit_deadline_rejected
+        )
+        admission_hold_requested = bool(
+            admission_waiting or admission_exit_deadline_hold_requested
+        )
+        admission_prealign_requested = bool(
+            self.config
+            .probabilistic_obstacle_traversal_window_commit_admission_prealign_enabled
+            and not active
+            and not admission_stable
+            and not temporal_emergency_raw_triggered
+            and not self._probabilistic_traversal_rearm_pending
+            and self._probabilistic_traversal_retreat_progress is None
+            and certificate.get("sequence") is not None
+        )
+        admission_released = False
+        retreat_margin = float(
+            self.config
+            .probabilistic_obstacle_traversal_window_retreat_margin_m
+        )
+        retreat_exit_progress = max(0.0, entry_progress - retreat_margin)
+        forward_exit_distance = max(0.0, clear_progress - current_progress)
+        retreat_exit_distance = max(
+            0.0, current_progress - retreat_exit_progress
+        )
+        preserve_for_nearest_safe_exit = bool(
+            active
+            and started
+            and current_progress < crossing_progress - 1.0e-9
+            and temporal_abort
+            and certificate["safe"]
+            and self.config
+            .probabilistic_obstacle_traversal_window_temporal_abort_nearest_exit_enabled
+            and forward_exit_distance <= retreat_exit_distance
+        )
+        v_index = self.action_spec.index("v_cmd")
+        midpoint_guard_band = max(
+            0.0, float(self.action_spec.upper[v_index]) * self.config.dt
+        )
+        forward_speed = max(
+            1.0e-12, float(self.action_spec.upper[v_index])
+        )
+        reverse_speed = max(
+            1.0e-12, -float(self.action_spec.lower[v_index])
+        )
+        forward_exit_optimistic_time = (
+            forward_exit_distance / forward_speed
+        )
+        retreat_exit_optimistic_time = (
+            retreat_exit_distance / reverse_speed
+        )
+        temporal_exit_deadline_ttc = float(temporal_emergency_ttc_s)
+        temporal_exit_deadline_guard_abort = bool(
+            active
+            and started
+            and current_progress < crossing_progress - 1.0e-9
+            and temporal_emergency_raw_triggered
+            and np.isfinite(temporal_exit_deadline_ttc)
+            and temporal_exit_deadline_ttc > 0.0
+            and self.config
+            .probabilistic_obstacle_traversal_window_temporal_exit_deadline_guard_enabled
+            and min(
+                forward_exit_optimistic_time,
+                retreat_exit_optimistic_time,
+            ) >= temporal_exit_deadline_ttc
+        )
+        temporal_midpoint_guard_abort = bool(
+            active
+            and started
+            and current_progress < crossing_progress - 1.0e-9
+            and temporal_emergency_triggered
+            and certificate["forecast_sufficient"]
+            and certificate["safe"]
+            and self.config
+            .probabilistic_obstacle_traversal_window_temporal_midpoint_guard_enabled
+            and retreat_exit_distance <= forward_exit_distance
+            and forward_exit_distance - retreat_exit_distance
+            <= midpoint_guard_band + 1.0e-12
+        )
+        abort_started_commit = bool(
+            active
+            and started
+            and current_progress < crossing_progress - 1.0e-9
+            and not preserve_for_nearest_safe_exit
+            and (
+                temporal_abort
+                or temporal_midpoint_guard_abort
+                or temporal_exit_deadline_guard_abort
+                or (
+                    abort_probability > 0.0
+                    and (
+                        not certificate["forecast_sufficient"]
+                        or certificate["maximum_probability"]
+                        >= abort_probability
+                    )
+                )
+            )
+        )
+        if abort_started_commit:
+            result["commit_cancelled"] = True
+            result["commit_cancelled_by_temporal_closing"] = bool(
+                temporal_abort
+                or temporal_midpoint_guard_abort
+                or temporal_exit_deadline_guard_abort
+            )
+            result["commit_cancelled_by_temporal_midpoint_guard"] = bool(
+                temporal_midpoint_guard_abort
+            )
+            result[
+                "commit_cancelled_by_temporal_exit_deadline_guard"
+            ] = bool(temporal_exit_deadline_guard_abort)
+            if retreat_margin > 0.0:
+                self._probabilistic_traversal_retreat_progress = max(
+                    0.0, entry_progress - retreat_margin
+                )
+                self._probabilistic_traversal_retreat_temporal_lattice = bool(
+                    temporal_midpoint_guard_abort
+                    or temporal_exit_deadline_guard_abort
+                )
+            else:
+                self._probabilistic_traversal_retreat_temporal_lattice = False
+            if (
+                temporal_exit_deadline_guard_abort
+                and self._probabilistic_traversal_retreat_progress is not None
+            ):
+                self._start_probabilistic_traversal_exit_deadline_retreat_escape()
+            else:
+                self._clear_probabilistic_traversal_exit_deadline_retreat_escape()
+            self._probabilistic_traversal_rearm_pending = False
+            self._clear_probabilistic_traversal_commit()
+            active = False
+            started = False
+        elif active and not started and not admission_safe:
+            result["commit_cancelled"] = True
+            result["commit_admission_rejected"] = admission_rejected
+            self._clear_probabilistic_traversal_commit()
+            active = False
+        elif not active and admission_stable:
+            self._probabilistic_traversal_crossing_progress = crossing_progress
+            self._probabilistic_traversal_entry_progress = entry_progress
+            self._probabilistic_traversal_clear_progress = clear_progress
+            self._probabilistic_traversal_commit_started = False
+            self._probabilistic_traversal_rearm_pending = False
+            active = True
+            started = bool(current_progress >= entry_progress - 1.0e-9)
+            admission_released = True
+            self._probabilistic_traversal_admission_safe_streak = 0
+            self._probabilistic_traversal_admission_signature = None
+        requested = bool(active and (started or certificate["safe"]))
+        if admission_hold_requested:
+            requested = True
+        if admission_prealign_requested:
+            requested = True
+        retreat_requested = bool(
+            abort_started_commit
+            and self._probabilistic_traversal_retreat_progress is not None
+        )
+        if retreat_requested:
+            requested = True
+        rearm_pending = bool(
+            self._probabilistic_traversal_rearm_pending and not active
+        )
+        if rearm_pending:
+            requested = True
+        post_center_forward_exit_commit_active = bool(
+            self.config
+            .probabilistic_obstacle_traversal_window_post_center_forward_exit_commit_enabled
+            and active
+            and started
+            and current_progress >= crossing_progress - 1.0e-9
+            and current_progress < clear_progress - 1.0e-9
+        )
+        result.update({
+            "candidate_requested": requested,
+            "window_safe": bool(certificate["safe"]),
+            "commit_admission_full_horizon_safe": bool(
+                certificate["commit_admission_full_horizon_safe"]
+            ),
+            "commit_admission_rejected": bool(
+                result["commit_admission_rejected"]
+                or (not active and admission_rejected)
+            ),
+            "commit_admission_exit_deadline_safe": bool(
+                admission_exit_deadline_safe
+            ),
+            "commit_admission_exit_deadline_rejected": bool(
+                admission_exit_deadline_rejected
+            ),
+            "commit_admission_exit_deadline_hold_requested": bool(
+                admission_exit_deadline_hold_requested
+            ),
+            "commit_admission_prealign_requested": bool(
+                admission_prealign_requested
+            ),
+            "commit_admission_exit_deadline_margin_s": float(
+                admission_exit_deadline_margin
+            ),
+            "commit_admission_safe_streak": int(admission_safe_streak),
+            "commit_admission_required_streak": int(
+                admission_required_streak
+            ),
+            "commit_admission_waiting": bool(admission_waiting),
+            "commit_admission_released": bool(admission_released),
+            "commit_preserved_for_nearest_safe_exit": bool(
+                preserve_for_nearest_safe_exit
+            ),
+            "forward_exit_distance_m": float(forward_exit_distance),
+            "retreat_exit_distance_m": float(retreat_exit_distance),
+            "forward_exit_optimistic_time_s": float(
+                forward_exit_optimistic_time
+            ),
+            "retreat_exit_optimistic_time_s": float(
+                retreat_exit_optimistic_time
+            ),
+            "temporal_exit_deadline_ttc_s": float(
+                temporal_exit_deadline_ttc
+            ),
+            "temporal_exit_deadline_guard_triggered": bool(
+                temporal_exit_deadline_guard_abort
+            ),
+            "temporal_closing_observed": bool(
+                temporal_emergency_closing_observed
+            ),
+            "exit_deadline_retreat_escape_transaction_active": bool(
+                self._probabilistic_traversal_exit_deadline_retreat_active
+            ),
+            "exit_deadline_retreat_escape_reused": False,
+            "commit_active": bool(active),
+            "commit_started": bool(started),
+            "forecast_sufficient": bool(certificate["forecast_sufficient"]),
+            "crossing_progress": float(crossing_progress),
+            "entry_progress": float(entry_progress),
+            "clear_progress": float(clear_progress),
+            "maximum_probability": float(certificate["maximum_probability"]),
+            "probability_mass": float(certificate["probability_mass"]),
+            "temporal_corroboration_maximum_probability": float(
+                certificate["temporal_corroboration_maximum_probability"]
+            ),
+            "temporal_corroboration_probability_mass": float(
+                certificate["temporal_corroboration_probability_mass"]
+            ),
+            "required_steps": int(certificate["required_steps"]),
+            "forecast_index": int(forecast_index),
+            "retreat_requested": retreat_requested,
+            "retreat_temporal_lattice_requested": bool(
+                self._probabilistic_traversal_retreat_temporal_lattice
+            ),
+            "rearm_pending": rearm_pending,
+            "rearm_staging_approach_requested": bool(
+                rearm_staging_approach_requested
+            ),
+            "rearm_staging_approach_safe": bool(
+                rearm_staging_approach_safe
+            ),
+            "rearm_staging_target_progress": float(
+                rearm_staging_target_progress
+            ),
+            "post_center_forward_exit_commit_active": bool(
+                post_center_forward_exit_commit_active
+            ),
+            "retreat_progress": float(
+                self._probabilistic_traversal_retreat_progress
+                if self._probabilistic_traversal_retreat_progress is not None
+                else 0.0
+            ),
+            "sequence": (
+                self._probabilistic_traversal_retreat_candidate(state, reference)
+                if retreat_requested
+                else rearm_staging_candidate["sequence"]
+                if (
+                    rearm_pending
+                    and rearm_staging_approach_safe
+                    and rearm_staging_candidate is not None
+                )
+                else self._probabilistic_traversal_hold_candidate()
+                if rearm_pending
+                else self._probabilistic_traversal_prealign_candidate(
+                    certificate["sequence"]
+                )
+                if admission_prealign_requested
+                else self._probabilistic_traversal_hold_candidate()
+                if admission_hold_requested
+                else certificate["sequence"]
+            ),
+        })
+        return result
+
+    def _inject_probabilistic_traversal_candidate(
+        self, samples, traversal_context
+    ):
+        sequence = traversal_context.get("sequence")
+        if (
+            not traversal_context.get("candidate_requested", False)
+            or sequence is None
+        ):
+            return -1
+        # The final six slots belong to the existing emergency lattice.  Slot
+        # K-7 is reserved from the same fixed K budget for the certified route
+        # traversal proposal.
+        index = int(self.config.num_samples - 7)
+        samples[index] = np.asarray(sequence, dtype=np.float64)
+        return index
+
     def _importance_sampling_cost(self, nominal, perturbations, covariance):
         """Return the MPPI likelihood-ratio correction for each rollout.
 
@@ -586,6 +3190,30 @@ class MppiController:
         if controls.shape[0] < 1 or not np.isfinite(controls).all():
             raise ValueError("rollout controls must contain a finite batch")
         prediction_controls = self._prediction_controls(controls)
+        if bool(getattr(self.dynamics, "supports_rollout_batch", False)):
+            trajectory = np.asarray(
+                self.dynamics.rollout_batch(
+                    initial_state,
+                    prediction_controls,
+                    self.config.dt,
+                    self.state_spec,
+                    self.config.integrator,
+                ),
+                dtype=np.float64,
+            )
+            expected_shape = (
+                controls.shape[0],
+                self.config.horizon + 1,
+                self.state_spec.dimension,
+            )
+            if (
+                trajectory.shape != expected_shape
+                or not np.isfinite(trajectory).all()
+            ):
+                raise FloatingPointError(
+                    "batch-rollout fast path returned an invalid trajectory"
+                )
+            return trajectory
         batch = controls.shape[0]
         trajectory = np.empty((batch, self.config.horizon + 1, self.state_spec.dimension), dtype=np.float64)
         trajectory[:, 0, :] = np.repeat(initial_state[None, :], batch, axis=0)
@@ -607,6 +3235,7 @@ class MppiController:
         target,
         obstacles: Iterable[Sequence[float]] = (),
         reference=None,
+        probabilistic_obstacles=(),
     ) -> SequenceEvaluation:
         """Roll out and score a fixed, bounded batch without sampling it.
 
@@ -618,7 +3247,12 @@ class MppiController:
         values = self._validate_evaluation_controls(controls)
         trajectories = self.rollout(initial_state, values)
         costs = self.cost_trajectories(
-            trajectories, values, target, obstacles, reference=reference
+            trajectories,
+            values,
+            target,
+            obstacles,
+            reference=reference,
+            probabilistic_obstacles=probabilistic_obstacles,
         )
         return SequenceEvaluation(trajectories=trajectories, costs=costs)
 
@@ -629,6 +3263,7 @@ class MppiController:
         target,
         obstacles: Iterable[Sequence[float]] = (),
         reference=None,
+        probabilistic_obstacles=(),
     ) -> np.ndarray:
         """Apply the controller's base cost contract to fixed trajectories."""
 
@@ -648,7 +3283,12 @@ class MppiController:
             raise ValueError("evaluation trajectories must be finite")
         costs = np.asarray(
             self._cost(
-                paths, values, target, tuple(obstacles), reference=reference
+                paths,
+                values,
+                target,
+                tuple(obstacles),
+                reference=reference,
+                probabilistic_obstacles=probabilistic_obstacles,
             ),
             dtype=np.float64,
         )
@@ -710,7 +3350,20 @@ class MppiController:
             -(adjusted - beta) / self.config.temperature, -700.0, 0.0
         )
         weights = np.exp(exponent)
-        weights /= max(float(np.sum(weights)), 1e-12)
+        weight_sum = float(np.sum(weights))
+        if np.isfinite(weight_sum) and weight_sum > 0.0:
+            # Do not floor a representable subnormal sum: doing so leaves all
+            # weights near zero, and squaring them later produces an infinite
+            # effective sample size. Exact normalization is stable here.
+            weights /= weight_sum
+        else:
+            finite_costs = np.where(np.isfinite(costs), costs, np.inf)
+            fallback_index = (
+                int(np.argmin(finite_costs))
+                if np.any(np.isfinite(finite_costs)) else 0
+            )
+            weights[:] = 0.0
+            weights[fallback_index] = 1.0
         effective_sample_size = float(1.0 / np.sum(weights ** 2))
         if not np.isfinite(weights).all() or not np.isfinite(effective_sample_size):
             raise FloatingPointError("MPPI importance weights are not finite")
@@ -737,7 +3390,17 @@ class MppiController:
         preceding[:, 1:, :] = values[:, :-1, :]
         return fraction * preceding + (1.0 - fraction) * values
 
-    def _cost(self, trajectories, controls, target, obstacles, reference=None):
+    def _cost(
+        self,
+        trajectories,
+        controls,
+        target,
+        obstacles,
+        reference=None,
+        probabilistic_obstacles=(),
+        path_boundary_margins=None,
+        probabilistic_risk=None,
+    ):
         xy_indices = self.state_spec.position_indices
         xy = trajectories[..., list(xy_indices)]
         target_xy = np.asarray((target.pose.x, target.pose.y), dtype=np.float64)
@@ -775,10 +3438,12 @@ class MppiController:
                 heading_error ** 2, axis=1
             )
         if self.config.path_boundary_enabled:
-            margins = self._path_boundary_margins(
-                trajectories,
-                reference,
-            )
+            margins = path_boundary_margins
+            if margins is None:
+                margins = self._path_boundary_margins(
+                    trajectories,
+                    reference,
+                )
             buffered_excess = np.maximum(
                 0.0, self.config.path_boundary_buffer - margins[:, 1:]
             )
@@ -834,10 +3499,1835 @@ class MppiController:
             influence = np.maximum(0.0, self.config.obstacle_influence - clearance)
             costs += self.config.obstacle_weight * np.sum(influence ** 2, axis=1)
             costs += self.config.collision_penalty * collision.astype(np.float64)
+        if self.config.probabilistic_obstacle_risk_enabled:
+            risk = probabilistic_risk
+            if risk is None:
+                risk = self._probabilistic_collision_risk(
+                    trajectories, probabilistic_obstacles
+                )
+            costs += (
+                self.config.probabilistic_obstacle_risk_weight
+                * risk.accumulated_probability_mass
+            )
+            costs += (
+                self.config.probabilistic_obstacle_hard_penalty
+                * risk.hard_violation.astype(np.float64)
+            )
         if self.memory_cost is not None:
             for index in range(trajectories.shape[0]):
                 costs[index] += float(self.memory_cost(trajectories[index], controls[index]))
         return costs
+
+    def _probabilistic_collision_risk(
+        self, trajectories, probabilistic_obstacles
+    ):
+        forecasts = tuple(probabilistic_obstacles)
+        if not forecasts:
+            raise ValueError(
+                "probabilistic obstacle risk is enabled but forecasts are absent"
+            )
+        if any(
+            not isinstance(item, GaussianMixtureObstacleForecast)
+            for item in forecasts
+        ):
+            raise TypeError(
+                "probabilistic obstacle forecasts use an invalid contract"
+            )
+        for forecast in forecasts:
+            if not np.isclose(
+                forecast.dt,
+                self.config.dt,
+                atol=1.0e-12,
+                rtol=0.0,
+            ):
+                raise ValueError(
+                    "probabilistic obstacle forecast dt must match MPPI dt"
+                )
+        xy = np.asarray(trajectories, dtype=np.float64)[
+            :, 1:, list(self.state_spec.position_indices)
+        ]
+        return evaluate_collision_risk(
+            xy,
+            forecasts,
+            CollisionRiskConfig(
+                robot_radius_m=self.config.robot_radius,
+                safety_margin_m=(
+                    self.config.probabilistic_obstacle_safety_margin
+                ),
+                minimum_position_std_m=(
+                    self.config.probabilistic_obstacle_minimum_std
+                ),
+                hard_probability_threshold=(
+                    self.config.probabilistic_obstacle_hard_threshold
+                ),
+            ),
+        )
+
+    @staticmethod
+    def _emergency_first_step_boundary_handoff(
+        full_horizon_eligible,
+        first_step_eligible,
+        emergency_candidate_mask,
+        *,
+        enabled,
+    ):
+        """Admit only emergency candidates whose immediate step is bounded."""
+
+        full = np.asarray(full_horizon_eligible, dtype=bool)
+        first = np.asarray(first_step_eligible, dtype=bool)
+        emergency = np.asarray(emergency_candidate_mask, dtype=bool)
+        if (
+            full.ndim != 1
+            or first.shape != full.shape
+            or emergency.shape != full.shape
+        ):
+            raise ValueError("emergency boundary handoff masks differ")
+        admitted = np.zeros(full.shape, dtype=bool)
+        result = full.copy()
+        if enabled:
+            admitted = emergency & first & ~full
+            result[admitted] = True
+        return result, admitted
+
+    def _apply_probabilistic_obstacle_action_guard(
+        self,
+        state,
+        action,
+        sequence,
+        trajectory,
+        samples,
+        costs,
+        probabilistic_obstacles,
+        candidate_eligible=None,
+        candidate_risk=None,
+        emergency_candidate_mask=None,
+        temporal_emergency_triggered=False,
+        traversal_context=None,
+        traversal_candidate_index=-1,
+    ):
+        """Apply the deployed final probability-risk action contract.
+
+        Alternative optimizers may generate and weight candidates differently,
+        but the command leaving MPPI must retain the same active-avoidance,
+        stop-is-safest, fail-closed and speed-governor semantics as standard
+        MPPI.  This helper does not sample or add candidates; it only selects
+        from the optimizer's already-budgeted final candidate batch.
+        """
+
+        if not self.config.probabilistic_obstacle_risk_enabled:
+            return action, sequence, trajectory, {
+                "probabilistic_obstacle_risk_enabled": False,
+                "probabilistic_obstacle_forecast_count": 0,
+                "probabilistic_obstacle_probability_mass": 0.0,
+                "probabilistic_obstacle_union_bound": 0.0,
+                "probabilistic_obstacle_maximum_step_probability": 0.0,
+                "probabilistic_obstacle_hard_violation": False,
+                "probabilistic_obstacle_fail_closed": False,
+                "probabilistic_obstacle_speed_scale": 1.0,
+                "probabilistic_obstacle_initial_hard_violation": False,
+                "probabilistic_obstacle_candidate_feasible_fraction": 1.0,
+                "probabilistic_obstacle_active_fallback_used": False,
+                "probabilistic_obstacle_active_fallback_index": -1,
+                "probabilistic_obstacle_active_fallback_kind": "none",
+                "probabilistic_obstacle_stop_maximum_probability": 0.0,
+                "probabilistic_obstacle_stop_probability_mass": 0.0,
+                "probabilistic_obstacle_stopping_feasibility_enabled": False,
+                "probabilistic_obstacle_emergency_candidate_count": 0,
+                "probabilistic_obstacle_emergency_candidate_selected": False,
+                "probabilistic_obstacle_temporal_emergency_triggered": False,
+                "probabilistic_obstacle_temporal_emergency_vetted": False,
+                "probabilistic_obstacle_traversal_window_enabled": False,
+                "probabilistic_obstacle_traversal_candidate_selected": False,
+                "probabilistic_obstacle_traversal_temporal_corroboration_enabled": False,
+                "probabilistic_obstacle_traversal_temporal_corroboration_maximum_probability": 0.0,
+                "probabilistic_obstacle_traversal_temporal_corroboration_probability_mass": 0.0,
+                "probabilistic_obstacle_traversal_commit_admission_full_horizon_enabled": False,
+                "probabilistic_obstacle_traversal_commit_admission_full_horizon_safe": False,
+                "probabilistic_obstacle_traversal_commit_admission_rejected": False,
+                "probabilistic_obstacle_traversal_commit_admission_exit_deadline_enabled": False,
+                "probabilistic_obstacle_traversal_commit_admission_exit_deadline_safe": True,
+                "probabilistic_obstacle_traversal_commit_admission_exit_deadline_rejected": False,
+                "probabilistic_obstacle_traversal_commit_admission_exit_deadline_hold_requested": False,
+                "probabilistic_obstacle_traversal_uncommitted_temporal_staging_hold_requested": False,
+                "probabilistic_obstacle_traversal_uncommitted_temporal_staging_hold_selected": False,
+                "probabilistic_obstacle_traversal_uncommitted_temporal_staging_hold_hard_risk_override": False,
+                "probabilistic_obstacle_traversal_uncommitted_temporal_staging_terminal_release_active": False,
+                "probabilistic_obstacle_traversal_commit_admission_exit_deadline_hold_hard_risk_override": False,
+                "probabilistic_obstacle_traversal_commit_admission_exit_deadline_forward_lattice_filtered": False,
+                "probabilistic_obstacle_traversal_commit_admission_exit_deadline_margin_s": 0.0,
+                "probabilistic_obstacle_traversal_commit_admission_safe_streak": 0,
+                "probabilistic_obstacle_traversal_commit_admission_required_streak": 1,
+                "probabilistic_obstacle_traversal_commit_admission_waiting": False,
+                "probabilistic_obstacle_traversal_commit_admission_released": False,
+                "probabilistic_obstacle_traversal_commit_cancelled_by_temporal_midpoint_guard": False,
+                "probabilistic_obstacle_traversal_commit_cancelled_by_temporal_exit_deadline_guard": False,
+                "probabilistic_obstacle_traversal_commit_preserved_for_nearest_safe_exit": False,
+                "probabilistic_obstacle_traversal_retreat_temporal_lattice_requested": False,
+                "probabilistic_obstacle_traversal_forward_exit_distance_m": 0.0,
+                "probabilistic_obstacle_traversal_retreat_exit_distance_m": 0.0,
+                "probabilistic_obstacle_traversal_forward_exit_optimistic_time_s": 0.0,
+                "probabilistic_obstacle_traversal_retreat_exit_optimistic_time_s": 0.0,
+                "probabilistic_obstacle_traversal_temporal_exit_deadline_ttc_s": 0.0,
+                "probabilistic_obstacle_traversal_temporal_exit_deadline_guard_triggered": False,
+                "probabilistic_obstacle_traversal_exit_deadline_retreat_escape_transaction_active": False,
+                "probabilistic_obstacle_traversal_exit_deadline_retreat_escape_latched": False,
+                "probabilistic_obstacle_traversal_exit_deadline_retreat_escape_reused": False,
+                "probabilistic_obstacle_traversal_exit_deadline_retreat_escape_pattern_v": 0.0,
+                "probabilistic_obstacle_traversal_exit_deadline_retreat_escape_pattern_omega": 0.0,
+                "probabilistic_obstacle_traversal_retreat_overridden_by_hard_risk": False,
+                "probabilistic_obstacle_traversal_retreat_overridden_by_temporal_midpoint_guard": False,
+                "probabilistic_obstacle_traversal_commit_overridden_by_post_center_hard_risk": False,
+                "probabilistic_obstacle_traversal_commit_overridden_by_post_center_temporal_risk": False,
+                "probabilistic_obstacle_traversal_post_center_low_ttc_continuity_requested": False,
+                "probabilistic_obstacle_traversal_post_center_low_ttc_continuity_forward_lattice_filtered": False,
+                "probabilistic_obstacle_traversal_post_center_low_ttc_continuity_hard_risk_fallback": False,
+                "probabilistic_obstacle_traversal_post_center_low_ttc_continuity_release_condition_met": False,
+                "probabilistic_obstacle_traversal_post_center_low_ttc_nonforward_coverage_requested": False,
+                "probabilistic_obstacle_traversal_post_center_low_ttc_nonforward_coverage_applied": False,
+                "probabilistic_obstacle_traversal_post_center_low_ttc_nonforward_candidate_count": 0,
+                "probabilistic_obstacle_traversal_post_center_low_ttc_first_step_boundary_handoff_requested": False,
+                "probabilistic_obstacle_traversal_post_center_low_ttc_first_step_boundary_handoff_admitted_count": 0,
+                "probabilistic_obstacle_traversal_post_center_low_ttc_first_step_boundary_handoff_selected": False,
+                "probabilistic_obstacle_traversal_post_center_low_ttc_prefix_boundary_handoff_requested": False,
+                "probabilistic_obstacle_traversal_post_center_low_ttc_prefix_boundary_handoff_admitted_count": 0,
+                "probabilistic_obstacle_traversal_post_center_low_ttc_prefix_boundary_handoff_selected": False,
+                "probabilistic_obstacle_traversal_rearm_staging_approach_requested": False,
+                "probabilistic_obstacle_traversal_rearm_staging_approach_safe": False,
+                "probabilistic_obstacle_traversal_rearm_staging_target_progress": 0.0,
+                "probabilistic_obstacle_traversal_post_center_forward_exit_commit_requested": False,
+                "probabilistic_obstacle_traversal_post_center_forward_exit_coverage_applied": False,
+                "probabilistic_obstacle_traversal_post_center_forward_exit_candidate_count": 0,
+                "probabilistic_obstacle_traversal_post_center_forward_exit_lattice_filtered": False,
+                "probabilistic_obstacle_traversal_post_center_temporal_raw_triggered": False,
+                "probabilistic_obstacle_traversal_temporal_closing_observed": False,
+                "probabilistic_obstacle_traversal_post_center_temporal_escape_latched": False,
+                "probabilistic_obstacle_traversal_post_center_temporal_escape_reused": False,
+                "probabilistic_obstacle_traversal_post_center_temporal_escape_pattern_v": 0.0,
+                "probabilistic_obstacle_traversal_post_center_temporal_escape_pattern_omega": 0.0,
+                "probabilistic_obstacle_active_avoidance_enabled": False,
+            }
+
+        forecasts = tuple(probabilistic_obstacles)
+        values = np.asarray(samples, dtype=np.float64)
+        candidate_costs = np.asarray(costs, dtype=np.float64)
+        if values.ndim != 3 or values.shape[0] < 1:
+            raise ValueError("probabilistic action guard requires candidates")
+        if candidate_costs.shape != (values.shape[0],):
+            raise ValueError("probabilistic action guard cost shape differs")
+        if candidate_eligible is None:
+            eligible_mask = np.ones(values.shape[0], dtype=bool)
+        else:
+            eligible_mask = np.asarray(candidate_eligible, dtype=bool)
+            if eligible_mask.shape != (values.shape[0],):
+                raise ValueError(
+                    "probabilistic action guard eligibility shape differs"
+                )
+        if emergency_candidate_mask is None:
+            emergency_mask = np.zeros(values.shape[0], dtype=bool)
+        else:
+            emergency_mask = np.asarray(
+                emergency_candidate_mask, dtype=bool
+            )
+            if emergency_mask.shape != (values.shape[0],):
+                raise ValueError(
+                    "probabilistic emergency candidate mask shape differs"
+                )
+
+        selected_risk = self._probabilistic_collision_risk(
+            np.asarray(trajectory, dtype=np.float64)[None, ...], forecasts
+        )
+        initial_hard_violation = bool(selected_risk.hard_violation[0])
+        fallback_used = False
+        fallback_candidate_index = -1
+        fallback_kind = "none"
+        stop_maximum_probability = 0.0
+        stop_probability_mass = 0.0
+        fail_closed = False
+        hard_action = self.config.probabilistic_obstacle_hard_violation_action
+        evaluated_candidates = candidate_risk
+        risk_candidate_feasible = np.ones(values.shape[0], dtype=bool)
+        temporal_emergency_vetted = False
+        pareto_forward_commit_applied = False
+        low_risk_forward_commit_applied = False
+        preferred_emergency_probability = 0.0
+        preferred_emergency_probability_mass = 0.0
+        preferred_emergency_hard_violation = False
+        best_cost_emergency_index = -1
+        minimum_risk_emergency_index = -1
+        traversal_context = dict(traversal_context or {})
+        traversal_index = int(traversal_candidate_index)
+        traversal_selected = False
+        traversal_retreat_overridden_by_hard_risk = False
+        traversal_retreat_overridden_by_temporal_midpoint_guard = False
+        traversal_commit_overridden_by_post_center_hard_risk = False
+        traversal_commit_overridden_by_post_center_temporal_risk = False
+        traversal_admission_exit_deadline_hold_overridden_by_hard_risk = False
+        traversal_uncommitted_temporal_staging_hold_overridden_by_hard_risk = False
+        traversal_admission_exit_deadline_forward_lattice_filtered = False
+        traversal_rearm_hold_overridden_by_hard_risk = False
+        traversal_rearm_hold_overridden_by_temporal_closing = False
+        traversal_temporal_retreat_post_intent_forward_filter_requested = False
+        traversal_temporal_retreat_post_intent_forward_lattice_filtered = False
+        traversal_temporal_midpoint_retreat_forward_filter_requested = False
+        traversal_temporal_midpoint_retreat_forward_lattice_filtered = False
+        traversal_post_center_low_ttc_continuity_requested = False
+        traversal_post_center_low_ttc_continuity_forward_lattice_filtered = False
+        traversal_post_center_low_ttc_continuity_hard_risk_fallback = False
+        traversal_post_center_low_ttc_continuity_release_condition_met = False
+        traversal_post_center_forward_exit_lattice_filtered = False
+        traversal_post_center_forward_exit_commit_requested = bool(
+            traversal_context.get(
+                "post_center_forward_exit_commit_requested", False
+            )
+        )
+        traversal_post_center_forward_exit_coverage_applied = bool(
+            getattr(
+                self,
+                "_probabilistic_emergency_forward_exit_coverage_applied",
+                False,
+            )
+        )
+        traversal_post_center_forward_exit_candidate_count = (
+            int(np.sum(
+                emergency_mask
+                & (
+                    values[:, 0, self.action_spec.index("v_cmd")]
+                    >= 0.0
+                )
+            ))
+            if "v_cmd" in self.action_spec.names
+            else 0
+        )
+        traversal_post_center_low_ttc_nonforward_coverage_requested = bool(
+            traversal_context.get(
+                "post_center_low_ttc_nonforward_coverage_requested", False
+            )
+        )
+        traversal_post_center_low_ttc_nonforward_coverage_applied = bool(
+            getattr(
+                self,
+                "_probabilistic_emergency_nonforward_coverage_applied",
+                False,
+            )
+        )
+        traversal_post_center_low_ttc_nonforward_candidate_count = (
+            int(np.sum(
+                emergency_mask
+                & (
+                    values[:, 0, self.action_spec.index("v_cmd")]
+                    <= 0.0
+                )
+            ))
+            if "v_cmd" in self.action_spec.names
+            else 0
+        )
+        traversal_post_center_low_ttc_first_step_boundary_handoff_requested = bool(
+            traversal_context.get(
+                "post_center_low_ttc_first_step_boundary_handoff_requested",
+                False,
+            )
+        )
+        first_step_boundary_handoff_mask = np.asarray(
+            traversal_context.get(
+                "_post_center_low_ttc_first_step_boundary_handoff_mask",
+                np.zeros(values.shape[0], dtype=bool),
+            ),
+            dtype=bool,
+        )
+        if first_step_boundary_handoff_mask.shape != (values.shape[0],):
+            raise ValueError("first-step boundary handoff mask shape differs")
+        traversal_post_center_low_ttc_first_step_boundary_handoff_admitted_count = int(
+            np.sum(first_step_boundary_handoff_mask)
+        )
+        traversal_post_center_low_ttc_prefix_boundary_handoff_requested = bool(
+            traversal_context.get(
+                "post_center_low_ttc_prefix_boundary_handoff_requested",
+                False,
+            )
+        )
+        exit_deadline_retreat_escape_transaction_active = bool(
+            traversal_context.get(
+                "exit_deadline_retreat_escape_transaction_active", False
+            )
+        )
+        exit_deadline_retreat_escape_latched = False
+        traversal_started = bool(
+            traversal_context.get("commit_started", False)
+        )
+
+        if (
+            traversal_context.get("candidate_requested", False)
+            and 0 <= traversal_index < values.shape[0]
+            and eligible_mask[traversal_index]
+        ):
+            if evaluated_candidates is None:
+                candidate_trajectories = self.rollout(state, values)
+                evaluated_candidates = self._probabilistic_collision_risk(
+                    candidate_trajectories, forecasts
+                )
+            risk_candidate_feasible = ~evaluated_candidates.hard_violation
+            retreat_requested = bool(
+                traversal_context.get("retreat_requested", False)
+            )
+            rearm_pending = bool(
+                traversal_context.get("rearm_pending", False)
+            )
+            traversal_rearm_hold_overridden_by_hard_risk = bool(
+                rearm_pending
+                and self.config
+                .probabilistic_obstacle_traversal_window_rearm_hard_risk_temporal_lattice_override_enabled
+                and traversal_context.get(
+                    "temporal_emergency_raw_triggered", False
+                )
+                and not risk_candidate_feasible[traversal_index]
+            )
+            admission_waiting = bool(
+                traversal_context.get("commit_admission_waiting", False)
+            )
+            admission_exit_deadline_hold_requested = bool(
+                traversal_context.get(
+                    "commit_admission_exit_deadline_hold_requested", False
+                )
+            )
+            admission_hold_requested = bool(
+                admission_waiting or admission_exit_deadline_hold_requested
+            )
+            admission_prealign_requested = bool(
+                traversal_context.get(
+                    "commit_admission_prealign_requested", False
+                )
+            )
+            uncommitted_temporal_staging_hold_requested = bool(
+                traversal_context.get(
+                    "uncommitted_temporal_staging_hold_requested", False
+                )
+            )
+            admission_hold_requested = bool(
+                admission_hold_requested or admission_prealign_requested
+            )
+            transactional_hold_requested = bool(
+                admission_hold_requested
+                or uncommitted_temporal_staging_hold_requested
+            )
+            traversal_rearm_hold_overridden_by_temporal_closing = bool(
+                rearm_pending
+                and not admission_hold_requested
+                and self.config
+                .probabilistic_obstacle_traversal_window_rearm_temporal_closing_lattice_override_enabled
+                and traversal_context.get(
+                    "temporal_emergency_raw_triggered", False
+                )
+                and risk_candidate_feasible[traversal_index]
+            )
+            traversal_admission_exit_deadline_hold_overridden_by_hard_risk = bool(
+                admission_exit_deadline_hold_requested
+                and not risk_candidate_feasible[traversal_index]
+            )
+            traversal_uncommitted_temporal_staging_hold_overridden_by_hard_risk = bool(
+                uncommitted_temporal_staging_hold_requested
+                and not risk_candidate_feasible[traversal_index]
+            )
+            traversal_commit_overridden_by_post_center_hard_risk = bool(
+                traversal_started
+                and not retreat_requested
+                and not rearm_pending
+                and self.config
+                .probabilistic_obstacle_traversal_window_post_center_hard_risk_override_enabled
+                and float(traversal_context.get("current_progress", 0.0))
+                >= float(traversal_context.get("crossing_progress", 0.0))
+                - 1.0e-9
+                and float(traversal_context.get("current_progress", 0.0))
+                < float(traversal_context.get("clear_progress", 0.0))
+                - 1.0e-9
+                and not risk_candidate_feasible[traversal_index]
+            )
+            traversal_commit_overridden_by_post_center_temporal_risk = bool(
+                traversal_started
+                and not retreat_requested
+                and not rearm_pending
+                and self.config
+                .probabilistic_obstacle_traversal_window_post_center_temporal_override_enabled
+                and bool(
+                    traversal_context.get(
+                        "temporal_emergency_raw_triggered",
+                        temporal_emergency_triggered,
+                    )
+                )
+                and float(
+                    traversal_context.get(
+                        "temporal_corroboration_probability_mass", 0.0
+                    )
+                )
+                >= float(
+                    self.config
+                    .probabilistic_obstacle_traversal_window_temporal_abort_mass_floor
+                )
+                and float(traversal_context.get("current_progress", 0.0))
+                >= float(traversal_context.get("crossing_progress", 0.0))
+                - 1.0e-9
+                and float(traversal_context.get("current_progress", 0.0))
+                < float(traversal_context.get("clear_progress", 0.0))
+                - 1.0e-9
+            )
+            post_center_transaction_scope = bool(
+                traversal_started
+                and not retreat_requested
+                and not rearm_pending
+                and float(traversal_context.get("current_progress", 0.0))
+                >= float(traversal_context.get("crossing_progress", 0.0))
+                - 1.0e-9
+                and float(traversal_context.get("current_progress", 0.0))
+                < float(traversal_context.get("clear_progress", 0.0))
+                - 1.0e-9
+            )
+            temporal_scan_ttc_s = float(
+                traversal_context.get(
+                    "temporal_emergency_ttc_s", float("inf")
+                )
+            )
+            temporal_scan_hard_stop_ttc_s = float(
+                traversal_context.get(
+                    "temporal_emergency_safety_hard_stop_ttc_s", 0.0
+                )
+            )
+            temporal_scan_hard_stop_active = bool(
+                traversal_context.get(
+                    "temporal_emergency_scan_valid", False
+                )
+                and temporal_scan_hard_stop_ttc_s > 0.0
+                and np.isfinite(temporal_scan_ttc_s)
+                and 0.0 < temporal_scan_ttc_s
+                <= temporal_scan_hard_stop_ttc_s
+            )
+            traversal_post_center_low_ttc_continuity_requested = bool(
+                self.config
+                .probabilistic_obstacle_traversal_window_post_center_low_ttc_continuity_guard_enabled
+                and traversal_commit_overridden_by_post_center_hard_risk
+                and post_center_transaction_scope
+                and temporal_scan_hard_stop_active
+                and not traversal_context.get(
+                    "temporal_emergency_closing_observed", False
+                )
+                and not traversal_context.get(
+                    "temporal_emergency_rearm_ready", True
+                )
+                and not traversal_post_center_forward_exit_commit_requested
+            )
+            traversal_post_center_low_ttc_continuity_release_condition_met = bool(
+                self.config
+                .probabilistic_obstacle_traversal_window_post_center_low_ttc_continuity_guard_enabled
+                and post_center_transaction_scope
+                and (
+                    traversal_context.get(
+                        "temporal_emergency_rearm_ready", True
+                    )
+                    or not temporal_scan_hard_stop_active
+                )
+            )
+            traversal_retreat_overridden_by_hard_risk = bool(
+                retreat_requested
+                and self.config
+                .probabilistic_obstacle_traversal_window_retreat_hard_risk_override_enabled
+                and not risk_candidate_feasible[traversal_index]
+            )
+            traversal_retreat_overridden_by_temporal_midpoint_guard = bool(
+                retreat_requested
+                and traversal_context.get(
+                    "retreat_temporal_lattice_requested", False
+                )
+                and self.config
+                .probabilistic_obstacle_traversal_window_temporal_midpoint_lattice_override_enabled
+                and (
+                    not self.config
+                    .probabilistic_obstacle_traversal_window_temporal_retreat_raw_lattice_binding_enabled
+                    or traversal_context.get(
+                        "temporal_emergency_raw_triggered", False
+                    )
+                    or exit_deadline_retreat_escape_transaction_active
+                )
+            )
+            traversal_temporal_retreat_post_intent_forward_filter_requested = bool(
+                traversal_retreat_overridden_by_temporal_midpoint_guard
+                and self.config
+                .probabilistic_obstacle_traversal_window_temporal_retreat_post_intent_all_hard_forward_filter_enabled
+                and traversal_context.get(
+                    "temporal_retreat_raw_lattice_requested", False
+                )
+                and not temporal_emergency_triggered
+            )
+            traversal_temporal_midpoint_retreat_forward_filter_requested = bool(
+                traversal_retreat_overridden_by_temporal_midpoint_guard
+                and self.config
+                .probabilistic_obstacle_traversal_window_temporal_midpoint_retreat_reverse_filter_enabled
+                and traversal_context.get(
+                    "temporal_retreat_raw_lattice_requested", False
+                )
+                and not exit_deadline_retreat_escape_transaction_active
+            )
+            if (
+                (
+                    traversal_started
+                    and not traversal_commit_overridden_by_post_center_hard_risk
+                    and not traversal_commit_overridden_by_post_center_temporal_risk
+                )
+                or (
+                    retreat_requested
+                    and not traversal_retreat_overridden_by_hard_risk
+                    and not traversal_retreat_overridden_by_temporal_midpoint_guard
+                )
+                or (
+                    rearm_pending
+                    and not traversal_rearm_hold_overridden_by_hard_risk
+                    and not traversal_rearm_hold_overridden_by_temporal_closing
+                )
+                or (
+                    transactional_hold_requested
+                    and risk_candidate_feasible[traversal_index]
+                )
+                or (
+                    not retreat_requested
+                    and not rearm_pending
+                    and not traversal_commit_overridden_by_post_center_hard_risk
+                    and not traversal_commit_overridden_by_post_center_temporal_risk
+                    and risk_candidate_feasible[traversal_index]
+                )
+            ):
+                fallback_candidate_index = traversal_index
+                fallback_kind = (
+                    "traversal_uncommitted_temporal_staging_hold"
+                    if uncommitted_temporal_staging_hold_requested
+                    else "traversal_admission_prealign"
+                    if admission_prealign_requested
+                    else "traversal_admission_exit_deadline_hold"
+                    if admission_exit_deadline_hold_requested
+                    else "traversal_admission_stability_hold"
+                    if admission_waiting
+                    else "traversal_rearm_no_crossing_certified_handoff"
+                    if traversal_context.get(
+                        "rearm_no_crossing_certified_handoff_active", False
+                    )
+                    else "certified_traversal_window_candidate"
+                )
+                fallback_used = True
+                traversal_selected = True
+                if (
+                    not retreat_requested
+                    and not rearm_pending
+                    and not transactional_hold_requested
+                ):
+                    self._probabilistic_traversal_commit_started = True
+                    traversal_started = True
+                sequence = values[traversal_index].copy()
+                action = self.action_spec.clip(sequence[0])
+                sequence[0] = action
+                trajectory = self.rollout(state, sequence)[0]
+                selected_risk = self._probabilistic_collision_risk(
+                    trajectory[None, ...], forecasts
+                )
+
+        if (
+            (
+                temporal_emergency_triggered
+                or traversal_retreat_overridden_by_temporal_midpoint_guard
+                or traversal_commit_overridden_by_post_center_hard_risk
+                    or traversal_commit_overridden_by_post_center_temporal_risk
+                    or traversal_admission_exit_deadline_hold_overridden_by_hard_risk
+                    or traversal_uncommitted_temporal_staging_hold_overridden_by_hard_risk
+                    or traversal_rearm_hold_overridden_by_hard_risk
+                    or traversal_rearm_hold_overridden_by_temporal_closing
+            )
+            and not traversal_selected
+            and hard_action == "active_avoidance"
+            and np.any(emergency_mask & eligible_mask)
+        ):
+            if evaluated_candidates is None:
+                candidate_trajectories = self.rollout(state, values)
+                evaluated_candidates = self._probabilistic_collision_risk(
+                    candidate_trajectories, forecasts
+                )
+            risk_candidate_feasible = ~evaluated_candidates.hard_violation
+            all_emergency_indices = np.flatnonzero(
+                emergency_mask & eligible_mask
+            )
+            emergency_index = -1
+            if all_emergency_indices.size:
+                preferred_index = int(all_emergency_indices[0])
+                preferred_emergency_probability = float(
+                    evaluated_candidates
+                    .maximum_step_probability[preferred_index]
+                )
+                preferred_emergency_probability_mass = float(
+                    evaluated_candidates
+                    .accumulated_probability_mass[preferred_index]
+                )
+                preferred_emergency_hard_violation = bool(
+                    evaluated_candidates.hard_violation[preferred_index]
+                )
+                if not preferred_emergency_hard_violation:
+                    # Temporal scan flow is an independent safety signal: once
+                    # it identifies a closing object, a below-threshold radial
+                    # escape remains certified even when an under-confident
+                    # forecast assigns the nominal trajectory a slightly lower
+                    # numerical risk.  This prevents direction oscillation.
+                    emergency_index = preferred_index
+                else:
+                    stop_sequence_for_preference = np.zeros(
+                        (
+                            self.config.horizon,
+                            self.action_spec.dimension,
+                        ),
+                        dtype=np.float64,
+                    )
+                    stop_trajectory_for_preference = self.rollout(
+                        state, stop_sequence_for_preference
+                    )[0]
+                    stop_risk_for_preference = (
+                        self._probabilistic_collision_risk(
+                            stop_trajectory_for_preference[None, ...],
+                            forecasts,
+                        )
+                    )
+                    stop_maximum_probability = float(
+                        stop_risk_for_preference
+                        .maximum_step_probability[0]
+                    )
+                    stop_probability_mass = float(
+                        stop_risk_for_preference
+                        .accumulated_probability_mass[0]
+                    )
+                    if self._risk_is_strictly_better(
+                        preferred_emergency_probability,
+                        preferred_emergency_probability_mass,
+                        stop_maximum_probability,
+                        stop_probability_mass,
+                        allow_equal_maximum_mass=True,
+                    ):
+                        emergency_index = preferred_index
+
+                # If every lattice member violates the hard threshold, the
+                # former contract kept the first radial intent whenever it was
+                # only marginally better than stopping.  In a moving-obstacle
+                # chase geometry that can ignore a substantially lower-risk
+                # lateral member of the same already-budgeted lattice.  Rank
+                # all emergency candidates before applying the feasibility
+                # subset; no new rollout or non-causal signal is introduced.
+                minimum_risk_pool = all_emergency_indices
+                traversal_temporal_retreat_post_intent_forward_lattice_filtered = bool(
+                    traversal_temporal_retreat_post_intent_forward_filter_requested
+                    and np.all(
+                        evaluated_candidates.hard_violation[
+                            all_emergency_indices
+                        ]
+                    )
+                )
+                if (
+                    (
+                        traversal_admission_exit_deadline_hold_overridden_by_hard_risk
+                        or traversal_temporal_retreat_post_intent_forward_lattice_filtered
+                        or traversal_temporal_midpoint_retreat_forward_filter_requested
+                    )
+                    and "v_cmd" in self.action_spec.names
+                ):
+                    reverse_indices = all_emergency_indices[
+                        values[
+                            all_emergency_indices,
+                            0,
+                            self.action_spec.index("v_cmd"),
+                        ] < 0.0
+                    ]
+                    if reverse_indices.size:
+                        minimum_risk_pool = reverse_indices
+                        if traversal_admission_exit_deadline_hold_overridden_by_hard_risk:
+                            traversal_admission_exit_deadline_forward_lattice_filtered = True
+                        if traversal_temporal_midpoint_retreat_forward_filter_requested:
+                            traversal_temporal_midpoint_retreat_forward_lattice_filtered = True
+                if (
+                    traversal_post_center_forward_exit_commit_requested
+                    and "v_cmd" in self.action_spec.names
+                ):
+                    v_index = self.action_spec.index("v_cmd")
+                    nonreverse_indices = all_emergency_indices[
+                        values[all_emergency_indices, 0, v_index] >= 0.0
+                    ]
+                    if nonreverse_indices.size:
+                        traversal_post_center_forward_exit_lattice_filtered = bool(
+                            np.any(
+                                values[
+                                    all_emergency_indices, 0, v_index
+                                ] < 0.0
+                            )
+                        )
+                        minimum_risk_pool = nonreverse_indices
+                if (
+                    traversal_post_center_low_ttc_continuity_requested
+                    and "v_cmd" in self.action_spec.names
+                ):
+                    v_index = self.action_spec.index("v_cmd")
+                    nonforward_indices = all_emergency_indices[
+                        values[all_emergency_indices, 0, v_index] <= 0.0
+                    ]
+                    if nonforward_indices.size:
+                        traversal_post_center_low_ttc_continuity_forward_lattice_filtered = bool(
+                            np.any(
+                                values[
+                                    all_emergency_indices, 0, v_index
+                                ] > 0.0
+                            )
+                        )
+                        traversal_post_center_low_ttc_continuity_hard_risk_fallback = bool(
+                            np.all(
+                                evaluated_candidates.hard_violation[
+                                    nonforward_indices
+                                ]
+                            )
+                        )
+                        minimum_risk_pool = nonforward_indices
+                minimum_all_order = np.lexsort((
+                    candidate_costs[minimum_risk_pool],
+                    evaluated_candidates.accumulated_probability_mass[
+                        minimum_risk_pool
+                    ],
+                    evaluated_candidates.maximum_step_probability[
+                        minimum_risk_pool
+                    ],
+                ))
+                minimum_risk_emergency_index = int(
+                    minimum_risk_pool[minimum_all_order[0]]
+                )
+                if traversal_admission_exit_deadline_hold_overridden_by_hard_risk:
+                    # The causal deadline already proves that continuing the
+                    # generic forward proposal cannot clear the crossing in
+                    # time.  When the zero-speed hold is itself hard-risk,
+                    # choose the least-risk member of the existing six-slot
+                    # lattice rather than returning authority to that generic
+                    # proposal.  No candidate or rollout is added here.
+                    emergency_index = minimum_risk_emergency_index
+                if traversal_rearm_hold_overridden_by_hard_risk:
+                    # A rearm hold is a safe default only while its same-cycle
+                    # forecast remains below the frozen hard threshold.  A
+                    # persistent causal scan warning must retain access to the
+                    # already-budgeted lattice after the global intent expires.
+                    emergency_index = minimum_risk_emergency_index
+                if traversal_temporal_retreat_post_intent_forward_lattice_filtered:
+                    # Once the one-shot scan intent expires, the active
+                    # transaction is explicitly retreating toward its frozen
+                    # staging target.  Keep the six-slot evidence budget but
+                    # do not let a late all-hard ranking flip that transaction
+                    # back to a forward member.
+                    emergency_index = minimum_risk_emergency_index
+                if traversal_temporal_midpoint_retreat_forward_lattice_filtered:
+                    # A midpoint abort has already committed the controller to
+                    # a frozen staging target behind the robot.  Keep all six
+                    # evaluated budget slots for evidence, but execute the
+                    # least-risk existing reverse member from the first raw-
+                    # bound retreat cycle so the one-shot scan intent cannot
+                    # advance away from that transaction target.
+                    emergency_index = minimum_risk_emergency_index
+                if traversal_post_center_low_ttc_continuity_requested:
+                    # The scan-flow estimator still has a valid, critically
+                    # low TTC and the previous matched encounter has not
+                    # rearmed.  A brief tracker/scan angle mismatch must not
+                    # turn a near-body stop into forward translation.  Rank
+                    # only the existing non-forward lattice members; the
+                    # six-slot rollout budget and risk evidence are unchanged.
+                    emergency_index = minimum_risk_emergency_index
+                if traversal_post_center_forward_exit_commit_requested:
+                    # Crossing the frozen conflict center is a one-way
+                    # transaction.  Select the least-risk non-reverse member
+                    # of the existing lattice so the robot clears the moving
+                    # obstacle path instead of backing into it again.
+                    emergency_index = minimum_risk_emergency_index
+                if (
+                    preferred_emergency_hard_violation
+                    and not traversal_commit_overridden_by_post_center_temporal_risk
+                    and not exit_deadline_retreat_escape_transaction_active
+                    and emergency_index >= 0
+                    and minimum_risk_emergency_index != emergency_index
+                    and self._risk_is_strictly_better(
+                        evaluated_candidates.maximum_step_probability[
+                            minimum_risk_emergency_index
+                        ],
+                        evaluated_candidates.accumulated_probability_mass[
+                            minimum_risk_emergency_index
+                        ],
+                        evaluated_candidates.maximum_step_probability[
+                            emergency_index
+                        ],
+                        evaluated_candidates.accumulated_probability_mass[
+                            emergency_index
+                        ],
+                        allow_equal_maximum_mass=True,
+                    )
+                ):
+                    emergency_index = minimum_risk_emergency_index
+
+            emergency_indices = all_emergency_indices[
+                risk_candidate_feasible[all_emergency_indices]
+            ]
+            if (
+                traversal_post_center_forward_exit_commit_requested
+                and emergency_indices.size
+                and "v_cmd" in self.action_spec.names
+            ):
+                nonreverse_feasible_indices = emergency_indices[
+                    values[
+                        emergency_indices,
+                        0,
+                        self.action_spec.index("v_cmd"),
+                    ] >= 0.0
+                ]
+                if nonreverse_feasible_indices.size:
+                    emergency_indices = nonreverse_feasible_indices
+            if (
+                traversal_post_center_low_ttc_continuity_requested
+                and emergency_indices.size
+                and "v_cmd" in self.action_spec.names
+            ):
+                nonforward_feasible_indices = emergency_indices[
+                    values[
+                        emergency_indices,
+                        0,
+                        self.action_spec.index("v_cmd"),
+                    ] <= 0.0
+                ]
+                if nonforward_feasible_indices.size:
+                    emergency_indices = nonforward_feasible_indices
+            if emergency_indices.size:
+                best_cost_emergency_index = int(
+                    emergency_indices[
+                        np.argmin(candidate_costs[emergency_indices])
+                    ]
+                )
+                minimum_risk_order = np.lexsort((
+                    candidate_costs[emergency_indices],
+                    evaluated_candidates.accumulated_probability_mass[
+                        emergency_indices
+                    ],
+                    evaluated_candidates.maximum_step_probability[
+                        emergency_indices
+                    ],
+                ))
+                minimum_risk_emergency_index = int(
+                    emergency_indices[minimum_risk_order[0]]
+                )
+                strict_pareto_forward = (
+                    emergency_index >= 0
+                    and minimum_risk_emergency_index != emergency_index
+                    and minimum_risk_emergency_index
+                    == best_cost_emergency_index
+                    and self._risk_is_strictly_better(
+                        evaluated_candidates.maximum_step_probability[
+                            minimum_risk_emergency_index
+                        ],
+                        evaluated_candidates.accumulated_probability_mass[
+                            minimum_risk_emergency_index
+                        ],
+                        evaluated_candidates.maximum_step_probability[
+                            emergency_index
+                        ],
+                        evaluated_candidates.accumulated_probability_mass[
+                            emergency_index
+                        ],
+                        allow_equal_maximum_mass=True,
+                    )
+                )
+                low_risk_cost_forward = (
+                    emergency_index >= 0
+                    and best_cost_emergency_index != emergency_index
+                    and self.config
+                    .probabilistic_obstacle_emergency_candidate_forward_risk_ceiling
+                    > 0.0
+                    and self.config
+                    .probabilistic_obstacle_emergency_candidate_forward_mass_ceiling
+                    > 0.0
+                    and not evaluated_candidates.hard_violation[
+                        best_cost_emergency_index
+                    ]
+                    and evaluated_candidates.maximum_step_probability[
+                        best_cost_emergency_index
+                    ]
+                    <= self.config
+                    .probabilistic_obstacle_emergency_candidate_forward_risk_ceiling
+                    and evaluated_candidates.accumulated_probability_mass[
+                        best_cost_emergency_index
+                    ]
+                    <= self.config
+                    .probabilistic_obstacle_emergency_candidate_forward_mass_ceiling
+                )
+                forward_commit_index = (
+                    minimum_risk_emergency_index
+                    if strict_pareto_forward
+                    else best_cost_emergency_index
+                    if low_risk_cost_forward
+                    else -1
+                )
+                if (
+                    self.config
+                    .probabilistic_obstacle_emergency_candidate_pareto_forward_commit_enabled
+                    and not traversal_commit_overridden_by_post_center_temporal_risk
+                    and not exit_deadline_retreat_escape_transaction_active
+                    and not traversal_admission_exit_deadline_hold_overridden_by_hard_risk
+                    and not traversal_rearm_hold_overridden_by_hard_risk
+                    and not traversal_rearm_hold_overridden_by_temporal_closing
+                    and not traversal_temporal_retreat_post_intent_forward_lattice_filtered
+                    and not traversal_temporal_midpoint_retreat_forward_lattice_filtered
+                    and not traversal_post_center_low_ttc_continuity_requested
+                    and emergency_index >= 0
+                    and forward_commit_index >= 0
+                    and "v_cmd" in self.action_spec.names
+                    and "omega_cmd" in self.action_spec.names
+                    and "theta" in self.state_spec.names
+                    and values[
+                        forward_commit_index,
+                        0,
+                        self.action_spec.index("v_cmd"),
+                    ] > 0.0
+                    and values[
+                        emergency_index,
+                        0,
+                        self.action_spec.index("v_cmd"),
+                    ] < 0.0
+                ):
+                    emergency_index = forward_commit_index
+                    pareto_forward_commit_applied = True
+                    low_risk_forward_commit_applied = bool(
+                        low_risk_cost_forward and not strict_pareto_forward
+                    )
+                    self._probabilistic_emergency_latched_pattern = (
+                        float(values[
+                            emergency_index,
+                            0,
+                            self.action_spec.index("v_cmd"),
+                        ]),
+                        float(values[
+                            emergency_index,
+                            0,
+                            self.action_spec.index("omega_cmd"),
+                        ]),
+                    )
+                    theta = float(
+                        np.asarray(state, dtype=np.float64)[
+                            self.state_spec.index("theta")
+                        ]
+                    )
+                    turn_duration = float(
+                        self.config
+                        .probabilistic_obstacle_emergency_candidate_prefix_steps
+                        * self.config.dt
+                    )
+                    self._probabilistic_emergency_latched_heading = float(
+                        np.arctan2(
+                            np.sin(
+                                theta
+                                + self._probabilistic_emergency_latched_pattern[1]
+                                * turn_duration
+                            ),
+                            np.cos(
+                                theta
+                                + self._probabilistic_emergency_latched_pattern[1]
+                                * turn_duration
+                            ),
+                        )
+                    )
+            if emergency_index < 0 and emergency_indices.size:
+                # If the preferred intent is not certifiable, fall back to the
+                # safest feasible member of the same evaluated lattice.
+                order = np.lexsort((
+                    candidate_costs[emergency_indices],
+                    evaluated_candidates
+                    .accumulated_probability_mass[emergency_indices],
+                    evaluated_candidates
+                    .maximum_step_probability[emergency_indices],
+                ))
+                ranked_indices = list(emergency_indices[order])
+                selected_probability = float(
+                    selected_risk.maximum_step_probability[0]
+                )
+                selected_mass = float(
+                    selected_risk.accumulated_probability_mass[0]
+                )
+                for candidate_index in ranked_indices:
+                    candidate_index = int(candidate_index)
+                    emergency_probability = float(
+                        evaluated_candidates
+                        .maximum_step_probability[candidate_index]
+                    )
+                    emergency_mass = float(
+                        evaluated_candidates
+                        .accumulated_probability_mass[candidate_index]
+                    )
+                    risk_not_worse = bool(
+                        emergency_probability
+                        < selected_probability - 1.0e-12
+                        or (
+                            np.isclose(
+                                emergency_probability,
+                                selected_probability,
+                                atol=1.0e-12,
+                                rtol=0.0,
+                            )
+                            and emergency_mass <= selected_mass + 1.0e-12
+                        )
+                    )
+                    if risk_not_worse:
+                        emergency_index = candidate_index
+                        break
+            if emergency_index >= 0:
+                if exit_deadline_retreat_escape_transaction_active:
+                    exit_deadline_retreat_escape_latched = (
+                        self._latch_probabilistic_traversal_exit_deadline_retreat_escape(
+                            (
+                                values[
+                                    emergency_index,
+                                    0,
+                                    self.action_spec.index("v_cmd"),
+                                ],
+                                values[
+                                    emergency_index,
+                                    0,
+                                    self.action_spec.index("omega_cmd"),
+                                ],
+                            ),
+                            state,
+                        )
+                    )
+                if traversal_commit_overridden_by_post_center_temporal_risk:
+                    self._latch_probabilistic_traversal_post_center_temporal_escape(
+                        (
+                            values[
+                                emergency_index,
+                                0,
+                                self.action_spec.index("v_cmd"),
+                            ],
+                            values[
+                                emergency_index,
+                                0,
+                                self.action_spec.index("omega_cmd"),
+                            ],
+                        ),
+                        state,
+                    )
+                fallback_candidate_index = emergency_index
+                fallback_kind = (
+                    "exit_deadline_retreat_emergency_candidate"
+                    if exit_deadline_retreat_escape_transaction_active
+                    else "post_center_forward_exit_emergency_candidate"
+                    if traversal_post_center_forward_exit_commit_requested
+                    else "post_center_low_ttc_continuity_emergency_candidate"
+                    if traversal_post_center_low_ttc_continuity_requested
+                    else "post_center_hard_risk_emergency_candidate"
+                    if traversal_commit_overridden_by_post_center_hard_risk
+                    else "post_center_temporal_corroborated_emergency_candidate"
+                    if traversal_commit_overridden_by_post_center_temporal_risk
+                    else "admission_exit_deadline_hold_hard_risk_emergency_candidate"
+                    if traversal_admission_exit_deadline_hold_overridden_by_hard_risk
+                    else "uncommitted_temporal_staging_hold_hard_risk_emergency_candidate"
+                    if traversal_uncommitted_temporal_staging_hold_overridden_by_hard_risk
+                    else "rearm_hold_hard_risk_emergency_candidate"
+                    if traversal_rearm_hold_overridden_by_hard_risk
+                    else "rearm_hold_temporal_closing_emergency_candidate"
+                    if traversal_rearm_hold_overridden_by_temporal_closing
+                    else "temporal_retreat_post_intent_emergency_candidate"
+                    if traversal_temporal_retreat_post_intent_forward_lattice_filtered
+                    else "temporal_midpoint_retreat_emergency_candidate"
+                    if traversal_temporal_midpoint_retreat_forward_lattice_filtered
+                    else "temporal_scan_vetted_emergency_candidate"
+                )
+                fallback_used = True
+                temporal_emergency_vetted = True
+                sequence = values[emergency_index].copy()
+                # Safety lattice commands are already bound-clipped and
+                # must not lose the early escape window to the nominal
+                # command slew limiter.
+                action = self.action_spec.clip(sequence[0])
+                sequence[0] = action
+                trajectory = self.rollout(state, sequence)[0]
+                selected_risk = self._probabilistic_collision_risk(
+                    trajectory[None, ...], forecasts
+                )
+
+        if (
+            not temporal_emergency_vetted
+            and not traversal_selected
+            and initial_hard_violation
+            and hard_action == "active_avoidance"
+        ):
+            if evaluated_candidates is None:
+                candidate_trajectories = self.rollout(state, values)
+                evaluated_candidates = self._probabilistic_collision_risk(
+                    candidate_trajectories, forecasts
+                )
+            risk_candidate_feasible = ~evaluated_candidates.hard_violation
+            eligible = np.flatnonzero(eligible_mask)
+            if eligible.size == 0:
+                eligible = np.arange(values.shape[0], dtype=np.int64)
+            feasible = eligible[risk_candidate_feasible[eligible]]
+            stop_sequence = np.zeros(
+                (self.config.horizon, self.action_spec.dimension),
+                dtype=np.float64,
+            )
+            stop_trajectory = self.rollout(state, stop_sequence)[0]
+            stop_risk = self._probabilistic_collision_risk(
+                stop_trajectory[None, ...], forecasts
+            )
+            stop_maximum_probability = float(
+                stop_risk.maximum_step_probability[0]
+            )
+            stop_probability_mass = float(
+                stop_risk.accumulated_probability_mass[0]
+            )
+            if feasible.size:
+                fallback_candidate_index = int(
+                    feasible[np.argmin(candidate_costs[feasible])]
+                )
+                fallback_kind = "feasible_active_candidate"
+            else:
+                candidate_order = np.lexsort(
+                    (
+                        candidate_costs[eligible],
+                        evaluated_candidates
+                        .accumulated_probability_mass[eligible],
+                        evaluated_candidates
+                        .maximum_step_probability[eligible],
+                    )
+                )
+                safest_index = int(eligible[candidate_order[0]])
+                safest_probability = float(
+                    evaluated_candidates
+                    .maximum_step_probability[safest_index]
+                )
+                safest_probability_mass = float(
+                    evaluated_candidates
+                    .accumulated_probability_mass[safest_index]
+                )
+                if self._risk_is_strictly_better(
+                    safest_probability,
+                    safest_probability_mass,
+                    stop_maximum_probability,
+                    stop_probability_mass,
+                    allow_equal_maximum_mass=(
+                        self.config
+                        .probabilistic_obstacle_stopping_feasibility_enabled
+                    ),
+                ):
+                    fallback_candidate_index = safest_index
+                    fallback_kind = (
+                        "minimum_accumulated_risk_active_candidate"
+                        if np.isclose(
+                            safest_probability,
+                            stop_maximum_probability,
+                            atol=1.0e-12,
+                            rtol=0.0,
+                        )
+                        else "minimum_risk_active_candidate"
+                    )
+                else:
+                    fallback_kind = "stop_is_safest_candidate"
+            fallback_used = True
+            if fallback_candidate_index >= 0:
+                sequence = values[fallback_candidate_index].copy()
+                if emergency_mask[fallback_candidate_index]:
+                    action = self.action_spec.clip(sequence[0])
+                else:
+                    action = self.action_spec.clip(
+                        sequence[0], self.previous_action, self.config.dt
+                    )
+                sequence[0] = action
+                trajectory = self.rollout(state, sequence)[0]
+            else:
+                action = np.zeros(
+                    self.action_spec.dimension, dtype=np.float64
+                )
+                sequence = stop_sequence
+                trajectory = stop_trajectory
+                fail_closed = True
+            selected_risk = self._probabilistic_collision_risk(
+                trajectory[None, ...], forecasts
+            )
+        elif evaluated_candidates is not None:
+            risk_candidate_feasible = ~evaluated_candidates.hard_violation
+
+        hard_violation = bool(selected_risk.hard_violation[0])
+        if hard_violation and hard_action == "stop":
+            fail_closed = True
+            fallback_used = True
+            fallback_kind = "unconditional_stop"
+            action = np.zeros(self.action_spec.dimension, dtype=np.float64)
+            sequence = np.zeros(
+                (self.config.horizon, self.action_spec.dimension),
+                dtype=np.float64,
+            )
+            trajectory = self.rollout(state, sequence)[0]
+
+        maximum_step_probability = float(
+            selected_risk.maximum_step_probability[0]
+        )
+        speed_scale = 1.0
+        if (
+            self.config.probabilistic_obstacle_speed_governor_enabled
+            and not traversal_started
+        ):
+            hard_threshold = self.config.probabilistic_obstacle_hard_threshold
+            soft_threshold = (
+                self.config.probabilistic_obstacle_speed_governor_start_ratio
+                * hard_threshold
+            )
+            speed_scale = float(np.clip(
+                (hard_threshold - maximum_step_probability)
+                / (hard_threshold - soft_threshold),
+                0.0,
+                1.0,
+            ))
+
+        post_center_temporal_escape_pattern = (
+            self._probabilistic_traversal_post_center_temporal_pattern
+        )
+        if post_center_temporal_escape_pattern is None:
+            post_center_temporal_escape_pattern = (0.0, 0.0)
+        exit_deadline_retreat_escape_pattern = (
+            self._probabilistic_traversal_exit_deadline_retreat_pattern
+        )
+        if exit_deadline_retreat_escape_pattern is None:
+            exit_deadline_retreat_escape_pattern = (0.0, 0.0)
+
+        diagnostics = {
+            "probabilistic_obstacle_risk_enabled": True,
+            "probabilistic_obstacle_forecast_count": len(forecasts),
+            "probabilistic_obstacle_probability_mass": float(
+                selected_risk.accumulated_probability_mass[0]
+            ),
+            "probabilistic_obstacle_union_bound": float(
+                selected_risk.horizon_union_bound[0]
+            ),
+            "probabilistic_obstacle_maximum_step_probability": float(
+                selected_risk.maximum_step_probability[0]
+            ),
+            "probabilistic_obstacle_hard_violation": hard_violation,
+            "probabilistic_obstacle_fail_closed": fail_closed,
+            "probabilistic_obstacle_speed_scale": speed_scale,
+            "probabilistic_obstacle_initial_hard_violation": (
+                initial_hard_violation
+            ),
+            "probabilistic_obstacle_candidate_feasible_fraction": float(
+                np.mean(risk_candidate_feasible)
+                if evaluated_candidates is not None else 1.0
+            ),
+            "probabilistic_obstacle_active_fallback_used": fallback_used,
+            "probabilistic_obstacle_active_fallback_index": (
+                fallback_candidate_index
+            ),
+            "probabilistic_obstacle_active_fallback_kind": fallback_kind,
+            "probabilistic_obstacle_stop_maximum_probability": (
+                stop_maximum_probability
+            ),
+            "probabilistic_obstacle_stop_probability_mass": (
+                stop_probability_mass
+            ),
+            "probabilistic_obstacle_stopping_feasibility_enabled": bool(
+                self.config
+                .probabilistic_obstacle_stopping_feasibility_enabled
+            ),
+            "probabilistic_obstacle_emergency_candidate_count": int(
+                np.sum(emergency_mask)
+            ),
+            "probabilistic_obstacle_emergency_candidate_selected": bool(
+                fallback_candidate_index >= 0
+                and emergency_mask[fallback_candidate_index]
+            ),
+            "probabilistic_obstacle_temporal_emergency_triggered": bool(
+                temporal_emergency_triggered
+            ),
+            "probabilistic_obstacle_temporal_emergency_vetted": bool(
+                temporal_emergency_vetted
+            ),
+            "probabilistic_obstacle_traversal_window_enabled": bool(
+                traversal_context.get("enabled", False)
+            ),
+            "probabilistic_obstacle_traversal_window_safe": bool(
+                traversal_context.get("window_safe", False)
+            ),
+            "probabilistic_obstacle_traversal_forecast_sufficient": bool(
+                traversal_context.get("forecast_sufficient", False)
+            ),
+            "probabilistic_obstacle_traversal_commit_active": bool(
+                traversal_context.get("commit_active", False)
+            ),
+            "probabilistic_obstacle_traversal_commit_started": bool(
+                traversal_started
+            ),
+            "probabilistic_obstacle_traversal_commit_completed": bool(
+                traversal_context.get("commit_completed", False)
+            ),
+            "probabilistic_obstacle_traversal_commit_cancelled": bool(
+                traversal_context.get("commit_cancelled", False)
+            ),
+            "probabilistic_obstacle_traversal_commit_cancelled_by_temporal_closing": bool(
+                traversal_context.get(
+                    "commit_cancelled_by_temporal_closing", False
+                )
+            ),
+            "probabilistic_obstacle_traversal_commit_cancelled_by_temporal_midpoint_guard": bool(
+                traversal_context.get(
+                    "commit_cancelled_by_temporal_midpoint_guard", False
+                )
+            ),
+            "probabilistic_obstacle_traversal_commit_cancelled_by_temporal_exit_deadline_guard": bool(
+                traversal_context.get(
+                    "commit_cancelled_by_temporal_exit_deadline_guard",
+                    False,
+                )
+            ),
+            "probabilistic_obstacle_traversal_retreat_requested": bool(
+                traversal_context.get("retreat_requested", False)
+            ),
+            "probabilistic_obstacle_traversal_retreat_temporal_lattice_requested": bool(
+                traversal_context.get(
+                    "retreat_temporal_lattice_requested", False
+                )
+            ),
+            "probabilistic_obstacle_traversal_temporal_retreat_raw_lattice_requested": bool(
+                traversal_context.get(
+                    "temporal_retreat_raw_lattice_requested", False
+                )
+            ),
+            "probabilistic_obstacle_traversal_retreat_completed": bool(
+                traversal_context.get("retreat_completed", False)
+            ),
+            "probabilistic_obstacle_traversal_rearm_pending": bool(
+                traversal_context.get("rearm_pending", False)
+            ),
+            "probabilistic_obstacle_traversal_rearm_no_crossing_safe_streak": int(
+                traversal_context.get("rearm_no_crossing_safe_streak", 0)
+            ),
+            "probabilistic_obstacle_traversal_rearm_released_by_no_crossing_clearance": bool(
+                traversal_context.get(
+                    "rearm_released_by_no_crossing_clearance", False
+                )
+            ),
+            "probabilistic_obstacle_traversal_rearm_no_crossing_certified_handoff_active": bool(
+                traversal_context.get(
+                    "rearm_no_crossing_certified_handoff_active", False
+                )
+            ),
+            "probabilistic_obstacle_traversal_rearm_no_crossing_certified_handoff_safe": bool(
+                traversal_context.get(
+                    "rearm_no_crossing_certified_handoff_safe", False
+                )
+            ),
+            "probabilistic_obstacle_traversal_rearm_staging_approach_requested": bool(
+                traversal_context.get(
+                    "rearm_staging_approach_requested", False
+                )
+            ),
+            "probabilistic_obstacle_traversal_rearm_staging_approach_safe": bool(
+                traversal_context.get(
+                    "rearm_staging_approach_safe", False
+                )
+            ),
+            "probabilistic_obstacle_traversal_rearm_staging_target_progress": float(
+                traversal_context.get(
+                    "rearm_staging_target_progress", 0.0
+                )
+            ),
+            "probabilistic_obstacle_traversal_retreat_progress": float(
+                traversal_context.get("retreat_progress", 0.0)
+            ),
+            "probabilistic_obstacle_traversal_candidate_selected": bool(
+                traversal_selected
+            ),
+            "probabilistic_obstacle_traversal_crossing_progress": float(
+                traversal_context.get("crossing_progress", 0.0)
+            ),
+            "probabilistic_obstacle_traversal_entry_progress": float(
+                traversal_context.get("entry_progress", 0.0)
+            ),
+            "probabilistic_obstacle_traversal_clear_progress": float(
+                traversal_context.get("clear_progress", 0.0)
+            ),
+            "probabilistic_obstacle_traversal_current_progress": float(
+                traversal_context.get("current_progress", 0.0)
+            ),
+            "probabilistic_obstacle_traversal_maximum_probability": float(
+                traversal_context.get("maximum_probability", 0.0)
+            ),
+            "probabilistic_obstacle_traversal_probability_mass": float(
+                traversal_context.get("probability_mass", 0.0)
+            ),
+            "probabilistic_obstacle_traversal_temporal_corroboration_enabled": bool(
+                self.config
+                .probabilistic_obstacle_traversal_window_temporal_abort_full_horizon_corroboration_enabled
+            ),
+            "probabilistic_obstacle_traversal_temporal_corroboration_maximum_probability": float(
+                traversal_context.get(
+                    "temporal_corroboration_maximum_probability", 0.0
+                )
+            ),
+            "probabilistic_obstacle_traversal_temporal_corroboration_probability_mass": float(
+                traversal_context.get(
+                    "temporal_corroboration_probability_mass", 0.0
+                )
+            ),
+            "probabilistic_obstacle_traversal_commit_admission_full_horizon_enabled": bool(
+                self.config
+                .probabilistic_obstacle_traversal_window_commit_admission_full_horizon_enabled
+            ),
+            "probabilistic_obstacle_traversal_commit_admission_full_horizon_safe": bool(
+                traversal_context.get(
+                    "commit_admission_full_horizon_safe", False
+                )
+            ),
+            "probabilistic_obstacle_traversal_commit_admission_rejected": bool(
+                traversal_context.get("commit_admission_rejected", False)
+            ),
+            "probabilistic_obstacle_traversal_commit_admission_exit_deadline_enabled": bool(
+                self.config
+                .probabilistic_obstacle_traversal_window_commit_admission_exit_deadline_enabled
+            ),
+            "probabilistic_obstacle_traversal_commit_admission_exit_deadline_safe": bool(
+                traversal_context.get(
+                    "commit_admission_exit_deadline_safe", True
+                )
+            ),
+            "probabilistic_obstacle_traversal_commit_admission_exit_deadline_rejected": bool(
+                traversal_context.get(
+                    "commit_admission_exit_deadline_rejected", False
+                )
+            ),
+            "probabilistic_obstacle_traversal_commit_admission_exit_deadline_hold_requested": bool(
+                traversal_context.get(
+                    "commit_admission_exit_deadline_hold_requested", False
+                )
+            ),
+            "probabilistic_obstacle_traversal_commit_admission_prealign_requested": bool(
+                traversal_context.get(
+                    "commit_admission_prealign_requested", False
+                )
+            ),
+            "probabilistic_obstacle_traversal_uncommitted_temporal_staging_hold_requested": bool(
+                traversal_context.get(
+                    "uncommitted_temporal_staging_hold_requested", False
+                )
+            ),
+            "probabilistic_obstacle_traversal_uncommitted_temporal_staging_hold_selected": bool(
+                traversal_selected
+                and traversal_context.get(
+                    "uncommitted_temporal_staging_hold_requested", False
+                )
+            ),
+            "probabilistic_obstacle_traversal_uncommitted_temporal_staging_hold_hard_risk_override": bool(
+                traversal_uncommitted_temporal_staging_hold_overridden_by_hard_risk
+            ),
+            "probabilistic_obstacle_traversal_uncommitted_temporal_staging_terminal_release_active": bool(
+                traversal_context.get(
+                    "uncommitted_temporal_staging_terminal_release_active",
+                    False,
+                )
+            ),
+            "probabilistic_obstacle_traversal_commit_admission_exit_deadline_hold_hard_risk_override": bool(
+                traversal_admission_exit_deadline_hold_overridden_by_hard_risk
+            ),
+            "probabilistic_obstacle_traversal_commit_admission_exit_deadline_forward_lattice_filtered": bool(
+                traversal_admission_exit_deadline_forward_lattice_filtered
+            ),
+            "probabilistic_obstacle_traversal_rearm_hold_overridden_by_hard_risk": bool(
+                traversal_rearm_hold_overridden_by_hard_risk
+            ),
+            "probabilistic_obstacle_traversal_rearm_hold_overridden_by_temporal_closing": bool(
+                traversal_rearm_hold_overridden_by_temporal_closing
+            ),
+            "probabilistic_obstacle_traversal_temporal_retreat_post_intent_forward_lattice_filtered": bool(
+                traversal_temporal_retreat_post_intent_forward_lattice_filtered
+            ),
+            "probabilistic_obstacle_traversal_temporal_midpoint_retreat_forward_lattice_filtered": bool(
+                traversal_temporal_midpoint_retreat_forward_lattice_filtered
+            ),
+            "probabilistic_obstacle_traversal_commit_admission_exit_deadline_margin_s": float(
+                traversal_context.get(
+                    "commit_admission_exit_deadline_margin_s", 0.0
+                )
+            ),
+            "probabilistic_obstacle_traversal_commit_admission_safe_streak": int(
+                traversal_context.get("commit_admission_safe_streak", 0)
+            ),
+            "probabilistic_obstacle_traversal_commit_admission_required_streak": int(
+                traversal_context.get("commit_admission_required_streak", 1)
+            ),
+            "probabilistic_obstacle_traversal_commit_admission_waiting": bool(
+                traversal_context.get("commit_admission_waiting", False)
+            ),
+            "probabilistic_obstacle_traversal_commit_admission_released": bool(
+                traversal_context.get("commit_admission_released", False)
+            ),
+            "probabilistic_obstacle_traversal_commit_preserved_for_nearest_safe_exit": bool(
+                traversal_context.get(
+                    "commit_preserved_for_nearest_safe_exit", False
+                )
+            ),
+            "probabilistic_obstacle_traversal_forward_exit_distance_m": float(
+                traversal_context.get("forward_exit_distance_m", 0.0)
+            ),
+            "probabilistic_obstacle_traversal_retreat_exit_distance_m": float(
+                traversal_context.get("retreat_exit_distance_m", 0.0)
+            ),
+            "probabilistic_obstacle_traversal_forward_exit_optimistic_time_s": float(
+                traversal_context.get(
+                    "forward_exit_optimistic_time_s", 0.0
+                )
+            ),
+            "probabilistic_obstacle_traversal_retreat_exit_optimistic_time_s": float(
+                traversal_context.get(
+                    "retreat_exit_optimistic_time_s", 0.0
+                )
+            ),
+            "probabilistic_obstacle_traversal_temporal_exit_deadline_ttc_s": float(
+                traversal_context.get(
+                    "temporal_exit_deadline_ttc_s", 0.0
+                )
+            ),
+            "probabilistic_obstacle_traversal_temporal_exit_deadline_guard_triggered": bool(
+                traversal_context.get(
+                    "temporal_exit_deadline_guard_triggered", False
+                )
+            ),
+            "probabilistic_obstacle_traversal_exit_deadline_retreat_escape_transaction_active": bool(
+                exit_deadline_retreat_escape_transaction_active
+            ),
+            "probabilistic_obstacle_traversal_exit_deadline_retreat_escape_latched": bool(
+                exit_deadline_retreat_escape_latched
+            ),
+            "probabilistic_obstacle_traversal_exit_deadline_retreat_escape_reused": bool(
+                traversal_context.get(
+                    "exit_deadline_retreat_escape_reused", False
+                )
+            ),
+            "probabilistic_obstacle_traversal_exit_deadline_retreat_escape_pattern_v": float(
+                exit_deadline_retreat_escape_pattern[0]
+            ),
+            "probabilistic_obstacle_traversal_exit_deadline_retreat_escape_pattern_omega": float(
+                exit_deadline_retreat_escape_pattern[1]
+            ),
+            "probabilistic_obstacle_traversal_retreat_overridden_by_hard_risk": bool(
+                traversal_retreat_overridden_by_hard_risk
+            ),
+            "probabilistic_obstacle_traversal_retreat_overridden_by_temporal_midpoint_guard": bool(
+                traversal_retreat_overridden_by_temporal_midpoint_guard
+            ),
+            "probabilistic_obstacle_traversal_commit_overridden_by_post_center_hard_risk": bool(
+                traversal_commit_overridden_by_post_center_hard_risk
+            ),
+            "probabilistic_obstacle_traversal_commit_overridden_by_post_center_temporal_risk": bool(
+                traversal_commit_overridden_by_post_center_temporal_risk
+            ),
+            "probabilistic_obstacle_traversal_post_center_forward_exit_commit_requested": bool(
+                traversal_post_center_forward_exit_commit_requested
+            ),
+            "probabilistic_obstacle_traversal_post_center_forward_exit_coverage_applied": bool(
+                traversal_post_center_forward_exit_coverage_applied
+            ),
+            "probabilistic_obstacle_traversal_post_center_forward_exit_candidate_count": int(
+                traversal_post_center_forward_exit_candidate_count
+            ),
+            "probabilistic_obstacle_traversal_post_center_forward_exit_lattice_filtered": bool(
+                traversal_post_center_forward_exit_lattice_filtered
+            ),
+            "probabilistic_obstacle_traversal_post_center_low_ttc_continuity_requested": bool(
+                traversal_post_center_low_ttc_continuity_requested
+            ),
+            "probabilistic_obstacle_traversal_post_center_low_ttc_continuity_forward_lattice_filtered": bool(
+                traversal_post_center_low_ttc_continuity_forward_lattice_filtered
+            ),
+            "probabilistic_obstacle_traversal_post_center_low_ttc_continuity_hard_risk_fallback": bool(
+                traversal_post_center_low_ttc_continuity_hard_risk_fallback
+            ),
+            "probabilistic_obstacle_traversal_post_center_low_ttc_continuity_release_condition_met": bool(
+                traversal_post_center_low_ttc_continuity_release_condition_met
+            ),
+            "probabilistic_obstacle_traversal_post_center_low_ttc_nonforward_coverage_requested": bool(
+                traversal_post_center_low_ttc_nonforward_coverage_requested
+            ),
+            "probabilistic_obstacle_traversal_post_center_low_ttc_nonforward_coverage_applied": bool(
+                traversal_post_center_low_ttc_nonforward_coverage_applied
+            ),
+            "probabilistic_obstacle_traversal_post_center_low_ttc_nonforward_candidate_count": int(
+                traversal_post_center_low_ttc_nonforward_candidate_count
+            ),
+            "probabilistic_obstacle_traversal_post_center_low_ttc_first_step_boundary_handoff_requested": bool(
+                traversal_post_center_low_ttc_first_step_boundary_handoff_requested
+            ),
+            "probabilistic_obstacle_traversal_post_center_low_ttc_first_step_boundary_handoff_admitted_count": int(
+                traversal_post_center_low_ttc_first_step_boundary_handoff_admitted_count
+            ),
+            "probabilistic_obstacle_traversal_post_center_low_ttc_first_step_boundary_handoff_selected": bool(
+                traversal_post_center_low_ttc_first_step_boundary_handoff_requested
+                and
+                0 <= fallback_candidate_index < values.shape[0]
+                and first_step_boundary_handoff_mask[
+                    fallback_candidate_index
+                ]
+            ),
+            "probabilistic_obstacle_traversal_post_center_low_ttc_prefix_boundary_handoff_requested": bool(
+                traversal_post_center_low_ttc_prefix_boundary_handoff_requested
+            ),
+            "probabilistic_obstacle_traversal_post_center_low_ttc_prefix_boundary_handoff_admitted_count": int(
+                traversal_post_center_low_ttc_first_step_boundary_handoff_admitted_count
+                if traversal_post_center_low_ttc_prefix_boundary_handoff_requested
+                else 0
+            ),
+            "probabilistic_obstacle_traversal_post_center_low_ttc_prefix_boundary_handoff_selected": bool(
+                traversal_post_center_low_ttc_prefix_boundary_handoff_requested
+                and 0 <= fallback_candidate_index < values.shape[0]
+                and first_step_boundary_handoff_mask[
+                    fallback_candidate_index
+                ]
+            ),
+            "probabilistic_obstacle_traversal_post_center_temporal_raw_triggered": bool(
+                traversal_context.get(
+                    "temporal_emergency_raw_triggered", False
+                )
+            ),
+            "probabilistic_obstacle_traversal_temporal_closing_observed": bool(
+                traversal_context.get(
+                    "temporal_emergency_closing_observed", False
+                )
+            ),
+            "probabilistic_obstacle_traversal_post_center_temporal_escape_latched": bool(
+                self._probabilistic_traversal_post_center_temporal_pattern
+                is not None
+            ),
+            "probabilistic_obstacle_traversal_post_center_temporal_escape_reused": bool(
+                traversal_context.get(
+                    "post_center_temporal_escape_reused", False
+                )
+            ),
+            "probabilistic_obstacle_traversal_post_center_temporal_escape_pattern_v": float(
+                post_center_temporal_escape_pattern[0]
+            ),
+            "probabilistic_obstacle_traversal_post_center_temporal_escape_pattern_omega": float(
+                post_center_temporal_escape_pattern[1]
+            ),
+            "probabilistic_obstacle_traversal_required_steps": int(
+                traversal_context.get("required_steps", 0)
+            ),
+            "probabilistic_obstacle_traversal_forecast_index": int(
+                traversal_context.get("forecast_index", -1)
+            ),
+            "probabilistic_obstacle_pareto_forward_commit_applied": bool(
+                pareto_forward_commit_applied
+            ),
+            'probabilistic_obstacle_low_risk_forward_commit_applied': bool(
+                low_risk_forward_commit_applied
+            ),
+            "probabilistic_obstacle_preferred_emergency_probability": float(
+                preferred_emergency_probability
+            ),
+            "probabilistic_obstacle_preferred_emergency_probability_mass": float(
+                preferred_emergency_probability_mass
+            ),
+            "probabilistic_obstacle_preferred_emergency_hard_violation": bool(
+                preferred_emergency_hard_violation
+            ),
+            "probabilistic_obstacle_best_cost_emergency_index": int(
+                best_cost_emergency_index
+            ),
+            "probabilistic_obstacle_best_cost_emergency_v": float(
+                values[best_cost_emergency_index, 0,
+                       self.action_spec.index("v_cmd")]
+                if best_cost_emergency_index >= 0
+                and "v_cmd" in self.action_spec.names else 0.0
+            ),
+            "probabilistic_obstacle_best_cost_emergency_omega": float(
+                values[best_cost_emergency_index, 0,
+                       self.action_spec.index("omega_cmd")]
+                if best_cost_emergency_index >= 0
+                and "omega_cmd" in self.action_spec.names else 0.0
+            ),
+            "probabilistic_obstacle_best_cost_emergency_probability": float(
+                evaluated_candidates.maximum_step_probability[
+                    best_cost_emergency_index
+                ] if best_cost_emergency_index >= 0 else 0.0
+            ),
+            "probabilistic_obstacle_best_cost_emergency_probability_mass": float(
+                evaluated_candidates.accumulated_probability_mass[
+                    best_cost_emergency_index
+                ] if best_cost_emergency_index >= 0 else 0.0
+            ),
+            "probabilistic_obstacle_minimum_risk_emergency_index": int(
+                minimum_risk_emergency_index
+            ),
+            "probabilistic_obstacle_minimum_risk_emergency_v": float(
+                values[minimum_risk_emergency_index, 0,
+                       self.action_spec.index("v_cmd")]
+                if minimum_risk_emergency_index >= 0
+                and "v_cmd" in self.action_spec.names else 0.0
+            ),
+            "probabilistic_obstacle_minimum_risk_emergency_omega": float(
+                values[minimum_risk_emergency_index, 0,
+                       self.action_spec.index("omega_cmd")]
+                if minimum_risk_emergency_index >= 0
+                and "omega_cmd" in self.action_spec.names else 0.0
+            ),
+            "probabilistic_obstacle_minimum_risk_emergency_probability": float(
+                evaluated_candidates.maximum_step_probability[
+                    minimum_risk_emergency_index
+                ] if minimum_risk_emergency_index >= 0 else 0.0
+            ),
+            "probabilistic_obstacle_minimum_risk_emergency_probability_mass": float(
+                evaluated_candidates.accumulated_probability_mass[
+                    minimum_risk_emergency_index
+                ] if minimum_risk_emergency_index >= 0 else 0.0
+            ),
+            "probabilistic_obstacle_active_avoidance_enabled": bool(
+                hard_action == "active_avoidance"
+            ),
+        }
+        if not fail_closed and speed_scale < 1.0:
+            if "v_cmd" in self.action_spec.names:
+                speed_index = self.action_spec.index("v_cmd")
+                action[speed_index] *= speed_scale
+                sequence[0, speed_index] = action[speed_index]
+            else:
+                action *= speed_scale
+                sequence[0] = action
+            trajectory = self.rollout(state, sequence)[0]
+        return action, sequence, trajectory, diagnostics
+
+    @staticmethod
+    def _risk_is_strictly_better(
+        candidate_maximum_probability,
+        candidate_probability_mass,
+        stop_maximum_probability,
+        stop_probability_mass,
+        allow_equal_maximum_mass=False,
+    ):
+        """Compare motion against stopping under the configured risk order."""
+
+        candidate_maximum_probability = float(candidate_maximum_probability)
+        candidate_probability_mass = float(candidate_probability_mass)
+        stop_maximum_probability = float(stop_maximum_probability)
+        stop_probability_mass = float(stop_probability_mass)
+        values = np.asarray((
+            candidate_maximum_probability,
+            candidate_probability_mass,
+            stop_maximum_probability,
+            stop_probability_mass,
+        ))
+        if not np.isfinite(values).all():
+            raise ValueError("probabilistic fallback risks must be finite")
+        tolerance = 1.0e-12
+        if candidate_maximum_probability < (
+            stop_maximum_probability - tolerance
+        ):
+            return True
+        return bool(
+            allow_equal_maximum_mass
+            and np.isclose(
+                candidate_maximum_probability,
+                stop_maximum_probability,
+                atol=tolerance,
+                rtol=0.0,
+            )
+            and candidate_probability_mass < stop_probability_mass - tolerance
+        )
 
     def _path_boundary_margins(
         self,
@@ -935,7 +5425,165 @@ class MppiController:
         self, state, prior, target, obstacles, rng, observation=None,
         reference=None,
     ):
-        del observation
+        tracker_diagnostics = (
+            {}
+            if observation is None
+            else dict(
+                observation.auxiliary.get(
+                    "dynamic_obstacle_tracker", {}
+                )
+            )
+        )
+        probabilistic_obstacles = ()
+        if self.config.probabilistic_obstacle_risk_enabled:
+            if observation is None:
+                raise ValueError(
+                    "probabilistic obstacle risk requires an observation"
+                )
+            probabilistic_obstacles = tuple(
+                observation.auxiliary.get(
+                    self.config.probabilistic_obstacle_forecast_key, ()
+                )
+            )
+            if not probabilistic_obstacles:
+                if (
+                    self.config
+                    .probabilistic_obstacle_missing_forecast_action
+                    == "stop"
+                ):
+                    action = np.zeros(
+                        self.action_spec.dimension, dtype=np.float64
+                    )
+                    sequence = np.zeros(
+                        (
+                            self.config.horizon,
+                            self.action_spec.dimension,
+                        ),
+                        dtype=np.float64,
+                    )
+                    trajectory = self.rollout(state, sequence)[0]
+                    diagnostics = {
+                        "cost_min": 0.0,
+                        "cost_mean": 0.0,
+                        "cost_std": 0.0,
+                        "effective_sample_size": 0.0,
+                        "effective_sample_fraction": 0.0,
+                        "reference_id": target.reference_id,
+                        "target_x": float(target.pose.x),
+                        "target_y": float(target.pose.y),
+                        "target_theta": float(target.pose.theta),
+                        "target_is_terminal": bool(
+                            target.is_terminal
+                        ),
+                        "target_phase": str(target.phase),
+                        "prior": dict(prior.metadata),
+                        "probabilistic_obstacle_risk_enabled": True,
+                        "probabilistic_obstacle_forecast_count": 0,
+                        "probabilistic_obstacle_probability_mass": 0.0,
+                        "probabilistic_obstacle_union_bound": 0.0,
+                        "probabilistic_obstacle_maximum_step_probability": 0.0,
+                        "probabilistic_obstacle_hard_violation": True,
+                        "probabilistic_obstacle_fail_closed": True,
+                        "probabilistic_obstacle_speed_scale": 0.0,
+                        "dynamic_obstacle_tracker_enabled": bool(
+                            tracker_diagnostics.get("enabled", False)
+                        ),
+                        "dynamic_obstacle_tracker_cluster_count": int(
+                            tracker_diagnostics.get("cluster_count", 0)
+                        ),
+                        "dynamic_obstacle_tracker_associated": bool(
+                            tracker_diagnostics.get(
+                                "associated", False
+                            )
+                        ),
+                        "dynamic_obstacle_tracker_association_distance_m": float(
+                            tracker_diagnostics.get(
+                                "association_distance_m", 0.0
+                            )
+                            or 0.0
+                        ),
+                        "dynamic_obstacle_tracker_measurement_x": float(
+                            tracker_diagnostics.get(
+                                "measurement_x", 0.0
+                            )
+                            or 0.0
+                        ),
+                        "dynamic_obstacle_tracker_measurement_y": float(
+                            tracker_diagnostics.get(
+                                "measurement_y", 0.0
+                            )
+                            or 0.0
+                        ),
+                        "dynamic_obstacle_tracker_support_beams": int(
+                            tracker_diagnostics.get(
+                                "selected_support_beams", 0
+                            )
+                        ),
+                        "dynamic_obstacle_tracker_unobserved_duration_s": float(
+                            tracker_diagnostics.get(
+                                "unobserved_duration_s", 0.0
+                            )
+                        ),
+                        "dynamic_obstacle_tracker_forecast_valid": False,
+                        "dynamic_obstacle_tracker_forecast_availability": float(
+                            tracker_diagnostics.get(
+                                "forecast_availability", 0.0
+                            )
+                        ),
+                        "dynamic_obstacle_tracker_innovation_nis": float(
+                            tracker_diagnostics.get(
+                                "innovation_nis", 0.0
+                            )
+                            or 0.0
+                        ),
+                        "dynamic_obstacle_tracker_change_triggered": bool(
+                            tracker_diagnostics.get(
+                                "change_triggered", False
+                            )
+                        ),
+                        "dynamic_obstacle_tracker_dropout_guard_triggered": bool(
+                            tracker_diagnostics.get(
+                                "dropout_guard_triggered", False
+                            )
+                        ),
+                        "dynamic_obstacle_tracker_recovery_active": bool(
+                            tracker_diagnostics.get(
+                                "recovery_active", False
+                            )
+                        ),
+                    }
+                    if self.config.profile_components:
+                        diagnostics.update(
+                            {
+                                "profile_mppi_sampling_ms": 0.0,
+                                "profile_mppi_batch_rollout_ms": 0.0,
+                                "profile_mppi_cost_ms": 0.0,
+                                "profile_mppi_weighting_update_ms": 0.0,
+                                "profile_mppi_final_rollout_ms": 0.0,
+                                "profile_mppi_solve_total_ms": 0.0,
+                            }
+                        )
+                    return action, sequence, trajectory, diagnostics
+                raise ValueError(
+                    "probabilistic obstacle risk is enabled but the "
+                    "observation contains no forecasts"
+                )
+            for forecast in probabilistic_obstacles:
+                if not isinstance(
+                    forecast, GaussianMixtureObstacleForecast
+                ):
+                    raise TypeError(
+                        "observation contains an invalid obstacle forecast"
+                    )
+                if not np.isclose(
+                    forecast.timestamp,
+                    observation.timestamp,
+                    atol=1.0e-9,
+                    rtol=0.0,
+                ):
+                    raise ValueError(
+                        "obstacle forecast timestamp must match observation"
+                    )
         profiling = self.config.profile_components
         solve_started = time.perf_counter() if profiling else None
         stage_started = solve_started
@@ -952,10 +5600,18 @@ class MppiController:
             stage_started = now
 
         samples = self._sample(prior, rng=rng)
+        emergency_candidate_mask = np.zeros(
+            self.config.num_samples, dtype=bool
+        )
         hard_boundary_filter = bool(
             self.config.path_boundary_candidate_filter_enabled
         )
-        if hard_boundary_filter:
+        risk_candidate_filter = bool(
+            self.config.probabilistic_obstacle_risk_enabled
+            and self.config
+            .probabilistic_obstacle_candidate_filter_enabled
+        )
+        if hard_boundary_filter or risk_candidate_filter:
             # Reserve one of the already budgeted candidates for a deterministic
             # braking sequence.  This does not increase K and gives the
             # fail-closed branch a reproducible control sequence when every
@@ -973,6 +5629,16 @@ class MppiController:
             samples[0, 0] = self.action_spec.clip(
                 samples[0, 0], self.previous_action, self.config.dt
             )
+        if (
+            self.config.probabilistic_obstacle_risk_enabled
+            and self.config
+            .probabilistic_obstacle_emergency_candidates_enabled
+        ):
+            emergency_candidate_mask = (
+                self._inject_probabilistic_emergency_candidates(
+                    samples, prior
+                )
+            )
         terminal_dx = float(
             target.pose.x - state[self.state_spec.position_indices[0]]
         )
@@ -980,6 +5646,19 @@ class MppiController:
             target.pose.y - state[self.state_spec.position_indices[1]]
         )
         terminal_distance = float(np.hypot(terminal_dx, terminal_dy))
+        target_bearing_error = 0.0
+        if (
+            "theta" in self.state_spec.names
+            and terminal_distance > 1.0e-12
+        ):
+            target_heading = float(np.arctan2(
+                terminal_dy, terminal_dx
+            ))
+            theta = float(state[self.state_spec.index("theta")])
+            target_bearing_error = float(np.arctan2(
+                np.sin(target_heading - theta),
+                np.cos(target_heading - theta),
+            ))
         terminal_control_region_active = bool(
             self.config.terminal_control_radius is None
             or terminal_distance <= self.config.terminal_control_radius
@@ -994,15 +5673,8 @@ class MppiController:
         terminal_bearing_error = 0.0
         terminal_translation_scale = 1.0
         if terminal_heading_gate_active:
-            theta = float(state[self.state_spec.index("theta")])
-            dx = terminal_dx
-            dy = terminal_dy
-            if np.hypot(dx, dy) > 1e-12:
-                desired_heading = float(np.arctan2(dy, dx))
-                terminal_bearing_error = float(np.arctan2(
-                    np.sin(desired_heading - theta),
-                    np.cos(desired_heading - theta),
-                ))
+            if terminal_distance > 1e-12:
+                terminal_bearing_error = target_bearing_error
                 gate = float(self.config.terminal_translation_heading_gate_rad)
                 gate_cosine = float(np.cos(gate))
                 if abs(terminal_bearing_error) >= gate:
@@ -1034,13 +5706,16 @@ class MppiController:
             # the predicted in-place alignment rather than becoming blind to
             # the value of turning.
             samples[:, 0, v_index] *= terminal_translation_scale
-        if hard_boundary_filter:
+        if hard_boundary_filter or risk_candidate_filter:
             # Candidate rollouts must use the same first command that can
             # actually pass the actuator slew-rate contract.  Otherwise a
             # nominally feasible sample may become infeasible only after the
             # selected command is clipped below.
-            samples[:, 0, :] = self.action_spec.clip(
-                samples[:, 0, :], self.previous_action, self.config.dt
+            regular_candidates = ~emergency_candidate_mask
+            samples[regular_candidates, 0, :] = self.action_spec.clip(
+                samples[regular_candidates, 0, :],
+                self.previous_action,
+                self.config.dt,
             )
         # Effective perturbations include actuator-bound clipping.  Expressing
         # the update this way makes the MPPI control law explicit while
@@ -1051,7 +5726,12 @@ class MppiController:
         trajectories = self.rollout(state, samples)
         mark("batch_rollout")
         costs = self._cost(
-            trajectories, samples, target, obstacles, reference=reference
+            trajectories,
+            samples,
+            target,
+            obstacles,
+            reference=reference,
+            probabilistic_obstacles=probabilistic_obstacles,
         )
         mark("cost")
         correction = self._importance_sampling_cost(prior.mean, perturbations, covariance)
@@ -1070,14 +5750,43 @@ class MppiController:
                 candidate_margins[:, 1:], axis=1
             )
             boundary_candidate_feasible = boundary_candidate_min_margin >= 0.0
+        candidate_risk = None
+        risk_candidate_feasible = np.ones(
+            self.config.num_samples, dtype=bool
+        )
+        if risk_candidate_filter:
+            candidate_risk = self._probabilistic_collision_risk(
+                trajectories, probabilistic_obstacles
+            )
+            risk_candidate_feasible = ~candidate_risk.hard_violation
+        candidate_eligible = boundary_candidate_feasible.copy()
+        jointly_feasible = (
+            candidate_eligible & risk_candidate_feasible
+        )
         beta = float(np.min(costs))
         exponent = np.clip(-(costs - beta) / self.config.temperature, -700.0, 0.0)
-        if hard_boundary_filter and np.any(boundary_candidate_feasible):
+        if risk_candidate_filter and np.any(jointly_feasible):
+            exponent = np.where(jointly_feasible, exponent, -np.inf)
+        elif hard_boundary_filter and np.any(boundary_candidate_feasible):
             exponent = np.where(
                 boundary_candidate_feasible, exponent, -np.inf
             )
+        elif risk_candidate_filter and np.any(risk_candidate_feasible):
+            exponent = np.where(
+                risk_candidate_feasible, exponent, -np.inf
+            )
         weights = np.exp(exponent)
-        weights /= max(float(np.sum(weights)), 1e-12)
+        weight_sum = float(np.sum(weights))
+        if np.isfinite(weight_sum) and weight_sum > 0.0:
+            weights /= weight_sum
+        else:
+            finite_costs = np.where(np.isfinite(costs), costs, np.inf)
+            fallback_index = (
+                int(np.argmin(finite_costs))
+                if np.any(np.isfinite(finite_costs)) else 0
+            )
+            weights[:] = 0.0
+            weights[fallback_index] = 1.0
         boundary_no_feasible_candidates = bool(
             hard_boundary_filter and not np.any(boundary_candidate_feasible)
         )
@@ -1190,6 +5899,7 @@ class MppiController:
                 target,
                 obstacles,
                 reference=reference,
+                probabilistic_obstacles=probabilistic_obstacles,
             )[0])
             selected_correction = float(self._importance_sampling_cost(
                 prior.mean,
@@ -1235,6 +5945,310 @@ class MppiController:
                 ),
             }
         mark("final_rollout")
+        if self.config.probabilistic_obstacle_risk_enabled:
+            selected_risk = self._probabilistic_collision_risk(
+                updated_trajectory[None, ...],
+                probabilistic_obstacles,
+            )
+            initial_hard_violation = bool(
+                selected_risk.hard_violation[0]
+            )
+            fallback_used = False
+            fallback_candidate_index = -1
+            fallback_kind = "none"
+            stop_maximum_probability = 0.0
+            stop_probability_mass = 0.0
+            fail_closed = False
+            hard_action = (
+                self.config
+                .probabilistic_obstacle_hard_violation_action
+            )
+            if initial_hard_violation and hard_action == "active_avoidance":
+                if candidate_risk is None:
+                    candidate_risk = self._probabilistic_collision_risk(
+                        trajectories, probabilistic_obstacles
+                    )
+                    risk_candidate_feasible = (
+                        ~candidate_risk.hard_violation
+                    )
+                eligible = np.flatnonzero(candidate_eligible)
+                if eligible.size == 0:
+                    eligible = np.arange(
+                        self.config.num_samples, dtype=np.int64
+                    )
+                feasible = eligible[
+                    risk_candidate_feasible[eligible]
+                ]
+                stop_sequence = np.zeros(
+                    (
+                        self.config.horizon,
+                        self.action_spec.dimension,
+                    ),
+                    dtype=np.float64,
+                )
+                stop_trajectory = self.rollout(
+                    state, stop_sequence
+                )[0]
+                stop_risk = self._probabilistic_collision_risk(
+                    stop_trajectory[None, ...],
+                    probabilistic_obstacles,
+                )
+                stop_maximum_probability = float(
+                    stop_risk.maximum_step_probability[0]
+                )
+                stop_probability_mass = float(
+                    stop_risk.accumulated_probability_mass[0]
+                )
+                if feasible.size:
+                    fallback_candidate_index = int(
+                        feasible[np.argmin(costs[feasible])]
+                    )
+                    fallback_kind = "feasible_active_candidate"
+                else:
+                    candidate_order = np.lexsort(
+                        (
+                            costs[eligible],
+                            candidate_risk
+                            .accumulated_probability_mass[eligible],
+                            candidate_risk
+                            .maximum_step_probability[eligible],
+                        )
+                    )
+                    safest_index = int(eligible[candidate_order[0]])
+                    safest_probability = float(
+                        candidate_risk
+                        .maximum_step_probability[safest_index]
+                    )
+                    safest_probability_mass = float(
+                        candidate_risk
+                        .accumulated_probability_mass[safest_index]
+                    )
+                    if self._risk_is_strictly_better(
+                        safest_probability,
+                        safest_probability_mass,
+                        stop_maximum_probability,
+                        stop_probability_mass,
+                        allow_equal_maximum_mass=(
+                            self.config
+                            .probabilistic_obstacle_stopping_feasibility_enabled
+                        ),
+                    ):
+                        fallback_candidate_index = safest_index
+                        fallback_kind = (
+                            "minimum_accumulated_risk_active_candidate"
+                            if np.isclose(
+                                safest_probability,
+                                stop_maximum_probability,
+                                atol=1.0e-12,
+                                rtol=0.0,
+                            )
+                            else "minimum_risk_active_candidate"
+                        )
+                    else:
+                        fallback_kind = "stop_is_safest_candidate"
+                fallback_used = True
+                if fallback_candidate_index >= 0:
+                    sequence = samples[
+                        fallback_candidate_index
+                    ].copy()
+                    if emergency_candidate_mask[
+                        fallback_candidate_index
+                    ]:
+                        action = self.action_spec.clip(sequence[0])
+                    else:
+                        action = self.action_spec.clip(
+                            sequence[0],
+                            self.previous_action,
+                            self.config.dt,
+                        )
+                    sequence[0] = action
+                    updated_trajectory = self.rollout(
+                        state, sequence
+                    )[0]
+                else:
+                    action = np.zeros(
+                        self.action_spec.dimension, dtype=np.float64
+                    )
+                    sequence = stop_sequence
+                    updated_trajectory = stop_trajectory
+                    fail_closed = True
+                selected_risk = self._probabilistic_collision_risk(
+                    updated_trajectory[None, ...],
+                    probabilistic_obstacles,
+                )
+            hard_violation = bool(selected_risk.hard_violation[0])
+            if hard_violation and hard_action == "stop":
+                fail_closed = True
+                fallback_used = True
+                fallback_kind = "unconditional_stop"
+                action = np.zeros(
+                    self.action_spec.dimension, dtype=np.float64
+                )
+                sequence = np.zeros(
+                    (
+                        self.config.horizon,
+                        self.action_spec.dimension,
+                    ),
+                    dtype=np.float64,
+                )
+                updated_trajectory = self.rollout(state, sequence)[0]
+            maximum_step_probability = float(
+                selected_risk.maximum_step_probability[0]
+            )
+            speed_scale = 1.0
+            if (
+                self.config
+                .probabilistic_obstacle_speed_governor_enabled
+            ):
+                hard_threshold = (
+                    self.config.probabilistic_obstacle_hard_threshold
+                )
+                soft_threshold = (
+                    self.config
+                    .probabilistic_obstacle_speed_governor_start_ratio
+                    * hard_threshold
+                )
+                speed_scale = float(np.clip(
+                    (hard_threshold - maximum_step_probability)
+                    / (hard_threshold - soft_threshold),
+                    0.0,
+                    1.0,
+                ))
+            probabilistic_risk_diagnostics = {
+                "probabilistic_obstacle_risk_enabled": True,
+                "probabilistic_obstacle_forecast_count": len(
+                    probabilistic_obstacles
+                ),
+                "probabilistic_obstacle_probability_mass": float(
+                    selected_risk.accumulated_probability_mass[0]
+                ),
+                "probabilistic_obstacle_union_bound": float(
+                    selected_risk.horizon_union_bound[0]
+                ),
+                "probabilistic_obstacle_maximum_step_probability": float(
+                    selected_risk.maximum_step_probability[0]
+                ),
+                "probabilistic_obstacle_hard_violation": hard_violation,
+                "probabilistic_obstacle_fail_closed": fail_closed,
+                "probabilistic_obstacle_speed_scale": speed_scale,
+                "probabilistic_obstacle_initial_hard_violation": (
+                    initial_hard_violation
+                ),
+                "probabilistic_obstacle_candidate_feasible_fraction": float(
+                    np.mean(risk_candidate_feasible)
+                    if candidate_risk is not None
+                    else 1.0
+                ),
+                "probabilistic_obstacle_active_fallback_used": (
+                    fallback_used
+                ),
+                "probabilistic_obstacle_active_fallback_index": (
+                    fallback_candidate_index
+                ),
+                "probabilistic_obstacle_active_fallback_kind": (
+                    fallback_kind
+                ),
+                "probabilistic_obstacle_stop_maximum_probability": (
+                    stop_maximum_probability
+                ),
+                "probabilistic_obstacle_stop_probability_mass": (
+                    stop_probability_mass
+                ),
+                "probabilistic_obstacle_stopping_feasibility_enabled": bool(
+                    self.config
+                    .probabilistic_obstacle_stopping_feasibility_enabled
+                ),
+                "probabilistic_obstacle_emergency_candidate_count": int(
+                    np.sum(emergency_candidate_mask)
+                ),
+                "probabilistic_obstacle_emergency_candidate_selected": bool(
+                    fallback_candidate_index >= 0
+                    and emergency_candidate_mask[fallback_candidate_index]
+                ),
+                "probabilistic_obstacle_active_avoidance_enabled": bool(
+                    hard_action == "active_avoidance"
+                ),
+            }
+            if not fail_closed and speed_scale < 1.0:
+                if "v_cmd" in self.action_spec.names:
+                    speed_index = self.action_spec.index("v_cmd")
+                    action[speed_index] *= speed_scale
+                    sequence[0, speed_index] = action[speed_index]
+                else:
+                    action *= speed_scale
+                    sequence[0] = action
+                updated_trajectory = self.rollout(state, sequence)[0]
+        else:
+            probabilistic_risk_diagnostics = {
+                "probabilistic_obstacle_risk_enabled": False,
+                "probabilistic_obstacle_forecast_count": 0,
+                "probabilistic_obstacle_probability_mass": 0.0,
+                "probabilistic_obstacle_union_bound": 0.0,
+                "probabilistic_obstacle_maximum_step_probability": 0.0,
+                "probabilistic_obstacle_hard_violation": False,
+                "probabilistic_obstacle_fail_closed": False,
+                "probabilistic_obstacle_speed_scale": 1.0,
+                "probabilistic_obstacle_initial_hard_violation": False,
+                "probabilistic_obstacle_candidate_feasible_fraction": 1.0,
+                "probabilistic_obstacle_active_fallback_used": False,
+                "probabilistic_obstacle_active_fallback_index": -1,
+                "probabilistic_obstacle_active_fallback_kind": "none",
+                "probabilistic_obstacle_stop_maximum_probability": 0.0,
+                "probabilistic_obstacle_stop_probability_mass": 0.0,
+                "probabilistic_obstacle_stopping_feasibility_enabled": False,
+                "probabilistic_obstacle_emergency_candidate_count": 0,
+                "probabilistic_obstacle_emergency_candidate_selected": False,
+                "probabilistic_obstacle_active_avoidance_enabled": False,
+            }
+        online_tracker_diagnostics = {
+            "dynamic_obstacle_tracker_enabled": bool(
+                tracker_diagnostics.get("enabled", False)
+            ),
+            "dynamic_obstacle_tracker_cluster_count": int(
+                tracker_diagnostics.get("cluster_count", 0)
+            ),
+            "dynamic_obstacle_tracker_associated": bool(
+                tracker_diagnostics.get("associated", False)
+            ),
+            "dynamic_obstacle_tracker_association_distance_m": float(
+                tracker_diagnostics.get(
+                    "association_distance_m", 0.0
+                )
+                or 0.0
+            ),
+            "dynamic_obstacle_tracker_measurement_x": float(
+                tracker_diagnostics.get("measurement_x", 0.0) or 0.0
+            ),
+            "dynamic_obstacle_tracker_measurement_y": float(
+                tracker_diagnostics.get("measurement_y", 0.0) or 0.0
+            ),
+            "dynamic_obstacle_tracker_support_beams": int(
+                tracker_diagnostics.get("selected_support_beams", 0)
+            ),
+            "dynamic_obstacle_tracker_unobserved_duration_s": float(
+                tracker_diagnostics.get("unobserved_duration_s", 0.0)
+            ),
+            "dynamic_obstacle_tracker_forecast_valid": bool(
+                tracker_diagnostics.get("forecast_valid", False)
+            ),
+            "dynamic_obstacle_tracker_forecast_availability": float(
+                tracker_diagnostics.get("forecast_availability", 0.0)
+            ),
+            "dynamic_obstacle_tracker_innovation_nis": float(
+                tracker_diagnostics.get("innovation_nis", 0.0) or 0.0
+            ),
+            "dynamic_obstacle_tracker_change_triggered": bool(
+                tracker_diagnostics.get("change_triggered", False)
+            ),
+            "dynamic_obstacle_tracker_dropout_guard_triggered": bool(
+                tracker_diagnostics.get(
+                    "dropout_guard_triggered", False
+                )
+            ),
+            "dynamic_obstacle_tracker_recovery_active": bool(
+                tracker_diagnostics.get("recovery_active", False)
+            ),
+        }
         diagnostics = {
             "cost_min": float(costs.min()),
             "cost_mean": float(costs.mean()),
@@ -1301,6 +6315,7 @@ class MppiController:
                 else float(self.config.terminal_translation_heading_gate_rad)
             ),
             "terminal_bearing_error": terminal_bearing_error,
+            "target_bearing_error": target_bearing_error,
             "terminal_translation_scale": terminal_translation_scale,
             "terminal_alignment_active": terminal_alignment_active,
             "terminal_alignment_yaw_gain": (
@@ -1317,6 +6332,8 @@ class MppiController:
             "terminal_control_distance": terminal_distance,
             "terminal_control_region_active": terminal_control_region_active,
             "prior": dict(prior.metadata),
+            **probabilistic_risk_diagnostics,
+            **online_tracker_diagnostics,
         }
         residual = getattr(self.dynamics, "residual", None)
         confidence = getattr(residual, "confidence", None)
@@ -1399,6 +6416,21 @@ class MppiController:
         diagnostics["compute_ms"] = 1000.0 * (
             time.perf_counter() - started
         )
+        diagnostics.update(
+            {
+                "planner_observation_x": float(
+                    state[self.state_spec.position_indices[0]]
+                ),
+                "planner_observation_y": float(
+                    state[self.state_spec.position_indices[1]]
+                ),
+                "planner_observation_theta": float(
+                    state[self.state_spec.index("theta")]
+                    if "theta" in self.state_spec.names
+                    else observation.pose.theta
+                ),
+            }
+        )
         if self.config.profile_components:
             diagnostics.update({
                 "profile_planner_state_reference_ms": 1000.0 * (
@@ -1422,6 +6454,7 @@ class MppiController:
         self._observe_residual_reliability(state)
         self._reliability_previous_state = state.copy()
         target = reference.target_at(observation.timestamp, state)
+        self._observe_residual_context(state, target)
         state_reference_finished = (
             time.perf_counter()
             if self.config.profile_components else None
@@ -1440,6 +6473,14 @@ class MppiController:
             observation,
             reference,
         )
+        current_risk = float(
+            diagnostics.get(
+                "probabilistic_obstacle_maximum_step_probability", 0.0
+            )
+        )
+        self._previous_probabilistic_risk = (
+            current_risk if np.isfinite(current_risk) else 1.0
+        )
         self.previous_sequence = sequence.copy()
         self._delay_preceding_action = self.previous_action.copy()
         self.previous_action = action.copy()
@@ -1448,6 +6489,21 @@ class MppiController:
             setter(sequence)
         diagnostics["compute_ms"] = 1000.0 * (
             time.perf_counter() - started
+        )
+        diagnostics.update(
+            {
+                "planner_observation_x": float(
+                    state[self.state_spec.position_indices[0]]
+                ),
+                "planner_observation_y": float(
+                    state[self.state_spec.position_indices[1]]
+                ),
+                "planner_observation_theta": float(
+                    state[self.state_spec.index("theta")]
+                    if "theta" in self.state_spec.names
+                    else observation.pose.theta
+                ),
+            }
         )
         if self.config.profile_components:
             diagnostics.update({

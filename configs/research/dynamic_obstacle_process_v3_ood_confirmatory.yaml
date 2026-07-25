@@ -1,0 +1,109 @@
+schema_version: 1
+generator_version: recurrent_semimarkov_v3
+study_id: dynamic_obstacle_process_v3_ood_confirmatory
+platform: windows_native_only
+seed_registry_path: configs/seeds/dynamic_uncertainty_splits.yaml
+output_dir: research_artifacts/dynamic_obstacle_generator_v3_qualification
+schedule_seed: 730199997
+development_seed_start: 730100021
+development_seed_count: 20
+processes:
+  - stochastic_cruise
+  - stochastic_shuttle
+  - branching_patrol
+  - hybrid_patrol
+noise_profiles:
+  process_shift:
+    acceleration_std: 0.100
+    observation_std: 0.075
+trajectory:
+  duration_s: 45.0
+  dt: 0.05
+  obstacle_radius_m: 0.25
+physical_limits:
+  maximum_speed_mps: 1.10
+  maximum_acceleration_mps2: 0.65
+  maximum_braking_mps2: 0.90
+  maximum_moving_yaw_rate_radps: 1.20
+  yaw_rate_audit_minimum_speed_mps: 0.15
+  stopped_speed_threshold_mps: 0.08
+navigation:
+  arrival_radius_m: 0.22
+  approach_radius_m: 1.00
+  minimum_cruise_speed_mps: 0.62
+  maximum_cruise_speed_mps: 1.05
+  dwell_time_s: [0.20, 0.80]
+  initial_heading_deg: 15.0
+processes_config:
+  stochastic_cruise:
+    initial_position_m: [-4.0, -2.0]
+    initial_speed_mps: 0.62
+    initial_heading_deg: 18.0
+  stochastic_shuttle:
+    waypoints_m:
+      - [-3.4, -1.4]
+      - [3.4, 1.4]
+    initial_waypoint: 0
+    initial_target: 1
+  branching_patrol:
+    waypoints_m:
+      - [-3.6, -2.2]
+      - [0.0, -2.7]
+      - [3.5, -1.2]
+      - [2.7, 2.3]
+      - [-0.2, 1.4]
+      - [-3.2, 2.2]
+    adjacency:
+      - [1, 4, 5]
+      - [0, 2, 4]
+      - [1, 3, 4]
+      - [2, 4, 5]
+      - [0, 1, 2, 3, 5]
+      - [0, 3, 4]
+    initial_waypoint: 0
+  hybrid_patrol:
+    waypoints_m:
+      - [-3.8, -2.2]
+      - [-0.4, -2.8]
+      - [3.5, -1.8]
+      - [3.0, 2.3]
+      - [0.2, 1.2]
+      - [-3.4, 2.4]
+    adjacency:
+      - [1, 4, 5]
+      - [0, 2, 4]
+      - [1, 3, 4]
+      - [2, 4, 5]
+      - [0, 1, 2, 3, 5]
+      - [0, 3, 4]
+    initial_waypoint: 0
+    intervention_gap_s: [1.50, 4.00]
+    intervention_probabilities:
+      early_retarget: 0.36
+      hesitation_stop: 0.34
+      speed_replan: 0.30
+    hesitation_duration_s: [0.40, 1.10]
+observation:
+  hybrid_dropout_count_range: [4, 7]
+  dropout_duration_s: [0.60, 1.20]
+  minimum_dropout_gap_s: 1.25
+qualification:
+  required_trajectories: 160
+  shuttle_minimum_completed_legs: 3
+  branching_minimum_completed_legs: 4
+  branching_minimum_distinct_waypoints: 3
+  hybrid_minimum_completed_legs: 3
+  hybrid_minimum_interventions: 2
+  numerical_tolerance: 1.0e-8
+scope_guards:
+  predictors_enabled: false
+  imm_enabled: false
+  collision_risk_enabled: false
+  mppi_enabled: false
+  rl_icode_hss_enabled: false
+  sealed_registry_imported: false
+  derived_from_frozen_v3: true
+  physical_limits_unchanged: true
+  predictor_parameters_unchanged: true
+  closed_loop_profile: process_shift
+  sensor_shift_not_claimed: true

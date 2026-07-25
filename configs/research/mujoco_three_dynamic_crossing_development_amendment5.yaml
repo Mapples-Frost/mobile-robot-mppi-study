@@ -1,0 +1,21 @@
+include: mujoco_three_dynamic_crossing_development_amendment4.yaml
+
+experiment:
+  name: mujoco_three_dynamic_crossing_development_amendment5
+
+planner:
+  path_preview_enabled: true
+  path_preview_speed_mps: 0.45
+  path_preview_heading_weight: 0.25
+
+three_obstacle_amendment:
+  version: 5
+  reason: amendment4_failed_preflight_because_boundary_enforcement_requires_finite_horizon_path_preview
+  intervention: enable_shared_route_preview_required_by_boundary_contract
+  obstacle_future_truth_used: false
+  obstacle_process_changed: false
+  tracker_changed: false
+  probability_risk_changed: false
+  rollout_budget_changed: false
+  active_waiting_allowed: true
+  active_traversal_objective: true

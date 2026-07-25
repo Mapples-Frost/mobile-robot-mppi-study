@@ -14,8 +14,11 @@ from mobile_robot_mppi.core.types import (
     RobotObservation,
     Twist2D,
 )
+from mobile_robot_mppi.obstacles.collision_risk import (
+    GaussianMixtureObstacleForecast,
+)
 from mobile_robot_mppi.planning.dynamics import DynamicUnicyclePrediction
-from mobile_robot_mppi.planning.mppi import MppiConfig
+from mobile_robot_mppi.planning.mppi import MppiConfig, MppiController
 from mobile_robot_mppi.planning.rl_driven_mppi import (
     PaperRLDrivenMppiController,
 )
@@ -112,6 +115,18 @@ class JointBatchedDirectPolicy(AuditableDirectPolicy):
             + rng.normal(size=distribution["physical_mean"].shape)
             * distribution["physical_std"]
         )
+
+
+class FixedMeanDirectPolicy(AuditableDirectPolicy):
+    def __init__(self, mean):
+        super().__init__()
+        self.mean = np.asarray(mean, dtype=np.float64)
+
+    def action_distribution(self, *args, **kwargs):
+        result = super().action_distribution(*args, **kwargs)
+        batch = result["physical_mean"].shape[0]
+        result["physical_mean"] = np.tile(self.mean, (batch, 1))
+        return result
 
 
 class ReliabilityDirectPolicy(JointBatchedDirectPolicy):
@@ -223,8 +238,12 @@ def test_paper_optimizer_applies_shared_boundary_candidate_filter(monkeypatch):
         footprint_radius=0.2,
     )
 
+    margin_calls = 0
+
     def synthetic_margins(trajectories, _reference, **kwargs):
+        nonlocal margin_calls
         del kwargs
+        margin_calls += 1
         count = np.asarray(trajectories).shape[0]
         values = np.full((count, controller.config.horizon + 1), 0.1)
         if count > 1:
@@ -246,6 +265,560 @@ def test_paper_optimizer_applies_shared_boundary_candidate_filter(monkeypatch):
     ] == 0.95
     assert not result.diagnostics["path_boundary_no_feasible_candidates"]
     assert result.diagnostics["path_boundary_weighted_update_feasible"]
+    # Two optimizer iterations plus one final weighted sequence. The shared
+    # per-iteration margins serve both soft cost and hard filtering.
+    assert margin_calls == 3
+
+
+def test_paper_optimizer_reuses_candidate_risk_for_cost_and_filter(monkeypatch):
+    policy = AuditableDirectPolicy()
+    controller = PaperRLDrivenMppiController(
+        DynamicUnicyclePrediction(),
+        dynamic_unicycle_state(),
+        body_velocity_action((0.0, 0.5), 1.0),
+        MppiConfig(
+            horizon=5,
+            num_samples=20,
+            dt=0.1,
+            noise_sigma=(0.08, 0.20),
+            probabilistic_obstacle_risk_enabled=True,
+            probabilistic_obstacle_candidate_filter_enabled=True,
+            probabilistic_obstacle_hard_threshold=0.20,
+            probabilistic_obstacle_hard_violation_action="active_avoidance",
+            seed=20260718,
+        ),
+        sampling_prior=policy,
+        paper_rl_driven_config={
+            "iterations": 2,
+            "guided_fraction": 0.25,
+            "elite_fraction": 0.25,
+            "terminal_value_weight": 0.0,
+        },
+    )
+    forecast = GaussianMixtureObstacleForecast(
+        timestamp=0.0,
+        dt=0.1,
+        component_means=np.full((5, 1, 2), 20.0),
+        component_covariances=np.repeat(
+            (0.01 * np.eye(2))[None, None, :, :], 5, axis=0
+        ),
+        component_weights=np.ones((5, 1)),
+        radius_m=0.2,
+        source="synthetic_test",
+    )
+    observation = RobotObservation(
+        timestamp=0.0,
+        pose=Pose2D(0.0, 0.0, 0.0),
+        twist=Twist2D(0.0, 0.0),
+        auxiliary={"probabilistic_obstacle_forecasts": (forecast,)},
+    )
+    original = controller._probabilistic_collision_risk
+    risk_calls = 0
+
+    def counted_risk(*args, **kwargs):
+        nonlocal risk_calls
+        risk_calls += 1
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(
+        controller, "_probabilistic_collision_risk", counted_risk
+    )
+
+    result = controller.plan(observation, PointGoal(1.0, 0.0))
+
+    assert not result.diagnostics["probabilistic_obstacle_hard_violation"]
+    # Two optimizer iterations plus one final weighted sequence. The shared
+    # per-iteration evaluation serves both soft cost and hard filtering.
+    assert risk_calls == 3
+
+
+def test_post_center_commit_keeps_six_direction_emergency_lattice_available(
+    monkeypatch,
+):
+    policy = AuditableDirectPolicy()
+    horizon = 5
+    sample_count = 20
+    controller = PaperRLDrivenMppiController(
+        DynamicUnicyclePrediction(),
+        dynamic_unicycle_state(),
+        body_velocity_action((-0.35, 0.60), 1.0),
+        MppiConfig(
+            horizon=horizon,
+            num_samples=sample_count,
+            dt=0.1,
+            noise_sigma=(0.08, 0.20),
+            probabilistic_obstacle_risk_enabled=True,
+            probabilistic_obstacle_candidate_filter_enabled=True,
+            probabilistic_obstacle_hard_threshold=0.20,
+            probabilistic_obstacle_hard_violation_action="active_avoidance",
+            probabilistic_obstacle_emergency_candidates_enabled=True,
+            probabilistic_obstacle_emergency_candidate_prefix_steps=3,
+            probabilistic_obstacle_traversal_window_post_center_hard_risk_override_enabled=True,
+            seed=20260718,
+        ),
+        sampling_prior=policy,
+        paper_rl_driven_config={
+            "iterations": 2,
+            "guided_fraction": 0.25,
+            "elite_fraction": 0.25,
+            "terminal_value_weight": 0.0,
+        },
+    )
+    forecast = GaussianMixtureObstacleForecast(
+        timestamp=0.0,
+        dt=0.1,
+        component_means=np.full((horizon, 1, 2), 20.0),
+        component_covariances=np.repeat(
+            (0.01 * np.eye(2))[None, None, :, :], horizon, axis=0
+        ),
+        component_weights=np.ones((horizon, 1)),
+        radius_m=0.2,
+        source="synthetic_test",
+    )
+    observation = RobotObservation(
+        timestamp=0.0,
+        pose=Pose2D(0.0, 0.0, 0.0),
+        twist=Twist2D(0.0, 0.0),
+        auxiliary={"probabilistic_obstacle_forecasts": (forecast,)},
+    )
+    traversal_sequence = np.zeros((horizon, 2), dtype=np.float64)
+    traversal_sequence[:, 0] = 0.60
+    monkeypatch.setattr(
+        controller,
+        "_probabilistic_emergency_context",
+        lambda *_args, **_kwargs: {"triggered": False},
+    )
+    monkeypatch.setattr(
+        controller,
+        "_probabilistic_traversal_window_context",
+        lambda *_args, **_kwargs: {
+            "enabled": True,
+            "candidate_requested": True,
+            "commit_active": True,
+            "commit_started": True,
+            "current_progress": 2.30,
+            "crossing_progress": 2.20,
+            "clear_progress": 2.90,
+            "sequence": traversal_sequence.copy(),
+        },
+    )
+    original_guard = controller._apply_probabilistic_obstacle_action_guard
+    observed = {"calls": 0}
+
+    def inspected_guard(*args, **kwargs):
+        samples = np.asarray(args[4])
+        emergency_mask = np.asarray(
+            kwargs["emergency_candidate_mask"], dtype=bool
+        )
+        traversal_index = int(kwargs["traversal_candidate_index"])
+        emergency_actions = samples[emergency_mask, 0, :]
+        observed["calls"] += 1
+        observed["count"] = int(np.sum(emergency_mask))
+        observed["unique_actions"] = int(
+            np.unique(emergency_actions, axis=0).shape[0]
+        )
+        observed["traversal_is_emergency"] = bool(
+            emergency_mask[traversal_index]
+        )
+        return original_guard(*args, **kwargs)
+
+    monkeypatch.setattr(
+        controller,
+        "_apply_probabilistic_obstacle_action_guard",
+        inspected_guard,
+    )
+
+    result = controller.plan(
+        observation,
+        PolylineReference(((0.0, 0.0), (5.0, 0.0))),
+    )
+
+    assert observed == {
+        "calls": 1,
+        "count": 6,
+        "unique_actions": 6,
+        "traversal_is_emergency": False,
+    }
+    assert result.diagnostics[
+        "probabilistic_obstacle_emergency_candidate_count"
+    ] == 6
+
+
+def test_rearm_raw_closing_keeps_six_direction_lattice_after_intent_expiry(
+    monkeypatch,
+):
+    policy = AuditableDirectPolicy()
+    horizon = 5
+    sample_count = 20
+    controller = PaperRLDrivenMppiController(
+        DynamicUnicyclePrediction(),
+        dynamic_unicycle_state(),
+        body_velocity_action((-0.35, 0.60), 1.0),
+        MppiConfig(
+            horizon=horizon,
+            num_samples=sample_count,
+            dt=0.1,
+            noise_sigma=(0.08, 0.20),
+            probabilistic_obstacle_risk_enabled=True,
+            probabilistic_obstacle_candidate_filter_enabled=True,
+            probabilistic_obstacle_hard_threshold=0.20,
+            probabilistic_obstacle_hard_violation_action="active_avoidance",
+            probabilistic_obstacle_emergency_candidates_enabled=True,
+            probabilistic_obstacle_emergency_candidate_prefix_steps=3,
+            probabilistic_obstacle_traversal_window_rearm_hard_risk_temporal_lattice_override_enabled=True,
+            seed=20260718,
+        ),
+        sampling_prior=policy,
+        paper_rl_driven_config={
+            "iterations": 2,
+            "guided_fraction": 0.25,
+            "elite_fraction": 0.25,
+            "terminal_value_weight": 0.0,
+        },
+    )
+    forecast = GaussianMixtureObstacleForecast(
+        timestamp=0.0,
+        dt=0.1,
+        component_means=np.full((horizon, 1, 2), 20.0),
+        component_covariances=np.repeat(
+            (0.01 * np.eye(2))[None, None, :, :], horizon, axis=0
+        ),
+        component_weights=np.ones((horizon, 1)),
+        radius_m=0.2,
+        source="synthetic_test",
+    )
+    observation = RobotObservation(
+        timestamp=0.0,
+        pose=Pose2D(0.0, 0.0, 0.0),
+        twist=Twist2D(0.0, 0.0),
+        auxiliary={"probabilistic_obstacle_forecasts": (forecast,)},
+    )
+    hold_sequence = np.zeros((horizon, 2), dtype=np.float64)
+    monkeypatch.setattr(
+        controller,
+        "_probabilistic_emergency_context",
+        lambda *_args, **_kwargs: {
+            "triggered": False,
+            "raw_triggered": True,
+            "closing_observed": True,
+            "away_heading_error_rad": np.pi,
+            "ttc_s": 0.8,
+        },
+    )
+    monkeypatch.setattr(
+        controller,
+        "_probabilistic_traversal_window_context",
+        lambda *_args, **_kwargs: {
+            "enabled": True,
+            "candidate_requested": True,
+            "commit_active": False,
+            "commit_started": False,
+            "retreat_requested": False,
+            "rearm_pending": True,
+            "sequence": hold_sequence.copy(),
+        },
+    )
+    original_guard = controller._apply_probabilistic_obstacle_action_guard
+    observed = {"calls": 0}
+
+    def inspected_guard(*args, **kwargs):
+        samples = np.asarray(args[4])
+        emergency_mask = np.asarray(
+            kwargs["emergency_candidate_mask"], dtype=bool
+        )
+        traversal_index = int(kwargs["traversal_candidate_index"])
+        emergency_actions = samples[emergency_mask, 0, :]
+        observed["calls"] += 1
+        observed["count"] = int(np.sum(emergency_mask))
+        observed["unique_actions"] = int(
+            np.unique(emergency_actions, axis=0).shape[0]
+        )
+        observed["traversal_is_emergency"] = bool(
+            emergency_mask[traversal_index]
+        )
+        observed["raw_triggered"] = bool(
+            kwargs["traversal_context"][
+                "temporal_emergency_raw_triggered"
+            ]
+        )
+        return original_guard(*args, **kwargs)
+
+    monkeypatch.setattr(
+        controller,
+        "_apply_probabilistic_obstacle_action_guard",
+        inspected_guard,
+    )
+
+    result = controller.plan(
+        observation,
+        PolylineReference(((0.0, 0.0), (5.0, 0.0))),
+    )
+
+    assert observed == {
+        "calls": 1,
+        "count": 6,
+        "unique_actions": 6,
+        "traversal_is_emergency": False,
+        "raw_triggered": True,
+    }
+    assert result.diagnostics[
+        "probabilistic_obstacle_emergency_candidate_count"
+    ] == 6
+
+
+def test_temporal_retreat_raw_closing_keeps_lattice_after_intent_expiry(
+    monkeypatch,
+):
+    policy = AuditableDirectPolicy()
+    horizon = 5
+    sample_count = 20
+    controller = PaperRLDrivenMppiController(
+        DynamicUnicyclePrediction(),
+        dynamic_unicycle_state(),
+        body_velocity_action((-0.35, 0.60), 1.0),
+        MppiConfig(
+            horizon=horizon,
+            num_samples=sample_count,
+            dt=0.1,
+            noise_sigma=(0.08, 0.20),
+            probabilistic_obstacle_risk_enabled=True,
+            probabilistic_obstacle_candidate_filter_enabled=True,
+            probabilistic_obstacle_hard_threshold=0.20,
+            probabilistic_obstacle_hard_violation_action="active_avoidance",
+            probabilistic_obstacle_emergency_candidates_enabled=True,
+            probabilistic_obstacle_emergency_candidate_prefix_steps=3,
+            probabilistic_obstacle_traversal_window_temporal_midpoint_lattice_override_enabled=True,
+            probabilistic_obstacle_traversal_window_temporal_retreat_raw_lattice_binding_enabled=True,
+            probabilistic_obstacle_traversal_window_temporal_midpoint_retreat_reverse_filter_enabled=True,
+            seed=20260718,
+        ),
+        sampling_prior=policy,
+        paper_rl_driven_config={
+            "iterations": 2,
+            "guided_fraction": 0.25,
+            "elite_fraction": 0.25,
+            "terminal_value_weight": 0.0,
+        },
+    )
+    forecast = GaussianMixtureObstacleForecast(
+        timestamp=0.0,
+        dt=0.1,
+        component_means=np.full((horizon, 1, 2), 20.0),
+        component_covariances=np.repeat(
+            (0.01 * np.eye(2))[None, None, :, :], horizon, axis=0
+        ),
+        component_weights=np.ones((horizon, 1)),
+        radius_m=0.2,
+        source="synthetic_test",
+    )
+    observation = RobotObservation(
+        timestamp=0.0,
+        pose=Pose2D(0.0, 0.0, 0.0),
+        twist=Twist2D(0.0, 0.0),
+        auxiliary={"probabilistic_obstacle_forecasts": (forecast,)},
+    )
+    retreat_sequence = np.zeros((horizon, 2), dtype=np.float64)
+    retreat_sequence[:, 0] = -0.35
+    monkeypatch.setattr(
+        controller,
+        "_probabilistic_emergency_context",
+        lambda *_args, **_kwargs: {
+            "triggered": False,
+            "raw_triggered": True,
+            "closing_observed": True,
+            "away_heading_error_rad": 0.0,
+            "ttc_s": 0.8,
+        },
+    )
+    monkeypatch.setattr(
+        controller,
+        "_probabilistic_traversal_window_context",
+        lambda *_args, **_kwargs: {
+            "enabled": True,
+            "candidate_requested": True,
+            "commit_active": False,
+            "commit_started": False,
+            "retreat_requested": True,
+            "retreat_temporal_lattice_requested": True,
+            "rearm_pending": False,
+            "sequence": retreat_sequence.copy(),
+        },
+    )
+    original_guard = controller._apply_probabilistic_obstacle_action_guard
+    observed = {"calls": 0}
+
+    def inspected_guard(*args, **kwargs):
+        samples = np.asarray(args[4])
+        emergency_mask = np.asarray(
+            kwargs["emergency_candidate_mask"], dtype=bool
+        )
+        emergency_actions = samples[emergency_mask, 0, :]
+        observed["calls"] += 1
+        observed["count"] = int(np.sum(emergency_mask))
+        observed["unique_actions"] = int(
+            np.unique(emergency_actions, axis=0).shape[0]
+        )
+        observed["raw_binding"] = bool(
+            kwargs["traversal_context"][
+                "temporal_retreat_raw_lattice_requested"
+            ]
+        )
+        return original_guard(*args, **kwargs)
+
+    monkeypatch.setattr(
+        controller,
+        "_apply_probabilistic_obstacle_action_guard",
+        inspected_guard,
+    )
+
+    result = controller.plan(
+        observation,
+        PolylineReference(((0.0, 0.0), (5.0, 0.0))),
+    )
+
+    assert observed == {
+        "calls": 1,
+        "count": 6,
+        "unique_actions": 6,
+        "raw_binding": True,
+    }
+    assert result.diagnostics[
+        "probabilistic_obstacle_traversal_temporal_retreat_raw_lattice_requested"
+    ]
+    assert result.diagnostics[
+        "probabilistic_obstacle_traversal_temporal_midpoint_retreat_forward_lattice_filtered"
+    ]
+    assert result.control_sequence[0, 0] < 0.0
+
+
+def test_exit_deadline_retreat_keeps_latched_lattice_after_intent_expiry(
+    monkeypatch,
+):
+    policy = AuditableDirectPolicy()
+    horizon = 5
+    sample_count = 20
+    controller = PaperRLDrivenMppiController(
+        DynamicUnicyclePrediction(),
+        dynamic_unicycle_state(),
+        body_velocity_action((-0.35, 0.60), 1.0),
+        MppiConfig(
+            horizon=horizon,
+            num_samples=sample_count,
+            dt=0.1,
+            noise_sigma=(0.08, 0.20),
+            probabilistic_obstacle_risk_enabled=True,
+            probabilistic_obstacle_candidate_filter_enabled=True,
+            probabilistic_obstacle_hard_threshold=0.20,
+            probabilistic_obstacle_hard_violation_action="active_avoidance",
+            probabilistic_obstacle_emergency_candidates_enabled=True,
+            probabilistic_obstacle_emergency_candidate_prefix_steps=3,
+            probabilistic_obstacle_emergency_candidate_pareto_forward_commit_enabled=True,
+            probabilistic_obstacle_traversal_window_temporal_midpoint_lattice_override_enabled=True,
+            probabilistic_obstacle_traversal_window_temporal_exit_deadline_escape_latch_enabled=True,
+            probabilistic_obstacle_traversal_window_temporal_retreat_raw_lattice_binding_enabled=True,
+            probabilistic_obstacle_traversal_window_temporal_retreat_post_intent_all_hard_forward_filter_enabled=True,
+            seed=20260718,
+        ),
+        sampling_prior=policy,
+        paper_rl_driven_config={
+            "iterations": 2,
+            "guided_fraction": 0.25,
+            "elite_fraction": 0.25,
+            "terminal_value_weight": 0.0,
+        },
+    )
+    controller._start_probabilistic_traversal_exit_deadline_retreat_escape()
+    state = np.zeros(controller.state_spec.dimension, dtype=np.float64)
+    assert controller._latch_probabilistic_traversal_exit_deadline_retreat_escape(
+        (-0.35, 0.90), state
+    )
+    controller._probabilistic_emergency_intent_remaining = 0
+    controller._probabilistic_emergency_latched_pattern = None
+    forecast = GaussianMixtureObstacleForecast(
+        timestamp=0.0,
+        dt=0.1,
+        component_means=np.full((horizon, 1, 2), 20.0),
+        component_covariances=np.repeat(
+            (0.01 * np.eye(2))[None, None, :, :], horizon, axis=0
+        ),
+        component_weights=np.ones((horizon, 1)),
+        radius_m=0.2,
+        source="synthetic_test",
+    )
+    observation = RobotObservation(
+        timestamp=0.0,
+        pose=Pose2D(0.0, 0.0, 0.0),
+        twist=Twist2D(0.0, 0.0),
+        auxiliary={"probabilistic_obstacle_forecasts": (forecast,)},
+    )
+    traversal_sequence = np.zeros((horizon, 2), dtype=np.float64)
+    traversal_sequence[:, 0] = -0.35
+    monkeypatch.setattr(
+        controller,
+        "_probabilistic_emergency_context",
+        lambda *_args, **_kwargs: {
+            "triggered": False,
+            "raw_triggered": True,
+        },
+    )
+    monkeypatch.setattr(
+        controller,
+        "_probabilistic_traversal_window_context",
+        lambda *_args, **_kwargs: {
+            "enabled": True,
+            "candidate_requested": True,
+            "commit_active": False,
+            "commit_started": False,
+            "retreat_requested": True,
+            "retreat_temporal_lattice_requested": True,
+            "rearm_pending": False,
+            "sequence": traversal_sequence.copy(),
+        },
+    )
+    original_guard = controller._apply_probabilistic_obstacle_action_guard
+    observed = {"calls": 0}
+
+    def inspected_guard(*args, **kwargs):
+        samples = np.asarray(args[4])
+        emergency_mask = np.asarray(
+            kwargs["emergency_candidate_mask"], dtype=bool
+        )
+        emergency_actions = samples[emergency_mask, 0, :]
+        observed["calls"] += 1
+        observed["count"] = int(np.sum(emergency_mask))
+        observed["unique_actions"] = int(
+            np.unique(emergency_actions, axis=0).shape[0]
+        )
+        observed["first_v"] = float(emergency_actions[0, 0])
+        return original_guard(*args, **kwargs)
+
+    monkeypatch.setattr(
+        controller,
+        "_apply_probabilistic_obstacle_action_guard",
+        inspected_guard,
+    )
+
+    result = controller.plan(
+        observation,
+        PolylineReference(((0.0, 0.0), (5.0, 0.0))),
+    )
+
+    assert observed == {
+        "calls": 1,
+        "count": 6,
+        "unique_actions": 6,
+        "first_v": -0.35,
+    }
+    assert result.control_sequence[0, 0] < 0.0
+    assert result.diagnostics[
+        "probabilistic_obstacle_traversal_exit_deadline_retreat_escape_transaction_active"
+    ]
+    assert result.diagnostics[
+        "probabilistic_obstacle_traversal_exit_deadline_retreat_escape_reused"
+    ]
+    assert result.diagnostics["probabilistic_obstacle_active_fallback_kind"] == (
+        "exit_deadline_retreat_emergency_candidate"
+    )
 
 
 def _reliable_controller(
@@ -430,6 +1003,41 @@ def test_paper_terminal_heading_gate_preserves_rotate_in_place():
     assert result.diagnostics["terminal_alignment_omega"] < 0.0
 
 
+def test_paper_reports_target_bearing_without_terminal_heading_gate():
+    policy = JointBatchedDirectPolicy()
+    controller = PaperRLDrivenMppiController(
+        DynamicUnicyclePrediction(),
+        dynamic_unicycle_state(),
+        body_velocity_action((0.0, 0.5), 1.0),
+        MppiConfig(
+            horizon=5,
+            num_samples=20,
+            dt=0.1,
+            noise_sigma=(0.08, 0.20),
+            seed=20260719,
+        ),
+        sampling_prior=policy,
+        paper_rl_driven_config={
+            "iterations": 2,
+            "guided_fraction": 0.25,
+            "elite_fraction": 0.25,
+            "terminal_value_weight": 0.0,
+        },
+    )
+    misaligned = RobotObservation(
+        timestamp=0.0,
+        pose=Pose2D(0.0, 0.0, np.pi / 2.0),
+        twist=Twist2D(0.2, 0.0),
+    )
+
+    result = controller.plan(misaligned, PointGoal(2.0, 0.0))
+
+    np.testing.assert_allclose(
+        result.diagnostics["target_bearing_error"], -np.pi / 2.0
+    )
+    assert not result.diagnostics["terminal_heading_gate_active"]
+
+
 def test_paper_terminal_control_radius_preserves_actor_far_from_goal():
     policy = JointBatchedDirectPolicy()
     controller = PaperRLDrivenMppiController(
@@ -518,6 +1126,248 @@ def test_reliability_hss_applies_authority_on_next_control_cycle():
     assert suppressed.diagnostics["reliability_guided_fraction_applied"] == 0.0
     assert suppressed.diagnostics["reliability_proposal_authority"] == 0.0
     assert suppressed.diagnostics["reliability_proposal_fallback_fraction"] == 1.0
+
+
+def _proposal_advantage_controller(
+    mode="episode_latched_veto",
+    standard_fallback=False,
+):
+    base = _reliable_controller(ReliabilityDirectPolicy(0.0))
+    config = dict(base.paper_rl_driven_config.__dict__)
+    config["proposal_advantage_gate"] = {
+        "enabled": True,
+        "mode": mode,
+        "relative_disadvantage_margin": 0.0,
+        "consecutive_disadvantages": 3,
+    }
+    config["standard_fallback_on_advantage_veto"] = bool(
+        standard_fallback
+    )
+    return PaperRLDrivenMppiController(
+        base.dynamics,
+        base.state_spec,
+        base.action_spec,
+        base.config,
+        sampling_prior=ReliabilityDirectPolicy(0.0),
+        paper_rl_driven_config=config,
+    )
+
+
+def test_proposal_advantage_veto_removes_guided_share_centre_and_variance():
+    controller = _proposal_advantage_controller()
+    for _ in range(3):
+        controller.proposal_advantage_gate.update(
+            110.0, 100.0, observed=True
+        )
+
+    result = controller.plan(_observation(), PointGoal(1.0, 0.0))
+    diagnostics = result.diagnostics
+
+    assert diagnostics["paper_guided_unique_sequences"] == 0
+    assert diagnostics["paper_gaussian_samples_per_iteration"] == 20
+    assert diagnostics["reliability_guided_fraction_applied"] == 0.0
+    assert diagnostics["reliability_guided_fraction_next"] == 0.0
+    assert diagnostics["reliability_proposal_authority"] == 0.0
+    assert diagnostics["reliability_proposal_fallback_fraction"] == 1.0
+    assert diagnostics[
+        "reliability_proposal_advantage_authority_applied"
+    ] == 0.0
+    assert diagnostics["reliability_proposal_advantage_latched"]
+
+    controller.reset(seed=20260718)
+    reset = controller.plan(_observation(), PointGoal(1.0, 0.0))
+    assert reset.diagnostics["paper_guided_unique_sequences"] > 0
+    assert reset.diagnostics[
+        "reliability_proposal_advantage_authority_applied"
+    ] == 1.0
+
+
+def test_proposal_advantage_shadow_never_changes_actor_authority():
+    controller = _proposal_advantage_controller(mode="shadow")
+    for _ in range(3):
+        controller.proposal_advantage_gate.update(
+            110.0, 100.0, observed=True
+        )
+
+    result = controller.plan(_observation(), PointGoal(1.0, 0.0))
+    diagnostics = result.diagnostics
+
+    assert diagnostics["paper_guided_unique_sequences"] > 0
+    assert diagnostics["reliability_proposal_authority"] > 0.0
+    assert diagnostics["reliability_proposal_advantage_gate_shadow"]
+    assert diagnostics[
+        "reliability_proposal_advantage_would_authority_next"
+    ] == 0.0
+    assert diagnostics[
+        "reliability_proposal_advantage_authority_applied"
+    ] == 1.0
+
+
+def test_same_cycle_cost_filter_excludes_disadvantaged_guided_elites(
+    monkeypatch,
+):
+    controller = _controller(AuditableDirectPolicy())
+    config = dict(controller.paper_rl_driven_config.__dict__)
+    config["same_cycle_guided_cost_filter"] = True
+    controller = PaperRLDrivenMppiController(
+        controller.dynamics,
+        controller.state_spec,
+        controller.action_spec,
+        controller.config,
+        sampling_prior=AuditableDirectPolicy(),
+        paper_rl_driven_config=config,
+    )
+
+    def synthetic_cost(trajectories, controls, *args, **kwargs):
+        del trajectories, args, kwargs
+        costs = np.zeros(len(controls), dtype=np.float64)
+        costs[:5] = 100.0
+        return costs
+
+    monkeypatch.setattr(controller, "_cost", synthetic_cost)
+    result = controller.plan(_observation(), PointGoal(1.0, 0.0))
+
+    assert result.diagnostics[
+        "paper_same_cycle_guided_cost_filter_iterations"
+    ] == 3
+    assert result.diagnostics[
+        "paper_same_cycle_guided_filtered_candidates"
+    ] == 15
+    assert result.diagnostics["paper_guided_elite_count"] == 0
+
+
+def test_same_cycle_filter_keeps_gaussian_control_actor_independent(
+    monkeypatch,
+):
+    def make_controller(mean):
+        base = _controller(FixedMeanDirectPolicy(mean))
+        config = dict(base.paper_rl_driven_config.__dict__)
+        config["same_cycle_guided_cost_filter"] = True
+        return PaperRLDrivenMppiController(
+            base.dynamics,
+            base.state_spec,
+            base.action_spec,
+            base.config,
+            sampling_prior=FixedMeanDirectPolicy(mean),
+            paper_rl_driven_config=config,
+        )
+
+    def synthetic_cost(trajectories, controls, *args, **kwargs):
+        del trajectories, args, kwargs
+        costs = np.sum(np.asarray(controls) ** 2, axis=(1, 2))
+        costs[:5] += 1000.0
+        return costs
+
+    left = make_controller((0.05, -0.80))
+    right = make_controller((0.45, 0.80))
+    monkeypatch.setattr(left, "_cost", synthetic_cost)
+    monkeypatch.setattr(right, "_cost", synthetic_cost)
+
+    left_result = left.plan(_observation(), PointGoal(1.0, 0.0))
+    right_result = right.plan(_observation(), PointGoal(1.0, 0.0))
+
+    np.testing.assert_allclose(
+        left_result.control_sequence,
+        right_result.control_sequence,
+        rtol=0.0,
+        atol=1.0e-12,
+    )
+    for result in (left_result, right_result):
+        assert result.diagnostics["paper_guided_elite_count"] == 0
+        assert result.diagnostics[
+            "paper_same_cycle_gaussian_actor_isolated"
+        ]
+        assert result.diagnostics["reliability_proposal_authority"] == 0.0
+        assert result.diagnostics[
+            "reliability_requested_proposal_authority"
+        ] > 0.0
+
+
+def test_proposal_advantage_veto_can_fall_back_to_exact_standard_mppi():
+    policy = ReliabilityDirectPolicy(0.0)
+    paper = _proposal_advantage_controller(standard_fallback=True)
+    paper.sampling_prior = policy
+    standard = MppiController(
+        paper.dynamics,
+        paper.state_spec,
+        paper.action_spec,
+        MppiConfig(
+            horizon=paper.config.horizon,
+            num_samples=(
+                paper.config.num_samples
+                * paper.paper_rl_driven_config.iterations
+            ),
+            dt=paper.config.dt,
+            noise_sigma=paper.config.noise_sigma,
+            importance_sampling_correction=True,
+            seed=paper.config.seed,
+        ),
+        sampling_prior=GoalWarmStartPrior(),
+    )
+    paper.reset(seed=20260718)
+    standard.reset(seed=20260718)
+    for _ in range(3):
+        paper.proposal_advantage_gate.update(
+            110.0, 100.0, observed=True
+        )
+
+    for timestamp in (0.0, 0.1):
+        observation = RobotObservation(
+            timestamp=timestamp,
+            pose=Pose2D(0.0, 0.0, 0.0),
+            twist=Twist2D(0.0, 0.0),
+        )
+        paper_result = paper.plan(observation, PointGoal(1.0, 0.0))
+        standard_result = standard.plan(observation, PointGoal(1.0, 0.0))
+
+        np.testing.assert_array_equal(
+            paper_result.proposed_control.values,
+            standard_result.proposed_control.values,
+        )
+        np.testing.assert_array_equal(
+            paper_result.control_sequence,
+            standard_result.control_sequence,
+        )
+        np.testing.assert_array_equal(
+            paper_result.predicted_trajectory,
+            standard_result.predicted_trajectory,
+        )
+        assert paper_result.diagnostics["paper_standard_fallback_active"]
+        assert paper_result.diagnostics["paper_total_rollouts"] == (
+            paper.config.num_samples
+            * paper.paper_rl_driven_config.iterations
+        )
+        assert paper_result.diagnostics[
+            "reliability_proposal_advantage_authority_applied"
+        ] == 0.0
+
+    assert policy.distribution_calls == 0
+    assert policy.sample_calls == 0
+    assert policy.terminal_calls == 0
+
+
+def test_standard_advantage_fallback_requires_active_veto():
+    base = _reliable_controller(ReliabilityDirectPolicy(0.0))
+    config = dict(base.paper_rl_driven_config.__dict__)
+    config["standard_fallback_on_advantage_veto"] = True
+    config["proposal_advantage_gate"] = {
+        "enabled": True,
+        "mode": "shadow",
+        "consecutive_disadvantages": 3,
+    }
+
+    with np.testing.assert_raises_regex(
+        ValueError,
+        "standard fallback requires an active episode-latched",
+    ):
+        PaperRLDrivenMppiController(
+            base.dynamics,
+            base.state_spec,
+            base.action_spec,
+            base.config,
+            sampling_prior=ReliabilityDirectPolicy(0.0),
+            paper_rl_driven_config=config,
+        )
 
 
 def test_terminal_guidance_floor_preserves_completion_candidate_share():

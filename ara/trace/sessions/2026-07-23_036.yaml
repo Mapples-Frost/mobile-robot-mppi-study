@@ -1,0 +1,85 @@
+session:
+  id: "2026-07-23_036"
+  timestamp: "2026-07-23T20:12:00+08:00"
+  summary: "Implemented and rejected causal stall, innovation-reliability and structure-preserving residual remediations; retained predictive value but froze direct residual dynamics before the RL-prior stage."
+
+events_logged:
+  - type: dead_end
+    id: N149
+    provenance: ai-executed
+    summary: "A causal stall latch activated 53 steps before collision but could not undo the already accumulated lateral displacement."
+  - type: dead_end
+    id: N150
+    provenance: ai-executed
+    summary: "Cold-start innovation authority became nondegenerate but the first residual block still collided."
+  - type: dead_end
+    id: N151
+    provenance: ai-executed
+    summary: "The structure-preserving v/omega-only residual still collided, while retaining 15.83%--16.62% saved-trajectory H36 prediction improvements."
+  - type: pivot
+    id: N152
+    provenance: ai-suggested
+    summary: "Freeze direct L57 dynamics integration and test the RL sampling prior against nominal probabilistic MPPI before any 2x2 composition."
+  - type: claim
+    id: C104
+    provenance: ai-suggested
+    summary: "Post-stall residual shutdown as a sufficient safety repair was refuted."
+  - type: claim
+    id: C105
+    provenance: ai-suggested
+    summary: "Causal innovation routing as a sufficient direct-residual safety repair was refuted."
+  - type: claim
+    id: C106
+    provenance: ai-suggested
+    summary: "Structure-preserving residuals remain predictively useful but unsafe as direct crossing-task dynamics."
+  - type: heuristic
+    id: H79
+    provenance: ai-suggested
+    summary: "Residual stall guards must use completed signals and remain preview-side-effect free."
+  - type: heuristic
+    id: H80
+    provenance: ai-suggested
+    summary: "Preserve analytic kinematics but do not treat the mask as a safety certificate."
+  - type: heuristic
+    id: H81
+    provenance: ai-suggested
+    summary: "Separate residual predictive utility from direct closed-loop authority."
+
+ai_actions:
+  - action: "Implemented a causal low-risk stall latch, runtime factory wiring, trajectory diagnostics and regression tests."
+    provenance: ai-executed
+    files_changed:
+      - "src/mobile_robot_mppi/learning/models.py"
+      - "src/mobile_robot_mppi/planning/mppi.py"
+      - "src/mobile_robot_mppi/runtime/factories.py"
+      - "src/mobile_robot_mppi/evaluation/metrics.py"
+  - action: "Extended the Stage 1 runner for registered stall, innovation-reliability and structure-preserving protocols with early-stop and authority gates."
+    provenance: ai-executed
+    files_changed:
+      - "experiments/dynamic_uncertainty/run_residual_dynamics_stage1.py"
+      - "tests/dynamic_uncertainty/test_residual_dynamics_stage1.py"
+  - action: "Ran Amendments 2--4 on development seed 730100003; each stopped on its first residual collision without opening sealed seeds."
+    provenance: ai-executed
+    files_changed: []
+  - action: "Ran 149 relevant tests and whitespace validation."
+    provenance: ai-executed
+    files_changed: []
+
+claims_touched:
+  - id: C104
+    action: created
+    provenance: ai-suggested
+  - id: C105
+    action: created
+    provenance: ai-suggested
+  - id: C106
+    action: created
+    provenance: ai-suggested
+
+open_threads:
+  - "Await user confirmation before making the proposed pivot to an RL sampling-prior stage."
+  - "Do not open residual sealed seeds or enable direct L57 dynamics in the Amendment 17 mainline."
+  - "Treat residual inference latency as a separate optimization problem only if direct residual integration is revisited."
+
+ai_suggestions_pending:
+  - "Use frozen nominal probabilistic MPPI as the baseline, connect RL only through the sampling prior, and later run a preregistered nominal/residual x no-RL/RL factorial if a safer residual interface qualifies."

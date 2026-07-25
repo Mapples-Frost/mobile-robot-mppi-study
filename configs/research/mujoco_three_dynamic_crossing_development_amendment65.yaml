@@ -1,0 +1,81 @@
+include: mujoco_three_dynamic_crossing_development_amendment64.yaml
+
+experiment:
+  name: mujoco_three_dynamic_crossing_development_amendment65
+
+scene:
+  name: three_independent_dynamic_crossings_feasible_windows
+  obstacles:
+    - type: cylinder
+      position: [-2.4, -3.2]
+      radius: 0.25
+      height: 0.5
+      motion:
+        type: linear_ping_pong
+        start: [-2.4, -3.2]
+        end: [-2.4, -0.2]
+        period_s: 12.0
+        phase_s: 2.0
+        phase_jitter_s: 0.35
+        period_scale_range: [0.92, 1.08]
+        endpoint_jitter_m: 0.08
+    - type: cylinder
+      position: [0.0, -0.2]
+      radius: 0.25
+      height: 0.5
+      motion:
+        type: linear_ping_pong
+        start: [0.0, -0.2]
+        end: [0.0, -3.4]
+        period_s: 13.0
+        phase_s: 1.5
+        phase_jitter_s: 0.40
+        period_scale_range: [0.90, 1.10]
+        endpoint_jitter_m: 0.08
+    - type: cylinder
+      position: [2.4, -3.3]
+      radius: 0.25
+      height: 0.5
+      motion:
+        type: linear_ping_pong
+        start: [2.4, -3.3]
+        end: [2.4, -0.1]
+        period_s: 14.0
+        phase_s: 3.0
+        phase_jitter_s: 0.45
+        period_scale_range: [0.90, 1.10]
+        endpoint_jitter_m: 0.08
+
+three_obstacle_amendment:
+  version: 65
+  reason: >-
+    the_original_7s_first_obstacle_period_provided_only_a_1p87s_nominal_and_approximately_1p72s_worst_randomized_free_gap_for_a_1p4m_certified_crossing_region_that_requires_at_least_2p33s_at_the_0p6mps_control_limit_before_actuator_settling;_therefore_strict_safe_completion_was_physically_infeasible
+  intervention: >-
+    change_only_the_three_true_plant_ping_pong_periods_to_12s_13s_and_14s_so_every_obstacle_retains_a_pre_route_conflict_and_seeded_phase_period_endpoint_uncertainty_while_the_worst_supported_randomization_still_leaves_at_least_the_ideal_1p4m_traversal_time_plus_a_0p35s_actuator_margin
+  obstacle_future_truth_used: false
+  obstacle_identity_used: false
+  crossing_geometry_source: online_forecast_plus_polyline_reference
+  scene_parameter_changed: true
+  obstacle_periods_changed: true
+  obstacle_phase_randomization_changed: false
+  obstacle_period_randomization_changed: false
+  obstacle_endpoint_randomization_changed: false
+  obstacle_route_overlap_preserved: true
+  controller_behavior_changed: false
+  candidate_values_changed: false
+  certificate_threshold_changed: false
+  hard_risk_threshold_changed: false
+  control_horizon_changed: false
+  control_limit_changed: false
+  checkpoint_changed: false
+  rollout_budget_changed: false
+  total_rollouts_per_decision: 600
+  development_only: true
+
+three_obstacle_feasibility_contract:
+  certified_crossing_width_m: 1.4
+  maximum_robot_speed_mps: 0.6
+  actuator_margin_s: 0.35
+  minimum_required_free_gap_s: 2.683333333333333
+  worst_case_endpoint_span_reduction_m: 0.16
+  applies_before_outcome_review: true

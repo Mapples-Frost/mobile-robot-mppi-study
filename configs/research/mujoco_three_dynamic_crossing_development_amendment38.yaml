@@ -1,0 +1,29 @@
+include: mujoco_three_dynamic_crossing_development_amendment37.yaml
+
+experiment:
+  name: mujoco_three_dynamic_crossing_development_amendment38
+
+planner:
+  probabilistic_obstacle_traversal_window_temporal_abort_nearest_exit_enabled: true
+
+three_obstacle_amendment:
+  version: 38
+  reason: >-
+    amendment37_rejected_four_unsafe_full_horizon_admissions_but_its_final_certified_commit_was_temporally_cancelled_only_0p0048m_before_the_crossing_center_while_the_short_clearance_certificate_remained_safe_at_0p000017_0p000021;_reverse_retreat_then_required_0p845m_to_the_staging_exit_versus_0p705m_forward_to_the_clear_exit_and_was_hit_while_backing_through_the_crossing
+  intervention: when_a_started_pre_center_commit_receives_a_corroborated_temporal_abort_but_its_short_clearance_certificate_remains_safe_preserve_forward_traversal_only_if_the_online_polyline_distance_to_the_forward_clear_exit_is_no_greater_than_the_distance_to_the_reverse_staging_exit
+  obstacle_future_truth_used: false
+  obstacle_identity_used: false
+  crossing_geometry_source: online_forecast_plus_polyline_reference
+  behavior_parameter_changed: true
+  candidate_values_changed: false
+  certificate_threshold_changed: false
+  commit_admission_contract_changed: false
+  temporal_abort_direction_contract_changed: true
+  control_horizon_changed: false
+  control_limit_changed: false
+  deterministic_computation_reused: true
+  diagnostic_profiling_changed: false
+  rollout_budget_changed: false
+  total_rollouts_per_decision: 600
+  active_waiting_allowed: true
+  active_traversal_objective: true

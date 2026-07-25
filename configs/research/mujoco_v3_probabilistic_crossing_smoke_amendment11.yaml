@@ -1,0 +1,33 @@
+include: mujoco_v3_probabilistic_crossing_smoke_amendment10.yaml
+
+experiment:
+  name: mujoco_v3_probabilistic_crossing_smoke_amendment11
+
+action_space:
+  lower: [-0.20, -0.90]
+
+perception:
+  scan_guard:
+    dynamic_escape_reverse_speed: 0.20
+
+online_smoke:
+  output_dir: research_artifacts/mujoco_v3_probabilistic_crossing_smoke_amendment11
+
+design_amendment:
+  version: 11
+  reason: amendment10_seed730100003_required_an_escape_direction_in_the_robot_rear_half_plane
+  intervention:
+    name: bidirectional_differential_drive_escape
+    forward_rule: use_forward_motion_when_the_away_heading_is_in_the_front_half_plane
+    reverse_rule: use_bounded_reverse_motion_when_the_away_heading_is_in_the_rear_half_plane
+    reverse_speed_mps: 0.20
+    simulator_truth_used: false
+  obstacle_generator_changed: false
+  predictor_changed: false
+  risk_definition_changed: false
+  hard_probability_threshold_changed: false
+  residual_model_changed: false
+  localization_changed: false
+  seeds_changed: false
+  route_changed: false
+  gate_changed: false

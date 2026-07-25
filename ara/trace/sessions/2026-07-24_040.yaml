@@ -1,0 +1,52 @@
+session:
+  id: "2026-07-24_040"
+  timestamp: "2026-07-24T11:43:50+08:00"
+  summary: "Preregistered and preflighted frozen L217 Actor/HSS Stage 4 integration while preserving Stage 3 budgets, shield semantics and sealed-seed boundaries."
+
+events_logged:
+  - type: decision
+    id: N166
+    provenance: user
+    summary: "Enter the frozen RL/HSS integration stage after Stage 3 runtime qualification."
+  - type: dead_end
+    id: N167
+    provenance: ai-executed
+    summary: "Strict action-bound equality correctly rejected direct loading of the forward-only L217 Actor into the reverse-capable Stage 3 controller."
+  - type: experiment
+    id: N168
+    provenance: ai-executed
+    summary: "Stage 4 schedule, preflight, real-checkpoint construction and focused/regression tests passed without starting an episode."
+  - type: claim
+    id: C116
+    provenance: ai-suggested
+    summary: "The Stage 4 treatment interface preserves frozen budget, safety and controller-isolation contracts at preflight."
+  - type: heuristic
+    id: H91
+    provenance: ai-suggested
+    summary: "Represent the frozen Actor bounds as a validated proposal subspace and clone mutable state inside matched shield controllers."
+
+ai_actions:
+  - action: "Implemented explicit residual-evidence updates and a frozen value-aligned HSS sidecar for nominal and residual prediction."
+    provenance: ai-executed
+    files_changed: ["src/mobile_robot_mppi/planning/mppi.py", "src/mobile_robot_mppi/planning/rl_driven_mppi.py", "src/mobile_robot_mppi/runtime/factories.py"]
+  - action: "Implemented the explicit frozen Actor action-subspace adapter with strict default rejection."
+    provenance: ai-executed
+    files_changed: ["src/mobile_robot_mppi/rl/paper_policy.py"]
+  - action: "Created the Stage 4 preregistration, protocol, resumable preflight runner and focused tests."
+    provenance: ai-executed
+    files_changed: ["configs/research/dynamic_uncertainty_rl_hss_stage4_preregistered.yaml", "docs/experiments/dynamic_uncertainty/RL_HSS_STAGE4_PREREGISTRATION.md", "experiments/dynamic_uncertainty/run_rl_hss_stage4.py", "tests/dynamic_uncertainty/test_rl_hss_stage4.py"]
+  - action: "Ran focused, relevant-regression and broad repository validation and constructed the real frozen checkpoint components without executing an episode."
+    provenance: ai-executed
+    files_changed: []
+
+claims_touched:
+  - id: C116
+    action: created
+    provenance: ai-suggested
+
+open_threads:
+  - "Run the preregistered 24-episode Stage 4 development matrix with the explicit --execute flag and analyze episode-level paired outcomes."
+  - "Keep sealed seeds unopened until a separately frozen development gate authorizes confirmation."
+
+ai_suggestions_pending:
+  - "Review the Stage 4 preregistration and then launch only the development matrix; do not change frozen hashes or select residual blocks using its outcomes."

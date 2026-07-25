@@ -1,0 +1,30 @@
+include: mujoco_v3_probabilistic_crossing_smoke_amendment2.yaml
+
+experiment:
+  name: mujoco_v3_probabilistic_crossing_smoke_amendment3
+  seed: 730100001
+  initial_state: [-4.60, -1.80, 0.00, 0.00, 0.00]
+
+task:
+  position: [4.20, -1.80]
+
+online_smoke:
+  development_seeds: [730100001, 730100003, 730100005]
+  output_dir: research_artifacts/mujoco_v3_probabilistic_crossing_smoke_amendment3
+
+design_amendment:
+  version: 3
+  reason: original_seeds_were_in_development_range_but_not_registered_smoke_subset
+  audit_horizon_s: 40.0
+  registered_smoke_seed_pool:
+    [730100001, 730100002, 730100003, 730100004, 730100005]
+  selected_seeds: [730100001, 730100003, 730100005]
+  amended_route:
+    start: [-4.60, -1.80]
+    goal: [4.20, -1.80]
+    crossing_counts_by_seed: [5, 3, 4]
+  obstacle_generator_changed: false
+  predictor_changed: false
+  risk_definition_changed: false
+  gate_changed: false
+

@@ -315,6 +315,170 @@ class SourceRelativeCompetence:
         }
 
 
+@dataclass(frozen=True)
+class ProposalAdvantageGateConfig:
+    """Causal cost-comparison veto for Actor-guided MPPI proposals.
+
+    The comparison uses only candidates already evaluated by the current
+    planner decision.  ``episode_latched_veto`` removes Actor authority after
+    a configured run of disadvantages and keeps it removed until reset.  The
+    ``shadow`` mode records the same counterfactual decision without changing
+    control, so its diagnostic value is not confused with an intervention.
+    """
+
+    enabled: bool = False
+    mode: str = "episode_latched_veto"
+    relative_disadvantage_margin: float = 0.0
+    consecutive_disadvantages: int = 3
+
+    @classmethod
+    def from_mapping(cls, values: Mapping[str, Any]):
+        values = dict(values or {})
+        result = cls(**{
+            name: values.get(name, field.default)
+            for name, field in cls.__dataclass_fields__.items()
+        })
+        result.validate()
+        return result
+
+    def validate(self):
+        if self.mode not in ("episode_latched_veto", "shadow"):
+            raise ValueError(
+                "proposal advantage gate mode must be "
+                "episode_latched_veto or shadow"
+            )
+        if (
+            not np.isfinite(self.relative_disadvantage_margin)
+            or float(self.relative_disadvantage_margin) < 0.0
+        ):
+            raise ValueError(
+                "proposal relative disadvantage margin must be finite and "
+                "non-negative"
+            )
+        if int(self.consecutive_disadvantages) < 1:
+            raise ValueError(
+                "proposal advantage gate patience must be positive"
+            )
+
+
+class ProposalAdvantageGate:
+    """Episode-latched Actor veto from guided-versus-Gaussian cost evidence."""
+
+    def __init__(self, config=None):
+        self.config = (
+            config
+            if isinstance(config, ProposalAdvantageGateConfig)
+            else ProposalAdvantageGateConfig.from_mapping(config or {})
+        )
+        self.reset()
+
+    def reset(self):
+        self.latched = False
+        self.consecutive_disadvantages = 0
+        self.observations = 0
+        self.relative_actor_advantage = 0.0
+
+    @property
+    def would_authority(self):
+        if not self.config.enabled:
+            return 1.0
+        return 0.0 if self.latched else 1.0
+
+    @property
+    def authority(self):
+        if not self.config.enabled or self.config.mode == "shadow":
+            return 1.0
+        return self.would_authority
+
+    def update(
+        self,
+        guided_cost_min,
+        gaussian_cost_min,
+        *,
+        observed,
+        authority_applied=None,
+    ):
+        authority_applied = (
+            self.authority
+            if authority_applied is None
+            else float(authority_applied)
+        )
+        if (
+            not np.isfinite(authority_applied)
+            or not 0.0 <= authority_applied <= 1.0
+        ):
+            raise ValueError(
+                "applied proposal advantage authority must lie in [0,1]"
+            )
+        updated = False
+        disadvantage = False
+        if self.config.enabled and bool(observed):
+            costs = np.asarray(
+                (guided_cost_min, gaussian_cost_min), dtype=np.float64
+            )
+            if not np.isfinite(costs).all():
+                raise ValueError(
+                    "proposal advantage costs must be finite when observed"
+                )
+            scale = max(abs(float(gaussian_cost_min)), 1.0)
+            self.relative_actor_advantage = float(
+                (float(gaussian_cost_min) - float(guided_cost_min)) / scale
+            )
+            disadvantage = bool(
+                self.relative_actor_advantage
+                < -float(self.config.relative_disadvantage_margin)
+            )
+            self.consecutive_disadvantages = (
+                self.consecutive_disadvantages + 1 if disadvantage else 0
+            )
+            self.observations += 1
+            updated = True
+            if (
+                self.consecutive_disadvantages
+                >= int(self.config.consecutive_disadvantages)
+            ):
+                self.latched = True
+        return {
+            "reliability_proposal_advantage_gate_enabled": bool(
+                self.config.enabled
+            ),
+            "reliability_proposal_advantage_gate_mode": str(
+                self.config.mode
+            ),
+            "reliability_proposal_advantage_gate_shadow": bool(
+                self.config.enabled and self.config.mode == "shadow"
+            ),
+            "reliability_proposal_advantage_updated": updated,
+            "reliability_proposal_advantage_disadvantage": disadvantage,
+            "reliability_proposal_advantage_relative": float(
+                self.relative_actor_advantage
+            ),
+            "reliability_proposal_advantage_observations": int(
+                self.observations
+            ),
+            "reliability_proposal_advantage_consecutive_disadvantages": int(
+                self.consecutive_disadvantages
+            ),
+            "reliability_proposal_advantage_latched": bool(self.latched),
+            "reliability_proposal_advantage_authority_applied": float(
+                authority_applied
+            ),
+            "reliability_proposal_advantage_authority_next": float(
+                self.authority
+            ),
+            "reliability_proposal_advantage_would_authority_next": float(
+                self.would_authority
+            ),
+            "reliability_proposal_advantage_relative_disadvantage_margin": (
+                float(self.config.relative_disadvantage_margin)
+            ),
+            "reliability_proposal_advantage_patience": int(
+                self.config.consecutive_disadvantages
+            ),
+            "reliability_proposal_advantage_causal_lag_steps": 1,
+        }
+
+
 class HybridSamplingReliability:
     """Evaluate one Actor mean rollout and assign discrete sampling authority."""
 

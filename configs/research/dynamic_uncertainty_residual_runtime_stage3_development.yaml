@@ -1,0 +1,62 @@
+schema_version: 1
+status: preregistered_development
+protocol_revision: 1
+
+base_config: configs/research/mujoco_v3_probabilistic_crossing_smoke_amendment17_residual_runtime_stage3.yaml
+acceptance_record: docs/experiments/dynamic_uncertainty/ENVIRONMENT_STAGE_ACCEPTANCE.md
+preregistration: docs/experiments/dynamic_uncertainty/RESIDUAL_RUNTIME_STAGE3_CLOSED_LOOP_PREREGISTRATION.md
+offline_gate: research_artifacts/dynamic_uncertainty_residual_stage2_offline/gate.json
+runtime_screen: research_artifacts/dynamic_uncertainty_residual_runtime_stage3_amendment2/runtime_screen.json
+
+design:
+  independent_unit: complete_episode
+  blocking: [obstacle_process_seed, residual_checkpoint_seed]
+  common_random_numbers: true
+  conditions: [nominal, icode_residual]
+  development_episode_seeds: [730100006, 730100008, 730100010]
+  sealed_seeds_authorized: false
+  shared_nominal_reference_per_episode_seed: true
+  schedule_seed: 730199911
+  output_dir: research_artifacts/dynamic_uncertainty_residual_runtime_stage3_development
+  early_stop_conditions: [residual_collision]
+
+residual_component_mask: [0.0, 0.0, 0.0, 1.0, 1.0]
+
+residual_safety_shield:
+  enabled: true
+  maximum_nominal_risk_increase: 0.0
+  maximum_position_deviation_m: 0.10
+  maximum_nominal_progress_regression_m: 0.02
+  require_residual_hard_safe: true
+  require_nominal_hard_safe: true
+
+residual_model_blocks:
+  - seed: 20261201
+    checkpoint: results/research_platform/stage2_task_aware_seed20261201_v1/best.pt
+    sha256: 8103887469dcaa0b21aa0140162f445614988d4a5e8b3d5d1f040e9411d2778c
+  - seed: 20261202
+    checkpoint: results/research_platform/stage2_task_aware_seed20261202_v1/best.pt
+    sha256: 56174361d31d316f33bebbe4bcef259e0adeece062b5e864ebfab38915618349
+  - seed: 20261203
+    checkpoint: results/research_platform/stage2_task_aware_seed20261203_v1/best.pt
+    sha256: 246a3a27ee1da6491bdafd3ed7c963211e973f7b98920371bdc90c729d30d7eb
+
+frozen:
+  environment_amendment: 17
+  obstacle_generator: v3_recurrent_semimarkov
+  predictor: change_aware_imm
+  hard_collision_probability_threshold: 0.20
+  localization: wheel_imu_localized
+  mppi_horizon: 36
+  mppi_candidates: 600
+  residual_device: cuda
+  residual_cuda_graph_enabled: true
+  rl_enabled: false
+
+gate:
+  minimum_positive_h36_model_blocks: 3
+  maximum_collision_count_increase_per_block: 0
+  minimum_median_completion_delta: -0.02
+  minimum_median_clearance_delta_m: -0.02
+  maximum_enabled_planner_p95_compute_ms: 100.0
+  minimum_shield_acceptance_fraction_per_residual_block: 0.01

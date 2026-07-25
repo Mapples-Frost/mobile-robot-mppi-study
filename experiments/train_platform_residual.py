@@ -24,12 +24,20 @@ def main(argv=None):
         type=int,
         help="override the model-initialization/training seed",
     )
+    parser.add_argument(
+        "--initial-checkpoint",
+        help="initialize and conservatively fine-tune an existing platform checkpoint",
+    )
     args = parser.parse_args(argv)
     config = load_yaml(args.config)
     if args.seed is not None:
         if args.seed < 0:
             parser.error("--seed must be non-negative")
         config["seed"] = int(args.seed)
+    if args.initial_checkpoint:
+        config.setdefault("training", {})["initial_checkpoint"] = str(
+            Path(args.initial_checkpoint).resolve()
+        )
     result = train_residual(
         config, args.dataset_dir, args.output_dir,
         device=args.device, epochs=args.epochs,

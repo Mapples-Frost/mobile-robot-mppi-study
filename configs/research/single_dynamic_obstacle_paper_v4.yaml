@@ -1,0 +1,237 @@
+schema_version: 4
+study_id: single_dynamic_obstacle_paper_v4
+status: frozen_before_qualification
+protocol_revision: 3
+qualification_attempt: 2
+supersedes_failed_engineering_bundle: paper_v4_20260725_1745
+revision_2_reason: >-
+  Attempt 1 exposed two dependency contracts before any formal registry was
+  generated: the P-off residual shield needed a causal deterministic-clearance
+  certificate, and fixed-HSS needed a fixed 0.30 allocation without disabling
+  the HSS object required by the proposal diagnostic. The execution bundle
+  also omitted two protected scan-layer runtime files. Revision 2 fixes only
+  these engineering contracts and strengthens preflight to run one decision
+  for every arm.
+frozen_at: "2026-07-25T17:30:00+08:00"
+revision_2_frozen_at: "2026-07-25T18:20:00+08:00"
+revision_3_reason: >-
+  Qualification attempt 2 passed 16/16 seed blocks and 112/112 episode jobs,
+  and the controller-independent formal registry was then sealed with SHA-256
+  91cc59c6025296bcb4aa5f8839bd5bc129159c109730f52c5c9ac13d03b47b56.
+  Before formal execution and before any formal outcome existed, the analysis
+  stub was completed, exact endpoint and multiplicity contracts were added,
+  and the execution manifest was expanded to hash the transitive Python code
+  closure and runtime inventory. No controller, scene, checkpoint, seed,
+  schedule, rollout budget, arm, or formal sample-size setting changed.
+revision_3_frozen_at: "2026-07-25T18:57:00+08:00"
+formal_experiment_started: false
+sealed_registry_generated: true
+sealed_registry_sha256: 91cc59c6025296bcb4aa5f8839bd5bc129159c109730f52c5c9ac13d03b47b56
+preregistration: docs/experiments/dynamic_uncertainty/SINGLE_DYNAMIC_OBSTACLE_PAPER_V4_PREREGISTRATION.md
+analysis_amendment: docs/experiments/dynamic_uncertainty/SINGLE_DYNAMIC_OBSTACLE_PAPER_V4_REVISION3_ANALYSIS_AMENDMENT.json
+base_config: configs/research/mujoco_v3_probabilistic_crossing_smoke_amendment17_residual_runtime_stage3.yaml
+stage3_protocol: configs/research/dynamic_uncertainty_residual_runtime_stage3_parallel_development.yaml
+stage4_protocol: configs/research/dynamic_uncertainty_rl_hss_stage4_amendment1.yaml
+id_obstacle_process: configs/research/dynamic_obstacle_process_v3.yaml
+ood_obstacle_process: configs/research/dynamic_obstacle_process_v3_ood_confirmatory.yaml
+formal_registry: configs/seeds/single_dynamic_obstacle_paper_v4_sealed.yaml
+qualification_output: research_artifacts/single_dynamic_obstacle_paper_v4_qualification
+formal_output: C:/Research/single_dynamic_obstacle_paper_v4_formal
+timing_output: research_artifacts/single_dynamic_obstacle_paper_v4_timing
+analysis_output: C:/Research/single_dynamic_obstacle_paper_v4_analysis
+
+design:
+  independent_unit: complete_episode_seed
+  core_arms:
+    - B00_strong_nominal_mppi
+    - B10_learning_only
+    - B01_probability_only
+    - B11_full_proposed
+  ablation_arms:
+    - A_full_ordinary_imm
+    - A_no_icode
+    - A_fixed_hss
+  core_seed_count: 360
+  core_seed_count_per_split: 180
+  ablation_seed_count: 140
+  ablation_seed_count_per_split: 70
+  total_episode_jobs: 1860
+  schedule_seed: 741990041
+  ablation_subset_seed: 741990043
+  common_random_numbers: true
+  same_seed_single_worker_block: true
+  arm_order: cyclic_latin_with_seeded_base_per_split_and_block_size
+  residual_model_block_assignment: balanced_by_split_and_seed_order
+  total_rollouts_per_decision: 600
+  horizon_steps: 36
+  control_period_s: 0.10
+  maximum_episode_steps: 400
+
+qualification:
+  seeds_per_split: 8
+  seed_candidate_start:
+    id: 730100001
+    ood: 730100151
+  seed_candidate_count: 150
+  all_seven_arms: true
+  candidate_worker_counts: [8, 16]
+  required_worker_equivalence_replays: 2
+  maximum_rss_fraction: 0.80
+  require_all_jobs_complete: true
+  require_all_decisions_exactly_600_rollouts: true
+  outcome_estimation_authorized: false
+
+formal_seed_selection:
+  id_candidate_start: 740200001
+  ood_candidate_start: 740300001
+  candidate_count_per_split: 2000
+  selection_rule: ascending_first_180_with_prefrozen_conflict_certificate
+  development_or_prior_confirmatory_overlap_allowed: false
+
+conflict_certificate:
+  process: hybrid_patrol
+  robot_start_xy: [-4.6, -1.8]
+  robot_goal_xy: [4.2, -1.8]
+  ghost_speed_mps: 0.35
+  robot_radius_m: 0.25
+  obstacle_radius_m: 0.25
+  collision_distance_m: 0.50
+  conflict_window_distance_m: 0.80
+  window_padding_s: 1.00
+  merge_gap_s: 0.50
+  no_window_policy: exclude_before_registry_without_outcome_access
+
+execution:
+  platform: windows_server_cpu_only
+  candidate_workers: 16
+  fallback_workers: [12, 8]
+  logical_cpu_count: 64
+  physical_cpu_count: 32
+  logical_cpus_per_worker: 4
+  omp_threads_per_worker: 1
+  mkl_threads_per_worker: 1
+  torch_threads_per_worker: 1
+  headless: true
+  local_nvme_required: true
+  viewer_forbidden: true
+  training_jobs_forbidden: true
+  behavior_timing_for_paper: false
+
+timing:
+  platform: local_rtx_5060_laptop_8gb
+  exclusive_single_worker: true
+  seeds_per_split: 8
+  arms: all_seven
+  total_episodes: 112
+  cuda_graph_capture_reported_separately: true
+  warmup_reported_separately: true
+  first_control_cycle_after_reset_included: true
+  included_components:
+    - perception
+    - tracker_imm_forecast
+    - actor_icode_hss
+    - mppi
+    - residual_shield
+    - scan_guard
+  excluded_components: [mujoco_physics_step, disk_io]
+  summaries: [decision_p50, decision_p95, decision_p99, deadline_miss_fraction, episode_p95, maximum_episode_p95]
+
+checkpoints:
+  actor:
+    path: research_artifacts/dynamic_actor_temporal_bidirectional_correction_v5_amendment6/checkpoints/improved_update_000250.pt
+    sha256: 714694f8d179f02b90c14e56c9e3e4f29a0101b70ad53f3cc795eb72dea7a1b5
+  residual_blocks:
+    - seed: 20261201
+      path: results/research_platform/stage2_task_aware_seed20261201_v1/best.pt
+      sha256: 8103887469dcaa0b21aa0140162f445614988d4a5e8b3d5d1f040e9411d2778c
+    - seed: 20261202
+      path: results/research_platform/stage2_task_aware_seed20261202_v1/best.pt
+      sha256: 56174361d31d316f33bebbe4bcef259e0adeece062b5e864ebfab38915618349
+    - seed: 20261203
+      path: results/research_platform/stage2_task_aware_seed20261203_v1/best.pt
+      sha256: 246a3a27ee1da6491bdafd3ed7c963211e973f7b98920371bdc90c729d30d7eb
+  hss_sidecars:
+    - path: results/research_platform/gate3_value_aligned_ensemble_member1_l192/best.pt
+      sha256: c43af62cbd96d8b3ab9d2283175ff278df9b396a911609798a8dd7a41047c6f9
+    - path: results/research_platform/gate3_value_aligned_ensemble_member2_l192/best.pt
+      sha256: e39065703214f5b3c8e9dfa2d16bb3c0be82e9340e54c017c40e5254c420acb8
+    - path: results/research_platform/gate3_value_aligned_ensemble_member3_l192/best.pt
+      sha256: 296159d7b7ae7780a6e7225f20d7e158c43acdd9bf0d4ab8254a07002b779e99
+
+arm_contracts:
+  B00_strong_nominal_mppi: {learning: false, probability: false, icode: false, predictor: none, hss: none}
+  B10_learning_only: {learning: true, probability: false, icode: true, predictor: none, hss: adaptive}
+  B01_probability_only: {learning: false, probability: true, icode: false, predictor: change_aware, hss: none}
+  B11_full_proposed: {learning: true, probability: true, icode: true, predictor: change_aware, hss: adaptive}
+  A_full_ordinary_imm: {learning: true, probability: true, icode: true, predictor: ordinary, hss: adaptive}
+  A_no_icode: {learning: true, probability: true, icode: false, predictor: change_aware, hss: adaptive}
+  A_fixed_hss: {learning: true, probability: true, icode: true, predictor: change_aware, hss: fixed_0.30}
+
+analysis:
+  safe_success: goal_distance_le_0.30_within_400_steps_no_collision_no_boundary_violation
+  primary_contrast: B11_full_proposed_minus_B00_strong_nominal_mppi
+  alpha: 0.05
+  statistical_confirmation: positive_difference_exact_mcnemar_p_lt_0.05_and_two_sided_95ci_lower_gt_0
+  practical_confirmation: statistical_confirmation_and_point_estimate_ge_0.10
+  collision_endpoint_name: collision_rate
+  predicted_quantity_name: predicted_collision_risk
+  paired_binary_ci: tango_matched_score
+  tango_root_tolerance: 1.0e-12
+  collision_noninferiority_margin: 0.02
+  split_success_harm_margin: -0.05
+  split_collision_harm_margin: 0.05
+  bootstrap_replicates: 200000
+  bootstrap_seed: 741990047
+  mechanism_multiplicity: holm_three_contrasts
+  ablation_multiplicity: holm_three_contrasts
+  timestep_as_independent_sample: false
+  outcome_unlock_rule: all_360_seed_blocks_and_1860_episode_jobs_complete_before_first_metric_read
+  primary_binary_endpoints: [safe_success, collision_rate]
+  primary_continuous_endpoints:
+    - failure_penalized_steps
+    - final_goal_distance
+    - path_progress_m_max
+    - minimum_clearance
+    - conflict_q05_clearance
+  supportive_continuous_endpoints:
+    - trajectory_length
+    - applied_control_jerk
+    - stuck_steps
+    - spin_steps
+    - direction_switch_count
+    - three_phase_oscillation_count
+    - premature_reverse_count
+    - release_delay_max_s
+    - conflict_traversal_time_failure_penalized_s
+    - zero_speed_risk_steps
+  mechanism_confirmatory_family:
+    endpoint: safe_success
+    contrasts: [learning_main, probability_main, learning_by_probability_interaction]
+    test: two_sided_wilcoxon_pratt_normal_approximation_on_whole_seed_contrast
+    correction: holm
+  ablation_confirmatory_family:
+    endpoint: safe_success
+    contrasts:
+      - B11_full_proposed_minus_A_full_ordinary_imm
+      - B11_full_proposed_minus_A_no_icode
+      - B11_full_proposed_minus_A_fixed_hss
+    test: two_sided_exact_mcnemar
+    correction: holm
+  boundary_violation_policy: >-
+    structural_zero_when_the_frozen_point_goal_scene_has_no_corridor_or_world_boundary;
+    otherwise_use_boundary_violation_steps_from_metrics
+  conflict_q05_no_observed_sample_policy: use_episode_minimum_clearance_and_flag_fallback
+  behavior_timing_status: concurrent_ecs_values_are_health_telemetry_only
+
+integrity:
+  require_factor_separability_test: true
+  require_fresh_runner_per_arm: true
+  require_no_cross_episode_state: true
+  require_registry_sha256: true
+  require_ablation_subset_sha256: true
+  require_execution_manifest_sha256: true
+  formal_registry_requires_qualification_pass: true
+  no_interim_outcome_access: true
+  no_seed_replacement: true
+  no_automatic_algorithm_failure_retry: true
+  infrastructure_retry_same_seed_arm_config_only: true

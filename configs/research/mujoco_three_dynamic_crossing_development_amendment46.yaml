@@ -1,0 +1,30 @@
+include: mujoco_three_dynamic_crossing_development_amendment45.yaml
+
+experiment:
+  name: mujoco_three_dynamic_crossing_development_amendment46
+
+three_obstacle_amendment:
+  version: 46
+  reason: >-
+    amendment45_triggered_the_new_post_center_temporal_override_at_row314_one_cycle_before_the_hard_probability_spike_but_the_generic_pareto_forward_promotion_immediately_replaced_the_causal_scan_preferred_reverse_escape_probability0p127_mass2p327_with_the_forward_straight_candidate_probability0p017_mass0p330;_the_executed_action_remained_v0p60_and_the_robot_collided_at_progress2p526m
+  intervention: >-
+    only_during_the_post_center_corroborated_temporal_override_preserve_the_existing_causal_scan_preferred_emergency_direction_and_suppress_the_generic_pareto_forward_promotion_for_that_cycle;_all_other_emergency_selection_and_commit_resume_behavior_remain_unchanged
+  obstacle_future_truth_used: false
+  obstacle_identity_used: false
+  crossing_geometry_source: online_forecast_plus_polyline_reference
+  behavior_parameter_changed: false
+  candidate_values_changed: false
+  certificate_threshold_changed: false
+  commit_admission_contract_changed: false
+  post_center_execution_arbitration_changed: true
+  post_center_emergency_lattice_binding_changed: false
+  temporal_escape_authority_preserved: true
+  temporal_abort_direction_contract_changed: false
+  control_horizon_changed: false
+  control_limit_changed: false
+  deterministic_computation_reused: true
+  diagnostic_profiling_changed: false
+  rollout_budget_changed: false
+  total_rollouts_per_decision: 600
+  active_waiting_allowed: true
+  active_traversal_objective: true

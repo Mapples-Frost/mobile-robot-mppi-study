@@ -444,3 +444,153 @@
 - **Provenance**: ai-suggested
 - **Sensitivity**: high
 - **Code ref**: [`src/mobile_robot_mppi/learning/value_alignment.py`, `experiments/icode/train_value_aligned_icode.py`, `configs/icode/value_ranked_icode_member1_l210.yaml`, `docs/rl/211_two_coupling_mechanisms_frozen_2026-07-19.md`]
+
+## H75: Preserve automatic gate truth when authorizing a stage waiver
+- **Rationale**: A project decision may accept a narrowly missed development gate, but the machine-readable result and failed threshold must remain unchanged. Record the waiver separately, state its scope, and freeze the accepted baseline so later gains cannot be attributed to hidden environment retuning.
+- **Provenance**: user-revised
+- **Sensitivity**: high
+- **Code ref**: [`docs/experiments/dynamic_uncertainty/ENVIRONMENT_STAGE_ACCEPTANCE.md`, `docs/experiments/dynamic_uncertainty/POST_ESCAPE_RECOVERY_AMENDMENT17_REPORT.md`]
+
+## H76: Block residual comparisons by checkpoint seed and obstacle seed
+- **Rationale**: A frozen residual checkpoint is a trained-model replicate, while a complete obstacle episode is the closed-loop stochastic replicate. Compare nominal and ICODE prediction with common obstacle seeds inside each model block, summarize effects across the three model blocks, and keep sealed seeds closed until the development gate passes.
+- **Provenance**: ai-suggested
+- **Sensitivity**: high
+- **Code ref**: [`configs/research/dynamic_uncertainty_residual_stage1_protocol.yaml`, `docs/experiments/dynamic_uncertainty/RESIDUAL_DYNAMICS_STAGE1_PREREGISTRATION.md`]
+
+## H77: Gate learned dynamics on closed-loop safety, not average rollout RMSE alone
+- **Rationale**: A residual model can reduce average multi-step velocity/yaw-rate error while changing early MPPI actions enough to enter a different obstacle-avoidance mode many seconds later. Require checkpoint-blocked collision and clearance gates in addition to offline prediction metrics, especially when hard chance constraints create discontinuous candidate selection.
+- **Provenance**: ai-suggested
+- **Sensitivity**: high
+- **Code ref**: [`experiments/dynamic_uncertainty/run_residual_dynamics_stage1.py`, `docs/experiments/dynamic_uncertainty/RESIDUAL_DYNAMICS_STAGE1_RESULT.md`]
+
+## H78: Prediction-only residual wrappers must expose unity confidence
+- **Rationale**: Canonicalization adds a diagnostic wrapper around a residual model, but a plain single-model residual has no uncertainty gate. When an MPPI consumer queries confidence, the mathematically neutral and backward-compatible value is one with the state's leading shape; assuming a `support_confidence` method exists crashes valid single-checkpoint inference.
+- **Provenance**: ai-suggested
+- **Sensitivity**: medium
+- **Code ref**: [`src/mobile_robot_mppi/learning/models.py`, `tests/learning/test_residual_state_canonicalization.py`]
+
+## H79: Residual stall guards must be causal and preview-side-effect free
+- **Rationale**: A stall counter may consume measured state and the previous completed plan's risk, but preview planning must not advance it. Episode latching can fail closed after a reproducible trigger, yet a late latch cannot undo state displacement accumulated earlier in the closed loop.
+- **Provenance**: ai-suggested
+- **Sensitivity**: high
+- **Code ref**: [`src/mobile_robot_mppi/learning/models.py`, `src/mobile_robot_mppi/planning/mppi.py`, `tests/platform/test_mppi_residual_stall_guard.py`]
+
+## H80: Preserve known kinematics without treating the mask as a safety certificate
+- **Rationale**: Dynamic-unicycle residuals should normally leave `x_dot`, `y_dot` and `theta_dot` to their analytic equations and correct only `v_dot` and `omega_dot`. This removes an avoidable structural degree of freedom, but Amendment 4 shows that structurally valid acceleration corrections can still alter receding-horizon decisions enough to cause collision.
+- **Provenance**: ai-suggested
+- **Sensitivity**: medium
+- **Code ref**: [`src/mobile_robot_mppi/learning/models.py`, `configs/research/dynamic_uncertainty_residual_stage1_amendment4_probe.yaml`, `docs/experiments/dynamic_uncertainty/RESIDUAL_DYNAMICS_STAGE1_AMENDMENT4_RESULT.md`]
+
+## H81: Separate predictive utility from direct closed-loop authority
+- **Rationale**: A residual can reduce blocked multi-step prediction error and still be unsafe when recursively inserted into a chance-constrained controller. Retain it as an auxiliary predictor or representation until task-aware bounded integration is independently qualified; use the frozen nominal probabilistic MPPI for testing an RL sampling prior so residual and policy effects remain identifiable.
+- **Provenance**: ai-suggested
+- **Sensitivity**: high
+- **Code ref**: [`docs/experiments/dynamic_uncertainty/RESIDUAL_DYNAMICS_STAGE1_AMENDMENT4_RESULT.md`]
+
+## H82: Weight hazard-region transitions without breaking episode splits
+- **Rationale**: Rare near-obstacle transitions are otherwise diluted by thousands of ordinary path samples. Increase their positive loss weight using only causal saved quantities, but append complete episodes to fixed train/validation/test partitions so rollout windows and model selection remain leakage-free.
+- **Provenance**: ai-suggested
+- **Sensitivity**: high
+- **Code ref**: [`experiments/dynamic_uncertainty/build_task_aware_residual_dataset.py`, `docs/experiments/dynamic_uncertainty/RESIDUAL_DYNAMICS_STAGE2_TASK_AWARE_PREREGISTRATION.md`]
+
+## H83: Anchor task-aware fine-tuning on the original residual function
+- **Rationale**: A small task dataset can improve its local operating region while catastrophically forgetting previously qualified dynamics. Initialize from the matching checkpoint and penalize output deviation on original-source rows; then impose an explicit original test/unseen regression gate.
+- **Provenance**: ai-suggested
+- **Sensitivity**: high
+- **Code ref**: [`src/mobile_robot_mppi/learning/trainer.py`, `configs/research/icode_dynamic_uncertainty_task_aware_stage2.yaml`]
+
+## H84: Propagate the accepted sequence's conservative risk diagnostics
+- **Rationale**: A dual-controller shield may accept a residual or hybrid control sequence whose downstream safety diagnostics cannot be copied from either source plan. Recompute both model views and publish the conservative probability mass, union bound, maximum step probability and hard-violation flag for the actual selected sequence.
+- **Provenance**: ai-suggested
+- **Sensitivity**: high
+- **Code ref**: [`src/mobile_robot_mppi/planning/residual_shield.py`, `tests/platform/test_residual_safety_shield.py`]
+
+## H85: Require a fresh development pilot after offline residual qualification
+- **Rationale**: Task-weighted validation can establish prediction and retention but not chance-constrained closed-loop safety. Register a new obstacle-process seed before execution, pair nominal with every independently trained residual block, keep sealed seeds closed, and require nondegenerate residual acceptance before interpreting zero collisions as more than permanent fallback.
+- **Provenance**: ai-suggested
+- **Sensitivity**: high
+- **Code ref**: [`configs/research/dynamic_uncertainty_residual_stage2_task_aware_probe.yaml`, `experiments/dynamic_uncertainty/run_residual_dynamics_stage1.py`]
+
+## H86: Audit where the global minimum clearance occurs
+- **Rationale**: A shared minimum clearance can be dominated by the initial pose rather than the obstacle crossing. Record its time index and report clearance quantiles or time-below-threshold fractions so an initialization artifact is not mistaken for equivalent crossing safety.
+- **Provenance**: ai-suggested
+- **Sensitivity**: medium
+- **Code ref**: [`experiments/dynamic_uncertainty/analyze_task_aware_residual_contribution.py`, `docs/experiments/dynamic_uncertainty/RESIDUAL_DYNAMICS_STAGE2_TASK_AWARE_DEVELOPMENT_RESULT.md`]
+
+## H87: Separate shield acceptance from realized control contribution
+- **Rationale**: A proposal can pass a model gate yet equal the nominal action, while paired closed-loop traces cease to be same-state counterfactuals after their first action difference. Report both shield acceptance and an explicit executed-action difference, label the latter paired-realized, and do not interpret later stepwise differences as isolated causal effects.
+- **Provenance**: ai-suggested
+- **Sensitivity**: high
+- **Code ref**: [`experiments/dynamic_uncertainty/analyze_task_aware_residual_contribution.py`, `research_artifacts/dynamic_uncertainty_residual_stage2_task_aware_development/contribution_audit.json`]
+
+## H88: A rollout microbenchmark does not replace full-controller runtime qualification
+- **Rationale**: Component profiling identifies the dominant kernel and cheaply rejects bad backends, but the deployed latency also includes nominal planning, cost evaluation, shield comparison and scheduling. Require both a fixed-shape rollout screen and the complete blocked closed-loop matrix before claiming the control-period target.
+- **Provenance**: ai-suggested
+- **Sensitivity**: high
+- **Code ref**: [`experiments/dynamic_uncertainty/benchmark_residual_runtime_stage3.py`, `experiments/dynamic_uncertainty/run_residual_dynamics_stage1.py`, `docs/experiments/dynamic_uncertainty/RESIDUAL_RUNTIME_STAGE3_RESULT.md`]
+
+## H89: Capture fixed-horizon small-network residual integration as one CUDA Graph
+- **Rationale**: The H36/K600 RK4 rollout invokes the same small residual network 144 times, so eager CUDA is dominated by CPU launch dispatch. Reuse static state/control/output buffers, capture the complete fixed-shape computation once, replay it, and copy only the inputs and final trajectory while retaining a numerical-equivalence gate.
+- **Provenance**: ai-suggested
+- **Sensitivity**: high
+- **Code ref**: [`src/mobile_robot_mppi/learning/models.py`, `src/mobile_robot_mppi/planning/dynamics.py`, `src/mobile_robot_mppi/planning/mppi.py`, `tests/learning/test_residual_device_rollout.py`]
+
+## H90: Parallelize independent dual-model planning and preserve the shield join
+- **Rationale**: Nominal and residual MPPI consume the same immutable observation/reference but maintain independent RNGs, dynamics, warm starts and diagnostics. Running them on persistent workers removes their serial sum; comparing the completed plans with the unchanged shield preserves decision semantics and makes exact sequential-equivalence auditing possible.
+- **Provenance**: ai-suggested
+- **Sensitivity**: high
+- **Code ref**: [`src/mobile_robot_mppi/planning/residual_shield.py`, `src/mobile_robot_mppi/runtime/factories.py`, `tests/platform/test_residual_safety_shield.py`]
+
+## H91: Treat a frozen Actor's action range as an explicit proposal subspace
+- **Rationale**: A checkpoint trained on forward speed `[0.0, 0.35]` must not be silently stretched to a controller that also permits reverse speed. Validate that the checkpoint bounds are a strict subset, preserve them for Actor proposals, retain the controller's full bounds for Gaussian MPPI and safety recovery, and require an explicit opt-in contract. In a dual-model shield, deep-copy the Actor, HSS sidecar and optimizer state so matched controllers share frozen parameters and seeds but not mutable objects.
+- **Provenance**: ai-suggested
+- **Sensitivity**: high
+- **Code ref**: [`src/mobile_robot_mppi/rl/paper_policy.py`, `src/mobile_robot_mppi/runtime/factories.py`, `tests/dynamic_uncertainty/test_rl_hss_stage4.py`]
+
+## H92: Exercise one real planning call for every newly wired safety interface
+- **Rationale**: Component construction, hashes and configuration equality cannot prove that a custom optimizer forwards every runtime observation auxiliary. Before a formal run, execute the real `plan()` path with each enabled safety contract, including present and absent probabilistic forecasts, and assert candidate filtering, final action guarding and diagnostics. This would have caught the original Stage 4 failure before launch.
+- **Provenance**: ai-suggested
+- **Sensitivity**: high
+- **Code ref**: [`src/mobile_robot_mppi/planning/rl_driven_mppi.py`, `tests/dynamic_uncertainty/test_rl_hss_stage4.py`, `docs/experiments/dynamic_uncertainty/RL_HSS_STAGE4_AMENDMENT1_PREREGISTRATION.md`]
+
+## H93: Do not rescue proposal authority without observed proposal advantage
+- **Rationale**: In all ten completed Stage 4 RL/HSS-on episodes, the best guided subset was worse than the Gaussian subset under the controller cost, yet mean proposal authority remained 0.611--0.922 while mean dynamics confidence was 0--0.016. A transferred Actor should lose proposal share when its causal cost or progress advantage is absent, even if checkpoint competence was high in its source domain; any new gate requires a separately frozen development study.
+- **Provenance**: ai-suggested
+- **Sensitivity**: high
+- **Code ref**: [`src/mobile_robot_mppi/planning/rl_driven_mppi.py`, `research_artifacts/dynamic_uncertainty_rl_hss_stage4_amendment1_development/paired_analysis.json`, `docs/experiments/dynamic_uncertainty/RL_HSS_STAGE4_RESULT.md`]
+
+## H94: Couple an episode-latched bad-proposal veto to both candidate quota and distribution authority
+- **Rationale**: When completed current-planner evidence shows the best guided proposal is more costly than the best Gaussian proposal for three consecutive comparable cycles, apply the rejection only from the next cycle and latch it for the episode. Set guided count and Actor mean/variance authority to zero together, make fallback fraction one, and preserve the fixed rollout budget; otherwise a nominally vetoed Actor can still bias either candidate allocation or the sampling distribution.
+- **Provenance**: ai-suggested
+- **Sensitivity**: high
+- **Code ref**: [`src/mobile_robot_mppi/rl/reliability.py`, `src/mobile_robot_mppi/planning/rl_driven_mppi.py`, `tests/rl/test_cross_layer_reliability.py`, `tests/planners/test_paper_rl_driven_mppi.py`]
+
+## H95: Use unequal-source minimum cost only as a one-way rejection signal
+- **Rationale**: Guided and Gaussian candidate pools can have different unique sample counts and reuse patterns, so their minima have unequal order-statistic bias. A persistent guided-minus-Gaussian minimum-cost disadvantage is acceptable for a conservative one-way safety veto whose false rejection falls back to Gaussian search, but it is not a calibrated competence probability and must not by itself restore Actor authority.
+- **Provenance**: ai-suggested
+- **Sensitivity**: high
+- **Code ref**: [`experiments/dynamic_uncertainty/analyze_stage4_proposal_advantage.py`, `src/mobile_robot_mppi/rl/reliability.py`, `docs/experiments/dynamic_uncertainty/RL_HSS_STAGE5_PROPOSAL_ADVANTAGE_RESULT.md`]
+
+## H96: Preserve the frozen Actor prefix and append causal scan deltas
+- **Rationale**: A single LaserScan cannot distinguish an obstacle approaching from one receding. Appending per-sector causal range deltas gives the correction head motion evidence while `correction_base_observation_dim` keeps the frozen 48-dimensional Actor input and its physical action exactly unchanged. Reverse demonstrations require a separate stratum, retention anchor and false-reverse penalty because naive reverse oversampling can produce prolonged unnecessary backing.
+- **Provenance**: ai-suggested
+- **Sensitivity**: high
+- **Code ref**: [`src/mobile_robot_mppi/rl/observation.py`, `src/mobile_robot_mppi/rl/sac.py`, `experiments/dynamic_uncertainty/train_dynamic_actor_correction.py`, `configs/research/dynamic_actor_temporal_bidirectional_correction_development_amendment2.yaml`]
+
+## H97: Gate guided elites with same-cycle proposal advantage
+- **Rationale**: An episode-latched veto waits for several bad cycles and then permanently removes the Actor, while unrestricted proposal use lets a currently inferior guided subset bias the rolling MPPI warm start. Compare the best guided and Gaussian costs after both are evaluated in the current cycle; if the guided best exceeds the Gaussian best by the frozen relative margin, exclude guided candidates from that cycle's elite/update only. This preserves useful active-passage proposals on good cycles, fails closed on clearly bad cycles, and does not change the fixed rollout budget. Because unequal pool sizes affect minima, the comparison remains a one-way rejection rule rather than a calibrated competence score.
+- **Provenance**: ai-suggested
+- **Sensitivity**: high
+- **Code ref**: [`src/mobile_robot_mppi/planning/rl_driven_mppi.py`, `experiments/dynamic_uncertainty/run_dynamic_actor_mujoco_probe.py`, `tests/planners/test_paper_rl_driven_mppi.py`, `research_artifacts/dynamic_actor_v5a6_u000250_samecycle_fresh_replication_summary.json`]
+
+## H98: Require an arm-order-balanced expanded safety gate before sealing an adapted Actor
+- **Rationale**: Two favorable eight-pair batches did not reveal the candidate-only collision and lost source success found in the next 24 frozen pairs. Freeze checkpoint, controller budget, filter and safety stack; pair treatments on the same episode seed; balance source-first and candidate-first execution within batches; prohibit tuning during the matrix; and require zero new collisions and zero lost baseline successes in addition to pooled completion/efficiency gains. Completion gains cannot compensate for a candidate-only collision in a safety-critical navigation qualification.
+- **Provenance**: ai-suggested
+- **Sensitivity**: high
+- **Code ref**: [`configs/research/dynamic_actor_v5a6_samecycle_expanded_development.yaml`, `experiments/dynamic_uncertainty/run_dynamic_actor_expanded_development.py`, `research_artifacts/dynamic_actor_v5a6_u000250_samecycle_expanded_development/gate.json`, `research_artifacts/dynamic_actor_v5a6_u000250_samecycle_expanded_development/integrity_audit.json`]
+
+## H99: Penalize failed episodes before comparing navigation efficiency
+- **Rationale**: Uncensored raw step sums can make an early collision look efficient because the failed episode terminates before a successful controller finishes the route. Freeze a failure-step penalty before execution, compare this outcome-aware total alongside raw steps, and still keep collision and lost-success gates lexicographically mandatory. This preserves the real raw-step trade-off while preventing success from being penalized solely for continuing after the baseline failed.
+- **Provenance**: ai-suggested
+- **Sensitivity**: medium
+- **Code ref**: [`configs/research/dynamic_actor_v5a6_samecycle_expanded_development_amendment2.yaml`, `experiments/dynamic_uncertainty/run_dynamic_actor_expanded_development.py`, `research_artifacts/dynamic_actor_v5a6_u000250_pareto_forward_commit_expanded_development_amendment2/summary.json`, `research_artifacts/dynamic_actor_v5a6_u000250_pareto_forward_commit_expanded_development_amendment2/formal_statistics.json`]

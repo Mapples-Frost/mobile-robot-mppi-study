@@ -1,0 +1,127 @@
+{
+  "action_space_migration_performed": true,
+  "base_action_offset": [
+    0.5,
+    0.0
+  ],
+  "base_action_scale": [
+    0.5,
+    1.0
+  ],
+  "best_checkpoint": "research_artifacts/dynamic_actor_temporal_bidirectional_correction_v5_amendment6/checkpoints/best.pt",
+  "best_checkpoint_sha256": "c6e8dde54c7d5955e363da8aeda2737a30ac957488df9ee9b36d0b809a5ca62a",
+  "best_update": 6000,
+  "checks": {
+    "active_passage_gain": true,
+    "all_finite": true,
+    "cuda_training": true,
+    "frozen_base_unchanged": true,
+    "retention_drift": true,
+    "reverse_recall": true,
+    "teacher_rmse_improvement": false,
+    "unnecessary_stop": true
+  },
+  "critical_training_samples": 1220,
+  "decision": "offline_gate_fail",
+  "device": "cuda",
+  "gate_pass": false,
+  "gpu_name": "NVIDIA GeForce RTX 5060 Laptop GPU",
+  "improved_checkpoints": [
+    "research_artifacts/dynamic_actor_temporal_bidirectional_correction_v5_amendment6/checkpoints/improved_update_000250.pt",
+    "research_artifacts/dynamic_actor_temporal_bidirectional_correction_v5_amendment6/checkpoints/improved_update_000500.pt",
+    "research_artifacts/dynamic_actor_temporal_bidirectional_correction_v5_amendment6/checkpoints/improved_update_000750.pt",
+    "research_artifacts/dynamic_actor_temporal_bidirectional_correction_v5_amendment6/checkpoints/improved_update_001000.pt",
+    "research_artifacts/dynamic_actor_temporal_bidirectional_correction_v5_amendment6/checkpoints/improved_update_001250.pt",
+    "research_artifacts/dynamic_actor_temporal_bidirectional_correction_v5_amendment6/checkpoints/improved_update_001750.pt",
+    "research_artifacts/dynamic_actor_temporal_bidirectional_correction_v5_amendment6/checkpoints/improved_update_002250.pt",
+    "research_artifacts/dynamic_actor_temporal_bidirectional_correction_v5_amendment6/checkpoints/improved_update_002500.pt",
+    "research_artifacts/dynamic_actor_temporal_bidirectional_correction_v5_amendment6/checkpoints/improved_update_002750.pt",
+    "research_artifacts/dynamic_actor_temporal_bidirectional_correction_v5_amendment6/checkpoints/improved_update_003000.pt",
+    "research_artifacts/dynamic_actor_temporal_bidirectional_correction_v5_amendment6/checkpoints/improved_update_003250.pt",
+    "research_artifacts/dynamic_actor_temporal_bidirectional_correction_v5_amendment6/checkpoints/improved_update_003500.pt",
+    "research_artifacts/dynamic_actor_temporal_bidirectional_correction_v5_amendment6/checkpoints/improved_update_003750.pt",
+    "research_artifacts/dynamic_actor_temporal_bidirectional_correction_v5_amendment6/checkpoints/improved_update_004000.pt",
+    "research_artifacts/dynamic_actor_temporal_bidirectional_correction_v5_amendment6/checkpoints/improved_update_005250.pt",
+    "research_artifacts/dynamic_actor_temporal_bidirectional_correction_v5_amendment6/checkpoints/improved_update_005750.pt",
+    "research_artifacts/dynamic_actor_temporal_bidirectional_correction_v5_amendment6/checkpoints/improved_update_006000.pt"
+  ],
+  "protocol": "dynamic_actor_temporal_bidirectional_correction_development_v1_amendment6",
+  "reverse_teacher_actions_available": 540,
+  "reverse_teacher_actions_clipped": 0,
+  "schema_version": 1,
+  "source_action_lower": [
+    0.0,
+    -0.8999999761581421
+  ],
+  "source_action_upper": [
+    0.3499999940395355,
+    0.8999999761581421
+  ],
+  "source_checkpoint_sha256": "eaea2e2975de0794da4ad6876fbff3e6e85e53427e5471982e857585fff97ae4",
+  "status": "complete",
+  "target_action_lower": [
+    -0.3499999940395355,
+    -0.8999999761581421
+  ],
+  "target_action_upper": [
+    0.3499999940395355,
+    0.8999999761581421
+  ],
+  "teacher_dataset_samples": 15268,
+  "teacher_manifest_sha256": "3369537f9582ad9558d6f1d20d37f0d8de60026a33826644f634555e2e559ccb",
+  "teacher_manifest_sha256_list": [
+    "a857e44d5720c79e750113663129bc650dd0de6d663e765b0376b89924cab8ab",
+    "f5298c7e1db0eee53624ca7d9a5a0fcbc1c44129f5d6075f2579c7f62c92282e",
+    "86ed4c7f54a9ed87e28cd721496698e39dfe3a3711ed170f8bae9e9385e132ca",
+    "d15d7233dfd548f0a5a9b6dd29adc83631c584d9350d8a9aaa6442332d6e3cca",
+    "6cdea1d1cd5b75a34f247c122e0e46604017fd65f0a8d04033d12caf5d1b1046"
+  ],
+  "train_metrics": {
+    "candidate_critical_physical_teacher_rmse": 0.15474551916122437,
+    "candidate_opportunity_active_passage_fraction": 0.9977922379735068,
+    "candidate_opportunity_unnecessary_stop_fraction": 0.0,
+    "candidate_physical_teacher_rmse": 0.14631512761116028,
+    "candidate_reverse_recall": 0.9837962962962963,
+    "candidate_reverse_velocity_mae": 0.018690528348088264,
+    "candidate_teacher_rmse": 0.18638134002685547,
+    "critical_samples": 1220,
+    "mean_absolute_correction": 0.03371291235089302,
+    "opportunity_active_passage_gain": 0.004066930048803097,
+    "opportunity_samples": 8606,
+    "relative_teacher_rmse_improvement": 0.2939396122105076,
+    "retention_mean_absolute_drift": 0.01273060031235218,
+    "retention_samples": 8954,
+    "reverse_samples": 432,
+    "samples": 10946,
+    "source_critical_physical_teacher_rmse": 0.25510331988334656,
+    "source_opportunity_active_passage_fraction": 0.9937253079247037,
+    "source_opportunity_unnecessary_stop_fraction": 0.0020915640250987683,
+    "source_physical_teacher_rmse": 0.18526510894298553,
+    "source_reverse_recall": 0.0,
+    "source_teacher_rmse": 0.2639736533164978
+  },
+  "validation_metrics": {
+    "candidate_critical_physical_teacher_rmse": 0.0,
+    "candidate_opportunity_active_passage_fraction": 0.9884192240880139,
+    "candidate_opportunity_unnecessary_stop_fraction": 0.006369426751592357,
+    "candidate_physical_teacher_rmse": 0.15709008276462555,
+    "candidate_reverse_recall": 0.9166666666666666,
+    "candidate_reverse_velocity_mae": 0.06845477223396301,
+    "candidate_teacher_rmse": 0.22145551443099976,
+    "critical_samples": 0,
+    "mean_absolute_correction": 0.042973991483449936,
+    "opportunity_active_passage_gain": 0.0031847133757961776,
+    "opportunity_samples": 3454,
+    "relative_teacher_rmse_improvement": 0.09118778651049692,
+    "retention_mean_absolute_drift": 0.025731142610311508,
+    "retention_samples": 3688,
+    "reverse_samples": 108,
+    "samples": 4322,
+    "source_critical_physical_teacher_rmse": 0.0,
+    "source_opportunity_active_passage_fraction": 0.9852345107122177,
+    "source_opportunity_unnecessary_stop_fraction": 0.004921829762594094,
+    "source_physical_teacher_rmse": 0.16920284926891327,
+    "source_reverse_recall": 0.0,
+    "source_teacher_rmse": 0.24367576837539673
+  }
+}

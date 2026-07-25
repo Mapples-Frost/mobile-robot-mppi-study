@@ -137,6 +137,9 @@ class SACConfig:
     gradient_clip_norm: float = 10.0
     policy_mode: str = "direct"
     correction_scale: Tuple[float, ...] = (0.20,)
+    correction_base_action_scale: Tuple[float, ...] = (1.0,)
+    correction_base_action_offset: Tuple[float, ...] = (0.0,)
+    correction_base_observation_dim: Optional[int] = None
     correction_gate_alpha: float = 1.0
     correction_initial_log_std: float = -2.5
     correction_penalty_weight: float = 0.0
@@ -155,6 +158,18 @@ class SACConfig:
             correction_scale = (float(raw_correction_scale),)
         else:
             correction_scale = tuple(float(value) for value in raw_correction_scale)
+        raw_base_scale = values.get("correction_base_action_scale", (1.0,))
+        base_scale = (
+            (float(raw_base_scale),)
+            if isinstance(raw_base_scale, (int, float))
+            else tuple(float(value) for value in raw_base_scale)
+        )
+        raw_base_offset = values.get("correction_base_action_offset", (0.0,))
+        base_offset = (
+            (float(raw_base_offset),)
+            if isinstance(raw_base_offset, (int, float))
+            else tuple(float(value) for value in raw_base_offset)
+        )
         return cls(
             hidden_sizes=tuple(int(value) for value in values.get("hidden_sizes", (256, 256))),
             activation=str(values.get("activation", "relu")),
@@ -174,6 +189,13 @@ class SACConfig:
             gradient_clip_norm=float(values.get("gradient_clip_norm", 10.0)),
             policy_mode=str(values.get("policy_mode", "direct")),
             correction_scale=correction_scale,
+            correction_base_action_scale=base_scale,
+            correction_base_action_offset=base_offset,
+            correction_base_observation_dim=(
+                None
+                if values.get("correction_base_observation_dim") is None
+                else int(values["correction_base_observation_dim"])
+            ),
             correction_gate_alpha=float(values.get("correction_gate_alpha", 1.0)),
             correction_initial_log_std=float(
                 values.get("correction_initial_log_std", -2.5)
@@ -222,14 +244,57 @@ class SACConfig:
             or correction_scale.size == 0
             or not np.isfinite(correction_scale).all()
             or np.any(correction_scale <= 0.0)
-            or np.any(correction_scale > 1.0)
+            or np.any(correction_scale > 2.0)
         ):
             raise ValueError(
-                "SAC correction_scale must contain finite values in (0, 1]"
+                "SAC correction_scale must contain finite values in (0, 2]"
             )
         if action_dim is not None and correction_scale.size not in (1, int(action_dim)):
             raise ValueError(
                 "SAC correction_scale must be scalar or match action_dim"
+            )
+        base_scale = np.asarray(
+            self.correction_base_action_scale, dtype=np.float64
+        )
+        base_offset = np.asarray(
+            self.correction_base_action_offset, dtype=np.float64
+        )
+        for name, values in (
+            ("correction_base_action_scale", base_scale),
+            ("correction_base_action_offset", base_offset),
+        ):
+            if (
+                values.ndim != 1
+                or values.size == 0
+                or not np.isfinite(values).all()
+                or (
+                    action_dim is not None
+                    and values.size not in (1, int(action_dim))
+                )
+            ):
+                raise ValueError(
+                    "SAC %s must be scalar or match action_dim" % name
+                )
+        if np.any(base_scale <= 0.0):
+            raise ValueError(
+                "SAC correction_base_action_scale must be positive"
+            )
+        expanded_scale = (
+            np.repeat(base_scale, int(action_dim))
+            if action_dim is not None and base_scale.size == 1
+            else base_scale
+        )
+        expanded_offset = (
+            np.repeat(base_offset, int(action_dim))
+            if action_dim is not None and base_offset.size == 1
+            else base_offset
+        )
+        if (
+            expanded_scale.shape == expanded_offset.shape
+            and np.any(np.abs(expanded_offset) + expanded_scale > 1.0 + 1e-7)
+        ):
+            raise ValueError(
+                "SAC correction base-action affine map leaves [-1, 1]"
             )
         if not 0.0 < self.correction_gate_alpha <= 1.0:
             raise ValueError("SAC correction_gate_alpha must be in (0, 1]")
@@ -365,6 +430,22 @@ class SACAgent:
             raise ValueError("SAC observation/action dimensions must be positive")
         self.config = config if isinstance(config, SACConfig) else SACConfig.from_mapping(config)
         self.config.validate(action_dim=self.action_dim)
+        self.base_observation_dim = int(
+            self.observation_dim
+            if self.config.correction_base_observation_dim is None
+            else self.config.correction_base_observation_dim
+        )
+        if (
+            self.base_observation_dim <= 0
+            or self.base_observation_dim > self.observation_dim
+            or (
+                not self.is_correction_policy
+                and self.base_observation_dim != self.observation_dim
+            )
+        ):
+            raise ValueError(
+                "SAC correction base observation dimension is invalid"
+            )
         requested_device = str(device)
         if requested_device == "auto":
             requested_device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -379,7 +460,7 @@ class SACAgent:
         self.base_actor_initialized = False
         if self.is_correction_policy:
             self.base_actor = SquashedGaussianActor(
-                self.observation_dim, self.action_dim, self.config
+                self.base_observation_dim, self.action_dim, self.config
             ).to(self.device)
             self.base_actor.requires_grad_(False)
             self.base_actor.eval()
@@ -427,6 +508,81 @@ class SACAgent:
         if len(values) == 1:
             values = values * self.action_dim
         return torch.as_tensor(values, dtype=torch.float32, device=self.device)
+
+    def _expanded_base_action_affine(self):
+        scale = tuple(
+            float(value)
+            for value in self.config.correction_base_action_scale
+        )
+        offset = tuple(
+            float(value)
+            for value in self.config.correction_base_action_offset
+        )
+        if len(scale) == 1:
+            scale = scale * self.action_dim
+        if len(offset) == 1:
+            offset = offset * self.action_dim
+        return (
+            torch.as_tensor(
+                scale, dtype=torch.float32, device=self.device
+            ),
+            torch.as_tensor(
+                offset, dtype=torch.float32, device=self.device
+            ),
+        )
+
+    def _map_frozen_base_action(self, base_action):
+        """Map the old Actor latent action into a migrated action space.
+
+        The affine map is part of the checkpoint contract.  Its parameters are
+        derived from old/new physical action bounds, so a zero correction
+        preserves the frozen Actor's physical command exactly.
+        """
+
+        scale, offset = self._expanded_base_action_affine()
+        shape = *((1,) * (base_action.ndim - 1)), self.action_dim
+        mapped = offset.view(shape) + scale.view(shape) * base_action
+        if not bool(torch.isfinite(mapped).all()):
+            raise FloatingPointError("mapped frozen base action is not finite")
+        tolerance = 1.0e-6
+        if bool(torch.any(mapped < -1.0 - tolerance)) or bool(
+            torch.any(mapped > 1.0 + tolerance)
+        ):
+            raise RuntimeError(
+                "frozen base action affine map left normalized bounds"
+            )
+        return torch.clamp(mapped, -1.0, 1.0)
+
+    def _base_observation(self, observation):
+        """Project expanded correction inputs onto the frozen Actor contract."""
+
+        if observation.shape[-1] != self.observation_dim:
+            raise ValueError("SAC observation has an invalid final dimension")
+        return observation[..., :self.base_observation_dim]
+
+    def _mapped_base_distribution(self, observation):
+        pre_tanh, log_std = self.base_actor.distribution(
+            self._base_observation(observation)
+        )
+        old_mean = torch.tanh(pre_tanh)
+        scale, offset = self._expanded_base_action_affine()
+        if bool(torch.all(scale == 1.0)) and bool(torch.all(offset == 0.0)):
+            return old_mean, pre_tanh, log_std
+        mapped_mean = self._map_frozen_base_action(old_mean)
+        shape = *((1,) * (old_mean.ndim - 1)), self.action_dim
+        mapped_post_tanh_std = torch.clamp(
+            scale.abs().view(shape)
+            * (1.0 - old_mean ** 2)
+            * torch.exp(log_std),
+            min=1.0e-6,
+        )
+        bounded = torch.clamp(mapped_mean, -1.0 + 1e-6, 1.0 - 1e-6)
+        mapped_pre_tanh = torch.atanh(bounded)
+        mapped_log_std = torch.log(
+            mapped_post_tanh_std
+            / torch.clamp(1.0 - bounded ** 2, min=1.0e-6)
+        )
+        return mapped_mean, mapped_pre_tanh, mapped_log_std
 
     def _zero_initialize_correction_actor(self):
         """Make the deterministic residual exactly zero before RL updates."""
@@ -524,7 +680,9 @@ class SACAgent:
 
         self._require_correction_base()
         with torch.no_grad():
-            base_action = self.base_actor.mean_action(observation)
+            base_action = self._map_frozen_base_action(
+                self.base_actor.mean_action(self._base_observation(observation))
+            )
         (
             unit_correction,
             correction_log_probability,
@@ -627,19 +785,9 @@ class SACAgent:
             raise FloatingPointError("SAC batched policy produced NaN or Inf")
         return selected.cpu().numpy().astype(np.float32)
 
-    def policy_gaussian_parameters_batch(self, observations):
-        """Return an auditable Gaussian approximation of the physical Actor.
+    def _policy_gaussian_parameters_batch(self, observations):
+        """Evaluate the composed Actor and retain its frozen-base Gaussian."""
 
-        RL-Driven MPPI needs both the policy mean and its stochastic spread to
-        initialize a control-sequence distribution.  Returning the exact
-        pre-tanh parameters lets the caller use its own seeded generator while
-        preserving the SAC actor's bounded-action transform. For a frozen-base
-        correction policy, the deterministic composed physical-control mean is
-        exact. Deployment deliberately retains the frozen base policy's
-        first-order post-tanh spread, so residual conditioning changes only the
-        MPPI proposal mean. This approximation is used only as proposal
-        covariance, never as a plant or value-model assumption.
-        """
         data = np.asarray(observations, dtype=np.float32)
         if (
             data.ndim != 2
@@ -651,14 +799,17 @@ class SACAgent:
                 "SAC observation batch must be finite with shape [B,%d]"
                 % self.observation_dim
             )
+        base_pre_tanh = None
+        base_log_std = None
         with torch.no_grad():
             tensor = torch.as_tensor(data, device=self.device)
             if self.is_correction_policy:
                 self._require_correction_base()
-                base_pre_tanh, base_log_std = self.base_actor.distribution(
-                    tensor
-                )
-                base_mean = torch.tanh(base_pre_tanh)
+                (
+                    base_mean,
+                    base_pre_tanh,
+                    base_log_std,
+                ) = self._mapped_base_distribution(tensor)
                 correction_mean, correction_log_std = self.actor.distribution(
                     tensor
                 )
@@ -666,11 +817,6 @@ class SACAgent:
                 final_mean, _, jacobian = self._compose_correction(
                     base_mean, unit_mean
                 )
-                # The correction changes only the proposal mean. Preserve the
-                # frozen L185 Actor's post-tanh spread exactly so the MPPI
-                # ablation does not confound residual conditioning with a
-                # covariance change. The correction log-std remains part of
-                # SAC training but does not silently alter deployment sampling.
                 del correction_log_std, jacobian
                 final_std = torch.clamp(
                     (1.0 - base_mean ** 2) * torch.exp(base_log_std),
@@ -687,14 +833,64 @@ class SACAgent:
                 )
             else:
                 mean, log_std = self.actor.distribution(tensor)
-        if not bool(torch.isfinite(mean).all() and torch.isfinite(log_std).all()):
+        finite = bool(
+            torch.isfinite(mean).all() and torch.isfinite(log_std).all()
+        )
+        if base_pre_tanh is not None:
+            finite = finite and bool(
+                torch.isfinite(base_pre_tanh).all()
+                and torch.isfinite(base_log_std).all()
+            )
+        if not finite:
             raise FloatingPointError(
                 "SAC policy Gaussian parameters contain NaN or Inf"
             )
         return (
             mean.cpu().numpy().astype(np.float64),
             log_std.cpu().numpy().astype(np.float64),
+            None if base_pre_tanh is None else (
+                base_pre_tanh.cpu().numpy().astype(np.float64)
+            ),
+            None if base_log_std is None else (
+                base_log_std.cpu().numpy().astype(np.float64)
+            ),
         )
+
+    def policy_gaussian_parameters_batch(self, observations):
+        """Return an auditable Gaussian approximation of the physical Actor.
+
+        RL-Driven MPPI needs both the policy mean and its stochastic spread to
+        initialize a control-sequence distribution.  Returning the exact
+        pre-tanh parameters lets the caller use its own seeded generator while
+        preserving the SAC actor's bounded-action transform. For a frozen-base
+        correction policy, the deterministic composed physical-control mean is
+        exact. Deployment deliberately retains the frozen base policy's
+        first-order post-tanh spread, so residual conditioning changes only the
+        MPPI proposal mean. This approximation is used only as proposal
+        covariance, never as a plant or value-model assumption.
+        """
+        mean, log_std, _, _ = self._policy_gaussian_parameters_batch(
+            observations
+        )
+        return mean, log_std
+
+    def policy_gaussian_parameters_with_base_batch(self, observations):
+        """Return composed and frozen-base Gaussians in one inference pass.
+
+        Dynamic-Actor deployment applies an additional causal correction
+        authority after evaluating the composed correction policy.  Returning
+        the already-computed base Gaussian avoids a second frozen-Actor forward
+        pass without changing any proposal values or random draws.
+        """
+
+        mean, log_std, base_mean, base_log_std = (
+            self._policy_gaussian_parameters_batch(observations)
+        )
+        if base_mean is None or base_log_std is None:
+            raise RuntimeError(
+                "joint base Gaussian is only defined for correction policies"
+            )
+        return mean, log_std, base_mean, base_log_std
 
     def correction_base_gaussian_parameters_batch(self, observations):
         """Return the frozen base Gaussian for an initialized correction Actor."""
@@ -715,7 +911,7 @@ class SACAgent:
             )
         with torch.no_grad():
             tensor = torch.as_tensor(data, device=self.device)
-            mean, log_std = self.base_actor.distribution(tensor)
+            _, mean, log_std = self._mapped_base_distribution(tensor)
         if not bool(torch.isfinite(mean).all() and torch.isfinite(log_std).all()):
             raise FloatingPointError("SAC base Gaussian contains NaN or Inf")
         return (
@@ -868,7 +1064,11 @@ class SACAgent:
             observation_tensor = torch.as_tensor(
                 observation_array, device=self.device
             ).unsqueeze(0)
-            action = self.base_actor.mean_action(observation_tensor)
+            action = self._map_frozen_base_action(
+                self.base_actor.mean_action(
+                    self._base_observation(observation_tensor)
+                )
+            )
         if not bool(torch.isfinite(action).all()):
             raise FloatingPointError("frozen base action produced NaN or Inf")
         return action[0].cpu().numpy().astype(np.float32)
@@ -965,7 +1165,11 @@ class SACAgent:
                 candidate_array, device=self.device
             ).unsqueeze(0)
             base_tensor = (
-                self.base_actor.mean_action(observation_tensor)
+                self._map_frozen_base_action(
+                    self.base_actor.mean_action(
+                        self._base_observation(observation_tensor)
+                    )
+                )
                 if base_array is None
                 else torch.as_tensor(
                     base_array, device=self.device

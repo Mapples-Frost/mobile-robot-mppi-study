@@ -59,6 +59,26 @@ class ResidualPrediction:
             raise FloatingPointError("combined prediction produced NaN or Inf")
         return value
 
+    @property
+    def supports_rollout_batch(self):
+        return bool(
+            getattr(self.residual, "supports_combined_rollout", False)
+        )
+
+    def rollout_batch(
+        self, initial_state, controls, dt, state_spec, method="euler"
+    ):
+        if not self.supports_rollout_batch:
+            raise RuntimeError("residual dynamics has no batch-rollout fast path")
+        return self.residual.combined_rollout(
+            self.nominal,
+            initial_state,
+            controls,
+            dt,
+            state_spec,
+            method,
+        )
+
 
 class OracleResidualPrediction:
     """Exact derivative difference for explicit low-order oracle ablations."""

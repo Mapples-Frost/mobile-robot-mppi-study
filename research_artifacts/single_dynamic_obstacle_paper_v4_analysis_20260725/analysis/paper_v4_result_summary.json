@@ -1,0 +1,28 @@
+{
+  "analysis_code_sha256": "76e55fc5cd1a4ca6ee9bbad3adc44fa012dd5fc0ca39d4bdccffe1bdc90b1962",
+  "formal_outcomes_opened_after_complete_matrix": true,
+  "input_file_count": 9300,
+  "input_file_manifest_sha256": "f4655176f88445f32049f187f21f2b42519fc4ed6ccb2f6bd059704b842765ce",
+  "primary_gates": {
+    "behavior_matrix_confirmatory_gate": false,
+    "pooled_collision_rate_noninferiority_margin_2pp": true,
+    "practically_meaningful_success_improvement_ge_10pp": false,
+    "publication_claim_pending_independent_timing_cohort": true,
+    "split_harm_gates": {
+      "id": {
+        "collision_no_harm": true,
+        "success_no_harm": true
+      },
+      "ood": {
+        "collision_no_harm": true,
+        "success_no_harm": false
+      }
+    },
+    "statistically_confirmed_success_improvement": false
+  },
+  "protocol_sha256": "c482dd3c8429768dd29bbc5836594d8842a567fe11591cc308b9eaede304cd33",
+  "registry_sha256": "91cc59c6025296bcb4aa5f8839bd5bc129159c109730f52c5c9ac13d03b47b56",
+  "schema_version": 1,
+  "study_id": "single_dynamic_obstacle_paper_v4",
+  "timing_conclusion": "pending_independent_exclusive_rtx5060_timing_cohort"
+}

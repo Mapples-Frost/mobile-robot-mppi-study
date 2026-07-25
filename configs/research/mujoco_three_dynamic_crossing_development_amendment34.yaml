@@ -1,0 +1,27 @@
+include: mujoco_three_dynamic_crossing_development_amendment33.yaml
+
+experiment:
+  name: mujoco_three_dynamic_crossing_development_amendment34
+
+planner:
+  probabilistic_obstacle_traversal_window_temporal_abort_full_horizon_corroboration_enabled: true
+
+three_obstacle_amendment:
+  version: 34
+  reason: >-
+    amendment33_seed730100253_reached_2p455m_but_collided_after_the_short_clearance_certificate_remained_near_zero_while_the_same_selected_forward_trajectory_full_main_horizon_risk_was_already_probability_0p073_mass_0p417_at_progress_2p146_and_probability_0p333_mass_1p886_at_progress_2p190_both_before_the_2p234m_crossing_center
+  intervention: corroborate_the_existing_temporal_pre_center_abort_with_probability_mass_from_at_least_the_main_36_step_horizon_of_the_same_causal_certified_forward_trajectory_while_leaving_the_short_clearance_certificate_safe_gate_and_all_thresholds_unchanged
+  obstacle_future_truth_used: false
+  obstacle_identity_used: false
+  crossing_geometry_source: online_forecast_plus_polyline_reference
+  behavior_parameter_changed: true
+  candidate_values_changed: false
+  certificate_threshold_changed: false
+  control_horizon_changed: false
+  control_limit_changed: false
+  deterministic_computation_reused: true
+  diagnostic_profiling_changed: false
+  rollout_budget_changed: false
+  total_rollouts_per_decision: 600
+  active_waiting_allowed: true
+  active_traversal_objective: true

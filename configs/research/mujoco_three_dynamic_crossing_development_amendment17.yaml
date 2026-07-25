@@ -1,0 +1,18 @@
+include: mujoco_three_dynamic_crossing_development_amendment13.yaml
+
+experiment:
+  name: mujoco_three_dynamic_crossing_development_amendment17
+
+planner:
+  optimizer_diagnostics_enabled: true
+
+three_obstacle_amendment:
+  version: 17
+  reason: distinguish_candidate_quality_from_weighted_update_cancellation_at_the_first_crossing
+  intervention: diagnostic_only_optimizer_best_vs_selected_sequence_audit
+  obstacle_future_truth_used: false
+  obstacle_process_changed: false
+  tracker_association_changed: false
+  probability_risk_changed: false
+  rollout_budget_changed: false
+  behavior_parameter_changed: false

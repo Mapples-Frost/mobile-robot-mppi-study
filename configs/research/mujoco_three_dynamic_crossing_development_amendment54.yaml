@@ -1,0 +1,38 @@
+include: mujoco_three_dynamic_crossing_development_amendment53.yaml
+
+experiment:
+  name: mujoco_three_dynamic_crossing_development_amendment54
+
+three_obstacle_amendment:
+  version: 54
+  reason: >-
+    amendment53_preserved_the_six_direction_lattice_and_hard_risk_override_but_during_the_second_deadline_rejected_window_the_same_cycle_minimum_probability_ranking_selected_positive_0.60_mps_lattice_members_for_eleven_consecutive_cycles_even_though_the_causal_deadline_predicate_already_proved_forward_clearance_could_not_finish_before_the_closing_laserscan_ttc;_the_first_window_selected_reverse_and_remained_safe
+  intervention: >-
+    only_inside_the_admission_deadline_hold_hard_risk_override_exclude_the_three_positive_velocity_members_from_the_existing_six_slot_lattice_and_select_the_minimum_same_cycle_causal_probability_risk_among_the_three_existing_reverse_members
+  obstacle_future_truth_used: false
+  obstacle_identity_used: false
+  crossing_geometry_source: online_forecast_plus_polyline_reference
+  behavior_parameter_changed: false
+  candidate_values_changed: false
+  certificate_threshold_changed: false
+  commit_admission_contract_changed: true
+  commit_admission_exit_deadline_contract_changed: false
+  commit_admission_exit_deadline_hold_authority_changed: false
+  commit_admission_exit_deadline_hard_risk_override_changed: true
+  commit_admission_exit_deadline_forward_filter_changed: true
+  pre_center_exit_deadline_contract_changed: false
+  pre_center_deadline_retreat_escape_transaction_changed: false
+  post_center_execution_arbitration_changed: false
+  post_center_emergency_lattice_binding_changed: false
+  post_center_escape_transaction_latch_changed: false
+  raw_temporal_signal_binding_changed: false
+  temporal_escape_authority_preserved: true
+  temporal_abort_direction_contract_changed: false
+  control_horizon_changed: false
+  control_limit_changed: false
+  deterministic_computation_reused: true
+  diagnostic_profiling_changed: false
+  rollout_budget_changed: false
+  total_rollouts_per_decision: 600
+  active_waiting_allowed: true
+  active_traversal_objective: true

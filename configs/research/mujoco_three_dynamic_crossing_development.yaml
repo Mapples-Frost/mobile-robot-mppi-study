@@ -1,0 +1,62 @@
+include: mujoco_v3_probabilistic_crossing_smoke_amendment17_residual_runtime_stage3.yaml
+
+experiment:
+  name: mujoco_three_dynamic_crossing_development
+  seed: 730100252
+  max_steps: 500
+
+scene:
+  name: three_independent_dynamic_crossings
+  obstacles:
+    - type: cylinder
+      position: [-2.4, -3.2]
+      radius: 0.25
+      height: 0.5
+      motion:
+        type: linear_ping_pong
+        start: [-2.4, -3.2]
+        end: [-2.4, -0.2]
+        period_s: 7.0
+        phase_s: 2.0
+        phase_jitter_s: 0.35
+        period_scale_range: [0.92, 1.08]
+        endpoint_jitter_m: 0.08
+    - type: cylinder
+      position: [0.0, -0.2]
+      radius: 0.25
+      height: 0.5
+      motion:
+        type: linear_ping_pong
+        start: [0.0, -0.2]
+        end: [0.0, -3.4]
+        period_s: 8.0
+        phase_s: 1.5
+        phase_jitter_s: 0.40
+        period_scale_range: [0.90, 1.10]
+        endpoint_jitter_m: 0.08
+    - type: cylinder
+      position: [2.4, -3.3]
+      radius: 0.25
+      height: 0.5
+      motion:
+        type: linear_ping_pong
+        start: [2.4, -3.3]
+        end: [2.4, -0.1]
+        period_s: 9.0
+        phase_s: 3.0
+        phase_jitter_s: 0.45
+        period_scale_range: [0.90, 1.10]
+        endpoint_jitter_m: 0.08
+
+perception:
+  dynamic_obstacle_tracker:
+    maximum_tracks: 3
+
+three_obstacle_design:
+  simulator_truth_used_by_controller: false
+  causal_laser_scan_only: true
+  probabilistic_forecast_count: 3
+  obstacle_identity_exposed_to_controller: false
+  rollout_budget_unchanged: true
+  total_rollouts_per_decision: 600
+  sealed_seeds_opened: false

@@ -1,0 +1,22 @@
+include: mujoco_three_dynamic_crossing_development_amendment13.yaml
+
+experiment:
+  name: mujoco_three_dynamic_crossing_development_amendment16
+
+planner:
+  probabilistic_obstacle_risk_weight: 35.0
+
+three_obstacle_amendment:
+  version: 16
+  reason: >-
+    the_single_obstacle_soft_risk_mass_weight_dominated_progress_under_multi_forecast_accumulation_despite_most_candidates_remaining_below_the_hard_threshold
+  intervention: lower_soft_risk_mass_weight_with_unchanged_hard_probability_filter_and_margin
+  obstacle_future_truth_used: false
+  obstacle_process_changed: false
+  tracker_association_changed: false
+  probability_risk_changed: true
+  probabilistic_obstacle_hard_threshold_changed: false
+  probabilistic_obstacle_safety_margin_changed: false
+  rollout_budget_changed: false
+  active_waiting_allowed: true
+  active_traversal_objective: true

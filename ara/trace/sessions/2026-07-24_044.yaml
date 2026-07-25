@@ -1,0 +1,78 @@
+session:
+  id: "2026-07-24_044"
+  timestamp: "2026-07-24T23:00:00+08:00"
+  summary: "Rejected non-replicating dynamic Actor variants, added same-cycle fail-closed proposal filtering, and independently replicated a modest positive V5 Amendment 6 single-obstacle result."
+
+events_logged:
+  - type: dead_end
+    id: N179
+    provenance: ai-executed
+    summary: "V5 Amendment 2's early gain failed fresh-seed safety replication with three candidate-only collisions."
+  - type: decision
+    id: N180
+    provenance: user
+    summary: "Kept the active research scope at one dynamic obstacle while continuing direct RL repair."
+  - type: dead_end
+    id: N181
+    provenance: ai-executed
+    summary: "V5 Amendments 3 and 4 partially repaired training-related states but failed fresh collision/completion checks."
+  - type: decision
+    id: N182
+    provenance: ai-suggested
+    summary: "Changed from a delayed permanent veto to current-cycle rejection of cost-inferior guided candidates."
+  - type: experiment
+    id: N183
+    provenance: ai-executed
+    summary: "V5 Amendment 6 update 250 plus same-cycle filtering improved success 13/16 to 14/16 without a new collision over two untouched development batches."
+  - type: claim
+    id: C121
+    provenance: ai-suggested
+    summary: "Weakened the original V5 Amendment 2 claim after failed independent replication."
+  - type: claim
+    id: C122
+    provenance: ai-suggested
+    summary: "Added bounded development support for the retained V5 Amendment 6 same-cycle-filtered candidate."
+  - type: heuristic
+    id: H97
+    provenance: ai-suggested
+    summary: "Gate Actor-guided elites using current-cycle cost advantage while preserving the rollout budget."
+
+ai_actions:
+  - action: "Extended CUDA correction training with collision-exposure critical sampling, critical teacher weighting, per-action target exploration and checkpoint retention."
+    provenance: ai-executed
+    files_changed: ["experiments/dynamic_uncertainty/train_dynamic_actor_correction.py", "configs/research/dynamic_actor_temporal_bidirectional_correction_development_amendment4.yaml", "configs/research/dynamic_actor_temporal_bidirectional_correction_development_amendment5.yaml", "configs/research/dynamic_actor_temporal_bidirectional_correction_development_amendment6.yaml"]
+  - action: "Ran corrected-source V5 Amendment 3, V5 Amendment 4 and later checkpoint MuJoCo screens while preserving failed artifacts."
+    provenance: ai-executed
+    files_changed: ["research_artifacts/dynamic_actor_v5a3_vs_v3_fresh_corrected_shadow_seed730100172/", "research_artifacts/dynamic_actor_v5a4_selected_vs_v3_fresh_shadow_seed730100180/"]
+  - action: "Implemented same-cycle guided-cost filtering and exposed it through the dynamic Actor probe."
+    provenance: ai-executed
+    files_changed: ["src/mobile_robot_mppi/planning/rl_driven_mppi.py", "experiments/dynamic_uncertainty/run_dynamic_actor_mujoco_probe.py", "tests/planners/test_paper_rl_driven_mppi.py"]
+  - action: "Repaired numerically degenerate MPPI weight normalization that could emit infinite ESS and make strict JSON metrics unwritable."
+    provenance: ai-executed
+    files_changed: ["src/mobile_robot_mppi/planning/mppi.py"]
+  - action: "Added step and episode aggregation for same-cycle filter activation and filtered-candidate counts."
+    provenance: ai-executed
+    files_changed: ["src/mobile_robot_mppi/evaluation/metrics.py"]
+  - action: "Ran two eight-pair previously unused development batches and bound the retained checkpoint hash and pooled outcomes in a summary artifact."
+    provenance: ai-executed
+    files_changed: ["research_artifacts/dynamic_actor_v5a6_u000250_samecycle_fresh_replication_summary.json"]
+  - action: "Ran 96 focused dynamic-Actor, Paper RL-MPPI, generic MPPI, runtime-contract and cross-layer-reliability regression tests."
+    provenance: ai-executed
+    files_changed: []
+
+claims_touched:
+  - id: C121
+    action: weakened
+    provenance: ai-suggested
+  - id: C122
+    action: created
+    provenance: ai-suggested
+
+open_threads:
+  - "Freeze and run a larger fresh single-obstacle development matrix before requesting sealed confirmation."
+  - "Add one untouched mechanism smoke episode if aggregate same-cycle filter counters are required in an artifact; the existing 16-pair results predate the metrics aggregation wiring."
+  - "Resolve the source-and-candidate collision cases on seeds 730100192 and 730100200 without tuning on sealed seeds."
+  - "Retrain and qualify a Critic for the 84-dimensional observation and bidirectional action space before any terminal-value integration."
+
+ai_suggestions_pending:
+  - "Retain V5 Amendment 6 update 250 plus same-cycle filtering as the current development candidate, but do not describe it as sealed or publication-confirmed evidence."

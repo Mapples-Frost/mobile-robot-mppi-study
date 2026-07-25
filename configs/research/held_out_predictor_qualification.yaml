@@ -1,0 +1,57 @@
+schema_version: 1
+study_id: held_out_predictor_qualification
+stage: offline_predictor_qualification
+platform: windows_native_only
+id_obstacle_config_path: configs/research/dynamic_obstacle_process_v3.yaml
+ood_override_config_path: configs/research/dynamic_obstacle_process_v3_ood.yaml
+ordinary_config_path: configs/research/ordinary_imm_v3_development.yaml
+change_aware_config_path: configs/research/change_aware_imm_v3_development_amendment2.yaml
+seed_registry_path: configs/seeds/dynamic_uncertainty_splits.yaml
+output_dir: research_artifacts/held_out_predictor_qualification
+schedule_seed: 730199992
+worker_count: 4
+splits:
+  held_out_id:
+    seed_start: 730200001
+    seed_count: 10
+    noise_profiles: [low, medium]
+  held_out_ood:
+    seed_start: 730300001
+    seed_count: 10
+    noise_profiles: [process_shift, sensor_shift]
+processes:
+  - stochastic_cruise
+  - stochastic_shuttle
+  - branching_patrol
+  - hybrid_patrol
+prediction:
+  horizon_s: 3.0
+  forecast_stride_steps: 4
+  warmup_s: 1.0
+statistics:
+  bootstrap_seed: 730199991
+  bootstrap_resamples: 10000
+  family_alpha: 0.05
+gate:
+  maximum_id_change_nll_ratio_to_ordinary: 0.95
+  maximum_ood_change_nll_ratio_to_ordinary: 0.98
+  maximum_id_change_nll_ratio_to_gaussian: 0.90
+  maximum_ood_change_nll_ratio_to_gaussian: 0.98
+  minimum_id_macro_coverage_90: 0.68
+  maximum_id_macro_coverage_90: 0.95
+  minimum_id_macro_coverage_95: 0.72
+  maximum_id_macro_coverage_95: 0.98
+  minimum_change_coverage_ratio_to_ordinary: 1.0
+  maximum_overall_ade_ratio_to_ordinary: 1.05
+  maximum_id_p1_ade_ratio_to_ordinary: 1.05
+  maximum_id_p1_false_triggers_per_minute: 3.0
+  maximum_holm_adjusted_p: 0.05
+scope_guards:
+  id_v3_frozen: true
+  ood_shift_frozen: true
+  predictor_parameters_frozen: true
+  held_out_only: true
+  sealed_registry_imported: false
+  collision_risk_enabled: false
+  mppi_enabled: false
+  rl_icode_hss_enabled: false

@@ -1,0 +1,154 @@
+{
+  "by_split": {
+    "id": {
+      "collision_rate": {
+        "control_events": 39,
+        "control_rate": 0.21666666666666667,
+        "exact_mcnemar_two_sided_p": 0.005222879350185394,
+        "n": 180,
+        "paired_table": {
+          "n00": 134,
+          "n01": 23,
+          "n10": 7,
+          "n11": 16
+        },
+        "tango_one_sided_95ci_lower": -0.14082669528987435,
+        "tango_one_sided_95ci_upper": -0.04073410032514904,
+        "tango_two_sided_95ci": [
+          -0.15164480359224697,
+          -0.031195608088179658
+        ],
+        "treatment_events": 23,
+        "treatment_minus_control": -0.0888888888888889,
+        "treatment_rate": 0.12777777777777777
+      },
+      "success_rate": {
+        "control_events": 141,
+        "control_rate": 0.7833333333333333,
+        "exact_mcnemar_two_sided_p": 0.8388197422027588,
+        "n": 180,
+        "paired_table": {
+          "n00": 26,
+          "n01": 11,
+          "n10": 13,
+          "n11": 130
+        },
+        "tango_one_sided_95ci_lower": -0.03506933616290202,
+        "tango_one_sided_95ci_upper": 0.05792483232516463,
+        "tango_two_sided_95ci": [
+          -0.0446896113867252,
+          0.06775012405113787
+        ],
+        "treatment_events": 143,
+        "treatment_minus_control": 0.011111111111111072,
+        "treatment_rate": 0.7944444444444444
+      }
+    },
+    "ood": {
+      "collision_rate": {
+        "control_events": 38,
+        "control_rate": 0.2111111111111111,
+        "exact_mcnemar_two_sided_p": 0.07295138851623051,
+        "n": 180,
+        "paired_table": {
+          "n00": 129,
+          "n01": 25,
+          "n10": 13,
+          "n11": 13
+        },
+        "tango_one_sided_95ci_lower": -0.1242317927612806,
+        "tango_one_sided_95ci_upper": -0.010653577907304524,
+        "tango_two_sided_95ci": [
+          -0.13586600942879618,
+          0.0004745963246932186
+        ],
+        "treatment_events": 26,
+        "treatment_minus_control": -0.06666666666666668,
+        "treatment_rate": 0.14444444444444443
+      },
+      "success_rate": {
+        "control_events": 142,
+        "control_rate": 0.7888888888888889,
+        "exact_mcnemar_two_sided_p": 1.0,
+        "n": 180,
+        "paired_table": {
+          "n00": 19,
+          "n01": 19,
+          "n10": 19,
+          "n11": 123
+        },
+        "tango_one_sided_95ci_lower": -0.05743839664364139,
+        "tango_one_sided_95ci_upper": 0.05743839664364139,
+        "tango_two_sided_95ci": [
+          -0.06896171347079183,
+          0.06896171347079183
+        ],
+        "treatment_events": 142,
+        "treatment_minus_control": 0.0,
+        "treatment_rate": 0.7888888888888889
+      }
+    },
+    "pooled": {
+      "collision_rate": {
+        "control_events": 77,
+        "control_rate": 0.21388888888888888,
+        "exact_mcnemar_two_sided_p": 0.0009143907212875583,
+        "n": 360,
+        "paired_table": {
+          "n00": 263,
+          "n01": 48,
+          "n10": 20,
+          "n11": 29
+        },
+        "tango_one_sided_95ci_lower": -0.11591851385536506,
+        "tango_one_sided_95ci_upper": -0.04095969696890778,
+        "tango_two_sided_95ci": [
+          -0.12354910047678133,
+          -0.033826667158333545
+        ],
+        "treatment_events": 49,
+        "treatment_minus_control": -0.07777777777777778,
+        "treatment_rate": 0.1361111111111111
+      },
+      "success_rate": {
+        "control_events": 283,
+        "control_rate": 0.7861111111111111,
+        "exact_mcnemar_two_sided_p": 0.899076313652859,
+        "n": 360,
+        "paired_table": {
+          "n00": 45,
+          "n01": 30,
+          "n10": 32,
+          "n11": 253
+        },
+        "tango_one_sided_95ci_lower": -0.030866006200537054,
+        "tango_one_sided_95ci_upper": 0.042085128073718225,
+        "tango_two_sided_95ci": [
+          -0.03807652602017317,
+          0.049335857687305695
+        ],
+        "treatment_events": 285,
+        "treatment_minus_control": 0.005555555555555536,
+        "treatment_rate": 0.7916666666666666
+      }
+    }
+  },
+  "contrast": "B11_full_proposed_minus_B00_strong_nominal_mppi",
+  "gates": {
+    "behavior_matrix_confirmatory_gate": false,
+    "pooled_collision_rate_noninferiority_margin_2pp": true,
+    "practically_meaningful_success_improvement_ge_10pp": false,
+    "publication_claim_pending_independent_timing_cohort": true,
+    "split_harm_gates": {
+      "id": {
+        "collision_no_harm": true,
+        "success_no_harm": true
+      },
+      "ood": {
+        "collision_no_harm": true,
+        "success_no_harm": false
+      }
+    },
+    "statistically_confirmed_success_improvement": false
+  }
+}

@@ -1,0 +1,22 @@
+schema_version: 1
+protocol: dynamic_actor_correction_development_v1
+
+source_checkpoint: research_artifacts/dynamic_actor_temporal_bidirectional_correction_v5_amendment6/checkpoints/improved_update_000250.pt
+source_checkpoint_sha256: 714694f8d179f02b90c14e56c9e3e4f29a0101b70ad53f3cc795eb72dea7a1b5
+
+collection:
+  base_config: configs/research/mujoco_three_dynamic_crossing_development.yaml
+  output_dir: research_artifacts/dynamic_actor_three_obstacle_teacher_smoke_seed730100253
+  episode_seeds: [730100253]
+  validation_seeds: [730100253]
+  maximum_steps: 500
+  low_risk_maximum_probability: 0.15
+  minimum_motion_speed_mps: 0.10
+  minimum_candidate_feasible_fraction: 0.10
+
+three_obstacle_teacher_design:
+  standard_risk_aware_mppi: true
+  learned_proposal_control_enabled: false
+  causal_lidar_only_student_observation: true
+  simulator_future_truth_used: false
+  total_rollouts_per_decision: 600

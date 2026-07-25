@@ -1,0 +1,77 @@
+session:
+  id: "2026-07-23_038"
+  timestamp: "2026-07-23T21:45:00+08:00"
+  ended: "2026-07-23T22:05:00+08:00"
+  summary: "Completed the frozen three-seed Stage 2 residual matrix, passed development safety/noninferiority, demonstrated bounded residual control contribution, and retained runtime and checkpoint-selection limits."
+
+events_logged:
+  - type: experiment
+    id: N159
+    provenance: ai-executed
+    summary: "The 12-episode matrix completed with 12 goal reaches, zero collisions and a passing frozen development gate."
+  - type: claim
+    id: C111
+    provenance: ai-suggested
+    summary: "Task-aware residuals passed the three-seed development safety and noninferiority gate."
+  - type: claim
+    id: C112
+    provenance: ai-suggested
+    summary: "Offline H36 ranking did not establish a fastest closed-loop checkpoint."
+  - type: claim
+    id: C113
+    provenance: ai-suggested
+    summary: "Observed safety was not produced by permanent nominal fallback."
+  - type: heuristic
+    id: H86
+    provenance: ai-suggested
+    summary: "Audit the time of global minimum clearance and supplement it with distributional safety metrics."
+  - type: heuristic
+    id: H87
+    provenance: ai-suggested
+    summary: "Separate shield acceptance from paired-realized executed-control contribution."
+
+ai_actions:
+  - action: "Froze the complete Stage 2 development protocol and carried forward byte-identical seed-730100006 pilot artifacts."
+    provenance: ai-executed
+    files_changed:
+      - "configs/research/dynamic_uncertainty_residual_stage2_task_aware_development.yaml"
+      - "research_artifacts/dynamic_uncertainty_residual_stage2_task_aware_development/"
+  - action: "Ran the remaining eight MuJoCo episodes for seeds 730100008 and 730100010 and regenerated the full automatic gate."
+    provenance: ai-executed
+    files_changed:
+      - "research_artifacts/dynamic_uncertainty_residual_stage2_task_aware_development/"
+  - action: "Implemented a paired contribution and clearance-distribution audit with explicit non-counterfactual scope."
+    provenance: ai-executed
+    files_changed:
+      - "experiments/dynamic_uncertainty/analyze_task_aware_residual_contribution.py"
+      - "research_artifacts/dynamic_uncertainty_residual_stage2_task_aware_development/contribution_audit.json"
+  - action: "Corrected generic runner metadata so Stage 2 artifacts no longer identify themselves as Stage 1."
+    provenance: ai-executed
+    files_changed:
+      - "experiments/dynamic_uncertainty/run_residual_dynamics_stage1.py"
+      - "tests/dynamic_uncertainty/test_residual_dynamics_stage1.py"
+  - action: "Wrote the full development report and evidence table and ran 97 relevant tests."
+    provenance: ai-executed
+    files_changed:
+      - "docs/experiments/dynamic_uncertainty/RESIDUAL_DYNAMICS_STAGE2_TASK_AWARE_DEVELOPMENT_RESULT.md"
+      - "ara/evidence/tables/table19_stage2_residual_development.md"
+
+claims_touched:
+  - id: C111
+    action: created
+    provenance: ai-suggested
+  - id: C112
+    action: created
+    provenance: ai-suggested
+  - id: C113
+    action: created
+    provenance: ai-suggested
+
+open_threads:
+  - "Reduce residual dual-planner P95 from 221.84--422.08 ms toward the 100 ms control period without changing qualified behavior."
+  - "Requalify fixed-seed candidate costs, selected actions and safety outcomes after runtime optimization."
+  - "Keep RL disabled until the residual runtime gate is resolved."
+  - "Do not select a Stage 2 checkpoint or open sealed residual seeds without a frozen selection/evaluation rule."
+
+ai_suggestions_pending:
+  - "Share sampled controls and common rollout costs between nominal and residual evaluations, batch residual inference, and require behavior-equivalence auditing before RL integration."

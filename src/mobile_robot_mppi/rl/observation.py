@@ -26,6 +26,8 @@ class ObservationEncoderConfig:
     path_preview_scale: float = 2.0
     include_residual_context: bool = False
     residual_context_dimension: int = 7
+    include_temporal_scan_delta: bool = False
+    temporal_scan_delta_scale: float = 0.05
     path_cross_track_scale: float = 1.0
     path_curvature_scale: float = 2.0
     path_remaining_scale: float = 6.0
@@ -57,6 +59,12 @@ class ObservationEncoderConfig:
             residual_context_dimension=int(
                 values.get("residual_context_dimension", 7)
             ),
+            include_temporal_scan_delta=bool(
+                values.get("include_temporal_scan_delta", False)
+            ),
+            temporal_scan_delta_scale=float(
+                values.get("temporal_scan_delta_scale", 0.05)
+            ),
             path_cross_track_scale=float(values.get("path_cross_track_scale", 1.0)),
             path_curvature_scale=float(values.get("path_curvature_scale", 2.0)),
             path_remaining_scale=float(values.get("path_remaining_scale", 6.0)),
@@ -74,6 +82,7 @@ class ObservationEncoderConfig:
             self.path_curvature_scale,
             self.path_remaining_scale,
             self.path_preview_scale,
+            self.temporal_scan_delta_scale,
         )
         numeric = np.asarray(positive, dtype=np.float64)
         if not np.isfinite(numeric).all() or np.any(numeric <= 0.0):
@@ -122,6 +131,11 @@ class ObservationEncoder:
         self.config.validate()
         self.action_spec = action_spec
         self._history = []
+        self._previous_scan_features = None
+        self._previous_scan_valid = False
+        self._last_temporal_scan_delta = np.zeros(
+            self.config.lidar_sectors, dtype=np.float32
+        )
 
     @property
     def frame_dimension(self):
@@ -133,6 +147,8 @@ class ObservationEncoder:
             size += self.action_spec.dimension
         if self.config.include_safety_state:
             size += 1
+        if self.config.include_temporal_scan_delta:
+            size += self.config.lidar_sectors
         if self.config.include_path_context:
             # signed cross-track, sin/cos heading error, curvature, remaining,
             # and an explicit path-valid flag.
@@ -149,6 +165,33 @@ class ObservationEncoder:
 
     def reset(self):
         self._history = []
+        self._previous_scan_features = None
+        self._previous_scan_valid = False
+        self._last_temporal_scan_delta.fill(0.0)
+
+    def _temporal_scan_delta(self, scan_encoding, update_state):
+        """Return a causal sector-range delta without simulator future truth."""
+
+        features, valid = scan_encoding
+        features = np.asarray(features, dtype=np.float32)
+        valid = bool(valid)
+        if update_state:
+            if valid and self._previous_scan_valid:
+                delta = np.clip(
+                    (features - self._previous_scan_features)
+                    / float(self.config.temporal_scan_delta_scale),
+                    -1.0,
+                    1.0,
+                ).astype(np.float32)
+            else:
+                delta = np.zeros(
+                    self.config.lidar_sectors, dtype=np.float32
+                )
+            self._previous_scan_features = features.copy() if valid else None
+            self._previous_scan_valid = valid
+            self._last_temporal_scan_delta = delta.copy()
+            return delta
+        return self._last_temporal_scan_delta.copy()
 
     def _scan_features(self, scan):
         sectors = self.config.lidar_sectors
@@ -184,6 +227,7 @@ class ObservationEncoder:
         previous_action=None,
         safety_override=False,
         scan_encoding=None,
+        temporal_scan_delta=None,
         path_context=None,
         residual_context=None,
         path_preview=None,
@@ -246,6 +290,22 @@ class ObservationEncoder:
                 raise ValueError("cached scan features must be finite")
         features.extend(scan_features.tolist())
         features.append(scan_valid)
+        if self.config.include_temporal_scan_delta:
+            if temporal_scan_delta is None:
+                temporal_scan_delta = np.zeros(
+                    self.config.lidar_sectors, dtype=np.float32
+                )
+            temporal_scan_delta = np.asarray(
+                temporal_scan_delta, dtype=np.float32
+            ).reshape(-1)
+            if (
+                temporal_scan_delta.shape != (self.config.lidar_sectors,)
+                or not np.isfinite(temporal_scan_delta).all()
+            ):
+                raise ValueError(
+                    "temporal scan delta must match configured lidar sectors"
+                )
+            features.extend(temporal_scan_delta.tolist())
         if self.config.include_residual_context:
             if residual_context is None:
                 residual_context = np.zeros(
@@ -303,12 +363,20 @@ class ObservationEncoder:
         appended to a temporary copy of the current history only.
         """
 
+        if scan_encoding is None:
+            scan_encoding = self._scan_features(observation.scan)
+        temporal_scan_delta = (
+            self._temporal_scan_delta(scan_encoding, update_history)
+            if self.config.include_temporal_scan_delta
+            else None
+        )
         frame = self._frame_for_target(
             observation,
             target,
             previous_action=previous_action,
             safety_override=safety_override,
             scan_encoding=scan_encoding,
+            temporal_scan_delta=temporal_scan_delta,
             path_context=path_context,
             residual_context=residual_context,
             path_preview=path_preview,
@@ -458,6 +526,11 @@ class ObservationEncoder:
             np.broadcast_to(scan_features[None, :], (batch, scan_features.size)),
             np.full((batch, 1), float(scan_valid), dtype=np.float64),
         ))
+        if self.config.include_temporal_scan_delta:
+            blocks.append(np.broadcast_to(
+                self._last_temporal_scan_delta[None, :],
+                (batch, self.config.lidar_sectors),
+            ))
         if self.config.include_residual_context:
             if residual_context_features is None:
                 residual_context_features = np.zeros(

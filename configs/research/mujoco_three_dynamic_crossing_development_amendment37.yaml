@@ -1,0 +1,28 @@
+include: mujoco_three_dynamic_crossing_development_amendment36.yaml
+
+experiment:
+  name: mujoco_three_dynamic_crossing_development_amendment37
+
+planner:
+  probabilistic_obstacle_traversal_window_commit_admission_full_horizon_enabled: true
+
+three_obstacle_amendment:
+  version: 37
+  reason: >-
+    amendment36_rejected_the_final_dangerous_commit_one_cycle_too_late_because_its_short_clearance_certificate_was_0p0728_1p2479_and_passed_while_the_same_selected_candidate_already_exceeded_the_existing_0p08_1p50_limits_over_the_full_36_step_main_horizon_at_0p0815_1p5401
+  intervention: require_both_the_existing_short_clearance_certificate_and_the_same_candidate_full_main_horizon_causal_certificate_to_satisfy_the_unchanged_0p08_1p50_limits_before_a_new_commit_can_be_admitted_or_remain_armed_before_entry
+  obstacle_future_truth_used: false
+  obstacle_identity_used: false
+  crossing_geometry_source: online_forecast_plus_polyline_reference
+  behavior_parameter_changed: true
+  candidate_values_changed: false
+  certificate_threshold_changed: false
+  commit_admission_contract_changed: true
+  control_horizon_changed: false
+  control_limit_changed: false
+  deterministic_computation_reused: true
+  diagnostic_profiling_changed: false
+  rollout_budget_changed: false
+  total_rollouts_per_decision: 600
+  active_waiting_allowed: true
+  active_traversal_objective: true

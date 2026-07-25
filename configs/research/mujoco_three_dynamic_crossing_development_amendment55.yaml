@@ -1,0 +1,39 @@
+include: mujoco_three_dynamic_crossing_development_amendment54.yaml
+
+experiment:
+  name: mujoco_three_dynamic_crossing_development_amendment55
+
+three_obstacle_amendment:
+  version: 55
+  reason: >-
+    amendment54_correctly_filtered_forward_actions_during_admission_deadline_hard_risk_override_but_a_later_started_commit_abort_exposed_a_retreat_transaction_lifetime_gap;_the_exit_deadline_escape_transaction_and_six_direction_lattice_cleared_when_the_raw_laserscan_trigger_transiently_dropped_even_though_retreat_requested_and_retreat_temporal_lattice_requested_remained_true_until_collision
+  intervention: >-
+    keep_the_existing_exit_deadline_retreat_escape_transaction_and_its_latched_causal_action_authoritative_for_the_full_retreat_transaction;_raw_trigger_dropout_no_longer_clears_it_while_retreat_and_temporal_lattice_requests_remain_active_and_existing_retreat_completion_cancellation_and_reset_boundaries_still_clear_it
+  obstacle_future_truth_used: false
+  obstacle_identity_used: false
+  crossing_geometry_source: online_forecast_plus_polyline_reference
+  behavior_parameter_changed: false
+  candidate_values_changed: false
+  certificate_threshold_changed: false
+  commit_admission_contract_changed: false
+  commit_admission_exit_deadline_contract_changed: false
+  commit_admission_exit_deadline_hold_authority_changed: false
+  commit_admission_exit_deadline_hard_risk_override_changed: false
+  commit_admission_exit_deadline_forward_filter_changed: false
+  pre_center_exit_deadline_contract_changed: false
+  pre_center_deadline_retreat_escape_transaction_changed: true
+  pre_center_deadline_retreat_escape_transaction_lifetime_changed: true
+  post_center_execution_arbitration_changed: false
+  post_center_emergency_lattice_binding_changed: false
+  post_center_escape_transaction_latch_changed: false
+  raw_temporal_signal_binding_changed: false
+  temporal_escape_authority_preserved: true
+  temporal_abort_direction_contract_changed: false
+  control_horizon_changed: false
+  control_limit_changed: false
+  deterministic_computation_reused: true
+  diagnostic_profiling_changed: false
+  rollout_budget_changed: false
+  total_rollouts_per_decision: 600
+  active_waiting_allowed: true
+  active_traversal_objective: true

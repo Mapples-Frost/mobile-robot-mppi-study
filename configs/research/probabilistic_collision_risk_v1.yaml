@@ -1,0 +1,43 @@
+schema_version: 1
+study_id: probabilistic_collision_risk_v1_qualification
+stage: offline_risk_interface_qualification
+platform: windows_native_only
+
+risk_interface:
+  implementation: conservative_tangent_halfspace_mixture_v1
+  forecast_auxiliary_key: probabilistic_obstacle_forecasts
+  robot_radius_m: 0.25
+  safety_margin_m: 0.10
+  minimum_position_std_m: 0.01
+  temporal_aggregation: union_bound_and_unclipped_probability_mass
+
+planner_adapter:
+  enabled_by_default: false
+  development_smoke_weight: 75.0
+  development_smoke_hard_threshold: 0.20
+  development_smoke_hard_penalty: 10000.0
+
+qualification_gate:
+  all_input_contract_tests_pass: true
+  all_outputs_finite_and_in_unit_interval: true
+  mean_inside_combined_radius_returns_one: true
+  closer_outside_mean_has_higher_risk: true
+  larger_radial_covariance_has_higher_risk: true
+  mixture_is_weight_linear: true
+  component_permutation_invariant: true
+  crossing_trajectory_risk_exceeds_bypass: true
+  temporal_union_bound_dominates_every_step: true
+  disabled_mppi_adapter_is_cost_identical: true
+  enabled_mppi_adapter_penalizes_crossing: true
+  synthetic_monte_carlo_upper_bound_violations: 0
+  maximum_reference_batch_runtime_ms: 25.0
+
+scope_guards:
+  obstacle_v3_frozen: true
+  change_aware_imm_frozen: true
+  synthetic_geometry_only: true
+  held_out_predictor_results_not_reused_for_tuning: true
+  sealed_registry_imported: false
+  closed_loop_mppi_enabled: false
+  rl_icode_hss_enabled: false
+

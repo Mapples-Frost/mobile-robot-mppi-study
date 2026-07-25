@@ -1,0 +1,106 @@
+session:
+  id: "2026-07-23_039"
+  timestamp: "2026-07-23T21:50:00+08:00"
+  ended: "2026-07-23T22:06:00+08:00"
+  summary: "Profiled and optimized the residual stack, retained two negative runtime routes, and passed the current-machine three-seed 100 ms development gate with exact sequential behavior equivalence."
+
+events_logged:
+  - type: decision
+    id: N160
+    provenance: user
+    summary: "Continue behavior-preserving residual runtime optimization before connecting RL."
+  - type: experiment
+    id: N161
+    provenance: ai-executed
+    summary: "CPU thread scaling regressed, while legacy CUDA improved rollout P95 by 45.8% but remained above 100 ms."
+  - type: dead_end
+    id: N162
+    provenance: ai-executed
+    summary: "Eager device-resident RK4 preserved trajectories but was slower than legacy CUDA."
+  - type: experiment
+    id: N163
+    provenance: ai-executed
+    summary: "CUDA Graph replay reduced worst-block residual rollout P95 to 15.19 ms with numerical equivalence."
+  - type: experiment
+    id: N164
+    provenance: ai-executed
+    summary: "Sequential full-controller CUDA-Graph qualification remained safe but missed the 100 ms gate at 136.79 ms."
+  - type: experiment
+    id: N165
+    provenance: ai-executed
+    summary: "Parallel shield planning passed the full development gate at 97.19 ms with 12/12 reaches and zero collisions."
+  - type: claim
+    id: C114
+    provenance: ai-suggested
+    summary: "Optimized residual control meets the current-machine development runtime gate without changing sequential behavior."
+  - type: claim
+    id: C115
+    provenance: ai-suggested
+    summary: "Eager CUDA device residency alone was refuted as a sufficient runtime optimization."
+  - type: heuristic
+    id: H88
+    provenance: ai-suggested
+    summary: "Require full-controller qualification after component microbenchmarks."
+  - type: heuristic
+    id: H89
+    provenance: ai-suggested
+    summary: "Use a static-buffer CUDA Graph for repeated fixed-shape small-network RK4 integration."
+  - type: heuristic
+    id: H90
+    provenance: ai-suggested
+    summary: "Parallelize independent planners while preserving the shield join and audit exact equivalence."
+
+ai_actions:
+  - action: "Profiled residual rollout and ran a preregistered CPU-thread/CUDA backend screen."
+    provenance: ai-executed
+    files_changed:
+      - "experiments/dynamic_uncertainty/benchmark_residual_runtime_stage3.py"
+      - "configs/research/dynamic_uncertainty_residual_runtime_stage3.yaml"
+      - "research_artifacts/dynamic_uncertainty_residual_runtime_stage3_screen/"
+  - action: "Implemented and retained the negative eager device-resident residual rollout."
+    provenance: ai-executed
+    files_changed:
+      - "configs/research/dynamic_uncertainty_residual_runtime_stage3_amendment1.yaml"
+      - "research_artifacts/dynamic_uncertainty_residual_runtime_stage3_amendment1/"
+  - action: "Implemented opt-in static-buffer CUDA Graph residual rollout with numerical-equivalence tests."
+    provenance: ai-executed
+    files_changed:
+      - "src/mobile_robot_mppi/learning/models.py"
+      - "src/mobile_robot_mppi/planning/dynamics.py"
+      - "src/mobile_robot_mppi/planning/mppi.py"
+      - "src/mobile_robot_mppi/runtime/factories.py"
+      - "tests/learning/test_residual_device_rollout.py"
+  - action: "Ran the complete sequential CUDA-Graph controller matrix and retained its isolated runtime-gate failure."
+    provenance: ai-executed
+    files_changed:
+      - "configs/research/dynamic_uncertainty_residual_runtime_stage3_development.yaml"
+      - "research_artifacts/dynamic_uncertainty_residual_runtime_stage3_development/"
+  - action: "Implemented persistent parallel nominal/residual planning and completed the passing 12-episode qualification."
+    provenance: ai-executed
+    files_changed:
+      - "src/mobile_robot_mppi/planning/residual_shield.py"
+      - "tests/platform/test_residual_safety_shield.py"
+      - "configs/research/dynamic_uncertainty_residual_runtime_stage3_parallel_development.yaml"
+      - "research_artifacts/dynamic_uncertainty_residual_runtime_stage3_parallel_development/"
+  - action: "Generated behavior-equivalence/contribution audits, wrote the final report and ran 143 relevant tests."
+    provenance: ai-executed
+    files_changed:
+      - "experiments/dynamic_uncertainty/analyze_residual_runtime_stage3.py"
+      - "docs/experiments/dynamic_uncertainty/RESIDUAL_RUNTIME_STAGE3_RESULT.md"
+      - "ara/evidence/tables/table20_residual_runtime_stage3.md"
+
+claims_touched:
+  - id: C114
+    action: created
+    provenance: ai-suggested
+  - id: C115
+    action: created
+    provenance: ai-suggested
+
+open_threads:
+  - "Treat the 97.19 ms result as current-machine development evidence only; qualify background load, thermal throttling, hardware I/O and hard deadlines before deployment."
+  - "Integrate the frozen RL Actor/HSS next while preserving the Stage 3 residual runtime baseline and attribution."
+  - "Do not select a residual checkpoint or open sealed seeds without a frozen selection/evaluation rule."
+
+ai_suggestions_pending:
+  - "Use the passing Stage 3 implementation as the frozen residual baseline for RL Actor/HSS development, then perform a separate loaded-system deployment stress stage."

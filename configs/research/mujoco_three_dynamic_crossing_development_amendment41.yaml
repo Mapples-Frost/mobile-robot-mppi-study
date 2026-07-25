@@ -1,0 +1,30 @@
+include: mujoco_three_dynamic_crossing_development_amendment40.yaml
+
+experiment:
+  name: mujoco_three_dynamic_crossing_development_amendment41
+
+planner:
+  probabilistic_obstacle_traversal_window_commit_admission_safe_hold_steps: 3
+
+three_obstacle_amendment:
+  version: 41
+  reason: >-
+    amendment40_confirmed_that_optimizing_the_abort_direction_after_a_commit_has_started_is_too_late_for_seed730100253;_the_last_dangerous_entry_was_released_on_the_first_cycle_that_the_full_horizon_certificate_crossed_from_unsafe_0p193749_over_2p365922_to_safe_0p071511_over_1p148997_while_the_successful_seed730100252_exhibited_three_consecutive_safe_cycles_before_clearing_the_crossing
+  intervention: require_three_consecutive_complete_control_cycles_that_pass_both_the_short_and_same_candidate_full_horizon_0p08_over_1p50_causal_certificates_before_releasing_a_new_commit;_unsafe_or_missing_forecast_or_online_crossing_geometry_change_resets_the_streak_and_the_reserved_candidate_holds_nonforward_while_waiting
+  obstacle_future_truth_used: false
+  obstacle_identity_used: false
+  crossing_geometry_source: online_forecast_plus_polyline_reference
+  behavior_parameter_changed: true
+  candidate_values_changed: false
+  certificate_threshold_changed: false
+  commit_admission_contract_changed: true
+  commit_admission_safe_hold_steps: 3
+  temporal_abort_direction_contract_changed: false
+  control_horizon_changed: false
+  control_limit_changed: false
+  deterministic_computation_reused: true
+  diagnostic_profiling_changed: false
+  rollout_budget_changed: false
+  total_rollouts_per_decision: 600
+  active_waiting_allowed: true
+  active_traversal_objective: true

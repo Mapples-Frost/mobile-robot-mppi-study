@@ -40,6 +40,21 @@ class PolylineProjection:
 
 
 @dataclass(frozen=True)
+class PolylineProjectionBatch:
+    """Vectorized read-only projections with one leading batch dimension."""
+
+    point: np.ndarray
+    progress: np.ndarray
+    remaining: np.ndarray
+    normalized_progress: np.ndarray
+    segment_index: np.ndarray
+    tangent_heading: np.ndarray
+    cross_track_error: np.ndarray
+    signed_cross_track_error: np.ndarray
+    curvature: np.ndarray
+
+
+@dataclass(frozen=True)
 class PointGoal:
     x: float
     y: float
@@ -297,6 +312,144 @@ class PolylineReference:
             curvature=float(curvature),
         )
 
+    def project_batch(
+        self,
+        positions: np.ndarray,
+        minimum_progress: Optional[np.ndarray] = None,
+    ) -> PolylineProjectionBatch:
+        """Project finite ``[B,2]`` positions without Python candidate loops.
+
+        ``minimum_progress`` may be one scalar or one value per position.  The
+        projection window and monotonic progress semantics are identical to
+        :meth:`project`; this method only vectorizes the independent geometry.
+        """
+
+        values = np.asarray(positions, dtype=np.float64)
+        if (
+            values.ndim != 2
+            or values.shape[0] <= 0
+            or values.shape[1] != 2
+            or not np.isfinite(values).all()
+        ):
+            raise ValueError(
+                "polyline batch projection requires finite [B,2] positions"
+            )
+        floors = None
+        if minimum_progress is not None:
+            supplied = np.asarray(minimum_progress, dtype=np.float64)
+            if supplied.ndim == 0:
+                floors = np.full(values.shape[0], float(supplied))
+            else:
+                floors = supplied.reshape(-1)
+            if (
+                floors.shape != (values.shape[0],)
+                or not np.isfinite(floors).all()
+                or np.any(floors < 0.0)
+                or np.any(floors > self.total_length)
+            ):
+                raise ValueError(
+                    "minimum polyline progress batch is outside the route"
+                )
+
+        starts = self.points[:-1]
+        vectors = np.diff(self.points, axis=0)
+        displacement = values[:, None, :] - starts[None, :, :]
+        fractions = np.sum(
+            displacement * vectors[None, :, :], axis=-1
+        ) / (self.segment_lengths[None, :] ** 2)
+        fractions = np.clip(fractions, 0.0, 1.0)
+        candidate_points = (
+            starts[None, :, :] + fractions[:, :, None] * vectors[None, :, :]
+        )
+        distances = np.linalg.norm(
+            candidate_points - values[:, None, :], axis=-1
+        )
+        candidate_progress = (
+            self.cumulative[None, :-1]
+            + fractions * self.segment_lengths[None, :]
+        )
+        admissible = np.ones(candidate_progress.shape, dtype=bool)
+        if floors is not None:
+            admissible = (
+                candidate_progress
+                >= floors[:, None] - self.projection_backtrack_distance
+            ) & (
+                candidate_progress
+                <= floors[:, None] + self.projection_forward_distance
+            )
+        has_admissible = np.any(admissible, axis=1)
+        selected = np.argmin(
+            np.where(admissible, distances, np.inf), axis=1
+        )
+        rows = np.arange(values.shape[0])
+        progress = candidate_progress[rows, selected]
+        if floors is not None:
+            progress = np.where(has_admissible, progress, floors)
+            progress = np.maximum(floors, progress)
+
+        progress = np.clip(progress, 0.0, self.total_length)
+        indices = np.searchsorted(
+            self.cumulative, progress, side="right"
+        ) - 1
+        indices = np.clip(indices, 0, len(self.segment_lengths) - 1)
+        segment_fractions = (
+            (progress - self.cumulative[indices])
+            / self.segment_lengths[indices]
+        )
+        active_vectors = self.points[indices + 1] - self.points[indices]
+        points = (
+            self.points[indices]
+            + segment_fractions[:, None] * active_vectors
+        )
+        headings = np.arctan2(active_vectors[:, 1], active_vectors[:, 0])
+        point_displacement = values - points
+        signed_error = (
+            np.cos(headings) * point_displacement[:, 1]
+            - np.sin(headings) * point_displacement[:, 0]
+        )
+        if len(self.segment_lengths) <= 1:
+            curvature = np.zeros(values.shape[0], dtype=np.float64)
+        else:
+            all_headings = np.arctan2(vectors[:, 1], vectors[:, 0])
+            left = np.clip(indices, 0, len(all_headings) - 2)
+            delta = np.arctan2(
+                np.sin(all_headings[left + 1] - all_headings[left]),
+                np.cos(all_headings[left + 1] - all_headings[left]),
+            )
+            scale = 0.5 * (
+                self.segment_lengths[left]
+                + self.segment_lengths[left + 1]
+            )
+            curvature = delta / scale
+        result = PolylineProjectionBatch(
+            point=points,
+            progress=progress,
+            remaining=self.total_length - progress,
+            normalized_progress=progress / self.total_length,
+            segment_index=indices.astype(np.int64, copy=False),
+            tangent_heading=headings,
+            cross_track_error=np.linalg.norm(point_displacement, axis=1),
+            signed_cross_track_error=signed_error,
+            curvature=curvature,
+        )
+        if not all(
+            np.isfinite(np.asarray(field)).all()
+            for field in (
+                result.point,
+                result.progress,
+                result.remaining,
+                result.normalized_progress,
+                result.tangent_heading,
+                result.cross_track_error,
+                result.signed_cross_track_error,
+                result.curvature,
+            )
+        ):
+            raise FloatingPointError(
+                "polyline batch projection produced NaN or Inf"
+            )
+        return result
+
     def _project_progress(self, position: np.ndarray) -> float:
         return self.project(position, minimum_progress=self.progress).progress
 
@@ -357,6 +510,20 @@ class PolylineReference:
         if not np.isfinite(result).all():
             raise FloatingPointError("polyline pose preview produced NaN or Inf")
         return result
+
+    def target_poses_at_progress(
+        self, progress_values: np.ndarray
+    ) -> np.ndarray:
+        """Return lookahead target poses for projected route progress values."""
+
+        progress = np.asarray(progress_values, dtype=np.float64)
+        if progress.ndim == 0 or not np.isfinite(progress).all():
+            raise ValueError(
+                "polyline target progress samples must be a finite array"
+            )
+        if np.any(progress < 0.0) or np.any(progress > self.total_length):
+            raise ValueError("polyline target progress is outside the route")
+        return self.poses_at_progress(progress + self.lookahead_distance)
 
     def preview_poses(
         self,

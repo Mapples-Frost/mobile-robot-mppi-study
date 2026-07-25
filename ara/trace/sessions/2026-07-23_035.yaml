@@ -1,0 +1,64 @@
+session:
+  id: "2026-07-23_035"
+  timestamp: "2026-07-23T19:42:00+08:00"
+  summary: "Completed residual Stage 1, found improved average prediction but reproducible closed-loop collision and compute regressions, and stopped a single coordinate-canonicalization remediation after its first residual failure."
+
+events_logged:
+  - type: experiment
+    id: N147
+    provenance: ai-executed
+    summary: "The 12-episode Stage 1 passed all three horizon-36 prediction blocks but failed collision, clearance and compute gates."
+  - type: dead_end
+    id: N148
+    provenance: ai-executed
+    summary: "Checkpoint-mean x/y canonicalization still collided and exceeded the compute threshold, triggering the registered early stop."
+  - type: claim
+    id: C102
+    provenance: ai-suggested
+    summary: "The current L57 residuals improve average multi-step prediction but do not transfer safely to Amendment 17 obstacle avoidance."
+  - type: claim
+    id: C103
+    provenance: ai-suggested
+    summary: "Spatial canonicalization as a sufficient safety repair was refuted."
+  - type: heuristic
+    id: H77
+    provenance: ai-suggested
+    summary: "Qualify learned dynamics by blocked closed-loop safety, not average rollout RMSE alone."
+  - type: heuristic
+    id: H78
+    provenance: ai-suggested
+    summary: "Prediction-only residual wrappers return unity when confidence is queried."
+
+ai_actions:
+  - action: "Implemented a resumable Stage 1 runner with shared nominal references, blocked checkpoint comparisons, multi-horizon prediction audits, closed-loop gates and forensic diagnostics."
+    provenance: ai-executed
+    files_changed:
+      - "experiments/dynamic_uncertainty/run_residual_dynamics_stage1.py"
+      - "tests/dynamic_uncertainty/test_residual_dynamics_stage1.py"
+  - action: "Ran 12 complete Stage 1 episodes, nine paired comparisons and the bounded canonicalization probe without opening sealed seeds."
+    provenance: ai-executed
+    files_changed: []
+  - action: "Fixed canonicalized single-checkpoint residual confidence fallback and added regression coverage."
+    provenance: ai-executed
+    files_changed:
+      - "src/mobile_robot_mppi/learning/models.py"
+      - "tests/learning/test_residual_state_canonicalization.py"
+  - action: "Ran 153 relevant tests, validated 14 artifact hashes and checked whitespace integrity."
+    provenance: ai-executed
+    files_changed: []
+
+claims_touched:
+  - id: C102
+    action: created
+    provenance: ai-suggested
+  - id: C103
+    action: created
+    provenance: ai-suggested
+
+open_threads:
+  - "Do not open sealed residual-stage seeds or insert the current L57 checkpoints into the Amendment 17 mainline."
+  - "Before another closed-loop residual run, choose a new preregistered algorithm question: support/authority gating versus obstacle-interaction data collection and retraining."
+  - "Treat the 150 ms residual compute miss as a separate implementation budget constraint rather than tuning it together with safety."
+
+ai_suggestions_pending:
+  - "Prefer a model-authority or data-coverage study next; do not continue checkpoint or cost tuning on the three development obstacle seeds."

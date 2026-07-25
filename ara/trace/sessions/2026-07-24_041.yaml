@@ -1,0 +1,66 @@
+session:
+  id: "2026-07-24_041"
+  timestamp: "2026-07-24T12:55:00+08:00"
+  summary: "Retained the original Stage 4 interface failure, executed Amendment 1 to its preregistered first-collision stop, and rejected the frozen L217 Actor/HSS integration after 0/10 paired RL-on successes."
+
+events_logged:
+  - type: dead_end
+    id: N169
+    provenance: ai-executed
+    summary: "The original Stage 4 launch failed before a control command because Paper RL-MPPI did not forward probabilistic forecasts or the complete risk-action contract."
+  - type: decision
+    id: N170
+    provenance: user
+    summary: "Authorize one implementation-only Amendment 1 and rerun the unchanged schedule from a new output directory while retaining the original failure."
+  - type: experiment
+    id: N171
+    provenance: ai-executed
+    summary: "Amendment 1 stopped at 22/24 after one RL-on collision; RL-off reached 12/12 goals and completed RL-on reached 0/10."
+  - type: claim
+    id: C117
+    provenance: ai-suggested
+    summary: "The frozen L217 Actor/HSS navigation-preservation claim was refuted in Stage 4 development."
+  - type: claim
+    id: C118
+    provenance: ai-suggested
+    summary: "High policy-rescue authority under near-zero dynamics confidence is retained as a mechanism hypothesis, not a causal conclusion."
+  - type: heuristic
+    id: H92
+    provenance: ai-suggested
+    summary: "Every newly wired optimizer must execute a real planning call under all enabled safety-interface cases before formal launch."
+  - type: heuristic
+    id: H93
+    provenance: ai-suggested
+    summary: "Transferred Actor proposal authority should require observed proposal advantage rather than source-domain competence alone."
+
+ai_actions:
+  - action: "Retained the implementation-only failed launch and created Amendment 1 with frozen probability-risk parity bindings and direct plan-call regression tests."
+    provenance: ai-executed
+    files_changed: ["configs/research/dynamic_uncertainty_rl_hss_stage4_amendment1.yaml", "docs/experiments/dynamic_uncertainty/RL_HSS_STAGE4_AMENDMENT1_PREREGISTRATION.md", "src/mobile_robot_mppi/planning/mppi.py", "src/mobile_robot_mppi/planning/rl_driven_mppi.py", "experiments/dynamic_uncertainty/run_rl_hss_stage4.py", "tests/dynamic_uncertainty/test_rl_hss_stage4.py"]
+  - action: "Monitored the formal MuJoCo matrix without retrying, tuning, opening sealed seeds or running the two post-collision cells."
+    provenance: ai-executed
+    files_changed: ["research_artifacts/dynamic_uncertainty_rl_hss_stage4_amendment1_development/"]
+  - action: "Implemented reproducible episode-level analysis, gate evaluation, collision forensics and a 111-file SHA-256 result manifest."
+    provenance: ai-executed
+    files_changed: ["experiments/dynamic_uncertainty/analyze_rl_hss_stage4.py", "tests/dynamic_uncertainty/test_rl_hss_stage4_analysis.py", "docs/experiments/dynamic_uncertainty/RL_HSS_STAGE4_RESULT.md", "research_artifacts/dynamic_uncertainty_rl_hss_stage4_amendment1_development/episode_summary.csv", "research_artifacts/dynamic_uncertainty_rl_hss_stage4_amendment1_development/paired_analysis.json", "research_artifacts/dynamic_uncertainty_rl_hss_stage4_amendment1_development/gate.json", "research_artifacts/dynamic_uncertainty_rl_hss_stage4_amendment1_development/result_manifest.json"]
+  - action: "Ran 72 focused and relevant-regression tests, compiled the Stage 4 runner/analyzer, and verified all 111 forensic bindings."
+    provenance: ai-executed
+    files_changed: []
+
+claims_touched:
+  - id: C116
+    action: advanced
+    provenance: ai-suggested
+  - id: C117
+    action: created
+    provenance: ai-suggested
+  - id: C118
+    action: created
+    provenance: ai-suggested
+
+open_threads:
+  - "Do not resume the two missing Stage 4 cells or open sealed seeds under the failed protocol."
+  - "A new bounded development amendment may test advantage-gated proposal authority, RL/HSS runtime reduction and moving-obstacle escape feasibility."
+
+ai_suggestions_pending:
+  - "Preregister a controlled policy-rescue/observed-advantage ablation before any new closed-loop RL/HSS matrix."

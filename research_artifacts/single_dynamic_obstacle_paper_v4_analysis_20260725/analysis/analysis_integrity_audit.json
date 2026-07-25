@@ -1,0 +1,14 @@
+{
+  "ablation_subset_sha256": "853e78eed75d9d3a8415440f7c94a3e672dac6411349e1ec70b6067b9d71ebb5",
+  "episode_jobs": 1860,
+  "execution_manifest_sha256": "531d20edc709be66b4cb62da1d76594a989d224b6c035d8342212fcfc243da51",
+  "formal_output": "C:\\Research\\single_dynamic_obstacle_paper_v4_formal",
+  "outcome_unlock_condition": "all_1860_jobs_complete_before_first_metric_read",
+  "outcomes_read": true,
+  "registry": "C:\\Research\\execution_mirror\\paper_v4_r2_20260725_1820\\configs\\seeds\\single_dynamic_obstacle_paper_v4_sealed.yaml",
+  "registry_sha256": "91cc59c6025296bcb4aa5f8839bd5bc129159c109730f52c5c9ac13d03b47b56",
+  "runtime_sha256": "c7f84cda171c7fb10552a4ddab38838b6d8579761b964a9636b6c354d41bf289",
+  "schedule_sha256": "a9e2eec039817002b8851ad66e903aa286d495b6728e67c630796ea48c9fe2b1",
+  "seed_blocks": 360,
+  "status": "complete_outcomes_may_be_opened"
+}

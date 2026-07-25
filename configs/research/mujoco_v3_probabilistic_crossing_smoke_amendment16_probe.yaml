@@ -1,0 +1,12 @@
+include: mujoco_v3_probabilistic_crossing_smoke_amendment16.yaml
+
+experiment:
+  name: mujoco_v3_probabilistic_crossing_smoke_amendment16_probe
+
+online_smoke:
+  development_seeds: [730100003]
+  output_dir: research_artifacts/mujoco_v3_probabilistic_crossing_smoke_amendment16_probe
+
+design_probe:
+  purpose: verify_rotation_only_recovery_on_the_amendment12_seed003_stall
+  confirmatory_result: false

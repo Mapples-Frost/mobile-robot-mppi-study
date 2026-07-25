@@ -51,6 +51,11 @@ class ExperimentRunner:
         if callable(reference_reset):
             reference_reset()
         controller.reset()
+        safety_reset = getattr(
+            self.components["safety"], "reset", None
+        )
+        if callable(safety_reset):
+            safety_reset()
         if memory is not None:
             memory.reset()
         if hasattr(reference, "waypoints"):
@@ -111,7 +116,11 @@ class ExperimentRunner:
                 wall_step_start = time.perf_counter()
                 perceived = self.components["perception"].process(observation)
                 plan = controller.plan(perceived.observation, reference)
-                decision = self.components["safety"].arbitrate(plan.proposed_control, perceived.guard)
+                decision = self.components["safety"].arbitrate(
+                    plan.proposed_control,
+                    perceived.guard,
+                    plan.diagnostics,
+                )
                 controller.observe_safety_decision(decision)
                 step = plant.step(decision.executed_control, dt)
                 truth = step.ground_truth
@@ -166,6 +175,9 @@ class ExperimentRunner:
                     termination_reason = "collision"
                     break
         finally:
+            controller_close = getattr(controller, "close", None)
+            if callable(controller_close):
+                controller_close()
             viewer.close()
             plant.close()
         summary = metrics.summary(termination_reason=termination_reason)

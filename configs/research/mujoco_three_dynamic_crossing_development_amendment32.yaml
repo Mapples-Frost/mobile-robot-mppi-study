@@ -1,0 +1,24 @@
+include: mujoco_three_dynamic_crossing_development_amendment31.yaml
+
+experiment:
+  name: mujoco_three_dynamic_crossing_development_amendment32
+
+three_obstacle_amendment:
+  version: 32
+  reason: >-
+    amendment31_preserved_the_collision_free_3p713m_first_crossing_behavior_but_candidate_p95_remained_101p350ms_and_cprofile_attributed_about_15ms_per_decision_to_duplicate_path_boundary_and_probability_risk_evaluations_used_by_both_cost_and_candidate_filters
+  intervention: compute_each_candidate_batch_path_margin_and_probability_risk_once_per_optimizer_iteration_then_reuse_the_identical_read_only_results_for_soft_cost_and_hard_filtering
+  obstacle_future_truth_used: false
+  obstacle_identity_used: false
+  crossing_geometry_source: online_forecast_plus_polyline_reference
+  behavior_parameter_changed: false
+  candidate_values_changed: false
+  certificate_threshold_changed: false
+  control_horizon_changed: false
+  control_limit_changed: false
+  deterministic_computation_reused: true
+  diagnostic_profiling_changed: false
+  rollout_budget_changed: false
+  total_rollouts_per_decision: 600
+  active_waiting_allowed: true
+  active_traversal_objective: true

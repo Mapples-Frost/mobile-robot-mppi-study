@@ -1,0 +1,36 @@
+include: mujoco_three_dynamic_crossing_development_amendment65.yaml
+
+experiment:
+  name: mujoco_three_dynamic_crossing_development_amendment66
+
+planner:
+  # A raw causal LaserScan closing signal can arrive before the online
+  # constant-velocity forecast exposes a future route intersection after an
+  # obstacle reversal. Preserve the uncertified entrance during that gap.
+  probabilistic_obstacle_traversal_window_uncommitted_temporal_staging_hold_enabled: true
+
+three_obstacle_amendment:
+  version: 66
+  reason: >-
+    amendment65_seed730100252_observed_raw_causal_temporal_closing_from_rows99_to107_while_the_online_forecast_exposed_no_route_crossing;_the_existing_emergency_lattice_selected_forward_0p6mps_and_advanced_the_robot_past_the_first_crossing_entry_before_crossing_context_appeared_at_row115
+  intervention: >-
+    when_raw_causal_laserscan_closing_is_observed_but_online_forecast_geometry_has_not_yet_exposed_a_crossing_and_no_commit_retreat_or_rearm_transaction_is_active_use_the_existing_fixed_budget_traversal_slot_for_zero_translation_staging;_select_that_hold_while_probabilistically_feasible_and_yield_to_the_existing_six_slot_emergency_lattice_only_if_the_hold_is_hard_risk
+  obstacle_future_truth_used: false
+  obstacle_identity_used: false
+  crossing_geometry_source: online_forecast_plus_polyline_reference
+  behavior_parameter_changed: true
+  candidate_values_changed: false
+  certificate_threshold_changed: false
+  hard_risk_threshold_changed: false
+  entrance_staging_contract_changed: true
+  entrance_staging_translation_mps: 0.0
+  active_commit_contract_changed: false
+  retreat_contract_changed: false
+  rearm_contract_changed: false
+  emergency_lattice_changed: false
+  control_horizon_changed: false
+  control_limit_changed: false
+  checkpoint_changed: false
+  rollout_budget_changed: false
+  total_rollouts_per_decision: 600
+  development_only: true

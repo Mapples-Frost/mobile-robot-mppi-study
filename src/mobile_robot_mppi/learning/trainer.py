@@ -12,7 +12,7 @@ import torch
 
 from mobile_robot_mppi.core.config import git_sha
 from .dataset_quality import assert_residual_dataset_quality
-from .models import ResidualNetwork, encode_state
+from .models import ResidualNetwork, encode_state, load_platform_checkpoint
 
 
 def nominal_derivative(state, control, config):
@@ -52,7 +52,23 @@ def integrate(model, state, control, dt, dynamics_config, method="rk4"):
     return torch.cat((result[..., :2], wrapped, result[..., 3:]), dim=-1)
 
 
-def state_mse(predicted, target, component_weights=None):
+def _weighted_mean(values, sample_weights=None):
+    if sample_weights is None:
+        return torch.mean(values)
+    weights = torch.as_tensor(
+        sample_weights, dtype=values.dtype, device=values.device
+    )
+    if weights.shape != values.shape:
+        try:
+            weights = torch.broadcast_to(weights, values.shape)
+        except RuntimeError as exc:
+            raise ValueError("sample_weights must match the batch shape") from exc
+    if not torch.isfinite(weights).all() or torch.any(weights <= 0.0):
+        raise ValueError("sample_weights must be finite and positive")
+    return torch.sum(values * weights) / torch.sum(weights)
+
+
+def state_mse(predicted, target, component_weights=None, sample_weights=None):
     error = predicted - target
     wrapped = torch.atan2(torch.sin(error[..., 2:3]), torch.cos(error[..., 2:3]))
     periodic_error = torch.cat((error[..., :2], wrapped, error[..., 3:]), dim=-1)
@@ -66,7 +82,16 @@ def state_mse(predicted, target, component_weights=None):
         if not torch.isfinite(weights).all() or torch.any(weights <= 0.0):
             raise ValueError("state_loss_weights must be finite and positive")
         squared = squared * weights / torch.mean(weights)
-    return torch.mean(squared)
+    return _weighted_mean(torch.mean(squared, dim=-1), sample_weights)
+
+
+def transition_weights(dataset, indices):
+    if "sample_weight" not in dataset:
+        return None
+    values = np.asarray(dataset["sample_weight"][indices], dtype=np.float64)
+    if not np.isfinite(values).all() or np.any(values <= 0.0):
+        raise ValueError("sample_weight values must be finite and positive")
+    return values
 
 
 def _split_path(directory, name):
@@ -173,7 +198,8 @@ def rollout_loss(
         state = integrate(model, state, control, dt, dynamics_config, dynamics_config.get("integrator", "rk4"))
         target = torch.as_tensor(dataset["state_t_plus_1"][selected + offset], dtype=torch.float32, device=device)
         loss = loss + float(resolved_step_weights[offset]) * state_mse(
-            state, target, component_weights
+            state, target, component_weights,
+            sample_weights=transition_weights(dataset, selected + offset),
         )
     return loss
 
@@ -245,8 +271,48 @@ def train_residual(config: Mapping[str, object], dataset_dir, output_dir, device
     control_dim = int(train["control_t"].shape[1])
     model_cfg = dict(config["model"])
     angle_indices = tuple(model_cfg.get("angle_indices", (2,)))
-    model = ResidualNetwork(state_dim, control_dim, model_cfg, statistics(train, angle_indices)).to(device)
     training = config.get("training", {})
+    initial_checkpoint = training.get("initial_checkpoint")
+    if initial_checkpoint:
+        model, initial_payload = load_platform_checkpoint(
+            Path(initial_checkpoint), device=device
+        )
+        if model.state_dim != state_dim or model.control_dim != control_dim:
+            raise ValueError(
+                "initial checkpoint dimensions do not match the training dataset"
+            )
+        checkpoint_model_cfg = dict(
+            initial_payload["model_config"].get("model", {})
+        )
+        for key in (
+            "type", "angle_indices", "hidden_sizes", "activation",
+            "residual_output_mask",
+        ):
+            if key in model_cfg and key in checkpoint_model_cfg:
+                if model_cfg[key] != checkpoint_model_cfg[key]:
+                    raise ValueError(
+                        "initial checkpoint model config mismatch for %s" % key
+                    )
+        model.train()
+    else:
+        model = ResidualNetwork(
+            state_dim, control_dim, model_cfg, statistics(train, angle_indices)
+        ).to(device)
+    anchor_weight = float(training.get("anchor_output_weight", 0.0))
+    if not math.isfinite(anchor_weight) or anchor_weight < 0.0:
+        raise ValueError("anchor_output_weight must be finite and nonnegative")
+    if anchor_weight > 0.0 and not initial_checkpoint:
+        raise ValueError(
+            "anchor_output_weight requires training.initial_checkpoint"
+        )
+    anchor_model = None
+    if anchor_weight > 0.0:
+        anchor_model = copy.deepcopy(model).to(device).eval()
+        for parameter in anchor_model.parameters():
+            parameter.requires_grad_(False)
+    anchor_sources = tuple(
+        str(value) for value in training.get("anchor_data_sources", ())
+    )
     optimizer = torch.optim.Adam(
         model.parameters(), lr=float(training.get("learning_rate", 5e-4)),
         weight_decay=float(training.get("weight_decay", 0.0)),
@@ -264,6 +330,15 @@ def train_residual(config: Mapping[str, object], dataset_dir, output_dir, device
             raise ValueError("state_loss_weights must match state dimension")
         if not np.isfinite(component_weights).all() or np.any(component_weights <= 0.0):
             raise ValueError("state_loss_weights must be finite and positive")
+    for name, dataset in (("train", train), ("validation", validation)):
+        if "sample_weight" in dataset:
+            values = np.asarray(dataset["sample_weight"], dtype=np.float64)
+            if values.shape != (len(dataset["state_t"]),):
+                raise ValueError("%s sample_weight must match transitions" % name)
+            if not np.isfinite(values).all() or np.any(values <= 0.0):
+                raise ValueError(
+                    "%s sample_weight values must be finite and positive" % name
+                )
     step_weights = rollout_step_weights(training, horizon)
     train_windows = contiguous_windows(train, horizon)
     validation_windows = contiguous_windows(validation, horizon)
@@ -286,6 +361,7 @@ def train_residual(config: Mapping[str, object], dataset_dir, output_dir, device
         model.train()
         order = np.random.RandomState(seed + epoch).permutation(len(train["state_t"]))
         epoch_losses = []
+        epoch_anchor_losses = []
         for begin in range(0, len(order), batch_size):
             indices = order[begin:begin + batch_size]
             state = torch.as_tensor(train["state_t"][indices], dtype=torch.float32, device=device)
@@ -295,17 +371,60 @@ def train_residual(config: Mapping[str, object], dataset_dir, output_dir, device
             dt = torch.as_tensor(train["dt"][indices], dtype=torch.float32, device=device).unsqueeze(-1)
             derivative_squared = (model(state, control) - target_residual) ** 2
             derivative_mask = model.residual_output_mask.reshape(1, -1)
-            derivative_loss = torch.sum(derivative_squared * derivative_mask) / (
-                derivative_squared.shape[0] * torch.sum(derivative_mask)
+            derivative_per_sample = torch.sum(
+                derivative_squared * derivative_mask, dim=-1
+            ) / torch.sum(derivative_mask)
+            batch_sample_weights = transition_weights(train, indices)
+            derivative_loss = _weighted_mean(
+                derivative_per_sample, batch_sample_weights
             )
             predicted_next = integrate(model, state, control, dt, config["dynamics"], config["dynamics"].get("integrator", "rk4"))
-            one_step_loss = state_mse(predicted_next, next_state, component_weights)
+            one_step_loss = state_mse(
+                predicted_next, next_state, component_weights,
+                sample_weights=batch_sample_weights,
+            )
             loss = derivative_weight * derivative_loss + one_step_weight * one_step_loss
+            anchor_loss = torch.zeros((), dtype=loss.dtype, device=device)
+            if anchor_model is not None:
+                if anchor_sources:
+                    source_mask = np.isin(
+                        np.asarray(train["data_source"])[indices],
+                        np.asarray(anchor_sources),
+                    )
+                else:
+                    source_mask = np.ones(len(indices), dtype=bool)
+                if np.any(source_mask):
+                    selected = np.flatnonzero(source_mask)
+                    selected_tensor = torch.as_tensor(
+                        selected, dtype=torch.long, device=device
+                    )
+                    current_output = model(
+                        torch.index_select(state, 0, selected_tensor),
+                        torch.index_select(control, 0, selected_tensor),
+                    )
+                    with torch.no_grad():
+                        anchor_output = anchor_model(
+                            torch.index_select(state, 0, selected_tensor),
+                            torch.index_select(control, 0, selected_tensor),
+                        )
+                    active = model.residual_output_mask.reshape(1, -1)
+                    anchor_per_sample = torch.sum(
+                        (current_output - anchor_output) ** 2 * active, dim=-1
+                    ) / torch.sum(active)
+                    selected_weights = (
+                        None if batch_sample_weights is None
+                        else np.asarray(batch_sample_weights)[selected]
+                    )
+                    anchor_loss = _weighted_mean(
+                        anchor_per_sample, selected_weights
+                    )
+                    loss = loss + anchor_weight * anchor_loss
             optimizer.zero_grad()
             loss.backward()
             torch.nn.utils.clip_grad_norm_(model.parameters(), float(training.get("gradient_clip_norm", 1.0)))
             optimizer.step()
             epoch_losses.append(float(loss.detach().cpu()))
+            epoch_anchor_losses.append(float(anchor_loss.detach().cpu()))
         model.train()
         optimizer.zero_grad()
         window_order = np.random.RandomState(seed + 100000 + epoch).permutation(train_windows)
@@ -327,6 +446,7 @@ def train_residual(config: Mapping[str, object], dataset_dir, output_dir, device
         record = {
             "epoch": epoch + 1,
             "train_loss": float(np.mean(epoch_losses)),
+            "train_anchor_mse": float(np.mean(epoch_anchor_losses)),
             "train_multistep_mse": float(multi.detach().cpu()),
             "validation_multistep_rmse": math.sqrt(max(validation_multi, 0.0)),
             "learning_rate": float(optimizer.param_groups[0]["lr"]),

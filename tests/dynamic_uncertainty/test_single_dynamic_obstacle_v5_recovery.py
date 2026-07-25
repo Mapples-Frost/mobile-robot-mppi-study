@@ -84,6 +84,20 @@ def _dual_horizon_c2_protocols():
     return protocol, source
 
 
+def _dual_horizon_c3_protocols():
+    path = (
+        development.ROOT
+        / "configs"
+        / "research"
+        / "single_dynamic_obstacle_v5_dual_horizon_development_c3.yaml"
+    )
+    protocol = v4._load_yaml(path)
+    _, source, _, _, _ = v4.validate_protocol(
+        development._repo_path(protocol["source_protocol"])
+    )
+    return protocol, source
+
+
 def test_v5_development_is_outcome_informed_and_not_effect_estimation():
     protocol, _ = _protocols()
 
@@ -470,6 +484,41 @@ def test_v5_dual_horizon_c2_changes_only_urgency_reserve():
     assert set(v5_changes) == {
         "perception.scan_guard.%s" % key
         for key in c2["candidate_overrides"]
+    }
+    assert v5_config["perception"]["scan_guard"][
+        "dynamic_deadline_authority_reserve_steps"
+    ] == 0
+    assert (
+        int(v5_config["planner"]["num_samples"])
+        * int(v5_config["planner"]["paper_rl_driven"]["iterations"])
+        == 600
+    )
+
+
+def test_v5_dual_horizon_c3_is_final_and_changes_only_urgency_reserve():
+    c2, _ = _dual_horizon_c2_protocols()
+    c3, source = _dual_horizon_c3_protocols()
+    development._validate_parent_attempt(c3)
+    assert c3["design"]["development_attempt"] == "C3"
+    assert c3["design"]["final_local_attempt_in_family"]
+    assert c3["development_go_no_go"] == c2["development_go_no_go"]
+    left = dict(c2["candidate_overrides"])
+    right = dict(c3["candidate_overrides"])
+    assert left.pop("dynamic_deadline_reserve_steps") == 3
+    assert right.pop("dynamic_deadline_reserve_steps") == 5
+    assert right == left
+
+    block = dict(c3["development_blocks"][0])
+    v4_config, v4_changes = development._configure_arm(
+        c3, source, block, "V4_full_frozen"
+    )
+    v5_config, v5_changes = development._configure_arm(
+        c3, source, block, "V5_dual_horizon_full"
+    )
+    assert not v4_changes
+    assert set(v5_changes) == {
+        "perception.scan_guard.%s" % key
+        for key in c3["candidate_overrides"]
     }
     assert v5_config["perception"]["scan_guard"][
         "dynamic_deadline_authority_reserve_steps"

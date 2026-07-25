@@ -1,0 +1,269 @@
+{
+  "blocks": [
+    {
+      "arm_order": [
+        "V4_full_frozen",
+        "V5_deadline_full"
+      ],
+      "block_order": 1,
+      "certificate": {
+        "certificate_rule": "ghost_constant_speed_center_distance_le_sum_radii",
+        "collision_threshold_m": 0.5,
+        "conflict_window_threshold_m": 0.8,
+        "conflict_windows_s": [
+          [
+            0.0,
+            3.75
+          ],
+          [
+            31.700000000000003,
+            38.300000000000004
+          ]
+        ],
+        "minimum_distance_time_s": 1.55,
+        "minimum_ghost_obstacle_center_distance_m": 0.3584249892057627,
+        "noise_profile": "medium",
+        "obstacle_process": "hybrid_patrol",
+        "obstacle_truth_sha256": "0e3787b3fe29f96097157551ad373233b1b00003e24ad76cd9cac528a544ba7d",
+        "seed": 740200252,
+        "split": "id"
+      },
+      "model_block": 1,
+      "seed": 740200252,
+      "split": "id",
+      "stratum": "near_goal_safe_noncompletion"
+    },
+    {
+      "arm_order": [
+        "V5_deadline_full",
+        "V4_full_frozen"
+      ],
+      "block_order": 2,
+      "certificate": {
+        "certificate_rule": "ghost_constant_speed_center_distance_le_sum_radii",
+        "collision_threshold_m": 0.5,
+        "conflict_window_threshold_m": 0.8,
+        "conflict_windows_s": [
+          [
+            0.0,
+            3.6500000000000004
+          ],
+          [
+            7.200000000000001,
+            11.700000000000001
+          ]
+        ],
+        "minimum_distance_time_s": 9.450000000000001,
+        "minimum_ghost_obstacle_center_distance_m": 0.13873890741447262,
+        "noise_profile": "medium",
+        "obstacle_process": "hybrid_patrol",
+        "obstacle_truth_sha256": "0e2daea581f43680365e60879f96073b0cbe0f9e7ea5d32e106b2f7200ec600e",
+        "seed": 740200006,
+        "split": "id"
+      },
+      "model_block": 2,
+      "seed": 740200006,
+      "split": "id",
+      "stratum": "long_stall_safe_noncompletion"
+    },
+    {
+      "arm_order": [
+        "V4_full_frozen",
+        "V5_deadline_full"
+      ],
+      "block_order": 3,
+      "certificate": {
+        "certificate_rule": "ghost_constant_speed_center_distance_le_sum_radii",
+        "collision_threshold_m": 0.5,
+        "conflict_window_threshold_m": 0.8,
+        "conflict_windows_s": [
+          [
+            0.0,
+            3.0500000000000003
+          ]
+        ],
+        "minimum_distance_time_s": 1.3,
+        "minimum_ghost_obstacle_center_distance_m": 0.4187289297898288,
+        "noise_profile": "medium",
+        "obstacle_process": "hybrid_patrol",
+        "obstacle_truth_sha256": "64a16cd09777a8c5f39fe89f1045120d40c7a18a501c6b3a5a47f27332a39f72",
+        "seed": 740200191,
+        "split": "id"
+      },
+      "model_block": 1,
+      "seed": 740200191,
+      "split": "id",
+      "stratum": "far_goal_safe_noncompletion"
+    },
+    {
+      "arm_order": [
+        "V5_deadline_full",
+        "V4_full_frozen"
+      ],
+      "block_order": 4,
+      "certificate": {
+        "certificate_rule": "ghost_constant_speed_center_distance_le_sum_radii",
+        "collision_threshold_m": 0.5,
+        "conflict_window_threshold_m": 0.8,
+        "conflict_windows_s": [
+          [
+            0.0,
+            3.0
+          ]
+        ],
+        "minimum_distance_time_s": 1.3,
+        "minimum_ghost_obstacle_center_distance_m": 0.41935776378524803,
+        "noise_profile": "process_shift",
+        "obstacle_process": "hybrid_patrol",
+        "obstacle_truth_sha256": "3abeb9a1ae1e436aaf5067293fc29777a7d24528797624f88e1915eb12cc57d5",
+        "seed": 740300251,
+        "split": "ood"
+      },
+      "model_block": 2,
+      "seed": 740300251,
+      "split": "ood",
+      "stratum": "long_release_safe_noncompletion"
+    },
+    {
+      "arm_order": [
+        "V4_full_frozen",
+        "V5_deadline_full"
+      ],
+      "block_order": 5,
+      "certificate": {
+        "certificate_rule": "ghost_constant_speed_center_distance_le_sum_radii",
+        "collision_threshold_m": 0.5,
+        "conflict_window_threshold_m": 0.8,
+        "conflict_windows_s": [
+          [
+            15.2,
+            28.6
+          ]
+        ],
+        "minimum_distance_time_s": 22.900000000000002,
+        "minimum_ghost_obstacle_center_distance_m": 0.03626813779395095,
+        "noise_profile": "medium",
+        "obstacle_process": "hybrid_patrol",
+        "obstacle_truth_sha256": "017ad90751d8c1614b4a8f7784d6a06e43eec4f9e6828ba36ca4f263ae2d80c9",
+        "seed": 740200011,
+        "split": "id"
+      },
+      "model_block": 0,
+      "seed": 740200011,
+      "split": "id",
+      "stratum": "safety_gain_sentinel"
+    },
+    {
+      "arm_order": [
+        "V5_deadline_full",
+        "V4_full_frozen"
+      ],
+      "block_order": 6,
+      "certificate": {
+        "certificate_rule": "ghost_constant_speed_center_distance_le_sum_radii",
+        "collision_threshold_m": 0.5,
+        "conflict_window_threshold_m": 0.8,
+        "conflict_windows_s": [
+          [
+            0.0,
+            2.95
+          ],
+          [
+            11.55,
+            14.05
+          ]
+        ],
+        "minimum_distance_time_s": 1.3,
+        "minimum_ghost_obstacle_center_distance_m": 0.41941124304662747,
+        "noise_profile": "process_shift",
+        "obstacle_process": "hybrid_patrol",
+        "obstacle_truth_sha256": "87dd0796fc619d4a310de680c2a70c553903b02ff6c6eee490d75a628ea626e8",
+        "seed": 740300004,
+        "split": "ood"
+      },
+      "model_block": 1,
+      "seed": 740300004,
+      "split": "ood",
+      "stratum": "safety_gain_sentinel"
+    },
+    {
+      "arm_order": [
+        "V4_full_frozen",
+        "V5_deadline_full"
+      ],
+      "block_order": 7,
+      "certificate": {
+        "certificate_rule": "ghost_constant_speed_center_distance_le_sum_radii",
+        "collision_threshold_m": 0.5,
+        "conflict_window_threshold_m": 0.8,
+        "conflict_windows_s": [
+          [
+            0.0,
+            3.0500000000000003
+          ],
+          [
+            41.95,
+            45.0
+          ]
+        ],
+        "minimum_distance_time_s": 1.3,
+        "minimum_ghost_obstacle_center_distance_m": 0.41898569578744643,
+        "noise_profile": "medium",
+        "obstacle_process": "hybrid_patrol",
+        "obstacle_truth_sha256": "0f6a90f937b6364c63f0167d7d6f3a555ad2dd510999d2152cab84e18593a89e",
+        "seed": 740200001,
+        "split": "id"
+      },
+      "model_block": 0,
+      "seed": 740200001,
+      "split": "id",
+      "stratum": "success_preservation_sentinel"
+    },
+    {
+      "arm_order": [
+        "V5_deadline_full",
+        "V4_full_frozen"
+      ],
+      "block_order": 8,
+      "certificate": {
+        "certificate_rule": "ghost_constant_speed_center_distance_le_sum_radii",
+        "collision_threshold_m": 0.5,
+        "conflict_window_threshold_m": 0.8,
+        "conflict_windows_s": [
+          [
+            0.0,
+            3.0500000000000003
+          ],
+          [
+            7.800000000000001,
+            11.700000000000001
+          ],
+          [
+            18.55,
+            25.450000000000003
+          ]
+        ],
+        "minimum_distance_time_s": 23.1,
+        "minimum_ghost_obstacle_center_distance_m": 0.009828469304291211,
+        "noise_profile": "process_shift",
+        "obstacle_process": "hybrid_patrol",
+        "obstacle_truth_sha256": "4a8a744ee433c91eebe77eff3b8cb0393223f4de7ddd3170c6af8de59515594c",
+        "seed": 740300001,
+        "split": "ood"
+      },
+      "model_block": 1,
+      "seed": 740300001,
+      "split": "ood",
+      "stratum": "success_preservation_sentinel"
+    }
+  ],
+  "formal_effect_estimation_authorized": false,
+  "implementation_git_sha": "165da4d4b7aea7b78acd6f34bf550d438b67cb9e",
+  "outcome_informed_development_selection": true,
+  "schedule_sha256": "9b6220219e1f62a71e40db537c8d8592a2853385b8c832dabe293e71416dd99f",
+  "schema_version": 1,
+  "scope": "targeted_mechanism_development_not_effect_estimation",
+  "source_analysis_manifest_sha256": "354d42efef5b48dec7d5d4d3b81c68ad1049af965c00039bd5cab68d5dc83691",
+  "source_analysis_sha256": "125ce781c7afbbceb09875a8805565584316e76400d39fdd443108a8f1b5465e",
+  "workers": 4
+}

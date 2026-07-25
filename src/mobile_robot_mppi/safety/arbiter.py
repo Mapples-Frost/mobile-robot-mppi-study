@@ -196,6 +196,43 @@ class ScanGuardArbiter:
                 "dynamic_recovery_goal_release_distance_m", 0.45
             )
         )
+        self.dynamic_deadline_supervisor_enabled = bool(
+            self.config.get("dynamic_deadline_supervisor_enabled", False)
+        )
+        self.dynamic_deadline_episode_steps = int(
+            self.config.get("dynamic_deadline_episode_steps", 0)
+        )
+        self.dynamic_deadline_control_period_s = float(
+            self.config.get("dynamic_deadline_control_period_s", 0.1)
+        )
+        self.dynamic_deadline_position_tolerance_m = float(
+            self.config.get("dynamic_deadline_position_tolerance_m", 0.3)
+        )
+        self.dynamic_deadline_reserve_steps = int(
+            self.config.get("dynamic_deadline_reserve_steps", 2)
+        )
+        self.dynamic_deadline_clear_hold_steps = int(
+            self.config.get("dynamic_deadline_clear_hold_steps", 5)
+        )
+        self.dynamic_deadline_minimum_required_speed = float(
+            self.config.get(
+                "dynamic_deadline_minimum_required_speed", 0.2
+            )
+        )
+        self.dynamic_deadline_speed_floor = float(
+            self.config.get("dynamic_deadline_speed_floor", 0.3)
+        )
+        self.dynamic_deadline_speed_margin = float(
+            self.config.get("dynamic_deadline_speed_margin", 1.1)
+        )
+        self.dynamic_deadline_trigger_margin_mps = float(
+            self.config.get("dynamic_deadline_trigger_margin_mps", 0.02)
+        )
+        self.dynamic_deadline_heading_tolerance_rad = float(
+            self.config.get(
+                "dynamic_deadline_heading_tolerance_rad", 0.2
+            )
+        )
         if self.dynamic_escape_max_speed < 0.0:
             raise ValueError(
                 "dynamic_escape_max_speed must be non-negative"
@@ -284,6 +321,29 @@ class ScanGuardArbiter:
             raise ValueError(
                 "dynamic recovery alignment creep parameters are invalid"
             )
+        if self.dynamic_deadline_supervisor_enabled and (
+            self.dynamic_deadline_episode_steps < 1
+            or self.dynamic_deadline_control_period_s <= 0.0
+            or self.dynamic_deadline_position_tolerance_m <= 0.0
+            or self.dynamic_deadline_reserve_steps < 0
+            or self.dynamic_deadline_reserve_steps
+            >= self.dynamic_deadline_episode_steps
+            or self.dynamic_deadline_clear_hold_steps < 1
+            or self.dynamic_deadline_minimum_required_speed < 0.0
+            or self.dynamic_deadline_minimum_required_speed
+            > self.dynamic_escape_max_speed
+            or self.dynamic_deadline_speed_floor < 0.0
+            or self.dynamic_deadline_speed_floor
+            > self.dynamic_escape_max_speed
+            or self.dynamic_deadline_speed_margin < 1.0
+            or self.dynamic_deadline_trigger_margin_mps < 0.0
+            or not 0.0
+            < self.dynamic_deadline_heading_tolerance_rad
+            < 0.5 * np.pi
+        ):
+            raise ValueError(
+                "dynamic deadline supervisor parameters are invalid"
+            )
         self.reset()
 
     def reset(self):
@@ -301,6 +361,9 @@ class ScanGuardArbiter:
         self._dynamic_recovery_progress_watch_remaining = 0
         self._dynamic_recovery_progress_watch_samples = []
         self._dynamic_recovery_progress_reentry_count = 0
+        self._dynamic_deadline_decision_count = 0
+        self._dynamic_deadline_conflict_seen = False
+        self._dynamic_deadline_clear_steps = 0
 
     def arbitrate(
         self,
@@ -308,6 +371,7 @@ class ScanGuardArbiter:
         guard_result: Mapping[str, object],
         planning_context: Mapping[str, object] = None,
     ):
+        self._dynamic_deadline_decision_count += 1
         values = self.action_spec.clip(proposed.values)
         reason = str(guard_result.get("reason", "front_clear"))
         context = dict(planning_context or {})
@@ -424,6 +488,19 @@ class ScanGuardArbiter:
         recovery_alignment_creep_active = False
         recovery_progress_watch_triggered = False
         recovery_progress_watch_progress_m = 0.0
+        deadline_supervisor_active = False
+        deadline_required_speed = 0.0
+        deadline_speed_floor = 0.0
+        deadline_steps_remaining = max(
+            0,
+            self.dynamic_deadline_episode_steps
+            - self._dynamic_deadline_decision_count
+            + 1,
+        )
+        deadline_available_steps = max(
+            0,
+            deadline_steps_remaining - self.dynamic_deadline_reserve_steps,
+        )
         recovery_scan_clearance = float("nan")
         scan_clearance_values = []
         for key in (
@@ -471,6 +548,9 @@ class ScanGuardArbiter:
             context.get("terminal_control_distance", float("inf"))
         )
         if dynamic_escape_allowed or planner_temporal_escape_active:
+            if self.dynamic_deadline_supervisor_enabled:
+                self._dynamic_deadline_conflict_seen = True
+                self._dynamic_deadline_clear_steps = 0
             self._dynamic_escape_seen = True
             self._dynamic_recovery_active = False
             self._dynamic_recovery_clear_steps = 0
@@ -612,7 +692,78 @@ class ScanGuardArbiter:
                         self._dynamic_recovery_progress_watch_active = False
                         self._dynamic_recovery_progress_watch_remaining = 0
                         self._dynamic_recovery_progress_watch_samples = []
-                        recovery_mode = "not_needed"
+                recovery_mode = "not_needed"
+        deadline_guard_clear = bool(
+            recovery_guard_clear
+            and recovery_ttc_clear
+            and selected_probability
+            <= self.dynamic_recovery_entry_probability
+            and not context.get(
+                "probabilistic_obstacle_hard_violation", False
+            )
+        )
+        if (
+            self.dynamic_deadline_supervisor_enabled
+            and self._dynamic_deadline_conflict_seen
+            and not dynamic_escape_allowed
+            and not planner_temporal_escape_active
+            and not self._dynamic_recovery_active
+            and not self._dynamic_recovery_progress_watch_active
+            and deadline_guard_clear
+        ):
+            self._dynamic_deadline_clear_steps += 1
+        elif self.dynamic_deadline_supervisor_enabled and (
+            not deadline_guard_clear
+            or dynamic_escape_allowed
+            or planner_temporal_escape_active
+        ):
+            self._dynamic_deadline_clear_steps = 0
+
+        proposed_deadline_v = (
+            float(values[self.action_spec.index("v_cmd")])
+            if "v_cmd" in self.action_spec.names
+            else 0.0
+        )
+        deadline_distance_remaining = max(
+            0.0,
+            recovery_goal_distance
+            - self.dynamic_deadline_position_tolerance_m,
+        )
+        if not self.dynamic_deadline_supervisor_enabled:
+            deadline_required_speed = 0.0
+        elif deadline_available_steps > 0:
+            deadline_required_speed = float(
+                deadline_distance_remaining
+                / (
+                    deadline_available_steps
+                    * self.dynamic_deadline_control_period_s
+                )
+            )
+        elif deadline_distance_remaining > 0.0:
+            deadline_required_speed = float("inf")
+        deadline_supervisor_active = bool(
+            self.dynamic_deadline_supervisor_enabled
+            and self._dynamic_deadline_conflict_seen
+            and not dynamic_escape_allowed
+            and not planner_temporal_escape_active
+            and not self._dynamic_recovery_active
+            and not self._dynamic_recovery_progress_watch_active
+            and deadline_guard_clear
+            and self._dynamic_deadline_clear_steps
+            >= self.dynamic_deadline_clear_hold_steps
+            and np.isfinite(recovery_goal_distance)
+            and recovery_goal_distance
+            > self.dynamic_deadline_position_tolerance_m
+            and np.isfinite(recovery_heading_error)
+            and abs(recovery_heading_error)
+            <= self.dynamic_deadline_heading_tolerance_rad
+            and deadline_available_steps > 0
+            and deadline_required_speed
+            >= self.dynamic_deadline_minimum_required_speed
+            and deadline_required_speed
+            > proposed_deadline_v
+            + self.dynamic_deadline_trigger_margin_mps
+        )
         if self._dynamic_recovery_active:
             if self.dynamic_recovery_alignment_creep_clearance_trend_enabled:
                 previous_clearance = (
@@ -925,6 +1076,19 @@ class ScanGuardArbiter:
                         self._dynamic_recovery_progress_watch_remaining = 0
                         self._dynamic_recovery_progress_watch_samples = []
                         recovery_mode = "planner_release"
+        elif deadline_supervisor_active:
+            if "v_cmd" in self.action_spec.names:
+                v_index = self.action_spec.index("v_cmd")
+                deadline_speed_floor = float(min(
+                    self.dynamic_escape_max_speed,
+                    max(
+                        self.dynamic_deadline_speed_floor,
+                        self.dynamic_deadline_speed_margin
+                        * deadline_required_speed,
+                    ),
+                ))
+                values[v_index] = max(values[v_index], deadline_speed_floor)
+            reason = "dynamic_deadline_supervisor"
         elif bool(guard_result.get("emergency_stop", False)):
             if "v_cmd" in self.action_spec.names:
                 values[self.action_spec.index("v_cmd")] = 0.0
@@ -1102,6 +1266,34 @@ class ScanGuardArbiter:
         )
         diagnostics["dynamic_recovery_progress_reentry_count"] = int(
             self._dynamic_recovery_progress_reentry_count
+        )
+        diagnostics["dynamic_deadline_supervisor_enabled"] = (
+            self.dynamic_deadline_supervisor_enabled
+        )
+        diagnostics["dynamic_deadline_supervisor_active"] = (
+            deadline_supervisor_active
+        )
+        diagnostics["dynamic_deadline_conflict_seen"] = (
+            self._dynamic_deadline_conflict_seen
+        )
+        diagnostics["dynamic_deadline_guard_clear"] = deadline_guard_clear
+        diagnostics["dynamic_deadline_clear_steps"] = int(
+            self._dynamic_deadline_clear_steps
+        )
+        diagnostics["dynamic_deadline_decision_count"] = int(
+            self._dynamic_deadline_decision_count
+        )
+        diagnostics["dynamic_deadline_steps_remaining"] = int(
+            deadline_steps_remaining
+        )
+        diagnostics["dynamic_deadline_available_steps"] = int(
+            deadline_available_steps
+        )
+        diagnostics["dynamic_deadline_required_speed"] = float(
+            deadline_required_speed
+        )
+        diagnostics["dynamic_deadline_speed_floor"] = float(
+            deadline_speed_floor
         )
         return SafetyDecision(
             proposed, executed, overridden, reason, diagnostics

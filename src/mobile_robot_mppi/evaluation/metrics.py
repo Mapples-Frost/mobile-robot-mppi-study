@@ -335,6 +335,54 @@ class EpisodeMetrics:
                     "dynamic_recovery_progress_reentry_count", 0
                 )
             ),
+            "dynamic_deadline_supervisor_enabled": float(
+                safety_diagnostics.get(
+                    "dynamic_deadline_supervisor_enabled", False
+                )
+            ),
+            "dynamic_deadline_supervisor_active": float(
+                safety_diagnostics.get(
+                    "dynamic_deadline_supervisor_active", False
+                )
+            ),
+            "dynamic_deadline_conflict_seen": float(
+                safety_diagnostics.get(
+                    "dynamic_deadline_conflict_seen", False
+                )
+            ),
+            "dynamic_deadline_guard_clear": float(
+                safety_diagnostics.get(
+                    "dynamic_deadline_guard_clear", False
+                )
+            ),
+            "dynamic_deadline_clear_steps": int(
+                safety_diagnostics.get("dynamic_deadline_clear_steps", 0)
+            ),
+            "dynamic_deadline_decision_count": int(
+                safety_diagnostics.get(
+                    "dynamic_deadline_decision_count", 0
+                )
+            ),
+            "dynamic_deadline_steps_remaining": int(
+                safety_diagnostics.get(
+                    "dynamic_deadline_steps_remaining", 0
+                )
+            ),
+            "dynamic_deadline_available_steps": int(
+                safety_diagnostics.get(
+                    "dynamic_deadline_available_steps", 0
+                )
+            ),
+            "dynamic_deadline_required_speed": float(
+                safety_diagnostics.get(
+                    "dynamic_deadline_required_speed", 0.0
+                )
+            ),
+            "dynamic_deadline_speed_floor": float(
+                safety_diagnostics.get(
+                    "dynamic_deadline_speed_floor", 0.0
+                )
+            ),
             "planner_temporal_escape_active": float(
                 safety_diagnostics.get(
                     "planner_temporal_escape_active", False
@@ -2387,6 +2435,33 @@ class EpisodeMetrics:
                 row.get("dynamic_recovery_speed_floor", 0.0)
                 for row in values
             )),
+            "dynamic_deadline_supervisor_enabled_fraction": float(
+                np.mean([
+                    row.get("dynamic_deadline_supervisor_enabled", 0.0)
+                    for row in values
+                ])
+            ),
+            "dynamic_deadline_supervisor_active_steps": int(sum(
+                row.get("dynamic_deadline_supervisor_active", 0.0)
+                for row in values
+            )),
+            "dynamic_deadline_conflict_seen_steps": int(sum(
+                row.get("dynamic_deadline_conflict_seen", 0.0)
+                for row in values
+            )),
+            "dynamic_deadline_required_speed_max_active": float(max([
+                row.get("dynamic_deadline_required_speed", 0.0)
+                for row in values
+                if row.get("dynamic_deadline_supervisor_active", 0.0)
+            ] or [0.0])),
+            "dynamic_deadline_speed_floor_mean_active": float(np.mean([
+                row.get("dynamic_deadline_speed_floor", 0.0)
+                for row in values
+                if row.get("dynamic_deadline_supervisor_active", 0.0)
+            ])) if any(
+                row.get("dynamic_deadline_supervisor_active", 0.0)
+                for row in values
+            ) else 0.0,
             "dynamic_escape_allowed_steps": int(sum(
                 row.get("dynamic_escape_allowed", 0.0) for row in values
             )),

@@ -14,6 +14,20 @@ def _protocols():
     return protocol, source
 
 
+def _deadline_protocols():
+    path = (
+        development.ROOT
+        / "configs"
+        / "research"
+        / "single_dynamic_obstacle_v5_deadline_development_b1.yaml"
+    )
+    protocol = v4._load_yaml(path)
+    _, source, _, _, _ = v4.validate_protocol(
+        development._repo_path(protocol["source_protocol"])
+    )
+    return protocol, source
+
+
 def test_v5_development_is_outcome_informed_and_not_effect_estimation():
     protocol, _ = _protocols()
 
@@ -151,3 +165,73 @@ def test_v5_analysis_uses_certificate_enriched_schedule_blocks(monkeypatch):
 
     assert len(seen) == 2
     assert all(row["certificate"] == blocks[0]["certificate"] for row in seen)
+
+
+def test_v5_deadline_b1_is_a_new_outcome_informed_mechanism_family():
+    protocol, _ = _deadline_protocols()
+
+    assert protocol["design"]["development_attempt"] == "B1"
+    assert protocol["design"]["mechanism_family"] == (
+        "online_deadline_feasibility_supervisor"
+    )
+    assert protocol["design"]["outcome_informed_development_selection"]
+    assert not protocol["design"]["formal_effect_estimation_authorized"]
+    assert protocol["design"]["paired_arms"] == [
+        "V4_full_frozen",
+        "V5_deadline_full",
+    ]
+    development._validate_parent_attempt(protocol)
+
+
+def test_v5_deadline_b1_changes_only_declared_scan_guard_fields():
+    protocol, source = _deadline_protocols()
+    block = dict(protocol["development_blocks"][0])
+
+    v4_config, v4_changes = development._configure_arm(
+        protocol, source, block, "V4_full_frozen"
+    )
+    v5_config, v5_changes = development._configure_arm(
+        protocol, source, block, "V5_deadline_full"
+    )
+
+    assert not v4_changes
+    assert set(v5_changes) <= {
+        "perception.scan_guard.%s" % key
+        for key in protocol["candidate_overrides"]
+    }
+    assert all(
+        key.startswith("perception.scan_guard.") for key in v5_changes
+    )
+    assert v5_config["perception"]["scan_guard"][
+        "dynamic_deadline_supervisor_enabled"
+    ]
+    assert not v5_config["perception"]["scan_guard"][
+        "dynamic_recovery_progress_watch_enabled"
+    ]
+    for section in ("planner", "rl"):
+        assert v5_config[section] == v4_config[section]
+    assert v5_config["experiment"]["max_steps"] == 400
+    assert v5_config["experiment"]["control_dt"] == 0.1
+    assert v5_config["task"]["position_tolerance"] == 0.3
+    assert (
+        int(v5_config["planner"]["num_samples"])
+        * int(v5_config["planner"]["paper_rl_driven"]["iterations"])
+        == 600
+    )
+
+
+def test_v5_deadline_b1_gate_is_paired_safety_noninferiority():
+    protocol, _ = _deadline_protocols()
+    gate = protocol["development_go_no_go"]
+    contract = protocol["deadline_supervisor_contract"]
+
+    assert "maximum_v5_collisions" not in gate
+    assert gate["maximum_new_paired_collisions"] == 0
+    assert gate["require_collision_count_not_worse"]
+    assert gate["minimum_challenge_conversions"] == 2
+    assert contract["requires_prior_dynamic_escape"]
+    assert contract["renewed_hazard_has_immediate_priority"]
+    assert not contract["uses_truth_conflict_window"]
+    assert not contract["uses_future_obstacle_trajectory"]
+    assert not contract["changes_steering_command"]
+    assert contract["total_rollouts_per_decision"] == 600

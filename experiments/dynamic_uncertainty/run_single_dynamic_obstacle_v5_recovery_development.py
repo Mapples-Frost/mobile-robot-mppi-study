@@ -1,4 +1,4 @@
-"""Run the outcome-informed, non-confirmatory v5 recovery development panel."""
+"""Run an outcome-informed, non-confirmatory v5 development panel."""
 
 import argparse
 from concurrent.futures import ProcessPoolExecutor, as_completed
@@ -68,6 +68,20 @@ def _repo_path(value):
     return path if path.is_absolute() else ROOT / path
 
 
+def _candidate_arm(development):
+    arms = list(development["design"]["paired_arms"])
+    candidates = [arm for arm in arms if arm != "V4_full_frozen"]
+    if len(candidates) != 1:
+        raise ValueError("development design must contain one candidate arm")
+    return str(candidates[0])
+
+
+def _candidate_overrides(development):
+    if "candidate_overrides" in development:
+        return development["candidate_overrides"]
+    return development["v5_recovery_overrides"]
+
+
 def _validate_parent_attempt(development):
     if "parent_development_result" not in development:
         return
@@ -129,9 +143,11 @@ def _configure_arm(development, source_protocol, block, arm):
         stage4,
     )
     before = deepcopy(config)
-    if arm == "V5_recovery_full":
+    candidate_arm = _candidate_arm(development)
+    overrides = _candidate_overrides(development)
+    if arm == candidate_arm:
         guard = config["perception"]["scan_guard"]
-        for key, value in development["v5_recovery_overrides"].items():
+        for key, value in overrides.items():
             guard[str(key)] = deepcopy(value)
     elif arm != "V4_full_frozen":
         raise ValueError("unknown development arm: %s" % arm)
@@ -139,15 +155,15 @@ def _configure_arm(development, source_protocol, block, arm):
     changes = v4._change_signature(before, config)
     expected = {
         "perception.scan_guard.%s" % key
-        for key in development["v5_recovery_overrides"]
+        for key in overrides
         if before["perception"]["scan_guard"].get(key, "<MISSING>")
-        != development["v5_recovery_overrides"][key]
+        != overrides[key]
     }
     if arm == "V4_full_frozen" and changes:
         raise RuntimeError("V4 frozen arm changed: %s" % sorted(changes))
-    if arm == "V5_recovery_full" and set(changes) != expected:
+    if arm == candidate_arm and set(changes) != expected:
         raise RuntimeError(
-            "v5 recovery change scope differs: %s vs %s"
+            "v5 candidate change scope differs: %s vs %s"
             % (sorted(changes), sorted(expected))
         )
 
@@ -240,6 +256,19 @@ def _episode_row(output, block, arm, source_protocol):
         "dynamic_recovery_speed_floor_mean": float(
             metrics.get("dynamic_recovery_speed_floor_mean", 0.0)
         ),
+        "dynamic_deadline_supervisor_active_steps": int(
+            metrics.get("dynamic_deadline_supervisor_active_steps", 0)
+        ),
+        "dynamic_deadline_required_speed_max_active": float(
+            metrics.get(
+                "dynamic_deadline_required_speed_max_active", 0.0
+            )
+        ),
+        "dynamic_deadline_speed_floor_mean_active": float(
+            metrics.get(
+                "dynamic_deadline_speed_floor_mean_active", 0.0
+            )
+        ),
     }
     row.update(behavior)
     return row
@@ -247,6 +276,10 @@ def _episode_row(output, block, arm, source_protocol):
 
 def _mean(rows, key):
     return float(np.mean([float(row[key]) for row in rows]))
+
+
+def _mean_optional(rows, key):
+    return float(np.mean([float(row.get(key, 0.0)) for row in rows]))
 
 
 def _relative_reduction(control, treatment, key):
@@ -265,7 +298,7 @@ def _analyze(development, source_protocol, output, blocks):
         }
         rows.extend(arm_rows.values())
         control = arm_rows["V4_full_frozen"]
-        treatment = arm_rows["V5_recovery_full"]
+        treatment = arm_rows[_candidate_arm(development)]
         pairs.append({
             "split": block["split"],
             "seed": int(block["seed"]),
@@ -299,7 +332,8 @@ def _analyze(development, source_protocol, output, blocks):
         })
 
     control = [row for row in rows if row["arm"] == "V4_full_frozen"]
-    treatment = [row for row in rows if row["arm"] == "V5_recovery_full"]
+    candidate_arm = _candidate_arm(development)
+    treatment = [row for row in rows if row["arm"] == candidate_arm]
     challenge_pairs = [
         pair for pair in pairs if "safe_noncompletion" in pair["stratum"]
     ]
@@ -311,6 +345,11 @@ def _analyze(development, source_protocol, output, blocks):
         pair["v4_success"] and not pair["v5_success"] for pair in pairs
     )
     v5_collisions = sum(row["collision"] for row in treatment)
+    v4_collisions = sum(row["collision"] for row in control)
+    new_paired_collisions = sum(
+        not pair["v4_collision"] and pair["v5_collision"]
+        for pair in pairs
+    )
     zero_reduction = _relative_reduction(
         control, treatment, "zero_speed_risk_steps"
     )
@@ -323,11 +362,17 @@ def _analyze(development, source_protocol, output, blocks):
         for row in rows
     )
     gate = development["development_go_no_go"]
+    minimum_conversions = int(gate.get(
+        "minimum_challenge_conversions",
+        gate.get("minimum_recovery_challenge_conversions", 0),
+    ))
+    conversion_check_name = (
+        "challenge_conversions"
+        if "minimum_challenge_conversions" in gate
+        else "recovery_challenge_conversions"
+    )
     checks = {
-        "recovery_challenge_conversions": conversions
-        >= int(gate["minimum_recovery_challenge_conversions"]),
-        "zero_v5_collisions": v5_collisions
-        <= int(gate["maximum_v5_collisions"]),
+        conversion_check_name: conversions >= minimum_conversions,
         "no_lost_v4_successes": lost_successes
         <= int(gate["maximum_lost_v4_successes"]),
         "zero_speed_risk_reduction": zero_reduction
@@ -338,6 +383,49 @@ def _analyze(development, source_protocol, output, blocks):
         >= -float(gate["maximum_mean_minimum_clearance_loss_m"]),
         "rollout_budget_exact": rollout_pass,
     }
+    if "maximum_v5_collisions" in gate:
+        checks["zero_v5_collisions"] = (
+            v5_collisions <= int(gate["maximum_v5_collisions"])
+        )
+    if "maximum_new_paired_collisions" in gate:
+        checks["no_new_paired_collisions"] = (
+            new_paired_collisions
+            <= int(gate["maximum_new_paired_collisions"])
+        )
+    if gate.get("require_collision_count_not_worse", False):
+        checks["collision_count_not_worse"] = (
+            v5_collisions <= v4_collisions
+        )
+    final_distance_delta = _mean(
+        treatment, "final_goal_distance"
+    ) - _mean(control, "final_goal_distance")
+    direction_switch_increase = int(sum(
+        row.get("direction_switch_count", 0) for row in treatment
+    ) - sum(row.get("direction_switch_count", 0) for row in control))
+    oscillation_increase = int(sum(
+        row.get("three_phase_oscillation_count", 0) for row in treatment
+    ) - sum(
+        row.get("three_phase_oscillation_count", 0) for row in control
+    ))
+    if "minimum_mean_final_goal_distance_reduction_m" in gate:
+        checks["mean_final_goal_distance_reduced"] = (
+            final_distance_delta
+            <= -float(gate[
+                "minimum_mean_final_goal_distance_reduction_m"
+            ])
+        )
+    if "maximum_total_direction_switch_increase" in gate:
+        checks["direction_switches_bounded"] = (
+            direction_switch_increase
+            <= int(gate["maximum_total_direction_switch_increase"])
+        )
+    if "maximum_total_three_phase_oscillation_increase" in gate:
+        checks["three_phase_oscillation_not_worse"] = (
+            oscillation_increase
+            <= int(gate[
+                "maximum_total_three_phase_oscillation_increase"
+            ])
+        )
     return {
         "schema_version": 1,
         "status": "development_gate_pass" if all(checks.values()) else "development_gate_fail",
@@ -348,9 +436,14 @@ def _analyze(development, source_protocol, output, blocks):
         "recovery_challenge_conversions": int(conversions),
         "lost_v4_successes": int(lost_successes),
         "v5_collisions": int(v5_collisions),
+        "v4_collisions": int(v4_collisions),
+        "new_paired_collisions": int(new_paired_collisions),
         "relative_zero_speed_risk_reduction": zero_reduction,
         "relative_stuck_step_reduction": stuck_reduction,
         "mean_minimum_clearance_delta_m": mean_clearance_delta,
+        "mean_final_goal_distance_delta_m": final_distance_delta,
+        "total_direction_switch_increase": direction_switch_increase,
+        "total_three_phase_oscillation_increase": oscillation_increase,
         "checks": checks,
         "arm_summaries": {
             "V4_full_frozen": {
@@ -368,7 +461,7 @@ def _analyze(development, source_protocol, output, blocks):
                     control, "minimum_clearance"
                 ),
             },
-            "V5_recovery_full": {
+            candidate_arm: {
                 "successes": int(sum(row["success"] for row in treatment)),
                 "collisions": int(sum(row["collision"] for row in treatment)),
                 "mean_steps": _mean(treatment, "steps"),
@@ -388,6 +481,16 @@ def _analyze(development, source_protocol, output, blocks):
                 "mean_dynamic_recovery_forward_commit_steps": _mean(
                     treatment, "dynamic_recovery_forward_commit_steps"
                 ),
+                "mean_dynamic_deadline_supervisor_active_steps": _mean_optional(
+                    treatment,
+                    "dynamic_deadline_supervisor_active_steps",
+                ),
+                "maximum_dynamic_deadline_required_speed": float(max(
+                    row.get(
+                        "dynamic_deadline_required_speed_max_active", 0.0
+                    )
+                    for row in treatment
+                )),
             },
         },
         "pairs": pairs,

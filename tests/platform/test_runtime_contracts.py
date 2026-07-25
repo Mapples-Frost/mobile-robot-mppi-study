@@ -876,6 +876,134 @@ def test_dynamic_recovery_progress_watch_cancels_on_temporal_hazard():
     assert cancelled.executed_control.values[0] == 0.0
 
 
+def _deadline_supervisor_arbiter():
+    return ScanGuardArbiter(
+        body_velocity_action((-0.35, 0.35), 0.9),
+        {
+            "dynamic_escape_max_speed": 0.35,
+            "dynamic_deadline_supervisor_enabled": True,
+            "dynamic_deadline_episode_steps": 100,
+            "dynamic_deadline_control_period_s": 0.1,
+            "dynamic_deadline_position_tolerance_m": 0.3,
+            "dynamic_deadline_reserve_steps": 1,
+            "dynamic_deadline_clear_hold_steps": 2,
+            "dynamic_deadline_minimum_required_speed": 0.2,
+            "dynamic_deadline_speed_floor": 0.3,
+            "dynamic_deadline_speed_margin": 1.1,
+            "dynamic_deadline_trigger_margin_mps": 0.02,
+            "dynamic_deadline_heading_tolerance_rad": 0.2,
+        },
+    )
+
+
+def test_dynamic_deadline_supervisor_requires_prior_dynamic_conflict():
+    arbiter = _deadline_supervisor_arbiter()
+    arbiter._dynamic_deadline_decision_count = 94
+    clear_guard = {"reason": "front_clear", "temporal_scan_valid": False}
+    context = {
+        "probabilistic_obstacle_maximum_step_probability": 0.05,
+        "target_bearing_error": 0.0,
+        "terminal_control_distance": 0.5,
+    }
+
+    decisions = [
+        arbiter.arbitrate(
+            ControlCommand(np.asarray((0.1, 0.0))),
+            clear_guard,
+            context,
+        )
+        for _ in range(2)
+    ]
+
+    assert not any(
+        item.diagnostics["dynamic_deadline_supervisor_active"]
+        for item in decisions
+    )
+    np.testing.assert_allclose(
+        [item.executed_control.values[0] for item in decisions],
+        0.1,
+    )
+
+
+def test_dynamic_deadline_supervisor_acts_only_after_clear_hold():
+    arbiter = _deadline_supervisor_arbiter()
+    arbiter._dynamic_deadline_conflict_seen = True
+    arbiter._dynamic_deadline_decision_count = 94
+    clear_guard = {"reason": "front_clear", "temporal_scan_valid": False}
+    context = {
+        "probabilistic_obstacle_maximum_step_probability": 0.05,
+        "target_bearing_error": 0.0,
+        "terminal_control_distance": 0.5,
+    }
+
+    waiting = arbiter.arbitrate(
+        ControlCommand(np.asarray((0.1, 0.0))),
+        clear_guard,
+        context,
+    )
+    active = arbiter.arbitrate(
+        ControlCommand(np.asarray((0.1, 0.0))),
+        clear_guard,
+        context,
+    )
+
+    assert not waiting.diagnostics["dynamic_deadline_supervisor_active"]
+    assert waiting.executed_control.values[0] == 0.1
+    assert active.diagnostics["dynamic_deadline_supervisor_active"]
+    assert active.diagnostics["dynamic_deadline_required_speed"] > 0.2
+    assert active.executed_control.values[0] == 0.35
+    assert active.reason == "dynamic_deadline_supervisor"
+
+
+def test_dynamic_deadline_supervisor_relinquishes_on_renewed_hazard():
+    arbiter = _deadline_supervisor_arbiter()
+    arbiter._dynamic_deadline_conflict_seen = True
+    arbiter._dynamic_deadline_decision_count = 94
+    clear_guard = {"reason": "front_clear", "temporal_scan_valid": False}
+    clear_context = {
+        "probabilistic_obstacle_maximum_step_probability": 0.05,
+        "target_bearing_error": 0.0,
+        "terminal_control_distance": 0.5,
+    }
+    for _ in range(2):
+        arbiter.arbitrate(
+            ControlCommand(np.asarray((0.1, 0.0))),
+            clear_guard,
+            clear_context,
+        )
+
+    hazardous = arbiter.arbitrate(
+        ControlCommand(np.asarray((0.1, 0.0))),
+        {
+            "reason": "front_clear",
+            "temporal_scan_valid": True,
+            "dynamic_obstacle_scan_flow_match": True,
+            "temporal_scan_ttc_s": 1.0,
+        },
+        {
+            **clear_context,
+            "probabilistic_obstacle_maximum_step_probability": 0.20,
+        },
+    )
+
+    assert not hazardous.diagnostics["dynamic_deadline_supervisor_active"]
+    assert hazardous.diagnostics["dynamic_deadline_clear_steps"] == 0
+    assert hazardous.executed_control.values[0] == 0.1
+
+
+def test_dynamic_deadline_supervisor_reset_clears_episode_state():
+    arbiter = _deadline_supervisor_arbiter()
+    arbiter._dynamic_deadline_conflict_seen = True
+    arbiter._dynamic_deadline_clear_steps = 9
+    arbiter._dynamic_deadline_decision_count = 50
+
+    arbiter.reset()
+
+    assert not arbiter._dynamic_deadline_conflict_seen
+    assert arbiter._dynamic_deadline_clear_steps == 0
+    assert arbiter._dynamic_deadline_decision_count == 0
+
+
 def test_dynamic_recovery_alignment_creep_moves_only_while_clear():
     action_spec = body_velocity_action((-0.35, 0.35), 0.9)
     arbiter = ScanGuardArbiter(

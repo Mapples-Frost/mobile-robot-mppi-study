@@ -102,6 +102,14 @@ def test_v5_recovery_contract_keeps_frozen_risk_thresholds_and_budget():
     assert contract[
         "alignment_creep_requires_non_decreasing_scan_clearance"
     ]
+    assert contract["commit_is_immediately_abortable_by_existing_risk_guards"]
+    assert contract["bounded_corridor_clearance_commit_s"] == 8.0
+    assert (
+        protocol["v5_recovery_overrides"][
+            "dynamic_recovery_minimum_forward_commit_steps"
+        ]
+        == 80
+    )
 
 
 def test_v5_analysis_uses_certificate_enriched_schedule_blocks(monkeypatch):

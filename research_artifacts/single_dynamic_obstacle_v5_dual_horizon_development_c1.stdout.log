@@ -1,0 +1,25 @@
+[block 1/8] id seed=740200191 complete
+[block 2/8] id seed=740200006 complete
+[block 3/8] ood seed=740300251 complete
+[block 4/8] id seed=740200252 complete
+[block 5/8] id seed=740200011 complete
+[block 6/8] id seed=740200001 complete
+[block 7/8] ood seed=740300004 complete
+[block 8/8] ood seed=740300001 complete
+{
+  "bundle_sha256": "761f058d4f09c270e92ee2cc3cb6018b7d8a4aada6a77c7758eaedf906408870",
+  "checks": {
+    "challenge_conversions": false,
+    "collision_count_not_worse": true,
+    "direction_switches_bounded": true,
+    "mean_final_goal_distance_reduced": true,
+    "mean_minimum_clearance_preserved": true,
+    "no_lost_v4_successes": true,
+    "no_new_paired_collisions": true,
+    "rollout_budget_exact": true,
+    "stuck_step_reduction": true,
+    "three_phase_oscillation_not_worse": true,
+    "zero_speed_risk_reduction": true
+  },
+  "status": "development_gate_fail"
+}

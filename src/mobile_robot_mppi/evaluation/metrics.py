@@ -305,6 +305,36 @@ class EpisodeMetrics:
                     "dynamic_recovery_clearance_trend_ready", False
                 )
             ),
+            "dynamic_recovery_progress_watch_active": float(
+                safety_diagnostics.get(
+                    "dynamic_recovery_progress_watch_active", False
+                )
+            ),
+            "dynamic_recovery_progress_watch_remaining": int(
+                safety_diagnostics.get(
+                    "dynamic_recovery_progress_watch_remaining", 0
+                )
+            ),
+            "dynamic_recovery_progress_watch_sample_count": int(
+                safety_diagnostics.get(
+                    "dynamic_recovery_progress_watch_sample_count", 0
+                )
+            ),
+            "dynamic_recovery_progress_watch_progress_m": float(
+                safety_diagnostics.get(
+                    "dynamic_recovery_progress_watch_progress_m", 0.0
+                )
+            ),
+            "dynamic_recovery_progress_watch_triggered": float(
+                safety_diagnostics.get(
+                    "dynamic_recovery_progress_watch_triggered", False
+                )
+            ),
+            "dynamic_recovery_progress_reentry_count": int(
+                safety_diagnostics.get(
+                    "dynamic_recovery_progress_reentry_count", 0
+                )
+            ),
             "planner_temporal_escape_active": float(
                 safety_diagnostics.get(
                     "planner_temporal_escape_active", False
@@ -2327,6 +2357,18 @@ class EpisodeMetrics:
             ),
             "dynamic_recovery_forward_commit_steps": int(sum(
                 row.get("dynamic_recovery_forward_commit_active", 0.0)
+                for row in values
+            )),
+            "dynamic_recovery_progress_watch_steps": int(sum(
+                row.get("dynamic_recovery_progress_watch_active", 0.0)
+                for row in values
+            )),
+            "dynamic_recovery_progress_watch_trigger_count": int(sum(
+                row.get("dynamic_recovery_progress_watch_triggered", 0.0)
+                for row in values
+            )),
+            "dynamic_recovery_progress_reentry_count_max": int(max(
+                row.get("dynamic_recovery_progress_reentry_count", 0)
                 for row in values
             )),
             "dynamic_recovery_advance_count_max": int(max(

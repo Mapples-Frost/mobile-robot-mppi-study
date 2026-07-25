@@ -31,7 +31,7 @@ DEFAULT_PROTOCOL = (
     ROOT
     / "configs"
     / "research"
-    / "single_dynamic_obstacle_v5_recovery_development_a4.yaml"
+    / "single_dynamic_obstacle_v5_recovery_development_a5.yaml"
 )
 
 

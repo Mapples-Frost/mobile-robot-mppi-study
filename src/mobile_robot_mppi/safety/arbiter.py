@@ -131,6 +131,29 @@ class ScanGuardArbiter:
                 "dynamic_recovery_minimum_forward_commit_steps", 0
             )
         )
+        self.dynamic_recovery_progress_watch_enabled = bool(
+            self.config.get(
+                "dynamic_recovery_progress_watch_enabled", False
+            )
+        )
+        self.dynamic_recovery_progress_watch_steps = int(
+            self.config.get("dynamic_recovery_progress_watch_steps", 5)
+        )
+        self.dynamic_recovery_progress_watch_minimum_progress_m = float(
+            self.config.get(
+                "dynamic_recovery_progress_watch_minimum_progress_m", 0.04
+            )
+        )
+        self.dynamic_recovery_progress_watch_max_reentries = int(
+            self.config.get(
+                "dynamic_recovery_progress_watch_max_reentries", 1
+            )
+        )
+        self.dynamic_recovery_progress_watch_timeout_steps = int(
+            self.config.get(
+                "dynamic_recovery_progress_watch_timeout_steps", 60
+            )
+        )
         self.dynamic_recovery_alignment_creep_enabled = bool(
             self.config.get(
                 "dynamic_recovery_alignment_creep_enabled", False
@@ -235,6 +258,16 @@ class ScanGuardArbiter:
             raise ValueError(
                 "dynamic recovery acceleration ramp parameters are invalid"
             )
+        if self.dynamic_recovery_progress_watch_enabled and (
+            self.dynamic_recovery_progress_watch_steps < 1
+            or self.dynamic_recovery_progress_watch_minimum_progress_m < 0.0
+            or self.dynamic_recovery_progress_watch_max_reentries < 1
+            or self.dynamic_recovery_progress_watch_timeout_steps
+            < self.dynamic_recovery_progress_watch_steps
+        ):
+            raise ValueError(
+                "dynamic recovery progress watch parameters are invalid"
+            )
         if self.dynamic_recovery_alignment_creep_enabled and (
             self.dynamic_recovery_alignment_creep_speed <= 0.0
             or self.dynamic_recovery_alignment_creep_speed
@@ -264,6 +297,10 @@ class ScanGuardArbiter:
         self._dynamic_recovery_alignment_creep_latched = False
         self._dynamic_recovery_previous_scan_clearance = float("nan")
         self._dynamic_recovery_clearance_trend_steps = 0
+        self._dynamic_recovery_progress_watch_active = False
+        self._dynamic_recovery_progress_watch_remaining = 0
+        self._dynamic_recovery_progress_watch_samples = []
+        self._dynamic_recovery_progress_reentry_count = 0
 
     def arbitrate(
         self,
@@ -385,6 +422,8 @@ class ScanGuardArbiter:
         recovery_risk_ramp_fraction = 0.0
         recovery_forward_commit_active = False
         recovery_alignment_creep_active = False
+        recovery_progress_watch_triggered = False
+        recovery_progress_watch_progress_m = 0.0
         recovery_scan_clearance = float("nan")
         scan_clearance_values = []
         for key in (
@@ -422,6 +461,15 @@ class ScanGuardArbiter:
                 )) <= self.dynamic_escape_trigger_ttc_s
             )
         )
+        recovery_heading_error = float(
+            context.get(
+                "target_bearing_error",
+                context.get("terminal_bearing_error", float("nan")),
+            )
+        )
+        recovery_goal_distance = float(
+            context.get("terminal_control_distance", float("inf"))
+        )
         if dynamic_escape_allowed or planner_temporal_escape_active:
             self._dynamic_escape_seen = True
             self._dynamic_recovery_active = False
@@ -431,15 +479,10 @@ class ScanGuardArbiter:
             self._dynamic_recovery_alignment_creep_latched = False
             self._dynamic_recovery_previous_scan_clearance = float("nan")
             self._dynamic_recovery_clearance_trend_steps = 0
+            self._dynamic_recovery_progress_watch_active = False
+            self._dynamic_recovery_progress_watch_remaining = 0
+            self._dynamic_recovery_progress_watch_samples = []
         elif self.dynamic_recovery_enabled and self._dynamic_escape_seen:
-            recovery_heading_error = float(
-                context.get(
-                    "target_bearing_error",
-                    context.get(
-                        "terminal_bearing_error", float("nan")
-                    ),
-                )
-            )
             recovery_clear = bool(
                 recovery_guard_clear
                 and recovery_ttc_clear
@@ -452,7 +495,74 @@ class ScanGuardArbiter:
                 or selected_probability
                 >= self.dynamic_recovery_abort_probability
             )
-            if self._dynamic_recovery_active and recovery_abort:
+            if (
+                self._dynamic_recovery_progress_watch_active
+                and not self._dynamic_recovery_active
+            ):
+                if (
+                    recovery_abort
+                    or not recovery_clear
+                    or not np.isfinite(recovery_goal_distance)
+                    or recovery_goal_distance
+                    <= self.dynamic_recovery_goal_release_distance_m
+                ):
+                    self._dynamic_recovery_progress_watch_active = False
+                    self._dynamic_recovery_progress_watch_remaining = 0
+                    self._dynamic_recovery_progress_watch_samples = []
+                    self._dynamic_escape_seen = False
+                    recovery_mode = "progress_watch_cancelled"
+                else:
+                    self._dynamic_recovery_progress_watch_remaining -= 1
+                    self._dynamic_recovery_progress_watch_samples.append(
+                        recovery_goal_distance
+                    )
+                    maximum_samples = (
+                        self.dynamic_recovery_progress_watch_steps + 1
+                    )
+                    if (
+                        len(self._dynamic_recovery_progress_watch_samples)
+                        > maximum_samples
+                    ):
+                        self._dynamic_recovery_progress_watch_samples.pop(0)
+                    if (
+                        len(self._dynamic_recovery_progress_watch_samples)
+                        == maximum_samples
+                    ):
+                        recovery_progress_watch_progress_m = float(
+                            self._dynamic_recovery_progress_watch_samples[0]
+                            - self._dynamic_recovery_progress_watch_samples[-1]
+                        )
+                        if (
+                            recovery_progress_watch_progress_m
+                            < self.dynamic_recovery_progress_watch_minimum_progress_m
+                            and self._dynamic_recovery_progress_reentry_count
+                            < self.dynamic_recovery_progress_watch_max_reentries
+                        ):
+                            self._dynamic_recovery_active = True
+                            self._dynamic_recovery_progress_watch_active = False
+                            self._dynamic_recovery_progress_watch_remaining = 0
+                            self._dynamic_recovery_progress_watch_samples = []
+                            self._dynamic_recovery_progress_reentry_count += 1
+                            self._dynamic_recovery_release_count = 0
+                            self._dynamic_recovery_advance_steps = 0
+                            self._dynamic_recovery_alignment_creep_latched = False
+                            self._dynamic_recovery_previous_scan_clearance = (
+                                float("nan")
+                            )
+                            self._dynamic_recovery_clearance_trend_steps = 0
+                            recovery_progress_watch_triggered = True
+                            recovery_mode = "progress_reentered"
+                    if (
+                        not self._dynamic_recovery_active
+                        and self._dynamic_recovery_progress_watch_remaining <= 0
+                    ):
+                        self._dynamic_recovery_progress_watch_active = False
+                        self._dynamic_recovery_progress_watch_samples = []
+                        self._dynamic_escape_seen = False
+                        recovery_mode = "progress_watch_timeout"
+                    elif not self._dynamic_recovery_active:
+                        recovery_mode = "progress_watch"
+            elif self._dynamic_recovery_active and recovery_abort:
                 self._dynamic_recovery_active = False
                 self._dynamic_recovery_clear_steps = 0
                 self._dynamic_recovery_release_count = 0
@@ -460,6 +570,9 @@ class ScanGuardArbiter:
                 self._dynamic_recovery_alignment_creep_latched = False
                 self._dynamic_recovery_previous_scan_clearance = float("nan")
                 self._dynamic_recovery_clearance_trend_steps = 0
+                self._dynamic_recovery_progress_watch_active = False
+                self._dynamic_recovery_progress_watch_remaining = 0
+                self._dynamic_recovery_progress_watch_samples = []
                 recovery_mode = "aborted"
             elif not self._dynamic_recovery_active:
                 if recovery_clear:
@@ -483,6 +596,9 @@ class ScanGuardArbiter:
                             "nan"
                         )
                         self._dynamic_recovery_clearance_trend_steps = 0
+                        self._dynamic_recovery_progress_watch_active = False
+                        self._dynamic_recovery_progress_watch_remaining = 0
+                        self._dynamic_recovery_progress_watch_samples = []
                         recovery_mode = "entered"
                     else:
                         self._dynamic_escape_seen = False
@@ -493,6 +609,9 @@ class ScanGuardArbiter:
                             "nan"
                         )
                         self._dynamic_recovery_clearance_trend_steps = 0
+                        self._dynamic_recovery_progress_watch_active = False
+                        self._dynamic_recovery_progress_watch_remaining = 0
+                        self._dynamic_recovery_progress_watch_samples = []
                         recovery_mode = "not_needed"
         if self._dynamic_recovery_active:
             if self.dynamic_recovery_alignment_creep_clearance_trend_enabled:
@@ -612,9 +731,7 @@ class ScanGuardArbiter:
                     ),
                 )
             )
-            goal_distance = float(
-                context.get("terminal_control_distance", float("inf"))
-            )
+            goal_distance = recovery_goal_distance
             proposed_v = (
                 float(values[self.action_spec.index("v_cmd")])
                 if "v_cmd" in self.action_spec.names
@@ -631,6 +748,9 @@ class ScanGuardArbiter:
                 self._dynamic_recovery_alignment_creep_latched = False
                 self._dynamic_recovery_previous_scan_clearance = float("nan")
                 self._dynamic_recovery_clearance_trend_steps = 0
+                self._dynamic_recovery_progress_watch_active = False
+                self._dynamic_recovery_progress_watch_remaining = 0
+                self._dynamic_recovery_progress_watch_samples = []
                 recovery_mode = "goal_release"
             elif not np.isfinite(heading_error):
                 self._dynamic_recovery_active = False
@@ -640,6 +760,9 @@ class ScanGuardArbiter:
                 self._dynamic_recovery_alignment_creep_latched = False
                 self._dynamic_recovery_previous_scan_clearance = float("nan")
                 self._dynamic_recovery_clearance_trend_steps = 0
+                self._dynamic_recovery_progress_watch_active = False
+                self._dynamic_recovery_progress_watch_remaining = 0
+                self._dynamic_recovery_progress_watch_samples = []
                 recovery_mode = "missing_heading_abort"
             elif abs(heading_error) > (
                 self.dynamic_recovery_heading_tolerance_rad
@@ -697,6 +820,9 @@ class ScanGuardArbiter:
                 self._dynamic_recovery_alignment_creep_latched = False
                 self._dynamic_recovery_previous_scan_clearance = float("nan")
                 self._dynamic_recovery_clearance_trend_steps = 0
+                self._dynamic_recovery_progress_watch_active = False
+                self._dynamic_recovery_progress_watch_remaining = 0
+                self._dynamic_recovery_progress_watch_samples = []
                 recovery_mode = "aligned_release"
             else:
                 self._dynamic_recovery_advance_steps += 1
@@ -768,7 +894,6 @@ class ScanGuardArbiter:
                     >= self.dynamic_recovery_minimum_forward_commit_steps
                 ):
                     self._dynamic_recovery_active = False
-                    self._dynamic_escape_seen = False
                     self._dynamic_recovery_clear_steps = 0
                     self._dynamic_recovery_release_count = 0
                     self._dynamic_recovery_advance_steps = 0
@@ -777,7 +902,29 @@ class ScanGuardArbiter:
                         "nan"
                     )
                     self._dynamic_recovery_clearance_trend_steps = 0
-                    recovery_mode = "planner_release"
+                    if (
+                        self.dynamic_recovery_progress_watch_enabled
+                        and self._dynamic_recovery_progress_reentry_count
+                        < self.dynamic_recovery_progress_watch_max_reentries
+                        and np.isfinite(goal_distance)
+                        and goal_distance
+                        > self.dynamic_recovery_goal_release_distance_m
+                    ):
+                        self._dynamic_escape_seen = True
+                        self._dynamic_recovery_progress_watch_active = True
+                        self._dynamic_recovery_progress_watch_remaining = (
+                            self.dynamic_recovery_progress_watch_timeout_steps
+                        )
+                        self._dynamic_recovery_progress_watch_samples = [
+                            goal_distance
+                        ]
+                        recovery_mode = "planner_release_watch"
+                    else:
+                        self._dynamic_escape_seen = False
+                        self._dynamic_recovery_progress_watch_active = False
+                        self._dynamic_recovery_progress_watch_remaining = 0
+                        self._dynamic_recovery_progress_watch_samples = []
+                        recovery_mode = "planner_release"
         elif bool(guard_result.get("emergency_stop", False)):
             if "v_cmd" in self.action_spec.names:
                 values[self.action_spec.index("v_cmd")] = 0.0
@@ -859,6 +1006,21 @@ class ScanGuardArbiter:
         diagnostics["dynamic_recovery_minimum_forward_commit_steps"] = (
             self.dynamic_recovery_minimum_forward_commit_steps
         )
+        diagnostics["dynamic_recovery_progress_watch_enabled"] = (
+            self.dynamic_recovery_progress_watch_enabled
+        )
+        diagnostics["dynamic_recovery_progress_watch_steps"] = (
+            self.dynamic_recovery_progress_watch_steps
+        )
+        diagnostics[
+            "dynamic_recovery_progress_watch_minimum_progress_m"
+        ] = self.dynamic_recovery_progress_watch_minimum_progress_m
+        diagnostics["dynamic_recovery_progress_watch_max_reentries"] = (
+            self.dynamic_recovery_progress_watch_max_reentries
+        )
+        diagnostics["dynamic_recovery_progress_watch_timeout_steps"] = (
+            self.dynamic_recovery_progress_watch_timeout_steps
+        )
         diagnostics["dynamic_recovery_alignment_creep_enabled"] = (
             self.dynamic_recovery_alignment_creep_enabled
         )
@@ -922,6 +1084,24 @@ class ScanGuardArbiter:
         )
         diagnostics["dynamic_recovery_clearance_trend_ready"] = (
             recovery_clearance_trend_ready
+        )
+        diagnostics["dynamic_recovery_progress_watch_active"] = (
+            self._dynamic_recovery_progress_watch_active
+        )
+        diagnostics["dynamic_recovery_progress_watch_remaining"] = int(
+            self._dynamic_recovery_progress_watch_remaining
+        )
+        diagnostics["dynamic_recovery_progress_watch_sample_count"] = len(
+            self._dynamic_recovery_progress_watch_samples
+        )
+        diagnostics["dynamic_recovery_progress_watch_progress_m"] = (
+            recovery_progress_watch_progress_m
+        )
+        diagnostics["dynamic_recovery_progress_watch_triggered"] = (
+            recovery_progress_watch_triggered
+        )
+        diagnostics["dynamic_recovery_progress_reentry_count"] = int(
+            self._dynamic_recovery_progress_reentry_count
         )
         return SafetyDecision(
             proposed, executed, overridden, reason, diagnostics

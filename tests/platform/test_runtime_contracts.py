@@ -750,6 +750,132 @@ def test_dynamic_recovery_minimum_forward_commit_delays_planner_release():
     )
 
 
+def test_dynamic_recovery_progress_watch_reenters_only_after_stagnation():
+    action_spec = body_velocity_action((-0.35, 0.35), 0.9)
+    arbiter = ScanGuardArbiter(
+        action_spec,
+        {
+            "dynamic_escape_enabled": True,
+            "dynamic_escape_max_speed": 0.35,
+            "dynamic_escape_reactive_enabled": True,
+            "dynamic_escape_trigger_ttc_s": 1.50,
+            "dynamic_recovery_enabled": True,
+            "dynamic_recovery_entry_probability": 0.10,
+            "dynamic_recovery_abort_probability": 0.15,
+            "dynamic_recovery_clear_hold_steps": 1,
+            "dynamic_recovery_heading_tolerance_rad": 0.30,
+            "dynamic_recovery_minimum_heading_error_rad": 0.0,
+            "dynamic_recovery_min_speed": 0.30,
+            "dynamic_recovery_translation_enabled": True,
+            "dynamic_recovery_release_steps": 1,
+            "dynamic_recovery_minimum_forward_commit_steps": 1,
+            "dynamic_recovery_progress_watch_enabled": True,
+            "dynamic_recovery_progress_watch_steps": 3,
+            "dynamic_recovery_progress_watch_minimum_progress_m": 0.05,
+            "dynamic_recovery_progress_watch_max_reentries": 2,
+            "dynamic_recovery_progress_watch_timeout_steps": 10,
+        },
+    )
+    arbiter._dynamic_escape_seen = True
+    clear_guard = {"reason": "front_clear", "temporal_scan_valid": False}
+
+    released = arbiter.arbitrate(
+        ControlCommand(np.asarray((0.30, 0.0))),
+        clear_guard,
+        {
+            "probabilistic_obstacle_maximum_step_probability": 0.05,
+            "target_bearing_error": 0.0,
+            "terminal_control_distance": 4.0,
+        },
+    )
+    assert released.diagnostics["dynamic_recovery_mode"] == (
+        "planner_release_watch"
+    )
+    assert released.diagnostics["dynamic_recovery_progress_watch_active"]
+
+    decisions = []
+    for distance in (4.0, 3.99, 3.98):
+        decisions.append(arbiter.arbitrate(
+            ControlCommand(np.asarray((0.0, 0.0))),
+            clear_guard,
+            {
+                "probabilistic_obstacle_maximum_step_probability": 0.05,
+                "target_bearing_error": 0.0,
+                "terminal_control_distance": distance,
+            },
+        ))
+
+    assert all(
+        item.executed_control.values[0] == 0.0 for item in decisions[:2]
+    )
+    assert decisions[-1].diagnostics[
+        "dynamic_recovery_progress_watch_triggered"
+    ]
+    assert decisions[-1].diagnostics[
+        "dynamic_recovery_progress_reentry_count"
+    ] == 1
+    assert decisions[-1].executed_control.values[0] == 0.30
+
+
+def test_dynamic_recovery_progress_watch_cancels_on_temporal_hazard():
+    action_spec = body_velocity_action((-0.35, 0.35), 0.9)
+    arbiter = ScanGuardArbiter(
+        action_spec,
+        {
+            "dynamic_escape_enabled": True,
+            "dynamic_escape_max_speed": 0.35,
+            "dynamic_escape_reactive_enabled": True,
+            "dynamic_escape_trigger_ttc_s": 1.50,
+            "dynamic_recovery_enabled": True,
+            "dynamic_recovery_entry_probability": 0.10,
+            "dynamic_recovery_abort_probability": 0.15,
+            "dynamic_recovery_clear_hold_steps": 1,
+            "dynamic_recovery_heading_tolerance_rad": 0.30,
+            "dynamic_recovery_minimum_heading_error_rad": 0.0,
+            "dynamic_recovery_min_speed": 0.30,
+            "dynamic_recovery_translation_enabled": True,
+            "dynamic_recovery_release_steps": 1,
+            "dynamic_recovery_minimum_forward_commit_steps": 1,
+            "dynamic_recovery_progress_watch_enabled": True,
+            "dynamic_recovery_progress_watch_steps": 3,
+            "dynamic_recovery_progress_watch_minimum_progress_m": 0.05,
+            "dynamic_recovery_progress_watch_max_reentries": 2,
+            "dynamic_recovery_progress_watch_timeout_steps": 10,
+        },
+    )
+    arbiter._dynamic_escape_seen = True
+    clear_context = {
+        "probabilistic_obstacle_maximum_step_probability": 0.05,
+        "target_bearing_error": 0.0,
+        "terminal_control_distance": 4.0,
+    }
+    arbiter.arbitrate(
+        ControlCommand(np.asarray((0.30, 0.0))),
+        {"reason": "front_clear", "temporal_scan_valid": False},
+        clear_context,
+    )
+
+    cancelled = arbiter.arbitrate(
+        ControlCommand(np.asarray((0.0, 0.0))),
+        {
+            "reason": "front_clear",
+            "temporal_scan_valid": True,
+            "dynamic_obstacle_scan_flow_match": True,
+            "temporal_scan_ttc_s": 1.0,
+        },
+        clear_context,
+    )
+
+    assert cancelled.diagnostics["dynamic_recovery_mode"] == (
+        "progress_watch_cancelled"
+    )
+    assert not cancelled.diagnostics[
+        "dynamic_recovery_progress_watch_active"
+    ]
+    assert not cancelled.diagnostics["dynamic_recovery_pending"]
+    assert cancelled.executed_control.values[0] == 0.0
+
+
 def test_dynamic_recovery_alignment_creep_moves_only_while_clear():
     action_spec = body_velocity_action((-0.35, 0.35), 0.9)
     arbiter = ScanGuardArbiter(

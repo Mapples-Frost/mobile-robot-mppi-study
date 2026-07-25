@@ -235,10 +235,10 @@ def _relative_reduction(control, treatment, key):
     return float((baseline - candidate) / baseline) if baseline > 0.0 else 0.0
 
 
-def _analyze(development, source_protocol, output):
+def _analyze(development, source_protocol, output, blocks):
     rows = []
     pairs = []
-    for block in development["development_blocks"]:
+    for block in blocks:
         arm_rows = {
             arm: _episode_row(output, block, arm, source_protocol)
             for arm in development["design"]["paired_arms"]
@@ -375,6 +375,50 @@ def _analyze(development, source_protocol, output):
     }
 
 
+def _finalize(
+    development,
+    source_protocol,
+    protocol_path,
+    source_path,
+    source_analysis_sha256,
+    source_analysis_manifest_sha256,
+    output,
+    schedule,
+):
+    result = _analyze(
+        development, source_protocol, output, schedule["blocks"]
+    )
+    episode_git_sha = str(schedule["implementation_git_sha"])
+    result.update({
+        "protocol": str(protocol_path.relative_to(ROOT)),
+        "protocol_sha256": _sha256(protocol_path),
+        "source_protocol_sha256": _sha256(source_path),
+        "source_analysis_sha256": source_analysis_sha256,
+        "source_analysis_manifest_sha256": (
+            source_analysis_manifest_sha256
+        ),
+        "implementation_git_sha": episode_git_sha,
+        "episode_implementation_git_sha": episode_git_sha,
+        "analysis_git_sha": git_sha(ROOT),
+        "schedule_sha256": str(schedule["schedule_sha256"]),
+    })
+    _write_json(output / "development_result.json", result)
+    hashes = {}
+    for path in sorted(output.rglob("*")):
+        if path.is_file() and path.name != "artifact_manifest.json":
+            hashes[str(path.relative_to(output)).replace("\\", "/")] = (
+                _sha256(path)
+            )
+    manifest = {
+        "schema_version": 1,
+        "file_count": len(hashes),
+        "files": hashes,
+        "bundle_sha256": _canonical_sha256(hashes),
+    }
+    _write_json(output / "artifact_manifest.json", manifest)
+    return result, manifest
+
+
 def run(protocol_path=DEFAULT_PROTOCOL, workers=None):
     protocol_path = _repo_path(protocol_path)
     development = v4._load_yaml(protocol_path)
@@ -481,36 +525,92 @@ def run(protocol_path=DEFAULT_PROTOCOL, workers=None):
     if failures:
         raise RuntimeError("v5 development failed; no automatic retry")
 
-    result = _analyze(development, source_protocol, output)
-    result.update({
-        "protocol": str(protocol_path.relative_to(ROOT)),
-        "protocol_sha256": _sha256(protocol_path),
-        "source_protocol_sha256": _sha256(source_path),
-        "source_analysis_sha256": source_analysis_sha256,
-        "source_analysis_manifest_sha256": source_analysis_manifest_sha256,
-        "implementation_git_sha": git_sha(ROOT),
-    })
-    _write_json(output / "development_result.json", result)
-    hashes = {}
-    for path in sorted(output.rglob("*")):
-        if path.is_file() and path.name != "artifact_manifest.json":
-            hashes[str(path.relative_to(output)).replace("\\", "/")] = _sha256(path)
-    manifest = {
-        "schema_version": 1,
-        "file_count": len(hashes),
-        "files": hashes,
-        "bundle_sha256": _canonical_sha256(hashes),
-    }
-    _write_json(output / "artifact_manifest.json", manifest)
-    return result, manifest
+    return _finalize(
+        development,
+        source_protocol,
+        protocol_path,
+        source_path,
+        source_analysis_sha256,
+        source_analysis_manifest_sha256,
+        output,
+        schedule,
+    )
+
+
+def analyze_existing(protocol_path=DEFAULT_PROTOCOL):
+    protocol_path = _repo_path(protocol_path)
+    development = v4._load_yaml(protocol_path)
+    if development["status"] != "frozen_before_development_execution":
+        raise ValueError("v5 development protocol is not frozen")
+    source_path = _repo_path(development["source_protocol"])
+    source_analysis = _repo_path(development["source_analysis"])
+    source_analysis_manifest = _repo_path(
+        development["source_analysis_manifest"]
+    )
+    source_analysis_sha256 = _sha256(source_analysis)
+    source_analysis_manifest_sha256 = _sha256(source_analysis_manifest)
+    if source_analysis_sha256 != development["source_analysis_sha256"]:
+        raise RuntimeError("v4 development-source episode table hash mismatch")
+    if (
+        source_analysis_manifest_sha256
+        != development["source_analysis_manifest_sha256"]
+    ):
+        raise RuntimeError("v4 development-source manifest hash mismatch")
+    _, source_protocol, _, _, _ = v4.validate_protocol(source_path)
+    output = _repo_path(development["output_dir"])
+    if (output / "development_result.json").exists():
+        raise FileExistsError("development result already exists")
+    if (output / "artifact_manifest.json").exists():
+        raise FileExistsError("development manifest already exists")
+    schedule = _load_json(output / "schedule.json")
+    if schedule["schedule_sha256"] != _canonical_sha256(
+        schedule["blocks"]
+    ):
+        raise RuntimeError("development schedule hash mismatch")
+    expected_blocks = development["development_blocks"]
+    if len(schedule["blocks"]) != len(expected_blocks):
+        raise RuntimeError("development schedule block count mismatch")
+    identity_keys = ("split", "seed", "model_block", "stratum", "arm_order")
+    for scheduled, expected in zip(schedule["blocks"], expected_blocks):
+        if any(scheduled[key] != expected[key] for key in identity_keys):
+            raise RuntimeError("development schedule differs from protocol")
+        if not scheduled.get("certificate"):
+            raise RuntimeError("development schedule lacks certificate")
+        for arm in development["design"]["paired_arms"]:
+            run_dir = _run_dir(output, scheduled, arm)
+            if not v4._complete(run_dir):
+                raise RuntimeError(
+                    "incomplete existing development episode: %s" % run_dir
+                )
+    progress = _load_json(output / "progress.json")
+    if (
+        progress.get("status") != "complete"
+        or int(progress.get("completed_blocks", -1)) != len(expected_blocks)
+        or progress.get("failures")
+    ):
+        raise RuntimeError("existing development progress is not complete")
+    return _finalize(
+        development,
+        source_protocol,
+        protocol_path,
+        source_path,
+        source_analysis_sha256,
+        source_analysis_manifest_sha256,
+        output,
+        schedule,
+    )
 
 
 def main(argv=None):
     parser = argparse.ArgumentParser()
     parser.add_argument("--protocol", default=str(DEFAULT_PROTOCOL))
     parser.add_argument("--workers", type=int, default=None)
+    parser.add_argument("--analyze-existing", action="store_true")
     args = parser.parse_args(argv)
-    result, manifest = run(args.protocol, args.workers)
+    if args.analyze_existing:
+        result, manifest = analyze_existing(args.protocol)
+    else:
+        result, manifest = run(args.protocol, args.workers)
     print(json.dumps({
         "status": result["status"],
         "checks": result["checks"],

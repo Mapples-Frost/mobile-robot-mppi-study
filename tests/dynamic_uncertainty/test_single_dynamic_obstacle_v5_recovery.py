@@ -93,3 +93,40 @@ def test_v5_recovery_contract_keeps_frozen_risk_thresholds_and_budget():
     assert not contract["new_collision_probability_threshold_added"]
     assert contract["new_rollout_candidates_added"] == 0
     assert contract["total_rollouts_per_decision"] == 600
+
+
+def test_v5_analysis_uses_certificate_enriched_schedule_blocks(monkeypatch):
+    protocol, source = _protocols()
+    blocks = [dict(protocol["development_blocks"][0])]
+    blocks[0]["certificate"] = {"conflict_windows_s": [[1.0, 2.0]]}
+    seen = []
+
+    def fake_episode_row(output, block, arm, source_protocol):
+        seen.append(block)
+        return {
+            "arm": arm,
+            "split": block["split"],
+            "seed": int(block["seed"]),
+            "model_block": int(block["model_block"]),
+            "stratum": block["stratum"],
+            "success": False,
+            "collision": False,
+            "steps": 400,
+            "final_goal_distance": 1.0,
+            "minimum_clearance": 0.5,
+            "stuck_steps": 10,
+            "planner_compute_ms_p95_health_only": 1.0,
+            "paper_total_rollouts_mean": 600.0,
+            "dynamic_recovery_active_steps": 0,
+            "dynamic_recovery_advance_steps": 0,
+            "dynamic_recovery_forward_commit_steps": 0,
+            "dynamic_recovery_speed_floor_mean": 0.0,
+            "zero_speed_risk_steps": 10,
+            "release_delay_max_s": 1.0,
+        }
+
+    monkeypatch.setattr(development, "_episode_row", fake_episode_row)
+    development._analyze(protocol, source, "unused", blocks)
+
+    assert len(seen) == 2
+    assert all(row["certificate"] == blocks[0]["certificate"] for row in seen)

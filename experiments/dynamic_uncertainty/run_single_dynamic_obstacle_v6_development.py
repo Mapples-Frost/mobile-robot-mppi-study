@@ -185,6 +185,10 @@ def _episode_row(output, block, arm, source_protocol):
         "emergency_candidate_selected_steps": int(metrics.get(
             "probabilistic_obstacle_emergency_candidate_selected_steps", 0
         )),
+        "speed_governor_bypassed_for_active_avoidance_steps": int(metrics.get(
+            "probabilistic_obstacle_speed_governor_bypassed_for_active_avoidance_steps",
+            0,
+        )),
         "temporal_emergency_triggered_steps": int(metrics.get(
             "probabilistic_obstacle_temporal_emergency_triggered_steps", 0
         )),
@@ -265,9 +269,20 @@ def _analyze(protocol, source_protocol, output, blocks):
         >= int(gate["minimum_collision_count_reduction"]),
         "mean_minimum_clearance_preserved": clearance_delta
         >= -float(gate["maximum_mean_minimum_clearance_loss_m"]),
-        "emergency_mechanism_exercised": sum(
-            row["emergency_candidate_selected_steps"] for row in candidate
-        ) > 0,
+        # v7's hard-risk motion contract intentionally reuses the normal
+        # active-avoidance fallback rather than the legacy emergency-candidate
+        # path.  Count the source-level speed-governor bypass as exercise of
+        # that mechanism; otherwise the old audit would report a false gate
+        # failure even when the selected motion was preserved.
+        "emergency_mechanism_exercised": any(
+            (
+                int(row.get("emergency_candidate_selected_steps", 0))
+                + int(row.get(
+                    "speed_governor_bypassed_for_active_avoidance_steps", 0
+                ))
+            ) > 0
+            for row in candidate
+        ),
         "rollout_budget_exact": all(
             abs(row["paper_total_rollouts_mean"] - 600.0) <= 1.0e-9
             for row in rows
@@ -300,6 +315,10 @@ def _analyze(protocol, source_protocol, output, blocks):
                 "mean_final_goal_distance": _mean(candidate, "final_goal_distance"),
                 "emergency_candidate_selected_steps": int(sum(
                     row["emergency_candidate_selected_steps"] for row in candidate
+                )),
+                "speed_governor_bypassed_for_active_avoidance_steps": int(sum(
+                    row["speed_governor_bypassed_for_active_avoidance_steps"]
+                    for row in candidate
                 )),
                 "temporal_emergency_vetted_steps": int(sum(
                     row["temporal_emergency_vetted_steps"] for row in candidate

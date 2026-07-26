@@ -1,0 +1,525 @@
+_config_path: D:\Projects\mobile-robot-mppi-study-single-v6\configs\research\mujoco_v3_probabilistic_crossing_smoke_amendment17_residual_runtime_stage3.yaml
+action_space:
+  lower:
+  - -0.35
+  - -0.9
+  names:
+  - v_cmd
+  - omega_cmd
+  rate_limits:
+  - 0.6
+  - 2.0
+  upper:
+  - 0.35
+  - 0.9
+design_amendment:
+  amended_route:
+    crossing_counts_by_seed:
+    - 5
+    - 3
+    - 4
+    goal:
+    - 4.2
+    - -1.8
+    start:
+    - -4.6
+    - -1.8
+  amendment14_result:
+    conclusion: forced_translation_without_rerollout_is_not_authorized
+    retained_as_negative_result: true
+    risk_enabled_collisions: 2
+  amendment16_result:
+    retained_as_negative_result: true
+    seed001_collision: true
+    seed003_final_goal_distance_m: 0.33342700446396867
+  amendment1_route:
+    crossing_counts_by_seed:
+    - 3
+    - 2
+    - 3
+    goal:
+    - 4.2
+    - -1.5
+    start:
+    - -4.6
+    - -1.5
+  association_change:
+    initialization_minimum_beams: 3
+    prediction_gate_m: 0.9
+    rationale: far_target_subtends_one_or_two_beams_after_track_identity_is_established
+    tracked_minimum_beams: 1
+  audit_change:
+    amended: truth_projected_into_the_online_odometry_frame
+    amendment4_odometry_frame_rmse_range_m:
+    - 0.0229
+    - 0.0312
+    deterministic_replay_max_position_error_m: 0.0
+    previous: direct_world_truth_minus_odometry_frame_measurement
+  audit_horizon_s: 40.0
+  blocking_factor: obstacle_process_seed
+  completed_episodes_observed_before_amendment: 0
+  diagnostic_endpoints:
+  - active_fallback_count
+  - active_fallback_fraction
+  - candidate_feasible_fraction
+  - localization_position_rmse_m
+  - planner_p95_compute_ms
+  gate_changed: false
+  hard_probability_threshold_changed: false
+  independent_unit: complete_episode
+  intervention:
+    action:
+    - command_zero_translation
+    - rotate_using_estimated_pose_until_goal_bearing_error_is_within_0p20_rad
+    - release_all_translation_authority_back_to_risk_evaluated_mppi
+    activation:
+    - a_dynamic_active_escape_has_occurred
+    - scan_guard_is_clear
+    - lidar_ttc_does_not_require_escape
+    - selected_stopped_trajectory_probability_is_at_most_0p10_for_0p5_seconds
+    behavior_change: none_to_the_registered_rotation_only_rule
+    candidate_budget_changed: false
+    forced_translation: false
+    forward_escape_speed_mps: 0.35
+    forward_rule: use_forward_motion_when_the_away_heading_is_in_the_front_half_plane
+    hard_probability_threshold_changed: false
+    minimum_goal_bearing_error_rad: 0.8
+    name: stall_specific_rotation_only_recovery
+    probability_model_changed: false
+    rationale: recovery_reorientation_is_only_needed_for_the_observed_near_perpendicular_post_escape_stall
+    reverse_escape_speed_mps: 0.35
+    reverse_rule: use_bounded_reverse_motion_when_the_away_heading_is_in_the_rear_half_plane
+    reverse_speed_mps: 0.2
+    selection_rule:
+    - filter_candidates_by_the_existing_hard_probability_threshold
+    - if_the_weighted_trajectory_is_unsafe_choose_the_lowest_cost_safe_candidate
+    - if_no_safe_candidate_exists_compare_the_minimum_risk_active_candidate_with_stopping
+    - stop_only_when_stopping_has_no_greater_maximum_probability
+    simulator_truth_used: false
+    wiring_fix:
+      amended: always_computed_target_bearing_error
+      observation_source: estimated_robot_pose_and_registered_goal
+      previous: terminal_gate_conditional_bearing_error
+      simulator_truth_used: false
+  lidar_geometry_audit:
+    amended_range_m: 10.0
+    maximum_route_endpoint_to_v3_waypoint_distance_m: 8.68
+    previous_range_m: 6.0
+  localization_change:
+    amended: wheel_imu_localized
+    exact_simulator_pose_exposed: false
+    external_pose_update_rate_hz: 2.0
+    previous: raw_wheel_odometry
+    rationale: navigation_requires_an_observable_absolute_pose_anchor
+  localization_changed: false
+  missing_forecast_behavior:
+    amended: zero_velocity_fail_closed_until_reacquisition
+    previous: raise_exception
+  obstacle_generator_changed: false
+  original_route:
+    crossing_counts_by_seed:
+    - 3
+    - 2
+    - 1
+    goal:
+    - 3.6
+    - 0.0
+    start:
+    - -3.6
+    - 0.0
+  paired_seeds:
+  - 730100001
+  - 730100003
+  - 730100005
+  predictor_changed: false
+  primary_endpoints:
+  - collision
+  - goal_reached
+  - minimum_clearance_m
+  reason: amendment16_reoriented_seed001_despite_only_0p34_rad_misalignment_and_changed_a_safe_avoidance_geometry_into_a_collision
+  registered_smoke_seed_pool:
+  - 730100001
+  - 730100002
+  - 730100003
+  - 730100004
+  - 730100005
+  residual_model_changed: false
+  risk_definition_changed: false
+  route_changed: false
+  safety_contract_change:
+    amended: selected_hard_risk_violation_commands_zero_velocity
+    previous: hard_risk_was_only_a_finite_candidate_cost
+    threshold_changed: false
+  seeds_changed: false
+  selected_seeds:
+  - 730100001
+  - 730100003
+  - 730100005
+  timing_basis:
+    command_delay_s: 0.04
+    control_interval_s: 0.1
+    maximum_yaw_rate_rad_s: 0.9
+    nominal_yaw_time_constant_s: 0.12
+    robustness_margin_s: 0.3
+    selected_ttc_trigger_s: 1.5
+    time_to_turn_45_deg_s: 0.8726646259971648
+  version: 17
+experiment:
+  control_dt: 0.1
+  initial_state:
+  - -4.6
+  - -1.8
+  - 0.0
+  - 0.0
+  - 0.0
+  max_steps: 400
+  name: v6_emergency_development__id__seed750100038__V7_risk_priority_full
+  paper_v4_arm: B11_full_proposed
+  paper_v4_model_block: 2
+  paper_v4_split: id
+  paper_v6_development_arm: V7_risk_priority_full
+  rollout_budget_per_controller_decision: 600
+  seed: 750100038
+  stage4_rl_hss_enabled: true
+  terminate_on_collision: true
+memory:
+  enable: false
+online_smoke:
+  arms:
+  - risk_disabled
+  - risk_enabled
+  development_seeds:
+  - 730100001
+  - 730100003
+  - 730100005
+  gate:
+    maximum_enabled_collision_regressions: 0
+    maximum_enabled_completion_regression: 0.1
+    maximum_enabled_planner_p95_compute_ms: 150.0
+    maximum_visible_measurement_rmse_m: 0.12
+    minimum_behaviorally_divergent_pairs: 1
+    minimum_enabled_median_clearance_delta_m: -0.02
+    minimum_route_crossings_per_episode: 3
+    minimum_tracker_forecast_availability: 0.9
+  output_dir: research_artifacts/mujoco_v3_probabilistic_crossing_smoke_amendment17
+  paired_by_complete_episode: true
+  schedule_seed: 730199988
+  use_common_random_numbers: true
+perception:
+  dynamic_obstacle_tracker:
+    association_gate_m: 0.9
+    change_candidate: dual_975_999
+    change_config_path: configs/research/change_aware_imm_v3_development_amendment2.yaml
+    enabled: true
+    forecast_auxiliary_key: probabilistic_obstacle_forecasts
+    forecast_dt_s: 0.1
+    forecast_horizon_steps: 36
+    maximum_cluster_point_gap_m: 0.2
+    maximum_unobserved_duration_s: 1.5
+    minimum_cluster_beams: 1
+    minimum_initial_cluster_beams: 3
+    observation_std_m: 0.075
+    obstacle_radius_m: 0.25
+    ordinary_config_path: configs/research/ordinary_imm_v3_development.yaml
+    predictor_mode: change_aware
+    sensor_forward_offset_m: 0.1
+  local_obstacle_layer:
+    downsample_step: 1
+    fallback_downsample_step: 3
+    max_obstacle_count: 80
+    obstacle_radius: 0.08
+    planner_max_obstacles: 24
+  scan_guard:
+    dynamic_escape_enabled: true
+    dynamic_escape_flow_angle_tolerance_deg: 20.0
+    dynamic_escape_hold_enabled: true
+    dynamic_escape_hold_min_probability: 0.2
+    dynamic_escape_hold_steps: 3
+    dynamic_escape_match_tolerance_m: 0.12
+    dynamic_escape_max_speed: 0.35
+    dynamic_escape_min_risk_improvement: 0.05
+    dynamic_escape_min_speed: 0.2
+    dynamic_escape_probability_mass_enabled: true
+    dynamic_escape_reactive_enabled: true
+    dynamic_escape_reverse_speed: 0.35
+    dynamic_escape_trigger_ttc_s: 1.5
+    dynamic_escape_turn_gain: 1.5
+    dynamic_recovery_abort_probability: 0.15
+    dynamic_recovery_clear_hold_steps: 5
+    dynamic_recovery_enabled: true
+    dynamic_recovery_entry_probability: 0.1
+    dynamic_recovery_goal_release_distance_m: 0.45
+    dynamic_recovery_heading_tolerance_rad: 0.2
+    dynamic_recovery_min_speed: 0.3
+    dynamic_recovery_minimum_heading_error_rad: 0.8
+    dynamic_recovery_release_steps: 5
+    dynamic_recovery_translation_enabled: true
+    dynamic_recovery_turn_gain: 1.5
+    front_angle_deg: 35.0
+    front_slow_distance: 0.85
+    front_slow_min_scale: 0.45
+    front_soft_block_distance: 0.45
+    front_soft_block_max_speed: 0.04
+    front_stop_distance: 0.35
+    hard_stop_distance: 0.35
+    near_body_stop_radius: 0.35
+    side_angle_deg: 125.0
+    side_stop_distance: 0.35
+  temporal_scan_guard:
+    enabled: true
+    field_of_view_deg: 270.0
+    hold_s: 0.2
+    maximum_clearance_m: 1.5
+    minimum_support_beams: 3
+    safety_enabled: false
+    window_beams: 7
+planner:
+  checkpoint: results/research_platform/stage2_task_aware_seed20261203_v1/best.pt
+  collision_penalty: 10000.0
+  device: cpu
+  goal_running_weight: 1.0
+  goal_terminal_weight: 25.0
+  horizon: 36
+  importance_sampling_correction: false
+  integrator: rk4
+  noise_sigma:
+  - 0.12
+  - 0.5
+  num_samples: 300
+  obstacle_influence: 0.7
+  obstacle_weight: 70.0
+  optimizer: paper_rl_driven
+  paper_rl_driven:
+    completion_handover_full_fallback_distance: 0.4
+    completion_handover_full_rl_distance: 0.8
+    covariance_max_scale: 2.0
+    covariance_min_scale: 0.25
+    covariance_smoothing: 0.5
+    elite_fraction: 0.2
+    guided_fraction: 0.3
+    iterations: 2
+    proposal_advantage_gate:
+      consecutive_disadvantages: 3
+      enabled: true
+      mode: shadow
+      relative_disadvantage_margin: 0.0
+    reliability:
+      actor_ood_hard: 7.0
+      actor_ood_soft: 3.0
+      dynamics_power: 1.0
+      dynamics_routing_mode: policy_rescue
+      enabled: true
+      ensemble_disagreement_hard: 0.029740063775983316
+      ensemble_disagreement_soft: 0.01809636916077508
+      high_confidence: 0.67
+      high_guided_fraction: 0.6
+      innovation_error_hard: 0.07152732870917881
+      innovation_error_soft: 0.04740944258503671
+      innovation_minimum_samples: 3
+      low_guided_fraction: 0.0
+      medium_confidence: 0.33
+      medium_guided_fraction: 0.3
+      policy_rescue_floor: 0.5
+    reliability_sidecar:
+      checkpoints:
+      - results/research_platform/gate3_value_aligned_ensemble_member1_l192/best.pt
+      - results/research_platform/gate3_value_aligned_ensemble_member2_l192/best.pt
+      - results/research_platform/gate3_value_aligned_ensemble_member3_l192/best.pt
+      contract: frozen_l217_value_hss_v1
+      device: cpu
+      ensemble:
+        disagreement_scales:
+        - 0.0192860868
+        - 0.0061503653
+        - 0.0276655704
+        - 0.2438328117
+        - 0.6734842658
+        innovation_decay: 0.9
+        innovation_scales:
+        - 0.25
+        - 0.25
+        - 0.35
+        - 0.25
+        - 0.6
+        support_hard_z: 7.0
+        support_soft_z: 3.0
+      torch_num_threads: 1
+      use_torchscript: true
+    same_cycle_guided_cost_filter: true
+    same_cycle_guided_relative_margin: 0.0
+    standard_fallback_on_advantage_veto: false
+    terminal_critic_source: target
+    terminal_guidance_radius: 0.0
+    terminal_guided_fraction_floor: 0.0
+    terminal_value_weight: 0.0
+  prediction_mode: icode_residual
+  previous_sequence_blend: 0.2
+  prior_v_gain: 0.7
+  prior_yaw_gain: 1.2
+  probabilistic_obstacle_candidate_filter_enabled: true
+  probabilistic_obstacle_emergency_candidate_prefix_steps: 3
+  probabilistic_obstacle_emergency_candidates_enabled: true
+  probabilistic_obstacle_forecast_key: probabilistic_obstacle_forecasts
+  probabilistic_obstacle_hard_penalty: 10000.0
+  probabilistic_obstacle_hard_threshold: 0.2
+  probabilistic_obstacle_hard_violation_action: active_avoidance_motion
+  probabilistic_obstacle_minimum_std: 0.01
+  probabilistic_obstacle_missing_forecast_action: stop
+  probabilistic_obstacle_risk_enabled: true
+  probabilistic_obstacle_risk_weight: 75.0
+  probabilistic_obstacle_safety_margin: 0.1
+  probabilistic_obstacle_speed_governor_enabled: true
+  probabilistic_obstacle_stopping_feasibility_enabled: true
+  profile_components: true
+  residual_component_mask:
+  - 0.0
+  - 0.0
+  - 0.0
+  - 1.0
+  - 1.0
+  residual_cuda_graph_enabled: false
+  residual_device_rollout_enabled: false
+  residual_safety_shield:
+    deterministic_clearance_fallback_enabled: true
+    enabled: true
+    maximum_nominal_clearance_regression_m: 0.0
+    maximum_nominal_progress_regression_m: 0.02
+    maximum_nominal_risk_increase: 0.0
+    maximum_position_deviation_m: 0.1
+    parallel_planning_enabled: true
+    require_nominal_hard_safe: true
+    require_residual_hard_safe: true
+    rl_hss_integration: matched_controllers_v1
+  residual_torch_num_threads: 1
+  residual_torchscript: true
+  robot_radius: 0.25
+  safety_recovery_prefix_steps: 8
+  sampling_prior: paper_direct_rl
+  seed: 750100038
+  temperature: 2.5
+  terminal_velocity_weight: 20.0
+  terminal_yaw_rate_weight: 8.0
+plant:
+  actuator:
+    command_delay: 0.04
+    deadband: 0.0
+    integral_limit: 2.5
+    ki: 1.5
+    kp: 0.55
+    profile: torque_pi
+    torque_limit: 2.2
+    torque_slew_rate: 50.0
+  backend: mujoco_diff_drive
+  contact:
+    caster_friction:
+    - 0.05
+    - 0.001
+    - 0.0001
+    floor_friction:
+    - 1.0
+    - 0.005
+    - 0.0005
+    solimp: 0.95 0.99 0.001
+    solref: 0.01 1
+    wheel_friction:
+    - 1.2
+    - 0.01
+    - 0.002
+  nominal_velocity_time_constant: 0.18
+  nominal_yaw_time_constant: 0.12
+  physics:
+    integrator: implicitfast
+    iterations: 60
+    solver: Newton
+    timestep: 0.002
+    tolerance: 1.0e-10
+  robot:
+    chassis_half_size:
+    - 0.19
+    - 0.14
+    - 0.045
+    chassis_inertia:
+    - 0.08
+    - 0.12
+    - 0.16
+    chassis_mass: 9.0
+    collision_radius: 0.25
+    track_width: 0.32
+    wheel_mass: 0.32
+    wheel_radius: 0.08
+    wheel_width: 0.035
+rl:
+  allow_actor_action_subspace: true
+  checkpoint: D:\Projects\mobile-robot-mppi-study-single-v6\research_artifacts\dynamic_actor_temporal_bidirectional_correction_v5_amendment6\checkpoints\improved_update_000250.pt
+  device: cpu
+  enabled: true
+  integration: paper_direct_control
+  policy_id: dynamic_actor_v5a6_u000250
+  torch_num_threads: 1
+scene:
+  name: v3_hybrid_recurrent_crossing
+  obstacles:
+  - height: 0.5
+    motion:
+      config_path: D:\Projects\mobile-robot-mppi-study-single-v6\configs\research\dynamic_obstacle_process_v3.yaml
+      noise_profile: medium
+      process: hybrid_patrol
+      type: recurrent_semimarkov_v3
+      use_episode_seed: true
+    position:
+    - -3.8
+    - -2.2
+    radius: 0.25
+    type: cylinder
+scope_guards:
+  active_avoidance_selection_rule_frozen_before_run: true
+  change_aware_imm_frozen: true
+  collision_risk_v1_frozen: true
+  development_seeds_only: true
+  exact_ground_truth_pose_for_control: false
+  formal_effect_estimation: false
+  localization_assumption: noisy_external_pose_updates
+  obstacle_v3_frozen: true
+  paired_complete_episodes: true
+  paper_v4: false
+  paper_v6_development: true
+  rl_icode_hss_enabled: false
+  sealed_registry_imported: false
+  simulator_truth_for_control: false
+sensors:
+  imu_yaw_rate_bias_std: 0.001
+  imu_yaw_rate_noise_std: 0.003
+  latency: 0.0
+  lidar_angle_max: 3.141592653589793
+  lidar_angle_min: -3.141592653589793
+  lidar_beams: 181
+  lidar_dropout_probability: 0.0
+  lidar_noise_std: 0.002
+  lidar_range_max: 10.0
+  lidar_range_min: 0.05
+  localization_correction_gain:
+  - 0.85
+  - 0.85
+  - 0.85
+  localization_pose_noise_std:
+  - 0.015
+  - 0.015
+  - 0.008726646259971648
+  localization_update_period_s: 0.5
+  odom_noise_std:
+  - 0.0005
+  - 0.0005
+  - 0.0005
+  pose_source: wheel_imu_localized
+  twist_noise_std:
+  - 0.001
+  - 0.002
+  twist_source: wheel_imu_localized
+state_space:
+  preset: dynamic_unicycle_5
+task:
+  position:
+  - 4.2
+  - -1.8
+  position_tolerance: 0.3
+  type: point_goal

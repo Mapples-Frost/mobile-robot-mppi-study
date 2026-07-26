@@ -1,0 +1,50 @@
+include: mujoco_irregular_spiral_three_dynamic_v1.yaml
+
+experiment:
+  name: mujoco_irregular_spiral_three_dynamic_v1_full_stack_preview
+  seed: 781700001
+
+perception:
+  scan_guard:
+    dynamic_escape_trigger_ttc_s: 2.20
+    dynamic_escape_max_speed: 0.75
+    dynamic_escape_min_speed: 0.30
+    dynamic_escape_reverse_speed: 0.35
+    dynamic_escape_corridor_enabled: false
+    dynamic_escape_use_vetted_emergency_candidate: true
+  dynamic_obstacle_tracker:
+    known_static_filter_enabled: true
+    known_static_filter_tolerance_m: 0.025
+    maximum_tracks: 3
+    association_gate_m: 0.80
+    maximum_unobserved_duration_s: 0.80
+    track_retirement_duration_s: 1.00
+    motion_confirmation_enabled: true
+    motion_confirmation_required_observations: 3
+    motion_confirmation_minimum_speed_mps: 0.15
+
+planner:
+  probabilistic_obstacle_missing_forecast_action: scan_only
+  known_static_map_cost_enabled: true
+  known_static_map_influence_m: 0.08
+  known_static_map_weight: 120.0
+  known_static_map_collision_penalty: 100000.0
+  probabilistic_obstacle_emergency_candidates_enabled: true
+  probabilistic_obstacle_emergency_candidate_prefix_steps: 12
+  probabilistic_obstacle_emergency_candidate_trigger_ttc_s: 2.20
+  probabilistic_obstacle_emergency_candidate_trigger_distance_m: 0.85
+  probabilistic_obstacle_emergency_candidate_critical_distance_m: 0.42
+  probabilistic_obstacle_emergency_candidate_intent_hold_steps: 12
+  probabilistic_obstacle_emergency_candidate_rearm_ttc_s: 2.80
+  probabilistic_obstacle_emergency_candidate_rearm_clear_steps: 3
+  probabilistic_obstacle_counterflow_escape_enabled: true
+  probabilistic_obstacle_counterflow_weight: 0.80
+  probabilistic_obstacle_hard_violation_action: active_avoidance_motion
+  probabilistic_obstacle_hard_violation_progress_tiebreak_enabled: true
+  probabilistic_obstacle_hard_violation_progress_mass_tolerance: 0.10
+
+development_preview:
+  schema_version: 1
+  source_scene: mujoco_irregular_spiral_three_dynamic_v1
+  mechanism_stack: static_dynamic_separation_exact_static_cost_vetted_escape
+  confirmatory_use: forbidden

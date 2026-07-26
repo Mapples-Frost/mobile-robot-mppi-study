@@ -1,4 +1,4 @@
-"""Run one non-overwriting, headless complex-scene development episode."""
+"""Run one non-overwriting complex-scene development episode."""
 
 import argparse
 import json
@@ -17,6 +17,11 @@ def main(argv=None):
     parser.add_argument("--seed", type=int, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--max-steps", type=int)
+    parser.add_argument(
+        "--viewer",
+        action="store_true",
+        help="open the live MuJoCo viewer and pace the episode at control dt",
+    )
     args = parser.parse_args(argv)
 
     output = args.output.resolve()
@@ -37,7 +42,7 @@ def main(argv=None):
         config,
         ROOT,
         output_dir=output,
-        headless=True,
+        headless=not bool(args.viewer),
     ).run()
     print(json.dumps(result.summary, indent=2, sort_keys=True), flush=True)
     return 0

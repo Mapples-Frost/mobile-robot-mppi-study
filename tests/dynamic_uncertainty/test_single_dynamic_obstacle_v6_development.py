@@ -6,6 +6,14 @@ from experiments.dynamic_uncertainty import (
 )
 
 
+A1B_PROTOCOL = (
+    v6.ROOT
+    / "configs"
+    / "research"
+    / "single_dynamic_obstacle_v6_emergency_development_a1b.yaml"
+)
+
+
 def _protocols():
     protocol = v4._load_yaml(v6.DEFAULT_PROTOCOL)
     _, source, _, _, _ = v4.validate_protocol(
@@ -88,3 +96,30 @@ def test_v6_existing_analysis_rejects_schedule_hash_mismatch(monkeypatch):
         assert "schedule hash mismatch" in str(error)
     else:
         raise AssertionError("mismatched schedule was accepted")
+
+
+def test_v6_a1b_changes_only_archived_model_block_assignments():
+    a1 = v4._load_yaml(v6.DEFAULT_PROTOCOL)
+    a1b = v4._load_yaml(A1B_PROTOCOL)
+    expected_blocks = {
+        750100002: 0,
+        750100005: 1,
+        750100017: 1,
+        750100026: 1,
+        750100038: 2,
+        750200020: 2,
+        750200036: 0,
+        750200042: 1,
+    }
+    assert a1b["candidate_override_paths"] == a1["candidate_override_paths"]
+    assert [row["seed"] for row in a1b["development_blocks"]] == [
+        row["seed"] for row in a1["development_blocks"]
+    ]
+    assert [row["arm_order"] for row in a1b["development_blocks"]] == [
+        row["arm_order"] for row in a1["development_blocks"]
+    ]
+    assert {
+        row["seed"]: row["model_block"] for row in a1b["development_blocks"]
+    } == expected_blocks
+    assert not a1b["design"]["mechanism_attempt_counter_increment"]
+    v6._validate_parent(a1b)

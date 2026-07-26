@@ -1,0 +1,42 @@
+{
+  "arm": "V4_full_frozen",
+  "block": {
+    "arm_order": [
+      "V4_full_frozen",
+      "V10_early_lateral_commit_full"
+    ],
+    "block_order": 9,
+    "certificate": {
+      "certificate_rule": "ghost_constant_speed_center_distance_le_sum_radii",
+      "collision_threshold_m": 0.5,
+      "conflict_window_threshold_m": 0.8,
+      "conflict_windows_s": [
+        [
+          0.0,
+          3.0
+        ],
+        [
+          9.05,
+          13.100000000000001
+        ],
+        [
+          37.1,
+          41.0
+        ]
+      ],
+      "minimum_distance_time_s": 11.05,
+      "minimum_ghost_obstacle_center_distance_m": 0.35581933548883504,
+      "noise_profile": "process_shift",
+      "obstacle_process": "hybrid_patrol",
+      "obstacle_truth_sha256": "b0c78ddbbc230c27dd9af4ce732f7ed4a6a2d6915e4e93cfc5abb2b525e177ce",
+      "seed": 750400001,
+      "split": "ood"
+    },
+    "model_block": 2,
+    "seed": 750400001,
+    "split": "ood",
+    "stratum": "fresh_ood_mid_conflict"
+  },
+  "change_signature": {},
+  "resolved_config_sha256": "9ea56c018609b4db3c420eb2d48a6db32ef6b8318899d33604974e2aa88f7be3"
+}

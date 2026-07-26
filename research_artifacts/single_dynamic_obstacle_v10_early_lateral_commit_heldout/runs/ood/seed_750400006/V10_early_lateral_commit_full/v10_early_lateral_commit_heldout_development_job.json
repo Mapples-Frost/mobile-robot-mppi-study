@@ -1,0 +1,63 @@
+{
+  "arm": "V10_early_lateral_commit_full",
+  "block": {
+    "arm_order": [
+      "V10_early_lateral_commit_full",
+      "V4_full_frozen"
+    ],
+    "block_order": 12,
+    "certificate": {
+      "certificate_rule": "ghost_constant_speed_center_distance_le_sum_radii",
+      "collision_threshold_m": 0.5,
+      "conflict_window_threshold_m": 0.8,
+      "conflict_windows_s": [
+        [
+          0.0,
+          3.1
+        ],
+        [
+          19.200000000000003,
+          25.25
+        ]
+      ],
+      "minimum_distance_time_s": 23.05,
+      "minimum_ghost_obstacle_center_distance_m": 0.04191887264635015,
+      "noise_profile": "process_shift",
+      "obstacle_process": "hybrid_patrol",
+      "obstacle_truth_sha256": "35a13230c46437e0efeea25aa48dcd831ec7ee5ac726c27fb32c262495d794b4",
+      "seed": 750400006,
+      "split": "ood"
+    },
+    "model_block": 1,
+    "seed": 750400006,
+    "split": "ood",
+    "stratum": "fresh_ood_late_conflict_b"
+  },
+  "change_signature": {
+    "planner.probabilistic_obstacle_emergency_candidate_intent_hold_steps": [
+      "<MISSING>",
+      4
+    ],
+    "planner.probabilistic_obstacle_emergency_candidate_prefix_steps": [
+      3,
+      6
+    ],
+    "planner.probabilistic_obstacle_emergency_candidate_trigger_ttc_s": [
+      "<MISSING>",
+      2.2
+    ],
+    "planner.probabilistic_obstacle_hard_violation_action": [
+      "active_avoidance",
+      "active_avoidance_motion"
+    ],
+    "planner.probabilistic_obstacle_hard_violation_progress_mass_tolerance": [
+      "<MISSING>",
+      0.05
+    ],
+    "planner.probabilistic_obstacle_hard_violation_progress_tiebreak_enabled": [
+      "<MISSING>",
+      true
+    ]
+  },
+  "resolved_config_sha256": "4841c8dbffc607fbbac378118926e336a8dba3902da5ccea0051776d30d6dabe"
+}

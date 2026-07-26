@@ -100,6 +100,7 @@ def test_all_maps_use_the_actual_b11_full_stack_and_600_rollouts():
             "probabilistic_obstacle_emergency_forecast_corroboration_enabled"
         ]
         assert planner["probabilistic_obstacle_counterflow_escape_enabled"]
+        assert planner["static_astar_replan_stagnation_steps"] == 0
         assert planner["probabilistic_obstacle_hard_violation_action"] == (
             "active_avoidance_motion"
         )

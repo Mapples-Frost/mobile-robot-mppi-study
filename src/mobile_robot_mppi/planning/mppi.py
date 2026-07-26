@@ -826,11 +826,11 @@ class MppiConfig:
                 "probability or accumulated probability mass"
             )
         if (
-            self.static_astar_replan_stagnation_steps <= 0
+            self.static_astar_replan_stagnation_steps < 0
             or self.static_astar_replan_cooldown_steps < 0
         ):
             raise ValueError(
-                "static A* replan step counts must be positive/non-negative"
+                "static A* replan step counts must be non-negative"
             )
         if self.static_astar_replan_enabled and (
             self.static_astar_replan_resolution_m <= 0.0
@@ -1336,7 +1336,8 @@ class MppiController:
         ):
             reason = "deviation"
         elif (
-            self._static_astar_stagnation_steps
+            self.config.static_astar_replan_stagnation_steps > 0
+            and self._static_astar_stagnation_steps
             >= self.config.static_astar_replan_stagnation_steps
         ):
             reason = "stagnation"

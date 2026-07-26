@@ -160,6 +160,35 @@ def test_static_replan_uses_current_pose_and_static_geometry_only():
     np.testing.assert_allclose(reference.points[-1], (4.0, 0.0))
 
 
+def test_zero_stagnation_threshold_disables_redundant_static_replans():
+    controller = _controller(
+        static_astar_replan_enabled=True,
+        static_astar_replan_stagnation_steps=0,
+        static_astar_replan_deviation_m=0.50,
+        static_astar_replan_minimum_progress_m=0.10,
+    )
+    reference = PolylineReference(((0.0, 0.0), (4.0, 0.0)))
+    observation = RobotObservation(
+        0.0,
+        Pose2D(0.0, 0.0, 0.0),
+        Twist2D(0.0, 0.0),
+        auxiliary={"known_static_obstacles": (BOX,)},
+    )
+    state = controller.state_from_observation(observation)
+
+    diagnostics = None
+    for _ in range(60):
+        diagnostics = controller._maybe_replan_static_reference(
+            state, observation, reference
+        )
+
+    assert diagnostics is not None
+    assert not diagnostics["triggered"]
+    assert diagnostics["reason"] == "none"
+    assert diagnostics["count"] == 0
+    assert diagnostics["stagnation_steps"] == 60
+
+
 def test_hard_static_candidate_filter_rejects_colliding_low_cost_path():
     obstacle = {
         "type": "box",

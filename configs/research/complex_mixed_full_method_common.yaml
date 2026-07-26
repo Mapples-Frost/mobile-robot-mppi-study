@@ -54,12 +54,15 @@ planner:
   probabilistic_reference_progress_weight: 12.0
 
   # Standard A* replans over frozen static geometry only. Dynamic tracks never
-  # enter its occupancy map.
+  # enter its occupancy map. Because that map cannot change, stagnation alone
+  # supplies no new planning information; only a material path deviation
+  # refreshes the soft reference. Zero disables the redundant stagnation
+  # trigger while retaining the existing deviation trigger.
   static_astar_replan_enabled: true
   static_astar_replan_resolution_m: 0.10
   static_astar_replan_clearance_margin_m: 0.08
   static_astar_replan_deviation_m: 0.70
-  static_astar_replan_stagnation_steps: 30
+  static_astar_replan_stagnation_steps: 0
   static_astar_replan_minimum_progress_m: 0.12
   static_astar_replan_cooldown_steps: 30
   static_astar_replan_bounds_padding_m: 0.50

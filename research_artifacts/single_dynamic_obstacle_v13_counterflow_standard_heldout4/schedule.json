@@ -1,0 +1,147 @@
+{
+  "blocks": [
+    {
+      "arm_order": [
+        "V4_full_frozen",
+        "V13_counterflow_full"
+      ],
+      "block_order": 1,
+      "certificate": {
+        "certificate_rule": "ghost_constant_speed_center_distance_le_sum_radii",
+        "collision_threshold_m": 0.5,
+        "conflict_window_threshold_m": 0.8,
+        "conflict_windows_s": [
+          [
+            0.0,
+            3.15
+          ],
+          [
+            10.4,
+            14.25
+          ],
+          [
+            25.25,
+            29.85
+          ],
+          [
+            42.85,
+            45.0
+          ]
+        ],
+        "minimum_distance_time_s": 12.350000000000001,
+        "minimum_ghost_obstacle_center_distance_m": 0.16401674475996042,
+        "noise_profile": "medium",
+        "obstacle_process": "hybrid_patrol",
+        "obstacle_truth_sha256": "0c77d1a370432aa27d1a34c3eb713315dd9a94c762a759295d9cadbb4a3004fe",
+        "seed": 760300002,
+        "split": "id"
+      },
+      "model_block": 0,
+      "seed": 760300002,
+      "split": "id",
+      "stratum": "standard_direct"
+    },
+    {
+      "arm_order": [
+        "V13_counterflow_full",
+        "V4_full_frozen"
+      ],
+      "block_order": 2,
+      "certificate": {
+        "certificate_rule": "ghost_constant_speed_center_distance_le_sum_radii",
+        "collision_threshold_m": 0.5,
+        "conflict_window_threshold_m": 0.8,
+        "conflict_windows_s": [
+          [
+            8.15,
+            11.9
+          ]
+        ],
+        "minimum_distance_time_s": 10.05,
+        "minimum_ghost_obstacle_center_distance_m": 0.32581800985361964,
+        "noise_profile": "medium",
+        "obstacle_process": "hybrid_patrol",
+        "obstacle_truth_sha256": "a1d66a0e1c427e74ede2fdd8653d3f2eadeb9fd22d15fab6d747e5264757e5b0",
+        "seed": 760300061,
+        "split": "id"
+      },
+      "model_block": 1,
+      "seed": 760300061,
+      "split": "id",
+      "stratum": "standard_offset"
+    },
+    {
+      "arm_order": [
+        "V13_counterflow_full",
+        "V4_full_frozen"
+      ],
+      "block_order": 3,
+      "certificate": {
+        "certificate_rule": "ghost_constant_speed_center_distance_le_sum_radii",
+        "collision_threshold_m": 0.5,
+        "conflict_window_threshold_m": 0.8,
+        "conflict_windows_s": [
+          [
+            0.0,
+            2.5
+          ],
+          [
+            9.450000000000001,
+            13.5
+          ]
+        ],
+        "minimum_distance_time_s": 11.450000000000001,
+        "minimum_ghost_obstacle_center_distance_m": 0.07367864737219355,
+        "noise_profile": "process_shift",
+        "obstacle_process": "hybrid_patrol",
+        "obstacle_truth_sha256": "f2eb40a96cfd3c81510aae6895c2a3cd1bb2dd978925638a89ddac99d9aeba32",
+        "seed": 760400019,
+        "split": "ood"
+      },
+      "model_block": 0,
+      "seed": 760400019,
+      "split": "ood",
+      "stratum": "standard_direct"
+    },
+    {
+      "arm_order": [
+        "V4_full_frozen",
+        "V13_counterflow_full"
+      ],
+      "block_order": 4,
+      "certificate": {
+        "certificate_rule": "ghost_constant_speed_center_distance_le_sum_radii",
+        "collision_threshold_m": 0.5,
+        "conflict_window_threshold_m": 0.8,
+        "conflict_windows_s": [
+          [
+            0.0,
+            2.4000000000000004
+          ],
+          [
+            9.5,
+            13.3
+          ]
+        ],
+        "minimum_distance_time_s": 11.4,
+        "minimum_ghost_obstacle_center_distance_m": 0.3545948032035341,
+        "noise_profile": "process_shift",
+        "obstacle_process": "hybrid_patrol",
+        "obstacle_truth_sha256": "61a78e6e79ca5851b4b1ec054f98d45bf55f0b37876953749405e6f27b2e385b",
+        "seed": 760400009,
+        "split": "ood"
+      },
+      "model_block": 1,
+      "seed": 760400009,
+      "split": "ood",
+      "stratum": "standard_offset"
+    }
+  ],
+  "formal_effect_estimation_authorized": false,
+  "implementation_git_sha": "0b22ebaad67da92bcbdded6aa6d762c9f1f711de",
+  "outcome_informed_development_selection": true,
+  "schedule_sha256": "bd1242f33c46efa609253eba2c5c3cc697345a49e8096a90ae699d27a947d2d7",
+  "schema_version": 1,
+  "scope": "outcome_blind_standard_geometry_heldout_qualification",
+  "workers": 2
+}

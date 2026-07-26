@@ -63,6 +63,12 @@ class ScanGuardArbiter:
                 "dynamic_escape_use_vetted_planner_control", False
             )
         )
+        self.dynamic_escape_preserve_hard_fallback_planner_control = bool(
+            self.config.get(
+                "dynamic_escape_preserve_hard_fallback_planner_control",
+                False,
+            )
+        )
         self.dynamic_escape_veto_forward_when_reactive_reverse = bool(
             self.config.get(
                 "dynamic_escape_veto_forward_when_reactive_reverse", False
@@ -826,9 +832,33 @@ class ScanGuardArbiter:
         )
         vetted_forward_reverse_veto = False
         reverse_escape = False
+        hard_fallback_planner_control = bool(
+            self.dynamic_escape_preserve_hard_fallback_planner_control
+            and dynamic_escape_allowed
+            and context.get(
+                "probabilistic_obstacle_active_fallback_used", False
+            )
+            and context.get(
+                "probabilistic_obstacle_hard_violation", False
+            )
+            and str(
+                context.get(
+                    "probabilistic_obstacle_active_fallback_kind",
+                    "",
+                )
+            )
+            in {
+                "minimum_accumulated_risk_active_candidate",
+                "minimum_risk_active_candidate",
+                "risk_equivalent_forward_progress_candidate",
+            }
+            and "v_cmd" in self.action_spec.names
+            and float(values[self.action_spec.index("v_cmd")]) >= 0.0
+        )
         if dynamic_escape_allowed:
             use_vetted_planner_control = (
                 self.dynamic_escape_use_vetted_planner_control
+                or hard_fallback_planner_control
             )
             if use_vetted_planner_control and (
                 self.dynamic_escape_veto_forward_when_reactive_reverse
@@ -1190,7 +1220,16 @@ class ScanGuardArbiter:
         )
         diagnostics["dynamic_escape_vetted_planner_control"] = bool(
             dynamic_escape_allowed
-            and self.dynamic_escape_use_vetted_planner_control
+            and (
+                self.dynamic_escape_use_vetted_planner_control
+                or hard_fallback_planner_control
+            )
+            and not vetted_forward_reverse_veto
+        )
+        diagnostics[
+            "dynamic_escape_hard_fallback_planner_control"
+        ] = bool(
+            hard_fallback_planner_control
             and not vetted_forward_reverse_veto
         )
         diagnostics["dynamic_escape_vetted_forward_reverse_veto"] = bool(

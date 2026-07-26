@@ -353,6 +353,83 @@ def test_reactive_dynamic_escape_can_preserve_vetted_planner_control():
     assert not dropout.diagnostics["dynamic_escape_allowed"]
 
 
+def test_hard_fallback_can_preserve_only_forward_vetted_planner_control():
+    action_spec = body_velocity_action((-0.35, 0.35), 0.9)
+    arbiter = ScanGuardArbiter(
+        action_spec,
+        {
+            "dynamic_escape_enabled": True,
+            "dynamic_escape_max_speed": 0.35,
+            "dynamic_escape_reactive_enabled": True,
+            "dynamic_escape_trigger_ttc_s": 1.50,
+            "dynamic_escape_turn_gain": 1.50,
+            "dynamic_escape_min_speed": 0.20,
+            "dynamic_escape_reverse_speed": 0.35,
+            "dynamic_escape_preserve_hard_fallback_planner_control": True,
+        },
+    )
+    proposed = ControlCommand(np.asarray((0.35, 0.70)))
+    context = {
+        "probabilistic_obstacle_active_avoidance_enabled": True,
+        "probabilistic_obstacle_active_fallback_used": True,
+        "probabilistic_obstacle_active_fallback_kind": (
+            "risk_equivalent_forward_progress_candidate"
+        ),
+        "probabilistic_obstacle_hard_violation": True,
+    }
+    decision = arbiter.arbitrate(
+        proposed,
+        {
+            "reason": "front_clear",
+            "dynamic_obstacle_scan_flow_match": True,
+            "dynamic_obstacle_away_heading_error_rad": 0.80,
+            "temporal_scan_valid": True,
+            "temporal_scan_ttc_s": 0.90,
+        },
+        context,
+    )
+
+    np.testing.assert_allclose(decision.executed_control.values, proposed.values)
+    assert decision.diagnostics["dynamic_escape_hard_fallback_planner_control"]
+
+
+def test_hard_fallback_planner_control_does_not_preserve_reverse_command():
+    action_spec = body_velocity_action((-0.35, 0.35), 0.9)
+    arbiter = ScanGuardArbiter(
+        action_spec,
+        {
+            "dynamic_escape_enabled": True,
+            "dynamic_escape_max_speed": 0.35,
+            "dynamic_escape_reactive_enabled": True,
+            "dynamic_escape_trigger_ttc_s": 1.50,
+            "dynamic_escape_turn_gain": 1.50,
+            "dynamic_escape_min_speed": 0.20,
+            "dynamic_escape_reverse_speed": 0.35,
+            "dynamic_escape_preserve_hard_fallback_planner_control": True,
+        },
+    )
+    decision = arbiter.arbitrate(
+        ControlCommand(np.asarray((-0.20, 0.70))),
+        {
+            "reason": "front_clear",
+            "dynamic_obstacle_scan_flow_match": True,
+            "dynamic_obstacle_away_heading_error_rad": 0.80,
+            "temporal_scan_valid": True,
+            "temporal_scan_ttc_s": 0.90,
+        },
+        {
+            "probabilistic_obstacle_active_avoidance_enabled": True,
+            "probabilistic_obstacle_active_fallback_used": True,
+            "probabilistic_obstacle_active_fallback_kind": (
+                "risk_equivalent_forward_progress_candidate"
+            ),
+            "probabilistic_obstacle_hard_violation": True,
+        },
+    )
+
+    assert not decision.diagnostics["dynamic_escape_hard_fallback_planner_control"]
+
+
 def test_vetted_forward_escape_is_vetoed_when_reactive_geometry_requires_reverse():
     action_spec = body_velocity_action((-0.35, 0.35), 0.9)
     arbiter = ScanGuardArbiter(

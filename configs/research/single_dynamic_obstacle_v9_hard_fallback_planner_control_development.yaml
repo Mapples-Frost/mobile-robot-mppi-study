@@ -1,0 +1,79 @@
+schema_version: 1
+status: frozen_before_development_execution
+frozen_at: "2026-07-26T12:45:00+08:00"
+study_id: single_dynamic_obstacle_v9_hard_fallback_planner_control_development
+scope: outcome_informed_development_not_effect_estimation
+runner_label: v9_hard_fallback_planner_control
+source_protocol: configs/research/single_dynamic_obstacle_paper_v4.yaml
+parent_result: research_artifacts/single_dynamic_obstacle_v8_progress_tiebreak_development/development_result.json
+parent_result_sha256: 6ae29984ed2bc134c5cdfff8bb4085641f127da81adba775a246c4a635cb8271
+parent_manifest: research_artifacts/single_dynamic_obstacle_v8_progress_tiebreak_development/artifact_manifest.json
+parent_manifest_sha256: cb8af6b1dca1e111dc603dc7eef7b4d25a32e95700bd50fbb6795c195ae8f790
+parent_bundle_sha256: 77fa16b8144785b9f21ff3ce8659283090e495391c56347c6e170d0033c48fb4
+design:
+  development_attempt: R1_preserve_hard_risk_forward_command
+  mechanism_family: hard_risk_scan_guard_handoff
+  paired_arms: [V4_full_frozen, V9_hard_fallback_planner_control_full]
+  common_random_numbers: true
+  outcome_informed_development_selection: true
+  previously_opened_v8_seeds_reused_for_development: true
+  formal_effect_estimation_authorized: false
+  fresh_held_out_required_before_formal_freeze: true
+  mechanism_attempt_counter_increment: true
+  total_rollouts_per_controller_decision: 600
+  horizon_steps: 36
+  control_period_s: 0.1
+  maximum_episode_steps: 400
+  workers: 4
+frozen_components:
+  change_aware_imm: unchanged_from_v4_full
+  collision_risk_v1: unchanged_from_v4_full
+  collision_probability_threshold: unchanged_from_v4_full
+  safety_margin: unchanged_from_v4_full
+  dynamic_obstacle_generator: unchanged_from_v4
+  actor_checkpoint: unchanged_from_v4
+  icode_checkpoints: unchanged_from_v4
+  hss_core: unchanged_from_v4
+  rollout_budget: 600
+  horizon_steps: 36
+  control_period_s: 0.1
+  maximum_episode_steps: 400
+  v5_deadline_supervisor: disabled
+  v7_hard_risk_motion_contract: retained
+  v8_progress_tiebreak: retained
+change_scope:
+  allowed_prefixes:
+    - perception.scan_guard.dynamic_escape_preserve_hard_fallback_planner_control
+candidate_override_paths:
+  perception.scan_guard.dynamic_escape_preserve_hard_fallback_planner_control: true
+mechanism_contract:
+  only_hard_risk_fallback_handoff_changed: true
+  only_nonnegative_forward_first_step_preserved: true
+  reactive_escape_for_nonhard_fallbacks_unchanged: true
+  actor_only_proposes_actions: true
+  safety_layer_retains_collision_authority: true
+  additional_total_rollouts: 0
+  total_rollouts_per_decision: 600
+development_blocks:
+  - {split: id, seed: 750100005, model_block: 1, stratum: early_collision_candidate_exhaustion, arm_order: [V4_full_frozen, V9_hard_fallback_planner_control_full]}
+  - {split: id, seed: 750100017, model_block: 1, stratum: mid_episode_collision_candidate_exhaustion, arm_order: [V9_hard_fallback_planner_control_full, V4_full_frozen]}
+  - {split: id, seed: 750100038, model_block: 2, stratum: near_goal_collision_candidate_exhaustion, arm_order: [V4_full_frozen, V9_hard_fallback_planner_control_full]}
+  - {split: ood, seed: 750200042, model_block: 1, stratum: ood_collision_candidate_exhaustion, arm_order: [V9_hard_fallback_planner_control_full, V4_full_frozen]}
+  - {split: id, seed: 750100026, model_block: 1, stratum: safe_noncompletion_stall, arm_order: [V4_full_frozen, V9_hard_fallback_planner_control_full]}
+  - {split: ood, seed: 750200036, model_block: 0, stratum: safe_noncompletion_reverse_stall, arm_order: [V9_hard_fallback_planner_control_full, V4_full_frozen]}
+  - {split: id, seed: 750100002, model_block: 0, stratum: success_preservation_sentinel, arm_order: [V4_full_frozen, V9_hard_fallback_planner_control_full]}
+  - {split: ood, seed: 750200020, model_block: 2, stratum: low_clearance_success_sentinel, arm_order: [V9_hard_fallback_planner_control_full, V4_full_frozen]}
+development_go_no_go:
+  minimum_safe_success_gain: 1
+  minimum_prevented_collisions: 1
+  minimum_collision_count_reduction: 1
+  maximum_new_paired_collisions: 0
+  maximum_lost_v4_successes: 0
+  maximum_mean_minimum_clearance_loss_m: 0.03
+  require_every_decision_600_rollouts: true
+  interpretation: engineering_gate_only_not_statistical_confirmation
+stop_rule:
+  maximum_local_attempts_in_family: 1
+  stop_after_consecutive_no_core_improvement: 1
+  stop_after_consecutive_safety_regressions: 1
+  fresh_held_out_required_after_development_and_opened_seed_replication: true

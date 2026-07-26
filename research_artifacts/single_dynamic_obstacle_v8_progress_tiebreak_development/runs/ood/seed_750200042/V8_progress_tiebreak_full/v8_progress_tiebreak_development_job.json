@@ -1,0 +1,55 @@
+{
+  "arm": "V8_progress_tiebreak_full",
+  "block": {
+    "arm_order": [
+      "V8_progress_tiebreak_full",
+      "V4_full_frozen"
+    ],
+    "block_order": 4,
+    "certificate": {
+      "certificate_rule": "ghost_constant_speed_center_distance_le_sum_radii",
+      "collision_threshold_m": 0.5,
+      "conflict_window_threshold_m": 0.8,
+      "conflict_windows_s": [
+        [
+          0.0,
+          2.95
+        ],
+        [
+          8.25,
+          12.950000000000001
+        ],
+        [
+          33.550000000000004,
+          38.2
+        ]
+      ],
+      "minimum_distance_time_s": 10.600000000000001,
+      "minimum_ghost_obstacle_center_distance_m": 0.1630566214093721,
+      "noise_profile": "process_shift",
+      "obstacle_process": "hybrid_patrol",
+      "obstacle_truth_sha256": "60615cc248432017c9372eb4014d37a8b03789f66959383c23a7c7816542db1c",
+      "seed": 750200042,
+      "split": "ood"
+    },
+    "model_block": 1,
+    "seed": 750200042,
+    "split": "ood",
+    "stratum": "ood_collision_candidate_exhaustion"
+  },
+  "change_signature": {
+    "planner.probabilistic_obstacle_hard_violation_action": [
+      "active_avoidance",
+      "active_avoidance_motion"
+    ],
+    "planner.probabilistic_obstacle_hard_violation_progress_mass_tolerance": [
+      "<MISSING>",
+      0.05
+    ],
+    "planner.probabilistic_obstacle_hard_violation_progress_tiebreak_enabled": [
+      "<MISSING>",
+      true
+    ]
+  },
+  "resolved_config_sha256": "cdb1788da0f1ede331fc37cb3eeeec8b2f9b6c640cd4ad346d1c670711b3a003"
+}

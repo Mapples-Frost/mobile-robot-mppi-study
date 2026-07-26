@@ -1,0 +1,47 @@
+{
+  "arm": "V8_progress_tiebreak_full",
+  "block": {
+    "arm_order": [
+      "V8_progress_tiebreak_full",
+      "V4_full_frozen"
+    ],
+    "block_order": 8,
+    "certificate": {
+      "certificate_rule": "ghost_constant_speed_center_distance_le_sum_radii",
+      "collision_threshold_m": 0.5,
+      "conflict_window_threshold_m": 0.8,
+      "conflict_windows_s": [
+        [
+          9.100000000000001,
+          12.55
+        ]
+      ],
+      "minimum_distance_time_s": 10.950000000000001,
+      "minimum_ghost_obstacle_center_distance_m": 0.24105085393153486,
+      "noise_profile": "process_shift",
+      "obstacle_process": "hybrid_patrol",
+      "obstacle_truth_sha256": "7ffd0190f81618a06bdb64bf2283995744dbcf72461dca000eef62f7c208aec3",
+      "seed": 750200020,
+      "split": "ood"
+    },
+    "model_block": 2,
+    "seed": 750200020,
+    "split": "ood",
+    "stratum": "low_clearance_success_sentinel"
+  },
+  "change_signature": {
+    "planner.probabilistic_obstacle_hard_violation_action": [
+      "active_avoidance",
+      "active_avoidance_motion"
+    ],
+    "planner.probabilistic_obstacle_hard_violation_progress_mass_tolerance": [
+      "<MISSING>",
+      0.05
+    ],
+    "planner.probabilistic_obstacle_hard_violation_progress_tiebreak_enabled": [
+      "<MISSING>",
+      true
+    ]
+  },
+  "resolved_config_sha256": "17cdfac9d771ee58de1cc30f29b0c83aaeddd3de3675004f9dde8de9be3ac2c8"
+}

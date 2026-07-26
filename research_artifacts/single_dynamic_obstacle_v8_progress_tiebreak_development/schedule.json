@@ -1,0 +1,275 @@
+{
+  "blocks": [
+    {
+      "arm_order": [
+        "V4_full_frozen",
+        "V8_progress_tiebreak_full"
+      ],
+      "block_order": 1,
+      "certificate": {
+        "certificate_rule": "ghost_constant_speed_center_distance_le_sum_radii",
+        "collision_threshold_m": 0.5,
+        "conflict_window_threshold_m": 0.8,
+        "conflict_windows_s": [
+          [
+            0.0,
+            3.25
+          ]
+        ],
+        "minimum_distance_time_s": 1.35,
+        "minimum_ghost_obstacle_center_distance_m": 0.4106933703756892,
+        "noise_profile": "medium",
+        "obstacle_process": "hybrid_patrol",
+        "obstacle_truth_sha256": "2ca57158dad6227494123c98bcd15d4c213b19331cc40b08cf951411c1d61d83",
+        "seed": 750100005,
+        "split": "id"
+      },
+      "model_block": 1,
+      "seed": 750100005,
+      "split": "id",
+      "stratum": "early_collision_candidate_exhaustion"
+    },
+    {
+      "arm_order": [
+        "V8_progress_tiebreak_full",
+        "V4_full_frozen"
+      ],
+      "block_order": 2,
+      "certificate": {
+        "certificate_rule": "ghost_constant_speed_center_distance_le_sum_radii",
+        "collision_threshold_m": 0.5,
+        "conflict_window_threshold_m": 0.8,
+        "conflict_windows_s": [
+          [
+            0.0,
+            2.4000000000000004
+          ],
+          [
+            10.0,
+            13.75
+          ],
+          [
+            29.55,
+            34.050000000000004
+          ]
+        ],
+        "minimum_distance_time_s": 11.8,
+        "minimum_ghost_obstacle_center_distance_m": 0.30674863602994096,
+        "noise_profile": "medium",
+        "obstacle_process": "hybrid_patrol",
+        "obstacle_truth_sha256": "58b7a4225fbc9dd1401f8642b6e3273357afec3652f754bf4793a438bb8f1187",
+        "seed": 750100017,
+        "split": "id"
+      },
+      "model_block": 1,
+      "seed": 750100017,
+      "split": "id",
+      "stratum": "mid_episode_collision_candidate_exhaustion"
+    },
+    {
+      "arm_order": [
+        "V4_full_frozen",
+        "V8_progress_tiebreak_full"
+      ],
+      "block_order": 3,
+      "certificate": {
+        "certificate_rule": "ghost_constant_speed_center_distance_le_sum_radii",
+        "collision_threshold_m": 0.5,
+        "conflict_window_threshold_m": 0.8,
+        "conflict_windows_s": [
+          [
+            0.0,
+            2.95
+          ],
+          [
+            7.300000000000001,
+            13.0
+          ],
+          [
+            33.65,
+            39.400000000000006
+          ]
+        ],
+        "minimum_distance_time_s": 9.55,
+        "minimum_ghost_obstacle_center_distance_m": 0.25366426240501905,
+        "noise_profile": "medium",
+        "obstacle_process": "hybrid_patrol",
+        "obstacle_truth_sha256": "d9b5b991dd80a591fca17a6bab9b0fb055d2440852011d3500dcff68d218d821",
+        "seed": 750100038,
+        "split": "id"
+      },
+      "model_block": 2,
+      "seed": 750100038,
+      "split": "id",
+      "stratum": "near_goal_collision_candidate_exhaustion"
+    },
+    {
+      "arm_order": [
+        "V8_progress_tiebreak_full",
+        "V4_full_frozen"
+      ],
+      "block_order": 4,
+      "certificate": {
+        "certificate_rule": "ghost_constant_speed_center_distance_le_sum_radii",
+        "collision_threshold_m": 0.5,
+        "conflict_window_threshold_m": 0.8,
+        "conflict_windows_s": [
+          [
+            0.0,
+            2.95
+          ],
+          [
+            8.25,
+            12.950000000000001
+          ],
+          [
+            33.550000000000004,
+            38.2
+          ]
+        ],
+        "minimum_distance_time_s": 10.600000000000001,
+        "minimum_ghost_obstacle_center_distance_m": 0.1630566214093721,
+        "noise_profile": "process_shift",
+        "obstacle_process": "hybrid_patrol",
+        "obstacle_truth_sha256": "60615cc248432017c9372eb4014d37a8b03789f66959383c23a7c7816542db1c",
+        "seed": 750200042,
+        "split": "ood"
+      },
+      "model_block": 1,
+      "seed": 750200042,
+      "split": "ood",
+      "stratum": "ood_collision_candidate_exhaustion"
+    },
+    {
+      "arm_order": [
+        "V4_full_frozen",
+        "V8_progress_tiebreak_full"
+      ],
+      "block_order": 5,
+      "certificate": {
+        "certificate_rule": "ghost_constant_speed_center_distance_le_sum_radii",
+        "collision_threshold_m": 0.5,
+        "conflict_window_threshold_m": 0.8,
+        "conflict_windows_s": [
+          [
+            0.0,
+            3.6
+          ],
+          [
+            8.700000000000001,
+            14.200000000000001
+          ],
+          [
+            34.85,
+            40.550000000000004
+          ]
+        ],
+        "minimum_distance_time_s": 11.75,
+        "minimum_ghost_obstacle_center_distance_m": 0.2604482688078971,
+        "noise_profile": "medium",
+        "obstacle_process": "hybrid_patrol",
+        "obstacle_truth_sha256": "32aae8d26e46741ec134f118f005f40ac6567cbec640dbe16bb97e308258d868",
+        "seed": 750100026,
+        "split": "id"
+      },
+      "model_block": 1,
+      "seed": 750100026,
+      "split": "id",
+      "stratum": "safe_noncompletion_stall"
+    },
+    {
+      "arm_order": [
+        "V8_progress_tiebreak_full",
+        "V4_full_frozen"
+      ],
+      "block_order": 6,
+      "certificate": {
+        "certificate_rule": "ghost_constant_speed_center_distance_le_sum_radii",
+        "collision_threshold_m": 0.5,
+        "conflict_window_threshold_m": 0.8,
+        "conflict_windows_s": [
+          [
+            0.0,
+            3.25
+          ]
+        ],
+        "minimum_distance_time_s": 1.35,
+        "minimum_ghost_obstacle_center_distance_m": 0.41102876985766096,
+        "noise_profile": "process_shift",
+        "obstacle_process": "hybrid_patrol",
+        "obstacle_truth_sha256": "8c5049845c8b5a0166b56e9fecdc77a23b2012107fa1a833eaca1356c17b3b87",
+        "seed": 750200036,
+        "split": "ood"
+      },
+      "model_block": 0,
+      "seed": 750200036,
+      "split": "ood",
+      "stratum": "safe_noncompletion_reverse_stall"
+    },
+    {
+      "arm_order": [
+        "V4_full_frozen",
+        "V8_progress_tiebreak_full"
+      ],
+      "block_order": 7,
+      "certificate": {
+        "certificate_rule": "ghost_constant_speed_center_distance_le_sum_radii",
+        "collision_threshold_m": 0.5,
+        "conflict_window_threshold_m": 0.8,
+        "conflict_windows_s": [
+          [
+            0.0,
+            3.1
+          ]
+        ],
+        "minimum_distance_time_s": 1.3,
+        "minimum_ghost_obstacle_center_distance_m": 0.41821146637437095,
+        "noise_profile": "medium",
+        "obstacle_process": "hybrid_patrol",
+        "obstacle_truth_sha256": "e4d4fd7584ea6ab21454cb174500b1ab5bd497ced1deaa841f0c15e7a6d4e54b",
+        "seed": 750100002,
+        "split": "id"
+      },
+      "model_block": 0,
+      "seed": 750100002,
+      "split": "id",
+      "stratum": "success_preservation_sentinel"
+    },
+    {
+      "arm_order": [
+        "V8_progress_tiebreak_full",
+        "V4_full_frozen"
+      ],
+      "block_order": 8,
+      "certificate": {
+        "certificate_rule": "ghost_constant_speed_center_distance_le_sum_radii",
+        "collision_threshold_m": 0.5,
+        "conflict_window_threshold_m": 0.8,
+        "conflict_windows_s": [
+          [
+            9.100000000000001,
+            12.55
+          ]
+        ],
+        "minimum_distance_time_s": 10.950000000000001,
+        "minimum_ghost_obstacle_center_distance_m": 0.24105085393153486,
+        "noise_profile": "process_shift",
+        "obstacle_process": "hybrid_patrol",
+        "obstacle_truth_sha256": "7ffd0190f81618a06bdb64bf2283995744dbcf72461dca000eef62f7c208aec3",
+        "seed": 750200020,
+        "split": "ood"
+      },
+      "model_block": 2,
+      "seed": 750200020,
+      "split": "ood",
+      "stratum": "low_clearance_success_sentinel"
+    }
+  ],
+  "formal_effect_estimation_authorized": false,
+  "implementation_git_sha": "71fc6e2123fd6d44c07a0587301e6dff0233a732",
+  "outcome_informed_development_selection": true,
+  "schedule_sha256": "83cfb025d6a6eaa753d8afb1deeaeafc845c2fec9bce34b4a73f4da435f61327",
+  "schema_version": 1,
+  "scope": "outcome_informed_development_not_effect_estimation",
+  "workers": 4
+}

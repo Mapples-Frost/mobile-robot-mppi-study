@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "D:\Projects\mobile-robot-mppi-study-single-v6\experiments\dynamic_uncertainty\run_single_dynamic_obstacle_v6_development.py", line 509, in <module>
+    raise SystemExit(main())
+  File "D:\Projects\mobile-robot-mppi-study-single-v6\experiments\dynamic_uncertainty\run_single_dynamic_obstacle_v6_development.py", line 499, in main
+    result, manifest = run(args.protocol, args.workers)
+  File "D:\Projects\mobile-robot-mppi-study-single-v6\experiments\dynamic_uncertainty\run_single_dynamic_obstacle_v6_development.py", line 375, in run
+    raise FileExistsError("v6 output is non-empty: %s" % output)
+FileExistsError: v6 output is non-empty: D:\Projects\mobile-robot-mppi-study-single-v6\research_artifacts\single_dynamic_obstacle_v8_progress_tiebreak_development

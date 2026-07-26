@@ -1265,6 +1265,42 @@ class EpisodeMetrics:
                     0.0,
                 )
             ),
+            "probabilistic_obstacle_emergency_near_distance_triggered": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_emergency_near_distance_triggered",
+                    False,
+                )
+            ),
+            "probabilistic_obstacle_emergency_critical_distance_triggered": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_emergency_critical_distance_triggered",
+                    False,
+                )
+            ),
+            "probabilistic_obstacle_emergency_surface_range_m": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_emergency_surface_range_m",
+                    float("inf"),
+                )
+            ),
+            "probabilistic_obstacle_counterflow_escape_applied": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_counterflow_escape_applied",
+                    False,
+                )
+            ),
+            "probabilistic_obstacle_preferred_escape_direction_x": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_preferred_escape_direction_x",
+                    0.0,
+                )
+            ),
+            "probabilistic_obstacle_preferred_escape_direction_y": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_preferred_escape_direction_y",
+                    0.0,
+                )
+            ),
             "dynamic_obstacle_tracker_enabled": float(
                 planner_diagnostics.get(
                     "dynamic_obstacle_tracker_enabled", False
@@ -2593,6 +2629,33 @@ class EpisodeMetrics:
                 sum(
                     row.get(
                         "probabilistic_obstacle_emergency_candidate_selected",
+                        0.0,
+                    )
+                    for row in values
+                )
+            ),
+            "probabilistic_obstacle_emergency_near_distance_triggered_steps": int(
+                sum(
+                    row.get(
+                        "probabilistic_obstacle_emergency_near_distance_triggered",
+                        0.0,
+                    )
+                    for row in values
+                )
+            ),
+            "probabilistic_obstacle_emergency_critical_distance_triggered_steps": int(
+                sum(
+                    row.get(
+                        "probabilistic_obstacle_emergency_critical_distance_triggered",
+                        0.0,
+                    )
+                    for row in values
+                )
+            ),
+            "probabilistic_obstacle_counterflow_escape_steps": int(
+                sum(
+                    row.get(
+                        "probabilistic_obstacle_counterflow_escape_applied",
                         0.0,
                     )
                     for row in values

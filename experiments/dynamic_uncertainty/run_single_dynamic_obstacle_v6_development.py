@@ -217,6 +217,17 @@ def _episode_row(output, block, arm, source_protocol):
         "corridor_turn_steps": int(metrics.get(
             "dynamic_escape_corridor_turn_steps", 0
         )),
+        "counterflow_escape_steps": int(metrics.get(
+            "probabilistic_obstacle_counterflow_escape_steps", 0
+        )),
+        "near_distance_triggered_steps": int(metrics.get(
+            "probabilistic_obstacle_emergency_near_distance_triggered_steps",
+            0,
+        )),
+        "critical_distance_triggered_steps": int(metrics.get(
+            "probabilistic_obstacle_emergency_critical_distance_triggered_steps",
+            0,
+        )),
     })
     return row
 
@@ -315,6 +326,16 @@ def _analyze(protocol, source_protocol, output, blocks):
             for row in rows
         ),
     }
+    if gate.get("require_counterflow_mechanism_exercised", False):
+        checks["counterflow_mechanism_exercised"] = any(
+            int(row.get("counterflow_escape_steps", 0)) > 0
+            for row in candidate
+        )
+    if gate.get("require_near_distance_trigger_exercised", False):
+        checks["near_distance_trigger_exercised"] = any(
+            int(row.get("near_distance_triggered_steps", 0)) > 0
+            for row in candidate
+        )
     return {
         "schema_version": 1,
         "status": "development_gate_pass" if all(checks.values()) else "development_gate_fail",
@@ -355,6 +376,18 @@ def _analyze(protocol, source_protocol, output, blocks):
                 )),
                 "corridor_turn_steps": int(sum(
                     row.get("corridor_turn_steps", 0) for row in candidate
+                )),
+                "counterflow_escape_steps": int(sum(
+                    row.get("counterflow_escape_steps", 0)
+                    for row in candidate
+                )),
+                "near_distance_triggered_steps": int(sum(
+                    row.get("near_distance_triggered_steps", 0)
+                    for row in candidate
+                )),
+                "critical_distance_triggered_steps": int(sum(
+                    row.get("critical_distance_triggered_steps", 0)
+                    for row in candidate
                 )),
             },
         },

@@ -324,6 +324,9 @@ class LegacyScanPipeline:
             "dynamic_obstacle_bearing_rad": guard.get(
                 "dynamic_obstacle_bearing_rad"
             ),
+            "dynamic_obstacle_surface_range_m": guard.get(
+                "dynamic_obstacle_surface_range_m"
+            ),
             "dynamic_obstacle_measurement_velocity_x_mps": (
                 None
                 if self.dynamic_obstacle_tracker is None

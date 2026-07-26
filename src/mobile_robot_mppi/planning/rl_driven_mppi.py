@@ -2918,6 +2918,30 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
                 risk_no_feasible_iterations / cfg.iterations
                 if risk_candidate_filter else 0.0
             ),
+            "probabilistic_obstacle_emergency_near_distance_triggered": bool(
+                emergency_context.get("near_distance_triggered", False)
+            ),
+            "probabilistic_obstacle_emergency_critical_distance_triggered": bool(
+                emergency_context.get(
+                    "critical_distance_triggered", False
+                )
+            ),
+            "probabilistic_obstacle_emergency_surface_range_m": float(
+                emergency_context.get("surface_range_m", float("inf"))
+            ),
+            "probabilistic_obstacle_counterflow_escape_applied": bool(
+                emergency_context.get("counterflow_escape_applied", False)
+            ),
+            "probabilistic_obstacle_preferred_escape_direction_x": float(
+                emergency_context.get(
+                    "preferred_escape_direction_x", 0.0
+                )
+            ),
+            "probabilistic_obstacle_preferred_escape_direction_y": float(
+                emergency_context.get(
+                    "preferred_escape_direction_y", 0.0
+                )
+            ),
             **probabilistic_risk_diagnostics,
             **online_tracker_diagnostics,
             **optimizer_diagnostics,

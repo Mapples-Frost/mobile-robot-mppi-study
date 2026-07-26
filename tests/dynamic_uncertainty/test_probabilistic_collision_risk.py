@@ -4311,6 +4311,98 @@ def test_temporal_emergency_uses_nearest_multi_track_forecast():
     )
 
 
+def test_near_dynamic_obstacle_triggers_motion_without_scan_flow_ttc():
+    controller = MppiController(
+        LegacyUnicyclePrediction(),
+        unicycle_state(),
+        body_velocity_action((-0.35, 0.45), 0.9),
+        MppiConfig(
+            horizon=5,
+            num_samples=8,
+            dt=0.1,
+            probabilistic_obstacle_emergency_candidates_enabled=True,
+            probabilistic_obstacle_emergency_candidate_trigger_distance_m=0.65,
+            probabilistic_obstacle_emergency_candidate_critical_distance_m=0.32,
+            probabilistic_obstacle_emergency_candidate_intent_hold_steps=2,
+        ),
+    )
+    observation = SimpleNamespace(auxiliary={
+        "dynamic_obstacle_escape_context": {
+            "temporal_scan_valid": False,
+            "dynamic_obstacle_scan_flow_match": False,
+            "dynamic_obstacle_surface_range_m": 0.30,
+            "dynamic_obstacle_away_heading_error_rad": np.pi,
+        }
+    })
+
+    context = controller._probabilistic_emergency_context(observation)
+
+    assert context["triggered"]
+    assert context["near_distance_triggered"]
+    assert context["critical_distance_triggered"]
+    assert context["reserve_reverse_coverage"]
+    persisted = controller._probabilistic_emergency_context(observation)
+    assert persisted["triggered"]
+    assert persisted["intent_held"]
+
+    samples = np.zeros((8, 5, 2), dtype=np.float64)
+    mask = controller._inject_probabilistic_emergency_candidates(
+        samples,
+        np.zeros((5, 2), dtype=np.float64),
+        context,
+    )
+    first_speeds = samples[mask, 0, 0]
+    assert np.sum(first_speeds < 0.0) == 3
+
+
+def test_counterflow_escape_moves_away_and_against_obstacle_velocity():
+    controller = MppiController(
+        LegacyUnicyclePrediction(),
+        unicycle_state(),
+        body_velocity_action((-0.35, 0.45), 0.9),
+        MppiConfig(
+            horizon=5,
+            num_samples=8,
+            dt=0.1,
+            probabilistic_obstacle_emergency_candidates_enabled=True,
+            probabilistic_obstacle_emergency_candidate_trigger_ttc_s=1.8,
+            probabilistic_obstacle_counterflow_escape_enabled=True,
+            probabilistic_obstacle_counterflow_weight=0.8,
+        ),
+    )
+    state = np.zeros(controller.state_spec.dimension)
+    state[controller.state_spec.index("x")] = 1.0
+    means = np.zeros((5, 1, 2), dtype=np.float64)
+    means[:, 0, 1] = np.arange(5, dtype=np.float64) * 0.1
+    forecast = SimpleNamespace(
+        component_means=means,
+        component_weights=np.ones((5, 1), dtype=np.float64),
+    )
+    observation = SimpleNamespace(auxiliary={
+        "dynamic_obstacle_escape_context": {
+            "temporal_scan_valid": True,
+            "temporal_scan_ttc_s": 1.0,
+            "dynamic_obstacle_scan_flow_match": True,
+            "dynamic_obstacle_away_heading_error_rad": 0.0,
+            "dynamic_obstacle_measurement_velocity_x_mps": 0.0,
+            "dynamic_obstacle_measurement_velocity_y_mps": 1.0,
+        }
+    })
+
+    context = controller._probabilistic_emergency_context(
+        observation, state, (forecast,)
+    )
+    preferred = np.asarray((
+        context["preferred_escape_direction_x"],
+        context["preferred_escape_direction_y"],
+    ))
+
+    assert context["counterflow_escape_applied"]
+    assert preferred[0] > 0.0
+    assert preferred[1] < 0.0
+    assert float(np.dot(preferred, np.asarray((0.0, 1.0)))) < 0.0
+
+
 def test_hard_temporal_emergency_uses_lowest_risk_lattice_member(
     monkeypatch,
 ):

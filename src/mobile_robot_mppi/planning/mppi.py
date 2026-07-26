@@ -93,8 +93,12 @@ class MppiConfig:
     probabilistic_obstacle_emergency_candidates_enabled: bool = False
     probabilistic_obstacle_emergency_candidate_prefix_steps: int = 5
     probabilistic_obstacle_emergency_candidate_trigger_ttc_s: float = 0.0
+    probabilistic_obstacle_emergency_candidate_trigger_distance_m: float = 0.0
+    probabilistic_obstacle_emergency_candidate_critical_distance_m: float = 0.0
     probabilistic_obstacle_emergency_candidate_intent_hold_steps: int = 0
     probabilistic_obstacle_front_obstacle_forward_turn_enabled: bool = False
+    probabilistic_obstacle_counterflow_escape_enabled: bool = False
+    probabilistic_obstacle_counterflow_weight: float = 1.0
     probabilistic_obstacle_emergency_candidate_pareto_forward_commit_enabled: bool = False
     probabilistic_obstacle_emergency_candidate_forward_risk_ceiling: float = 0.0
     probabilistic_obstacle_emergency_candidate_forward_mass_ceiling: float = 0.0
@@ -296,6 +300,18 @@ class MppiConfig:
                     0.0,
                 )
             ),
+            probabilistic_obstacle_emergency_candidate_trigger_distance_m=float(
+                values.get(
+                    "probabilistic_obstacle_emergency_candidate_trigger_distance_m",
+                    0.0,
+                )
+            ),
+            probabilistic_obstacle_emergency_candidate_critical_distance_m=float(
+                values.get(
+                    "probabilistic_obstacle_emergency_candidate_critical_distance_m",
+                    0.0,
+                )
+            ),
             probabilistic_obstacle_emergency_candidate_intent_hold_steps=int(
                 values.get(
                     "probabilistic_obstacle_emergency_candidate_intent_hold_steps",
@@ -306,6 +322,18 @@ class MppiConfig:
                 values.get(
                     "probabilistic_obstacle_front_obstacle_forward_turn_enabled",
                     False,
+                )
+            ),
+            probabilistic_obstacle_counterflow_escape_enabled=bool(
+                values.get(
+                    "probabilistic_obstacle_counterflow_escape_enabled",
+                    False,
+                )
+            ),
+            probabilistic_obstacle_counterflow_weight=float(
+                values.get(
+                    "probabilistic_obstacle_counterflow_weight",
+                    1.0,
                 )
             ),
             probabilistic_obstacle_emergency_candidate_pareto_forward_commit_enabled=bool(
@@ -794,6 +822,31 @@ class MppiConfig:
                 "probabilistic emergency candidate trigger TTC must be "
                 "finite and non-negative"
             )
+        trigger_distance = (
+            self.probabilistic_obstacle_emergency_candidate_trigger_distance_m
+        )
+        critical_distance = (
+            self.probabilistic_obstacle_emergency_candidate_critical_distance_m
+        )
+        if (
+            not np.isfinite(trigger_distance)
+            or trigger_distance < 0.0
+            or not np.isfinite(critical_distance)
+            or critical_distance < 0.0
+            or critical_distance > trigger_distance
+        ):
+            raise ValueError(
+                "probabilistic emergency candidate distances must be finite "
+                "and satisfy 0 <= critical <= trigger"
+            )
+        if (
+            not np.isfinite(self.probabilistic_obstacle_counterflow_weight)
+            or self.probabilistic_obstacle_counterflow_weight < 0.0
+        ):
+            raise ValueError(
+                "probabilistic counterflow weight must be finite and "
+                "non-negative"
+            )
         if self.probabilistic_obstacle_emergency_candidate_intent_hold_steps < 0:
             raise ValueError(
                 "probabilistic emergency candidate intent hold must be "
@@ -1275,7 +1328,13 @@ class MppiController:
             self.config
             .probabilistic_obstacle_emergency_candidate_trigger_ttc_s
         )
-        if observation is None or threshold <= 0.0:
+        trigger_distance = float(
+            self.config
+            .probabilistic_obstacle_emergency_candidate_trigger_distance_m
+        )
+        if observation is None or (
+            threshold <= 0.0 and trigger_distance <= 0.0
+        ):
             self._probabilistic_emergency_intent_remaining = 0
             self._probabilistic_emergency_direction = None
             self._probabilistic_emergency_latched_pattern = None
@@ -1292,6 +1351,10 @@ class MppiController:
                 "away_heading_error_rad": None,
                 "obstacle_bearing_rad": None,
                 "front_obstacle_forward_turn": False,
+                "near_distance_triggered": False,
+                "critical_distance_triggered": False,
+                "surface_range_m": float("inf"),
+                "reserve_reverse_coverage": False,
                 "ttc_s": float("inf"),
                 "safety_hard_stop_ttc_s": 0.0,
                 "rearm_ready": True,
@@ -1316,16 +1379,45 @@ class MppiController:
             and np.isfinite(ttc_s)
             and ttc_s > 0.0
         )
+        surface_range_value = context.get(
+            "dynamic_obstacle_surface_range_m"
+        )
+        surface_range_m = (
+            float(surface_range_value)
+            if surface_range_value is not None
+            else float("inf")
+        )
+        near_distance_triggered = bool(
+            trigger_distance > 0.0
+            and np.isfinite(surface_range_m)
+            and surface_range_m <= trigger_distance
+        )
+        critical_distance = float(
+            self.config
+            .probabilistic_obstacle_emergency_candidate_critical_distance_m
+        )
+        critical_distance_triggered = bool(
+            critical_distance > 0.0
+            and np.isfinite(surface_range_m)
+            and surface_range_m <= critical_distance
+        )
         raw_triggered = bool(
-            closing_observed
-            and ttc_s <= threshold
+            (
+                threshold > 0.0
+                and closing_observed
+                and ttc_s <= threshold
+            )
+            or near_distance_triggered
         )
         start_intent = bool(
             raw_triggered and self._probabilistic_emergency_rearm_ready
         )
         intent_held = bool(
             not start_intent
-            and self._probabilistic_emergency_intent_remaining > 0
+            and (
+                near_distance_triggered
+                or self._probabilistic_emergency_intent_remaining > 0
+            )
         )
         triggered = bool(start_intent or intent_held)
         away_heading_error = context.get(
@@ -1355,6 +1447,10 @@ class MppiController:
                 and obstacle_bearing is not None
                 and abs(obstacle_bearing) <= 0.5 * np.pi
             ),
+            "near_distance_triggered": near_distance_triggered,
+            "critical_distance_triggered": critical_distance_triggered,
+            "surface_range_m": surface_range_m,
+            "reserve_reverse_coverage": critical_distance_triggered,
             "ttc_s": ttc_s,
             "safety_hard_stop_ttc_s": safety_hard_stop_ttc_s,
         }
@@ -1496,6 +1592,27 @@ class MppiController:
                 measured_preferred_direction = (
                     np.sign(lateral_side) * perpendicular
                 )
+                if (
+                    self.config
+                    .probabilistic_obstacle_counterflow_escape_enabled
+                ):
+                    counterflow_direction = (
+                        measured_preferred_direction
+                        - self.config.probabilistic_obstacle_counterflow_weight
+                        * tangent
+                    )
+                    counterflow_norm = float(
+                        np.linalg.norm(counterflow_direction)
+                    )
+                    if counterflow_norm > 1.0e-9:
+                        measured_preferred_direction = (
+                            counterflow_direction / counterflow_norm
+                        )
+                        result["counterflow_escape_applied"] = True
+                    else:
+                        result["counterflow_escape_applied"] = False
+                else:
+                    result["counterflow_escape_applied"] = False
                 if self._probabilistic_emergency_direction is None:
                     self._probabilistic_emergency_direction = (
                         measured_preferred_direction.copy()
@@ -1503,6 +1620,12 @@ class MppiController:
                 preferred_direction = np.asarray(
                     self._probabilistic_emergency_direction,
                     dtype=np.float64,
+                )
+                result["preferred_escape_direction_x"] = float(
+                    preferred_direction[0]
+                )
+                result["preferred_escape_direction_y"] = float(
+                    preferred_direction[1]
                 )
                 theta = float(
                     np.asarray(state, dtype=np.float64)[
@@ -1548,6 +1671,11 @@ class MppiController:
                 .probabilistic_obstacle_emergency_candidate_intent_hold_steps
             )
             self._probabilistic_emergency_rearm_ready = False
+            self._probabilistic_emergency_rearm_clear_count = 0
+        elif near_distance_triggered:
+            # A still-close obstacle is not a one-shot event. Keep the chosen
+            # direction latched and spend the configured hold only after the
+            # measured separation rises above the trigger distance.
             self._probabilistic_emergency_rearm_clear_count = 0
         elif self._probabilistic_emergency_intent_remaining > 0:
             self._probabilistic_emergency_intent_remaining -= 1
@@ -1706,8 +1834,14 @@ class MppiController:
                     if len(preferred) >= preferred_capacity:
                         break
                 patterns = tuple(preferred + forward_templates)
-            elif emergency_context.get(
-                "post_center_low_ttc_nonforward_coverage_requested", False
+            elif (
+                emergency_context.get(
+                    "post_center_low_ttc_nonforward_coverage_requested",
+                    False,
+                )
+                or emergency_context.get(
+                    "reserve_reverse_coverage", False
+                )
             ):
                 self._probabilistic_emergency_nonforward_coverage_applied = True
                 # Forecast, away-heading and latched preferences can otherwise

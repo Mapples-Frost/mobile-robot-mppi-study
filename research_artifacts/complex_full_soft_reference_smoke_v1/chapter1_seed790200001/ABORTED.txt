@@ -1,0 +1,5 @@
+status: aborted_without_outcome
+reason: user reduced scope to a few live-viewer smoke runs
+outcome_opened: false
+result_files_generated: false
+eligible_as_evidence: false

@@ -5,8 +5,14 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
+import sys
 
 import yaml
+
+ROOT = Path(__file__).resolve().parents[2]
+for _value in (ROOT, ROOT / "src"):
+    if str(_value) not in sys.path:
+        sys.path.insert(0, str(_value))
 
 from experiments.dynamic_uncertainty.complex_full_method import (
     MAPS,

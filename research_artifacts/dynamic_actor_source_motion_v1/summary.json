@@ -1,0 +1,122 @@
+{
+  "action_space_migration_performed": true,
+  "base_action_offset": [
+    0.5,
+    0.0
+  ],
+  "base_action_scale": [
+    0.5,
+    1.0
+  ],
+  "best_checkpoint": "research_artifacts\\dynamic_actor_source_motion_v1\\checkpoints\\best.pt",
+  "best_checkpoint_sha256": "354da6aface98c1040b78b71655bce6d1db2cb386999a87f424a3ca1a95babef",
+  "best_update": 4750,
+  "checks": {
+    "active_passage_gain": false,
+    "all_finite": true,
+    "cuda_training": false,
+    "frozen_base_unchanged": true,
+    "retention_drift": true,
+    "reverse_recall": true,
+    "teacher_rmse_improvement": false,
+    "unnecessary_stop": true
+  },
+  "critical_training_samples": 173,
+  "decision": "offline_gate_fail",
+  "device": "cpu",
+  "gate_pass": false,
+  "gpu_name": null,
+  "improved_checkpoints": [
+    "research_artifacts\\dynamic_actor_source_motion_v1\\checkpoints\\improved_update_000250.pt",
+    "research_artifacts\\dynamic_actor_source_motion_v1\\checkpoints\\improved_update_000500.pt",
+    "research_artifacts\\dynamic_actor_source_motion_v1\\checkpoints\\improved_update_000750.pt",
+    "research_artifacts\\dynamic_actor_source_motion_v1\\checkpoints\\improved_update_001250.pt",
+    "research_artifacts\\dynamic_actor_source_motion_v1\\checkpoints\\improved_update_001500.pt",
+    "research_artifacts\\dynamic_actor_source_motion_v1\\checkpoints\\improved_update_001750.pt",
+    "research_artifacts\\dynamic_actor_source_motion_v1\\checkpoints\\improved_update_002000.pt",
+    "research_artifacts\\dynamic_actor_source_motion_v1\\checkpoints\\improved_update_002250.pt",
+    "research_artifacts\\dynamic_actor_source_motion_v1\\checkpoints\\improved_update_002500.pt",
+    "research_artifacts\\dynamic_actor_source_motion_v1\\checkpoints\\improved_update_002750.pt",
+    "research_artifacts\\dynamic_actor_source_motion_v1\\checkpoints\\improved_update_003000.pt",
+    "research_artifacts\\dynamic_actor_source_motion_v1\\checkpoints\\improved_update_003500.pt",
+    "research_artifacts\\dynamic_actor_source_motion_v1\\checkpoints\\improved_update_003750.pt",
+    "research_artifacts\\dynamic_actor_source_motion_v1\\checkpoints\\improved_update_004000.pt",
+    "research_artifacts\\dynamic_actor_source_motion_v1\\checkpoints\\improved_update_004500.pt",
+    "research_artifacts\\dynamic_actor_source_motion_v1\\checkpoints\\improved_update_004750.pt"
+  ],
+  "protocol": "dynamic_actor_source_motion_development_v1",
+  "reverse_teacher_actions_available": 110,
+  "reverse_teacher_actions_clipped": 0,
+  "schema_version": 1,
+  "source_action_lower": [
+    0.0,
+    -0.8999999761581421
+  ],
+  "source_action_upper": [
+    0.3499999940395355,
+    0.8999999761581421
+  ],
+  "source_checkpoint_sha256": "eaea2e2975de0794da4ad6876fbff3e6e85e53427e5471982e857585fff97ae4",
+  "status": "complete",
+  "target_action_lower": [
+    -0.3499999940395355,
+    -0.8999999761581421
+  ],
+  "target_action_upper": [
+    0.3499999940395355,
+    0.8999999761581421
+  ],
+  "teacher_dataset_samples": 4602,
+  "teacher_manifest_sha256": "0d87a221f738a00e606070d698c6073cb6169f2a3aa5042cfb2ba3f8ccf1b2d1",
+  "teacher_manifest_sha256_list": [
+    "50130f848b9145eb804ffb833e6b2ee0cebb0d474e429448a2e143eca3b91868"
+  ],
+  "train_metrics": {
+    "candidate_critical_physical_teacher_rmse": 0.25449323654174805,
+    "candidate_opportunity_active_passage_fraction": 0.9986795774647887,
+    "candidate_opportunity_unnecessary_stop_fraction": 0.0,
+    "candidate_physical_teacher_rmse": 0.16281376779079437,
+    "candidate_reverse_recall": 1.0,
+    "candidate_reverse_velocity_mae": 0.012822373770177364,
+    "candidate_teacher_rmse": 0.2152552455663681,
+    "critical_samples": 173,
+    "mean_absolute_correction": 0.023031260818243027,
+    "opportunity_active_passage_gain": 0.0017605633802817433,
+    "opportunity_samples": 2272,
+    "relative_teacher_rmse_improvement": 0.17948942673966792,
+    "retention_mean_absolute_drift": 0.008504380472004414,
+    "retention_samples": 2628,
+    "reverse_samples": 96,
+    "samples": 3124,
+    "source_critical_physical_teacher_rmse": 0.3500968813896179,
+    "source_opportunity_active_passage_fraction": 0.996919014084507,
+    "source_opportunity_unnecessary_stop_fraction": 0.00044014084507042255,
+    "source_physical_teacher_rmse": 0.17704516649246216,
+    "source_reverse_recall": 0.0,
+    "source_teacher_rmse": 0.26234304904937744
+  },
+  "validation_metrics": {
+    "candidate_critical_physical_teacher_rmse": 0.27485066652297974,
+    "candidate_opportunity_active_passage_fraction": 0.9787798408488063,
+    "candidate_opportunity_unnecessary_stop_fraction": 0.01237842617152962,
+    "candidate_physical_teacher_rmse": 0.19039082527160645,
+    "candidate_reverse_recall": 0.8571428571428571,
+    "candidate_reverse_velocity_mae": 0.12517571449279785,
+    "candidate_teacher_rmse": 0.2695522606372833,
+    "critical_samples": 21,
+    "mean_absolute_correction": 0.05093226209282875,
+    "opportunity_active_passage_gain": -0.008841732979664063,
+    "opportunity_samples": 1131,
+    "relative_teacher_rmse_improvement": -0.09495490819932967,
+    "retention_mean_absolute_drift": 0.043069373816251755,
+    "retention_samples": 1332,
+    "reverse_samples": 14,
+    "samples": 1478,
+    "source_critical_physical_teacher_rmse": 0.30425748229026794,
+    "source_opportunity_active_passage_fraction": 0.9876215738284704,
+    "source_opportunity_unnecessary_stop_fraction": 0.004420866489832007,
+    "source_physical_teacher_rmse": 0.1812923699617386,
+    "source_reverse_recall": 0.0,
+    "source_teacher_rmse": 0.2461765855550766
+  }
+}

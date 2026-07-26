@@ -52,7 +52,10 @@ training:
   critical_fraction: 0.25
   retention_fraction: 0.35
   critical_maximum_obstacle_distance_m: 100.0
-  critical_minimum_probability: 0.0
+  # High-risk teacher states remain critical even when the teacher prevents
+  # the collision; requiring an observed collision would discard the very
+  # avoidance labels we want the Actor to learn.
+  critical_minimum_probability: 0.20
   critical_teacher_loss_multiplier: 2.0
   retention_agreement_tolerance: 0.50
   velocity_loss_weight: 2.0

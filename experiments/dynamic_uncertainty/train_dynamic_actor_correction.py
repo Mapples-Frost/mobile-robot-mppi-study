@@ -543,13 +543,21 @@ def train(
     target_physical = _normalized_to_physical(targets, lower, upper)
     reverse_mask = target_physical[:, 0] < -0.02
     collision_exposure = arrays["episode_collision"].astype(bool)
-    critical_mask = collision_exposure & (
-        (arrays["nearest_dynamic_obstacle_distance"] <= float(
-            training.get("critical_maximum_obstacle_distance_m", 1.50)
-        ))
-        | (arrays["maximum_probability"] >= float(
-            training.get("critical_minimum_probability", 0.02)
-        ))
+    critical_probability_floor = float(
+        training.get("critical_minimum_probability", 0.02)
+    )
+    critical_mask = (
+        (
+            collision_exposure
+            & (
+                arrays["nearest_dynamic_obstacle_distance"]
+                <= float(training.get(
+                    "critical_maximum_obstacle_distance_m", 1.50
+                ))
+            )
+        )
+        | (arrays["maximum_probability"] >= critical_probability_floor)
+        | arrays["safety_override"].astype(bool)
     )
     agreement = np.max(np.abs(source_actions - targets), axis=1) <= float(
         training.get("retention_agreement_tolerance", 0.20)

@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "D:\Projects\mobile-robot-mppi-study-single-v6\experiments\dynamic_uncertainty\train_dynamic_actor_correction.py", line 987, in <module>
+    raise SystemExit(main())
+  File "D:\Projects\mobile-robot-mppi-study-single-v6\experiments\dynamic_uncertainty\train_dynamic_actor_correction.py", line 977, in main
+    train(
+  File "D:\Projects\mobile-robot-mppi-study-single-v6\experiments\dynamic_uncertainty\train_dynamic_actor_correction.py", line 425, in train
+    raise FileExistsError("dynamic Actor correction output already exists")
+FileExistsError: dynamic Actor correction output already exists

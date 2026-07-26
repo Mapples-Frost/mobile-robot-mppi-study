@@ -167,6 +167,7 @@ class LegacyScanPipeline:
     def _dynamic_tracker_observation(self, observation):
         if (
             not self.known_static_filter_enabled
+            or self.dynamic_obstacle_tracker is None
             or observation.scan is None
         ):
             return observation
@@ -314,18 +315,32 @@ class LegacyScanPipeline:
                     guard["reason"] = "temporal_slowdown"
                 guard["should_slow_down"] = True
                 guard["slow_scale"] = temporal_scale
-        values = scan.obstacle_ranges if scan.obstacle_ranges is not None else scan.ranges
+        # Safety continues to inspect the raw scan above.  The planner already
+        # receives exact injected static geometry, so its scan-derived local
+        # obstacle set must contain only residual (potentially dynamic)
+        # returns.  Feeding known-static hits into both representations
+        # double-counts walls as dense inflated circles and can make every
+        # low-risk forward action look worse than stopping.
+        planner_observation = self._dynamic_tracker_observation(
+            observation
+        )
+        planner_scan = planner_observation.scan
+        values = (
+            planner_scan.obstacle_ranges
+            if planner_scan.obstacle_ranges is not None
+            else planner_scan.ranges
+        )
         layer_cfg = self.config.get("local_obstacle_layer", {})
         state = observation.pose.as_array()
         try:
             obstacles, debug = self.local_layer.scan_to_experiment_obstacles_geometric(
                 ranges=values.tolist(),
-                angle_min=scan.angle_min,
-                angle_increment=scan.angle_increment,
-                range_min=scan.range_min,
-                range_max=scan.range_max,
+                angle_min=planner_scan.angle_min,
+                angle_increment=planner_scan.angle_increment,
+                range_min=planner_scan.range_min,
+                range_max=planner_scan.range_max,
                 current_state_exp=tuple(state),
-                max_radius=scan.range_max,
+                max_radius=planner_scan.range_max,
                 min_radius=float(layer_cfg.get("min_radius", 0.08)),
                 angle_offset_rad=0.0,
                 downsample_step=int(layer_cfg.get("downsample_step", 1)),
@@ -337,12 +352,12 @@ class LegacyScanPipeline:
         except Exception as exc:
             obstacles = self.local_layer.scan_to_experiment_obstacles(
                 ranges=values.tolist(),
-                angle_min=scan.angle_min,
-                angle_increment=scan.angle_increment,
-                range_min=scan.range_min,
-                range_max=scan.range_max,
+                angle_min=planner_scan.angle_min,
+                angle_increment=planner_scan.angle_increment,
+                range_min=planner_scan.range_min,
+                range_max=planner_scan.range_max,
                 current_state_exp=tuple(state),
-                max_radius=scan.range_max,
+                max_radius=planner_scan.range_max,
                 min_radius=float(layer_cfg.get("min_radius", 0.08)),
                 angle_offset_rad=0.0,
                 downsample_step=int(layer_cfg.get("fallback_downsample_step", 3)),
@@ -366,27 +381,27 @@ class LegacyScanPipeline:
             )
         diagnostics = dict(debug)
         diagnostics["temporal_scan_flow"] = flow_values
+        static_filter_diagnostics = (
+            planner_observation.auxiliary.get("known_static_filter")
+        )
+        if static_filter_diagnostics is not None:
+            static_filter_diagnostics = dict(static_filter_diagnostics)
+            static_filter_diagnostics[
+                "planner_local_layer_static_hits_removed"
+            ] = int(
+                static_filter_diagnostics.get(
+                    "masked_static_hit_count", 0
+                )
+            )
+            auxiliary["known_static_filter"] = (
+                static_filter_diagnostics
+            )
+            diagnostics["known_static_filter"] = (
+                static_filter_diagnostics
+            )
         if self.dynamic_obstacle_tracker is not None:
-            tracker_observation = self._dynamic_tracker_observation(
-                observation
-            )
-            static_filter_diagnostics = (
-                tracker_observation.auxiliary.get(
-                    "known_static_filter"
-                )
-            )
-            if static_filter_diagnostics is not None:
-                static_filter_diagnostics = dict(
-                    static_filter_diagnostics
-                )
-                auxiliary["known_static_filter"] = (
-                    static_filter_diagnostics
-                )
-                diagnostics["known_static_filter"] = (
-                    static_filter_diagnostics
-                )
             tracker_update = self.dynamic_obstacle_tracker.update(
-                tracker_observation
+                planner_observation
             )
             tracker_diagnostics = dict(tracker_update.diagnostics)
             auxiliary["dynamic_obstacle_tracker"] = tracker_diagnostics

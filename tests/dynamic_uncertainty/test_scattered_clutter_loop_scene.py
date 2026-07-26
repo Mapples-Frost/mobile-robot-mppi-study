@@ -15,6 +15,12 @@ from mobile_robot_mppi.simulation.model_factory import build_diff_drive_mjcf
 from mobile_robot_mppi.simulation.mujoco_plant import MujocoDiffDrivePlant
 from mobile_robot_mppi.perception.legacy_pipeline import LegacyScanPipeline
 from mobile_robot_mppi.runtime.factories import make_components
+from mobile_robot_mppi.core.types import (
+    LaserScan,
+    Pose2D,
+    RobotObservation,
+    Twist2D,
+)
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -89,6 +95,59 @@ def test_static_mask_rejects_map_surface_but_not_nearby_dynamic_return():
     )
 
     assert mask.tolist() == [True, False]
+
+
+def test_known_static_returns_do_not_enter_planner_local_obstacles():
+    config = load_yaml(CONFIG)
+    perception_config = dict(config["perception"])
+    tracker_config = dict(
+        perception_config["dynamic_obstacle_tracker"]
+    )
+    tracker_config["known_static_filter_enabled"] = True
+    tracker_config["known_static_obstacles"] = (
+        {
+            "type": "cylinder",
+            "position": [1.0, 0.0],
+            "radius": 0.20,
+        },
+    )
+    perception_config["dynamic_obstacle_tracker"] = tracker_config
+    pipeline = LegacyScanPipeline(ROOT, perception_config)
+    scan = LaserScan(
+        ranges=np.asarray((0.70, 1.00, 6.00)),
+        angle_min=0.0,
+        angle_increment=0.5 * np.pi,
+        range_min=0.02,
+        range_max=6.0,
+        timestamp=0.1,
+    )
+    observation = RobotObservation(
+        timestamp=0.1,
+        pose=Pose2D(0.0, 0.0, 0.0),
+        twist=Twist2D(0.0, 0.0),
+        scan=scan,
+    )
+
+    result = pipeline.process(observation)
+    local = np.asarray(result.observation.local_obstacles)
+    filter_values = result.diagnostics["known_static_filter"]
+
+    assert filter_values["masked_static_hit_count"] == 1
+    assert (
+        filter_values["planner_local_layer_static_hits_removed"]
+        == 1
+    )
+    assert local.shape[0] >= 1
+    # The residual return at roughly (0.1, 1.0) remains available; the
+    # known-static surface at roughly (0.8, 0.0) is absent.
+    assert np.min(np.linalg.norm(
+        local[:, :2] - np.asarray((0.1, 1.0)),
+        axis=1,
+    )) < 0.20
+    assert np.min(np.linalg.norm(
+        local[:, :2] - np.asarray((0.8, 0.0)),
+        axis=1,
+    )) > 0.25
 
 
 def test_exact_static_map_cost_uses_signed_footprint_clearance():

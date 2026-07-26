@@ -1,0 +1,100 @@
+schema_version: 1
+status: frozen_before_heldout_execution
+frozen_at: "2026-07-26T13:20:00+08:00"
+study_id: single_dynamic_obstacle_v10_early_lateral_commit_heldout
+scope: fresh_held_out_qualification_not_effect_estimation
+runner_label: v10_early_lateral_commit_heldout
+source_protocol: configs/research/single_dynamic_obstacle_paper_v4.yaml
+output_dir: research_artifacts/single_dynamic_obstacle_v10_early_lateral_commit_heldout
+parent_result: research_artifacts/single_dynamic_obstacle_v10_early_lateral_commit_development/development_result.json
+parent_result_sha256: 84618e2196f4232e700eb5ea68b12b9c65995dfa7be9eb32281269a7b4a2f2c7
+parent_manifest: research_artifacts/single_dynamic_obstacle_v10_early_lateral_commit_development/artifact_manifest.json
+parent_manifest_sha256: e51dbb48d8f9f08b292832fbf0fbfdbc103179e16ab5abf439a2ef9d60261ade
+parent_bundle_sha256: b5b45b2e9679717391af4b97d5a68a683658fc84d96cddd87a0e543979a95deb
+design:
+  qualification_attempt: Q1_fresh_heldout_early_lateral_commit
+  mechanism_family: causal_early_lateral_escape
+  paired_arms: [V4_full_frozen, V10_early_lateral_commit_full]
+  common_random_numbers: true
+  outcome_informed_development_selection: false
+  previously_opened_v10_development_seeds_reused: false
+  fresh_seed_schedule: true
+  formal_effect_estimation_authorized: false
+  formal_server_execution_authorized: false
+  total_rollouts_per_controller_decision: 600
+  horizon_steps: 36
+  control_period_s: 0.1
+  maximum_episode_steps: 400
+  workers: 4
+frozen_components:
+  change_aware_imm: unchanged_from_v4_full
+  collision_risk_v1: unchanged_from_v4_full
+  collision_probability_threshold: unchanged_from_v4_full
+  safety_margin: unchanged_from_v4_full
+  dynamic_obstacle_generator: unchanged_from_v4
+  actor_checkpoint: unchanged_from_v4
+  icode_checkpoints: unchanged_from_v4
+  hss_core: unchanged_from_v4
+  rollout_budget: 600
+  horizon_steps: 36
+  control_period_s: 0.1
+  maximum_episode_steps: 400
+  v5_deadline_supervisor: disabled
+  v7_hard_risk_motion_contract: retained
+  v8_progress_tiebreak: retained
+  v10_early_lateral_commit: retained
+change_scope:
+  allowed_prefixes:
+    - planner.probabilistic_obstacle_hard_violation_action
+    - planner.probabilistic_obstacle_hard_violation_progress_
+    - planner.probabilistic_obstacle_emergency_candidate_prefix_steps
+    - planner.probabilistic_obstacle_emergency_candidate_trigger_ttc_s
+    - planner.probabilistic_obstacle_emergency_candidate_intent_hold_steps
+candidate_override_paths:
+  planner.probabilistic_obstacle_hard_violation_action: active_avoidance_motion
+  planner.probabilistic_obstacle_hard_violation_progress_tiebreak_enabled: true
+  planner.probabilistic_obstacle_hard_violation_progress_mass_tolerance: 0.05
+  planner.probabilistic_obstacle_emergency_candidate_prefix_steps: 6
+  planner.probabilistic_obstacle_emergency_candidate_trigger_ttc_s: 2.20
+  planner.probabilistic_obstacle_emergency_candidate_intent_hold_steps: 4
+mechanism_contract:
+  seed_lists_disjoint_from_all_opened_development: true
+  id_seed_count: 8
+  ood_seed_count: 8
+  causal_scan_trigger_precedes_hard_probability_violation: true
+  lateral_arc_prefix_is_six_control_steps: true
+  selected_escape_intent_is_held_for_four_steps: true
+  future_obstacle_truth_used_for_control: false
+  actor_only_proposes_actions: true
+  safety_layer_retains_collision_authority: true
+  additional_total_rollouts: 0
+  total_rollouts_per_decision: 600
+development_blocks:
+  - {split: id, seed: 750300001, model_block: 0, stratum: fresh_id_early_conflict, arm_order: [V4_full_frozen, V10_early_lateral_commit_full]}
+  - {split: id, seed: 750300009, model_block: 0, stratum: fresh_id_early_conflict_b, arm_order: [V10_early_lateral_commit_full, V4_full_frozen]}
+  - {split: id, seed: 750300015, model_block: 2, stratum: fresh_id_late_conflict, arm_order: [V4_full_frozen, V10_early_lateral_commit_full]}
+  - {split: id, seed: 750300029, model_block: 2, stratum: fresh_id_mid_conflict, arm_order: [V10_early_lateral_commit_full, V4_full_frozen]}
+  - {split: id, seed: 750300031, model_block: 1, stratum: fresh_id_mid_conflict_b, arm_order: [V4_full_frozen, V10_early_lateral_commit_full]}
+  - {split: id, seed: 750300034, model_block: 1, stratum: fresh_id_late_early_conflict, arm_order: [V10_early_lateral_commit_full, V4_full_frozen]}
+  - {split: id, seed: 750300018, model_block: 0, stratum: fresh_id_early_conflict_c, arm_order: [V4_full_frozen, V10_early_lateral_commit_full]}
+  - {split: id, seed: 750300042, model_block: 2, stratum: fresh_id_unopened_conflict, arm_order: [V10_early_lateral_commit_full, V4_full_frozen]}
+  - {split: ood, seed: 750400001, model_block: 2, stratum: fresh_ood_mid_conflict, arm_order: [V4_full_frozen, V10_early_lateral_commit_full]}
+  - {split: ood, seed: 750400003, model_block: 2, stratum: fresh_ood_mid_conflict_b, arm_order: [V10_early_lateral_commit_full, V4_full_frozen]}
+  - {split: ood, seed: 750400004, model_block: 1, stratum: fresh_ood_late_conflict, arm_order: [V4_full_frozen, V10_early_lateral_commit_full]}
+  - {split: ood, seed: 750400006, model_block: 1, stratum: fresh_ood_late_conflict_b, arm_order: [V10_early_lateral_commit_full, V4_full_frozen]}
+  - {split: ood, seed: 750400008, model_block: 0, stratum: fresh_ood_mid_conflict_c, arm_order: [V4_full_frozen, V10_early_lateral_commit_full]}
+  - {split: ood, seed: 750400010, model_block: 0, stratum: fresh_ood_mid_conflict_d, arm_order: [V10_early_lateral_commit_full, V4_full_frozen]}
+  - {split: ood, seed: 750400011, model_block: 2, stratum: fresh_ood_late_conflict_c, arm_order: [V4_full_frozen, V10_early_lateral_commit_full]}
+  - {split: ood, seed: 750400023, model_block: 1, stratum: fresh_ood_early_conflict, arm_order: [V10_early_lateral_commit_full, V4_full_frozen]}
+development_go_no_go:
+  minimum_safe_success_gain: 1
+  minimum_prevented_collisions: 2
+  minimum_collision_count_reduction: 2
+  maximum_new_paired_collisions: 0
+  maximum_lost_v4_successes: 0
+  maximum_mean_minimum_clearance_loss_m: 0.03
+  require_every_decision_600_rollouts: true
+  interpretation: qualification_only_no_formal_effect_estimation
+stop_rule:
+  fresh_heldout_failure_stops_single_obstacle_optimization: true
+  formal_server_execution_requires_user_confirmation: true

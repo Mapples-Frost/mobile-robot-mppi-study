@@ -1,0 +1,31 @@
+[block 1/16] id seed=750300015 complete
+[block 2/16] id seed=750300018 complete
+[block 3/16] id seed=750300009 complete
+[block 4/16] id seed=750300001 complete
+[block 5/16] id seed=750300029 complete
+[block 6/16] id seed=750300034 complete
+[block 7/16] id seed=750300031 complete
+[block 8/16] id seed=750300042 complete
+[block 9/16] ood seed=750400001 complete
+[block 10/16] ood seed=750400003 complete
+[block 11/16] ood seed=750400004 complete
+[block 12/16] ood seed=750400006 complete
+[block 13/16] ood seed=750400008 complete
+[block 14/16] ood seed=750400011 complete
+[block 15/16] ood seed=750400023 complete
+[block 16/16] ood seed=750400010 complete
+{
+  "bundle_sha256": "b4f0a25e4966ddcb9f03ae248f243af08c8f130a7f7271fa4a98537658bdfc5f",
+  "checks": {
+    "candidate_clearance_nonnegative": false,
+    "collision_count_improved": false,
+    "emergency_mechanism_exercised": true,
+    "mean_minimum_clearance_preserved": true,
+    "minimum_prevented_collisions": false,
+    "no_lost_v4_successes": false,
+    "no_new_paired_collisions": false,
+    "rollout_budget_exact": true,
+    "safe_success_noninferior": false
+  },
+  "status": "development_gate_fail"
+}

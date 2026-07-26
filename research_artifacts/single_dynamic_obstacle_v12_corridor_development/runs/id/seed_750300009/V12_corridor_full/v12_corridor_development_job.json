@@ -1,0 +1,55 @@
+{
+  "arm": "V12_corridor_full",
+  "block": {
+    "arm_order": [
+      "V12_corridor_full",
+      "V4_full_frozen"
+    ],
+    "block_order": 2,
+    "certificate": {
+      "certificate_rule": "ghost_constant_speed_center_distance_le_sum_radii",
+      "collision_threshold_m": 0.5,
+      "conflict_window_threshold_m": 0.8,
+      "conflict_windows_s": [
+        [
+          0.0,
+          3.6500000000000004
+        ],
+        [
+          32.15,
+          37.4
+        ]
+      ],
+      "minimum_distance_time_s": 1.5,
+      "minimum_ghost_obstacle_center_distance_m": 0.37100611116236354,
+      "noise_profile": "medium",
+      "obstacle_process": "hybrid_patrol",
+      "obstacle_truth_sha256": "78b54acc7a529c35d47cbbb43ff7820b688b639163f315adb87431a4f4151a83",
+      "seed": 750300009,
+      "split": "id"
+    },
+    "model_block": 0,
+    "seed": 750300009,
+    "split": "id",
+    "stratum": "opened_v10_id_early_conflict_b"
+  },
+  "change_signature": {
+    "perception.scan_guard.dynamic_escape_corridor_commit_steps": [
+      "<MISSING>",
+      14
+    ],
+    "perception.scan_guard.dynamic_escape_corridor_enabled": [
+      "<MISSING>",
+      true
+    ],
+    "perception.scan_guard.dynamic_escape_corridor_speed": [
+      "<MISSING>",
+      0.35
+    ],
+    "perception.scan_guard.dynamic_escape_corridor_turn_steps": [
+      "<MISSING>",
+      4
+    ]
+  },
+  "resolved_config_sha256": "f69e5e5957254b66b9c423d4fbd066c5f5a765e55a993470e136348b35d47a2c"
+}

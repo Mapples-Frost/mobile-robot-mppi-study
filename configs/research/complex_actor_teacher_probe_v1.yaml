@@ -11,7 +11,7 @@ teacher:
   # Must equal the frozen Change-Aware forecast horizon. Teacher capacity is
   # increased only along the sample axis.
   horizon: 36
-  num_samples: 1200
+  num_samples: 2400
   maximum_steps: 200
   future_truth_used: false
   dynamic_obstacles_in_astar: false
@@ -19,7 +19,7 @@ teacher:
   safety_contract_changed: false
 
 development_seeds:
-  chapter1: [790201007, 790201009]
+  chapter1: [790201007, 790201009, 790201011]
   chapter2: [790202007]
   chapter3: [790203007]
 
@@ -29,3 +29,12 @@ gate:
   maximum_boundary_violations: 0
   require_nonzero_forward_motion: true
   formal_server_launch_authorized: false
+
+amendment:
+  revision: 2
+  reason: >
+    The 1,200-sample teacher passed Chapters 2 and 3 but failed the Chapter 1
+    motion gate. This is the single permitted shared compute-scale escalation.
+  previous_num_samples: 1200
+  new_num_samples: 2400
+  maximum_further_sample_escalations: 0

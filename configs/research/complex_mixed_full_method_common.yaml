@@ -6,6 +6,13 @@ scope: complex_mixed_environment_interface_repair
 # behavior; Actor, ICODE, Change-Aware prediction, risk thresholds, HSS, Safety,
 # horizon, dt, and the 600-rollout budget remain inherited from B11.
 perception:
+  scan_guard:
+    # The Full planner already evaluates the selected sequence against both
+    # exact static geometry and probabilistic dynamic forecasts.  In mixed
+    # scenes the legacy reactive guard must therefore preserve that vetted
+    # command instead of synthesizing a context-free reverse manoeuvre that
+    # can point into a wall behind the robot.
+    dynamic_escape_use_vetted_planner_control: true
   dynamic_obstacle_tracker:
     enabled: true
     predictor_mode: change_aware

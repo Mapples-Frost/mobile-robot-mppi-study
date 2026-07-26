@@ -58,6 +58,9 @@ def test_all_maps_use_the_actual_b11_full_stack_and_600_rollouts():
         assert tracker["predictor_mode"] == "change_aware"
         assert tracker["maximum_tracks"] == 3
         assert tracker["known_static_filter_enabled"]
+        assert config["perception"]["scan_guard"][
+            "dynamic_escape_use_vetted_planner_control"
+        ]
         assert len(dynamics) == 3
         assert (
             planner["num_samples"]
@@ -83,6 +86,7 @@ def test_all_maps_share_one_controller_parameter_contract():
     expected_tracker = configs[0]["perception"][
         "dynamic_obstacle_tracker"
     ]
+    expected_guard = configs[0]["perception"]["scan_guard"]
 
     for config in configs[1:]:
         assert {
@@ -91,6 +95,9 @@ def test_all_maps_share_one_controller_parameter_contract():
         } == expected_planner
         assert config["action_space"] == expected_action
         tracker = config["perception"]["dynamic_obstacle_tracker"]
+        assert config["perception"]["scan_guard"][
+            "dynamic_escape_use_vetted_planner_control"
+        ] == expected_guard["dynamic_escape_use_vetted_planner_control"]
         for key in (
             "maximum_tracks",
             "known_static_filter_enabled",

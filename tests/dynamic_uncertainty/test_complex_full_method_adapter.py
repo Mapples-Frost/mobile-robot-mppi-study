@@ -118,6 +118,7 @@ def test_all_maps_use_the_actual_b11_full_stack_and_600_rollouts():
             planner["num_samples"]
             * planner["paper_rl_driven"]["iterations"]
         ) == 600
+        assert config["action_space"]["upper"] == [0.70, 0.95]
         assert not planner["path_boundary_enabled"]
         assert not planner["path_boundary_candidate_filter_enabled"]
         assert not config["task"]["terminate_on_boundary_violation"]
@@ -135,6 +136,7 @@ def test_all_maps_share_one_controller_parameter_contract():
         for key in SHARED_PLANNER_KEYS
     }
     expected_action = configs[0]["action_space"]
+    assert expected_action["upper"] == [0.70, 0.95]
     expected_tracker = configs[0]["perception"][
         "dynamic_obstacle_tracker"
     ]

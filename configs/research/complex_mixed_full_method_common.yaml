@@ -3,8 +3,16 @@ scope: complex_mixed_environment_interface_repair
 
 # This file is an override applied after constructing the frozen paper-v4
 # B11 Full arm. It changes only mixed-environment interfaces and soft-reference
-# behavior; Actor, ICODE, Change-Aware prediction, risk thresholds, HSS, Safety,
-# horizon, dt, and the 600-rollout budget remain inherited from B11.
+# behavior and the shared complex-scene action envelope; Actor, ICODE,
+# Change-Aware prediction, risk thresholds, HSS, Safety, horizon, dt, and the
+# 600-rollout budget remain inherited from B11.
+action_space:
+  # Chapter 1's frozen geometry was certified at 0.70 m/s. Applying one common
+  # limit avoids both an infeasible half-speed Chapter 1 controller and
+  # map-specific actuator authority. Lower bounds and acceleration limits stay
+  # inherited from B11.
+  upper: [0.70, 0.95]
+
 perception:
   scan_guard:
     # The Full planner already evaluates the selected sequence against both

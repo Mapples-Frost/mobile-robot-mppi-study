@@ -109,6 +109,7 @@ def build_complex_full_config(
         "complex_map_source": str(MAPS[str(map_name)].resolve()),
     })
     full = deep_merge(full, {
+        "action_space": common["action_space"],
         "perception": common["perception"],
         "planner": common["planner"],
     })

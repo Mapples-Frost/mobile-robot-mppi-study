@@ -118,9 +118,15 @@ def _configure_arm(protocol, source_protocol, block, arm):
             % (sorted(changes), sorted(expected))
         )
 
+    runner_label = str(protocol.get("runner_label", "v6"))
     config["experiment"].update({
-        "name": "v6_emergency_development__%s__seed%d__%s"
-        % (block["split"], int(block["seed"]), arm),
+        "name": "%s_development__%s__seed%d__%s"
+        % (
+            runner_label,
+            block["split"],
+            int(block["seed"]),
+            arm,
+        ),
         "paper_v6_development_arm": arm,
     })
     config["scope_guards"].update({
@@ -165,7 +171,8 @@ def _run_block(payload):
             raise FileExistsError("v6 artifact already exists: %s" % run_dir)
         config, changes = _configure_arm(protocol, source, block, arm)
         run_dir.mkdir(parents=True, exist_ok=False)
-        v5._write_json(run_dir / "v6_development_job.json", {
+        runner_label = str(protocol.get("runner_label", "v6"))
+        v5._write_json(run_dir / ("%s_development_job.json" % runner_label), {
             "arm": arm,
             "block": block,
             "change_signature": changes,

@@ -543,6 +543,12 @@ class EpisodeMetrics:
                     "probabilistic_obstacle_active_fallback_kind", "none"
                 )
             ),
+            "probabilistic_obstacle_risk_equivalent_forward_progress_applied": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_risk_equivalent_forward_progress_applied",
+                    False,
+                )
+            ),
             "probabilistic_obstacle_stop_maximum_probability": float(
                 planner_diagnostics.get(
                     "probabilistic_obstacle_stop_maximum_probability",
@@ -2523,6 +2529,15 @@ class EpisodeMetrics:
                 == "minimum_accumulated_risk_active_candidate"
                 for row in values
             )),
+            "probabilistic_obstacle_risk_equivalent_forward_progress_steps": int(
+                sum(
+                    row.get(
+                        "probabilistic_obstacle_risk_equivalent_forward_progress_applied",
+                        0.0,
+                    )
+                    for row in values
+                )
+            ),
             "probabilistic_obstacle_emergency_candidate_selected_steps": int(
                 sum(
                     row.get(

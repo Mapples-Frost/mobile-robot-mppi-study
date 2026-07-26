@@ -86,6 +86,8 @@ class MppiConfig:
     )
     probabilistic_obstacle_missing_forecast_action: str = "raise"
     probabilistic_obstacle_hard_violation_action: str = "penalize"
+    probabilistic_obstacle_hard_violation_progress_tiebreak_enabled: bool = False
+    probabilistic_obstacle_hard_violation_progress_mass_tolerance: float = 0.05
     probabilistic_obstacle_candidate_filter_enabled: bool = False
     probabilistic_obstacle_stopping_feasibility_enabled: bool = False
     probabilistic_obstacle_emergency_candidates_enabled: bool = False
@@ -249,6 +251,18 @@ class MppiConfig:
                 values.get(
                     "probabilistic_obstacle_hard_violation_action",
                     "penalize",
+                )
+            ),
+            probabilistic_obstacle_hard_violation_progress_tiebreak_enabled=bool(
+                values.get(
+                    "probabilistic_obstacle_hard_violation_progress_tiebreak_enabled",
+                    False,
+                )
+            ),
+            probabilistic_obstacle_hard_violation_progress_mass_tolerance=float(
+                values.get(
+                    "probabilistic_obstacle_hard_violation_progress_mass_tolerance",
+                    0.05,
                 )
             ),
             probabilistic_obstacle_candidate_filter_enabled=bool(
@@ -691,6 +705,17 @@ class MppiConfig:
                 "probabilistic obstacle hard-violation action must be "
                 "'penalize', 'stop', 'active_avoidance', or "
                 "'active_avoidance_motion'"
+            )
+        if (
+            not np.isfinite(
+                self.probabilistic_obstacle_hard_violation_progress_mass_tolerance
+            )
+            or not 0.0
+            <= self.probabilistic_obstacle_hard_violation_progress_mass_tolerance
+            <= 1.0
+        ):
+            raise ValueError(
+                "hard-violation progress mass tolerance must be in [0,1]"
             )
         if not (
             0.0
@@ -3631,6 +3656,7 @@ class MppiController:
                 "probabilistic_obstacle_active_fallback_used": False,
                 "probabilistic_obstacle_active_fallback_index": -1,
                 "probabilistic_obstacle_active_fallback_kind": "none",
+                "probabilistic_obstacle_risk_equivalent_forward_progress_applied": False,
                 "probabilistic_obstacle_stop_maximum_probability": 0.0,
                 "probabilistic_obstacle_stop_probability_mass": 0.0,
                 "probabilistic_obstacle_stopping_feasibility_enabled": False,
@@ -3742,6 +3768,7 @@ class MppiController:
         fallback_used = False
         fallback_candidate_index = -1
         fallback_kind = "none"
+        risk_equivalent_forward_progress_applied = False
         stop_maximum_probability = 0.0
         stop_probability_mass = 0.0
         fail_closed = False
@@ -4728,9 +4755,54 @@ class MppiController:
                             rtol=0.0,
                         )
                         else "minimum_risk_active_candidate"
-                    )
+                        )
+                    if (
+                        hard_action == "active_avoidance_motion"
+                        and self.config
+                        .probabilistic_obstacle_hard_violation_progress_tiebreak_enabled
+                        and "v_cmd" in self.action_spec.names
+                    ):
+                        v_index = self.action_spec.index("v_cmd")
+                        mass_limit = safest_probability_mass * (
+                            1.0
+                            + self.config
+                            .probabilistic_obstacle_hard_violation_progress_mass_tolerance
+                        ) + 1.0e-12
+                        progress_mask = (
+                            eligible_mask
+                            & (
+                                evaluated_candidates.maximum_step_probability
+                                <= safest_probability + 1.0e-12
+                            )
+                            & (
+                                evaluated_candidates.accumulated_probability_mass
+                                <= mass_limit
+                            )
+                            & (values[:, 0, v_index] >= 0.0)
+                        )
+                        progress_indices = np.flatnonzero(progress_mask)
+                        if progress_indices.size:
+                            progress_order = np.lexsort(
+                                (
+                                    candidate_costs[progress_indices],
+                                    -values[progress_indices, 0, v_index],
+                                )
+                            )
+                            progress_index = int(
+                                progress_indices[progress_order[0]]
+                            )
+                            if (
+                                values[progress_index, 0, v_index]
+                                > values[safest_index, 0, v_index]
+                                + 1.0e-12
+                            ):
+                                fallback_candidate_index = progress_index
+                                fallback_kind = (
+                                    "risk_equivalent_forward_progress_candidate"
+                                )
+                                risk_equivalent_forward_progress_applied = True
                 else:
-                    fallback_kind = "stop_is_safest_candidate"
+                        fallback_kind = "stop_is_safest_candidate"
             fallback_used = True
             if fallback_candidate_index >= 0:
                 sequence = values[fallback_candidate_index].copy()
@@ -4834,6 +4906,9 @@ class MppiController:
                 fallback_candidate_index
             ),
             "probabilistic_obstacle_active_fallback_kind": fallback_kind,
+            "probabilistic_obstacle_risk_equivalent_forward_progress_applied": (
+                risk_equivalent_forward_progress_applied
+            ),
             "probabilistic_obstacle_stop_maximum_probability": (
                 stop_maximum_probability
             ),
@@ -5976,6 +6051,7 @@ class MppiController:
             fallback_used = False
             fallback_candidate_index = -1
             fallback_kind = "none"
+            risk_equivalent_forward_progress_applied = False
             stop_maximum_probability = 0.0
             stop_probability_mass = 0.0
             fail_closed = False
@@ -6067,6 +6143,51 @@ class MppiController:
                             )
                             else "minimum_risk_active_candidate"
                         )
+                    if (
+                        hard_action == "active_avoidance_motion"
+                        and self.config
+                        .probabilistic_obstacle_hard_violation_progress_tiebreak_enabled
+                        and "v_cmd" in self.action_spec.names
+                    ):
+                        v_index = self.action_spec.index("v_cmd")
+                        mass_limit = safest_probability_mass * (
+                            1.0
+                            + self.config
+                            .probabilistic_obstacle_hard_violation_progress_mass_tolerance
+                        ) + 1.0e-12
+                        progress_mask = (
+                            candidate_eligible
+                            & (
+                                candidate_risk.maximum_step_probability
+                                <= safest_probability + 1.0e-12
+                            )
+                            & (
+                                candidate_risk.accumulated_probability_mass
+                                <= mass_limit
+                            )
+                            & (samples[:, 0, v_index] >= 0.0)
+                        )
+                        progress_indices = np.flatnonzero(progress_mask)
+                        if progress_indices.size:
+                            progress_order = np.lexsort(
+                                (
+                                    costs[progress_indices],
+                                    -samples[progress_indices, 0, v_index],
+                                )
+                            )
+                            progress_index = int(
+                                progress_indices[progress_order[0]]
+                            )
+                            if (
+                                samples[progress_index, 0, v_index]
+                                > samples[safest_index, 0, v_index]
+                                + 1.0e-12
+                            ):
+                                fallback_candidate_index = progress_index
+                                fallback_kind = (
+                                    "risk_equivalent_forward_progress_candidate"
+                                )
+                                risk_equivalent_forward_progress_applied = True
                     else:
                         fallback_kind = "stop_is_safest_candidate"
                 fallback_used = True
@@ -6180,6 +6301,9 @@ class MppiController:
                 "probabilistic_obstacle_active_fallback_kind": (
                     fallback_kind
                 ),
+                "probabilistic_obstacle_risk_equivalent_forward_progress_applied": (
+                    risk_equivalent_forward_progress_applied
+                ),
                 "probabilistic_obstacle_stop_maximum_probability": (
                     stop_maximum_probability
                 ),
@@ -6228,6 +6352,7 @@ class MppiController:
                 "probabilistic_obstacle_active_fallback_used": False,
                 "probabilistic_obstacle_active_fallback_index": -1,
                 "probabilistic_obstacle_active_fallback_kind": "none",
+                "probabilistic_obstacle_risk_equivalent_forward_progress_applied": False,
                 "probabilistic_obstacle_stop_maximum_probability": 0.0,
                 "probabilistic_obstacle_stop_probability_mass": 0.0,
                 "probabilistic_obstacle_stopping_feasibility_enabled": False,

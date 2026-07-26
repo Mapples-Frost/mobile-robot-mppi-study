@@ -46,6 +46,24 @@ class LegacyScanPipeline:
         tracker_config = self.config.get(
             "dynamic_obstacle_tracker", {}
         )
+        self.known_static_filter_enabled = bool(
+            tracker_config.get("known_static_filter_enabled", False)
+        )
+        self.known_static_filter_tolerance_m = float(
+            tracker_config.get(
+                "known_static_filter_tolerance_m", 0.06
+            )
+        )
+        self.known_static_obstacles = tuple(
+            tracker_config.get("known_static_obstacles", ())
+        )
+        if (
+            self.known_static_filter_enabled
+            and not self.known_static_obstacles
+        ):
+            raise ValueError(
+                "known static filtering requires injected static geometry"
+            )
         maximum_tracks = int(tracker_config.get("maximum_tracks", 1))
         tracker_type = (
             MultiObstacleChangeAwareTracker
@@ -75,6 +93,138 @@ class LegacyScanPipeline:
         if self.dynamic_obstacle_tracker is not None:
             self.dynamic_obstacle_tracker.reset()
 
+    @staticmethod
+    def _point_segment_distance(points, start, end):
+        start = np.asarray(start, dtype=np.float64)
+        end = np.asarray(end, dtype=np.float64)
+        delta = end - start
+        denominator = float(np.dot(delta, delta))
+        if denominator <= 1.0e-12:
+            return np.linalg.norm(points - start[None, :], axis=1)
+        fraction = np.clip(
+            np.sum((points - start[None, :]) * delta[None, :], axis=1)
+            / denominator,
+            0.0,
+            1.0,
+        )
+        projections = start[None, :] + fraction[:, None] * delta[None, :]
+        return np.linalg.norm(points - projections, axis=1)
+
+    def _known_static_hit_mask(self, points):
+        points = np.asarray(points, dtype=np.float64)
+        matched = np.zeros(points.shape[0], dtype=bool)
+        tolerance = self.known_static_filter_tolerance_m
+        for obstacle in self.known_static_obstacles:
+            kind = str(obstacle.get("type", "cylinder"))
+            if kind == "box":
+                position = np.asarray(
+                    obstacle["position"][:2], dtype=np.float64
+                )
+                yaw = float(obstacle.get("yaw", 0.0))
+                cosine = float(np.cos(yaw))
+                sine = float(np.sin(yaw))
+                relative = points - position[None, :]
+                local = np.stack(
+                    (
+                        cosine * relative[:, 0]
+                        + sine * relative[:, 1],
+                        -sine * relative[:, 0]
+                        + cosine * relative[:, 1],
+                    ),
+                    axis=1,
+                )
+                half_size = np.asarray(
+                    obstacle["size"][:2], dtype=np.float64
+                )
+                outside = np.maximum(
+                    np.abs(local) - half_size[None, :], 0.0
+                )
+                matched |= (
+                    np.linalg.norm(outside, axis=1)
+                    <= tolerance
+                )
+            elif kind == "segment":
+                distance = self._point_segment_distance(
+                    points, obstacle["start"], obstacle["end"]
+                )
+                matched |= distance <= (
+                    float(obstacle.get("thickness", 0.10))
+                    + tolerance
+                )
+            elif kind == "cylinder":
+                position = np.asarray(
+                    obstacle["position"][:2], dtype=np.float64
+                )
+                radial = np.linalg.norm(
+                    points - position[None, :], axis=1
+                )
+                matched |= radial <= (
+                    float(obstacle.get("radius", 0.25))
+                    + tolerance
+                )
+        return matched
+
+    def _dynamic_tracker_observation(self, observation):
+        if (
+            not self.known_static_filter_enabled
+            or observation.scan is None
+        ):
+            return observation
+        scan = observation.scan
+        ranges = np.asarray(scan.ranges, dtype=np.float64).copy()
+        valid = (
+            np.isfinite(ranges)
+            & (ranges >= float(scan.range_min))
+            & (ranges < float(scan.range_max) - 1.0e-12)
+        )
+        indices = np.flatnonzero(valid)
+        if not indices.size:
+            return observation
+        tracker_cfg = self.dynamic_obstacle_tracker.config
+        theta = float(observation.pose.theta)
+        origin = np.asarray(
+            (
+                observation.pose.x
+                + tracker_cfg.sensor_forward_offset_m * np.cos(theta),
+                observation.pose.y
+                + tracker_cfg.sensor_forward_offset_m * np.sin(theta),
+            ),
+            dtype=np.float64,
+        )
+        angles = (
+            theta
+            + float(scan.angle_min)
+            + indices * float(scan.angle_increment)
+        )
+        endpoints = origin[None, :] + ranges[indices, None] * np.stack(
+            (np.cos(angles), np.sin(angles)), axis=1
+        )
+        static_hits = self._known_static_hit_mask(endpoints)
+        ranges[indices[static_hits]] = float(scan.range_max)
+        obstacle_ranges = np.where(
+            ranges < float(scan.range_max) - 1.0e-12,
+            ranges,
+            np.inf,
+        )
+        auxiliary = dict(observation.auxiliary)
+        auxiliary["known_static_filter"] = {
+            "enabled": True,
+            "input_hit_count": int(indices.size),
+            "masked_static_hit_count": int(np.sum(static_hits)),
+            "residual_dynamic_hit_count": int(
+                indices.size - np.sum(static_hits)
+            ),
+        }
+        return replace(
+            observation,
+            scan=replace(
+                scan,
+                ranges=ranges,
+                obstacle_ranges=obstacle_ranges,
+            ),
+            auxiliary=auxiliary,
+        )
+
     def process(self, observation: RobotObservation) -> PerceptionResult:
         if observation.scan is None:
             tracker_update = (
@@ -83,6 +233,10 @@ class LegacyScanPipeline:
                 else self.dynamic_obstacle_tracker.update(observation)
             )
             auxiliary = dict(observation.auxiliary)
+            if self.known_static_obstacles:
+                auxiliary["known_static_obstacles"] = (
+                    self.known_static_obstacles
+                )
             diagnostics = {"mode": "none"}
             if tracker_update is not None:
                 auxiliary["dynamic_obstacle_tracker"] = dict(
@@ -206,11 +360,33 @@ class LegacyScanPipeline:
         )
         auxiliary = dict(observation.auxiliary)
         auxiliary["temporal_scan_flow"] = flow_values
+        if self.known_static_obstacles:
+            auxiliary["known_static_obstacles"] = (
+                self.known_static_obstacles
+            )
         diagnostics = dict(debug)
         diagnostics["temporal_scan_flow"] = flow_values
         if self.dynamic_obstacle_tracker is not None:
-            tracker_update = self.dynamic_obstacle_tracker.update(
+            tracker_observation = self._dynamic_tracker_observation(
                 observation
+            )
+            static_filter_diagnostics = (
+                tracker_observation.auxiliary.get(
+                    "known_static_filter"
+                )
+            )
+            if static_filter_diagnostics is not None:
+                static_filter_diagnostics = dict(
+                    static_filter_diagnostics
+                )
+                auxiliary["known_static_filter"] = (
+                    static_filter_diagnostics
+                )
+                diagnostics["known_static_filter"] = (
+                    static_filter_diagnostics
+                )
+            tracker_update = self.dynamic_obstacle_tracker.update(
+                tracker_observation
             )
             tracker_diagnostics = dict(tracker_update.diagnostics)
             auxiliary["dynamic_obstacle_tracker"] = tracker_diagnostics

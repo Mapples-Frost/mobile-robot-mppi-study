@@ -13,6 +13,8 @@ from mobile_robot_mppi.evaluation.scene_feasibility import (
 )
 from mobile_robot_mppi.simulation.model_factory import build_diff_drive_mjcf
 from mobile_robot_mppi.simulation.mujoco_plant import MujocoDiffDrivePlant
+from mobile_robot_mppi.perception.legacy_pipeline import LegacyScanPipeline
+from mobile_robot_mppi.runtime.factories import make_components
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -48,20 +50,77 @@ def _polygon_area(points):
     )
 
 
-def test_chapter3_is_point_goal_clutter_without_visible_route():
+def test_chapter3_is_hidden_astar_clutter_without_visible_route():
     config = load_yaml(CONFIG)
     static, dynamic = _split(config)
     design = config["chapter3_scene_design"]
 
     assert len(static) == design["static_obstacle_count"] == 34
     assert len(dynamic) == design["dynamic_obstacle_count"] == 3
-    assert config["task"]["type"] == "point_goal"
+    assert config["task"]["type"] == "polyline"
     assert config["experiment"]["initial_state"][:2] == [-6.0, -4.0]
     assert config["task"]["position"] == [6.0, 4.0]
     assert not config["scene"]["visual"]["show_reference_overlay"]
-    assert design["controller_reference"] == "point_goal_only"
+    assert design["controller_reference"] == "hidden_static_astar_polyline"
     assert not design["obvious_corridor_walls"]
     assert config["planner"]["num_samples"] == 600
+    assert config["planner"]["known_static_map_cost_enabled"]
+
+
+def test_static_mask_rejects_map_surface_but_not_nearby_dynamic_return():
+    config = load_yaml(CONFIG)
+    static, _ = _split(config)
+    perception_config = dict(config["perception"])
+    tracker_config = dict(
+        perception_config["dynamic_obstacle_tracker"]
+    )
+    tracker_config["known_static_obstacles"] = static
+    perception_config["dynamic_obstacle_tracker"] = tracker_config
+    pipeline = LegacyScanPipeline(ROOT, perception_config)
+
+    box = next(item for item in static if item["type"] == "box")
+    center = np.asarray(box["position"], dtype=np.float64)
+    yaw = float(box["yaw"])
+    outward = np.asarray((np.cos(yaw), np.sin(yaw)))
+    surface = center + float(box["size"][0]) * outward
+    nearby_dynamic = surface + 0.04 * outward
+    mask = pipeline._known_static_hit_mask(
+        np.stack((surface, nearby_dynamic))
+    )
+
+    assert mask.tolist() == [True, False]
+
+
+def test_exact_static_map_cost_uses_signed_footprint_clearance():
+    config = load_yaml(CONFIG)
+    static, _ = _split(config)
+    components = make_components(config, ROOT)
+    controller = components["controller"]
+    box = next(item for item in static if item["type"] == "box")
+    center = np.asarray(box["position"], dtype=np.float64)
+    yaw = float(box["yaw"])
+    outward = np.asarray((np.cos(yaw), np.sin(yaw)))
+    surface = center + float(box["size"][0]) * outward
+    trajectories = np.zeros(
+        (2, controller.config.horizon + 1, 5), dtype=np.float64
+    )
+    trajectories[0, :, :2] = center
+    trajectories[1, :, :2] = (
+        surface
+        + (controller.config.robot_radius + 0.02) * outward
+    )
+    try:
+        clearance = controller._known_static_map_clearance(
+            trajectories, static
+        )
+    finally:
+        close_controller = getattr(controller, "close", None)
+        if callable(close_controller):
+            close_controller()
+        components["plant"].close()
+
+    assert np.max(clearance[0]) < 0.0
+    assert np.min(clearance[1]) == pytest.approx(0.02)
 
 
 def test_scattered_scene_is_reachable_but_straight_line_is_blocked():

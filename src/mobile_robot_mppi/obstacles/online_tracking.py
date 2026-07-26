@@ -36,6 +36,7 @@ class OnlineTrackerConfig:
     motion_confirmation_enabled: bool = False
     motion_confirmation_required_observations: int = 4
     motion_confirmation_minimum_speed_mps: float = 0.12
+    track_retirement_duration_s: float = 0.0
 
     def __post_init__(self):
         finite = (
@@ -46,6 +47,7 @@ class OnlineTrackerConfig:
             float(self.maximum_unobserved_duration_s),
             float(self.forecast_dt_s),
             float(self.motion_confirmation_minimum_speed_mps),
+            float(self.track_retirement_duration_s),
         )
         if not np.isfinite(finite).all():
             raise ValueError("online tracker configuration must be finite")
@@ -57,6 +59,7 @@ class OnlineTrackerConfig:
             or finite[4] <= 0.0
             or finite[5] <= 0.0
             or finite[6] < 0.0
+            or finite[7] < 0.0
         ):
             raise ValueError("online tracker metric values are invalid")
         if (
@@ -128,6 +131,9 @@ class OnlineTrackerConfig:
                 values.get(
                     "motion_confirmation_minimum_speed_mps", 0.12
                 )
+            ),
+            track_retirement_duration_s=float(
+                values.get("track_retirement_duration_s", 0.0)
             ),
         )
 

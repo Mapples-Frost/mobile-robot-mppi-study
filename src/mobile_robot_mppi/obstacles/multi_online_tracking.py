@@ -52,6 +52,7 @@ class MultiObstacleChangeAwareTracker:
             tracker.reset()
         self.last_timestamp = None
         self.update_count = 0
+        self.retirement_count = 0
 
     def scan_clusters(self, observation):
         return self.trackers[0].scan_clusters(observation)
@@ -140,6 +141,22 @@ class MultiObstacleChangeAwareTracker:
             and timestamp <= float(self.last_timestamp)
         ):
             raise ValueError("tracker timestamps must increase strictly")
+        retired_track_indices = []
+        retirement_duration = float(
+            self.config.track_retirement_duration_s
+        )
+        if retirement_duration > 0.0:
+            for track_index, tracker in enumerate(self.trackers):
+                if tracker.last_associated_timestamp is None:
+                    continue
+                age = (
+                    timestamp
+                    - float(tracker.last_associated_timestamp)
+                )
+                if age > retirement_duration + 1.0e-12:
+                    tracker.reset()
+                    retired_track_indices.append(track_index)
+            self.retirement_count += len(retired_track_indices)
         clusters = self.scan_clusters(observation)
         assignments = self._assign(clusters, timestamp)
         updates = []
@@ -220,6 +237,8 @@ class MultiObstacleChangeAwareTracker:
             "forecast_count": sum(
                 tracker.forecast_count for tracker in self.trackers
             ),
+            "retired_track_indices": tuple(retired_track_indices),
+            "retirement_count": self.retirement_count,
             "forecast_availability": float(
                 sum(tracker.forecast_count for tracker in self.trackers)
                 / (self.maximum_tracks * self.update_count)

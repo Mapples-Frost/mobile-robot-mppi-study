@@ -332,6 +332,34 @@ def test_multi_tracker_publishes_only_motion_confirmed_clusters():
     assert confirmed[0]["measurement_speed_mps"] >= 0.45
 
 
+def test_multi_tracker_retires_stale_slots_before_reassociation():
+    config = load_yaml(CONFIG_PATH)
+    values = dict(config["perception"]["dynamic_obstacle_tracker"])
+    values.update({
+        "maximum_tracks": 3,
+        "association_gate_m": 0.40,
+        "track_retirement_duration_s": 0.15,
+    })
+    tracker = MultiObstacleChangeAwareTracker.from_mapping(ROOT, values)
+    tracker.update(_circle_scan(
+        ((1.5, -0.8), (1.8, 0.0), (1.5, 0.8)),
+        timestamp=0.0,
+    ))
+    tracker.update(_circle_scan(((1.5, -0.74),), timestamp=0.1))
+    refreshed = tracker.update(
+        _circle_scan(((-1.5, 0.75),), timestamp=0.2)
+    )
+
+    assert refreshed.diagnostics["retirement_count"] == 2
+    assert len(refreshed.diagnostics["retired_track_indices"]) == 2
+    assert refreshed.diagnostics["associated_track_count"] == 1
+    assert any(
+        row["measurement_x"] is not None
+        and row["measurement_x"] < -1.0
+        for row in refreshed.diagnostics["tracks"]
+    )
+
+
 def test_multi_tracker_public_api_is_causal():
     forbidden = {
         "truth",

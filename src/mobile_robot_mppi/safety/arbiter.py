@@ -63,6 +63,11 @@ class ScanGuardArbiter:
                 "dynamic_escape_use_vetted_planner_control", False
             )
         )
+        self.dynamic_escape_use_vetted_emergency_candidate = bool(
+            self.config.get(
+                "dynamic_escape_use_vetted_emergency_candidate", False
+            )
+        )
         self.dynamic_escape_preserve_hard_fallback_planner_control = bool(
             self.config.get(
                 "dynamic_escape_preserve_hard_fallback_planner_control",
@@ -1057,6 +1062,17 @@ class ScanGuardArbiter:
                 use_vetted_planner_control = (
                     self.dynamic_escape_use_vetted_planner_control
                     or hard_fallback_planner_control
+                    or (
+                        self.dynamic_escape_use_vetted_emergency_candidate
+                        and context.get(
+                            "probabilistic_obstacle_emergency_candidate_selected",
+                            False,
+                        )
+                        and context.get(
+                            "probabilistic_obstacle_temporal_emergency_vetted",
+                            False,
+                        )
+                    )
                 )
                 if use_vetted_planner_control and (
                     self.dynamic_escape_veto_forward_when_reactive_reverse

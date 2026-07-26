@@ -3,7 +3,9 @@ include: mujoco_v3_probabilistic_crossing_smoke_amendment17.yaml
 experiment:
   name: mujoco_scattered_clutter_three_loop_v1
   seed: 783100001
-  max_steps: 1200
+  # The irregular static-map route is about twice as long as the earlier
+  # crossing scenes. Preserve dt and dynamics; give it a 240 s task horizon.
+  max_steps: 2400
   initial_state: [-6.0, -4.0, 0.45, 0.0, 0.0]
   terminate_on_collision: true
 
@@ -11,9 +13,26 @@ action_space:
   upper: [0.75, 1.0]
 
 task:
-  type: point_goal
+  type: polyline
   position: [6.0, 4.0]
   position_tolerance: 0.34
+  lookahead_distance: 0.85
+  terminal_approach_distance: 1.10
+  projection_backtrack_distance: 0.55
+  projection_forward_distance: 2.50
+  # Deterministic A* route generated from the frozen static map. It is hidden
+  # from the viewer; MPPI remains responsible for online dynamic avoidance.
+  points:
+    - [-6.000, -4.000]
+    - [-6.240, -2.130]
+    - [-4.560, 0.030]
+    - [-3.000, 0.870]
+    - [-1.200, 1.710]
+    - [0.840, 3.030]
+    - [3.000, 3.150]
+    - [3.720, 3.390]
+    - [5.160, 4.230]
+    - [6.000, 4.000]
 
 scene:
   name: scattered_irregular_clutter_three_closed_loops
@@ -51,8 +70,8 @@ scene:
     - {type: box, position: [-3.65, 3.85], size: [0.27, 0.42], yaw: -0.28, height: 0.50, rgba: [0.42, 0.29, 0.52, 1.0]}
     - {type: box, position: [-1.55, 4.20], size: [0.48, 0.15], yaw: 0.18, height: 0.34, rgba: [0.08, 0.52, 0.62, 1.0]}
     - {type: box, position: [0.65, 3.95], size: [0.24, 0.38], yaw: 0.55, height: 0.48, rgba: [0.55, 0.27, 0.18, 1.0]}
-    - {type: box, position: [3.00, 4.10], size: [0.50, 0.15], yaw: -0.16, height: 0.32, rgba: [0.08, 0.52, 0.62, 1.0]}
-    - {type: box, position: [5.05, 3.25], size: [0.30, 0.27], yaw: 0.48, height: 0.56, rgba: [0.55, 0.27, 0.18, 1.0]}
+    - {type: box, position: [2.90, 4.65], size: [0.50, 0.15], yaw: -0.16, height: 0.32, rgba: [0.08, 0.52, 0.62, 1.0]}
+    - {type: box, position: [5.65, 2.40], size: [0.30, 0.27], yaw: 0.48, height: 0.56, rgba: [0.55, 0.27, 0.18, 1.0]}
     - {type: box, position: [5.60, 1.15], size: [0.48, 0.17], yaw: -0.52, height: 0.36, rgba: [0.18, 0.46, 0.34, 1.0]}
     - {type: box, position: [5.05, -1.15], size: [0.25, 0.42], yaw: 0.25, height: 0.50, rgba: [0.42, 0.29, 0.52, 1.0]}
     - {type: box, position: [4.40, -3.50], size: [0.28, 0.39], yaw: -0.42, height: 0.48, rgba: [0.55, 0.27, 0.18, 1.0]}
@@ -62,10 +81,10 @@ scene:
     - {type: box, position: [-4.30, -3.70], size: [0.52, 0.15], yaw: -0.22, height: 0.32, rgba: [0.18, 0.46, 0.34, 1.0]}
     - {type: box, position: [-3.85, 1.55], size: [0.48, 0.16], yaw: -0.48, height: 0.34, rgba: [0.08, 0.52, 0.62, 1.0]}
     - {type: box, position: [-2.05, 2.35], size: [0.26, 0.40], yaw: 0.28, height: 0.52, rgba: [0.55, 0.27, 0.18, 1.0]}
-    - {type: box, position: [-1.55, 0.40], size: [0.40, 0.15], yaw: -0.55, height: 0.32, rgba: [0.18, 0.46, 0.34, 1.0]}
+    - {type: box, position: [-2.30, 0.25], size: [0.40, 0.15], yaw: -0.55, height: 0.32, rgba: [0.18, 0.46, 0.34, 1.0]}
     - {type: box, position: [1.60, -2.20], size: [0.44, 0.16], yaw: 0.46, height: 0.36, rgba: [0.42, 0.29, 0.52, 1.0]}
     - {type: box, position: [3.35, -1.90], size: [0.25, 0.42], yaw: -0.36, height: 0.50, rgba: [0.08, 0.52, 0.62, 1.0]}
-    - {type: box, position: [4.05, 0.45], size: [0.48, 0.15], yaw: 0.34, height: 0.32, rgba: [0.55, 0.27, 0.18, 1.0]}
+    - {type: box, position: [5.25, 0.15], size: [0.48, 0.15], yaw: 0.34, height: 0.32, rgba: [0.55, 0.27, 0.18, 1.0]}
     # Static islands inside the three moving loops.
     - {type: box, position: [-3.00, -2.15], size: [0.33, 0.25], yaw: 0.22, height: 0.54, rgba: [0.22, 0.38, 0.50, 1.0]}
     - {type: box, position: [0.15, 0.05], size: [0.30, 0.24], yaw: -0.35, height: 0.50, rgba: [0.22, 0.38, 0.50, 1.0]}
@@ -149,17 +168,52 @@ scene:
         waypoint_jitter_m: 0.05
 
 perception:
+  scan_guard:
+    # Execute a forecast-vetted MPPI emergency candidate when one is selected;
+    # retain reactive reverse only when no vetted candidate is available.
+    dynamic_escape_trigger_ttc_s: 2.20
+    dynamic_escape_max_speed: 0.75
+    dynamic_escape_min_speed: 0.30
+    dynamic_escape_reverse_speed: 0.35
+    dynamic_escape_corridor_enabled: false
+    dynamic_escape_use_vetted_emergency_candidate: true
   dynamic_obstacle_tracker:
-    # Track every visible cluster causally, but publish probability forecasts
-    # only for clusters whose world-frame motion has been confirmed.
-    maximum_tracks: 8
-    association_gate_m: 0.40
+    # Remove known static-map returns before causal motion tracking. Dynamic
+    # identity and future motion remain hidden from the controller.
+    known_static_filter_enabled: true
+    # Smaller than the frozen dynamic-to-static clearance floor (0.04 m), so
+    # nearby moving-body returns cannot be swallowed by the static mask.
+    known_static_filter_tolerance_m: 0.025
+    maximum_tracks: 3
+    association_gate_m: 0.80
+    maximum_unobserved_duration_s: 0.80
+    track_retirement_duration_s: 1.00
     motion_confirmation_enabled: true
-    motion_confirmation_required_observations: 6
-    motion_confirmation_minimum_speed_mps: 0.45
+    motion_confirmation_required_observations: 3
+    motion_confirmation_minimum_speed_mps: 0.15
 
 planner:
   probabilistic_obstacle_missing_forecast_action: scan_only
+  # Exact static-map geometry augments (but does not replace) causal scan
+  # obstacles. It prevents unseen-corner cuts without constraining the robot
+  # to a narrow route tube during dynamic avoidance.
+  known_static_map_cost_enabled: true
+  known_static_map_influence_m: 0.08
+  known_static_map_weight: 120.0
+  known_static_map_collision_penalty: 100000.0
+  probabilistic_obstacle_emergency_candidates_enabled: true
+  probabilistic_obstacle_emergency_candidate_prefix_steps: 12
+  probabilistic_obstacle_emergency_candidate_trigger_ttc_s: 2.20
+  probabilistic_obstacle_emergency_candidate_trigger_distance_m: 0.85
+  probabilistic_obstacle_emergency_candidate_critical_distance_m: 0.42
+  probabilistic_obstacle_emergency_candidate_intent_hold_steps: 12
+  probabilistic_obstacle_emergency_candidate_rearm_ttc_s: 2.80
+  probabilistic_obstacle_emergency_candidate_rearm_clear_steps: 3
+  probabilistic_obstacle_counterflow_escape_enabled: true
+  probabilistic_obstacle_counterflow_weight: 0.80
+  probabilistic_obstacle_hard_violation_action: active_avoidance_motion
+  probabilistic_obstacle_hard_violation_progress_tiebreak_enabled: true
+  probabilistic_obstacle_hard_violation_progress_mass_tolerance: 0.10
 
 chapter3_scene_design:
   schema_version: 1
@@ -168,7 +222,7 @@ chapter3_scene_design:
   dynamic_obstacle_count: 3
   start_corner: lower_left
   goal_corner: upper_right
-  controller_reference: point_goal_only
+  controller_reference: hidden_static_astar_polyline
   visible_reference_overlay: false
   obvious_corridor_walls: false
   controller_observation: causal_laser_scan_only

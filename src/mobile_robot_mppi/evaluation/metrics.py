@@ -1474,6 +1474,21 @@ class EpisodeMetrics:
                     "path_boundary_candidate_filter_enabled", False
                 )
             ),
+            "known_static_map_cost_enabled": float(
+                planner_diagnostics.get(
+                    "known_static_map_cost_enabled", False
+                )
+            ),
+            "known_static_map_obstacle_count": int(
+                planner_diagnostics.get(
+                    "known_static_map_obstacle_count", 0
+                )
+            ),
+            "known_static_map_minimum_clearance": float(
+                planner_diagnostics.get(
+                    "known_static_map_minimum_clearance", 0.0
+                )
+            ),
             "path_boundary_candidate_feasible_fraction": float(
                 planner_diagnostics.get(
                     "path_boundary_candidate_feasible_fraction", 1.0
@@ -3296,6 +3311,14 @@ class EpisodeMetrics:
             ),
             "path_boundary_candidate_filter_enabled_fraction": float(np.mean([
                 row.get("path_boundary_candidate_filter_enabled", False)
+                for row in values
+            ])),
+            "known_static_map_cost_enabled_fraction": float(np.mean([
+                row.get("known_static_map_cost_enabled", False)
+                for row in values
+            ])),
+            "known_static_map_minimum_clearance_min": float(np.min([
+                row.get("known_static_map_minimum_clearance", 0.0)
                 for row in values
             ])),
             "path_boundary_candidate_feasible_fraction_mean": float(np.mean([

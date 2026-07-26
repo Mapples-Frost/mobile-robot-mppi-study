@@ -75,6 +75,10 @@ class MppiConfig:
     obstacle_influence: float = 0.55
     robot_radius: float = 0.25
     collision_penalty: float = 5000.0
+    known_static_map_cost_enabled: bool = False
+    known_static_map_influence_m: float = 0.0
+    known_static_map_weight: float = 0.0
+    known_static_map_collision_penalty: float = 0.0
     probabilistic_obstacle_risk_enabled: bool = False
     probabilistic_obstacle_risk_weight: float = 0.0
     probabilistic_obstacle_hard_threshold: float = 0.20
@@ -222,6 +226,18 @@ class MppiConfig:
             obstacle_influence=float(values.get("obstacle_influence", 0.55)),
             robot_radius=float(values.get("robot_radius", 0.25)),
             collision_penalty=float(values.get("collision_penalty", 5000.0)),
+            known_static_map_cost_enabled=bool(
+                values.get("known_static_map_cost_enabled", False)
+            ),
+            known_static_map_influence_m=float(
+                values.get("known_static_map_influence_m", 0.0)
+            ),
+            known_static_map_weight=float(
+                values.get("known_static_map_weight", 0.0)
+            ),
+            known_static_map_collision_penalty=float(
+                values.get("known_static_map_collision_penalty", 0.0)
+            ),
             probabilistic_obstacle_risk_enabled=bool(
                 values.get("probabilistic_obstacle_risk_enabled", False)
             ),
@@ -673,6 +689,9 @@ class MppiConfig:
             self.obstacle_influence,
             self.robot_radius,
             self.collision_penalty,
+            self.known_static_map_influence_m,
+            self.known_static_map_weight,
+            self.known_static_map_collision_penalty,
             self.probabilistic_obstacle_risk_weight,
             self.probabilistic_obstacle_hard_threshold,
             self.probabilistic_obstacle_hard_penalty,
@@ -681,6 +700,14 @@ class MppiConfig:
         )
         if not np.isfinite(numeric_costs).all() or any(value < 0.0 for value in numeric_costs):
             raise ValueError("MPPI cost and geometry parameters must be finite and non-negative")
+        if self.known_static_map_cost_enabled and (
+            self.known_static_map_weight <= 0.0
+            or self.known_static_map_collision_penalty <= 0.0
+        ):
+            raise ValueError(
+                "known static-map cost requires positive weight and "
+                "collision penalty"
+            )
         if (
             not np.isfinite(self.path_preview_speed_mps)
             or self.path_preview_speed_mps <= 0.0
@@ -3591,6 +3618,98 @@ class MppiController:
         preceding[:, 1:, :] = values[:, :-1, :]
         return fraction * preceding + (1.0 - fraction) * values
 
+    def _known_static_map_clearance(
+        self, trajectories, known_static_obstacles
+    ):
+        """Exact signed footprint clearance to frozen static geometry."""
+
+        xy = np.asarray(trajectories, dtype=np.float64)[
+            ..., list(self.state_spec.position_indices)
+        ]
+        minimum = np.full(xy.shape[:2], np.inf, dtype=np.float64)
+        for obstacle in known_static_obstacles:
+            kind = str(obstacle.get("type", "cylinder"))
+            if kind == "box":
+                center = np.asarray(
+                    obstacle["position"][:2], dtype=np.float64
+                )
+                yaw = float(obstacle.get("yaw", 0.0))
+                cosine = float(np.cos(yaw))
+                sine = float(np.sin(yaw))
+                relative = xy - center
+                local_x = (
+                    cosine * relative[..., 0]
+                    + sine * relative[..., 1]
+                )
+                local_y = (
+                    -sine * relative[..., 0]
+                    + cosine * relative[..., 1]
+                )
+                half_size = np.asarray(
+                    obstacle["size"][:2], dtype=np.float64
+                )
+                offset_x = np.abs(local_x) - half_size[0]
+                offset_y = np.abs(local_y) - half_size[1]
+                outside = np.hypot(
+                    np.maximum(offset_x, 0.0),
+                    np.maximum(offset_y, 0.0),
+                )
+                inside = np.minimum(
+                    np.maximum(offset_x, offset_y), 0.0
+                )
+                surface_distance = outside + inside
+            elif kind == "segment":
+                start = np.asarray(
+                    obstacle["start"][:2], dtype=np.float64
+                )
+                end = np.asarray(
+                    obstacle["end"][:2], dtype=np.float64
+                )
+                vector = end - start
+                denominator = float(np.dot(vector, vector))
+                if denominator <= 1.0e-12:
+                    centerline_distance = np.linalg.norm(
+                        xy - start, axis=-1
+                    )
+                else:
+                    fraction = np.clip(
+                        np.sum((xy - start) * vector, axis=-1)
+                        / denominator,
+                        0.0,
+                        1.0,
+                    )
+                    projection = (
+                        start
+                        + fraction[..., None] * vector
+                    )
+                    centerline_distance = np.linalg.norm(
+                        xy - projection, axis=-1
+                    )
+                surface_distance = centerline_distance - float(
+                    obstacle.get("thickness", 0.10)
+                )
+            elif kind == "cylinder":
+                center = np.asarray(
+                    obstacle["position"][:2], dtype=np.float64
+                )
+                surface_distance = (
+                    np.linalg.norm(xy - center, axis=-1)
+                    - float(obstacle.get("radius", 0.25))
+                )
+            else:
+                raise ValueError(
+                    "unsupported known static obstacle type: %s" % kind
+                )
+            minimum = np.minimum(
+                minimum,
+                surface_distance - self.config.robot_radius,
+            )
+        if not np.isfinite(minimum).all():
+            raise FloatingPointError(
+                "known static-map clearance contains NaN or Inf"
+            )
+        return minimum
+
     def _cost(
         self,
         trajectories,
@@ -3599,6 +3718,7 @@ class MppiController:
         obstacles,
         reference=None,
         probabilistic_obstacles=(),
+        known_static_obstacles=(),
         path_boundary_margins=None,
         probabilistic_risk=None,
     ):
@@ -3700,6 +3820,28 @@ class MppiController:
             influence = np.maximum(0.0, self.config.obstacle_influence - clearance)
             costs += self.config.obstacle_weight * np.sum(influence ** 2, axis=1)
             costs += self.config.collision_penalty * collision.astype(np.float64)
+        if (
+            self.config.known_static_map_cost_enabled
+            and known_static_obstacles
+        ):
+            static_clearance = self._known_static_map_clearance(
+                trajectories, known_static_obstacles
+            )
+            static_influence = np.maximum(
+                0.0,
+                self.config.known_static_map_influence_m
+                - static_clearance,
+            )
+            costs += self.config.known_static_map_weight * np.sum(
+                static_influence[:, 1:] ** 2, axis=1
+            )
+            static_collision = np.any(
+                static_clearance[:, 1:] <= 0.0, axis=1
+            )
+            costs += (
+                self.config.known_static_map_collision_penalty
+                * static_collision.astype(np.float64)
+            )
         if (
             self.config.probabilistic_obstacle_risk_enabled
             and probabilistic_obstacles
@@ -5706,6 +5848,23 @@ class MppiController:
                 )
             )
         )
+        known_static_obstacles = (
+            ()
+            if observation is None
+            else tuple(
+                observation.auxiliary.get(
+                    "known_static_obstacles", ()
+                )
+            )
+        )
+        if (
+            self.config.known_static_map_cost_enabled
+            and not known_static_obstacles
+        ):
+            raise ValueError(
+                "known static-map cost is enabled but the observation "
+                "contains no static geometry"
+            )
         probabilistic_obstacles = ()
         if self.config.probabilistic_obstacle_risk_enabled:
             if observation is None:
@@ -5859,6 +6018,20 @@ class MppiController:
                     raise ValueError(
                         "obstacle forecast timestamp must match observation"
                     )
+        emergency_context = {
+            "triggered": False,
+            "counterflow_escape_applied": False,
+            "preferred_escape_direction_x": 0.0,
+            "preferred_escape_direction_y": 0.0,
+        }
+        if probabilistic_obstacles:
+            # Standard MPPI uses the same causal forecast-relative emergency
+            # lattice as the RL-driven optimizer. Previously it injected only
+            # context-free templates, leaving the predictor-aware generator
+            # unreachable in the nominal controller.
+            emergency_context = self._probabilistic_emergency_context(
+                observation, state, probabilistic_obstacles
+            )
         profiling = self.config.profile_components
         solve_started = time.perf_counter() if profiling else None
         stage_started = solve_started
@@ -5910,10 +6083,11 @@ class MppiController:
             and probabilistic_obstacles
             and self.config
             .probabilistic_obstacle_emergency_candidates_enabled
+            and emergency_context["triggered"]
         ):
             emergency_candidate_mask = (
                 self._inject_probabilistic_emergency_candidates(
-                    samples, prior
+                    samples, prior, emergency_context
                 )
             )
         terminal_dx = float(
@@ -6009,6 +6183,7 @@ class MppiController:
             obstacles,
             reference=reference,
             probabilistic_obstacles=probabilistic_obstacles,
+            known_static_obstacles=known_static_obstacles,
         )
         mark("cost")
         correction = self._importance_sampling_cost(prior.mean, perturbations, covariance)
@@ -6177,6 +6352,7 @@ class MppiController:
                 obstacles,
                 reference=reference,
                 probabilistic_obstacles=probabilistic_obstacles,
+                known_static_obstacles=known_static_obstacles,
             )[0])
             selected_correction = float(self._importance_sampling_cost(
                 prior.mean,
@@ -6506,6 +6682,31 @@ class MppiController:
                     fallback_candidate_index >= 0
                     and emergency_candidate_mask[fallback_candidate_index]
                 ),
+                "probabilistic_obstacle_temporal_emergency_triggered": bool(
+                    emergency_context["triggered"]
+                ),
+                "probabilistic_obstacle_temporal_emergency_vetted": bool(
+                    emergency_context["triggered"]
+                    and fallback_candidate_index >= 0
+                    and emergency_candidate_mask[
+                        fallback_candidate_index
+                    ]
+                ),
+                "probabilistic_obstacle_counterflow_escape_applied": bool(
+                    emergency_context.get(
+                        "counterflow_escape_applied", False
+                    )
+                ),
+                "probabilistic_obstacle_preferred_escape_direction_x": float(
+                    emergency_context.get(
+                        "preferred_escape_direction_x", 0.0
+                    )
+                ),
+                "probabilistic_obstacle_preferred_escape_direction_y": float(
+                    emergency_context.get(
+                        "preferred_escape_direction_y", 0.0
+                    )
+                ),
                 "probabilistic_obstacle_active_avoidance_enabled": bool(
                     hard_action in (
                         "active_avoidance",
@@ -6552,6 +6753,11 @@ class MppiController:
                 "probabilistic_obstacle_stopping_feasibility_enabled": False,
                 "probabilistic_obstacle_emergency_candidate_count": 0,
                 "probabilistic_obstacle_emergency_candidate_selected": False,
+                "probabilistic_obstacle_temporal_emergency_triggered": False,
+                "probabilistic_obstacle_temporal_emergency_vetted": False,
+                "probabilistic_obstacle_counterflow_escape_applied": False,
+                "probabilistic_obstacle_preferred_escape_direction_x": 0.0,
+                "probabilistic_obstacle_preferred_escape_direction_y": 0.0,
                 "probabilistic_obstacle_active_avoidance_enabled": False,
             }
         online_tracker_diagnostics = {
@@ -6603,6 +6809,17 @@ class MppiController:
                 tracker_diagnostics.get("recovery_active", False)
             ),
         }
+        known_static_minimum_clearance = 0.0
+        if (
+            self.config.known_static_map_cost_enabled
+            and known_static_obstacles
+        ):
+            known_static_minimum_clearance = float(np.min(
+                self._known_static_map_clearance(
+                    updated_trajectory[None, ...],
+                    known_static_obstacles,
+                )[0, 1:]
+            ))
         diagnostics = {
             "cost_min": float(costs.min()),
             "cost_mean": float(costs.mean()),
@@ -6635,6 +6852,15 @@ class MppiController:
             "path_boundary_fallback_used": boundary_fallback_used,
             "path_boundary_fallback_candidate_index": (
                 boundary_fallback_candidate_index
+            ),
+            "known_static_map_cost_enabled": bool(
+                self.config.known_static_map_cost_enabled
+            ),
+            "known_static_map_obstacle_count": len(
+                known_static_obstacles
+            ),
+            "known_static_map_minimum_clearance": (
+                known_static_minimum_clearance
             ),
             **optimizer_diagnostics,
             "importance_sampling_correction": bool(

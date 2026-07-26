@@ -773,7 +773,18 @@ def make_components(config, project_root, rl_policy=None):
             nominal_controller=nominal_controller,
             shield_config=shield_mapping,
         )
-    perception = LegacyScanPipeline(project_root, config.get("perception", {}))
+    perception_cfg = deepcopy(dict(config.get("perception", {})))
+    tracker_cfg = deepcopy(dict(
+        perception_cfg.get("dynamic_obstacle_tracker", {})
+    ))
+    if bool(tracker_cfg.get("known_static_filter_enabled", False)):
+        tracker_cfg["known_static_obstacles"] = [
+            deepcopy(obstacle)
+            for obstacle in scene.get("obstacles", ())
+            if not isinstance(obstacle.get("motion"), dict)
+        ]
+        perception_cfg["dynamic_obstacle_tracker"] = tracker_cfg
+    perception = LegacyScanPipeline(project_root, perception_cfg)
     safety = ScanGuardArbiter(
         action_spec,
         config.get("perception", {}).get("scan_guard", {}),

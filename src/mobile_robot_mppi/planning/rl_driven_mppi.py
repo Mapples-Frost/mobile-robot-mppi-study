@@ -1940,6 +1940,12 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
         guided_costs_by_iteration = []
         gaussian_costs_by_iteration = []
         guided_feasible_count = 0
+        guided_boundary_feasible_count = 0
+        guided_static_feasible_count = 0
+        guided_risk_feasible_count = 0
+        guided_boundary_first_failure_steps = []
+        guided_static_first_failure_steps = []
+        guided_risk_first_failure_steps = []
         gaussian_feasible_count = 0
         costs_by_iteration = []
         terminal_diagnostics = {}
@@ -2389,6 +2395,68 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
             traversal_last_index = int(traversal_index)
             guided_mask = labels == 1
             gaussian_mask = labels == 0
+            guided_boundary_feasible_count += int(np.sum(
+                boundary_feasible & guided_mask
+            ))
+            guided_static_feasible_count += int(np.sum(
+                static_feasible & guided_mask
+            ))
+            guided_risk_feasible_count += int(np.sum(
+                risk_feasible & guided_mask
+            ))
+            if hard_boundary_filter and np.any(guided_mask):
+                guided_boundary_violations = (
+                    boundary_margins[guided_mask, 1:] < 0.0
+                )
+                guided_boundary_failed = np.any(
+                    guided_boundary_violations, axis=1
+                )
+                guided_boundary_first_failure_steps.extend(
+                    (
+                        np.argmax(
+                            guided_boundary_violations[
+                                guided_boundary_failed
+                            ],
+                            axis=1,
+                        )
+                        + 1
+                    ).tolist()
+                )
+            if hard_static_filter and np.any(guided_mask):
+                guided_static_violations = (
+                    static_clearance[guided_mask, 1:] < 0.0
+                )
+                guided_static_failed = np.any(
+                    guided_static_violations, axis=1
+                )
+                guided_static_first_failure_steps.extend(
+                    (
+                        np.argmax(
+                            guided_static_violations[
+                                guided_static_failed
+                            ],
+                            axis=1,
+                        )
+                        + 1
+                    ).tolist()
+                )
+            if risk_candidate_filter and np.any(guided_mask):
+                guided_risk_violations = (
+                    candidate_risk.step_probability_upper_bound[guided_mask]
+                    >= self.config.probabilistic_obstacle_hard_threshold
+                )
+                guided_risk_failed = np.any(
+                    guided_risk_violations, axis=1
+                )
+                guided_risk_first_failure_steps.extend(
+                    (
+                        np.argmax(
+                            guided_risk_violations[guided_risk_failed],
+                            axis=1,
+                        )
+                        + 1
+                    ).tolist()
+                )
             if cfg.same_cycle_guided_cost_filter:
                 guided_eligible = optimizer_feasible & guided_mask
                 gaussian_eligible = optimizer_feasible & gaussian_mask
@@ -3052,6 +3120,33 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
             "paper_guided_feasible_fraction": float(
                 guided_feasible_count / total_guided_opportunities
                 if total_guided_opportunities else 0.0
+            ),
+            "paper_guided_boundary_feasible_fraction": float(
+                guided_boundary_feasible_count
+                / total_guided_opportunities
+                if total_guided_opportunities else 0.0
+            ),
+            "paper_guided_static_feasible_fraction": float(
+                guided_static_feasible_count
+                / total_guided_opportunities
+                if total_guided_opportunities else 0.0
+            ),
+            "paper_guided_risk_feasible_fraction": float(
+                guided_risk_feasible_count
+                / total_guided_opportunities
+                if total_guided_opportunities else 0.0
+            ),
+            "paper_guided_boundary_first_failure_step_mean": float(
+                np.mean(guided_boundary_first_failure_steps)
+                if guided_boundary_first_failure_steps else -1.0
+            ),
+            "paper_guided_static_first_failure_step_mean": float(
+                np.mean(guided_static_first_failure_steps)
+                if guided_static_first_failure_steps else -1.0
+            ),
+            "paper_guided_risk_first_failure_step_mean": float(
+                np.mean(guided_risk_first_failure_steps)
+                if guided_risk_first_failure_steps else -1.0
             ),
             "paper_gaussian_feasible_fraction": float(
                 gaussian_feasible_count / total_gaussian_opportunities

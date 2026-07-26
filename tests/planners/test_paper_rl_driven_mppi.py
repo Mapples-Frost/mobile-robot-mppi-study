@@ -327,6 +327,24 @@ def test_paper_optimizer_reuses_candidate_risk_for_cost_and_filter(monkeypatch):
     result = controller.plan(observation, PointGoal(1.0, 0.0))
 
     assert not result.diagnostics["probabilistic_obstacle_hard_violation"]
+    assert result.diagnostics[
+        "paper_guided_boundary_feasible_fraction"
+    ] == 1.0
+    assert result.diagnostics[
+        "paper_guided_static_feasible_fraction"
+    ] == 1.0
+    assert result.diagnostics[
+        "paper_guided_risk_feasible_fraction"
+    ] == 1.0
+    assert result.diagnostics[
+        "paper_guided_boundary_first_failure_step_mean"
+    ] == -1.0
+    assert result.diagnostics[
+        "paper_guided_static_first_failure_step_mean"
+    ] == -1.0
+    assert result.diagnostics[
+        "paper_guided_risk_first_failure_step_mean"
+    ] == -1.0
     # Two optimizer iterations plus one final weighted sequence. The shared
     # per-iteration evaluation serves both soft cost and hard filtering.
     assert risk_calls == 3

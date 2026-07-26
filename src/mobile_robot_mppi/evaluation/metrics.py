@@ -2124,6 +2124,36 @@ class EpisodeMetrics:
                     "paper_guided_feasible_fraction", 0.0
                 )
             ),
+            "paper_guided_boundary_feasible_fraction": float(
+                planner_diagnostics.get(
+                    "paper_guided_boundary_feasible_fraction", 0.0
+                )
+            ),
+            "paper_guided_static_feasible_fraction": float(
+                planner_diagnostics.get(
+                    "paper_guided_static_feasible_fraction", 0.0
+                )
+            ),
+            "paper_guided_risk_feasible_fraction": float(
+                planner_diagnostics.get(
+                    "paper_guided_risk_feasible_fraction", 0.0
+                )
+            ),
+            "paper_guided_boundary_first_failure_step_mean": float(
+                planner_diagnostics.get(
+                    "paper_guided_boundary_first_failure_step_mean", -1.0
+                )
+            ),
+            "paper_guided_static_first_failure_step_mean": float(
+                planner_diagnostics.get(
+                    "paper_guided_static_first_failure_step_mean", -1.0
+                )
+            ),
+            "paper_guided_risk_first_failure_step_mean": float(
+                planner_diagnostics.get(
+                    "paper_guided_risk_first_failure_step_mean", -1.0
+                )
+            ),
             "paper_gaussian_feasible_fraction": float(
                 planner_diagnostics.get(
                     "paper_gaussian_feasible_fraction", 0.0
@@ -4016,6 +4046,85 @@ class EpisodeMetrics:
                 row.get("paper_guided_cost_observed", 0.0)
                 for row in values
             ) else 0.0,
+            "paper_guided_boundary_feasible_fraction_mean": float(np.mean([
+                row.get("paper_guided_boundary_feasible_fraction", 0.0)
+                for row in values
+                if row.get("paper_guided_cost_observed", 0.0)
+            ])) if any(
+                row.get("paper_guided_cost_observed", 0.0)
+                for row in values
+            ) else 0.0,
+            "paper_guided_static_feasible_fraction_mean": float(np.mean([
+                row.get("paper_guided_static_feasible_fraction", 0.0)
+                for row in values
+                if row.get("paper_guided_cost_observed", 0.0)
+            ])) if any(
+                row.get("paper_guided_cost_observed", 0.0)
+                for row in values
+            ) else 0.0,
+            "paper_guided_risk_feasible_fraction_mean": float(np.mean([
+                row.get("paper_guided_risk_feasible_fraction", 0.0)
+                for row in values
+                if row.get("paper_guided_cost_observed", 0.0)
+            ])) if any(
+                row.get("paper_guided_cost_observed", 0.0)
+                for row in values
+            ) else 0.0,
+            "paper_guided_boundary_first_failure_step_mean": float(np.mean([
+                row.get(
+                    "paper_guided_boundary_first_failure_step_mean", -1.0
+                )
+                for row in values
+                if (
+                    row.get("paper_guided_cost_observed", 0.0)
+                    and row.get(
+                        "paper_guided_boundary_first_failure_step_mean",
+                        -1.0,
+                    ) >= 0.0
+                )
+            ])) if any(
+                row.get("paper_guided_cost_observed", 0.0)
+                and row.get(
+                    "paper_guided_boundary_first_failure_step_mean", -1.0
+                ) >= 0.0
+                for row in values
+            ) else -1.0,
+            "paper_guided_static_first_failure_step_mean": float(np.mean([
+                row.get(
+                    "paper_guided_static_first_failure_step_mean", -1.0
+                )
+                for row in values
+                if (
+                    row.get("paper_guided_cost_observed", 0.0)
+                    and row.get(
+                        "paper_guided_static_first_failure_step_mean", -1.0
+                    ) >= 0.0
+                )
+            ])) if any(
+                row.get("paper_guided_cost_observed", 0.0)
+                and row.get(
+                    "paper_guided_static_first_failure_step_mean", -1.0
+                ) >= 0.0
+                for row in values
+            ) else -1.0,
+            "paper_guided_risk_first_failure_step_mean": float(np.mean([
+                row.get(
+                    "paper_guided_risk_first_failure_step_mean", -1.0
+                )
+                for row in values
+                if (
+                    row.get("paper_guided_cost_observed", 0.0)
+                    and row.get(
+                        "paper_guided_risk_first_failure_step_mean", -1.0
+                    ) >= 0.0
+                )
+            ])) if any(
+                row.get("paper_guided_cost_observed", 0.0)
+                and row.get(
+                    "paper_guided_risk_first_failure_step_mean", -1.0
+                ) >= 0.0
+                for row in values
+            ) else -1.0,
             "paper_gaussian_feasible_fraction_mean": float(np.mean([
                 row.get("paper_gaussian_feasible_fraction", 0.0)
                 for row in values

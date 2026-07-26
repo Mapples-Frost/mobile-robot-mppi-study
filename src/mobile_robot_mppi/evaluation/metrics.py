@@ -119,6 +119,21 @@ class EpisodeMetrics:
                     "dynamic_escape_reactive", False
                 )
             ),
+            "dynamic_escape_uncertainty_fusion": float(
+                safety_diagnostics.get(
+                    "dynamic_escape_uncertainty_fusion", False
+                )
+            ),
+            "dynamic_escape_geometric_forward": float(
+                safety_diagnostics.get(
+                    "dynamic_escape_geometric_forward", False
+                )
+            ),
+            "dynamic_escape_direction_commit_remaining": int(
+                safety_diagnostics.get(
+                    "dynamic_escape_direction_commit_remaining", 0
+                )
+            ),
             "dynamic_escape_held": float(
                 safety_diagnostics.get("dynamic_escape_held", False)
             ),
@@ -2491,6 +2506,14 @@ class EpisodeMetrics:
             ) else 0.0,
             "dynamic_escape_allowed_steps": int(sum(
                 row.get("dynamic_escape_allowed", 0.0) for row in values
+            )),
+            "dynamic_escape_uncertainty_fusion_steps": int(sum(
+                row.get("dynamic_escape_uncertainty_fusion", 0.0)
+                for row in values
+            )),
+            "dynamic_escape_geometric_forward_steps": int(sum(
+                row.get("dynamic_escape_geometric_forward", 0.0)
+                for row in values
             )),
             "dynamic_escape_held_steps": int(sum(
                 row.get("dynamic_escape_held", 0.0) for row in values

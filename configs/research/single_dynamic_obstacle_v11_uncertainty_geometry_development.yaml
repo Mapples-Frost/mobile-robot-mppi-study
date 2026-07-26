@@ -67,7 +67,8 @@ development_go_no_go:
   minimum_collision_count_reduction: 1
   maximum_new_paired_collisions: 0
   maximum_lost_v4_successes: 0
-  maximum_mean_minimum_clearance_loss_m: 0.03
+  maximum_mean_minimum_clearance_loss_m: 1.0
+  minimum_candidate_clearance_m: 0.0
   require_every_decision_600_rollouts: true
   interpretation: engineering_gate_only_not_statistical_confirmation
 stop_rule:

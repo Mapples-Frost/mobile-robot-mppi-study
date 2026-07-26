@@ -268,6 +268,9 @@ def _analyze(protocol, source_protocol, output, blocks):
     clearance_delta = _mean(candidate, "minimum_clearance") - _mean(
         control, "minimum_clearance"
     )
+    candidate_minimum_clearance = min(
+        float(row["minimum_clearance"]) for row in candidate
+    )
     gate = protocol["development_go_no_go"]
     checks = {
         "safe_success_noninferior": safe_success_gain
@@ -282,6 +285,8 @@ def _analyze(protocol, source_protocol, output, blocks):
         >= int(gate["minimum_collision_count_reduction"]),
         "mean_minimum_clearance_preserved": clearance_delta
         >= -float(gate["maximum_mean_minimum_clearance_loss_m"]),
+        "candidate_clearance_nonnegative": candidate_minimum_clearance
+        >= float(gate.get("minimum_candidate_clearance_m", 0.0)),
         # v7's hard-risk motion contract intentionally reuses the normal
         # active-avoidance fallback rather than the legacy emergency-candidate
         # path.  Count the source-level speed-governor bypass as exercise of

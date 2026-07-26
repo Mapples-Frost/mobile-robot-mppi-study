@@ -1,0 +1,18 @@
+[block 1/1] id seed=770300071 complete
+{
+  "bundle_sha256": "e7df7f99ce74711252e20f3ef9055d0dc621f6a90e0b0b174a1238505df93c20",
+  "checks": {
+    "candidate_clearance_nonnegative": false,
+    "collision_count_improved": false,
+    "counterflow_mechanism_exercised": true,
+    "emergency_mechanism_exercised": true,
+    "mean_minimum_clearance_preserved": false,
+    "minimum_prevented_collisions": true,
+    "near_distance_trigger_exercised": true,
+    "no_lost_v4_successes": false,
+    "no_new_paired_collisions": false,
+    "rollout_budget_exact": true,
+    "safe_success_noninferior": false
+  },
+  "status": "development_gate_fail"
+}

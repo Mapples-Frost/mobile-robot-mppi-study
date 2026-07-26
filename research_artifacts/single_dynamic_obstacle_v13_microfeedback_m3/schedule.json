@@ -1,0 +1,44 @@
+{
+  "blocks": [
+    {
+      "arm_order": [
+        "V13_counterflow_full",
+        "V4_full_frozen"
+      ],
+      "block_order": 1,
+      "certificate": {
+        "certificate_rule": "ghost_constant_speed_center_distance_le_sum_radii",
+        "collision_threshold_m": 0.5,
+        "conflict_window_threshold_m": 0.8,
+        "conflict_windows_s": [
+          [
+            8.75,
+            12.65
+          ],
+          [
+            40.400000000000006,
+            45.0
+          ]
+        ],
+        "minimum_distance_time_s": 10.700000000000001,
+        "minimum_ghost_obstacle_center_distance_m": 0.11155190733458376,
+        "noise_profile": "medium",
+        "obstacle_process": "hybrid_patrol",
+        "obstacle_truth_sha256": "2c44c907ef05db1d5ac3666ba11f7a6ecf7f13ed57e8e2e4ce260f89bef7eed6",
+        "seed": 770300071,
+        "split": "id"
+      },
+      "model_block": 1,
+      "seed": 770300071,
+      "split": "id",
+      "stratum": "moderate_direct"
+    }
+  ],
+  "formal_effect_estimation_authorized": false,
+  "implementation_git_sha": "5b78352e2c2ebac4fa3b27bc1abe2e29beaa1db6",
+  "outcome_informed_development_selection": true,
+  "schedule_sha256": "b280b8aa087c44efd68cbaf30bbeca3a96486f89ff71d9d935c1c04fb35f6d87",
+  "schema_version": 1,
+  "scope": "one_pair_engineering_feedback_not_effect_estimation",
+  "workers": 1
+}

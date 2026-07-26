@@ -8,12 +8,18 @@ It is a development runner: its output can never authorize formal claims.
 import argparse
 import json
 import os
+import sys
 import traceback
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from copy import deepcopy
 from pathlib import Path
 
 import numpy as np
+
+
+ROOT = Path(__file__).resolve().parents[2]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
 from experiments.dynamic_uncertainty import (
     analyze_single_dynamic_obstacle_paper_v4 as v4_analysis,
@@ -28,7 +34,6 @@ from mobile_robot_mppi.core.config import git_sha
 from mobile_robot_mppi.runtime.experiment_runner import ExperimentRunner
 
 
-ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_PROTOCOL = (
     ROOT
     / "configs"

@@ -1,0 +1,92 @@
+schema_version: 1
+status: frozen_before_development_execution
+frozen_at: "2026-07-26T15:00:00+08:00"
+study_id: single_dynamic_obstacle_v12_corridor_development
+scope: outcome_informed_mechanism_development_not_effect_estimation
+runner_label: v12_corridor
+source_protocol: configs/research/single_dynamic_obstacle_paper_v4.yaml
+output_dir: research_artifacts/single_dynamic_obstacle_v12_corridor_development
+parent_result: research_artifacts/single_dynamic_obstacle_v11_uncertainty_geometry_development/development_result.json
+parent_result_sha256: 5c192ccec29e182dc828e727e9ae9d67c9a4f6cfbaaf99dabecce90572c799e8
+parent_manifest: research_artifacts/single_dynamic_obstacle_v11_uncertainty_geometry_development/artifact_manifest.json
+parent_manifest_sha256: 0cff6157b0635d4a60212c5b5861f6f6b52dafbcdedb5c00cf37c46f945824b6
+parent_bundle_sha256: e7a56d7912950273166bace11111201ccd9f29d981e0d9a6654c65f33a32a5af
+design:
+  development_attempt: R1_reachable_side_corridor
+  mechanism_family: reachable_forward_corridor_side_commit
+  paired_arms: [V4_full_frozen, V12_corridor_full]
+  common_random_numbers: true
+  outcome_informed_development_selection: true
+  previously_opened_v10_seeds_reused_for_development: true
+  formal_effect_estimation_authorized: false
+  fresh_held_out_required_before_formal_freeze: true
+  mechanism_attempt_counter_increment: true
+  total_rollouts_per_controller_decision: 600
+  horizon_steps: 36
+  control_period_s: 0.1
+  maximum_episode_steps: 400
+  workers: 4
+frozen_components:
+  change_aware_imm: unchanged_from_v4_full
+  collision_risk_v1: unchanged_from_v4_full
+  collision_probability_threshold: unchanged_from_v4_full
+  safety_margin: unchanged_from_v4_full
+  dynamic_obstacle_generator: unchanged_from_v4
+  actor_checkpoint: unchanged_from_v4
+  icode_checkpoints: unchanged_from_v4
+  hss_core: unchanged_from_v4
+  rollout_budget: 600
+  horizon_steps: 36
+  control_period_s: 0.1
+  maximum_episode_steps: 400
+  v11_uncertainty_geometry: not reused
+change_scope:
+  allowed_prefixes:
+    - perception.scan_guard.dynamic_escape_corridor_
+candidate_override_paths:
+  perception.scan_guard.dynamic_escape_corridor_enabled: true
+  perception.scan_guard.dynamic_escape_corridor_turn_steps: 4
+  perception.scan_guard.dynamic_escape_corridor_commit_steps: 14
+  perception.scan_guard.dynamic_escape_corridor_speed: 0.35
+mechanism_contract:
+  side_selection_is_latched_from_obstacle_bearing: true
+  forward_arc_is_finite_then_straight: true
+  corridor_commit_survives_ttc_dropout: true
+  rear_half_plane_reverse_logic_unchanged: true
+  future_obstacle_truth_used_for_control: false
+  actor_only_proposes_actions: true
+  safety_layer_retains_collision_authority: true
+  additional_total_rollouts: 0
+  total_rollouts_per_decision: 600
+development_go_no_go:
+  minimum_safe_success_gain: 1
+  minimum_prevented_collisions: 1
+  minimum_collision_count_reduction: 1
+  maximum_new_paired_collisions: 0
+  maximum_lost_v4_successes: 0
+  maximum_mean_minimum_clearance_loss_m: 1.0
+  minimum_candidate_clearance_m: 0.0
+  require_every_decision_600_rollouts: true
+  interpretation: engineering_gate_only_not_statistical_confirmation
+stop_rule:
+  maximum_local_attempts_in_family: 1
+  stop_after_consecutive_no_core_improvement: 1
+  stop_after_consecutive_safety_regressions: 1
+  fresh_held_out_required_after_development_and_opened_seed_replication: true
+development_blocks:
+  - {split: id, seed: 750300001, model_block: 0, stratum: opened_v10_id_early_conflict, arm_order: [V4_full_frozen, V12_corridor_full]}
+  - {split: id, seed: 750300009, model_block: 0, stratum: opened_v10_id_early_conflict_b, arm_order: [V12_corridor_full, V4_full_frozen]}
+  - {split: id, seed: 750300015, model_block: 2, stratum: opened_v10_id_late_conflict, arm_order: [V4_full_frozen, V12_corridor_full]}
+  - {split: id, seed: 750300018, model_block: 2, stratum: opened_v10_id_early_conflict_c, arm_order: [V12_corridor_full, V4_full_frozen]}
+  - {split: id, seed: 750300029, model_block: 2, stratum: opened_v10_id_mid_conflict, arm_order: [V4_full_frozen, V12_corridor_full]}
+  - {split: id, seed: 750300031, model_block: 1, stratum: opened_v10_id_mid_conflict_b, arm_order: [V12_corridor_full, V4_full_frozen]}
+  - {split: id, seed: 750300034, model_block: 1, stratum: opened_v10_id_late_early_conflict, arm_order: [V4_full_frozen, V12_corridor_full]}
+  - {split: id, seed: 750300042, model_block: 0, stratum: opened_v10_id_unopened_conflict, arm_order: [V12_corridor_full, V4_full_frozen]}
+  - {split: ood, seed: 750400001, model_block: 0, stratum: opened_v10_ood_mid_conflict, arm_order: [V4_full_frozen, V12_corridor_full]}
+  - {split: ood, seed: 750400003, model_block: 0, stratum: opened_v10_ood_mid_conflict_b, arm_order: [V12_corridor_full, V4_full_frozen]}
+  - {split: ood, seed: 750400004, model_block: 1, stratum: opened_v10_ood_late_conflict, arm_order: [V4_full_frozen, V12_corridor_full]}
+  - {split: ood, seed: 750400006, model_block: 1, stratum: opened_v10_ood_late_conflict_b, arm_order: [V12_corridor_full, V4_full_frozen]}
+  - {split: ood, seed: 750400008, model_block: 0, stratum: opened_v10_ood_mid_conflict_c, arm_order: [V4_full_frozen, V12_corridor_full]}
+  - {split: ood, seed: 750400010, model_block: 0, stratum: opened_v10_ood_mid_conflict_d, arm_order: [V4_full_frozen, V12_corridor_full]}
+  - {split: ood, seed: 750400011, model_block: 2, stratum: opened_v10_ood_late_conflict_c, arm_order: [V12_corridor_full, V4_full_frozen]}
+  - {split: ood, seed: 750400023, model_block: 1, stratum: opened_v10_ood_early_conflict, arm_order: [V4_full_frozen, V12_corridor_full]}

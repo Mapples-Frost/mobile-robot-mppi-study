@@ -129,6 +129,26 @@ class EpisodeMetrics:
                     "dynamic_escape_geometric_forward", False
                 )
             ),
+            "dynamic_escape_corridor_active": float(
+                safety_diagnostics.get(
+                    "dynamic_escape_corridor_active", False
+                )
+            ),
+            "dynamic_escape_corridor_turning": float(
+                safety_diagnostics.get(
+                    "dynamic_escape_corridor_turning", False
+                )
+            ),
+            "dynamic_escape_corridor_remaining": int(
+                safety_diagnostics.get(
+                    "dynamic_escape_corridor_remaining", 0
+                )
+            ),
+            "dynamic_escape_corridor_turn_remaining": int(
+                safety_diagnostics.get(
+                    "dynamic_escape_corridor_turn_remaining", 0
+                )
+            ),
             "dynamic_escape_direction_commit_remaining": int(
                 safety_diagnostics.get(
                     "dynamic_escape_direction_commit_remaining", 0
@@ -2513,6 +2533,14 @@ class EpisodeMetrics:
             )),
             "dynamic_escape_geometric_forward_steps": int(sum(
                 row.get("dynamic_escape_geometric_forward", 0.0)
+                for row in values
+            )),
+            "dynamic_escape_corridor_steps": int(sum(
+                row.get("dynamic_escape_corridor_active", 0.0)
+                for row in values
+            )),
+            "dynamic_escape_corridor_turn_steps": int(sum(
+                row.get("dynamic_escape_corridor_turning", 0.0)
                 for row in values
             )),
             "dynamic_escape_held_steps": int(sum(

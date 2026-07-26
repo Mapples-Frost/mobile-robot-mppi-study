@@ -211,6 +211,12 @@ def _episode_row(output, block, arm, source_protocol):
         "geometric_forward_escape_steps": int(metrics.get(
             "dynamic_escape_geometric_forward_steps", 0
         )),
+        "corridor_escape_steps": int(metrics.get(
+            "dynamic_escape_corridor_steps", 0
+        )),
+        "corridor_turn_steps": int(metrics.get(
+            "dynamic_escape_corridor_turn_steps", 0
+        )),
     })
     return row
 
@@ -300,6 +306,7 @@ def _analyze(protocol, source_protocol, output, blocks):
                 ))
                 + int(row.get("uncertainty_fusion_steps", 0))
                 + int(row.get("geometric_forward_escape_steps", 0))
+                + int(row.get("corridor_escape_steps", 0))
             ) > 0
             for row in candidate
         ),
@@ -342,6 +349,12 @@ def _analyze(protocol, source_protocol, output, blocks):
                 )),
                 "temporal_emergency_vetted_steps": int(sum(
                     row["temporal_emergency_vetted_steps"] for row in candidate
+                )),
+                "corridor_escape_steps": int(sum(
+                    row.get("corridor_escape_steps", 0) for row in candidate
+                )),
+                "corridor_turn_steps": int(sum(
+                    row.get("corridor_turn_steps", 0) for row in candidate
                 )),
             },
         },

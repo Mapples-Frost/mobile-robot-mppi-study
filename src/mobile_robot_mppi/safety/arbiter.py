@@ -105,6 +105,23 @@ class ScanGuardArbiter:
         self.dynamic_escape_direction_commit_steps = int(
             self.config.get("dynamic_escape_direction_commit_steps", 0)
         )
+        # v12 uses a finite two-phase forward corridor (turn, then coast
+        # straight) instead of repeatedly replaying the same saturated turn.
+        self.dynamic_escape_corridor_enabled = bool(
+            self.config.get("dynamic_escape_corridor_enabled", False)
+        )
+        self.dynamic_escape_corridor_turn_steps = int(
+            self.config.get("dynamic_escape_corridor_turn_steps", 3)
+        )
+        self.dynamic_escape_corridor_commit_steps = int(
+            self.config.get("dynamic_escape_corridor_commit_steps", 10)
+        )
+        self.dynamic_escape_corridor_speed = float(
+            self.config.get(
+                "dynamic_escape_corridor_speed",
+                self.dynamic_escape_max_speed,
+            )
+        )
         self.dynamic_recovery_enabled = bool(
             self.config.get("dynamic_recovery_enabled", False)
         )
@@ -293,6 +310,12 @@ class ScanGuardArbiter:
             or self.dynamic_escape_uncertainty_nis_threshold <= 0.0
             or self.dynamic_escape_uncertainty_trigger_ttc_s <= 0.0
             or self.dynamic_escape_direction_commit_steps < 0
+            or self.dynamic_escape_corridor_turn_steps < 1
+            or self.dynamic_escape_corridor_commit_steps
+            < self.dynamic_escape_corridor_turn_steps
+            or self.dynamic_escape_corridor_speed < 0.0
+            or self.dynamic_escape_corridor_speed
+            > self.dynamic_escape_max_speed
         ):
             raise ValueError(
                 "dynamic reactive escape parameters are invalid"
@@ -394,6 +417,9 @@ class ScanGuardArbiter:
         self._dynamic_escape_hold_values = None
         self._dynamic_escape_direction_commit_remaining = 0
         self._dynamic_escape_direction_commit_values = None
+        self._dynamic_escape_corridor_remaining = 0
+        self._dynamic_escape_corridor_turn_remaining = 0
+        self._dynamic_escape_corridor_turn_sign = 0.0
         self._dynamic_recovery_active = False
         self._dynamic_recovery_clear_steps = 0
         self._dynamic_recovery_release_count = 0
@@ -895,6 +921,25 @@ class ScanGuardArbiter:
             and "v_cmd" in self.action_spec.names
             and "omega_cmd" in self.action_spec.names
         )
+        corridor_commit_active = bool(
+            self.dynamic_escape_corridor_enabled
+            and self._dynamic_escape_corridor_remaining > 0
+            and context.get(
+                "probabilistic_obstacle_active_avoidance_enabled",
+                False,
+            )
+            and guard_result.get(
+                "dynamic_obstacle_scan_flow_match", False
+            )
+            and guard_result.get("temporal_scan_valid", False)
+            and not guard_result.get("emergency_stop", False)
+            and "v_cmd" in self.action_spec.names
+            and "omega_cmd" in self.action_spec.names
+        )
+        corridor_escape_active = bool(
+            corridor_commit_active or geometric_forward_escape
+        )
+        corridor_turning = False
         committed_geometric_escape = bool(
             geometric_forward_escape
             and self._dynamic_escape_direction_commit_remaining > 0
@@ -931,8 +976,44 @@ class ScanGuardArbiter:
             and "v_cmd" in self.action_spec.names
             and float(values[self.action_spec.index("v_cmd")]) >= 0.0
         )
-        if dynamic_escape_allowed:
-            if committed_geometric_escape:
+        if dynamic_escape_allowed or corridor_commit_active:
+            if self.dynamic_escape_corridor_enabled and (
+                geometric_forward_escape or corridor_commit_active
+            ):
+                if self._dynamic_escape_corridor_remaining <= 0:
+                    self._dynamic_escape_corridor_turn_sign = (
+                        -1.0 if obstacle_bearing >= 0.0 else 1.0
+                    )
+                    self._dynamic_escape_corridor_remaining = (
+                        self.dynamic_escape_corridor_commit_steps
+                    )
+                    self._dynamic_escape_corridor_turn_remaining = min(
+                        self.dynamic_escape_corridor_turn_steps,
+                        self._dynamic_escape_corridor_remaining,
+                    )
+                v_index = self.action_spec.index("v_cmd")
+                omega_index = self.action_spec.index("omega_cmd")
+                values[v_index] = min(
+                    self.dynamic_escape_corridor_speed,
+                    self.action_spec.upper[v_index],
+                )
+                corridor_turning = (
+                    self._dynamic_escape_corridor_turn_remaining > 0
+                )
+                if corridor_turning:
+                    values[omega_index] = (
+                        self.action_spec.upper[omega_index]
+                        if self._dynamic_escape_corridor_turn_sign > 0.0
+                        else self.action_spec.lower[omega_index]
+                    )
+                    self._dynamic_escape_corridor_turn_remaining -= 1
+                else:
+                    values[omega_index] = 0.0
+                self._dynamic_escape_corridor_remaining -= 1
+                values = self.action_spec.clip(values)
+                reverse_escape = False
+                reason = "dynamic_corridor_escape"
+            elif committed_geometric_escape:
                 values = self.action_spec.clip(
                     self._dynamic_escape_direction_commit_values
                 )
@@ -1286,9 +1367,12 @@ class ScanGuardArbiter:
             if "v_cmd" in self.action_spec.names:
                 index = self.action_spec.index("v_cmd")
                 values[index] = max(0.0, values[index]) * float(guard_result.get("slow_scale", 1.0))
-        if not dynamic_escape_allowed:
+        if not dynamic_escape_allowed and not corridor_commit_active:
             self._dynamic_escape_direction_commit_remaining = 0
             self._dynamic_escape_direction_commit_values = None
+            self._dynamic_escape_corridor_remaining = 0
+            self._dynamic_escape_corridor_turn_remaining = 0
+            self._dynamic_escape_corridor_turn_sign = 0.0
         executed = ControlCommand(values, proposed.timestamp, "safety_arbitration")
         overridden = not np.allclose(executed.values, proposed.values, rtol=0.0, atol=1e-12)
         diagnostics = dict(guard_result)
@@ -1301,6 +1385,18 @@ class ScanGuardArbiter:
         )
         diagnostics["dynamic_escape_geometric_forward"] = (
             geometric_forward_escape
+        )
+        diagnostics["dynamic_escape_corridor_active"] = (
+            corridor_escape_active
+        )
+        diagnostics["dynamic_escape_corridor_turning"] = (
+            corridor_turning
+        )
+        diagnostics["dynamic_escape_corridor_remaining"] = int(
+            self._dynamic_escape_corridor_remaining
+        )
+        diagnostics["dynamic_escape_corridor_turn_remaining"] = int(
+            self._dynamic_escape_corridor_turn_remaining
         )
         diagnostics["dynamic_escape_direction_commit_remaining"] = int(
             self._dynamic_escape_direction_commit_remaining

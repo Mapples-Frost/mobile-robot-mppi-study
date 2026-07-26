@@ -1,0 +1,60 @@
+schema_version: 1
+status: frozen_before_smoke_execution
+frozen_at: "2026-07-26T15:05:00+08:00"
+study_id: single_dynamic_obstacle_v12_corridor_smoke
+scope: engineering_mechanism_smoke_not_effect_estimation
+runner_label: v12_corridor_smoke
+source_protocol: configs/research/single_dynamic_obstacle_paper_v4.yaml
+output_dir: research_artifacts/single_dynamic_obstacle_v12_corridor_smoke
+parent_result: research_artifacts/single_dynamic_obstacle_v11_uncertainty_geometry_development/development_result.json
+parent_result_sha256: 5c192ccec29e182dc828e727e9ae9d67c9a4f6cfbaaf99dabecce90572c799e8
+parent_manifest: research_artifacts/single_dynamic_obstacle_v11_uncertainty_geometry_development/artifact_manifest.json
+parent_manifest_sha256: 0cff6157b0635d4a60212c5b5861f6f6b52dafbcdedb5c00cf37c46f945824b6
+parent_bundle_sha256: e7a56d7912950273166bace11111201ccd9f29d981e0d9a6654c65f33a32a5af
+design:
+  development_attempt: R1_reachable_side_corridor_smoke
+  mechanism_family: reachable_forward_corridor_side_commit
+  paired_arms: [V4_full_frozen, V12_corridor_full]
+  common_random_numbers: true
+  outcome_informed_development_selection: true
+  formal_effect_estimation_authorized: false
+  total_rollouts_per_controller_decision: 600
+  horizon_steps: 36
+  control_period_s: 0.1
+  maximum_episode_steps: 400
+  workers: 2
+frozen_components:
+  actor_checkpoint: unchanged_from_v4
+  icode_checkpoints: unchanged_from_v4
+  hss_core: unchanged_from_v4
+  rollout_budget: 600
+  horizon_steps: 36
+  control_period_s: 0.1
+change_scope:
+  allowed_prefixes:
+    - perception.scan_guard.dynamic_escape_corridor_
+candidate_override_paths:
+  perception.scan_guard.dynamic_escape_corridor_enabled: true
+  perception.scan_guard.dynamic_escape_corridor_turn_steps: 4
+  perception.scan_guard.dynamic_escape_corridor_commit_steps: 14
+  perception.scan_guard.dynamic_escape_corridor_speed: 0.35
+mechanism_contract:
+  side_selection_is_latched_from_obstacle_bearing: true
+  forward_arc_is_finite_then_straight: true
+  corridor_commit_survives_ttc_dropout: true
+  rear_half_plane_reverse_logic_unchanged: true
+  additional_total_rollouts: 0
+development_go_no_go:
+  minimum_safe_success_gain: 0
+  minimum_prevented_collisions: 0
+  minimum_collision_count_reduction: 0
+  maximum_new_paired_collisions: 0
+  maximum_lost_v4_successes: 0
+  maximum_mean_minimum_clearance_loss_m: 1.0
+  minimum_candidate_clearance_m: -0.05
+  require_every_decision_600_rollouts: true
+  interpretation: smoke_only
+stop_rule:
+  maximum_local_attempts_in_family: 1
+development_blocks:
+  - {split: ood, seed: 750400004, model_block: 1, stratum: opened_v10_ood_late_conflict, arm_order: [V4_full_frozen, V12_corridor_full]}

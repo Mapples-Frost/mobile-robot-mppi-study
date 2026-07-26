@@ -412,12 +412,65 @@ def run(protocol_path=DEFAULT_PROTOCOL, workers=None):
     return _finalize(protocol, source, protocol_path, output, schedule)
 
 
+def analyze_existing(protocol_path=DEFAULT_PROTOCOL):
+    """Verify and finalize a complete raw run after detached stdout."""
+
+    protocol_path = _repo_path(protocol_path)
+    protocol = v4._load_yaml(protocol_path)
+    if protocol["status"] != "frozen_before_development_execution":
+        raise ValueError("v6 development protocol is not frozen")
+    _validate_parent(protocol)
+    _, source, _, _, _ = v4.validate_protocol(
+        _repo_path(protocol["source_protocol"])
+    )
+    output = _repo_path(protocol["output_dir"])
+    if (output / "development_result.json").exists():
+        raise FileExistsError("v6 development result already exists")
+    if (output / "artifact_manifest.json").exists():
+        raise FileExistsError("v6 artifact manifest already exists")
+    schedule = v5._load_json(output / "schedule.json")
+    if schedule["schedule_sha256"] != v5._canonical_sha256(
+        schedule["blocks"]
+    ):
+        raise RuntimeError("v6 existing schedule hash mismatch")
+    expected = protocol["development_blocks"]
+    if len(schedule["blocks"]) != len(expected):
+        raise RuntimeError("v6 existing schedule block count mismatch")
+    identity = ("split", "seed", "model_block", "stratum", "arm_order")
+    for scheduled, frozen in zip(schedule["blocks"], expected):
+        if any(scheduled[key] != frozen[key] for key in identity):
+            raise RuntimeError("v6 existing schedule differs from protocol")
+        if not scheduled.get("certificate"):
+            raise RuntimeError("v6 existing schedule lacks certificate")
+        for arm in protocol["design"]["paired_arms"]:
+            run_dir = _run_dir(output, scheduled, arm)
+            if not v4._complete(run_dir):
+                raise RuntimeError("incomplete existing v6 episode: %s" % run_dir)
+            job = v5._load_json(run_dir / "v6_development_job.json")
+            if job["arm"] != arm or int(job["block"]["seed"]) != int(
+                scheduled["seed"]
+            ):
+                raise RuntimeError("v6 existing job identity mismatch: %s" % run_dir)
+    v5._write_json(output / "progress.json", {
+        "status": "complete",
+        "completed_blocks": len(expected),
+        "total_blocks": len(expected),
+        "failures": [],
+        "progress_reconciled_after_detached_stdout": True,
+    })
+    return _finalize(protocol, source, protocol_path, output, schedule)
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser()
     parser.add_argument("--protocol", default=str(DEFAULT_PROTOCOL))
     parser.add_argument("--workers", type=int, default=None)
+    parser.add_argument("--analyze-existing", action="store_true")
     args = parser.parse_args(argv)
-    result, manifest = run(args.protocol, args.workers)
+    if args.analyze_existing:
+        result, manifest = analyze_existing(args.protocol)
+    else:
+        result, manifest = run(args.protocol, args.workers)
     print(json.dumps({
         "status": result["status"],
         "checks": result["checks"],

@@ -68,3 +68,23 @@ def test_v6_a1_uses_current_hazard_evidence_without_truth_or_deadline():
     assert not contract["deadline_or_remaining_episode_time_used_for_control"]
     assert contract["additional_total_rollouts"] == 0
     assert contract["total_rollouts_per_decision"] == 600
+
+
+def test_v6_existing_analysis_rejects_schedule_hash_mismatch(monkeypatch):
+    protocol, _ = _protocols()
+    monkeypatch.setattr(v6, "_validate_parent", lambda _protocol: None)
+    monkeypatch.setattr(
+        v6.v4,
+        "validate_protocol",
+        lambda _path: (None, {}, None, None, None),
+    )
+    monkeypatch.setattr(v6.v5, "_load_json", lambda _path: {
+        "blocks": protocol["development_blocks"],
+        "schedule_sha256": "not-the-canonical-hash",
+    })
+    try:
+        v6.analyze_existing(v6.DEFAULT_PROTOCOL)
+    except RuntimeError as error:
+        assert "schedule hash mismatch" in str(error)
+    else:
+        raise AssertionError("mismatched schedule was accepted")

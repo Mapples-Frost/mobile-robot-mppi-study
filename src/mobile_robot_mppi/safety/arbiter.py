@@ -913,13 +913,20 @@ class ScanGuardArbiter:
         obstacle_bearing = float(
             guard_result.get("dynamic_obstacle_bearing_rad", 0.0)
         )
-        geometric_forward_escape = bool(
-            self.dynamic_escape_uncertainty_fusion_enabled
-            and reactive_escape_allowed
+        front_geometric_escape_available = bool(
+            reactive_escape_allowed
             and np.isfinite(obstacle_bearing)
             and abs(obstacle_bearing) <= 0.5 * np.pi
             and "v_cmd" in self.action_spec.names
             and "omega_cmd" in self.action_spec.names
+        )
+        geometric_forward_escape = bool(
+            self.dynamic_escape_uncertainty_fusion_enabled
+            and front_geometric_escape_available
+        )
+        corridor_entry_allowed = bool(
+            self.dynamic_escape_corridor_enabled
+            and front_geometric_escape_available
         )
         corridor_commit_active = bool(
             self.dynamic_escape_corridor_enabled
@@ -937,7 +944,7 @@ class ScanGuardArbiter:
             and "omega_cmd" in self.action_spec.names
         )
         corridor_escape_active = bool(
-            corridor_commit_active or geometric_forward_escape
+            corridor_commit_active or corridor_entry_allowed
         )
         corridor_turning = False
         committed_geometric_escape = bool(
@@ -978,7 +985,7 @@ class ScanGuardArbiter:
         )
         if dynamic_escape_allowed or corridor_commit_active:
             if self.dynamic_escape_corridor_enabled and (
-                geometric_forward_escape or corridor_commit_active
+                corridor_entry_allowed or corridor_commit_active
             ):
                 if self._dynamic_escape_corridor_remaining <= 0:
                     self._dynamic_escape_corridor_turn_sign = (

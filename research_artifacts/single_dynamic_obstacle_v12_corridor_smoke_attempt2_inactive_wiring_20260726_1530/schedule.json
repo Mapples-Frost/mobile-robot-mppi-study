@@ -1,0 +1,40 @@
+{
+  "blocks": [
+    {
+      "arm_order": [
+        "V4_full_frozen",
+        "V12_corridor_full"
+      ],
+      "block_order": 1,
+      "certificate": {
+        "certificate_rule": "ghost_constant_speed_center_distance_le_sum_radii",
+        "collision_threshold_m": 0.5,
+        "conflict_window_threshold_m": 0.8,
+        "conflict_windows_s": [
+          [
+            16.55,
+            20.05
+          ]
+        ],
+        "minimum_distance_time_s": 18.3,
+        "minimum_ghost_obstacle_center_distance_m": 0.027399426059662214,
+        "noise_profile": "medium",
+        "obstacle_process": "hybrid_patrol",
+        "obstacle_truth_sha256": "8ff43be43b2879c2016b3533b76d84286db43f8cdb432dcd55e91d6fe320d7bd",
+        "seed": 750300015,
+        "split": "id"
+      },
+      "model_block": 2,
+      "seed": 750300015,
+      "split": "id",
+      "stratum": "opened_v10_id_late_conflict"
+    }
+  ],
+  "formal_effect_estimation_authorized": false,
+  "implementation_git_sha": "187a09733334b3fcc298ce05194d2f22c2ff2652",
+  "outcome_informed_development_selection": true,
+  "schedule_sha256": "50c043ac72441602cf95fb20569b4b5b1d209851beb73ccaab77be23c74c5efb",
+  "schema_version": 1,
+  "scope": "engineering_mechanism_smoke_not_effect_estimation",
+  "workers": 2
+}

@@ -205,6 +205,12 @@ def _episode_row(output, block, arm, source_protocol):
         "planner_temporal_escape_active_steps": int(metrics.get(
             "planner_temporal_escape_active_steps", 0
         )),
+        "uncertainty_fusion_steps": int(metrics.get(
+            "dynamic_escape_uncertainty_fusion_steps", 0
+        )),
+        "geometric_forward_escape_steps": int(metrics.get(
+            "dynamic_escape_geometric_forward_steps", 0
+        )),
     })
     return row
 
@@ -287,6 +293,8 @@ def _analyze(protocol, source_protocol, output, blocks):
                 + int(row.get(
                     "speed_governor_bypassed_for_active_avoidance_steps", 0
                 ))
+                + int(row.get("uncertainty_fusion_steps", 0))
+                + int(row.get("geometric_forward_escape_steps", 0))
             ) > 0
             for row in candidate
         ),

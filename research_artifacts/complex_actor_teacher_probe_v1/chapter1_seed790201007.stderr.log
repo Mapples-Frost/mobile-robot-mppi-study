@@ -1,0 +1,34 @@
+Traceback (most recent call last):
+  File "D:\Projects\mobile-robot-mppi-study-single-v6\experiments\dynamic_uncertainty\run_complex_actor_teacher_probe.py", line 77, in <module>
+    raise SystemExit(main())
+  File "D:\Projects\mobile-robot-mppi-study-single-v6\experiments\dynamic_uncertainty\run_complex_actor_teacher_probe.py", line 71, in main
+    ).run()
+  File "D:\Projects\mobile-robot-mppi-study-single-v6\src\mobile_robot_mppi\runtime\experiment_runner.py", line 118, in run
+    plan = controller.plan(perceived.observation, reference)
+  File "D:\Projects\mobile-robot-mppi-study-single-v6\src\mobile_robot_mppi\planning\residual_shield.py", line 566, in plan
+    nominal_plan, residual_plan = self._plan_pair(
+  File "D:\Projects\mobile-robot-mppi-study-single-v6\src\mobile_robot_mppi\planning\residual_shield.py", line 210, in _plan_pair
+    return nominal_future.result(), residual_future.result()
+  File "C:\Users\lenovo\AppData\Local\Programs\Python\Python310\lib\concurrent\futures\_base.py", line 458, in result
+    return self.__get_result()
+  File "C:\Users\lenovo\AppData\Local\Programs\Python\Python310\lib\concurrent\futures\_base.py", line 403, in __get_result
+    raise self._exception
+  File "C:\Users\lenovo\AppData\Local\Programs\Python\Python310\lib\concurrent\futures\thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+  File "D:\Projects\mobile-robot-mppi-study-single-v6\src\mobile_robot_mppi\planning\mppi.py", line 7715, in plan
+    action, sequence, updated_trajectory, diagnostics = self._solve_plan(
+  File "D:\Projects\mobile-robot-mppi-study-single-v6\src\mobile_robot_mppi\planning\mppi.py", line 6525, in _solve_plan
+    emergency_context = self._probabilistic_emergency_context(
+  File "D:\Projects\mobile-robot-mppi-study-single-v6\src\mobile_robot_mppi\planning\mppi.py", line 1791, in _probabilistic_emergency_context
+    stop_risk = self._probabilistic_collision_risk(
+  File "D:\Projects\mobile-robot-mppi-study-single-v6\src\mobile_robot_mppi\planning\mppi.py", line 4388, in _probabilistic_collision_risk
+    return evaluate_collision_risk(
+  File "D:\Projects\mobile-robot-mppi-study-single-v6\src\mobile_robot_mppi\obstacles\collision_risk.py", line 349, in evaluate_collision_risk
+    per_obstacle = [
+  File "D:\Projects\mobile-robot-mppi-study-single-v6\src\mobile_robot_mppi\obstacles\collision_risk.py", line 350, in <listcomp>
+    mixture_collision_probability_upper_bound(
+  File "D:\Projects\mobile-robot-mppi-study-single-v6\src\mobile_robot_mppi\obstacles\collision_risk.py", line 317, in mixture_collision_probability_upper_bound
+    component = component_collision_probability_upper_bound(
+  File "D:\Projects\mobile-robot-mppi-study-single-v6\src\mobile_robot_mppi\obstacles\collision_risk.py", line 278, in component_collision_probability_upper_bound
+    raise ValueError("robot horizon cannot exceed obstacle forecast horizon")
+ValueError: robot horizon cannot exceed obstacle forecast horizon

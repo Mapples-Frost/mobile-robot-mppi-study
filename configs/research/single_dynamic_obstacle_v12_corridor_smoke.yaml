@@ -1,5 +1,5 @@
 schema_version: 1
-status: frozen_before_smoke_execution
+status: frozen_before_development_execution
 frozen_at: "2026-07-26T15:05:00+08:00"
 study_id: single_dynamic_obstacle_v12_corridor_smoke
 scope: engineering_mechanism_smoke_not_effect_estimation

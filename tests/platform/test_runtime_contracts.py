@@ -107,6 +107,35 @@ def test_soft_block_creep_is_strictly_capped_and_preserves_turning():
     np.testing.assert_allclose(decision.executed_control.values, (0.04, -0.5))
 
 
+def test_front_slowdown_scales_forward_but_preserves_vetted_reverse():
+    action_spec = body_velocity_action((-0.35, 0.70), 0.95)
+    arbiter = ScanGuardArbiter(action_spec, {})
+    guard = {
+        "emergency_stop": False,
+        "should_slow_down": True,
+        "slow_scale": 0.25,
+        "reason": "front_obstacle_slow",
+    }
+
+    forward = arbiter.arbitrate(
+        ControlCommand(np.asarray((0.60, 0.20))),
+        guard,
+    )
+    reverse = arbiter.arbitrate(
+        ControlCommand(np.asarray((-0.35, -0.20))),
+        guard,
+    )
+
+    np.testing.assert_allclose(
+        forward.executed_control.values,
+        (0.15, 0.20),
+    )
+    np.testing.assert_allclose(
+        reverse.executed_control.values,
+        (-0.35, -0.20),
+    )
+
+
 def test_dynamic_escape_requires_matched_obstacle_and_lower_risk_than_stop():
     action_spec = body_velocity_action((0.0, 0.4), 0.9)
     arbiter = ScanGuardArbiter(

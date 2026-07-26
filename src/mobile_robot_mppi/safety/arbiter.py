@@ -1389,7 +1389,16 @@ class ScanGuardArbiter:
         elif bool(guard_result.get("should_slow_down", False)):
             if "v_cmd" in self.action_spec.names:
                 index = self.action_spec.index("v_cmd")
-                values[index] = max(0.0, values[index]) * float(guard_result.get("slow_scale", 1.0))
+                # A front-sector slowdown constrains motion *toward* the
+                # obstacle.  Mapping a planner-vetted reverse command through
+                # max(0, v) traps the robot against the same obstacle and
+                # defeats static/dynamic candidate certification upstream.
+                # Emergency and near-body hard stops are handled above and
+                # remain fail-closed.
+                if values[index] > 0.0:
+                    values[index] *= float(
+                        guard_result.get("slow_scale", 1.0)
+                    )
         if not dynamic_escape_allowed and not corridor_commit_active:
             self._dynamic_escape_direction_commit_remaining = 0
             self._dynamic_escape_direction_commit_values = None

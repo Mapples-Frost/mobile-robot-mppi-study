@@ -1,0 +1,38 @@
+{
+  "arm": "V4_full_frozen",
+  "block": {
+    "arm_order": [
+      "V4_full_frozen",
+      "V11_uncertainty_geometry_full"
+    ],
+    "block_order": 11,
+    "certificate": {
+      "certificate_rule": "ghost_constant_speed_center_distance_le_sum_radii",
+      "collision_threshold_m": 0.5,
+      "conflict_window_threshold_m": 0.8,
+      "conflict_windows_s": [
+        [
+          0.0,
+          2.95
+        ],
+        [
+          14.15,
+          25.200000000000003
+        ]
+      ],
+      "minimum_distance_time_s": 22.55,
+      "minimum_ghost_obstacle_center_distance_m": 0.2759731636118935,
+      "noise_profile": "process_shift",
+      "obstacle_process": "hybrid_patrol",
+      "obstacle_truth_sha256": "c8a35d0a421b50662dfd47acfd258bf67d5a768a5d5484b8c3d9e55a15fe2bd3",
+      "seed": 750400004,
+      "split": "ood"
+    },
+    "model_block": 1,
+    "seed": 750400004,
+    "split": "ood",
+    "stratum": "opened_v10_ood_late_conflict"
+  },
+  "change_signature": {},
+  "resolved_config_sha256": "a6b10f85a2b59c2aaffc82b5b416a77950c38c30f1d2f1bf94ecbd119ad9ac65"
+}

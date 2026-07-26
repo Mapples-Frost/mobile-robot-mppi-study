@@ -1,0 +1,63 @@
+{
+  "arm": "V11_uncertainty_geometry_full",
+  "block": {
+    "arm_order": [
+      "V4_full_frozen",
+      "V11_uncertainty_geometry_full"
+    ],
+    "block_order": 16,
+    "certificate": {
+      "certificate_rule": "ghost_constant_speed_center_distance_le_sum_radii",
+      "collision_threshold_m": 0.5,
+      "conflict_window_threshold_m": 0.8,
+      "conflict_windows_s": [
+        [
+          0.0,
+          6.5
+        ],
+        [
+          10.700000000000001,
+          13.25
+        ],
+        [
+          31.15,
+          35.5
+        ]
+      ],
+      "minimum_distance_time_s": 1.4000000000000001,
+      "minimum_ghost_obstacle_center_distance_m": 0.40441644943792876,
+      "noise_profile": "process_shift",
+      "obstacle_process": "hybrid_patrol",
+      "obstacle_truth_sha256": "527d8ec99f143624550fd20deb67837464f8382d01d2b8e86faf8e6ed708fe76",
+      "seed": 750400023,
+      "split": "ood"
+    },
+    "model_block": 1,
+    "seed": 750400023,
+    "split": "ood",
+    "stratum": "opened_v10_ood_early_conflict"
+  },
+  "change_signature": {
+    "perception.scan_guard.dynamic_escape_direction_commit_steps": [
+      "<MISSING>",
+      6
+    ],
+    "perception.scan_guard.dynamic_escape_uncertainty_fusion_enabled": [
+      "<MISSING>",
+      true
+    ],
+    "perception.scan_guard.dynamic_escape_uncertainty_nis_threshold": [
+      "<MISSING>",
+      4.0
+    ],
+    "perception.scan_guard.dynamic_escape_uncertainty_trigger_ttc_s": [
+      "<MISSING>",
+      2.2
+    ],
+    "planner.probabilistic_obstacle_front_obstacle_forward_turn_enabled": [
+      "<MISSING>",
+      true
+    ]
+  },
+  "resolved_config_sha256": "ff633c1fd6c3bad7ce4496a184d2babbdc27d18aa8c5d7ea23f1143bafa6b2ba"
+}

@@ -1,0 +1,44 @@
+{
+  "blocks": [
+    {
+      "arm_order": [
+        "V4_full_frozen",
+        "V12_corridor_full"
+      ],
+      "block_order": 1,
+      "certificate": {
+        "certificate_rule": "ghost_constant_speed_center_distance_le_sum_radii",
+        "collision_threshold_m": 0.5,
+        "conflict_window_threshold_m": 0.8,
+        "conflict_windows_s": [
+          [
+            0.0,
+            2.95
+          ],
+          [
+            14.15,
+            25.200000000000003
+          ]
+        ],
+        "minimum_distance_time_s": 22.55,
+        "minimum_ghost_obstacle_center_distance_m": 0.2759731636118935,
+        "noise_profile": "process_shift",
+        "obstacle_process": "hybrid_patrol",
+        "obstacle_truth_sha256": "c8a35d0a421b50662dfd47acfd258bf67d5a768a5d5484b8c3d9e55a15fe2bd3",
+        "seed": 750400004,
+        "split": "ood"
+      },
+      "model_block": 1,
+      "seed": 750400004,
+      "split": "ood",
+      "stratum": "opened_v10_ood_late_conflict"
+    }
+  ],
+  "formal_effect_estimation_authorized": false,
+  "implementation_git_sha": "0006e51239f0d6d122c76db354eef1865a1bd79c",
+  "outcome_informed_development_selection": true,
+  "schedule_sha256": "49d92bb15103db1a3772b75344848591f1566242514d90dd7d1cc5939f9b4c04",
+  "schema_version": 1,
+  "scope": "engineering_mechanism_smoke_not_effect_estimation",
+  "workers": 2
+}

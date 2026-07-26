@@ -57,4 +57,4 @@ development_go_no_go:
 stop_rule:
   maximum_local_attempts_in_family: 1
 development_blocks:
-  - {split: ood, seed: 750400004, model_block: 1, stratum: opened_v10_ood_late_conflict, arm_order: [V4_full_frozen, V12_corridor_full]}
+  - {split: id, seed: 750300015, model_block: 2, stratum: opened_v10_id_late_conflict, arm_order: [V4_full_frozen, V12_corridor_full]}

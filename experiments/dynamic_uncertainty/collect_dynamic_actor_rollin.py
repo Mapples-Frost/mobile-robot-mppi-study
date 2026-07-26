@@ -232,7 +232,14 @@ def collect(
             collection["maximum_steps"],
         )
         teacher_job = configure_teacher_job(
-            base, stage3, stage4, seed, collection["maximum_steps"]
+            base,
+            stage3,
+            stage4,
+            seed,
+            collection["maximum_steps"],
+            collection.get(
+                "hard_violation_action", "active_avoidance"
+            ),
         )
         runner = ExperimentRunner(
             student_job,

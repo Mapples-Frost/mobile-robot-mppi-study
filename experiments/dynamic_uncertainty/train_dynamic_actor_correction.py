@@ -405,10 +405,18 @@ def train(
     config_path = Path(config_path).resolve()
     config = yaml.safe_load(config_path.read_text(encoding="utf-8"))
     training = dict(config["training"])
-    if not str(training["device"]).startswith("cuda"):
-        raise ValueError("dynamic Actor correction training must use CUDA")
-    if not torch.cuda.is_available():
-        raise RuntimeError("CUDA was requested but is unavailable")
+    device_name = str(training["device"]).lower()
+    if device_name.startswith("cuda"):
+        if not torch.cuda.is_available():
+            raise RuntimeError("CUDA was requested but is unavailable")
+    elif not (
+        device_name == "cpu"
+        and bool(training.get("allow_cpu_development", False))
+    ):
+        raise ValueError(
+            "dynamic Actor correction training requires CUDA unless "
+            "allow_cpu_development is explicitly enabled"
+        )
     dataset_root = Path(
         dataset_dir or ROOT / config["collection"]["output_dir"]
     ).resolve()
@@ -844,7 +852,7 @@ def train(
                         improved_path.relative_to(ROOT)
                     ))
             print(json.dumps({
-                "stage": "cuda_training",
+                "stage": "actor_training",
                 "device": str(agent.device),
                 "update": update,
                 "updates": updates,
@@ -914,7 +922,11 @@ def train(
         "decision": "offline_gate_pass" if all(checks.values()) else "offline_gate_fail",
         "gate_pass": bool(all(checks.values())),
         "device": str(best_agent.device),
-        "gpu_name": torch.cuda.get_device_name(best_agent.device),
+        "gpu_name": (
+            torch.cuda.get_device_name(best_agent.device)
+            if str(best_agent.device).startswith("cuda")
+            else None
+        ),
         "best_update": best_update,
         "best_checkpoint": str(best_path.relative_to(ROOT)),
         "best_checkpoint_sha256": _sha256(best_path),

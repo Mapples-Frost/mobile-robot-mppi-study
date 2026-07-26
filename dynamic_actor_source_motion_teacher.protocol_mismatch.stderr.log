@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "D:\Projects\mobile-robot-mppi-study-single-v6\experiments\dynamic_uncertainty\collect_dynamic_actor_teacher.py", line 393, in <module>
+    raise SystemExit(main())
+  File "D:\Projects\mobile-robot-mppi-study-single-v6\experiments\dynamic_uncertainty\collect_dynamic_actor_teacher.py", line 388, in main
+    collect(args.config, args.output_dir, args.maximum_episodes)
+  File "D:\Projects\mobile-robot-mppi-study-single-v6\experiments\dynamic_uncertainty\collect_dynamic_actor_teacher.py", line 272, in collect
+    raise ValueError("dynamic Actor correction protocol mismatch")
+ValueError: dynamic Actor correction protocol mismatch

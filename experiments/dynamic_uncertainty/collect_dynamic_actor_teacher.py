@@ -89,7 +89,14 @@ def _actor_contract(checkpoint: Path, expected_sha256: str):
     return payload, encoder, action_spec, actual
 
 
-def configure_teacher_job(base, stage3, stage4, seed, maximum_steps):
+def configure_teacher_job(
+    base,
+    stage3,
+    stage4,
+    seed,
+    maximum_steps,
+    hard_violation_action="active_avoidance",
+):
     """Return safe standard-MPPI teacher config without learned proposals."""
 
     config = configure_combined_job(
@@ -99,6 +106,9 @@ def configure_teacher_job(base, stage3, stage4, seed, maximum_steps):
         "probabilistic_obstacle_stopping_feasibility_enabled": True,
         "probabilistic_obstacle_emergency_candidates_enabled": True,
         "probabilistic_obstacle_emergency_candidate_prefix_steps": 3,
+        "probabilistic_obstacle_hard_violation_action": str(
+            hard_violation_action
+        ),
     })
     config["perception"]["scan_guard"].update({
         "dynamic_escape_probability_mass_enabled": True,
@@ -258,7 +268,10 @@ def _rows_to_arrays(rows, validation, thresholds, episode_summary):
 def collect(config_path=DEFAULT_CONFIG, output_dir=None, maximum_episodes=None):
     config_path = Path(config_path).resolve()
     config = yaml.safe_load(config_path.read_text(encoding="utf-8"))
-    if config.get("protocol") != "dynamic_actor_correction_development_v1":
+    if config.get("protocol") not in {
+        "dynamic_actor_correction_development_v1",
+        "dynamic_actor_source_motion_development_v1",
+    }:
         raise ValueError("dynamic Actor correction protocol mismatch")
     collection = dict(config["collection"])
     output = Path(output_dir or ROOT / collection["output_dir"]).resolve()
@@ -286,7 +299,14 @@ def collect(config_path=DEFAULT_CONFIG, output_dir=None, maximum_episodes=None):
     for index, seed in enumerate(seeds):
         run_dir = output / "runs" / ("seed_%d" % seed)
         job = configure_teacher_job(
-            base, stage3, stage4, seed, collection["maximum_steps"]
+            base,
+            stage3,
+            stage4,
+            seed,
+            collection["maximum_steps"],
+            collection.get(
+                "hard_violation_action", "active_avoidance"
+            ),
         )
         runner = ExperimentRunner(job, ROOT, output_dir=run_dir, headless=True)
         recorder = _RecordingController(

@@ -4355,6 +4355,118 @@ def test_near_dynamic_obstacle_triggers_motion_without_scan_flow_ttc():
     assert np.sum(first_speeds < 0.0) == 3
 
 
+def test_forecast_corroboration_rejects_noncritical_raw_scan_false_positive():
+    controller = MppiController(
+        LegacyUnicyclePrediction(),
+        unicycle_state(),
+        body_velocity_action((-0.35, 0.45), 0.9),
+        MppiConfig(
+            horizon=5,
+            num_samples=8,
+            dt=0.1,
+            probabilistic_obstacle_risk_enabled=True,
+            probabilistic_obstacle_hard_threshold=0.20,
+            probabilistic_obstacle_emergency_candidates_enabled=True,
+            probabilistic_obstacle_emergency_candidate_trigger_ttc_s=1.8,
+            probabilistic_obstacle_emergency_candidate_trigger_distance_m=0.85,
+            probabilistic_obstacle_emergency_candidate_critical_distance_m=0.42,
+            probabilistic_obstacle_emergency_forecast_corroboration_enabled=True,
+        ),
+    )
+    observation = SimpleNamespace(auxiliary={
+        "dynamic_obstacle_escape_context": {
+            "temporal_scan_valid": True,
+            "temporal_scan_ttc_s": 1.0,
+            "dynamic_obstacle_scan_flow_match": True,
+            "dynamic_obstacle_surface_range_m": 0.60,
+            "dynamic_obstacle_away_heading_error_rad": 0.0,
+        }
+    })
+    far_forecast = _forecast(
+        np.repeat(np.asarray(((5.0, 5.0),)), 5, axis=0),
+        covariance=0.001,
+        radius=0.20,
+    )
+
+    context = controller._probabilistic_emergency_context(
+        observation,
+        np.zeros(controller.state_spec.dimension),
+        (far_forecast,),
+    )
+
+    assert context["near_distance_triggered"]
+    assert not context["critical_distance_triggered"]
+    assert context["forecast_corroboration_enabled"]
+    assert not context["forecast_corroborated"]
+    assert not context["raw_triggered"]
+    assert not context["triggered"]
+
+
+def test_forecast_corroboration_admits_predicted_conflict_and_critical_override():
+    controller = MppiController(
+        LegacyUnicyclePrediction(),
+        unicycle_state(),
+        body_velocity_action((-0.35, 0.45), 0.9),
+        MppiConfig(
+            horizon=5,
+            num_samples=8,
+            dt=0.1,
+            probabilistic_obstacle_risk_enabled=True,
+            probabilistic_obstacle_hard_threshold=0.20,
+            probabilistic_obstacle_emergency_candidates_enabled=True,
+            probabilistic_obstacle_emergency_candidate_trigger_ttc_s=1.8,
+            probabilistic_obstacle_emergency_candidate_trigger_distance_m=0.85,
+            probabilistic_obstacle_emergency_candidate_critical_distance_m=0.42,
+            probabilistic_obstacle_emergency_forecast_corroboration_enabled=True,
+        ),
+    )
+    state = np.zeros(controller.state_spec.dimension)
+    observation = SimpleNamespace(auxiliary={
+        "dynamic_obstacle_escape_context": {
+            "temporal_scan_valid": True,
+            "temporal_scan_ttc_s": 1.0,
+            "dynamic_obstacle_scan_flow_match": True,
+            "dynamic_obstacle_surface_range_m": 0.60,
+            "dynamic_obstacle_away_heading_error_rad": 0.0,
+        }
+    })
+    colliding_forecast = _forecast(
+        np.zeros((5, 2)),
+        covariance=0.001,
+        radius=0.20,
+    )
+
+    corroborated = controller._probabilistic_emergency_context(
+        observation, state, (colliding_forecast,)
+    )
+    assert corroborated["forecast_corroborated"]
+    assert corroborated["raw_triggered"]
+    assert corroborated["triggered"]
+
+    controller.reset()
+    critical_observation = SimpleNamespace(auxiliary={
+        "dynamic_obstacle_escape_context": {
+            "temporal_scan_valid": False,
+            "temporal_scan_ttc_s": float("inf"),
+            "dynamic_obstacle_scan_flow_match": False,
+            "dynamic_obstacle_surface_range_m": 0.30,
+            "dynamic_obstacle_away_heading_error_rad": np.pi,
+        }
+    })
+    far_forecast = _forecast(
+        np.repeat(np.asarray(((5.0, 5.0),)), 5, axis=0),
+        covariance=0.001,
+        radius=0.20,
+    )
+    critical = controller._probabilistic_emergency_context(
+        critical_observation, state, (far_forecast,)
+    )
+    assert not critical["forecast_corroborated"]
+    assert critical["critical_distance_triggered"]
+    assert critical["raw_triggered"]
+    assert critical["triggered"]
+
+
 def test_counterflow_escape_moves_away_and_against_obstacle_velocity():
     controller = MppiController(
         LegacyUnicyclePrediction(),

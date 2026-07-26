@@ -74,6 +74,11 @@ planner:
   probabilistic_obstacle_emergency_candidate_trigger_distance_m: 0.85
   probabilistic_obstacle_emergency_candidate_critical_distance_m: 0.42
   probabilistic_obstacle_emergency_candidate_intent_hold_steps: 12
+  # Raw scan flow remains available to Safety, but a non-critical planner
+  # escape must agree with the existing probabilistic stop-trajectory risk.
+  # This prevents static-wall range contraction from masquerading as a moving
+  # conflict in dense maps. Critical near-contact still bypasses this gate.
+  probabilistic_obstacle_emergency_forecast_corroboration_enabled: true
   probabilistic_obstacle_emergency_candidate_rearm_ttc_s: 2.80
   probabilistic_obstacle_emergency_candidate_rearm_clear_steps: 3
   probabilistic_obstacle_counterflow_escape_enabled: true

@@ -1283,6 +1283,24 @@ class EpisodeMetrics:
                     float("inf"),
                 )
             ),
+            "probabilistic_obstacle_emergency_forecast_corroboration_enabled": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_emergency_forecast_corroboration_enabled",
+                    False,
+                )
+            ),
+            "probabilistic_obstacle_emergency_forecast_corroborated": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_emergency_forecast_corroborated",
+                    False,
+                )
+            ),
+            "probabilistic_obstacle_emergency_forecast_stop_maximum_probability": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_emergency_forecast_stop_maximum_probability",
+                    0.0,
+                )
+            ),
             "probabilistic_obstacle_counterflow_escape_applied": float(
                 planner_diagnostics.get(
                     "probabilistic_obstacle_counterflow_escape_applied",
@@ -2747,6 +2765,15 @@ class EpisodeMetrics:
                 sum(
                     row.get(
                         "probabilistic_obstacle_emergency_critical_distance_triggered",
+                        0.0,
+                    )
+                    for row in values
+                )
+            ),
+            "probabilistic_obstacle_emergency_forecast_corroborated_steps": int(
+                sum(
+                    row.get(
+                        "probabilistic_obstacle_emergency_forecast_corroborated",
                         0.0,
                     )
                     for row in values

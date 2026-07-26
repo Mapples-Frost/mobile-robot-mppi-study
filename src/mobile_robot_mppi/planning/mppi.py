@@ -117,6 +117,7 @@ class MppiConfig:
     probabilistic_obstacle_emergency_candidate_trigger_distance_m: float = 0.0
     probabilistic_obstacle_emergency_candidate_critical_distance_m: float = 0.0
     probabilistic_obstacle_emergency_candidate_intent_hold_steps: int = 0
+    probabilistic_obstacle_emergency_forecast_corroboration_enabled: bool = False
     probabilistic_obstacle_front_obstacle_forward_turn_enabled: bool = False
     probabilistic_obstacle_counterflow_escape_enabled: bool = False
     probabilistic_obstacle_counterflow_weight: float = 1.0
@@ -410,6 +411,12 @@ class MppiConfig:
                 values.get(
                     "probabilistic_obstacle_emergency_candidate_intent_hold_steps",
                     0,
+                )
+            ),
+            probabilistic_obstacle_emergency_forecast_corroboration_enabled=bool(
+                values.get(
+                    "probabilistic_obstacle_emergency_forecast_corroboration_enabled",
+                    False,
                 )
             ),
             probabilistic_obstacle_front_obstacle_forward_turn_enabled=bool(
@@ -1707,6 +1714,12 @@ class MppiController:
                 "front_obstacle_forward_turn": False,
                 "near_distance_triggered": False,
                 "critical_distance_triggered": False,
+                "forecast_corroboration_enabled": bool(
+                    self.config
+                    .probabilistic_obstacle_emergency_forecast_corroboration_enabled
+                ),
+                "forecast_corroborated": False,
+                "forecast_stop_maximum_probability": 0.0,
                 "surface_range_m": float("inf"),
                 "reserve_reverse_coverage": False,
                 "ttc_s": float("inf"),
@@ -1755,7 +1768,38 @@ class MppiController:
             and np.isfinite(surface_range_m)
             and surface_range_m <= critical_distance
         )
-        raw_triggered = bool(
+        forecast_corroboration_enabled = bool(
+            self.config
+            .probabilistic_obstacle_emergency_forecast_corroboration_enabled
+        )
+        forecast_stop_maximum_probability = 0.0
+        forecast_corroborated = not forecast_corroboration_enabled
+        if (
+            forecast_corroboration_enabled
+            and state is not None
+            and probabilistic_obstacles
+        ):
+            stop_sequence = np.zeros(
+                (self.config.horizon, self.action_spec.dimension),
+                dtype=np.float64,
+            )
+            stop_trajectory = self.rollout(
+                np.asarray(state, dtype=np.float64),
+                stop_sequence,
+            )[0]
+            stop_risk = self._probabilistic_collision_risk(
+                stop_trajectory[None, ...],
+                probabilistic_obstacles,
+            )
+            forecast_stop_maximum_probability = float(
+                stop_risk.maximum_step_probability[0]
+            )
+            forecast_corroborated = bool(
+                forecast_stop_maximum_probability
+                >= self.config.probabilistic_obstacle_hard_threshold
+                - 1.0e-12
+            )
+        noncritical_trigger = bool(
             (
                 threshold > 0.0
                 and closing_observed
@@ -1763,13 +1807,27 @@ class MppiController:
             )
             or near_distance_triggered
         )
+        raw_triggered = bool(
+            critical_distance_triggered
+            or (
+                noncritical_trigger
+                and forecast_corroborated
+            )
+        )
         start_intent = bool(
             raw_triggered and self._probabilistic_emergency_rearm_ready
+        )
+        near_intent_unresolved = bool(
+            critical_distance_triggered
+            or (
+                near_distance_triggered
+                and forecast_corroborated
+            )
         )
         intent_held = bool(
             not start_intent
             and (
-                near_distance_triggered
+                near_intent_unresolved
                 or self._probabilistic_emergency_intent_remaining > 0
             )
         )
@@ -1803,6 +1861,13 @@ class MppiController:
             ),
             "near_distance_triggered": near_distance_triggered,
             "critical_distance_triggered": critical_distance_triggered,
+            "forecast_corroboration_enabled": (
+                forecast_corroboration_enabled
+            ),
+            "forecast_corroborated": forecast_corroborated,
+            "forecast_stop_maximum_probability": (
+                forecast_stop_maximum_probability
+            ),
             "surface_range_m": surface_range_m,
             "reserve_reverse_coverage": critical_distance_triggered,
             "ttc_s": ttc_s,

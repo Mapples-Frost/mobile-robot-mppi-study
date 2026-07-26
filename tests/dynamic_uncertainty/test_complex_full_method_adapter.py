@@ -27,6 +27,7 @@ SHARED_PLANNER_KEYS = (
     "probabilistic_obstacle_emergency_candidate_trigger_distance_m",
     "probabilistic_obstacle_emergency_candidate_critical_distance_m",
     "probabilistic_obstacle_emergency_candidate_intent_hold_steps",
+    "probabilistic_obstacle_emergency_forecast_corroboration_enabled",
     "probabilistic_obstacle_emergency_candidate_rearm_ttc_s",
     "probabilistic_obstacle_emergency_candidate_rearm_clear_steps",
     "probabilistic_obstacle_counterflow_escape_enabled",
@@ -95,6 +96,9 @@ def test_all_maps_use_the_actual_b11_full_stack_and_600_rollouts():
             ]
             == 12
         )
+        assert planner[
+            "probabilistic_obstacle_emergency_forecast_corroboration_enabled"
+        ]
         assert planner["probabilistic_obstacle_counterflow_escape_enabled"]
         assert planner["probabilistic_obstacle_hard_violation_action"] == (
             "active_avoidance_motion"

@@ -3198,6 +3198,19 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
             "probabilistic_obstacle_emergency_surface_range_m": float(
                 emergency_context.get("surface_range_m", float("inf"))
             ),
+            "probabilistic_obstacle_emergency_forecast_corroboration_enabled": bool(
+                emergency_context.get(
+                    "forecast_corroboration_enabled", False
+                )
+            ),
+            "probabilistic_obstacle_emergency_forecast_corroborated": bool(
+                emergency_context.get("forecast_corroborated", False)
+            ),
+            "probabilistic_obstacle_emergency_forecast_stop_maximum_probability": float(
+                emergency_context.get(
+                    "forecast_stop_maximum_probability", 0.0
+                )
+            ),
             "probabilistic_obstacle_counterflow_escape_applied": bool(
                 emergency_context.get("counterflow_escape_applied", False)
             ),

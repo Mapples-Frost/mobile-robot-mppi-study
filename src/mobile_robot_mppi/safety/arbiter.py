@@ -63,6 +63,11 @@ class ScanGuardArbiter:
                 "dynamic_escape_use_vetted_planner_control", False
             )
         )
+        self.dynamic_escape_veto_forward_when_reactive_reverse = bool(
+            self.config.get(
+                "dynamic_escape_veto_forward_when_reactive_reverse", False
+            )
+        )
         self.dynamic_escape_trigger_ttc_s = float(
             self.config.get("dynamic_escape_trigger_ttc_s", 1.20)
         )
@@ -811,9 +816,32 @@ class ScanGuardArbiter:
                 )
             else:
                 recovery_clearance_trend_ready = True
+        away_heading_error = float(guard_result.get(
+            "dynamic_obstacle_away_heading_error_rad", 0.0
+        ))
+        reactive_reverse_required = bool(
+            reactive_escape_allowed
+            and self.dynamic_escape_reverse_speed > 0.0
+            and abs(away_heading_error) > 0.5 * np.pi
+        )
+        vetted_forward_reverse_veto = False
         reverse_escape = False
         if dynamic_escape_allowed:
-            if self.dynamic_escape_use_vetted_planner_control:
+            use_vetted_planner_control = (
+                self.dynamic_escape_use_vetted_planner_control
+            )
+            if use_vetted_planner_control and (
+                self.dynamic_escape_veto_forward_when_reactive_reverse
+                and fresh_reactive_escape_allowed
+                and reactive_reverse_required
+                and "v_cmd" in self.action_spec.names
+            ):
+                proposed_v = float(
+                    values[self.action_spec.index("v_cmd")]
+                )
+                vetted_forward_reverse_veto = bool(proposed_v > 0.0)
+                use_vetted_planner_control = not vetted_forward_reverse_veto
+            if use_vetted_planner_control:
                 # The proposed command is the first action of the trajectory
                 # already evaluated by the probabilistic planner.  Do not
                 # replace it with a bearing-only heuristic whose risk was never
@@ -842,13 +870,8 @@ class ScanGuardArbiter:
                 self._dynamic_escape_hold_remaining -= 1
                 reason = "dynamic_active_escape"
             else:
-                away_heading_error = float(guard_result.get(
-                    "dynamic_obstacle_away_heading_error_rad", 0.0
-                ))
                 reverse_escape = bool(
-                    reactive_escape_allowed
-                    and self.dynamic_escape_reverse_speed > 0.0
-                    and abs(away_heading_error) > 0.5 * np.pi
+                    reactive_reverse_required
                 )
                 if "v_cmd" in self.action_spec.names:
                     index = self.action_spec.index("v_cmd")
@@ -1168,6 +1191,10 @@ class ScanGuardArbiter:
         diagnostics["dynamic_escape_vetted_planner_control"] = bool(
             dynamic_escape_allowed
             and self.dynamic_escape_use_vetted_planner_control
+            and not vetted_forward_reverse_veto
+        )
+        diagnostics["dynamic_escape_vetted_forward_reverse_veto"] = bool(
+            vetted_forward_reverse_veto
         )
         diagnostics["dynamic_recovery_enabled"] = (
             self.dynamic_recovery_enabled

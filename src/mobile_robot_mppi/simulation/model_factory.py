@@ -9,6 +9,16 @@ def _f(value):
     return "%.9g" % float(value)
 
 
+def _rgba(obstacle):
+    values = tuple(
+        float(value)
+        for value in obstacle.get("rgba", (0.65, 0.32, 0.28, 1.0))
+    )
+    if len(values) != 4 or any(value < 0.0 or value > 1.0 for value in values):
+        raise ValueError("obstacle rgba must contain four values in [0, 1]")
+    return " ".join(_f(value) for value in values)
+
+
 def _geom_for_obstacle(index, obstacle, local=False):
     kind = str(obstacle.get("type", "cylinder"))
     position = (0.0, 0.0) if local else obstacle.get("position", (0.0, 0.0))
@@ -18,16 +28,17 @@ def _geom_for_obstacle(index, obstacle, local=False):
         yaw = float(obstacle.get("yaw", 0.0))
         return (
             '<geom name="obstacle_%d" type="box" pos="%s %s %s" '
-            'size="%s %s %s" euler="0 0 %s" rgba="0.65 0.32 0.28 1" group="1"/>'
+            'size="%s %s %s" euler="0 0 %s" rgba="%s" group="1"/>'
             % (index, _f(position[0]), _f(position[1]), _f(height / 2.0),
-               _f(size[0]), _f(size[1]), _f(height / 2.0), _f(yaw))
+               _f(size[0]), _f(size[1]), _f(height / 2.0), _f(yaw),
+               _rgba(obstacle))
         )
     radius = float(obstacle.get("radius", 0.25))
     return (
         '<geom name="obstacle_%d" type="cylinder" pos="%s %s %s" '
-        'size="%s %s" rgba="0.65 0.32 0.28 1" group="1"/>'
+        'size="%s %s" rgba="%s" group="1"/>'
         % (index, _f(position[0]), _f(position[1]), _f(height / 2.0),
-           _f(radius), _f(height / 2.0))
+           _f(radius), _f(height / 2.0), _rgba(obstacle))
     )
 
 

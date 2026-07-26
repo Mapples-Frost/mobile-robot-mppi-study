@@ -69,10 +69,18 @@ planner:
   # activate the existing MPPI candidates without adding a decision layer or
   # changing the rollout budget.
   probabilistic_obstacle_emergency_candidates_enabled: true
+  probabilistic_obstacle_emergency_candidate_prefix_steps: 12
   probabilistic_obstacle_emergency_candidate_trigger_ttc_s: 2.20
   probabilistic_obstacle_emergency_candidate_trigger_distance_m: 0.85
   probabilistic_obstacle_emergency_candidate_critical_distance_m: 0.42
-  probabilistic_obstacle_emergency_candidate_intent_hold_steps: 0
+  probabilistic_obstacle_emergency_candidate_intent_hold_steps: 12
+  probabilistic_obstacle_emergency_candidate_rearm_ttc_s: 2.80
+  probabilistic_obstacle_emergency_candidate_rearm_clear_steps: 3
+  probabilistic_obstacle_counterflow_escape_enabled: true
+  probabilistic_obstacle_counterflow_weight: 0.80
+  probabilistic_obstacle_hard_violation_action: active_avoidance_motion
+  probabilistic_obstacle_hard_violation_progress_tiebreak_enabled: true
+  probabilistic_obstacle_hard_violation_progress_mass_tolerance: 0.10
 
 gate_contract:
   maps: 3

@@ -25,7 +25,7 @@ DEFAULT_CONFIG = (
     ROOT
     / "configs"
     / "research"
-    / "mujoco_irregular_spiral_three_dynamic_v1.yaml"
+    / "mujoco_scattered_clutter_three_loop_v1.yaml"
 )
 
 
@@ -79,45 +79,61 @@ def _draw_sphere(mujoco, scene, point, radius, rgba):
 def _rebuild_overlay(viewer, config, mujoco):
     if viewer.viewer is None or viewer.viewer.user_scn is None:
         return
-    points = config["task"]["points"]
-    design = config.get("spiral_scene_design", config.get("complex_scene_design"))
+    visual = config["scene"].get("visual", {})
+    points = config["task"].get("points", ())
+    design = (
+        config.get("chapter3_scene_design")
+        or config.get("spiral_scene_design")
+        or config.get("complex_scene_design")
+    )
     if design is None:
         raise KeyError("scene design block is required for preview")
-    conflicts = design["route_conflict_points"]
+    conflicts = design.get("route_conflict_points", ())
+    start = config["experiment"]["initial_state"][:2]
+    goal = config["task"]["position"]
     with viewer.viewer.lock():
         scene = viewer.viewer.user_scn
         scene.ngeom = 0
-        for start, end in zip(points[:-1], points[1:]):
-            _draw_segment(
-                mujoco,
-                scene,
-                (start[0], start[1], 0.025),
-                (end[0], end[1], 0.025),
-                0.025,
-                (0.10, 0.78, 0.92, 0.85),
-            )
+        if bool(visual.get("show_reference_overlay", True)):
+            for segment_start, segment_end in zip(points[:-1], points[1:]):
+                _draw_segment(
+                    mujoco,
+                    scene,
+                    (segment_start[0], segment_start[1], 0.025),
+                    (segment_end[0], segment_end[1], 0.025),
+                    0.025,
+                    (0.10, 0.78, 0.92, 0.85),
+                )
         _draw_sphere(
             mujoco,
             scene,
-            (points[0][0], points[0][1], 0.06),
+            (start[0], start[1], 0.06),
             0.11,
             (0.15, 0.90, 0.25, 0.95),
         )
         _draw_sphere(
             mujoco,
             scene,
-            (points[-1][0], points[-1][1], 0.06),
+            (goal[0], goal[1], 0.06),
             0.13,
             (0.15, 0.35, 1.00, 0.95),
         )
-        for point in conflicts:
-            _draw_sphere(
-                mujoco,
-                scene,
-                (point[0], point[1], 0.055),
-                0.09,
-                (1.00, 0.90, 0.10, 0.92),
-            )
+        if bool(visual.get("show_conflict_markers", True)):
+            for point in conflicts:
+                _draw_sphere(
+                    mujoco,
+                    scene,
+                    (point[0], point[1], 0.055),
+                    0.09,
+                    (1.00, 0.90, 0.10, 0.92),
+                )
+
+
+def _motion_duration(obstacle):
+    motion = obstacle["motion"]
+    if str(motion["type"]) == "closed_waypoint_loop":
+        return float(sum(motion["segment_durations_s"]))
+    return float(motion["period_s"])
 
 
 def preview(config_path, seed, playback_speed, loop):
@@ -130,7 +146,7 @@ def preview(config_path, seed, playback_speed, loop):
     viewer = MujocoViewer(plant, enabled=True)
     dt = float(config["experiment"]["control_dt"])
     duration = max(
-        float(obstacle["motion"]["period_s"])
+        _motion_duration(obstacle)
         for obstacle in config["scene"]["obstacles"]
         if obstacle.get("motion")
     )
@@ -149,7 +165,7 @@ def preview(config_path, seed, playback_speed, loop):
             int(seed),
             static_count,
             dynamic_count,
-            len(config["task"]["points"]),
+            len(config["task"].get("points", ())),
         ),
         flush=True,
     )
@@ -193,7 +209,7 @@ def build_parser():
         description="Preview complex static + three dynamic MuJoCo scene"
     )
     parser.add_argument("--config", type=Path, default=DEFAULT_CONFIG)
-    parser.add_argument("--seed", type=int, default=781700001)
+    parser.add_argument("--seed", type=int, default=783100001)
     parser.add_argument("--playback-speed", type=float, default=0.75)
     parser.add_argument("--loop", action="store_true")
     return parser

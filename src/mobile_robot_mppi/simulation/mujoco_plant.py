@@ -133,6 +133,7 @@ class MujocoDiffDrivePlant:
             motion_type = str(motion.get("type", "linear_ping_pong"))
             if motion_type not in (
                 "linear_ping_pong",
+                "closed_waypoint_loop",
                 "recurrent_semimarkov_v3",
             ):
                 raise ValueError("unknown obstacle motion type: %s" % motion_type)
@@ -183,6 +184,87 @@ class MujocoDiffDrivePlant:
                         "yaw": float(obstacle.get("yaw", 0.0)),
                     }
                 )
+                continue
+            if motion_type == "closed_waypoint_loop":
+                waypoints = np.asarray(
+                    motion.get("waypoints", ()), dtype=np.float64
+                )
+                durations = np.asarray(
+                    motion.get("segment_durations_s", ()),
+                    dtype=np.float64,
+                ).reshape(-1)
+                if (
+                    waypoints.ndim != 2
+                    or waypoints.shape[0] < 3
+                    or waypoints.shape[1] != 2
+                    or not np.isfinite(waypoints).all()
+                ):
+                    raise ValueError(
+                        "closed waypoint loop requires at least three "
+                        "finite XY waypoints"
+                    )
+                if (
+                    durations.shape != (waypoints.shape[0],)
+                    or not np.isfinite(durations).all()
+                    or np.any(durations <= 0.0)
+                ):
+                    raise ValueError(
+                        "closed waypoint loop requires one positive duration "
+                        "per closed segment"
+                    )
+                phase = float(motion.get("phase_s", 0.0))
+                phase_jitter = float(motion.get("phase_jitter_s", 0.0))
+                duration_scale = np.asarray(
+                    motion.get("duration_scale_range", (1.0, 1.0)),
+                    dtype=np.float64,
+                ).reshape(-1)
+                waypoint_jitter = float(
+                    motion.get("waypoint_jitter_m", 0.0)
+                )
+                if not math.isfinite(phase):
+                    raise ValueError("closed loop phase must be finite")
+                if not math.isfinite(phase_jitter) or phase_jitter < 0.0:
+                    raise ValueError(
+                        "closed loop phase jitter must be non-negative"
+                    )
+                if (
+                    duration_scale.shape != (2,)
+                    or not np.isfinite(duration_scale).all()
+                    or np.any(duration_scale <= 0.0)
+                    or duration_scale[1] < duration_scale[0]
+                ):
+                    raise ValueError(
+                        "duration_scale_range must contain two ordered "
+                        "positive values"
+                    )
+                if (
+                    not math.isfinite(waypoint_jitter)
+                    or waypoint_jitter < 0.0
+                ):
+                    raise ValueError(
+                        "closed loop waypoint jitter must be non-negative"
+                    )
+                body_id = self._id(
+                    self.mujoco.mjtObj.mjOBJ_BODY,
+                    "dynamic_obstacle_%d" % index,
+                )
+                mocap_id = int(self.model.body_mocapid[body_id])
+                if mocap_id < 0:
+                    raise RuntimeError(
+                        "dynamic obstacle body is not a mocap body"
+                    )
+                resolved.append({
+                    "index": index,
+                    "mocap_id": mocap_id,
+                    "motion_type": motion_type,
+                    "waypoints": waypoints,
+                    "segment_durations_s": durations,
+                    "phase_s": phase,
+                    "phase_jitter_s": phase_jitter,
+                    "duration_scale_range": duration_scale,
+                    "waypoint_jitter_m": waypoint_jitter,
+                    "yaw": float(obstacle.get("yaw", 0.0)),
+                })
                 continue
             start = self._finite_pair(
                 motion.get("start", obstacle.get("position", (0.0, 0.0))),
@@ -266,6 +348,34 @@ class MujocoDiffDrivePlant:
                     trajectory_seed,
                     profiles[base["noise_profile"]],
                     base["obstacle_config"],
+                )
+                item["current_yaw"] = float(base["yaw"])
+                sampled.append(item)
+                continue
+            if base["motion_type"] == "closed_waypoint_loop":
+                phase_jitter = float(base["phase_jitter_s"])
+                item["phase_s"] = float(base["phase_s"]) + (
+                    rng.uniform(-phase_jitter, phase_jitter)
+                    if phase_jitter > 0.0 else 0.0
+                )
+                scale_low, scale_high = base["duration_scale_range"]
+                scale = (
+                    rng.uniform(scale_low, scale_high)
+                    if scale_high > scale_low else float(scale_low)
+                )
+                item["segment_durations_s"] = (
+                    base["segment_durations_s"] * float(scale)
+                )
+                waypoint_jitter = float(base["waypoint_jitter_m"])
+                item["waypoints"] = base["waypoints"].copy()
+                if waypoint_jitter > 0.0:
+                    item["waypoints"] += rng.uniform(
+                        -waypoint_jitter,
+                        waypoint_jitter,
+                        size=item["waypoints"].shape,
+                    )
+                item["period_s"] = float(
+                    np.sum(item["segment_durations_s"])
                 )
                 item["current_yaw"] = float(base["yaw"])
                 sampled.append(item)
@@ -355,6 +465,41 @@ class MujocoDiffDrivePlant:
                     math.sin(0.5 * yaw),
                 )
                 continue
+            if item["motion_type"] == "closed_waypoint_loop":
+                durations = item["segment_durations_s"]
+                period = float(item["period_s"])
+                cycle = (
+                    float(time_value) + float(item["phase_s"])
+                ) % period
+                cumulative = np.cumsum(durations)
+                segment = int(
+                    np.searchsorted(cumulative, cycle, side="right")
+                )
+                segment = min(segment, len(durations) - 1)
+                lower_time = (
+                    0.0 if segment == 0 else float(cumulative[segment - 1])
+                )
+                fraction = (
+                    cycle - lower_time
+                ) / float(durations[segment])
+                waypoints = item["waypoints"]
+                start = waypoints[segment]
+                end = waypoints[(segment + 1) % len(waypoints)]
+                delta = end - start
+                position = start + float(fraction) * delta
+                yaw = float(math.atan2(delta[1], delta[0]))
+                item["current_yaw"] = yaw
+                mocap_id = item["mocap_id"]
+                self.data.mocap_pos[mocap_id] = (
+                    position[0], position[1], 0.0
+                )
+                self.data.mocap_quat[mocap_id] = (
+                    math.cos(0.5 * yaw),
+                    0.0,
+                    0.0,
+                    math.sin(0.5 * yaw),
+                )
+                continue
             fraction = self._ping_pong_fraction(
                 time_value, item["period_s"], item["phase_s"]
             )
@@ -385,6 +530,24 @@ class MujocoDiffDrivePlant:
                     "trajectory_duration_s": float(
                         item["trajectory"].times[-1]
                     ),
+                })
+                continue
+            if item["motion_type"] == "closed_waypoint_loop":
+                output.append({
+                    "index": int(item["index"]),
+                    "x": float(position[0]),
+                    "y": float(position[1]),
+                    "motion_type": item["motion_type"],
+                    "period_s": float(item["period_s"]),
+                    "phase_s": float(item["phase_s"]),
+                    "waypoints": [
+                        [float(value) for value in waypoint]
+                        for waypoint in item["waypoints"]
+                    ],
+                    "segment_durations_s": [
+                        float(value)
+                        for value in item["segment_durations_s"]
+                    ],
                 })
                 continue
             output.append({

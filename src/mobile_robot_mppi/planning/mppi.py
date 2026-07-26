@@ -725,10 +725,11 @@ class MppiConfig:
         if self.probabilistic_obstacle_missing_forecast_action not in (
             "raise",
             "stop",
+            "scan_only",
         ):
             raise ValueError(
                 "probabilistic obstacle missing-forecast action must be "
-                "'raise' or 'stop'"
+                "'raise', 'stop' or 'scan_only'"
             )
         if self.probabilistic_obstacle_hard_violation_action not in (
             "penalize",
@@ -3699,7 +3700,10 @@ class MppiController:
             influence = np.maximum(0.0, self.config.obstacle_influence - clearance)
             costs += self.config.obstacle_weight * np.sum(influence ** 2, axis=1)
             costs += self.config.collision_penalty * collision.astype(np.float64)
-        if self.config.probabilistic_obstacle_risk_enabled:
+        if (
+            self.config.probabilistic_obstacle_risk_enabled
+            and probabilistic_obstacles
+        ):
             risk = probabilistic_risk
             if risk is None:
                 risk = self._probabilistic_collision_risk(
@@ -5714,10 +5718,12 @@ class MppiController:
                 )
             )
             if not probabilistic_obstacles:
-                if (
+                missing_forecast_action = (
                     self.config
                     .probabilistic_obstacle_missing_forecast_action
-                    == "stop"
+                )
+                if (
+                    missing_forecast_action == "stop"
                 ):
                     action = np.zeros(
                         self.action_spec.dimension, dtype=np.float64
@@ -5832,10 +5838,11 @@ class MppiController:
                             }
                         )
                     return action, sequence, trajectory, diagnostics
-                raise ValueError(
-                    "probabilistic obstacle risk is enabled but the "
-                    "observation contains no forecasts"
-                )
+                if missing_forecast_action == "raise":
+                    raise ValueError(
+                        "probabilistic obstacle risk is enabled but the "
+                        "observation contains no forecasts"
+                    )
             for forecast in probabilistic_obstacles:
                 if not isinstance(
                     forecast, GaussianMixtureObstacleForecast
@@ -5876,6 +5883,7 @@ class MppiController:
         )
         risk_candidate_filter = bool(
             self.config.probabilistic_obstacle_risk_enabled
+            and probabilistic_obstacles
             and self.config
             .probabilistic_obstacle_candidate_filter_enabled
         )
@@ -5899,6 +5907,7 @@ class MppiController:
             )
         if (
             self.config.probabilistic_obstacle_risk_enabled
+            and probabilistic_obstacles
             and self.config
             .probabilistic_obstacle_emergency_candidates_enabled
         ):
@@ -6213,7 +6222,10 @@ class MppiController:
                 ),
             }
         mark("final_rollout")
-        if self.config.probabilistic_obstacle_risk_enabled:
+        if (
+            self.config.probabilistic_obstacle_risk_enabled
+            and probabilistic_obstacles
+        ):
             selected_risk = self._probabilistic_collision_risk(
                 updated_trajectory[None, ...],
                 probabilistic_obstacles,
@@ -6512,7 +6524,16 @@ class MppiController:
                 updated_trajectory = self.rollout(state, sequence)[0]
         else:
             probabilistic_risk_diagnostics = {
-                "probabilistic_obstacle_risk_enabled": False,
+                "probabilistic_obstacle_risk_enabled": bool(
+                    self.config.probabilistic_obstacle_risk_enabled
+                ),
+                "probabilistic_obstacle_scan_only_fallback": bool(
+                    self.config.probabilistic_obstacle_risk_enabled
+                    and not probabilistic_obstacles
+                    and self.config
+                    .probabilistic_obstacle_missing_forecast_action
+                    == "scan_only"
+                ),
                 "probabilistic_obstacle_forecast_count": 0,
                 "probabilistic_obstacle_probability_mass": 0.0,
                 "probabilistic_obstacle_union_bound": 0.0,

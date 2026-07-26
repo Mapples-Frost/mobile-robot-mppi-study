@@ -33,6 +33,9 @@ class OnlineTrackerConfig:
     forecast_horizon_steps: int = 36
     forecast_dt_s: float = 0.10
     forecast_auxiliary_key: str = "probabilistic_obstacle_forecasts"
+    motion_confirmation_enabled: bool = False
+    motion_confirmation_required_observations: int = 4
+    motion_confirmation_minimum_speed_mps: float = 0.12
 
     def __post_init__(self):
         finite = (
@@ -42,6 +45,7 @@ class OnlineTrackerConfig:
             float(self.association_gate_m),
             float(self.maximum_unobserved_duration_s),
             float(self.forecast_dt_s),
+            float(self.motion_confirmation_minimum_speed_mps),
         )
         if not np.isfinite(finite).all():
             raise ValueError("online tracker configuration must be finite")
@@ -52,6 +56,7 @@ class OnlineTrackerConfig:
             or finite[3] <= 0.0
             or finite[4] <= 0.0
             or finite[5] <= 0.0
+            or finite[6] < 0.0
         ):
             raise ValueError("online tracker metric values are invalid")
         if (
@@ -69,6 +74,10 @@ class OnlineTrackerConfig:
             )
         if int(self.forecast_horizon_steps) <= 0:
             raise ValueError("forecast horizon must be positive")
+        if int(self.motion_confirmation_required_observations) < 2:
+            raise ValueError(
+                "motion confirmation requires at least two observations"
+            )
         if not str(self.forecast_auxiliary_key):
             raise ValueError("forecast auxiliary key must be nonempty")
 
@@ -105,6 +114,19 @@ class OnlineTrackerConfig:
                 values.get(
                     "forecast_auxiliary_key",
                     "probabilistic_obstacle_forecasts",
+                )
+            ),
+            motion_confirmation_enabled=bool(
+                values.get("motion_confirmation_enabled", False)
+            ),
+            motion_confirmation_required_observations=int(
+                values.get(
+                    "motion_confirmation_required_observations", 4
+                )
+            ),
+            motion_confirmation_minimum_speed_mps=float(
+                values.get(
+                    "motion_confirmation_minimum_speed_mps", 0.12
                 )
             ),
         )
@@ -406,12 +428,41 @@ class SingleObstacleChangeAwareTracker:
             if self.last_associated_timestamp is None
             else timestamp - float(self.last_associated_timestamp)
         )
+        measurement_velocity = None
+        required_motion_observations = int(
+            self.config.motion_confirmation_required_observations
+        )
+        if len(self.measurement_history) >= required_motion_observations:
+            history = np.asarray(
+                self.measurement_history[-required_motion_observations:],
+                dtype=np.float64,
+            )
+            times = history[:, 0] - float(np.mean(history[:, 0]))
+            denominator = float(np.sum(times ** 2))
+            if denominator > 1.0e-12:
+                measurement_velocity = np.sum(
+                    times[:, None] * history[:, 1:3], axis=0
+                ) / denominator
+        measurement_speed = (
+            None
+            if measurement_velocity is None
+            else float(np.linalg.norm(measurement_velocity))
+        )
+        motion_confirmed = bool(
+            not self.config.motion_confirmation_enabled
+            or (
+                measurement_speed is not None
+                and measurement_speed
+                >= self.config.motion_confirmation_minimum_speed_mps
+            )
+        )
         forecast = None
         valid = bool(
             self.predictor.state is not None
             and self.last_associated_timestamp is not None
             and unobserved_duration
             <= self.config.maximum_unobserved_duration_s + 1.0e-12
+            and motion_confirmed
         )
         if valid:
             prediction = self.predictor.forecast(
@@ -426,17 +477,6 @@ class SingleObstacleChangeAwareTracker:
                 source="online_%s" % str(self.predictor.name),
             )
             self.forecast_count += 1
-        measurement_velocity = None
-        if len(self.measurement_history) >= 4:
-            history = np.asarray(
-                self.measurement_history, dtype=np.float64
-            )
-            times = history[:, 0] - float(np.mean(history[:, 0]))
-            denominator = float(np.sum(times ** 2))
-            if denominator > 1.0e-12:
-                measurement_velocity = np.sum(
-                    times[:, None] * history[:, 1:3], axis=0
-                ) / denominator
         diagnostics = {
             "enabled": True,
             "cluster_count": len(clusters),
@@ -458,6 +498,17 @@ class SingleObstacleChangeAwareTracker:
                 if measurement_velocity is None
                 else float(measurement_velocity[1])
             ),
+            "measurement_speed_mps": measurement_speed,
+            "motion_confirmation_enabled": bool(
+                self.config.motion_confirmation_enabled
+            ),
+            "motion_confirmation_required_observations": (
+                required_motion_observations
+            ),
+            "motion_confirmation_minimum_speed_mps": float(
+                self.config.motion_confirmation_minimum_speed_mps
+            ),
+            "motion_confirmed": motion_confirmed,
             "selected_support_beams": (
                 0 if selected is None else selected.support_beams
             ),

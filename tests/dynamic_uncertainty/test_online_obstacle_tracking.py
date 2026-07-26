@@ -297,6 +297,41 @@ def test_multi_tracker_does_not_duplicate_one_cluster_across_free_tracks():
     ) == 1
 
 
+def test_multi_tracker_publishes_only_motion_confirmed_clusters():
+    config = load_yaml(CONFIG_PATH)
+    values = dict(config["perception"]["dynamic_obstacle_tracker"])
+    values.update({
+        "maximum_tracks": 4,
+        "association_gate_m": 0.40,
+        "motion_confirmation_enabled": True,
+        "motion_confirmation_required_observations": 4,
+        "motion_confirmation_minimum_speed_mps": 0.45,
+    })
+    tracker = MultiObstacleChangeAwareTracker.from_mapping(ROOT, values)
+    updates = []
+    for step in range(4):
+        updates.append(tracker.update(_circle_scan(
+            (
+                (1.45, -0.90 + 0.08 * step),
+                (1.70, -0.20),
+                (1.65, 0.45),
+                (1.40, 0.95),
+            ),
+            timestamp=0.1 * step,
+        )))
+
+    assert all(update.forecast is None for update in updates[:3])
+    final = updates[-1]
+    assert final.forecast is not None
+    assert len(final.forecast) == 1
+    confirmed = [
+        row for row in final.diagnostics["tracks"]
+        if row["motion_confirmed"]
+    ]
+    assert len(confirmed) == 1
+    assert confirmed[0]["measurement_speed_mps"] >= 0.45
+
+
 def test_multi_tracker_public_api_is_causal():
     forbidden = {
         "truth",

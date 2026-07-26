@@ -1,0 +1,188 @@
+include: mujoco_v3_probabilistic_crossing_smoke_amendment17.yaml
+
+experiment:
+  name: mujoco_scattered_clutter_three_loop_v1
+  seed: 783100001
+  max_steps: 1200
+  initial_state: [-6.0, -4.0, 0.45, 0.0, 0.0]
+  terminate_on_collision: true
+
+action_space:
+  upper: [0.75, 1.0]
+
+task:
+  type: point_goal
+  position: [6.0, 4.0]
+  position_tolerance: 0.34
+
+scene:
+  name: scattered_irregular_clutter_three_closed_loops
+  visual:
+    camera_distance: 17.2
+    camera_elevation: -77.0
+    show_reference_overlay: false
+    show_conflict_markers: false
+    floor_rgba: [0.90, 0.93, 0.96, 1.0]
+    headlight_ambient: [0.21, 0.24, 0.29]
+    headlight_diffuse: [0.48, 0.52, 0.58]
+    sun_diffuse: [0.57, 0.63, 0.71]
+    floor_checker:
+      rgb1: [0.13, 0.17, 0.22]
+      rgb2: [0.21, 0.27, 0.33]
+      repeat: [14.0, 10.0]
+      reflectance: 0.08
+  obstacles:
+    # Irregular outer boundary, visually distinct from the internal clutter.
+    - {type: segment, start: [-7.0, -4.9], end: [-2.5, -5.3], thickness: 0.28, height: 0.58, rgba: [0.05, 0.10, 0.18, 1.0]}
+    - {type: segment, start: [-2.5, -5.3], end: [2.8, -5.15], thickness: 0.28, height: 0.58, rgba: [0.05, 0.10, 0.18, 1.0]}
+    - {type: segment, start: [2.8, -5.15], end: [6.8, -4.6], thickness: 0.28, height: 0.58, rgba: [0.05, 0.10, 0.18, 1.0]}
+    - {type: segment, start: [6.8, -4.6], end: [7.25, -0.3], thickness: 0.28, height: 0.58, rgba: [0.05, 0.10, 0.18, 1.0]}
+    - {type: segment, start: [7.25, -0.3], end: [6.9, 4.8], thickness: 0.28, height: 0.58, rgba: [0.05, 0.10, 0.18, 1.0]}
+    - {type: segment, start: [6.9, 4.8], end: [2.4, 5.25], thickness: 0.28, height: 0.58, rgba: [0.05, 0.10, 0.18, 1.0]}
+    - {type: segment, start: [2.4, 5.25], end: [-2.8, 5.15], thickness: 0.28, height: 0.58, rgba: [0.05, 0.10, 0.18, 1.0]}
+    - {type: segment, start: [-2.8, 5.15], end: [-6.7, 4.3], thickness: 0.28, height: 0.58, rgba: [0.05, 0.10, 0.18, 1.0]}
+    - {type: segment, start: [-6.7, 4.3], end: [-7.2, 0.0], thickness: 0.28, height: 0.58, rgba: [0.05, 0.10, 0.18, 1.0]}
+    - {type: segment, start: [-7.2, 0.0], end: [-7.0, -4.9], thickness: 0.28, height: 0.58, rgba: [0.05, 0.10, 0.18, 1.0]}
+
+    # Twenty-four widely scattered boxes: no dense piles or corridor-like rows.
+    - {type: box, position: [-5.20, -2.40], size: [0.46, 0.17], yaw: 0.58, height: 0.36, rgba: [0.08, 0.52, 0.62, 1.0]}
+    - {type: box, position: [-5.55, 0.55], size: [0.30, 0.26], yaw: -0.35, height: 0.54, rgba: [0.55, 0.27, 0.18, 1.0]}
+    - {type: box, position: [-5.05, 2.75], size: [0.52, 0.16], yaw: 0.42, height: 0.32, rgba: [0.18, 0.46, 0.34, 1.0]}
+    - {type: box, position: [-3.65, 3.85], size: [0.27, 0.42], yaw: -0.28, height: 0.50, rgba: [0.42, 0.29, 0.52, 1.0]}
+    - {type: box, position: [-1.55, 4.20], size: [0.48, 0.15], yaw: 0.18, height: 0.34, rgba: [0.08, 0.52, 0.62, 1.0]}
+    - {type: box, position: [0.65, 3.95], size: [0.24, 0.38], yaw: 0.55, height: 0.48, rgba: [0.55, 0.27, 0.18, 1.0]}
+    - {type: box, position: [3.00, 4.10], size: [0.50, 0.15], yaw: -0.16, height: 0.32, rgba: [0.08, 0.52, 0.62, 1.0]}
+    - {type: box, position: [5.05, 3.25], size: [0.30, 0.27], yaw: 0.48, height: 0.56, rgba: [0.55, 0.27, 0.18, 1.0]}
+    - {type: box, position: [5.60, 1.15], size: [0.48, 0.17], yaw: -0.52, height: 0.36, rgba: [0.18, 0.46, 0.34, 1.0]}
+    - {type: box, position: [5.05, -1.15], size: [0.25, 0.42], yaw: 0.25, height: 0.50, rgba: [0.42, 0.29, 0.52, 1.0]}
+    - {type: box, position: [4.40, -3.50], size: [0.28, 0.39], yaw: -0.42, height: 0.48, rgba: [0.55, 0.27, 0.18, 1.0]}
+    - {type: box, position: [2.45, -4.00], size: [0.47, 0.16], yaw: 0.20, height: 0.34, rgba: [0.18, 0.46, 0.34, 1.0]}
+    - {type: box, position: [0.20, -4.05], size: [0.24, 0.42], yaw: 0.50, height: 0.52, rgba: [0.42, 0.29, 0.52, 1.0]}
+    - {type: box, position: [-2.15, -4.10], size: [0.28, 0.36], yaw: 0.37, height: 0.46, rgba: [0.55, 0.27, 0.18, 1.0]}
+    - {type: box, position: [-4.30, -3.70], size: [0.52, 0.15], yaw: -0.22, height: 0.32, rgba: [0.18, 0.46, 0.34, 1.0]}
+    - {type: box, position: [-3.85, 1.55], size: [0.48, 0.16], yaw: -0.48, height: 0.34, rgba: [0.08, 0.52, 0.62, 1.0]}
+    - {type: box, position: [-2.05, 2.35], size: [0.26, 0.40], yaw: 0.28, height: 0.52, rgba: [0.55, 0.27, 0.18, 1.0]}
+    - {type: box, position: [-1.55, 0.40], size: [0.40, 0.15], yaw: -0.55, height: 0.32, rgba: [0.18, 0.46, 0.34, 1.0]}
+    - {type: box, position: [1.60, -2.20], size: [0.44, 0.16], yaw: 0.46, height: 0.36, rgba: [0.42, 0.29, 0.52, 1.0]}
+    - {type: box, position: [3.35, -1.90], size: [0.25, 0.42], yaw: -0.36, height: 0.50, rgba: [0.08, 0.52, 0.62, 1.0]}
+    - {type: box, position: [4.05, 0.45], size: [0.48, 0.15], yaw: 0.34, height: 0.32, rgba: [0.55, 0.27, 0.18, 1.0]}
+    # Static islands inside the three moving loops.
+    - {type: box, position: [-3.00, -2.15], size: [0.33, 0.25], yaw: 0.22, height: 0.54, rgba: [0.22, 0.38, 0.50, 1.0]}
+    - {type: box, position: [0.15, 0.05], size: [0.30, 0.24], yaw: -0.35, height: 0.50, rgba: [0.22, 0.38, 0.50, 1.0]}
+    - {type: box, position: [3.20, 2.20], size: [0.34, 0.25], yaw: 0.40, height: 0.56, rgba: [0.22, 0.38, 0.50, 1.0]}
+
+    # Dynamic A: five-segment patrol around the lower-left island.
+    - type: box
+      position: [-4.20, -2.90]
+      size: [0.19, 0.11]
+      radius: 0.31
+      height: 0.34
+      rgba: [0.96, 0.30, 0.16, 1.0]
+      parts:
+        - {offset: [-0.10, 0.14], size: [0.08, 0.05], yaw: 0.40, height: 0.25, rgba: [1.0, 0.56, 0.18, 1.0]}
+        - {offset: [0.13, -0.08], size: [0.06, 0.09], yaw: -0.30, height: 0.28, rgba: [0.72, 0.16, 0.08, 1.0]}
+      motion:
+        type: closed_waypoint_loop
+        waypoints:
+          - [-4.20, -2.90]
+          - [-2.80, -3.30]
+          - [-1.80, -2.30]
+          - [-2.20, -1.00]
+          - [-3.80, -1.20]
+        segment_durations_s: [1.8, 1.5, 1.7, 2.0, 1.6]
+        # Start on the far side of the loop so no moving body is staged beside
+        # the lower-left robot spawn.
+        phase_s: 4.2
+        phase_jitter_s: 0.45
+        duration_scale_range: [0.88, 1.12]
+        waypoint_jitter_m: 0.05
+
+    # Dynamic B: six-segment central orbit with unequal speeds.
+    - type: box
+      position: [-1.20, -1.00]
+      size: [0.18, 0.11]
+      radius: 0.31
+      height: 0.34
+      rgba: [0.98, 0.76, 0.10, 1.0]
+      parts:
+        - {offset: [-0.08, 0.14], size: [0.11, 0.05], yaw: 0.20, height: 0.25, rgba: [1.0, 0.92, 0.25, 1.0]}
+        - {offset: [0.13, -0.08], size: [0.06, 0.09], yaw: -0.35, height: 0.28, rgba: [0.78, 0.52, 0.05, 1.0]}
+      motion:
+        type: closed_waypoint_loop
+        waypoints:
+          - [-1.20, -1.00]
+          - [0.00, -1.60]
+          - [1.30, -0.80]
+          - [1.50, 0.50]
+          - [0.30, 1.20]
+          - [-1.00, 0.70]
+        segment_durations_s: [1.3, 1.6, 1.2, 1.8, 1.4, 1.7]
+        phase_s: 2.6
+        phase_jitter_s: 0.55
+        duration_scale_range: [0.88, 1.12]
+        waypoint_jitter_m: 0.05
+
+    # Dynamic C: seven-segment upper-right patrol around a static island.
+    - type: box
+      position: [1.80, 1.00]
+      size: [0.18, 0.11]
+      radius: 0.31
+      height: 0.34
+      rgba: [0.78, 0.20, 0.86, 1.0]
+      parts:
+        - {offset: [-0.11, 0.0], size: [0.06, 0.18], yaw: 0.0, height: 0.25, rgba: [0.96, 0.35, 0.92, 1.0]}
+        - {offset: [0.12, 0.10], size: [0.07, 0.05], yaw: 0.35, height: 0.28, rgba: [0.56, 0.10, 0.68, 1.0]}
+      motion:
+        type: closed_waypoint_loop
+        waypoints:
+          - [1.80, 1.00]
+          - [3.00, 0.50]
+          - [4.20, 1.30]
+          - [4.80, 2.50]
+          - [3.80, 3.50]
+          - [2.40, 3.40]
+          - [1.60, 2.30]
+        segment_durations_s: [1.4, 1.5, 1.3, 1.7, 1.5, 1.4, 1.6]
+        phase_s: 4.4
+        phase_jitter_s: 0.60
+        duration_scale_range: [0.88, 1.12]
+        waypoint_jitter_m: 0.05
+
+perception:
+  dynamic_obstacle_tracker:
+    # Track every visible cluster causally, but publish probability forecasts
+    # only for clusters whose world-frame motion has been confirmed.
+    maximum_tracks: 8
+    association_gate_m: 0.40
+    motion_confirmation_enabled: true
+    motion_confirmation_required_observations: 6
+    motion_confirmation_minimum_speed_mps: 0.45
+
+planner:
+  probabilistic_obstacle_missing_forecast_action: scan_only
+
+chapter3_scene_design:
+  schema_version: 1
+  scene_role: scattered_clutter_three_closed_loops
+  static_obstacle_count: 34
+  dynamic_obstacle_count: 3
+  start_corner: lower_left
+  goal_corner: upper_right
+  controller_reference: point_goal_only
+  visible_reference_overlay: false
+  obvious_corridor_walls: false
+  controller_observation: causal_laser_scan_only
+  simulator_future_truth_used_by_controller: false
+  obstacle_identity_exposed_to_controller: false
+  closed_loop_waypoint_counts: [5, 6, 7]
+  total_rollouts_per_decision: 600
+  development_only: true
+
+chapter3_feasibility_contract:
+  robot_footprint_radius_m: 0.25
+  static_clearance_margin_m: 0.08
+  dynamic_path_static_clearance_floor_m: 0.04
+  occupancy_resolution_m: 0.05
+  minimum_dynamic_loop_area_m2: 2.0
+  minimum_dynamic_heading_changes: 4
+  waypoint_jitter_m: 0.05

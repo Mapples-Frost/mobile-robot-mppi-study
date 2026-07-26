@@ -90,14 +90,21 @@ def _obstacle_element(index, obstacle):
     motion_type = str(motion.get("type", "linear_ping_pong"))
     if motion_type not in (
         "linear_ping_pong",
+        "closed_waypoint_loop",
         "recurrent_semimarkov_v3",
     ):
         raise ValueError("unknown obstacle motion type: %s" % motion_type)
-    position = (
-        motion.get("start", obstacle.get("position", (0.0, 0.0)))
-        if motion_type == "linear_ping_pong"
-        else obstacle.get("position", (0.0, 0.0))
-    )
+    if motion_type == "linear_ping_pong":
+        position = motion.get(
+            "start", obstacle.get("position", (0.0, 0.0))
+        )
+    elif motion_type == "closed_waypoint_loop":
+        waypoints = motion.get("waypoints", ())
+        if not waypoints:
+            raise ValueError("closed waypoint loop requires waypoints")
+        position = waypoints[0]
+    else:
+        position = obstacle.get("position", (0.0, 0.0))
     if len(position) != 2:
         raise ValueError("dynamic obstacle start must contain x and y")
     return (

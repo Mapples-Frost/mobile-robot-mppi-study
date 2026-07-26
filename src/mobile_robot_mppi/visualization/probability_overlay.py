@@ -166,6 +166,14 @@ def forecast_ellipse_specs(
 class MujocoProbabilityOverlay:
     """Render task markers and forecast confidence ellipses."""
 
+    TRACK_COLORS = (
+        (0.00, 0.88, 1.00),
+        (0.96, 0.18, 0.72),
+        (1.00, 0.68, 0.05),
+        (0.26, 0.92, 0.42),
+        (0.62, 0.36, 1.00),
+        (1.00, 0.34, 0.14),
+    )
     HORIZON_COLORS = (
         (0.00, 0.88, 1.00),
         (0.05, 0.55, 1.00),
@@ -180,6 +188,7 @@ class MujocoProbabilityOverlay:
         start_xy,
         goal_xy,
         horizon_indices=(0, 9, 19, 35),
+        show_reference_segment=True,
     ):
         self.mujoco = mujoco_module
         self.viewer = viewer
@@ -190,6 +199,7 @@ class MujocoProbabilityOverlay:
             goal_xy, dtype=np.float64
         ).reshape(2)
         self.horizon_indices = tuple(int(v) for v in horizon_indices)
+        self.show_reference_segment = bool(show_reference_segment)
         self.identity = np.eye(3, dtype=np.float64).reshape(-1)
         self.zero = np.zeros(3, dtype=np.float64)
 
@@ -320,13 +330,14 @@ class MujocoProbabilityOverlay:
         with self.viewer.lock():
             scene = self.viewer.user_scn
             scene.ngeom = 0
-            self._draw_segment(
-                scene,
-                (*self.start_xy, 0.025),
-                (*self.goal_xy, 0.025),
-                0.018,
-                (0.38, 0.42, 0.48, 0.42),
-            )
+            if self.show_reference_segment:
+                self._draw_segment(
+                    scene,
+                    (*self.start_xy, 0.025),
+                    (*self.goal_xy, 0.025),
+                    0.018,
+                    (0.38, 0.42, 0.48, 0.42),
+                )
             self._draw_cylinder(
                 scene, self.start_xy, 0.30, (0.10, 0.90, 0.28, 0.88)
             )
@@ -339,61 +350,115 @@ class MujocoProbabilityOverlay:
             self._draw_label(scene, (*self.goal_xy, 0.42), "GOAL")
 
             if not forecasts:
+                motion_filter = bool(
+                    (tracker_diagnostics or {}).get(
+                        "motion_confirmation_enabled", False
+                    )
+                )
                 self._draw_label(
                     scene,
-                    (-4.45, 3.05, 0.30),
-                    "FORECAST UNAVAILABLE - FAIL CLOSED",
+                    (-6.25, 4.55, 0.30),
+                    (
+                        "MOTION CONFIRMATION WARMUP | scan-only static guard"
+                        if motion_filter
+                        else "FORECAST UNAVAILABLE - FAIL CLOSED"
+                    ),
                 )
                 return
 
-            forecast = forecasts[0]
-            specs, transformed_means = forecast_ellipse_specs(
-                forecast,
-                horizon_indices=self.horizon_indices,
-                source_pose=source_pose,
-                target_pose=target_pose,
+            track_rows = tuple(
+                (tracker_diagnostics or {}).get("tracks", ())
             )
-            selected = sorted(
-                {spec.horizon_index for spec in specs}
-            )
-            color_by_horizon = {
-                horizon: self.HORIZON_COLORS[
-                    min(index, len(self.HORIZON_COLORS) - 1)
-                ]
-                for index, horizon in enumerate(selected)
-            }
-            for spec in specs:
-                color = color_by_horizon[spec.horizon_index]
-                level = selected.index(spec.horizon_index)
-                self._draw_ellipse(
-                    scene, spec, color, 0.055 + 0.018 * level
+            forecast_track_indices = tuple(
+                (tracker_diagnostics or {}).get(
+                    "forecast_track_indices",
+                    range(len(forecasts)),
                 )
+            )
+            for forecast_index, forecast in enumerate(forecasts):
+                base_color = self.TRACK_COLORS[
+                    forecast_index % len(self.TRACK_COLORS)
+                ]
+                specs, transformed_means = forecast_ellipse_specs(
+                    forecast,
+                    horizon_indices=self.horizon_indices,
+                    source_pose=source_pose,
+                    target_pose=target_pose,
+                )
+                selected = sorted(
+                    {spec.horizon_index for spec in specs}
+                )
+                for spec in specs:
+                    level = selected.index(spec.horizon_index)
+                    fade = 1.0 - 0.13 * level
+                    color = tuple(
+                        float(np.clip(channel * fade, 0.0, 1.0))
+                        for channel in base_color
+                    )
+                    self._draw_ellipse(
+                        scene, spec, color, 0.055 + 0.018 * level
+                    )
+                    self._draw_sphere(
+                        scene,
+                        spec.mean_xy,
+                        0.085 + 0.018 * level,
+                        0.025 + 0.004 * forecast_index,
+                        (*color, min(0.95, 0.35 + spec.weight)),
+                    )
+
+                weighted_mean = np.sum(
+                    transformed_means
+                    * forecast.component_weights[..., None],
+                    axis=1,
+                )
+                for index in range(0, weighted_mean.shape[0] - 1, 2):
+                    next_index = min(
+                        index + 2, weighted_mean.shape[0] - 1
+                    )
+                    self._draw_segment(
+                        scene,
+                        (*weighted_mean[index], 0.115),
+                        (*weighted_mean[next_index], 0.115),
+                        0.012 + 0.002 * forecast_index,
+                        (*base_color, 0.92),
+                    )
                 self._draw_sphere(
                     scene,
-                    spec.mean_xy,
-                    0.085 + 0.018 * level,
-                    0.025,
-                    (*color, min(0.95, 0.35 + spec.weight)),
+                    weighted_mean[0],
+                    0.16,
+                    0.055,
+                    (*base_color, 0.98),
                 )
-
-            weighted_mean = np.sum(
-                transformed_means
-                * forecast.component_weights[..., None],
-                axis=1,
-            )
-            for index in range(0, weighted_mean.shape[0] - 1, 2):
-                next_index = min(index + 2, weighted_mean.shape[0] - 1)
-                self._draw_segment(
+                track_index = (
+                    int(forecast_track_indices[forecast_index])
+                    if forecast_index < len(forecast_track_indices)
+                    else forecast_index
+                )
+                track = (
+                    track_rows[track_index]
+                    if 0 <= track_index < len(track_rows)
+                    else {}
+                )
+                speed = track.get("measurement_speed_mps")
+                speed_text = (
+                    "?"
+                    if speed is None
+                    else "%.2f" % float(speed)
+                )
+                self._draw_label(
                     scene,
-                    (*weighted_mean[index], 0.115),
-                    (*weighted_mean[next_index], 0.115),
-                    0.012,
-                    (0.02, 0.95, 0.88, 0.92),
+                    (
+                        float(weighted_mean[0, 0]) + 0.12,
+                        float(weighted_mean[0, 1]) + 0.12,
+                        0.34,
+                    ),
+                    "D%d | v=%s m/s | confirmed"
+                    % (forecast_index + 1, speed_text),
                 )
             self._draw_label(
                 scene,
-                (-4.45, 3.05, 0.30),
-                "95% CENTER FORECAST | opacity = mode probability",
+                (-6.25, 4.55, 0.30),
+                "DYNAMIC FORECASTS | color=track | ellipses=95% CI",
             )
             if tracker_diagnostics:
                 availability = float(
@@ -403,9 +468,9 @@ class MujocoProbabilityOverlay:
                 )
                 self._draw_label(
                     scene,
-                    (-4.45, 2.70, 0.30),
-                    "online Change-Aware IMM | availability %.0f%%"
-                    % (100.0 * availability),
+                    (-6.25, 4.18, 0.30),
+                    "Change-Aware IMM | %d moving tracks | availability %.0f%%"
+                    % (len(forecasts), 100.0 * availability),
                 )
 
 

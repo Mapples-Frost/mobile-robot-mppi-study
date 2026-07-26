@@ -43,15 +43,25 @@ def show(config_path=DEFAULT_CONFIG, seeds=DEFAULT_SEEDS):
     viewer = MujocoViewer(plant, enabled=True)
     if viewer.viewer is None:
         raise RuntimeError("MuJoCo viewer did not open")
-    viewer.viewer.cam.lookat[:] = (-0.2, -0.2, 0.0)
-    viewer.viewer.cam.distance = 11.0
+    visual = config.get("scene", {}).get("visual", {})
+    viewer.viewer.cam.lookat[:] = tuple(
+        visual.get("camera_lookat", (-0.2, -0.2, 0.0))
+    )
+    viewer.viewer.cam.distance = float(
+        visual.get("camera_distance", 11.0)
+    )
     viewer.viewer.cam.azimuth = 90.0
-    viewer.viewer.cam.elevation = -58.0
+    viewer.viewer.cam.elevation = float(
+        visual.get("camera_elevation", -58.0)
+    )
     overlay = MujocoProbabilityOverlay(
         plant.mujoco,
         viewer.viewer,
         start_xy=initial[:2],
         goal_xy=np.asarray(config["task"]["position"], dtype=np.float64),
+        show_reference_segment=bool(
+            visual.get("show_reference_overlay", True)
+        ),
     )
 
     episode = 0

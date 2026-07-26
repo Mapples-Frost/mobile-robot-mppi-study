@@ -1,0 +1,138 @@
+{
+  "completed": 12,
+  "shards": [
+    {
+      "collision": false,
+      "file": "shards\\seed_730100130.npz",
+      "opportunity_samples": 286,
+      "reverse_requested_samples": 0,
+      "samples": 380,
+      "seed": 730100130,
+      "sha256": "5725f2b4c411ac8c3aea5ba081b7982309a973cd519f426c03e64b72f14387fe",
+      "success": true,
+      "validation": false
+    },
+    {
+      "collision": false,
+      "file": "shards\\seed_730100131.npz",
+      "opportunity_samples": 291,
+      "reverse_requested_samples": 4,
+      "samples": 378,
+      "seed": 730100131,
+      "sha256": "017c1e987361df142049d45b806afb799e5bc512186a63b5fc3e7db9e8d10f74",
+      "success": true,
+      "validation": false
+    },
+    {
+      "collision": false,
+      "file": "shards\\seed_730100132.npz",
+      "opportunity_samples": 308,
+      "reverse_requested_samples": 37,
+      "samples": 400,
+      "seed": 730100132,
+      "sha256": "e60f5fb77dccaa7cf7ad89c70a069730ee65e6a40072ba82e1812ea5cc5e4540",
+      "success": false,
+      "validation": false
+    },
+    {
+      "collision": false,
+      "file": "shards\\seed_730100133.npz",
+      "opportunity_samples": 286,
+      "reverse_requested_samples": 0,
+      "samples": 368,
+      "seed": 730100133,
+      "sha256": "10f3d1be4d3ddf43ecdec94bc376450847027675d6b7d25cc220164853e005a0",
+      "success": true,
+      "validation": false
+    },
+    {
+      "collision": false,
+      "file": "shards\\seed_730100134.npz",
+      "opportunity_samples": 284,
+      "reverse_requested_samples": 0,
+      "samples": 380,
+      "seed": 730100134,
+      "sha256": "4d919d3100e1ca6f423efb9d2289b10dc0e65c244d74f85f6692e61ccd350a36",
+      "success": true,
+      "validation": false
+    },
+    {
+      "collision": false,
+      "file": "shards\\seed_730100135.npz",
+      "opportunity_samples": 286,
+      "reverse_requested_samples": 15,
+      "samples": 400,
+      "seed": 730100135,
+      "sha256": "eeff461d1b897584b906dcbc3ba04e7c9b5026460e714251f70113a9e3adf255",
+      "success": false,
+      "validation": false
+    },
+    {
+      "collision": false,
+      "file": "shards\\seed_730100136.npz",
+      "opportunity_samples": 285,
+      "reverse_requested_samples": 0,
+      "samples": 371,
+      "seed": 730100136,
+      "sha256": "53408239b47b8a2864be345fee1c2d9316ccc35d08d2db9869e8a6d302db86a4",
+      "success": true,
+      "validation": false
+    },
+    {
+      "collision": false,
+      "file": "shards\\seed_730100137.npz",
+      "opportunity_samples": 294,
+      "reverse_requested_samples": 4,
+      "samples": 385,
+      "seed": 730100137,
+      "sha256": "cb9cb84e1fe7d5dfd831ba6ccc2f1ddf0efce5820dc13908fe66e07d73d66bcc",
+      "success": true,
+      "validation": false
+    },
+    {
+      "collision": false,
+      "file": "shards\\seed_730100138.npz",
+      "opportunity_samples": 295,
+      "reverse_requested_samples": 20,
+      "samples": 400,
+      "seed": 730100138,
+      "sha256": "3902f98ba6e7f5fa21109798ce45ac9ed5c41c99cc557b5c58b2459910a7e985",
+      "success": false,
+      "validation": true
+    },
+    {
+      "collision": false,
+      "file": "shards\\seed_730100139.npz",
+      "opportunity_samples": 286,
+      "reverse_requested_samples": 1,
+      "samples": 390,
+      "seed": 730100139,
+      "sha256": "e2688592957f7511f03009a543ae17277d94cb72210e79f660bc6c5318a7fbb9",
+      "success": true,
+      "validation": true
+    },
+    {
+      "collision": false,
+      "file": "shards\\seed_730100140.npz",
+      "opportunity_samples": 288,
+      "reverse_requested_samples": 4,
+      "samples": 400,
+      "seed": 730100140,
+      "sha256": "e649a33907b159729529605fc7bb364416f76c3ee46f8e32e6c9cf386cca2489",
+      "success": false,
+      "validation": true
+    },
+    {
+      "collision": false,
+      "file": "shards\\seed_730100141.npz",
+      "opportunity_samples": 282,
+      "reverse_requested_samples": 4,
+      "samples": 372,
+      "seed": 730100141,
+      "sha256": "fd4bcdc4fe311b4d11e4233d22c77b17a6c4b4e20853231f35d8d19bfb266c60",
+      "success": true,
+      "validation": true
+    }
+  ],
+  "total": 12
+}

@@ -271,6 +271,7 @@ def collect(config_path=DEFAULT_CONFIG, output_dir=None, maximum_episodes=None):
     if config.get("protocol") not in {
         "dynamic_actor_correction_development_v1",
         "dynamic_actor_source_motion_development_v1",
+        "dynamic_actor_source_motion_development_v2",
     }:
         raise ValueError("dynamic Actor correction protocol mismatch")
     collection = dict(config["collection"])

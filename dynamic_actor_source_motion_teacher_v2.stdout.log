@@ -1,0 +1,13 @@
+{"episode": 1, "episodes": 12, "seed": 730100130, "stage": "teacher_collection"}
+{"episode": 2, "episodes": 12, "seed": 730100131, "stage": "teacher_collection"}
+{"episode": 3, "episodes": 12, "seed": 730100132, "stage": "teacher_collection"}
+{"episode": 4, "episodes": 12, "seed": 730100133, "stage": "teacher_collection"}
+{"episode": 5, "episodes": 12, "seed": 730100134, "stage": "teacher_collection"}
+{"episode": 6, "episodes": 12, "seed": 730100135, "stage": "teacher_collection"}
+{"episode": 7, "episodes": 12, "seed": 730100136, "stage": "teacher_collection"}
+{"episode": 8, "episodes": 12, "seed": 730100137, "stage": "teacher_collection"}
+{"episode": 9, "episodes": 12, "seed": 730100138, "stage": "teacher_collection"}
+{"episode": 10, "episodes": 12, "seed": 730100139, "stage": "teacher_collection"}
+{"episode": 11, "episodes": 12, "seed": 730100140, "stage": "teacher_collection"}
+{"episode": 12, "episodes": 12, "seed": 730100141, "stage": "teacher_collection"}
+{"collisions": 0, "episodes": 12, "opportunity_samples": 3471, "reverse_requested_samples": 89, "samples": 4624, "successes": 8}

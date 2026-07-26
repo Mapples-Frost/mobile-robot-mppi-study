@@ -1,0 +1,83 @@
+schema_version: 1
+protocol: dynamic_actor_source_motion_development_v2
+
+# The source and retention checkpoints remain immutable inputs.  They live in
+# the sibling canonical worktree and are referenced by a relative path so the
+# protocol is reproducible without copying or modifying the binary artifacts.
+source_checkpoint: ../mobile-robot-mppi-study/results/research_platform/rl/gate1_direct_control_multidomain_screen_l175/checkpoints/best.pt
+source_checkpoint_sha256: eaea2e2975de0794da4ad6876fbff3e6e85e53427e5471982e857585fff97ae4
+retention_checkpoint: ../mobile-robot-mppi-study/research_artifacts/dynamic_actor_correction_development_v3_rollin/checkpoints/best.pt
+retention_checkpoint_sha256: 6e346e5e4fcc1eca029ee4495ca0ffd0c978c5ce11089ab8ebfaaee89236c63d
+
+collection:
+  output_dir: research_artifacts/dynamic_actor_source_motion_teacher_v2
+  episode_seeds:
+    - 730100130
+    - 730100131
+    - 730100132
+    - 730100133
+    - 730100134
+    - 730100135
+    - 730100136
+    - 730100137
+    - 730100138
+    - 730100139
+    - 730100140
+    - 730100141
+  validation_seeds: [730100138, 730100139, 730100140, 730100141]
+  maximum_steps: 400
+  low_risk_maximum_probability: 0.15
+  minimum_motion_speed_mps: 0.10
+  minimum_candidate_feasible_fraction: 0.10
+  hard_violation_action: active_avoidance_motion
+
+training:
+  output_dir: research_artifacts/dynamic_actor_source_motion_v2
+  seed: 730200302
+  # Local development fallback: this machine currently has CPU-only torch.
+  # Formal Actor training remains CUDA-only in the unmodified protocol.
+  device: cpu
+  allow_cpu_development: true
+  updates: 6000
+  batch_size: 1024
+  learning_rate: 0.0003
+  action_lower: [-0.35, -0.9]
+  action_upper: [0.35, 0.9]
+  correction_scale: [2.0, 1.0]
+  include_temporal_scan_delta: true
+  temporal_scan_delta_scale: 0.05
+  opportunity_fraction: 0.20
+  intervention_fraction: 0.10
+  reverse_fraction: 0.10
+  critical_fraction: 0.25
+  retention_fraction: 0.35
+  critical_maximum_obstacle_distance_m: 100.0
+  # High-risk teacher states remain critical even when the teacher prevents
+  # the collision; requiring an observed collision would discard the very
+  # avoidance labels we want the Actor to learn.
+  critical_minimum_probability: 0.20
+  critical_teacher_loss_multiplier: 2.0
+  retention_agreement_tolerance: 0.50
+  velocity_loss_weight: 2.0
+  yaw_loss_weight: 1.0
+  reverse_velocity_loss_multiplier: 2.0
+  false_reverse_weight: 1.5
+  anti_freeze_weight: 1.5
+  anti_freeze_minimum_speed_mps: 0.12
+  retention_weight: 2.5
+  correction_weight: 0.10
+  selection_reverse_weight: 0.15
+  selection_retention_weight: 0.50
+  selection_critical_weight: 1.0
+  save_improved_checkpoints: true
+  log_interval: 250
+  validation_interval: 250
+  target_log_std: [-2.5, -0.35]
+  log_std_weight: 0.01
+
+offline_gate:
+  minimum_relative_teacher_rmse_improvement: 0.10
+  minimum_opportunity_active_passage_gain: 0.00
+  minimum_reverse_recall: 0.50
+  maximum_opportunity_unnecessary_stop_fraction: 0.20
+  maximum_retention_mean_absolute_drift: 0.12

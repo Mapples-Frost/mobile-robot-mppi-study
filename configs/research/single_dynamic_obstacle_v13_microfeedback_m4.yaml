@@ -1,0 +1,46 @@
+schema_version: 1
+status: frozen_before_development_execution
+scope: one_pair_engineering_feedback_not_effect_estimation
+runner_label: v13_micro_m4
+source_protocol: configs/research/single_dynamic_obstacle_paper_v4.yaml
+output_dir: research_artifacts/single_dynamic_obstacle_v13_microfeedback_m4
+parent_result: research_artifacts/single_dynamic_obstacle_v13_counterflow_standard_heldout4/development_result.json
+parent_result_sha256: 685bb11123fd0e75fbeaeb9f48793206cd2277b9f20e6a47c700f4cea079c006
+parent_manifest: research_artifacts/single_dynamic_obstacle_v13_counterflow_standard_heldout4/artifact_manifest.json
+parent_manifest_sha256: d62b16f3d5fc926373d90c260dcf24687dcb8d97d268b662d57b5228003a6383
+parent_bundle_sha256: b3e91c2775541d3f20ec6a1b1edfe35d18eaa8a3c0d1bb70f189f1f1c77ce934
+design:
+  paired_arms: [V4_full_frozen, V13_counterflow_full]
+  workers: 1
+  outcomes_used_for_seed_selection: false
+  formal_effect_estimation_authorized: false
+  total_rollouts_per_controller_decision: 600
+change_scope:
+  allowed_prefixes: [action_space.upper, planner.probabilistic_obstacle_, perception.scan_guard.dynamic_escape_]
+candidate_override_paths:
+  action_space.upper: [0.45, 0.9]
+  planner.probabilistic_obstacle_emergency_candidate_trigger_ttc_s: 1.8
+  planner.probabilistic_obstacle_emergency_candidate_trigger_distance_m: 0.65
+  planner.probabilistic_obstacle_emergency_candidate_critical_distance_m: 0.32
+  planner.probabilistic_obstacle_emergency_candidate_intent_hold_steps: 8
+  planner.probabilistic_obstacle_emergency_candidate_rearm_ttc_s: 2.2
+  planner.probabilistic_obstacle_emergency_candidate_rearm_clear_steps: 3
+  planner.probabilistic_obstacle_counterflow_escape_enabled: true
+  planner.probabilistic_obstacle_counterflow_weight: 0.8
+  planner.probabilistic_obstacle_hard_violation_action: active_avoidance_motion
+  perception.scan_guard.dynamic_escape_max_speed: 0.45
+  perception.scan_guard.dynamic_escape_min_speed: 0.25
+  perception.scan_guard.dynamic_escape_reverse_speed: 0.35
+  perception.scan_guard.dynamic_escape_use_vetted_planner_control: true
+development_go_no_go:
+  minimum_safe_success_gain: 0
+  minimum_prevented_collisions: 0
+  minimum_collision_count_reduction: 0
+  maximum_new_paired_collisions: 0
+  maximum_lost_v4_successes: 0
+  maximum_mean_minimum_clearance_loss_m: 0.05
+  minimum_candidate_clearance_m: 0.0
+  require_counterflow_mechanism_exercised: true
+  require_near_distance_trigger_exercised: true
+development_blocks:
+  - {split: ood, seed: 770400059, model_block: 1, stratum: moderate_direct, arm_order: [V4_full_frozen, V13_counterflow_full]}

@@ -1,0 +1,77 @@
+schema_version: 1
+status: frozen_before_development_execution
+frozen_at: "2026-07-26T14:15:00+08:00"
+study_id: single_dynamic_obstacle_v11_uncertainty_geometry_smoke
+scope: mechanism_smoke_not_effect_estimation
+runner_label: v11_uncertainty_geometry_smoke
+source_protocol: configs/research/single_dynamic_obstacle_paper_v4.yaml
+output_dir: research_artifacts/single_dynamic_obstacle_v11_uncertainty_geometry_smoke
+parent_result: research_artifacts/single_dynamic_obstacle_v10_early_lateral_commit_heldout/development_result.json
+parent_result_sha256: acfc2451db42199ed52d068500613942970262ccc8ef0e5cb51d93c2c2ed9d51
+parent_manifest: research_artifacts/single_dynamic_obstacle_v10_early_lateral_commit_heldout/artifact_manifest.json
+parent_manifest_sha256: e6ad20ebd3048f7c0ff97b723d6c546c57a9bbc8330514f618fd91cde71d2d1a
+parent_bundle_sha256: 3e9f81d10f01f2d9050587ea294551291687413f66ad0ebdcf353443c5a2c8fd
+design:
+  development_attempt: R1_uncertainty_fusion_geometry_commit_smoke
+  mechanism_family: temporal_risk_fusion_and_geometric_escape
+  paired_arms: [V4_full_frozen, V11_uncertainty_geometry_full]
+  common_random_numbers: true
+  outcome_informed_development_selection: false
+  previously_opened_v10_heldout_seed_reused: true
+  formal_effect_estimation_authorized: false
+  fresh_held_out_required_before_formal_freeze: true
+  total_rollouts_per_controller_decision: 600
+  horizon_steps: 36
+  control_period_s: 0.1
+  maximum_episode_steps: 400
+  workers: 2
+frozen_components:
+  change_aware_imm: unchanged_from_v4_full
+  collision_risk_v1: unchanged_from_v4_full
+  collision_probability_threshold: unchanged_from_v4_full
+  safety_margin: unchanged_from_v4_full
+  dynamic_obstacle_generator: unchanged_from_v4
+  actor_checkpoint: unchanged_from_v4
+  icode_checkpoints: unchanged_from_v4
+  hss_core: unchanged_from_v4
+  rollout_budget: 600
+  horizon_steps: 36
+  control_period_s: 0.1
+  maximum_episode_steps: 400
+change_scope:
+  allowed_prefixes:
+    - planner.probabilistic_obstacle_front_obstacle_forward_turn_enabled
+    - perception.scan_guard.dynamic_escape_uncertainty_
+    - perception.scan_guard.dynamic_escape_direction_commit_steps
+candidate_override_paths:
+  planner.probabilistic_obstacle_front_obstacle_forward_turn_enabled: true
+  perception.scan_guard.dynamic_escape_uncertainty_fusion_enabled: true
+  perception.scan_guard.dynamic_escape_uncertainty_nis_threshold: 4.0
+  perception.scan_guard.dynamic_escape_uncertainty_trigger_ttc_s: 2.20
+  perception.scan_guard.dynamic_escape_direction_commit_steps: 6
+mechanism_contract:
+  scan_ttc_and_model_mismatch_can_escalate_before_probability_threshold: true
+  front_half_plane_escape_is_forward_and_turn_away: true
+  escape_direction_commit_is_six_control_steps: true
+  reverse_escape_reserved_for_rear_half_plane: true
+  future_obstacle_truth_used_for_control: false
+  actor_only_proposes_actions: true
+  safety_layer_retains_collision_authority: true
+  additional_total_rollouts: 0
+  total_rollouts_per_decision: 600
+development_go_no_go:
+  minimum_safe_success_gain: 0
+  minimum_prevented_collisions: 0
+  minimum_collision_count_reduction: 0
+  maximum_new_paired_collisions: 1
+  maximum_lost_v4_successes: 1
+  maximum_mean_minimum_clearance_loss_m: 1.0
+  require_every_decision_600_rollouts: true
+  interpretation: smoke_diagnostic_only_not_a_development_gate
+stop_rule:
+  maximum_local_attempts_in_family: 1
+  stop_after_consecutive_no_core_improvement: 1
+  stop_after_consecutive_safety_regressions: 1
+  fresh_held_out_required_after_development_and_opened_seed_replication: true
+development_blocks:
+  - {split: ood, seed: 750400004, model_block: 1, stratum: opened_v10_failure_reproduction, arm_order: [V4_full_frozen, V11_uncertainty_geometry_full]}

@@ -1,0 +1,83 @@
+{
+  "arm": "V6_temporal_emergency_full",
+  "block": {
+    "arm_order": [
+      "V4_full_frozen",
+      "V6_temporal_emergency_full"
+    ],
+    "block_order": 5,
+    "certificate": {
+      "certificate_rule": "ghost_constant_speed_center_distance_le_sum_radii",
+      "collision_threshold_m": 0.5,
+      "conflict_window_threshold_m": 0.8,
+      "conflict_windows_s": [
+        [
+          0.0,
+          3.6
+        ],
+        [
+          8.700000000000001,
+          14.200000000000001
+        ],
+        [
+          34.85,
+          40.550000000000004
+        ]
+      ],
+      "minimum_distance_time_s": 11.75,
+      "minimum_ghost_obstacle_center_distance_m": 0.2604482688078971,
+      "noise_profile": "medium",
+      "obstacle_process": "hybrid_patrol",
+      "obstacle_truth_sha256": "32aae8d26e46741ec134f118f005f40ac6567cbec640dbe16bb97e308258d868",
+      "seed": 750100026,
+      "split": "id"
+    },
+    "model_block": 1,
+    "seed": 750100026,
+    "split": "id",
+    "stratum": "safe_noncompletion_stall"
+  },
+  "change_signature": {
+    "perception.scan_guard.dynamic_escape_min_probability_mass_relative_improvement": [
+      "<MISSING>",
+      0.1
+    ],
+    "perception.scan_guard.dynamic_escape_use_vetted_planner_control": [
+      "<MISSING>",
+      true
+    ],
+    "perception.scan_guard.dynamic_escape_veto_forward_when_reactive_reverse": [
+      "<MISSING>",
+      true
+    ],
+    "planner.probabilistic_obstacle_emergency_candidate_forward_mass_ceiling": [
+      "<MISSING>",
+      0.0
+    ],
+    "planner.probabilistic_obstacle_emergency_candidate_forward_risk_ceiling": [
+      "<MISSING>",
+      0.0
+    ],
+    "planner.probabilistic_obstacle_emergency_candidate_intent_hold_steps": [
+      "<MISSING>",
+      16
+    ],
+    "planner.probabilistic_obstacle_emergency_candidate_pareto_forward_commit_enabled": [
+      "<MISSING>",
+      true
+    ],
+    "planner.probabilistic_obstacle_emergency_candidate_rearm_clear_steps": [
+      "<MISSING>",
+      1
+    ],
+    "planner.probabilistic_obstacle_emergency_candidate_rearm_ttc_s": [
+      "<MISSING>",
+      0.0
+    ],
+    "planner.probabilistic_obstacle_emergency_candidate_trigger_ttc_s": [
+      "<MISSING>",
+      1.5
+    ]
+  },
+  "resolved_config_sha256": "462be4702408878491d036e8e413f55ed4d7c378b5fe3b47bba552ad891fc68a"
+}

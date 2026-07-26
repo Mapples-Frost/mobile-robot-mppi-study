@@ -472,7 +472,10 @@ def analyze_existing(protocol_path=DEFAULT_PROTOCOL):
             run_dir = _run_dir(output, scheduled, arm)
             if not v4._complete(run_dir):
                 raise RuntimeError("incomplete existing v6 episode: %s" % run_dir)
-            job = v5._load_json(run_dir / "v6_development_job.json")
+            runner_label = str(protocol.get("runner_label", "v6"))
+            job = v5._load_json(
+                run_dir / ("%s_development_job.json" % runner_label)
+            )
             if job["arm"] != arm or int(job["block"]["seed"]) != int(
                 scheduled["seed"]
             ):

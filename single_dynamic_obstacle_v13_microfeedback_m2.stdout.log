@@ -1,0 +1,18 @@
+[block 1/1] ood seed=770400052 complete
+{
+  "bundle_sha256": "d16d2262b9cc7832d7f8bba0f58aac3f0e3b8bf5e9c648a74fc56b42a63e1970",
+  "checks": {
+    "candidate_clearance_nonnegative": false,
+    "collision_count_improved": false,
+    "counterflow_mechanism_exercised": true,
+    "emergency_mechanism_exercised": true,
+    "mean_minimum_clearance_preserved": false,
+    "minimum_prevented_collisions": true,
+    "near_distance_trigger_exercised": true,
+    "no_lost_v4_successes": false,
+    "no_new_paired_collisions": false,
+    "rollout_budget_exact": true,
+    "safe_success_noninferior": false
+  },
+  "status": "development_gate_fail"
+}

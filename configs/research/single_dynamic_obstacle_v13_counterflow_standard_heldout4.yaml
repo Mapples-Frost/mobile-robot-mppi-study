@@ -1,0 +1,96 @@
+schema_version: 1
+status: frozen_before_heldout_execution
+frozen_at: "2026-07-26T16:55:00+08:00"
+study_id: single_dynamic_obstacle_v13_counterflow_standard_heldout4
+scope: outcome_blind_standard_geometry_heldout_qualification
+runner_label: v13_counterflow_h4
+source_protocol: configs/research/single_dynamic_obstacle_paper_v4.yaml
+output_dir: research_artifacts/single_dynamic_obstacle_v13_counterflow_standard_heldout4
+parent_result: research_artifacts/single_dynamic_obstacle_v13_counterflow_development/development_result.json
+parent_result_sha256: b16671c48432a4ba260c721d55b4d6b0e99af8d1180b8d33845841735afb0322
+parent_manifest: research_artifacts/single_dynamic_obstacle_v13_counterflow_development/artifact_manifest.json
+parent_manifest_sha256: f9bb5d5cd9ba74483acb3f7a75f1e6e3ddf41cf84a7bb17f38d6287c7502b400
+parent_bundle_sha256: aeb4d59cffd79f916f97b204af96a85081ff5f476dc5df86ea55df7587651f79
+design:
+  qualification_attempt: H1_standard_geometry
+  mechanism_family: predictive_counterflow_active_mobility
+  paired_arms: [V4_full_frozen, V13_counterflow_full]
+  common_random_numbers: true
+  outcomes_used_for_seed_selection: false
+  seeds_disjoint_from_v4_v5_v11_v12_v13_development: true
+  formal_effect_estimation_authorized: false
+  total_rollouts_per_controller_decision: 600
+  horizon_steps: 36
+  control_period_s: 0.1
+  maximum_episode_steps: 400
+  workers: 2
+standard_geometry_eligibility:
+  certificate_rule: ghost_constant_speed_center_distance_le_sum_radii
+  minimum_ghost_obstacle_center_distance_m: 0.05
+  maximum_ghost_obstacle_center_distance_m: 0.40
+  minimum_conflict_time_s: 7.0
+  maximum_conflict_time_s: 18.0
+  rationale: exclude_late_near_center_stress_intercepts_from_standard_scope
+  selection_algorithm:
+    candidate_ranges:
+      id: [760300001, 760300500]
+      ood: [760400001, 760400500]
+    strata:
+      direct: [0.05, 0.20]
+      offset: [0.20, 0.40]
+    rule: first_ascending_eligible_seed_per_split_and_stratum
+frozen_components:
+  change_aware_imm: unchanged_from_v4_full
+  collision_risk_v1: unchanged_from_v4_full
+  collision_probability_threshold: unchanged_from_v4_full
+  safety_margin: unchanged_from_v4_full
+  dynamic_obstacle_generator: unchanged_from_v4
+  actor_checkpoint: unchanged_from_v4
+  icode_checkpoints: unchanged_from_v4
+  hss_core: unchanged_from_v4
+  rollout_budget: 600
+  horizon_steps: 36
+  control_period_s: 0.1
+  maximum_episode_steps: 400
+change_scope:
+  allowed_prefixes:
+    - action_space.upper
+    - planner.probabilistic_obstacle_
+    - perception.scan_guard.dynamic_escape_
+candidate_override_paths:
+  action_space.upper: [0.45, 0.9]
+  planner.probabilistic_obstacle_emergency_candidate_trigger_ttc_s: 1.8
+  planner.probabilistic_obstacle_emergency_candidate_trigger_distance_m: 0.65
+  planner.probabilistic_obstacle_emergency_candidate_critical_distance_m: 0.32
+  planner.probabilistic_obstacle_emergency_candidate_intent_hold_steps: 8
+  planner.probabilistic_obstacle_emergency_candidate_rearm_ttc_s: 2.2
+  planner.probabilistic_obstacle_emergency_candidate_rearm_clear_steps: 3
+  planner.probabilistic_obstacle_counterflow_escape_enabled: true
+  planner.probabilistic_obstacle_counterflow_weight: 0.8
+  planner.probabilistic_obstacle_hard_violation_action: active_avoidance_motion
+  perception.scan_guard.dynamic_escape_max_speed: 0.45
+  perception.scan_guard.dynamic_escape_min_speed: 0.25
+  perception.scan_guard.dynamic_escape_reverse_speed: 0.35
+  perception.scan_guard.dynamic_escape_use_vetted_planner_control: true
+development_go_no_go:
+  minimum_safe_success_gain: 1
+  minimum_prevented_collisions: 1
+  minimum_collision_count_reduction: 1
+  maximum_new_paired_collisions: 0
+  maximum_lost_v4_successes: 0
+  maximum_mean_minimum_clearance_loss_m: 0.05
+  minimum_candidate_clearance_m: 0.0
+  require_counterflow_mechanism_exercised: true
+  require_near_distance_trigger_exercised: true
+  require_every_decision_600_rollouts: true
+  interpretation: four_pair_heldout_engineering_gate_not_effect_estimation
+stop_rule:
+  no_seed_replacement_after_execution: true
+  no_parameter_change_after_execution: true
+  pass_all_checks_or_stop_family: true
+  formal_server_requires_separate_user_confirmation: true
+development_blocks:
+  - {split: id, seed: 760300002, model_block: 0, stratum: standard_direct, arm_order: [V4_full_frozen, V13_counterflow_full]}
+  - {split: id, seed: 760300061, model_block: 1, stratum: standard_offset, arm_order: [V13_counterflow_full, V4_full_frozen]}
+  - {split: ood, seed: 760400019, model_block: 0, stratum: standard_direct, arm_order: [V13_counterflow_full, V4_full_frozen]}
+  - {split: ood, seed: 760400009, model_block: 1, stratum: standard_offset, arm_order: [V4_full_frozen, V13_counterflow_full]}

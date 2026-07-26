@@ -79,7 +79,7 @@ def test_v6_a1_uses_current_hazard_evidence_without_truth_or_deadline():
 
 
 def test_v6_existing_analysis_rejects_schedule_hash_mismatch(monkeypatch):
-    protocol, _ = _protocols()
+    protocol = v4._load_yaml(A1B_PROTOCOL)
     monkeypatch.setattr(v6, "_validate_parent", lambda _protocol: None)
     monkeypatch.setattr(
         v6.v4,
@@ -91,7 +91,7 @@ def test_v6_existing_analysis_rejects_schedule_hash_mismatch(monkeypatch):
         "schedule_sha256": "not-the-canonical-hash",
     })
     try:
-        v6.analyze_existing(v6.DEFAULT_PROTOCOL)
+        v6.analyze_existing(A1B_PROTOCOL)
     except RuntimeError as error:
         assert "schedule hash mismatch" in str(error)
     else:

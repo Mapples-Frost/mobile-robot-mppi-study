@@ -86,6 +86,25 @@ class ScanGuardArbiter:
         self.dynamic_escape_reverse_speed = float(
             self.config.get("dynamic_escape_reverse_speed", 0.0)
         )
+        self.dynamic_escape_uncertainty_fusion_enabled = bool(
+            self.config.get(
+                "dynamic_escape_uncertainty_fusion_enabled", False
+            )
+        )
+        self.dynamic_escape_uncertainty_nis_threshold = float(
+            self.config.get(
+                "dynamic_escape_uncertainty_nis_threshold", 4.0
+            )
+        )
+        self.dynamic_escape_uncertainty_trigger_ttc_s = float(
+            self.config.get(
+                "dynamic_escape_uncertainty_trigger_ttc_s",
+                self.dynamic_escape_trigger_ttc_s,
+            )
+        )
+        self.dynamic_escape_direction_commit_steps = int(
+            self.config.get("dynamic_escape_direction_commit_steps", 0)
+        )
         self.dynamic_recovery_enabled = bool(
             self.config.get("dynamic_recovery_enabled", False)
         )
@@ -271,6 +290,9 @@ class ScanGuardArbiter:
             or self.dynamic_escape_min_speed
             > self.dynamic_escape_max_speed
             or self.dynamic_escape_reverse_speed < 0.0
+            or self.dynamic_escape_uncertainty_nis_threshold <= 0.0
+            or self.dynamic_escape_uncertainty_trigger_ttc_s <= 0.0
+            or self.dynamic_escape_direction_commit_steps < 0
         ):
             raise ValueError(
                 "dynamic reactive escape parameters are invalid"
@@ -370,6 +392,8 @@ class ScanGuardArbiter:
         self._dynamic_escape_seen = False
         self._dynamic_escape_hold_remaining = 0
         self._dynamic_escape_hold_values = None
+        self._dynamic_escape_direction_commit_remaining = 0
+        self._dynamic_escape_direction_commit_values = None
         self._dynamic_recovery_active = False
         self._dynamic_recovery_clear_steps = 0
         self._dynamic_recovery_release_count = 0
@@ -467,6 +491,39 @@ class ScanGuardArbiter:
                 "temporal_scan_ttc_s", float("inf")
             )) <= self.dynamic_escape_trigger_ttc_s
         )
+        tracker_innovation_nis = float(
+            context.get("dynamic_obstacle_tracker_innovation_nis", 0.0)
+            or 0.0
+        )
+        tracker_change_triggered = bool(
+            context.get(
+                "dynamic_obstacle_tracker_change_triggered", False
+            )
+        )
+        temporal_ttc_s = float(
+            guard_result.get("temporal_scan_ttc_s", float("inf"))
+        )
+        uncertainty_fusion_escape_allowed = bool(
+            self.dynamic_escape_enabled
+            and self.dynamic_escape_reactive_enabled
+            and self.dynamic_escape_uncertainty_fusion_enabled
+            and context.get(
+                "probabilistic_obstacle_active_avoidance_enabled",
+                False,
+            )
+            and guard_result.get(
+                "dynamic_obstacle_scan_flow_match", False
+            )
+            and guard_result.get("temporal_scan_valid", False)
+            and np.isfinite(temporal_ttc_s)
+            and temporal_ttc_s
+            <= self.dynamic_escape_uncertainty_trigger_ttc_s
+            and (
+                tracker_change_triggered
+                or tracker_innovation_nis
+                >= self.dynamic_escape_uncertainty_nis_threshold
+            )
+        )
         held_reactive_escape_allowed = bool(
             self.dynamic_escape_enabled
             and self.dynamic_escape_reactive_enabled
@@ -482,7 +539,9 @@ class ScanGuardArbiter:
             >= self.dynamic_escape_hold_min_probability
         )
         reactive_escape_allowed = bool(
-            fresh_reactive_escape_allowed or held_reactive_escape_allowed
+            fresh_reactive_escape_allowed
+            or held_reactive_escape_allowed
+            or uncertainty_fusion_escape_allowed
         )
         if (
             not fresh_reactive_escape_allowed
@@ -825,10 +884,27 @@ class ScanGuardArbiter:
         away_heading_error = float(guard_result.get(
             "dynamic_obstacle_away_heading_error_rad", 0.0
         ))
+        obstacle_bearing = float(
+            guard_result.get("dynamic_obstacle_bearing_rad", 0.0)
+        )
+        geometric_forward_escape = bool(
+            self.dynamic_escape_uncertainty_fusion_enabled
+            and reactive_escape_allowed
+            and np.isfinite(obstacle_bearing)
+            and abs(obstacle_bearing) <= 0.5 * np.pi
+            and "v_cmd" in self.action_spec.names
+            and "omega_cmd" in self.action_spec.names
+        )
+        committed_geometric_escape = bool(
+            geometric_forward_escape
+            and self._dynamic_escape_direction_commit_remaining > 0
+            and self._dynamic_escape_direction_commit_values is not None
+        )
         reactive_reverse_required = bool(
             reactive_escape_allowed
             and self.dynamic_escape_reverse_speed > 0.0
             and abs(away_heading_error) > 0.5 * np.pi
+            and not geometric_forward_escape
         )
         vetted_forward_reverse_veto = False
         reverse_escape = False
@@ -856,96 +932,126 @@ class ScanGuardArbiter:
             and float(values[self.action_spec.index("v_cmd")]) >= 0.0
         )
         if dynamic_escape_allowed:
-            use_vetted_planner_control = (
-                self.dynamic_escape_use_vetted_planner_control
-                or hard_fallback_planner_control
-            )
-            if use_vetted_planner_control and (
-                self.dynamic_escape_veto_forward_when_reactive_reverse
-                and fresh_reactive_escape_allowed
-                and reactive_reverse_required
-                and "v_cmd" in self.action_spec.names
-            ):
-                proposed_v = float(
-                    values[self.action_spec.index("v_cmd")]
-                )
-                vetted_forward_reverse_veto = bool(proposed_v > 0.0)
-                use_vetted_planner_control = not vetted_forward_reverse_veto
-            if use_vetted_planner_control:
-                # The proposed command is the first action of the trajectory
-                # already evaluated by the probabilistic planner.  Do not
-                # replace it with a bearing-only heuristic whose risk was never
-                # scored against the obstacle forecast.  Planner-controlled
-                # mode also disables cross-cycle command holding because a
-                # previously vetted command is not certified for a new state.
-                values = self.action_spec.clip(proposed.values)
-                self._dynamic_escape_hold_remaining = 0
-                self._dynamic_escape_hold_values = None
-                if "v_cmd" in self.action_spec.names:
-                    reverse_escape = bool(
-                        values[self.action_spec.index("v_cmd")] < 0.0
-                    )
-                reason = "dynamic_active_escape"
-            elif (
-                held_reactive_escape_allowed
-                and not fresh_reactive_escape_allowed
-            ):
+            if committed_geometric_escape:
                 values = self.action_spec.clip(
-                    self._dynamic_escape_hold_values
+                    self._dynamic_escape_direction_commit_values
                 )
-                if "v_cmd" in self.action_spec.names:
-                    reverse_escape = bool(
-                        values[self.action_spec.index("v_cmd")] < 0.0
+                self._dynamic_escape_direction_commit_remaining -= 1
+                reverse_escape = False
+                reason = "dynamic_active_escape"
+            elif geometric_forward_escape:
+                # A front-half-plane obstacle with short TTC should be
+                # cleared by a committed forward arc.  Reversing along the
+                # closing line caused the repeated reverse/turn failure mode.
+                v_index = self.action_spec.index("v_cmd")
+                omega_index = self.action_spec.index("omega_cmd")
+                values[v_index] = min(
+                    self.dynamic_escape_max_speed,
+                    self.action_spec.upper[v_index],
+                )
+                turn_sign = -1.0 if obstacle_bearing >= 0.0 else 1.0
+                values[omega_index] = (
+                    self.action_spec.upper[omega_index]
+                    if turn_sign > 0.0
+                    else self.action_spec.lower[omega_index]
+                )
+                values = self.action_spec.clip(values)
+                reverse_escape = False
+                if self.dynamic_escape_direction_commit_steps > 0:
+                    self._dynamic_escape_direction_commit_values = (
+                        values.copy()
                     )
-                self._dynamic_escape_hold_remaining -= 1
+                    self._dynamic_escape_direction_commit_remaining = (
+                        self.dynamic_escape_direction_commit_steps - 1
+                    )
                 reason = "dynamic_active_escape"
             else:
-                reverse_escape = bool(
-                    reactive_reverse_required
+                use_vetted_planner_control = (
+                    self.dynamic_escape_use_vetted_planner_control
+                    or hard_fallback_planner_control
                 )
-                if "v_cmd" in self.action_spec.names:
-                    index = self.action_spec.index("v_cmd")
-                    if reverse_escape:
-                        values[index] = max(
-                            -self.dynamic_escape_reverse_speed,
-                            self.action_spec.lower[index],
-                        )
-                    else:
-                        minimum_speed = (
-                            self.dynamic_escape_min_speed
-                            if reactive_escape_allowed
-                            else 0.0
-                        )
-                        values[index] = min(
-                            max(minimum_speed, values[index]),
-                            self.dynamic_escape_max_speed,
-                        )
-                if (
-                    reactive_escape_allowed
-                    and "omega_cmd" in self.action_spec.names
+                if use_vetted_planner_control and (
+                    self.dynamic_escape_veto_forward_when_reactive_reverse
+                    and fresh_reactive_escape_allowed
+                    and reactive_reverse_required
+                    and "v_cmd" in self.action_spec.names
                 ):
-                    omega_index = self.action_spec.index("omega_cmd")
-                    heading_error = away_heading_error
-                    if reverse_escape:
-                        heading_error = float(np.arctan2(
-                            np.sin(away_heading_error - np.pi),
-                            np.cos(away_heading_error - np.pi),
-                        ))
-                    values[omega_index] = np.clip(
-                        self.dynamic_escape_turn_gain
-                        * heading_error,
-                        self.action_spec.lower[omega_index],
-                        self.action_spec.upper[omega_index],
+                    proposed_v = float(
+                        values[self.action_spec.index("v_cmd")]
                     )
-                if (
-                    fresh_reactive_escape_allowed
-                    and self.dynamic_escape_hold_enabled
+                    vetted_forward_reverse_veto = bool(proposed_v > 0.0)
+                    use_vetted_planner_control = (
+                        not vetted_forward_reverse_veto
+                    )
+                if use_vetted_planner_control:
+                    # Preserve the planner command only when it was already
+                    # risk-vetted; otherwise use the reactive escape below.
+                    values = self.action_spec.clip(proposed.values)
+                    self._dynamic_escape_hold_remaining = 0
+                    self._dynamic_escape_hold_values = None
+                    if "v_cmd" in self.action_spec.names:
+                        reverse_escape = bool(
+                            values[self.action_spec.index("v_cmd")] < 0.0
+                        )
+                    reason = "dynamic_active_escape"
+                elif (
+                    held_reactive_escape_allowed
+                    and not fresh_reactive_escape_allowed
                 ):
-                    self._dynamic_escape_hold_values = values.copy()
-                    self._dynamic_escape_hold_remaining = (
-                        self.dynamic_escape_hold_steps
+                    values = self.action_spec.clip(
+                        self._dynamic_escape_hold_values
                     )
-                reason = "dynamic_active_escape"
+                    if "v_cmd" in self.action_spec.names:
+                        reverse_escape = bool(
+                            values[self.action_spec.index("v_cmd")] < 0.0
+                        )
+                    self._dynamic_escape_hold_remaining -= 1
+                    reason = "dynamic_active_escape"
+                else:
+                    reverse_escape = bool(reactive_reverse_required)
+                    if "v_cmd" in self.action_spec.names:
+                        index = self.action_spec.index("v_cmd")
+                        if reverse_escape:
+                            values[index] = max(
+                                -self.dynamic_escape_reverse_speed,
+                                self.action_spec.lower[index],
+                            )
+                        else:
+                            minimum_speed = (
+                                self.dynamic_escape_min_speed
+                                if reactive_escape_allowed
+                                else 0.0
+                            )
+                            values[index] = min(
+                                max(minimum_speed, values[index]),
+                                self.dynamic_escape_max_speed,
+                            )
+                    if (
+                        reactive_escape_allowed
+                        and "omega_cmd" in self.action_spec.names
+                    ):
+                        omega_index = self.action_spec.index("omega_cmd")
+                        heading_error = away_heading_error
+                        if reverse_escape:
+                            heading_error = float(np.arctan2(
+                                np.sin(away_heading_error - np.pi),
+                                np.cos(away_heading_error - np.pi),
+                            ))
+                        values[omega_index] = np.clip(
+                            self.dynamic_escape_turn_gain
+                            * heading_error,
+                            self.action_spec.lower[omega_index],
+                            self.action_spec.upper[omega_index],
+                        )
+                    if (
+                        fresh_reactive_escape_allowed
+                        and self.dynamic_escape_hold_enabled
+                    ):
+                        self._dynamic_escape_hold_values = values.copy()
+                        self._dynamic_escape_hold_remaining = (
+                            self.dynamic_escape_hold_steps
+                        )
+                    reason = "dynamic_active_escape"
         elif self._dynamic_recovery_active:
             heading_error = float(
                 context.get(
@@ -1180,12 +1286,24 @@ class ScanGuardArbiter:
             if "v_cmd" in self.action_spec.names:
                 index = self.action_spec.index("v_cmd")
                 values[index] = max(0.0, values[index]) * float(guard_result.get("slow_scale", 1.0))
+        if not dynamic_escape_allowed:
+            self._dynamic_escape_direction_commit_remaining = 0
+            self._dynamic_escape_direction_commit_values = None
         executed = ControlCommand(values, proposed.timestamp, "safety_arbitration")
         overridden = not np.allclose(executed.values, proposed.values, rtol=0.0, atol=1e-12)
         diagnostics = dict(guard_result)
         diagnostics["dynamic_escape_allowed"] = dynamic_escape_allowed
         diagnostics["dynamic_escape_reactive"] = (
             reactive_escape_allowed
+        )
+        diagnostics["dynamic_escape_uncertainty_fusion"] = (
+            uncertainty_fusion_escape_allowed
+        )
+        diagnostics["dynamic_escape_geometric_forward"] = (
+            geometric_forward_escape
+        )
+        diagnostics["dynamic_escape_direction_commit_remaining"] = int(
+            self._dynamic_escape_direction_commit_remaining
         )
         diagnostics["dynamic_escape_held"] = bool(
             held_reactive_escape_allowed

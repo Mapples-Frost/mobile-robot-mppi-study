@@ -94,6 +94,7 @@ class MppiConfig:
     probabilistic_obstacle_emergency_candidate_prefix_steps: int = 5
     probabilistic_obstacle_emergency_candidate_trigger_ttc_s: float = 0.0
     probabilistic_obstacle_emergency_candidate_intent_hold_steps: int = 0
+    probabilistic_obstacle_front_obstacle_forward_turn_enabled: bool = False
     probabilistic_obstacle_emergency_candidate_pareto_forward_commit_enabled: bool = False
     probabilistic_obstacle_emergency_candidate_forward_risk_ceiling: float = 0.0
     probabilistic_obstacle_emergency_candidate_forward_mass_ceiling: float = 0.0
@@ -299,6 +300,12 @@ class MppiConfig:
                 values.get(
                     "probabilistic_obstacle_emergency_candidate_intent_hold_steps",
                     0,
+                )
+            ),
+            probabilistic_obstacle_front_obstacle_forward_turn_enabled=bool(
+                values.get(
+                    "probabilistic_obstacle_front_obstacle_forward_turn_enabled",
+                    False,
                 )
             ),
             probabilistic_obstacle_emergency_candidate_pareto_forward_commit_enabled=bool(
@@ -1283,6 +1290,8 @@ class MppiController:
                 "scan_flow_match": False,
                 "intent_held": False,
                 "away_heading_error_rad": None,
+                "obstacle_bearing_rad": None,
+                "front_obstacle_forward_turn": False,
                 "ttc_s": float("inf"),
                 "safety_hard_stop_ttc_s": 0.0,
                 "rearm_ready": True,
@@ -1322,6 +1331,11 @@ class MppiController:
         away_heading_error = context.get(
             "dynamic_obstacle_away_heading_error_rad"
         )
+        obstacle_bearing = context.get("dynamic_obstacle_bearing_rad")
+        if obstacle_bearing is not None:
+            obstacle_bearing = float(obstacle_bearing)
+            if not np.isfinite(obstacle_bearing):
+                obstacle_bearing = None
         if away_heading_error is not None:
             away_heading_error = float(away_heading_error)
             if not np.isfinite(away_heading_error):
@@ -1334,6 +1348,13 @@ class MppiController:
             "scan_flow_match": scan_flow_match,
             "intent_held": intent_held,
             "away_heading_error_rad": away_heading_error,
+            "obstacle_bearing_rad": obstacle_bearing,
+            "front_obstacle_forward_turn": bool(
+                self.config
+                .probabilistic_obstacle_front_obstacle_forward_turn_enabled
+                and obstacle_bearing is not None
+                and abs(obstacle_bearing) <= 0.5 * np.pi
+            ),
             "ttc_s": ttc_s,
             "safety_hard_stop_ttc_s": safety_hard_stop_ttc_s,
         }
@@ -1602,8 +1623,26 @@ class MppiController:
         )
         latched_pattern = emergency_context.get("latched_escape_pattern")
         away_heading_error = emergency_context.get("away_heading_error_rad")
+        obstacle_bearing = emergency_context.get("obstacle_bearing_rad")
+        front_obstacle_forward_turn = bool(
+            emergency_context.get("front_obstacle_forward_turn", False)
+        )
         away_pattern = None
-        if away_heading_error is not None and np.isfinite(away_heading_error):
+        if (
+            front_obstacle_forward_turn
+            and obstacle_bearing is not None
+            and np.isfinite(obstacle_bearing)
+        ):
+            turn_sign = -1.0 if float(obstacle_bearing) >= 0.0 else 1.0
+            away_pattern = (
+                float(self.action_spec.upper[v_index]),
+                float(
+                    self.action_spec.upper[omega_index]
+                    if turn_sign > 0.0
+                    else self.action_spec.lower[omega_index]
+                ),
+            )
+        elif away_heading_error is not None and np.isfinite(away_heading_error):
             away_heading_error = float(away_heading_error)
             reverse = abs(away_heading_error) > 0.5 * np.pi
             motion_heading_error = away_heading_error

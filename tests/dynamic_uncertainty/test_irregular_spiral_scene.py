@@ -12,6 +12,7 @@ from mobile_robot_mppi.evaluation.scene_feasibility import (
     audit_static_scene,
     point_clearance,
 )
+from mobile_robot_mppi.planning.static_astar import plan_static_astar_path
 from mobile_robot_mppi.simulation.model_factory import build_diff_drive_mjcf
 from mobile_robot_mppi.simulation.mujoco_plant import MujocoDiffDrivePlant
 
@@ -121,6 +122,26 @@ def test_frozen_spiral_route_is_clear_and_globally_reachable():
     assert free_space["start_free"]
     assert free_space["goal_free"]
     assert free_space["path_exists"]
+
+
+def test_static_astar_recovers_from_recorded_post_detour_position():
+    config = load_yaml(CONFIG)
+    static, _ = _split(config)
+    contract = config["spiral_scene_feasibility_contract"]
+
+    route = plan_static_astar_path(
+        (-6.2786, -3.8150),
+        config["task"]["points"][-1],
+        static,
+        robot_radius=float(contract["robot_footprint_radius_m"]),
+        clearance_margin=float(contract["static_clearance_margin_m"]),
+        resolution=0.10,
+        bounds_padding=0.50,
+    )
+
+    np.testing.assert_allclose(route[0], (-6.2786, -3.8150))
+    np.testing.assert_allclose(route[-1], config["task"]["points"][-1])
+    assert len(route) >= 3
 
 
 def test_dynamic_carriers_cross_route_and_keep_static_clearance():

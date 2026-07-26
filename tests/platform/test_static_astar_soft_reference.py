@@ -12,6 +12,7 @@ from mobile_robot_mppi.core.types import Pose2D, RobotObservation, Twist2D
 from mobile_robot_mppi.planning.dynamics import DynamicUnicyclePrediction
 from mobile_robot_mppi.planning.mppi import MppiConfig, MppiController
 from mobile_robot_mppi.planning.static_astar import (
+    _point_clearance,
     plan_static_astar_path,
 )
 
@@ -55,6 +56,26 @@ def test_static_astar_routes_around_frozen_box_and_keeps_exact_endpoints():
     np.testing.assert_allclose(route[-1], (4.0, 0.0))
     assert len(route) >= 3
     assert np.max(np.abs(route[:, 1])) > 0.75
+
+
+def test_static_astar_segment_thickness_matches_mujoco_full_width_contract():
+    wall = {
+        "type": "segment",
+        "start": (-1.0, 0.0),
+        "end": (1.0, 0.0),
+        "thickness": 0.20,
+    }
+
+    clearance = _point_clearance(
+        0.0,
+        0.50,
+        (wall,),
+        robot_radius=0.25,
+    )
+
+    # MuJoCo represents the segment as a box with half-width
+    # 0.5 * thickness, so 0.50 - 0.10 - 0.25 = 0.15 m.
+    assert clearance == pytest.approx(0.15)
 
 
 def test_polyline_replacement_preserves_contract_and_restarts_progress():

@@ -47,7 +47,12 @@ def _point_clearance(x, y, obstacles, robot_radius):
                 centerline = float(
                     np.linalg.norm(point - (start + fraction * vector))
                 )
-            surface = centerline - float(obstacle.get("thickness", 0.10))
+            # Scene segment ``thickness`` is the full MuJoCo box width.  Keep
+            # A* geometry identical to model_factory and scene_feasibility,
+            # both of which use half of that width as the centreline extent.
+            surface = centerline - (
+                0.5 * float(obstacle.get("thickness", 0.10))
+            )
         elif kind == "cylinder":
             center = np.asarray(obstacle["position"][:2], dtype=np.float64)
             surface = (

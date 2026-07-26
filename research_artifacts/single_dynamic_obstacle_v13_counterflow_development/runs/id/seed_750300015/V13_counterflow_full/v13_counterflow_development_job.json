@@ -1,0 +1,93 @@
+{
+  "arm": "V13_counterflow_full",
+  "block": {
+    "arm_order": [
+      "V4_full_frozen",
+      "V13_counterflow_full"
+    ],
+    "block_order": 1,
+    "certificate": {
+      "certificate_rule": "ghost_constant_speed_center_distance_le_sum_radii",
+      "collision_threshold_m": 0.5,
+      "conflict_window_threshold_m": 0.8,
+      "conflict_windows_s": [
+        [
+          16.55,
+          20.05
+        ]
+      ],
+      "minimum_distance_time_s": 18.3,
+      "minimum_ghost_obstacle_center_distance_m": 0.027399426059662214,
+      "noise_profile": "medium",
+      "obstacle_process": "hybrid_patrol",
+      "obstacle_truth_sha256": "8ff43be43b2879c2016b3533b76d84286db43f8cdb432dcd55e91d6fe320d7bd",
+      "seed": 750300015,
+      "split": "id"
+    },
+    "model_block": 2,
+    "seed": 750300015,
+    "split": "id",
+    "stratum": "opened_collision"
+  },
+  "change_signature": {
+    "action_space.upper": [
+      [
+        0.35,
+        0.9
+      ],
+      [
+        0.45,
+        0.9
+      ]
+    ],
+    "perception.scan_guard.dynamic_escape_max_speed": [
+      0.35,
+      0.45
+    ],
+    "perception.scan_guard.dynamic_escape_min_speed": [
+      0.2,
+      0.25
+    ],
+    "perception.scan_guard.dynamic_escape_use_vetted_planner_control": [
+      "<MISSING>",
+      true
+    ],
+    "planner.probabilistic_obstacle_counterflow_escape_enabled": [
+      "<MISSING>",
+      true
+    ],
+    "planner.probabilistic_obstacle_counterflow_weight": [
+      "<MISSING>",
+      0.8
+    ],
+    "planner.probabilistic_obstacle_emergency_candidate_critical_distance_m": [
+      "<MISSING>",
+      0.32
+    ],
+    "planner.probabilistic_obstacle_emergency_candidate_intent_hold_steps": [
+      "<MISSING>",
+      8
+    ],
+    "planner.probabilistic_obstacle_emergency_candidate_rearm_clear_steps": [
+      "<MISSING>",
+      3
+    ],
+    "planner.probabilistic_obstacle_emergency_candidate_rearm_ttc_s": [
+      "<MISSING>",
+      2.2
+    ],
+    "planner.probabilistic_obstacle_emergency_candidate_trigger_distance_m": [
+      "<MISSING>",
+      0.65
+    ],
+    "planner.probabilistic_obstacle_emergency_candidate_trigger_ttc_s": [
+      "<MISSING>",
+      1.8
+    ],
+    "planner.probabilistic_obstacle_hard_violation_action": [
+      "active_avoidance",
+      "active_avoidance_motion"
+    ]
+  },
+  "resolved_config_sha256": "eaf23114ab82ead77067e56103c59b4cadbc12fb30c78019761f83f1a4915038"
+}

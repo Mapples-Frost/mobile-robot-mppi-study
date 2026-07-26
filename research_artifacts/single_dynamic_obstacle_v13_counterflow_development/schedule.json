@@ -1,0 +1,135 @@
+{
+  "blocks": [
+    {
+      "arm_order": [
+        "V4_full_frozen",
+        "V13_counterflow_full"
+      ],
+      "block_order": 1,
+      "certificate": {
+        "certificate_rule": "ghost_constant_speed_center_distance_le_sum_radii",
+        "collision_threshold_m": 0.5,
+        "conflict_window_threshold_m": 0.8,
+        "conflict_windows_s": [
+          [
+            16.55,
+            20.05
+          ]
+        ],
+        "minimum_distance_time_s": 18.3,
+        "minimum_ghost_obstacle_center_distance_m": 0.027399426059662214,
+        "noise_profile": "medium",
+        "obstacle_process": "hybrid_patrol",
+        "obstacle_truth_sha256": "8ff43be43b2879c2016b3533b76d84286db43f8cdb432dcd55e91d6fe320d7bd",
+        "seed": 750300015,
+        "split": "id"
+      },
+      "model_block": 2,
+      "seed": 750300015,
+      "split": "id",
+      "stratum": "opened_collision"
+    },
+    {
+      "arm_order": [
+        "V13_counterflow_full",
+        "V4_full_frozen"
+      ],
+      "block_order": 2,
+      "certificate": {
+        "certificate_rule": "ghost_constant_speed_center_distance_le_sum_radii",
+        "collision_threshold_m": 0.5,
+        "conflict_window_threshold_m": 0.8,
+        "conflict_windows_s": [
+          [
+            13.05,
+            16.950000000000003
+          ]
+        ],
+        "minimum_distance_time_s": 14.700000000000001,
+        "minimum_ghost_obstacle_center_distance_m": 0.13876507361453297,
+        "noise_profile": "medium",
+        "obstacle_process": "hybrid_patrol",
+        "obstacle_truth_sha256": "d0010ab075f14f76d937c91add1bd604f52e999f8a8af661772b8ebda725efea",
+        "seed": 750300029,
+        "split": "id"
+      },
+      "model_block": 2,
+      "seed": 750300029,
+      "split": "id",
+      "stratum": "opened_v12_regression"
+    },
+    {
+      "arm_order": [
+        "V4_full_frozen",
+        "V13_counterflow_full"
+      ],
+      "block_order": 3,
+      "certificate": {
+        "certificate_rule": "ghost_constant_speed_center_distance_le_sum_radii",
+        "collision_threshold_m": 0.5,
+        "conflict_window_threshold_m": 0.8,
+        "conflict_windows_s": [
+          [
+            0.0,
+            3.0
+          ],
+          [
+            9.05,
+            13.100000000000001
+          ],
+          [
+            37.1,
+            41.0
+          ]
+        ],
+        "minimum_distance_time_s": 11.05,
+        "minimum_ghost_obstacle_center_distance_m": 0.35581933548883504,
+        "noise_profile": "process_shift",
+        "obstacle_process": "hybrid_patrol",
+        "obstacle_truth_sha256": "b0c78ddbbc230c27dd9af4ce732f7ed4a6a2d6915e4e93cfc5abb2b525e177ce",
+        "seed": 750400001,
+        "split": "ood"
+      },
+      "model_block": 0,
+      "seed": 750400001,
+      "split": "ood",
+      "stratum": "opened_collision"
+    },
+    {
+      "arm_order": [
+        "V13_counterflow_full",
+        "V4_full_frozen"
+      ],
+      "block_order": 4,
+      "certificate": {
+        "certificate_rule": "ghost_constant_speed_center_distance_le_sum_radii",
+        "collision_threshold_m": 0.5,
+        "conflict_window_threshold_m": 0.8,
+        "conflict_windows_s": [
+          [
+            8.55,
+            12.100000000000001
+          ]
+        ],
+        "minimum_distance_time_s": 10.350000000000001,
+        "minimum_ghost_obstacle_center_distance_m": 0.056982616706326934,
+        "noise_profile": "process_shift",
+        "obstacle_process": "hybrid_patrol",
+        "obstacle_truth_sha256": "f1f859668645f5dbf9dbed6e5da4d7c923f0700f45a5663d24583a1241996917",
+        "seed": 750400003,
+        "split": "ood"
+      },
+      "model_block": 0,
+      "seed": 750400003,
+      "split": "ood",
+      "stratum": "opened_safe_noncompletion"
+    }
+  ],
+  "formal_effect_estimation_authorized": false,
+  "implementation_git_sha": "c23ea2142f1b6205bfeea8a757ca60f84672605c",
+  "outcome_informed_development_selection": true,
+  "schedule_sha256": "9c316a0cff76133abc370e7e609890d602bbdd126ff5939b35e261bbd531fa38",
+  "schema_version": 1,
+  "scope": "outcome_informed_mechanism_development_not_effect_estimation",
+  "workers": 2
+}

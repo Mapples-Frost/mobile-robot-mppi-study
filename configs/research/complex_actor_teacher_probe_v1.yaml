@@ -8,7 +8,9 @@ scope: development_only_not_deployment_method
 teacher:
   optimizer: standard
   sampling_prior: goal_warm_start
-  horizon: 60
+  # Must equal the frozen Change-Aware forecast horizon. Teacher capacity is
+  # increased only along the sample axis.
+  horizon: 36
   num_samples: 1200
   maximum_steps: 200
   future_truth_used: false
@@ -17,7 +19,7 @@ teacher:
   safety_contract_changed: false
 
 development_seeds:
-  chapter1: [790201007]
+  chapter1: [790201007, 790201009]
   chapter2: [790202007]
   chapter3: [790203007]
 

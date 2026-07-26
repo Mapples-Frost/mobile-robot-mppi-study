@@ -225,7 +225,7 @@ def test_complex_actor_teacher_changes_compute_not_risk_or_geometry():
         ]
         == ""
     )
-    assert teacher["planner"]["horizon"] == 60
+    assert teacher["planner"]["horizon"] == full["planner"]["horizon"] == 36
     assert teacher["planner"]["num_samples"] == 1200
     for prefix in (
         "probabilistic_obstacle_",

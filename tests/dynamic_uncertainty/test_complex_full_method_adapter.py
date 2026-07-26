@@ -21,6 +21,10 @@ SHARED_PLANNER_KEYS = (
     "probabilistic_reference_authority_minimum",
     "probabilistic_reference_authority_risk_source",
     "probabilistic_reference_progress_weight",
+    "probabilistic_obstacle_emergency_candidates_enabled",
+    "probabilistic_obstacle_emergency_candidate_trigger_ttc_s",
+    "probabilistic_obstacle_emergency_candidate_trigger_distance_m",
+    "probabilistic_obstacle_emergency_candidate_critical_distance_m",
     "static_astar_replan_enabled",
     "static_astar_replan_resolution_m",
     "static_astar_replan_clearance_margin_m",
@@ -54,6 +58,24 @@ def test_all_maps_use_the_actual_b11_full_stack_and_600_rollouts():
         assert planner["sampling_prior"] == "paper_direct_rl"
         assert config["rl"]["enabled"]
         assert planner["probabilistic_obstacle_risk_enabled"]
+        assert planner[
+            "probabilistic_obstacle_emergency_candidates_enabled"
+        ]
+        assert (
+            planner[
+                "probabilistic_obstacle_emergency_candidate_trigger_ttc_s"
+            ]
+            > 0.0
+        )
+        assert (
+            planner[
+                "probabilistic_obstacle_emergency_candidate_trigger_distance_m"
+            ]
+            > planner[
+                "probabilistic_obstacle_emergency_candidate_critical_distance_m"
+            ]
+            > 0.0
+        )
         assert tracker["enabled"]
         assert tracker["predictor_mode"] == "change_aware"
         assert tracker["maximum_tracks"] == 3

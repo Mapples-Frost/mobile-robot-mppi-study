@@ -60,6 +60,18 @@ planner:
   path_boundary_enabled: false
   path_boundary_candidate_filter_enabled: false
   probabilistic_obstacle_missing_forecast_action: scan_only
+
+  # B11 already contains the predictor-aware six-direction escape lattice,
+  # but its activation thresholds default to zero in the paper-v4 base
+  # configuration.  A zero/zero contract makes the enabled lattice
+  # unreachable precisely when stopping is predicted unsafe.  These are the
+  # shared thresholds used by the three original complex-scene previews; they
+  # activate the existing MPPI candidates without adding a decision layer or
+  # changing the rollout budget.
+  probabilistic_obstacle_emergency_candidates_enabled: true
+  probabilistic_obstacle_emergency_candidate_trigger_ttc_s: 2.20
+  probabilistic_obstacle_emergency_candidate_trigger_distance_m: 0.85
+  probabilistic_obstacle_emergency_candidate_critical_distance_m: 0.42
   probabilistic_obstacle_emergency_candidate_intent_hold_steps: 0
 
 gate_contract:

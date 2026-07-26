@@ -1489,6 +1489,91 @@ class EpisodeMetrics:
                     "known_static_map_minimum_clearance", 0.0
                 )
             ),
+            "known_static_map_candidate_filter_enabled": float(
+                planner_diagnostics.get(
+                    "known_static_map_candidate_filter_enabled", False
+                )
+            ),
+            "known_static_map_candidate_feasible_fraction": float(
+                planner_diagnostics.get(
+                    "known_static_map_candidate_feasible_fraction", 1.0
+                )
+            ),
+            "known_static_map_no_feasible_candidates": float(
+                planner_diagnostics.get(
+                    "known_static_map_no_feasible_candidates", False
+                )
+            ),
+            "known_static_map_weighted_update_feasible": float(
+                planner_diagnostics.get(
+                    "known_static_map_weighted_update_feasible", True
+                )
+            ),
+            "known_static_map_fallback_used": float(
+                planner_diagnostics.get(
+                    "known_static_map_fallback_used", False
+                )
+            ),
+            "probabilistic_reference_authority_enabled": float(
+                planner_diagnostics.get(
+                    "probabilistic_reference_authority_enabled", False
+                )
+            ),
+            "probabilistic_reference_risk_raw": float(
+                planner_diagnostics.get(
+                    "probabilistic_reference_risk_raw", 0.0
+                )
+            ),
+            "probabilistic_reference_risk_filtered": float(
+                planner_diagnostics.get(
+                    "probabilistic_reference_risk_filtered", 0.0
+                )
+            ),
+            "probabilistic_reference_authority": float(
+                planner_diagnostics.get(
+                    "probabilistic_reference_authority", 1.0
+                )
+            ),
+            "probabilistic_reference_progress_weight": float(
+                planner_diagnostics.get(
+                    "probabilistic_reference_progress_weight", 0.0
+                )
+            ),
+            "static_astar_replan_enabled": float(
+                planner_diagnostics.get(
+                    "static_astar_replan_enabled", False
+                )
+            ),
+            "static_astar_replan_triggered": float(
+                planner_diagnostics.get(
+                    "static_astar_replan_triggered", False
+                )
+            ),
+            "static_astar_replan_reason": str(
+                planner_diagnostics.get(
+                    "static_astar_replan_reason", "none"
+                )
+            ),
+            "static_astar_replan_route_points": int(
+                planner_diagnostics.get(
+                    "static_astar_replan_route_points", 0
+                )
+            ),
+            "static_astar_replan_cross_track_m": float(
+                planner_diagnostics.get(
+                    "static_astar_replan_cross_track_m", 0.0
+                )
+            ),
+            "static_astar_replan_stagnation_steps": int(
+                planner_diagnostics.get(
+                    "static_astar_replan_stagnation_steps", 0
+                )
+            ),
+            "static_astar_replan_count": int(
+                planner_diagnostics.get(
+                    "static_astar_replan_count", 0
+                )
+            ),
             "path_boundary_candidate_feasible_fraction": float(
                 planner_diagnostics.get(
                     "path_boundary_candidate_feasible_fraction", 1.0
@@ -3321,6 +3406,74 @@ class EpisodeMetrics:
                 row.get("known_static_map_minimum_clearance", 0.0)
                 for row in values
             ])),
+            "known_static_map_candidate_filter_enabled_fraction": float(
+                np.mean([
+                    row.get(
+                        "known_static_map_candidate_filter_enabled", False
+                    )
+                    for row in values
+                ])
+            ),
+            "known_static_map_candidate_feasible_fraction_mean": float(
+                np.mean([
+                    row.get(
+                        "known_static_map_candidate_feasible_fraction", 1.0
+                    )
+                    for row in values
+                ])
+            ),
+            "known_static_map_no_feasible_decision_fraction": float(
+                np.mean([
+                    row.get(
+                        "known_static_map_no_feasible_candidates", False
+                    )
+                    for row in values
+                ])
+            ),
+            "known_static_map_weighted_update_infeasible_fraction": float(
+                np.mean([
+                    not row.get(
+                        "known_static_map_weighted_update_feasible", True
+                    )
+                    for row in values
+                ])
+            ),
+            "known_static_map_fallback_steps": int(sum(
+                row.get("known_static_map_fallback_used", False)
+                for row in values
+            )),
+            "probabilistic_reference_authority_enabled_fraction": float(
+                np.mean([
+                    row.get(
+                        "probabilistic_reference_authority_enabled", False
+                    )
+                    for row in values
+                ])
+            ),
+            "probabilistic_reference_risk_filtered_max": float(np.max([
+                row.get("probabilistic_reference_risk_filtered", 0.0)
+                for row in values
+            ])),
+            "probabilistic_reference_authority_mean": float(np.mean([
+                row.get("probabilistic_reference_authority", 1.0)
+                for row in values
+            ])),
+            "probabilistic_reference_authority_min": float(np.min([
+                row.get("probabilistic_reference_authority", 1.0)
+                for row in values
+            ])),
+            "static_astar_replan_enabled_fraction": float(np.mean([
+                row.get("static_astar_replan_enabled", False)
+                for row in values
+            ])),
+            "static_astar_replan_trigger_count": int(sum(
+                row.get("static_astar_replan_triggered", False)
+                for row in values
+            )),
+            "static_astar_replan_count_max": int(max(
+                row.get("static_astar_replan_count", 0)
+                for row in values
+            )),
             "path_boundary_candidate_feasible_fraction_mean": float(np.mean([
                 row.get("path_boundary_candidate_feasible_fraction", 1.0)
                 for row in values

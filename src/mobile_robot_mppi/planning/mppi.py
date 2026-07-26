@@ -13,6 +13,7 @@ from mobile_robot_mppi.obstacles.collision_risk import (
     GaussianMixtureObstacleForecast,
     evaluate_collision_risk,
 )
+from mobile_robot_mppi.planning.static_astar import plan_static_astar_path
 from mobile_robot_mppi.policies.priors import GoalWarmStartPrior, PriorOutput
 
 
@@ -79,6 +80,22 @@ class MppiConfig:
     known_static_map_influence_m: float = 0.0
     known_static_map_weight: float = 0.0
     known_static_map_collision_penalty: float = 0.0
+    known_static_map_candidate_filter_enabled: bool = False
+    probabilistic_reference_authority_enabled: bool = False
+    probabilistic_reference_authority_filter_alpha: float = 0.85
+    probabilistic_reference_authority_minimum: float = 0.15
+    probabilistic_reference_authority_risk_source: str = (
+        "maximum_step_probability"
+    )
+    probabilistic_reference_progress_weight: float = 0.0
+    static_astar_replan_enabled: bool = False
+    static_astar_replan_resolution_m: float = 0.10
+    static_astar_replan_clearance_margin_m: float = 0.08
+    static_astar_replan_deviation_m: float = 0.70
+    static_astar_replan_stagnation_steps: int = 30
+    static_astar_replan_minimum_progress_m: float = 0.12
+    static_astar_replan_cooldown_steps: int = 30
+    static_astar_replan_bounds_padding_m: float = 0.50
     probabilistic_obstacle_risk_enabled: bool = False
     probabilistic_obstacle_risk_weight: float = 0.0
     probabilistic_obstacle_hard_threshold: float = 0.20
@@ -237,6 +254,67 @@ class MppiConfig:
             ),
             known_static_map_collision_penalty=float(
                 values.get("known_static_map_collision_penalty", 0.0)
+            ),
+            known_static_map_candidate_filter_enabled=bool(
+                values.get(
+                    "known_static_map_candidate_filter_enabled", False
+                )
+            ),
+            probabilistic_reference_authority_enabled=bool(
+                values.get(
+                    "probabilistic_reference_authority_enabled", False
+                )
+            ),
+            probabilistic_reference_authority_filter_alpha=float(
+                values.get(
+                    "probabilistic_reference_authority_filter_alpha", 0.85
+                )
+            ),
+            probabilistic_reference_authority_minimum=float(
+                values.get(
+                    "probabilistic_reference_authority_minimum", 0.15
+                )
+            ),
+            probabilistic_reference_authority_risk_source=str(
+                values.get(
+                    "probabilistic_reference_authority_risk_source",
+                    "maximum_step_probability",
+                )
+            ),
+            probabilistic_reference_progress_weight=float(
+                values.get(
+                    "probabilistic_reference_progress_weight", 0.0
+                )
+            ),
+            static_astar_replan_enabled=bool(
+                values.get("static_astar_replan_enabled", False)
+            ),
+            static_astar_replan_resolution_m=float(
+                values.get("static_astar_replan_resolution_m", 0.10)
+            ),
+            static_astar_replan_clearance_margin_m=float(
+                values.get(
+                    "static_astar_replan_clearance_margin_m", 0.08
+                )
+            ),
+            static_astar_replan_deviation_m=float(
+                values.get("static_astar_replan_deviation_m", 0.70)
+            ),
+            static_astar_replan_stagnation_steps=int(
+                values.get("static_astar_replan_stagnation_steps", 30)
+            ),
+            static_astar_replan_minimum_progress_m=float(
+                values.get(
+                    "static_astar_replan_minimum_progress_m", 0.12
+                )
+            ),
+            static_astar_replan_cooldown_steps=int(
+                values.get("static_astar_replan_cooldown_steps", 30)
+            ),
+            static_astar_replan_bounds_padding_m=float(
+                values.get(
+                    "static_astar_replan_bounds_padding_m", 0.50
+                )
             ),
             probabilistic_obstacle_risk_enabled=bool(
                 values.get("probabilistic_obstacle_risk_enabled", False)
@@ -692,6 +770,14 @@ class MppiConfig:
             self.known_static_map_influence_m,
             self.known_static_map_weight,
             self.known_static_map_collision_penalty,
+            self.probabilistic_reference_authority_filter_alpha,
+            self.probabilistic_reference_authority_minimum,
+            self.probabilistic_reference_progress_weight,
+            self.static_astar_replan_resolution_m,
+            self.static_astar_replan_clearance_margin_m,
+            self.static_astar_replan_deviation_m,
+            self.static_astar_replan_minimum_progress_m,
+            self.static_astar_replan_bounds_padding_m,
             self.probabilistic_obstacle_risk_weight,
             self.probabilistic_obstacle_hard_threshold,
             self.probabilistic_obstacle_hard_penalty,
@@ -707,6 +793,55 @@ class MppiConfig:
             raise ValueError(
                 "known static-map cost requires positive weight and "
                 "collision penalty"
+            )
+        if (
+            self.known_static_map_candidate_filter_enabled
+            and not self.known_static_map_cost_enabled
+        ):
+            raise ValueError(
+                "known static-map candidate filtering requires the exact "
+                "static-map cost"
+            )
+        if not 0.0 <= self.probabilistic_reference_authority_filter_alpha < 1.0:
+            raise ValueError(
+                "reference-authority filter alpha must be in [0,1)"
+            )
+        if not 0.0 <= self.probabilistic_reference_authority_minimum <= 1.0:
+            raise ValueError(
+                "minimum reference authority must be within [0,1]"
+            )
+        if self.probabilistic_reference_authority_risk_source not in (
+            "maximum_step_probability",
+            "accumulated_probability_mass",
+        ):
+            raise ValueError(
+                "reference-authority risk source must be maximum-step "
+                "probability or accumulated probability mass"
+            )
+        if (
+            self.static_astar_replan_stagnation_steps <= 0
+            or self.static_astar_replan_cooldown_steps < 0
+        ):
+            raise ValueError(
+                "static A* replan step counts must be positive/non-negative"
+            )
+        if self.static_astar_replan_enabled and (
+            self.static_astar_replan_resolution_m <= 0.0
+            or self.static_astar_replan_deviation_m <= 0.0
+            or self.static_astar_replan_minimum_progress_m <= 0.0
+            or self.static_astar_replan_bounds_padding_m <= 0.0
+        ):
+            raise ValueError(
+                "enabled static A* replanning requires positive geometry "
+                "and progress parameters"
+            )
+        if (
+            self.probabilistic_reference_authority_enabled
+            and not self.probabilistic_obstacle_risk_enabled
+        ):
+            raise ValueError(
+                "probabilistic reference authority requires probabilistic "
+                "obstacle risk"
             )
         if (
             not np.isfinite(self.path_preview_speed_mps)
@@ -1020,6 +1155,19 @@ class MppiController:
         self._reliability_pending_control = None
         self._delay_preceding_action = self.previous_action.copy()
         self._previous_probabilistic_risk = 1.0
+        self._probabilistic_reference_risk_filtered = 0.0
+        self._static_astar_progress_anchor = None
+        self._static_astar_stagnation_steps = 0
+        self._static_astar_cooldown_steps = 0
+        self._static_astar_replan_count = 0
+        self._static_astar_last_diagnostics = {
+            "enabled": bool(config.static_astar_replan_enabled),
+            "triggered": False,
+            "reason": "none",
+            "route_points": 0,
+            "cross_track_m": 0.0,
+            "stagnation_steps": 0,
+        }
         self._probabilistic_emergency_intent_remaining = 0
         self._probabilistic_emergency_direction = None
         self._probabilistic_emergency_latched_pattern = None
@@ -1060,6 +1208,19 @@ class MppiController:
         self._reliability_pending_control = None
         self._delay_preceding_action = self.previous_action.copy()
         self._previous_probabilistic_risk = 1.0
+        self._probabilistic_reference_risk_filtered = 0.0
+        self._static_astar_progress_anchor = None
+        self._static_astar_stagnation_steps = 0
+        self._static_astar_cooldown_steps = 0
+        self._static_astar_replan_count = 0
+        self._static_astar_last_diagnostics = {
+            "enabled": bool(self.config.static_astar_replan_enabled),
+            "triggered": False,
+            "reason": "none",
+            "route_points": 0,
+            "cross_track_m": 0.0,
+            "stagnation_steps": 0,
+        }
         self._probabilistic_emergency_intent_remaining = 0
         self._probabilistic_emergency_direction = None
         self._probabilistic_emergency_latched_pattern = None
@@ -1103,6 +1264,171 @@ class MppiController:
         except KeyError as exc:
             raise ValueError("observation does not provide state channel %s" % exc)
         return self.state_spec.validate(state)
+
+    def _maybe_replan_static_reference(
+        self, state, observation, reference
+    ) -> Dict[str, Any]:
+        """Refresh only the static A* reference after deviation/stagnation."""
+
+        diagnostics = {
+            "enabled": bool(self.config.static_astar_replan_enabled),
+            "triggered": False,
+            "reason": "none",
+            "route_points": 0,
+            "cross_track_m": 0.0,
+            "stagnation_steps": int(
+                self._static_astar_stagnation_steps
+            ),
+            "count": int(self._static_astar_replan_count),
+        }
+        required = (
+            "project",
+            "replace_points",
+            "points",
+            "progress",
+        )
+        if (
+            not self.config.static_astar_replan_enabled
+            or not all(hasattr(reference, name) for name in required)
+        ):
+            self._static_astar_last_diagnostics = diagnostics
+            return diagnostics
+        position = np.asarray(state, dtype=np.float64)[
+            list(self.state_spec.position_indices)
+        ]
+        projection = reference.project(
+            position, minimum_progress=float(reference.progress)
+        )
+        progress = float(projection.progress)
+        diagnostics["cross_track_m"] = float(
+            projection.cross_track_error
+        )
+        if self._static_astar_progress_anchor is None:
+            self._static_astar_progress_anchor = progress
+        if (
+            progress - float(self._static_astar_progress_anchor)
+            >= self.config.static_astar_replan_minimum_progress_m
+        ):
+            self._static_astar_progress_anchor = progress
+            self._static_astar_stagnation_steps = 0
+        else:
+            self._static_astar_stagnation_steps += 1
+        diagnostics["stagnation_steps"] = int(
+            self._static_astar_stagnation_steps
+        )
+        if self._static_astar_cooldown_steps > 0:
+            self._static_astar_cooldown_steps -= 1
+            diagnostics["reason"] = "cooldown"
+            self._static_astar_last_diagnostics = diagnostics
+            return diagnostics
+
+        reason = None
+        if (
+            projection.cross_track_error
+            > self.config.static_astar_replan_deviation_m
+        ):
+            reason = "deviation"
+        elif (
+            self._static_astar_stagnation_steps
+            >= self.config.static_astar_replan_stagnation_steps
+        ):
+            reason = "stagnation"
+        if reason is None:
+            self._static_astar_last_diagnostics = diagnostics
+            return diagnostics
+
+        static_obstacles = tuple(
+            observation.auxiliary.get("known_static_obstacles", ())
+        )
+        if not static_obstacles:
+            diagnostics["reason"] = "missing_static_map"
+            self._static_astar_last_diagnostics = diagnostics
+            return diagnostics
+        goal = np.asarray(reference.points[-1], dtype=np.float64)
+        if float(np.linalg.norm(goal - position)) <= max(
+            2.0 * float(getattr(reference, "tolerance", 0.2)),
+            self.config.static_astar_replan_resolution_m,
+        ):
+            diagnostics["reason"] = "near_goal"
+            self._static_astar_last_diagnostics = diagnostics
+            return diagnostics
+        try:
+            route = plan_static_astar_path(
+                position,
+                goal,
+                static_obstacles,
+                robot_radius=self.config.robot_radius,
+                clearance_margin=(
+                    self.config.static_astar_replan_clearance_margin_m
+                ),
+                resolution=self.config.static_astar_replan_resolution_m,
+                bounds_padding=(
+                    self.config.static_astar_replan_bounds_padding_m
+                ),
+            )
+            reference.replace_points(route)
+        except (RuntimeError, ValueError) as exc:
+            diagnostics["reason"] = "failed:%s" % str(exc)
+            self._static_astar_cooldown_steps = (
+                self.config.static_astar_replan_cooldown_steps
+            )
+            self._static_astar_last_diagnostics = diagnostics
+            return diagnostics
+        self._static_astar_progress_anchor = 0.0
+        self._static_astar_stagnation_steps = 0
+        self._static_astar_cooldown_steps = (
+            self.config.static_astar_replan_cooldown_steps
+        )
+        self._static_astar_replan_count += 1
+        diagnostics.update({
+            "triggered": True,
+            "reason": reason,
+            "route_points": int(len(route)),
+            "stagnation_steps": 0,
+            "count": int(self._static_astar_replan_count),
+        })
+        self._static_astar_last_diagnostics = diagnostics
+        return diagnostics
+
+    def _probabilistic_reference_authority(
+        self, candidate_risk, prior_index
+    ) -> Tuple[float, float]:
+        if (
+            not self.config.probabilistic_reference_authority_enabled
+            or candidate_risk is None
+        ):
+            self._probabilistic_reference_risk_filtered = 0.0
+            return 1.0, 0.0
+        index = int(np.clip(
+            prior_index,
+            0,
+            len(candidate_risk.maximum_step_probability) - 1,
+        ))
+        if (
+            self.config.probabilistic_reference_authority_risk_source
+            == "accumulated_probability_mass"
+        ):
+            raw = float(
+                candidate_risk.accumulated_probability_mass[index]
+            )
+        else:
+            raw = float(
+                candidate_risk.maximum_step_probability[index]
+            )
+        raw = float(np.clip(raw, 0.0, 1.0))
+        alpha = (
+            self.config
+            .probabilistic_reference_authority_filter_alpha
+        )
+        self._probabilistic_reference_risk_filtered = float(
+            alpha * self._probabilistic_reference_risk_filtered
+            + (1.0 - alpha) * raw
+        )
+        authority = max(
+            self.config.probabilistic_reference_authority_minimum,
+            1.0 - self._probabilistic_reference_risk_filtered,
+        )
+        return float(authority), raw
 
     def _prior(self, observation, reference) -> PriorOutput:
         output = self.sampling_prior.propose(
@@ -3721,7 +4047,14 @@ class MppiController:
         known_static_obstacles=(),
         path_boundary_margins=None,
         probabilistic_risk=None,
+        reference_authority=1.0,
     ):
+        reference_authority = float(reference_authority)
+        if (
+            not np.isfinite(reference_authority)
+            or not 0.0 <= reference_authority <= 1.0
+        ):
+            raise ValueError("reference authority must be within [0,1]")
         xy_indices = self.state_spec.position_indices
         xy = trajectories[..., list(xy_indices)]
         target_xy = np.asarray((target.pose.x, target.pose.y), dtype=np.float64)
@@ -3743,8 +4076,43 @@ class MppiController:
         else:
             reference_poses = None
             distance_sq = np.sum((xy - target_xy) ** 2, axis=-1)
-        costs = self.config.goal_running_weight * np.sum(distance_sq[:, 1:-1], axis=1)
-        costs += self.config.goal_terminal_weight * distance_sq[:, -1]
+        costs = (
+            reference_authority
+            * self.config.goal_running_weight
+            * np.sum(distance_sq[:, 1:-1], axis=1)
+        )
+        costs += (
+            reference_authority
+            * self.config.goal_terminal_weight
+            * distance_sq[:, -1]
+        )
+        if (
+            self.config.probabilistic_reference_progress_weight > 0.0
+            and reference is not None
+            and all(
+                hasattr(reference, name)
+                for name in (
+                    "points",
+                    "segment_lengths",
+                    "cumulative",
+                    "progress",
+                )
+            )
+        ):
+            terminal_progress = self._reference_terminal_progress(
+                xy[:, -1, :], reference
+            )
+            progress_gain = np.maximum(
+                0.0,
+                terminal_progress - float(reference.progress),
+            )
+            # Preserve a direction-of-travel incentive while the dynamic-risk
+            # signal relaxes exact path/subgoal attraction. This is a soft
+            # reference-cost term, not a discrete navigation decision.
+            costs -= (
+                self.config.probabilistic_reference_progress_weight
+                * progress_gain
+            )
         if (
             path_preview_active
             and self.config.path_preview_heading_weight > 0.0
@@ -3755,8 +4123,10 @@ class MppiController:
                 np.sin(theta - reference_poses[None, 1:, 2]),
                 np.cos(theta - reference_poses[None, 1:, 2]),
             )
-            costs += self.config.path_preview_heading_weight * np.sum(
-                heading_error ** 2, axis=1
+            costs += (
+                reference_authority
+                * self.config.path_preview_heading_weight
+                * np.sum(heading_error ** 2, axis=1)
             )
         if self.config.path_boundary_enabled:
             margins = path_boundary_margins
@@ -3863,6 +4233,63 @@ class MppiController:
             for index in range(trajectories.shape[0]):
                 costs[index] += float(self.memory_cost(trajectories[index], controls[index]))
         return costs
+
+    def _reference_terminal_progress(self, positions, reference):
+        """Vectorized final-state progress on a soft polyline reference."""
+
+        values = np.asarray(positions, dtype=np.float64)
+        if values.ndim != 2 or values.shape[1] != 2:
+            raise ValueError(
+                "reference progress positions must have shape [K,2]"
+            )
+        starts = np.asarray(reference.points[:-1], dtype=np.float64)
+        vectors = np.diff(
+            np.asarray(reference.points, dtype=np.float64), axis=0
+        )
+        lengths = np.asarray(
+            reference.segment_lengths, dtype=np.float64
+        )
+        cumulative = np.asarray(
+            reference.cumulative[:-1], dtype=np.float64
+        )
+        relative = values[:, None, :] - starts[None, :, :]
+        fractions = np.sum(
+            relative * vectors[None, :, :], axis=2
+        )
+        fractions = np.clip(
+            fractions / lengths[None, :] ** 2, 0.0, 1.0
+        )
+        projections = (
+            starts[None, :, :]
+            + fractions[..., None] * vectors[None, :, :]
+        )
+        squared_distances = np.sum(
+            (projections - values[:, None, :]) ** 2, axis=2
+        )
+        candidate_progress = (
+            cumulative[None, :] + fractions * lengths[None, :]
+        )
+        floor = float(reference.progress)
+        backtrack = float(
+            getattr(reference, "projection_backtrack_distance", 0.0)
+        )
+        forward = float(
+            getattr(reference, "projection_forward_distance", float("inf"))
+        )
+        admissible = (
+            candidate_progress >= floor - backtrack
+        ) & (
+            candidate_progress <= floor + forward
+        )
+        has_admissible = np.any(admissible, axis=1)
+        nearest = np.argmin(
+            np.where(admissible, squared_distances, np.inf), axis=1
+        )
+        projected = candidate_progress[
+            np.arange(values.shape[0]), nearest
+        ]
+        projected = np.where(has_admissible, projected, floor)
+        return np.maximum(floor, projected)
 
     def _probabilistic_collision_risk(
         self, trajectories, probabilistic_obstacles
@@ -6054,13 +6481,21 @@ class MppiController:
         hard_boundary_filter = bool(
             self.config.path_boundary_candidate_filter_enabled
         )
+        hard_static_filter = bool(
+            self.config.known_static_map_candidate_filter_enabled
+            and known_static_obstacles
+        )
         risk_candidate_filter = bool(
             self.config.probabilistic_obstacle_risk_enabled
             and probabilistic_obstacles
             and self.config
             .probabilistic_obstacle_candidate_filter_enabled
         )
-        if hard_boundary_filter or risk_candidate_filter:
+        if (
+            hard_boundary_filter
+            or hard_static_filter
+            or risk_candidate_filter
+        ):
             # Reserve one of the already budgeted candidates for a deterministic
             # braking sequence.  This does not increase K and gives the
             # fail-closed branch a reproducible control sequence when every
@@ -6157,7 +6592,11 @@ class MppiController:
             # the predicted in-place alignment rather than becoming blind to
             # the value of turning.
             samples[:, 0, v_index] *= terminal_translation_scale
-        if hard_boundary_filter or risk_candidate_filter:
+        if (
+            hard_boundary_filter
+            or hard_static_filter
+            or risk_candidate_filter
+        ):
             # Candidate rollouts must use the same first command that can
             # actually pass the actuator slew-rate contract.  Otherwise a
             # nominally feasible sample may become infeasible only after the
@@ -6176,6 +6615,35 @@ class MppiController:
         mark("sampling")
         trajectories = self.rollout(state, samples)
         mark("batch_rollout")
+        candidate_risk = None
+        if (
+            probabilistic_obstacles
+            and (
+                risk_candidate_filter
+                or self.config
+                .probabilistic_reference_authority_enabled
+            )
+        ):
+            candidate_risk = self._probabilistic_collision_risk(
+                trajectories, probabilistic_obstacles
+            )
+        reference_prior_index = (
+            1
+            if (
+                self.config.num_samples > 1
+                and (
+                    hard_boundary_filter
+                    or hard_static_filter
+                    or risk_candidate_filter
+                )
+            )
+            else 0
+        )
+        reference_authority, reference_risk_raw = (
+            self._probabilistic_reference_authority(
+                candidate_risk, reference_prior_index
+            )
+        )
         costs = self._cost(
             trajectories,
             samples,
@@ -6184,6 +6652,8 @@ class MppiController:
             reference=reference,
             probabilistic_obstacles=probabilistic_obstacles,
             known_static_obstacles=known_static_obstacles,
+            probabilistic_risk=candidate_risk,
+            reference_authority=reference_authority,
         )
         mark("cost")
         correction = self._importance_sampling_cost(prior.mean, perturbations, covariance)
@@ -6202,26 +6672,51 @@ class MppiController:
                 candidate_margins[:, 1:], axis=1
             )
             boundary_candidate_feasible = boundary_candidate_min_margin >= 0.0
-        candidate_risk = None
+        static_candidate_feasible = np.ones(
+            self.config.num_samples, dtype=bool
+        )
+        static_candidate_min_clearance = np.full(
+            self.config.num_samples, np.nan, dtype=np.float64
+        )
+        if hard_static_filter:
+            static_clearance = self._known_static_map_clearance(
+                trajectories, known_static_obstacles
+            )
+            static_candidate_min_clearance = np.min(
+                static_clearance[:, 1:], axis=1
+            )
+            static_candidate_feasible = (
+                static_candidate_min_clearance >= 0.0
+            )
         risk_candidate_feasible = np.ones(
             self.config.num_samples, dtype=bool
         )
         if risk_candidate_filter:
-            candidate_risk = self._probabilistic_collision_risk(
-                trajectories, probabilistic_obstacles
-            )
+            if candidate_risk is None:
+                candidate_risk = self._probabilistic_collision_risk(
+                    trajectories, probabilistic_obstacles
+                )
             risk_candidate_feasible = ~candidate_risk.hard_violation
-        candidate_eligible = boundary_candidate_feasible.copy()
+        candidate_eligible = (
+            boundary_candidate_feasible
+            & static_candidate_feasible
+        )
         jointly_feasible = (
             candidate_eligible & risk_candidate_feasible
         )
         beta = float(np.min(costs))
         exponent = np.clip(-(costs - beta) / self.config.temperature, -700.0, 0.0)
-        if risk_candidate_filter and np.any(jointly_feasible):
+        if (
+            risk_candidate_filter
+            and np.any(jointly_feasible)
+        ):
             exponent = np.where(jointly_feasible, exponent, -np.inf)
-        elif hard_boundary_filter and np.any(boundary_candidate_feasible):
+        elif (
+            (hard_boundary_filter or hard_static_filter)
+            and np.any(candidate_eligible)
+        ):
             exponent = np.where(
-                boundary_candidate_feasible, exponent, -np.inf
+                candidate_eligible, exponent, -np.inf
             )
         elif risk_candidate_filter and np.any(risk_candidate_feasible):
             exponent = np.where(
@@ -6242,7 +6737,13 @@ class MppiController:
         boundary_no_feasible_candidates = bool(
             hard_boundary_filter and not np.any(boundary_candidate_feasible)
         )
-        if boundary_no_feasible_candidates:
+        static_no_feasible_candidates = bool(
+            hard_static_filter and not np.any(static_candidate_feasible)
+        )
+        if (
+            boundary_no_feasible_candidates
+            or static_no_feasible_candidates
+        ):
             # Candidate zero is the fixed braking sequence inserted above.
             # Use it deterministically instead of allowing an infeasible RL or
             # Gaussian proposal to dominate merely through a lower soft cost.
@@ -6324,6 +6825,58 @@ class MppiController:
                 boundary_weighted_update_feasible = bool(updated_margin >= 0.0)
         else:
             updated_margin = 0.0
+        static_weighted_update_feasible = True
+        static_fallback_used = False
+        static_fallback_candidate_index = -1
+        static_updated_min_clearance = 0.0
+        if hard_static_filter:
+            static_updated_min_clearance = float(np.min(
+                self._known_static_map_clearance(
+                    updated_trajectory[None, ...],
+                    known_static_obstacles,
+                )[0, 1:]
+            ))
+            static_weighted_update_feasible = bool(
+                static_updated_min_clearance >= 0.0
+            )
+            if (
+                not static_weighted_update_feasible
+                and np.any(candidate_eligible)
+            ):
+                feasible_mask = candidate_eligible.copy()
+                if (
+                    risk_candidate_filter
+                    and np.any(
+                        feasible_mask & risk_candidate_feasible
+                    )
+                ):
+                    feasible_mask &= risk_candidate_feasible
+                feasible_indices = np.flatnonzero(feasible_mask)
+                static_fallback_candidate_index = int(
+                    feasible_indices[np.argmin(costs[feasible_indices])]
+                )
+                sequence = samples[
+                    static_fallback_candidate_index
+                ].copy()
+                action = self.action_spec.clip(
+                    sequence[0],
+                    self.previous_action,
+                    self.config.dt,
+                )
+                sequence[0] = action
+                updated_trajectory = self.rollout(
+                    state, sequence
+                )[0]
+                static_fallback_used = True
+                static_updated_min_clearance = float(np.min(
+                    self._known_static_map_clearance(
+                        updated_trajectory[None, ...],
+                        known_static_obstacles,
+                    )[0, 1:]
+                ))
+                static_weighted_update_feasible = bool(
+                    static_updated_min_clearance >= 0.0
+                )
         optimizer_diagnostics = {
             "optimizer_diagnostics_enabled": False,
             "optimizer_best_candidate_cost": 0.0,
@@ -6337,8 +6890,11 @@ class MppiController:
         }
         if self.config.optimizer_diagnostics_enabled:
             eligible = (
-                np.flatnonzero(boundary_candidate_feasible)
-                if hard_boundary_filter and np.any(boundary_candidate_feasible)
+                np.flatnonzero(candidate_eligible)
+                if (
+                    (hard_boundary_filter or hard_static_filter)
+                    and np.any(candidate_eligible)
+                )
                 else np.arange(self.config.num_samples, dtype=np.int64)
             )
             best_index = int(eligible[np.argmin(costs[eligible])])
@@ -6353,6 +6909,7 @@ class MppiController:
                 reference=reference,
                 probabilistic_obstacles=probabilistic_obstacles,
                 known_static_obstacles=known_static_obstacles,
+                reference_authority=reference_authority,
             )[0])
             selected_correction = float(self._importance_sampling_cost(
                 prior.mean,
@@ -6853,6 +7410,32 @@ class MppiController:
             "path_boundary_fallback_candidate_index": (
                 boundary_fallback_candidate_index
             ),
+            "known_static_map_candidate_filter_enabled": (
+                hard_static_filter
+            ),
+            "known_static_map_candidate_feasible_count": int(
+                np.sum(static_candidate_feasible)
+            ),
+            "known_static_map_candidate_feasible_fraction": float(
+                np.mean(static_candidate_feasible)
+            ),
+            "known_static_map_candidate_min_clearance": float(
+                np.nanmin(static_candidate_min_clearance)
+                if hard_static_filter else 0.0
+            ),
+            "known_static_map_no_feasible_candidates": (
+                static_no_feasible_candidates
+            ),
+            "known_static_map_weighted_update_feasible": (
+                static_weighted_update_feasible
+            ),
+            "known_static_map_fallback_used": static_fallback_used,
+            "known_static_map_fallback_candidate_index": int(
+                static_fallback_candidate_index
+            ),
+            "known_static_map_weighted_update_min_clearance": float(
+                static_updated_min_clearance
+            ),
             "known_static_map_cost_enabled": bool(
                 self.config.known_static_map_cost_enabled
             ),
@@ -6861,6 +7444,22 @@ class MppiController:
             ),
             "known_static_map_minimum_clearance": (
                 known_static_minimum_clearance
+            ),
+            "probabilistic_reference_authority_enabled": bool(
+                self.config
+                .probabilistic_reference_authority_enabled
+            ),
+            "probabilistic_reference_risk_raw": float(
+                reference_risk_raw
+            ),
+            "probabilistic_reference_risk_filtered": float(
+                self._probabilistic_reference_risk_filtered
+            ),
+            "probabilistic_reference_authority": float(
+                reference_authority
+            ),
+            "probabilistic_reference_progress_weight": float(
+                self.config.probabilistic_reference_progress_weight
             ),
             **optimizer_diagnostics,
             "importance_sampling_correction": bool(
@@ -7033,6 +7632,9 @@ class MppiController:
         state = self.state_from_observation(observation)
         self._observe_residual_reliability(state)
         self._reliability_previous_state = state.copy()
+        static_replan = self._maybe_replan_static_reference(
+            state, observation, reference
+        )
         target = reference.target_at(observation.timestamp, state)
         self._observe_residual_context(state, target)
         state_reference_finished = (
@@ -7082,6 +7684,27 @@ class MppiController:
                     state[self.state_spec.index("theta")]
                     if "theta" in self.state_spec.names
                     else observation.pose.theta
+                ),
+                "static_astar_replan_enabled": bool(
+                    static_replan["enabled"]
+                ),
+                "static_astar_replan_triggered": bool(
+                    static_replan["triggered"]
+                ),
+                "static_astar_replan_reason": str(
+                    static_replan["reason"]
+                ),
+                "static_astar_replan_route_points": int(
+                    static_replan["route_points"]
+                ),
+                "static_astar_replan_cross_track_m": float(
+                    static_replan["cross_track_m"]
+                ),
+                "static_astar_replan_stagnation_steps": int(
+                    static_replan["stagnation_steps"]
+                ),
+                "static_astar_replan_count": int(
+                    static_replan["count"]
                 ),
             }
         )

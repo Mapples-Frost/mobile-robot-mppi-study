@@ -1,0 +1,65 @@
+schema_version: 1
+scope: complex_mixed_environment_interface_repair
+
+# This file is an override applied after constructing the frozen paper-v4
+# B11 Full arm. It changes only mixed-environment interfaces and soft-reference
+# behavior; Actor, ICODE, Change-Aware prediction, risk thresholds, HSS, Safety,
+# horizon, dt, and the 600-rollout budget remain inherited from B11.
+perception:
+  dynamic_obstacle_tracker:
+    enabled: true
+    predictor_mode: change_aware
+    maximum_tracks: 3
+    known_static_filter_enabled: true
+    known_static_filter_tolerance_m: 0.025
+    association_gate_m: 0.80
+    maximum_unobserved_duration_s: 0.80
+    track_retirement_duration_s: 1.00
+    motion_confirmation_enabled: true
+    motion_confirmation_required_observations: 3
+    motion_confirmation_minimum_speed_mps: 0.15
+
+planner:
+  # Known static geometry is exact experimental input. Soft costs shape
+  # clearance; the candidate filter prevents collision trajectories from
+  # entering the MPPI weighted update.
+  known_static_map_cost_enabled: true
+  known_static_map_influence_m: 0.12
+  known_static_map_weight: 120.0
+  known_static_map_collision_penalty: 100000.0
+  known_static_map_candidate_filter_enabled: true
+
+  # A* supplies only a soft, updateable global reference. Dynamic risk relaxes
+  # exact subgoal attraction while an unscaled progress term keeps the robot
+  # moving through the map.
+  probabilistic_reference_authority_enabled: true
+  probabilistic_reference_authority_filter_alpha: 0.85
+  probabilistic_reference_authority_minimum: 0.20
+  probabilistic_reference_authority_risk_source: maximum_step_probability
+  probabilistic_reference_progress_weight: 12.0
+
+  # Standard A* replans over frozen static geometry only. Dynamic tracks never
+  # enter its occupancy map.
+  static_astar_replan_enabled: true
+  static_astar_replan_resolution_m: 0.10
+  static_astar_replan_clearance_margin_m: 0.08
+  static_astar_replan_deviation_m: 0.70
+  static_astar_replan_stagnation_steps: 30
+  static_astar_replan_minimum_progress_m: 0.12
+  static_astar_replan_cooldown_steps: 30
+  static_astar_replan_bounds_padding_m: 0.50
+
+  # The reference is deliberately not a hard corridor.
+  path_boundary_enabled: false
+  path_boundary_candidate_filter_enabled: false
+  probabilistic_obstacle_missing_forecast_action: scan_only
+  probabilistic_obstacle_emergency_candidate_intent_hold_steps: 0
+
+gate_contract:
+  maps: 3
+  seeds_per_map: 5
+  required_successes: 12
+  maximum_collisions: 0
+  identical_common_parameters: true
+  map_specific_controller_logic_allowed: false
+  formal_server_launch_authorized: false

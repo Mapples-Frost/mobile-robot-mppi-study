@@ -246,6 +246,30 @@ class PolylineReference:
     def reset(self) -> None:
         self.progress = 0.0
 
+    def replace_points(self, points: Sequence[Sequence[float]]) -> None:
+        """Replace the soft route after a standard static-only replan.
+
+        The goal and all tracking semantics stay unchanged. Progress restarts
+        at zero because the refreshed route begins at the current robot pose.
+        """
+
+        replacement = PolylineReference(
+            points,
+            tolerance=self.tolerance,
+            lookahead_distance=self.lookahead_distance,
+            terminal_approach_distance=self.terminal_approach_distance,
+            projection_backtrack_distance=self.projection_backtrack_distance,
+            projection_forward_distance=self.projection_forward_distance,
+            corridor_half_width=self.corridor_half_width,
+            footprint_radius=self.footprint_radius,
+            corridor_half_width_profile=self.corridor_half_width_profile,
+        )
+        self.points = replacement.points
+        self.segment_lengths = replacement.segment_lengths
+        self.cumulative = replacement.cumulative
+        self.total_length = replacement.total_length
+        self.progress = 0.0
+
     def project(
         self,
         position: np.ndarray,

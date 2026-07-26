@@ -1665,6 +1665,17 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
         tracker_diagnostics = dict(
             observation.auxiliary.get("dynamic_obstacle_tracker", {})
         )
+        known_static_obstacles = tuple(
+            observation.auxiliary.get("known_static_obstacles", ())
+        )
+        if (
+            self.config.known_static_map_cost_enabled
+            and not known_static_obstacles
+        ):
+            raise ValueError(
+                "known static-map cost is enabled but the observation "
+                "contains no static geometry"
+            )
         probabilistic_obstacles = ()
         if self.config.probabilistic_obstacle_risk_enabled:
             probabilistic_obstacles = tuple(
@@ -1937,6 +1948,10 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
         hard_boundary_filter = bool(
             self.config.path_boundary_candidate_filter_enabled
         )
+        hard_static_filter = bool(
+            self.config.known_static_map_candidate_filter_enabled
+            and known_static_obstacles
+        )
         risk_candidate_filter = bool(
             self.config.probabilistic_obstacle_risk_enabled
             and self.config.probabilistic_obstacle_candidate_filter_enabled
@@ -1948,12 +1963,21 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
         boundary_last_emergency_prefix_feasible = None
         boundary_last_samples = None
         boundary_last_costs = None
+        static_feasible_fractions = []
+        static_no_feasible_iterations = 0
+        static_last_feasible = None
+        static_last_min_clearance = None
+        static_last_samples = None
+        static_last_costs = None
         risk_feasible_fractions = []
         risk_no_feasible_iterations = 0
         risk_last_candidate = None
         risk_last_feasible = None
         risk_last_samples = None
         risk_last_costs = None
+        reference_authority = 1.0
+        reference_risk_raw = 0.0
+        reference_authority_updated = False
         emergency_context = self._probabilistic_emergency_context(
             observation, state, probabilistic_obstacles
         )
@@ -2130,7 +2154,11 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
                 np.ones(guided_count, dtype=np.int8),
                 np.zeros(gaussian_count, dtype=np.int8),
             ))
-            if hard_boundary_filter or risk_candidate_filter:
+            if (
+                hard_boundary_filter
+                or hard_static_filter
+                or risk_candidate_filter
+            ):
                 # Keep K fixed while reserving one deterministic braking
                 # candidate.  Label -1 excludes it from guided/Gaussian source
                 # competence accounting.
@@ -2186,7 +2214,11 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
             samples, constraints = self._terminal_constraints(
                 state, target, samples
             )
-            if hard_boundary_filter or risk_candidate_filter:
+            if (
+                hard_boundary_filter
+                or hard_static_filter
+                or risk_candidate_filter
+            ):
                 regular_candidates = ~protected_candidate_mask
                 samples[regular_candidates, 0, :] = self.action_spec.clip(
                     samples[regular_candidates, 0, :],
@@ -2202,8 +2234,21 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
                 self._probabilistic_collision_risk(
                     trajectories, probabilistic_obstacles
                 )
-                if risk_candidate_filter else None
+                if (
+                    risk_candidate_filter
+                    or self.config
+                    .probabilistic_reference_authority_enabled
+                )
+                else None
             )
+            if not reference_authority_updated:
+                reference_authority, reference_risk_raw = (
+                    self._probabilistic_reference_authority(
+                        candidate_risk,
+                        1 if self.config.num_samples > 1 else 0,
+                    )
+                )
+                reference_authority_updated = True
             running = self._cost(
                 trajectories,
                 samples,
@@ -2211,8 +2256,10 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
                 obstacles,
                 reference=reference,
                 probabilistic_obstacles=probabilistic_obstacles,
+                known_static_obstacles=known_static_obstacles,
                 path_boundary_margins=boundary_margins,
                 probabilistic_risk=candidate_risk,
+                reference_authority=reference_authority,
             )
             terminal, terminal_diagnostics = self._paper_terminal_cost(
                 trajectories,
@@ -2271,6 +2318,24 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
                 boundary_feasible = np.ones(
                     self.config.num_samples, dtype=bool
                 )
+            static_feasible = np.ones(
+                self.config.num_samples, dtype=bool
+            )
+            if hard_static_filter:
+                static_clearance = self._known_static_map_clearance(
+                    trajectories, known_static_obstacles
+                )
+                static_min_clearance = np.min(
+                    static_clearance[:, 1:], axis=1
+                )
+                static_feasible = static_min_clearance >= 0.0
+                static_feasible_fractions.append(float(
+                    np.mean(static_feasible)
+                ))
+                static_last_feasible = static_feasible
+                static_last_min_clearance = static_min_clearance
+                static_last_samples = samples.copy()
+                static_last_costs = costs.copy()
             risk_feasible = np.ones(
                 self.config.num_samples, dtype=bool
             )
@@ -2279,17 +2344,27 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
                 risk_feasible_fractions.append(float(
                     np.mean(risk_feasible)
                 ))
-            jointly_feasible = boundary_feasible & risk_feasible
-            if not hard_boundary_filter and not risk_candidate_filter:
+            geometry_feasible = (
+                boundary_feasible & static_feasible
+            )
+            jointly_feasible = geometry_feasible & risk_feasible
+            if (
+                not hard_boundary_filter
+                and not hard_static_filter
+                and not risk_candidate_filter
+            ):
                 optimizer_feasible = jointly_feasible
             elif (
-                hard_boundary_filter
+                (hard_boundary_filter or hard_static_filter)
                 and risk_candidate_filter
                 and np.any(jointly_feasible)
             ):
                 optimizer_feasible = jointly_feasible
-            elif hard_boundary_filter and np.any(boundary_feasible):
-                optimizer_feasible = boundary_feasible
+            elif (
+                (hard_boundary_filter or hard_static_filter)
+                and np.any(geometry_feasible)
+            ):
+                optimizer_feasible = geometry_feasible
             elif risk_candidate_filter and np.any(risk_feasible):
                 optimizer_feasible = risk_feasible
             else:
@@ -2302,6 +2377,8 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
                 optimizer_feasible[0] = True
                 if hard_boundary_filter and not np.any(boundary_feasible):
                     boundary_no_feasible_iterations += 1
+                if hard_static_filter and not np.any(static_feasible):
+                    static_no_feasible_iterations += 1
                 if risk_candidate_filter and not np.any(risk_feasible):
                     risk_no_feasible_iterations += 1
             risk_last_candidate = candidate_risk
@@ -2526,11 +2603,68 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
                 boundary_weighted_update_feasible = bool(
                     boundary_final_min_margin >= 0.0
                 )
-        guard_candidate_eligible = (
-            boundary_last_feasible.copy()
-            if hard_boundary_filter
-            else np.ones(self.config.num_samples, dtype=bool)
+        static_weighted_update_feasible = True
+        static_fallback_used = False
+        static_fallback_candidate_index = -1
+        static_final_min_clearance = 0.0
+        if hard_static_filter:
+            static_final_min_clearance = float(np.min(
+                self._known_static_map_clearance(
+                    trajectory[None, ...],
+                    known_static_obstacles,
+                )[0, 1:]
+            ))
+            static_weighted_update_feasible = bool(
+                static_final_min_clearance >= 0.0
+            )
+            geometry_last_feasible = static_last_feasible.copy()
+            if hard_boundary_filter:
+                geometry_last_feasible &= boundary_last_feasible
+            if (
+                not static_weighted_update_feasible
+                and np.any(geometry_last_feasible)
+            ):
+                feasible_mask = geometry_last_feasible.copy()
+                if (
+                    risk_candidate_filter
+                    and risk_last_feasible is not None
+                    and np.any(feasible_mask & risk_last_feasible)
+                ):
+                    feasible_mask &= risk_last_feasible
+                feasible_indices = np.flatnonzero(feasible_mask)
+                static_fallback_candidate_index = int(
+                    feasible_indices[np.argmin(
+                        static_last_costs[feasible_indices]
+                    )]
+                )
+                sequence = static_last_samples[
+                    static_fallback_candidate_index
+                ].copy()
+                sequence, constraints = self._terminal_constraints(
+                    state, target, sequence[None, :, :]
+                )
+                sequence = sequence[0]
+                action, sequence, terminal_action_diagnostics = (
+                    self._finalize_terminal_action(sequence, constraints)
+                )
+                trajectory = self.rollout(state, sequence)[0]
+                static_fallback_used = True
+                static_final_min_clearance = float(np.min(
+                    self._known_static_map_clearance(
+                        trajectory[None, ...],
+                        known_static_obstacles,
+                    )[0, 1:]
+                ))
+                static_weighted_update_feasible = bool(
+                    static_final_min_clearance >= 0.0
+                )
+        guard_candidate_eligible = np.ones(
+            self.config.num_samples, dtype=bool
         )
+        if hard_boundary_filter:
+            guard_candidate_eligible &= boundary_last_feasible
+        if hard_static_filter:
+            guard_candidate_eligible &= static_last_feasible
         boundary_handoff_scope = bool(
             hard_boundary_filter
             and traversal_context.get(
@@ -2567,6 +2701,10 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
                 ),
             )
         )
+        if hard_static_filter:
+            # A boundary handoff may deliberately relax the path corridor, but
+            # it must never relax the known-static-map collision contract.
+            guard_candidate_eligible &= static_last_feasible
         traversal_context[
             "post_center_low_ttc_first_step_boundary_handoff_requested"
         ] = first_step_boundary_handoff_requested
@@ -2595,6 +2733,60 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
                 traversal_candidate_index=traversal_last_index,
             )
         )
+        if hard_static_filter:
+            static_final_min_clearance = float(np.min(
+                self._known_static_map_clearance(
+                    trajectory[None, ...],
+                    known_static_obstacles,
+                )[0, 1:]
+            ))
+            static_weighted_update_feasible = bool(
+                static_final_min_clearance >= 0.0
+            )
+            if (
+                not static_weighted_update_feasible
+                and static_last_feasible is not None
+            ):
+                geometry_last_feasible = static_last_feasible.copy()
+                if hard_boundary_filter:
+                    geometry_last_feasible &= boundary_last_feasible
+                if np.any(geometry_last_feasible):
+                    feasible_mask = geometry_last_feasible.copy()
+                    if (
+                        risk_candidate_filter
+                        and risk_last_feasible is not None
+                        and np.any(feasible_mask & risk_last_feasible)
+                    ):
+                        feasible_mask &= risk_last_feasible
+                    feasible_indices = np.flatnonzero(feasible_mask)
+                    static_fallback_candidate_index = int(
+                        feasible_indices[np.argmin(
+                            static_last_costs[feasible_indices]
+                        )]
+                    )
+                    sequence = static_last_samples[
+                        static_fallback_candidate_index
+                    ].copy()
+                    sequence, constraints = self._terminal_constraints(
+                        state, target, sequence[None, :, :]
+                    )
+                    sequence = sequence[0]
+                    action, sequence, terminal_action_diagnostics = (
+                        self._finalize_terminal_action(
+                            sequence, constraints
+                        )
+                    )
+                    trajectory = self.rollout(state, sequence)[0]
+                    static_fallback_used = True
+                    static_final_min_clearance = float(np.min(
+                        self._known_static_map_clearance(
+                            trajectory[None, ...],
+                            known_static_obstacles,
+                        )[0, 1:]
+                    ))
+                    static_weighted_update_feasible = bool(
+                        static_final_min_clearance >= 0.0
+                    )
         all_costs = np.concatenate(costs_by_iteration)
         guided_costs = (
             np.concatenate(guided_costs_by_iteration)
@@ -2658,25 +2850,39 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
             "optimizer_initial_proposal_first_omega": 0.0,
         }
         if self.config.optimizer_diagnostics_enabled:
+            diagnostic_eligible = np.ones(
+                self.config.num_samples, dtype=bool
+            )
+            if hard_boundary_filter:
+                diagnostic_eligible &= boundary_last_feasible
+            if hard_static_filter:
+                diagnostic_eligible &= static_last_feasible
             diagnostic_indices = (
-                np.flatnonzero(boundary_last_feasible)
-                if hard_boundary_filter
-                and boundary_last_feasible is not None
-                and np.any(boundary_last_feasible)
+                np.flatnonzero(diagnostic_eligible)
+                if (
+                    (hard_boundary_filter or hard_static_filter)
+                    and np.any(diagnostic_eligible)
+                )
                 else np.arange(self.config.num_samples, dtype=np.int64)
             )
             best_index = int(diagnostic_indices[np.argmin(
-                boundary_last_costs[diagnostic_indices]
+                static_last_costs[diagnostic_indices]
+                if hard_static_filter and static_last_costs is not None
+                else boundary_last_costs[diagnostic_indices]
                 if hard_boundary_filter and boundary_last_costs is not None
                 else costs[diagnostic_indices]
             )])
             diagnostic_samples = (
-                boundary_last_samples
+                static_last_samples
+                if hard_static_filter and static_last_samples is not None
+                else boundary_last_samples
                 if hard_boundary_filter and boundary_last_samples is not None
                 else samples
             )
             diagnostic_costs = (
-                boundary_last_costs
+                static_last_costs
+                if hard_static_filter and static_last_costs is not None
+                else boundary_last_costs
                 if hard_boundary_filter and boundary_last_costs is not None
                 else costs
             )
@@ -2692,6 +2898,8 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
                 obstacles,
                 reference=reference,
                 probabilistic_obstacles=probabilistic_obstacles,
+                known_static_obstacles=known_static_obstacles,
+                reference_authority=reference_authority,
             )[0])
             selected_terminal = float(self._paper_terminal_cost(
                 trajectory[None, ...],
@@ -2906,6 +3114,67 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
             "path_boundary_fallback_used": boundary_fallback_used,
             "path_boundary_fallback_candidate_index": (
                 boundary_fallback_candidate_index
+            ),
+            "known_static_map_candidate_filter_enabled": (
+                hard_static_filter
+            ),
+            "known_static_map_candidate_feasible_count": int(
+                np.sum(static_last_feasible)
+                if static_last_feasible is not None
+                else self.config.num_samples
+            ),
+            "known_static_map_candidate_feasible_fraction": float(
+                np.mean(static_feasible_fractions)
+                if static_feasible_fractions else 1.0
+            ),
+            "known_static_map_candidate_feasible_fraction_min": float(
+                np.min(static_feasible_fractions)
+                if static_feasible_fractions else 1.0
+            ),
+            "known_static_map_candidate_min_clearance": float(
+                np.nanmin(static_last_min_clearance)
+                if static_last_min_clearance is not None else 0.0
+            ),
+            "known_static_map_no_feasible_candidates": bool(
+                static_no_feasible_iterations > 0
+            ),
+            "known_static_map_no_feasible_iteration_fraction": float(
+                static_no_feasible_iterations / cfg.iterations
+                if hard_static_filter else 0.0
+            ),
+            "known_static_map_weighted_update_feasible": (
+                static_weighted_update_feasible
+            ),
+            "known_static_map_fallback_used": static_fallback_used,
+            "known_static_map_fallback_candidate_index": int(
+                static_fallback_candidate_index
+            ),
+            "known_static_map_weighted_update_min_clearance": float(
+                static_final_min_clearance
+            ),
+            "known_static_map_cost_enabled": bool(
+                self.config.known_static_map_cost_enabled
+            ),
+            "known_static_map_obstacle_count": len(
+                known_static_obstacles
+            ),
+            "known_static_map_minimum_clearance": float(
+                static_final_min_clearance
+            ),
+            "probabilistic_reference_authority_enabled": bool(
+                self.config.probabilistic_reference_authority_enabled
+            ),
+            "probabilistic_reference_risk_raw": float(
+                reference_risk_raw
+            ),
+            "probabilistic_reference_risk_filtered": float(
+                self._probabilistic_reference_risk_filtered
+            ),
+            "probabilistic_reference_authority": float(
+                reference_authority
+            ),
+            "probabilistic_reference_progress_weight": float(
+                self.config.probabilistic_reference_progress_weight
             ),
             "probabilistic_obstacle_candidate_filter_enabled": (
                 risk_candidate_filter

@@ -2,6 +2,7 @@
 
 import hashlib
 import json
+import math
 from typing import Mapping, Sequence, Tuple
 
 
@@ -28,16 +29,35 @@ def _rgb(values, label):
 
 def _geom_for_obstacle(index, obstacle, local=False, geom_name=None):
     kind = str(obstacle.get("type", "cylinder"))
-    position = (
-        obstacle.get("offset", (0.0, 0.0))
-        if local
-        else obstacle.get("position", (0.0, 0.0))
-    )
+    if kind == "segment":
+        start = tuple(float(value) for value in obstacle["start"])
+        end = tuple(float(value) for value in obstacle["end"])
+        if len(start) != 2 or len(end) != 2:
+            raise ValueError("segment start and end must contain x and y")
+        delta_x = end[0] - start[0]
+        delta_y = end[1] - start[1]
+        length = math.hypot(delta_x, delta_y)
+        thickness = float(obstacle.get("thickness", 0.20))
+        if length <= 0.0 or thickness <= 0.0:
+            raise ValueError("segment length and thickness must be positive")
+        position = (
+            0.5 * (start[0] + end[0]),
+            0.5 * (start[1] + end[1]),
+        )
+        size = (0.5 * length, 0.5 * thickness)
+        yaw = math.atan2(delta_y, delta_x)
+        kind = "box"
+    else:
+        position = (
+            obstacle.get("offset", (0.0, 0.0))
+            if local
+            else obstacle.get("position", (0.0, 0.0))
+        )
+        size = obstacle.get("size", (0.25, 0.25))
+        yaw = float(obstacle.get("yaw", 0.0))
     name = geom_name or "obstacle_%d" % index
     height = float(obstacle.get("height", 0.5))
     if kind == "box":
-        size = obstacle.get("size", (0.25, 0.25))
-        yaw = float(obstacle.get("yaw", 0.0))
         return (
             '<geom name="%s" type="box" pos="%s %s %s" '
             'size="%s %s %s" euler="0 0 %s" rgba="%s" group="1"/>'

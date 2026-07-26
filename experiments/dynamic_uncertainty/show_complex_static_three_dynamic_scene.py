@@ -25,7 +25,7 @@ DEFAULT_CONFIG = (
     ROOT
     / "configs"
     / "research"
-    / "mujoco_complex_static_three_dynamic_v2.yaml"
+    / "mujoco_irregular_spiral_three_dynamic_v1.yaml"
 )
 
 
@@ -80,7 +80,10 @@ def _rebuild_overlay(viewer, config, mujoco):
     if viewer.viewer is None or viewer.viewer.user_scn is None:
         return
     points = config["task"]["points"]
-    conflicts = config["complex_scene_design"]["route_conflict_points"]
+    design = config.get("spiral_scene_design", config.get("complex_scene_design"))
+    if design is None:
+        raise KeyError("scene design block is required for preview")
+    conflicts = design["route_conflict_points"]
     with viewer.viewer.lock():
         scene = viewer.viewer.user_scn
         scene.ngeom = 0
@@ -157,9 +160,14 @@ def preview(config_path, seed, playback_speed, loop):
                 viewer.viewer.cam.lookat[:] = np.asarray(
                     (0.0, 0.0, 0.0), dtype=np.float64
                 )
-                viewer.viewer.cam.distance = 14.8
+                visual = config["scene"].get("visual", {})
+                viewer.viewer.cam.distance = float(
+                    visual.get("camera_distance", 14.8)
+                )
                 viewer.viewer.cam.azimuth = 90.0
-                viewer.viewer.cam.elevation = -75.0
+                viewer.viewer.cam.elevation = float(
+                    visual.get("camera_elevation", -75.0)
+                )
         while viewer.viewer is not None and viewer.viewer.is_running():
             plant.step(
                 ControlCommand(
@@ -185,7 +193,7 @@ def build_parser():
         description="Preview complex static + three dynamic MuJoCo scene"
     )
     parser.add_argument("--config", type=Path, default=DEFAULT_CONFIG)
-    parser.add_argument("--seed", type=int, default=780500001)
+    parser.add_argument("--seed", type=int, default=781700001)
     parser.add_argument("--playback-speed", type=float, default=0.75)
     parser.add_argument("--loop", action="store_true")
     return parser

@@ -6,13 +6,34 @@ import math
 import numpy as np
 
 
+def _box_geometry(obstacle):
+    kind = str(obstacle.get("type", "cylinder"))
+    if kind == "segment":
+        start = np.asarray(obstacle["start"], dtype=np.float64)
+        end = np.asarray(obstacle["end"], dtype=np.float64)
+        delta = end - start
+        return (
+            0.5 * (start + end),
+            (
+                0.5 * float(np.linalg.norm(delta)),
+                0.5 * float(obstacle.get("thickness", 0.20)),
+            ),
+            math.atan2(float(delta[1]), float(delta[0])),
+        )
+    return (
+        np.asarray(obstacle.get("position", (0.0, 0.0)), dtype=np.float64),
+        tuple(float(value) for value in obstacle.get("size", (0.25, 0.25))),
+        float(obstacle.get("yaw", 0.0)),
+    )
+
+
 def point_clearance(x, y, obstacles, robot_radius):
     values = []
     for obstacle in obstacles:
-        px, py = (float(v) for v in obstacle.get("position", (0.0, 0.0)))
-        if str(obstacle.get("type", "cylinder")) == "box":
-            sx, sy = (float(v) for v in obstacle.get("size", (0.25, 0.25)))
-            yaw = float(obstacle.get("yaw", 0.0))
+        kind = str(obstacle.get("type", "cylinder"))
+        if kind in ("box", "segment"):
+            position, (sx, sy), yaw = _box_geometry(obstacle)
+            px, py = (float(value) for value in position)
             dx, dy = float(x) - px, float(y) - py
             local_x = math.cos(yaw) * dx + math.sin(yaw) * dy
             local_y = -math.sin(yaw) * dx + math.cos(yaw) * dy
@@ -22,6 +43,10 @@ def point_clearance(x, y, obstacles, robot_radius):
             inside = min(max(abs(local_x) - sx, abs(local_y) - sy), 0.0)
             values.append(outside + inside - float(robot_radius))
         else:
+            px, py = (
+                float(value)
+                for value in obstacle.get("position", (0.0, 0.0))
+            )
             values.append(
                 math.hypot(float(x) - px, float(y) - py)
                 - float(obstacle.get("radius", 0.25))
@@ -97,6 +122,27 @@ def audit_static_scene(
     points_x = [float(start[0]), float(goal[0])]
     points_y = [float(start[1]), float(goal[1])]
     for obstacle in obstacles:
+        if str(obstacle.get("type", "cylinder")) == "segment":
+            segment_start = obstacle["start"]
+            segment_end = obstacle["end"]
+            extent = 0.5 * float(obstacle.get("thickness", 0.20))
+            points_x.extend(
+                (
+                    float(segment_start[0]) - extent,
+                    float(segment_start[0]) + extent,
+                    float(segment_end[0]) - extent,
+                    float(segment_end[0]) + extent,
+                )
+            )
+            points_y.extend(
+                (
+                    float(segment_start[1]) - extent,
+                    float(segment_start[1]) + extent,
+                    float(segment_end[1]) - extent,
+                    float(segment_end[1]) + extent,
+                )
+            )
+            continue
         px, py = obstacle.get("position", (0.0, 0.0))
         extent = max(
             tuple(float(v) for v in obstacle.get("size", ()))

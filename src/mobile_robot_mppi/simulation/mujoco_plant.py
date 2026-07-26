@@ -568,8 +568,19 @@ class MujocoDiffDrivePlant:
         for index, obstacle in enumerate(self.scene.get("obstacles", ())):
             geom_id = self._obstacle_geom_by_index[index]
             position = self.data.geom_xpos[geom_id]
-            if str(obstacle.get("type", "cylinder")) == "box":
-                size = obstacle.get("size", (0.25, 0.25))
+            kind = str(obstacle.get("type", "cylinder"))
+            if kind in ("box", "segment"):
+                if kind == "segment":
+                    start = np.asarray(
+                        obstacle["start"], dtype=np.float64
+                    )
+                    end = np.asarray(obstacle["end"], dtype=np.float64)
+                    size = (
+                        0.5 * float(np.linalg.norm(end - start)),
+                        0.5 * float(obstacle.get("thickness", 0.20)),
+                    )
+                else:
+                    size = obstacle.get("size", (0.25, 0.25))
                 rotation = self.data.geom_xmat[geom_id].reshape(3, 3)
                 yaw = math.atan2(float(rotation[1, 0]), float(rotation[0, 0]))
                 world_dx = pose.x - float(position[0])

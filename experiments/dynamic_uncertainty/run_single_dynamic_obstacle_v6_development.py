@@ -365,8 +365,11 @@ def _finalize(protocol, source_protocol, protocol_path, output, schedule):
 def run(protocol_path=DEFAULT_PROTOCOL, workers=None):
     protocol_path = _repo_path(protocol_path)
     protocol = v4._load_yaml(protocol_path)
-    if protocol["status"] != "frozen_before_development_execution":
-        raise ValueError("v6 development protocol is not frozen")
+    if protocol["status"] not in (
+        "frozen_before_development_execution",
+        "frozen_before_heldout_execution",
+    ):
+        raise ValueError("v6 development/held-out protocol is not frozen")
     _validate_parent(protocol)
     source_path = _repo_path(protocol["source_protocol"])
     _, source, id_config, ood_config, _ = v4.validate_protocol(source_path)

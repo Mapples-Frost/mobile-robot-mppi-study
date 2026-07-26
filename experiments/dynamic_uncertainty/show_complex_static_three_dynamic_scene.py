@@ -25,7 +25,7 @@ DEFAULT_CONFIG = (
     ROOT
     / "configs"
     / "research"
-    / "mujoco_complex_static_three_dynamic_v1.yaml"
+    / "mujoco_complex_static_three_dynamic_v2.yaml"
 )
 
 
@@ -157,7 +157,7 @@ def preview(config_path, seed, playback_speed, loop):
                 viewer.viewer.cam.lookat[:] = np.asarray(
                     (0.0, 0.0, 0.0), dtype=np.float64
                 )
-                viewer.viewer.cam.distance = 12.0
+                viewer.viewer.cam.distance = 14.8
                 viewer.viewer.cam.azimuth = 90.0
                 viewer.viewer.cam.elevation = -75.0
         while viewer.viewer is not None and viewer.viewer.is_running():

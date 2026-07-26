@@ -13,6 +13,7 @@ from mobile_robot_mppi.evaluation.scene_feasibility import (
     point_clearance,
 )
 from mobile_robot_mppi.simulation.model_factory import build_diff_drive_mjcf
+from mobile_robot_mppi.simulation.mujoco_plant import MujocoDiffDrivePlant
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -20,7 +21,7 @@ CONFIG = (
     ROOT
     / "configs"
     / "research"
-    / "mujoco_complex_static_three_dynamic_v1.yaml"
+    / "mujoco_complex_static_three_dynamic_v2.yaml"
 )
 
 
@@ -66,10 +67,12 @@ def test_complex_scene_has_four_gate_static_maze_and_three_dynamic_obstacles():
     static, dynamic = _split_obstacles(config)
     design = config["complex_scene_design"]
 
-    assert len(static) == design["static_obstacle_count"] == 13
+    assert len(static) == design["static_obstacle_count"] == 39
     assert len(dynamic) == design["dynamic_obstacle_count"] == 3
+    assert all(item["type"] == "box" for item in static + dynamic)
+    assert all(len(item["parts"]) == 2 for item in dynamic)
     assert config["task"]["type"] == "polyline"
-    assert len(config["task"]["points"]) == 15
+    assert len(config["task"]["points"]) == 17
     assert config["task"]["corridor_half_width"] >= 0.8
     assert config["action_space"]["upper"][0] == pytest.approx(0.6)
     assert config["planner"]["num_samples"] == 600
@@ -189,14 +192,22 @@ def test_mujoco_model_compiles_with_three_mocap_bodies_and_scene_colors():
     config = load_yaml(CONFIG)
     xml = build_diff_drive_mjcf(config["plant"], config["scene"])
     model = mujoco.MjModel.from_xml_string(xml)
+    plant = MujocoDiffDrivePlant(config["plant"], config["scene"])
     static, dynamic = _split_obstacles(config)
 
     assert model.nmocap == 3
-    assert len(static) == 13
+    assert len(static) == 39
     for offset, obstacle in enumerate(dynamic, start=len(static)):
         geom_id = mujoco.mj_name2id(
             model, mujoco.mjtObj.mjOBJ_GEOM, "obstacle_%d" % offset
         )
         assert geom_id >= 0
         assert model.geom_rgba[geom_id] == pytest.approx(obstacle["rgba"])
-
+        for part_index in range(2):
+            part_id = mujoco.mj_name2id(
+                model,
+                mujoco.mjtObj.mjOBJ_GEOM,
+                "obstacle_%d_part_%d" % (offset, part_index),
+            )
+            assert part_id >= 0
+            assert part_id in plant._obstacle_geom_ids

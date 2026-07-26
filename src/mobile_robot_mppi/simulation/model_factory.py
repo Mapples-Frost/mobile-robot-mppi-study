@@ -19,25 +19,37 @@ def _rgba(obstacle):
     return " ".join(_f(value) for value in values)
 
 
-def _geom_for_obstacle(index, obstacle, local=False):
+def _rgb(values, label):
+    values = tuple(float(value) for value in values)
+    if len(values) != 3 or any(value < 0.0 or value > 1.0 for value in values):
+        raise ValueError("%s must contain three values in [0, 1]" % label)
+    return " ".join(_f(value) for value in values)
+
+
+def _geom_for_obstacle(index, obstacle, local=False, geom_name=None):
     kind = str(obstacle.get("type", "cylinder"))
-    position = (0.0, 0.0) if local else obstacle.get("position", (0.0, 0.0))
+    position = (
+        obstacle.get("offset", (0.0, 0.0))
+        if local
+        else obstacle.get("position", (0.0, 0.0))
+    )
+    name = geom_name or "obstacle_%d" % index
     height = float(obstacle.get("height", 0.5))
     if kind == "box":
         size = obstacle.get("size", (0.25, 0.25))
         yaw = float(obstacle.get("yaw", 0.0))
         return (
-            '<geom name="obstacle_%d" type="box" pos="%s %s %s" '
+            '<geom name="%s" type="box" pos="%s %s %s" '
             'size="%s %s %s" euler="0 0 %s" rgba="%s" group="1"/>'
-            % (index, _f(position[0]), _f(position[1]), _f(height / 2.0),
+            % (name, _f(position[0]), _f(position[1]), _f(height / 2.0),
                _f(size[0]), _f(size[1]), _f(height / 2.0), _f(yaw),
                _rgba(obstacle))
         )
     radius = float(obstacle.get("radius", 0.25))
     return (
-        '<geom name="obstacle_%d" type="cylinder" pos="%s %s %s" '
+        '<geom name="%s" type="cylinder" pos="%s %s %s" '
         'size="%s %s" rgba="%s" group="1"/>'
-        % (index, _f(position[0]), _f(position[1]), _f(height / 2.0),
+        % (name, _f(position[0]), _f(position[1]), _f(height / 2.0),
            _f(radius), _f(height / 2.0), _rgba(obstacle))
     )
 
@@ -76,9 +88,37 @@ def _obstacle_element(index, obstacle):
             index,
             _f(position[0]),
             _f(position[1]),
-            _geom_for_obstacle(index, obstacle, local=True),
+            _dynamic_obstacle_geoms(index, obstacle),
         )
     )
+
+
+def _dynamic_obstacle_geoms(index, obstacle):
+    """Render one irregular moving obstacle as a rigid multi-geom body."""
+
+    primary = dict(obstacle)
+    # World yaw belongs to the mocap body.  Geom yaws are relative to it.
+    primary["yaw"] = 0.0
+    output = [_geom_for_obstacle(index, primary, local=True)]
+    parts = obstacle.get("parts", ())
+    if not isinstance(parts, Sequence) or isinstance(parts, (str, bytes)):
+        raise TypeError("dynamic obstacle parts must be a sequence")
+    for part_index, part in enumerate(parts):
+        if not isinstance(part, Mapping):
+            raise TypeError("dynamic obstacle part must be a mapping")
+        shape = dict(part)
+        shape.setdefault("type", obstacle.get("type", "box"))
+        shape.setdefault("height", obstacle.get("height", 0.5))
+        shape.setdefault("rgba", obstacle.get("rgba", (0.65, 0.32, 0.28, 1.0)))
+        output.append(
+            _geom_for_obstacle(
+                index,
+                shape,
+                local=True,
+                geom_name="obstacle_%d_part_%d" % (index, part_index),
+            )
+        )
+    return "\n      ".join(output)
 
 
 def build_diff_drive_mjcf(config: Mapping[str, object], scene: Mapping[str, object]):
@@ -107,6 +147,65 @@ def build_diff_drive_mjcf(config: Mapping[str, object], scene: Mapping[str, obje
     profile = str(actuator.get("profile", "torque_pi"))
     torque_limit = float(actuator.get("torque_limit", 2.2))
     velocity_gain = float(actuator.get("velocity_gain", 8.0))
+    visual = scene.get("visual", {})
+    if not isinstance(visual, Mapping):
+        raise TypeError("scene visual must be a mapping")
+    floor_rgba = _rgba(
+        {"rgba": visual.get("floor_rgba", (0.66, 0.67, 0.65, 1.0))}
+    )
+    headlight_ambient = _rgb(
+        visual.get("headlight_ambient", (0.45, 0.45, 0.45)),
+        "headlight ambient",
+    )
+    headlight_diffuse = _rgb(
+        visual.get("headlight_diffuse", (0.70, 0.70, 0.70)),
+        "headlight diffuse",
+    )
+    sun_diffuse = _rgb(
+        visual.get("sun_diffuse", (0.70, 0.70, 0.70)),
+        "sun diffuse",
+    )
+    if visual:
+        sun_style = (
+            ' diffuse="%s" specular="0.10 0.10 0.12"' % sun_diffuse
+        )
+        fill_light = (
+            '    <light name="fill" pos="-4 -3 4" dir="0.6 0.4 -1"\n'
+            '           directional="true" diffuse="0.22 0.28 0.35" '
+            'specular="0.08 0.08 0.10"/>\n'
+        )
+    else:
+        sun_style = ""
+        fill_light = ""
+    checker = visual.get("floor_checker")
+    if checker is None:
+        visual_assets = ""
+        floor_material = ""
+    else:
+        if not isinstance(checker, Mapping):
+            raise TypeError("floor_checker must be a mapping")
+        rgb1 = _rgb(checker.get("rgb1", (0.16, 0.19, 0.23)), "checker rgb1")
+        rgb2 = _rgb(checker.get("rgb2", (0.22, 0.26, 0.31)), "checker rgb2")
+        repeat = checker.get("repeat", (10.0, 6.0))
+        if len(repeat) != 2 or any(float(value) <= 0.0 for value in repeat):
+            raise ValueError("checker repeat must contain two positive values")
+        visual_assets = (
+            '  <asset>\n'
+            '    <texture name="research_floor_grid" type="2d" builtin="checker" '
+            'rgb1="%s" rgb2="%s" width="512" height="512"/>\n'
+            '    <material name="research_floor_material" '
+            'texture="research_floor_grid" texuniform="true" '
+            'texrepeat="%s %s" reflectance="%s"/>\n'
+            '  </asset>\n'
+            % (
+                rgb1,
+                rgb2,
+                _f(repeat[0]),
+                _f(repeat[1]),
+                _f(checker.get("reflectance", 0.08)),
+            )
+        )
+        floor_material = ' material="research_floor_material"'
     obstacles = "\n".join(
         "    " + _obstacle_element(index, value)
         for index, value in enumerate(scene.get("obstacles", ()))
@@ -134,14 +233,15 @@ def build_diff_drive_mjcf(config: Mapping[str, object], scene: Mapping[str, obje
   <compiler angle="radian" inertiafromgeom="false"/>
   <option timestep="{timestep}" integrator="{integrator}" solver="{solver}"
           iterations="{iterations}" tolerance="{tolerance}" gravity="0 0 -9.81"/>
-  <visual><headlight ambient="0.45 0.45 0.45" diffuse="0.7 0.7 0.7"/></visual>
+  <visual><headlight ambient="{headlight_ambient}" diffuse="{headlight_diffuse}"/></visual>
   <default>
     <geom condim="4" solref="{solref}" solimp="{solimp}" contype="1" conaffinity="1"/>
     <joint damping="0.01" armature="0.001"/>
   </default>
-  <worldbody>
-    <light name="sun" pos="0 0 6" dir="0 0 -1" directional="true"/>
-    <geom name="floor" type="plane" size="10 10 0.1" friction="{floor_friction}" rgba="0.66 0.67 0.65 1" group="1"/>
+{visual_assets}  <worldbody>
+    <light name="sun" pos="0 0 6" dir="0 0 -1" directional="true"{sun_style}/>
+{fill_light}    <geom name="floor" type="plane" size="10 10 0.1" friction="{floor_friction}"
+          rgba="{floor_rgba}"{floor_material} group="1"/>
 {obstacles}
     <body name="base" pos="0 0 {base_height}">
       <freejoint name="base_free"/>
@@ -182,6 +282,13 @@ def build_diff_drive_mjcf(config: Mapping[str, object], scene: Mapping[str, obje
         timestep=_f(timestep), integrator=integrator, solver=solver,
         iterations=iterations, tolerance=_f(tolerance), solref=solref, solimp=solimp,
         floor_friction=" ".join(_f(v) for v in floor_friction), obstacles=obstacles,
+        visual_assets=visual_assets, floor_rgba=floor_rgba,
+        floor_material=floor_material,
+        headlight_ambient=headlight_ambient,
+        headlight_diffuse=headlight_diffuse,
+        sun_diffuse=sun_diffuse,
+        sun_style=sun_style,
+        fill_light=fill_light,
         base_height=_f(base_height), chassis_mass=_f(chassis_mass),
         inertia=" ".join(_f(v) for v in inertia),
         chassis_size=" ".join(_f(v) for v in chassis_size),

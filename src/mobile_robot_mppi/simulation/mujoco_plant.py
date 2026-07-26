@@ -94,6 +94,14 @@ class MujocoDiffDrivePlant:
             for index, _ in enumerate(self.scene.get("obstacles", ()))
         }
         self._obstacle_geom_ids = set(self._obstacle_geom_by_index.values())
+        for index, obstacle in enumerate(self.scene.get("obstacles", ())):
+            for part_index, _ in enumerate(obstacle.get("parts", ())):
+                self._obstacle_geom_ids.add(
+                    self._id(
+                        mujoco.mjtObj.mjOBJ_GEOM,
+                        "obstacle_%d_part_%d" % (index, part_index),
+                    )
+                )
         self._dynamic_obstacles = self._resolve_dynamic_obstacles()
         self._episode_dynamic_obstacles = self._dynamic_obstacles
         self._robot_geom_ids = {

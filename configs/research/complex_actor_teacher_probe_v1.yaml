@@ -1,0 +1,29 @@
+schema_version: 1
+protocol: complex_actor_teacher_upper_bound_v1
+scope: development_only_not_deployment_method
+
+# The teacher is used only to test whether the existing observation/action
+# contract is learnable in the three complex maps. It never replaces the
+# deployed 600-rollout Full controller.
+teacher:
+  optimizer: standard
+  sampling_prior: goal_warm_start
+  horizon: 60
+  num_samples: 1200
+  maximum_steps: 200
+  future_truth_used: false
+  dynamic_obstacles_in_astar: false
+  probability_thresholds_changed: false
+  safety_contract_changed: false
+
+development_seeds:
+  chapter1: [790201007]
+  chapter2: [790202007]
+  chapter3: [790203007]
+
+gate:
+  minimum_path_progress_m: 0.80
+  maximum_collisions: 0
+  maximum_boundary_violations: 0
+  require_nonzero_forward_motion: true
+  formal_server_launch_authorized: false

@@ -5,6 +5,9 @@ from experiments.dynamic_uncertainty.complex_full_method import (
     ROOT,
     build_complex_full_config,
 )
+from experiments.dynamic_uncertainty.complex_actor_teacher import (
+    build_complex_actor_teacher_config,
+)
 from mobile_robot_mppi.runtime.factories import make_components
 
 
@@ -204,3 +207,45 @@ def test_runtime_constructs_paper_rl_inside_the_frozen_residual_shield():
     finally:
         controller.close()
         components["plant"].close()
+
+
+def test_complex_actor_teacher_changes_compute_not_risk_or_geometry():
+    full = build_complex_full_config("chapter1", 790201007)
+    teacher = build_complex_actor_teacher_config(
+        "chapter1", 790201007
+    )
+
+    assert teacher["planner"]["optimizer"] == "standard"
+    assert teacher["planner"]["sampling_prior"] == "goal_warm_start"
+    assert not teacher["rl"]["enabled"]
+    assert teacher["planner"]["residual_safety_shield"]["enabled"]
+    assert (
+        teacher["planner"]["residual_safety_shield"][
+            "rl_hss_integration"
+        ]
+        == ""
+    )
+    assert teacher["planner"]["horizon"] == 60
+    assert teacher["planner"]["num_samples"] == 1200
+    for prefix in (
+        "probabilistic_obstacle_",
+        "known_static_map_",
+    ):
+        assert {
+            key: value
+            for key, value in teacher["planner"].items()
+            if key.startswith(prefix)
+        } == {
+            key: value
+            for key, value in full["planner"].items()
+            if key.startswith(prefix)
+        }
+    contract = teacher["complex_actor_teacher_contract"]
+    assert contract["training_only"]
+    assert not contract["deployment_method_changed"]
+    assert not contract["future_truth_used"]
+    assert not contract["dynamic_obstacles_in_astar"]
+    assert not contract["probability_thresholds_changed"]
+    assert not contract["safety_contract_changed"]
+    assert not contract["actor_enabled"]
+    assert contract["source_full_rollouts_per_decision"] == 600

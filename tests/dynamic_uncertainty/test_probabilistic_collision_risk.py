@@ -2151,6 +2151,68 @@ def test_active_avoidance_filters_stop_and_selects_safe_motion():
     ] < 1.0
 
 
+def test_active_avoidance_motion_is_not_zeroed_by_speed_governor():
+    horizon = 3
+    controller = MppiController(
+        LegacyUnicyclePrediction(),
+        unicycle_state(),
+        body_velocity_action((0.0, 0.5), 1.0),
+        MppiConfig(
+            horizon=horizon,
+            num_samples=2,
+            dt=0.1,
+            probabilistic_obstacle_risk_enabled=True,
+            probabilistic_obstacle_hard_violation_action=(
+                "active_avoidance_motion"
+            ),
+            probabilistic_obstacle_speed_governor_enabled=True,
+            probabilistic_obstacle_stopping_feasibility_enabled=True,
+        ),
+    )
+    samples = np.zeros((2, horizon, 2), dtype=np.float64)
+    samples[1, :, 0] = 0.5
+    candidate_risk = SimpleNamespace(
+        hard_violation=np.asarray((True, True)),
+        maximum_step_probability=np.asarray((1.0, 1.0)),
+        accumulated_probability_mass=np.asarray((3.0, 2.0)),
+        horizon_union_bound=np.asarray((1.0, 1.0)),
+    )
+
+    def risk_for_trajectory(trajectories, _forecasts):
+        moving = bool(np.asarray(trajectories)[0, 1, 0] > 0.0)
+        mass = 2.0 if moving else 3.0
+        return SimpleNamespace(
+            hard_violation=np.asarray((True,)),
+            maximum_step_probability=np.asarray((1.0,)),
+            accumulated_probability_mass=np.asarray((mass,)),
+            horizon_union_bound=np.asarray((1.0,)),
+        )
+
+    controller._probabilistic_collision_risk = risk_for_trajectory
+    stop_sequence = samples[0].copy()
+    stop_trajectory = controller.rollout(
+        np.zeros(controller.state_spec.dimension), stop_sequence
+    )[0]
+    action, sequence, _, diagnostics = (
+        controller._apply_probabilistic_obstacle_action_guard(
+            np.zeros(controller.state_spec.dimension),
+            stop_sequence[0].copy(),
+            stop_sequence,
+            stop_trajectory,
+            samples,
+            np.asarray((0.0, 1.0)),
+            (object(),),
+            candidate_risk=candidate_risk,
+        )
+    )
+
+    assert action[0] > 0.0
+    assert sequence[0, 0] > 0.0
+    assert diagnostics[
+        "probabilistic_obstacle_speed_governor_bypassed_for_active_avoidance"
+    ]
+
+
 def test_active_avoidance_uses_probability_mass_when_maximum_risk_saturates(
     monkeypatch,
 ):

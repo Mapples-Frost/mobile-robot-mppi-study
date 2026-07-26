@@ -685,10 +685,12 @@ class MppiConfig:
             "penalize",
             "stop",
             "active_avoidance",
+            "active_avoidance_motion",
         ):
             raise ValueError(
                 "probabilistic obstacle hard-violation action must be "
-                "'penalize', 'stop', or 'active_avoidance'"
+                "'penalize', 'stop', 'active_avoidance', or "
+                "'active_avoidance_motion'"
             )
         if not (
             0.0
@@ -4137,7 +4139,10 @@ class MppiController:
                     or traversal_rearm_hold_overridden_by_temporal_closing
             )
             and not traversal_selected
-            and hard_action == "active_avoidance"
+            and hard_action in (
+                "active_avoidance",
+                "active_avoidance_motion",
+            )
             and np.any(emergency_mask & eligible_mask)
         ):
             if evaluated_candidates is None:
@@ -4650,7 +4655,10 @@ class MppiController:
             not temporal_emergency_vetted
             and not traversal_selected
             and initial_hard_violation
-            and hard_action == "active_avoidance"
+            and hard_action in (
+                "active_avoidance",
+                "active_avoidance_motion",
+            )
         ):
             if evaluated_candidates is None:
                 candidate_trajectories = self.rollout(state, values)
@@ -4763,9 +4771,15 @@ class MppiController:
             selected_risk.maximum_step_probability[0]
         )
         speed_scale = 1.0
+        active_avoidance_motion_selected = bool(
+            hard_action == "active_avoidance_motion"
+            and fallback_used
+            and fallback_candidate_index >= 0
+        )
         if (
             self.config.probabilistic_obstacle_speed_governor_enabled
             and not traversal_started
+            and not active_avoidance_motion_selected
         ):
             hard_threshold = self.config.probabilistic_obstacle_hard_threshold
             soft_threshold = (
@@ -4805,6 +4819,9 @@ class MppiController:
             "probabilistic_obstacle_hard_violation": hard_violation,
             "probabilistic_obstacle_fail_closed": fail_closed,
             "probabilistic_obstacle_speed_scale": speed_scale,
+            "probabilistic_obstacle_speed_governor_bypassed_for_active_avoidance": (
+                active_avoidance_motion_selected
+            ),
             "probabilistic_obstacle_initial_hard_violation": (
                 initial_hard_violation
             ),
@@ -5277,7 +5294,10 @@ class MppiController:
                 ] if minimum_risk_emergency_index >= 0 else 0.0
             ),
             "probabilistic_obstacle_active_avoidance_enabled": bool(
-                hard_action == "active_avoidance"
+                hard_action in (
+                    "active_avoidance",
+                    "active_avoidance_motion",
+                )
             ),
         }
         if not fail_closed and speed_scale < 1.0:
@@ -5963,7 +5983,10 @@ class MppiController:
                 self.config
                 .probabilistic_obstacle_hard_violation_action
             )
-            if initial_hard_violation and hard_action == "active_avoidance":
+            if initial_hard_violation and hard_action in (
+                "active_avoidance",
+                "active_avoidance_motion",
+            ):
                 if candidate_risk is None:
                     candidate_risk = self._probabilistic_collision_risk(
                         trajectories, probabilistic_obstacles
@@ -6096,9 +6119,15 @@ class MppiController:
                 selected_risk.maximum_step_probability[0]
             )
             speed_scale = 1.0
+            active_avoidance_motion_selected = bool(
+                hard_action == "active_avoidance_motion"
+                and fallback_used
+                and fallback_candidate_index >= 0
+            )
             if (
                 self.config
                 .probabilistic_obstacle_speed_governor_enabled
+                and not active_avoidance_motion_selected
             ):
                 hard_threshold = (
                     self.config.probabilistic_obstacle_hard_threshold
@@ -6131,6 +6160,9 @@ class MppiController:
                 "probabilistic_obstacle_hard_violation": hard_violation,
                 "probabilistic_obstacle_fail_closed": fail_closed,
                 "probabilistic_obstacle_speed_scale": speed_scale,
+                "probabilistic_obstacle_speed_governor_bypassed_for_active_avoidance": (
+                    active_avoidance_motion_selected
+                ),
                 "probabilistic_obstacle_initial_hard_violation": (
                     initial_hard_violation
                 ),
@@ -6166,7 +6198,10 @@ class MppiController:
                     and emergency_candidate_mask[fallback_candidate_index]
                 ),
                 "probabilistic_obstacle_active_avoidance_enabled": bool(
-                    hard_action == "active_avoidance"
+                    hard_action in (
+                        "active_avoidance",
+                        "active_avoidance_motion",
+                    )
                 ),
             }
             if not fail_closed and speed_scale < 1.0:

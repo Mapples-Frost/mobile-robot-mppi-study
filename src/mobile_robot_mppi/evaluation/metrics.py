@@ -509,6 +509,12 @@ class EpisodeMetrics:
                     "probabilistic_obstacle_speed_scale", 1.0
                 )
             ),
+            "probabilistic_obstacle_speed_governor_bypassed_for_active_avoidance": float(
+                planner_diagnostics.get(
+                    "probabilistic_obstacle_speed_governor_bypassed_for_active_avoidance",
+                    False,
+                )
+            ),
             "probabilistic_obstacle_initial_hard_violation": float(
                 planner_diagnostics.get(
                     "probabilistic_obstacle_initial_hard_violation",
@@ -2503,6 +2509,15 @@ class EpisodeMetrics:
                 row.get("probabilistic_obstacle_active_fallback_used", 0.0)
                 for row in values
             )),
+            "probabilistic_obstacle_speed_governor_bypassed_for_active_avoidance_steps": int(
+                sum(
+                    row.get(
+                        "probabilistic_obstacle_speed_governor_bypassed_for_active_avoidance",
+                        0.0,
+                    )
+                    for row in values
+                )
+            ),
             "probabilistic_obstacle_mass_fallback_steps": int(sum(
                 row.get("probabilistic_obstacle_active_fallback_kind")
                 == "minimum_accumulated_risk_active_candidate"

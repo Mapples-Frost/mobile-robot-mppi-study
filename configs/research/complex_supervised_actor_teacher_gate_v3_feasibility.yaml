@@ -1,0 +1,71 @@
+schema_version: 3
+protocol: complex_supervised_actor_privileged_teacher_gate_v1
+scope: development_only_pretraining_gate
+
+question: >
+  Does a privileged long-horizon teacher contain at least one physically safe
+  maneuver at each saved complex-map conflict state that the frozen online
+  ICODE and Collision Risk contracts also accept?
+
+frozen_components:
+  change_aware: true
+  collision_risk: true
+  icode: true
+  mppi: true
+  safety: true
+  hss: true
+  map_physics: true
+  action_bounds: true
+  proposal_actor_replaced: false
+
+teacher:
+  future_truth_used_for_selection: true
+  online_observation_used_for_risk_audit: true
+  truth_horizon_steps: 80
+  deployment_prefix_steps: 36
+  control_dt_s: 0.1
+  speed_fractions: [0.45, 0.70, 1.0]
+  turn_rate_fractions: [0.45, 0.75, 1.0]
+  turn_steps: [12, 20, 30]
+  wait_steps: [0, 6]
+  reverse_prefix_steps: [0, 6]
+  recovery_fraction: 0.60
+  minimum_local_target_progress_m: 0.20
+  minimum_true_static_clearance_m: 0.00
+  minimum_predicted_static_clearance_m: 0.00
+
+saved_conflict_states:
+  chapter1:
+    artifact: research_artifacts/complex_actor_teacher_probe_v3/chapter1_seed791101003
+    anchor_rule: first_forecast_valid_hard_risk
+  chapter2:
+    artifact: research_artifacts/complex_actor_teacher_extended_preview_v1/chapter2_seed790202007
+    anchor_rule: first_forecast_valid_hard_risk
+  chapter3:
+    artifact: research_artifacts/complex_actor_teacher_probe_v3/chapter3_seed791103003
+    anchor_rule: first_forecast_valid_hard_risk
+
+gate:
+  require_all_maps_physically_safe_teacher: true
+  require_all_maps_risk_accepted_teacher: true
+  require_all_maps_first_step_safety_nonstop: true
+  actor_training_authorized_only_on_pass: true
+  formal_server_launch_authorized: false
+
+stopping_rules:
+  risk_rejected_teacher: >
+    Do not train the supervised Actor. Audit risk aggregation, prediction
+    timing, duplicate/retired tracks, and Safety before changing any model.
+  no_physically_safe_teacher: >
+    Treat the scene/online action contract as a capability boundary. Do not
+    compensate by weakening risk thresholds or tailoring the test map.
+
+amendment:
+  revision: 3
+  training_map_feasibility_revision: r3
+  chapter1_seed: 791101003
+  chapter3_seed: 791103003
+  outcomes_opened_before_freeze: false
+  teacher_lattice_changed: false
+  risk_contract_changed: false
+  safety_contract_changed: false

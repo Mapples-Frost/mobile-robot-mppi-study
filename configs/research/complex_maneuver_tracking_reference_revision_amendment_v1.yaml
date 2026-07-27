@@ -1,0 +1,125 @@
+schema_version: 1
+status: frozen_before_implementation
+frozen_at: "2026-07-28T05:35:25+08:00"
+scope: evaluation_only_reference_revision_synchronization
+development_only: true
+amends:
+  - configs/research/complex_maneuver_proposal_execution_equivalence_amendment_v1.yaml
+
+question: >-
+  Can the evaluation monitor survive a standard static A* route replacement
+  without changing planner behavior or carrying progress from an obsolete
+  route into the replacement geometry?
+
+evidence_anchor:
+  failure_commit: 0e34633
+  failure_tag: checkpoint/complex-maneuver-actor-on-reference-tracking-fail-20260728
+  failure_path: research_artifacts/complex_maneuver_proposal_execution_consistency_v1/actor_on_equivalence_amended/reference_af691f1_failure.json
+  failure_sha256: da0c7569588fa6cc2d9bff3951c7e49fe0d5d17504fe0f856038bb825fe989ff
+  exception: "ValueError: minimum polyline progress is outside the route"
+  complete_episode_produced: false
+
+root_cause_contract:
+  route_mutation: PolylineReference.replace_points
+  route_mutation_resets_reference_progress: true
+  monitor_state_that_remained_stale:
+    - progress
+    - obstacle_progress
+    - next_obstacle
+    - recovery_start_time
+    - recovery_start_progress
+  forbidden_workaround: clamp_stale_progress_to_new_route_end
+  rationale: >-
+    Clamping would avoid the exception but would falsely label the robot as
+    already near the end of a newly generated route.
+
+intervention:
+  polyline_reference:
+    add_private_revision_counter: true
+    initial_revision: 0
+    increment_only_after_successful_replace_points: true
+    expose_read_only_revision_property: true
+    reset_does_not_change_revision: true
+    projection_and_target_semantics_changed: false
+  tracking_event_monitor:
+    store_last_seen_revision: true
+    check_revision_before_every_update: true
+    on_revision_change:
+      progress: 0.0
+      recompute_obstacle_progress_on_new_route: true
+      next_obstacle: 0
+      recovery_start_time: null
+      recovery_start_progress: null
+      center_crossing_count: preserve
+      inside_center_crossing: preserve
+      update_last_seen_revision: true
+    reason_to_preserve_center_crossing_state: >-
+      It is an episode-level event count defined in world coordinates, not a
+      route-relative state variable.
+
+frozen_components:
+  planner_source_changed: false
+  planner_configuration_changed: false
+  reference_target_generation_changed: false
+  risk_changed: false
+  icode_changed: false
+  safety_changed: false
+  actor_checkpoint_changed: false
+  maps_changed: false
+  mppi_cost_changed: false
+  rollout_budget_changed: false
+  total_rollouts_per_forecast_valid_cycle: 600
+
+source_baseline:
+  references_py_sha256: 639602edb4d2ee2ad8ad4e728151f0da1d4bf55e17b7dce27fa8c9e5622d37cf
+  tracking_py_sha256: 6ee41656698c983ed405c597080cf3a2abdf52f1def6c790cb76c0ac4333cb00
+  metrics_py_sha256: ee4cdf8b9553eaf8aea07d68845e87c1a5ea5fba71382fbe7a6dd27a8c61f3ef
+  unchanged_since_reference_commit: true
+
+tests:
+  required:
+    - revision_starts_at_zero
+    - reset_preserves_revision
+    - successful_replace_increments_revision_once
+    - failed_replace_does_not_increment_revision
+    - monitor_without_replace_is_bitwise_behaviorally_identical
+    - shorter_route_replace_resets_route_relative_monitor_state
+    - longer_route_replace_resets_route_relative_monitor_state
+    - obstacle_progress_is_reprojected_on_replacement_route
+    - center_crossing_episode_state_is_preserved
+    - tracking_sample_after_replace_is_finite_and_within_new_route
+  actor_off_closed_loop_regression:
+    required: true
+    reference: concurrent_same_runtime_af691f1
+    excluded_timing_columns: 9
+    all_other_common_columns_exact: true
+    permitted_rollout_counts: [0, 600]
+
+paired_actor_on_equivalence:
+  authorized_only_after_tests_pass: true
+  reference_source: af691f1_plus_identical_evaluation_patch
+  diagnostic_source: current_plus_identical_evaluation_patch
+  patch_content_must_be_identical: true
+  map: chapter1
+  seed: 791101019
+  arm: full_plus_bootstrap_actor
+  margin: 0.0
+  exact_non_timing_common_columns_required: true
+  outcome_equality_required: true
+  actor_heads_required: [0, 1, 2]
+  supervised_added_rollout_count_required: 0
+  permitted_rollout_counts: [0, 600]
+
+authorization:
+  implementation: true
+  actor_on_episode_before_unit_tests: false
+  margin_0_02: false
+  training_or_data_expansion: false
+  formal_or_paid_server_execution: false
+
+stopping_rules:
+  unit_contract_failure: stop_and_preserve
+  actor_off_control_or_trajectory_change: stop_and_preserve
+  actor_on_reference_or_diagnostic_runtime_failure: stop_and_preserve
+  actor_on_non_timing_mismatch: stop_and_preserve
+  rollout_contract_violation: stop_and_preserve

@@ -1,0 +1,14 @@
+{
+  "audit_sha256": "2bdbe367e078bcce86f8094a23850d7a2c4b563a35c015881893093d9fd3f9c9",
+  "dataset_sha256": "6f9eb1f782d4eca2a64866183b3ab7fff51efd5cc5afe9942afc3db205590189",
+  "formal_server_launch_authorized": false,
+  "gate_sha256": "4dff9d3bc2d5deedd373f733ee9d48f4dfd65f6f49e05f8b80bf22f1d92e78d4",
+  "git_sha": "623b4b3016aad9efa90809d0e4cd32a142e01d8e",
+  "protocol_config_hash": "9da88fd8cc953b55784214672c0c6885a6e2b277a17703e384bf497cb1afa27e",
+  "protocol_sha256": "92279e55673bf6a60080cace9ac415cfab185f0337aa1832ffb2e5d750924f9c",
+  "scenario_level_split": true,
+  "source_gate": "D:\\Projects\\mobile-robot-mppi-study-single-v6\\research_artifacts\\complex_supervised_actor_oracle_gate_v4\\oracle_gate_result.json",
+  "source_gate_sha256": "e72152210c188ffb74f8b82c56b0c7077f0a95079401b89249d70b4f8b546171",
+  "student_observation_contains_future_truth": false,
+  "teacher_label_selection_uses_future_truth": true
+}

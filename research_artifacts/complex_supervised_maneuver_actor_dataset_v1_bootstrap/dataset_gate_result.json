@@ -1,0 +1,47 @@
+{
+  "checks": {
+    "minimum_train_behavior_families": true,
+    "minimum_train_causal_states": true,
+    "minimum_train_scenarios": true,
+    "minimum_train_teacher_rows": true,
+    "minimum_validation_behavior_families": true,
+    "minimum_validation_causal_states": true,
+    "minimum_validation_scenarios": true,
+    "minimum_validation_teacher_rows": true,
+    "no_privileged_student_fields": true,
+    "scenario_split_disjoint": true
+  },
+  "closed_loop_gate_d_authorized": false,
+  "engineering_training_authorized": true,
+  "formal_claim_authorized": false,
+  "splits": {
+    "train": {
+      "behavior_families": [
+        "left",
+        "right",
+        "yield"
+      ],
+      "causal_state_count": 9,
+      "scenario_count": 2,
+      "scenarios": [
+        "chapter1_seed791101003",
+        "chapter3_seed791103003"
+      ],
+      "teacher_row_count": 35
+    },
+    "validation": {
+      "behavior_families": [
+        "left",
+        "right",
+        "yield"
+      ],
+      "causal_state_count": 6,
+      "scenario_count": 1,
+      "scenarios": [
+        "chapter2_seed790202007"
+      ],
+      "teacher_row_count": 29
+    }
+  },
+  "status": "pass"
+}

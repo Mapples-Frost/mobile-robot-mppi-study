@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "status": "pass",
+  "scope": "evaluation_revision_actor_off_equivalence",
+  "map": "chapter1",
+  "seed": 791101019,
+  "arm": "frozen_full",
+  "implementations": {
+    "current_commit": "ee86ed4b57ce2bb6fe5800a30695f24c1fe7f499",
+    "reference_commit": "af691f184774094551d13fb4cde51d98bad2caf9",
+    "shared_evaluation_patch_commit": "a547985"
+  },
+  "comparison_contract": {
+    "row_alignment": "exact",
+    "comparison_mode": "exact_string_equality",
+    "numeric_tolerance": null,
+    "excluded_timing_columns": [
+      "planner_compute_ms",
+      "profile_mppi_batch_rollout_ms",
+      "profile_mppi_cost_ms",
+      "profile_mppi_final_rollout_ms",
+      "profile_mppi_sampling_ms",
+      "profile_mppi_solve_total_ms",
+      "profile_mppi_weighting_update_ms",
+      "profile_planner_prior_ms",
+      "profile_planner_state_reference_ms"
+    ]
+  },
+  "trajectory_comparison": {
+    "rows_current": 211,
+    "rows_reference": 211,
+    "common_non_timing_columns": 593,
+    "exact_equal": true,
+    "mismatch_columns": 0,
+    "first_mismatch": null
+  },
+  "outcome": {
+    "current": {
+      "success": false,
+      "collision": true,
+      "termination_reason": "collision",
+      "steps": 211
+    },
+    "reference": {
+      "success": false,
+      "collision": true,
+      "termination_reason": "collision",
+      "steps": 211
+    },
+    "exact_equal": true
+  },
+  "rollout_contract": {
+    "current_values": [0, 600],
+    "reference_values": [0, 600],
+    "pass": true
+  },
+  "identity": {
+    "normalized_resolved_config_exact": true,
+    "normalized_resolved_config_sha256": "1bd14073f9af062695c4dcc9939b0e8a6126328eb237c239cb59f0ea50c4604e",
+    "actor_checkpoint_sha256": "6b95e9ca384ced388b63a02c1337035bd1823b02d1469626fd5412b396b987fe",
+    "protocol_canonical_git_blob_exact": true,
+    "risk_source_exact": true,
+    "icode_model_source_exact": true,
+    "safety_source_exact": true,
+    "perception_source_canonical_git_blob_exact": true,
+    "runtime_factory_canonical_git_blob_exact": true,
+    "reference_revision_source_canonical_git_blob_exact": true,
+    "tracking_revision_source_canonical_git_blob_exact": true
+  },
+  "stderr_empty": {
+    "current": true,
+    "reference": true
+  },
+  "trajectory_sha256": {
+    "current": "b0a6abd3ae9e4df666d856ab388d33050ee77d3b4197a1c94739245c5137b0dd",
+    "reference": "54a22775b207321fa7ca77a17a7b753238a896d7342cdbee67e3fcb6e952a4c6"
+  },
+  "decision": "Actor-off strict equivalence passes under the amended concurrent-runtime oracle. Actor-on margin-zero paired equivalence is now authorized; margin 0.02 remains forbidden."
+}

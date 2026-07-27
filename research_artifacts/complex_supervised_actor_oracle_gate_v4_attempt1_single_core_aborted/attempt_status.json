@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "status": "aborted_before_first_state_result",
+  "reason": "The scientifically frozen search was implemented as a single sequential process. After approximately 776 seconds of active CPU time it had not completed the first two-horizon state, implying several hours for the full audit. The attempt was preserved and stopped before changing implementation scheduling only.",
+  "scientific_outcome_available": false,
+  "partial_outcome_used": false,
+  "protocol_changed_during_attempt": false,
+  "maps_changed": false,
+  "risk_thresholds_changed": false,
+  "safety_contract_changed": false,
+  "next_action": "Run the identical deterministic state searches with four independent local workers and merge results in the parent process."
+}

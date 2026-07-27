@@ -1,0 +1,45 @@
+schema_version: 4
+protocol: complex_actor_teacher_upper_bound_v1
+scope: development_dataset_expansion_not_closed_loop_test
+
+teacher:
+  optimizer: standard
+  sampling_prior: goal_warm_start
+  horizon: 36
+  num_samples: 2400
+  maximum_steps: 120
+  future_truth_used: false
+  dynamic_obstacles_in_astar: false
+  probability_thresholds_changed: false
+  safety_contract_changed: false
+
+# Frozen before any outcome from these episodes is opened. These seeds may
+# enter the expanded training dataset and therefore can never be final tests.
+development_seeds:
+  chapter1: [791101011]
+  chapter2: [790202011]
+  chapter3: [791103011]
+
+reserved_unopened_closed_loop_seeds:
+  chapter1: [791101019]
+  chapter2: [790202019]
+  chapter3: [791103019]
+
+gate:
+  minimum_path_progress_m: 0.20
+  maximum_collisions: 0
+  maximum_boundary_violations: 0
+  require_nonzero_forward_motion: true
+  formal_server_launch_authorized: false
+
+dataset_expansion_contract:
+  source_gate_bc_status: pass
+  source_gate_bc_result: research_artifacts/complex_supervised_maneuver_actor_gate_bc_v1/gate_bc_result.json
+  maps_changed: false
+  teacher_capacity_changed: false
+  probability_thresholds_changed: false
+  icode_changed: false
+  safety_contract_changed: false
+  actor_used_by_source_probe: false
+  final_test_maps: false
+  formal_server_launch_authorized: false

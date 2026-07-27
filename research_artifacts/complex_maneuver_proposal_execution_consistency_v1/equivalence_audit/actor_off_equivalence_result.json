@@ -1,0 +1,41 @@
+{
+  "arm": "frozen_full",
+  "common_column_count": 581,
+  "decision": "do_not_start_actor_on_audit_or_margin_round; diagnose run-to-run determinism or instrumentation side effect",
+  "deterministic_common_column_count": 572,
+  "deterministic_mismatch_column_count": 89,
+  "diagnostic_commit": "996e048",
+  "exact_equivalence": false,
+  "first_core_mismatch_by_column": {
+    "applied_omega": 57,
+    "applied_v": 56,
+    "goal_distance": 56,
+    "proposed_omega": 57,
+    "proposed_v": 56,
+    "theta": 56,
+    "x": 56,
+    "y": 56
+  },
+  "first_core_mismatch_row": 56,
+  "map": "chapter1",
+  "maximum_absolute_difference": {
+    "applied_omega": 2.0182284246605953e-09,
+    "applied_v": 7.521104017360614e-10,
+    "goal_distance": 9.38296551566964e-10,
+    "proposed_omega": 2.5984615847907122e-09,
+    "proposed_v": 7.521641920416045e-10,
+    "theta": 6.58013754595288e-10,
+    "x": 8.608171953028432e-10,
+    "y": 4.438627243530391e-10
+  },
+  "new_trajectory_sha256": "662e39c381184051947bf523c362ee3ca5c801d5f479c870e09696f93b14c2b8",
+  "old_trajectory_sha256": "8428bfddc798a304226c5d3badac2ad1710daedc3c8c750b0b7a8c4e8d0a808c",
+  "outcome_equal": true,
+  "reference_commit": "af691f1",
+  "row_count_new": 211,
+  "row_count_old": 211,
+  "schema_version": 1,
+  "scope": "actor_off_closed_loop_exact_equivalence",
+  "seed": 791101019,
+  "status": "fail"
+}

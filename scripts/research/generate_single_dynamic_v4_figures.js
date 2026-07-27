@@ -14,12 +14,25 @@ const ANALYSIS = path.join(
   "single_dynamic_obstacle_paper_v4_analysis_20260725",
   "analysis"
 );
-const OUTPUT = process.argv[2]
-  ? path.resolve(process.argv[2])
-  : path.join(process.env.USERPROFILE || REPO, "Desktop", "single_dynamic_v4_figures_20260727");
+const LANG_ARG = process.argv.slice(2).find((arg) => arg.startsWith("--lang="));
+const LANG = LANG_ARG ? LANG_ARG.split("=", 2)[1].toLowerCase() : "en";
+if (!["en", "zh"].includes(LANG)) {
+  throw new Error(`Unsupported language: ${LANG}; expected en or zh`);
+}
+const OUTPUT_ARG = process.argv.slice(2).find((arg) => !arg.startsWith("--"));
+const OUTPUT = OUTPUT_ARG
+  ? path.resolve(OUTPUT_ARG)
+  : path.join(
+      process.env.USERPROFILE || REPO,
+      "Desktop",
+      LANG === "zh"
+        ? "single_dynamic_v4_figures_zh_20260727"
+        : "single_dynamic_v4_figures_20260727"
+    );
 
 const W = 1600;
 const H = 1000;
+const IS_ZH = LANG === "zh";
 const COLORS = {
   ink: "#17202A",
   muted: "#5D6D7E",
@@ -37,6 +50,10 @@ const COLORS = {
   softGreen: "#E8F5F0",
   danger: "#CC3311",
 };
+
+function tr(en, zh) {
+  return IS_ZH ? zh : en;
+}
 
 function esc(value) {
   return String(value)
@@ -158,8 +175,14 @@ function baseSvg(titleValue, subtitle) {
 }
 
 function footer(
-  left = "Single dynamic obstacle v4 · sealed formal analysis · 360 paired core seeds",
-  right = "Error bars: paired Tango two-sided 95% CI"
+  left = tr(
+    "Single dynamic obstacle v4 · sealed formal analysis · 360 paired core seeds",
+    "单动态障碍 v4 · 封存正式分析 · 360 个配对核心种子"
+  ),
+  right = tr(
+    "Error bars: paired Tango two-sided 95% CI",
+    "误差线：配对 Tango 双侧 95% 置信区间"
+  )
 ) {
   return [
     line(80, 930, 1520, 930, { stroke: COLORS.grid, width: 2 }),
@@ -215,12 +238,17 @@ function drawRatePanel({ x, y, width, height, titleValue, max, rates, delta, p, 
     fill: color === COLORS.collision ? COLORS.softOrange : COLORS.softBlue,
     radius: 12,
   }));
-  out.push(text(x + width / 2, y + height - 51, `Full − Baseline: ${pp(delta)}  ·  ${pLabel(p)}`, {
+  out.push(text(
+    x + width / 2,
+    y + height - 51,
+    `${tr("Full − Baseline", "完整方法 − 基线")}: ${pp(delta)}  ·  ${pLabel(p)}`,
+    {
     size: 22,
     weight: 700,
     anchor: "middle",
     fill: color,
-  }));
+    }
+  ));
   return out.join("\n");
 }
 
@@ -228,19 +256,25 @@ function figurePrimary(primary) {
   const pooled = primary.by_split.pooled;
   return [
     baseSvg(
-      "Primary outcomes: Full reduces collisions, not completion failures",
-      "Strong nominal MPPI (Baseline) versus proposed Full system; pooled ID + OOD results"
+      tr(
+        "Primary outcomes: Full reduces collisions, not completion failures",
+        "主要结果：完整方法显著降低碰撞，但未显著提高任务完成率"
+      ),
+      tr(
+        "Strong nominal MPPI (Baseline) versus proposed Full system; pooled ID + OOD results",
+        "强标称 MPPI（基线）与完整方法对比；合并 ID 与 OOD 的正式结果"
+      )
     ),
     drawRatePanel({
       x: 90,
       y: 180,
       width: 680,
       height: 700,
-      titleValue: "Safe success rate",
+      titleValue: tr("Safe success rate", "安全成功率"),
       max: 1,
       rates: [
-        { label: "Baseline", value: pooled.success_rate.control_rate, color: COLORS.baseline },
-        { label: "Full", value: pooled.success_rate.treatment_rate, color: COLORS.full },
+        { label: tr("Baseline", "基线"), value: pooled.success_rate.control_rate, color: COLORS.baseline },
+        { label: tr("Full", "完整方法"), value: pooled.success_rate.treatment_rate, color: COLORS.full },
       ],
       delta: pooled.success_rate.treatment_minus_control,
       p: pooled.success_rate.exact_mcnemar_two_sided_p,
@@ -251,19 +285,22 @@ function figurePrimary(primary) {
       y: 180,
       width: 680,
       height: 700,
-      titleValue: "Collision rate",
+      titleValue: tr("Collision rate", "碰撞率"),
       max: 0.30,
       rates: [
-        { label: "Baseline", value: pooled.collision_rate.control_rate, color: COLORS.baseline },
-        { label: "Full", value: pooled.collision_rate.treatment_rate, color: COLORS.collision },
+        { label: tr("Baseline", "基线"), value: pooled.collision_rate.control_rate, color: COLORS.baseline },
+        { label: tr("Full", "完整方法"), value: pooled.collision_rate.treatment_rate, color: COLORS.collision },
       ],
       delta: pooled.collision_rate.treatment_minus_control,
       p: pooled.collision_rate.exact_mcnemar_two_sided_p,
       color: COLORS.collision,
     }),
     footer(
-      "Single dynamic obstacle v4 · sealed formal analysis · 360 paired core seeds",
-      "Paired exact McNemar tests"
+      tr(
+        "Single dynamic obstacle v4 · sealed formal analysis · 360 paired core seeds",
+        "单动态障碍 v4 · 封存正式分析 · 360 个配对核心种子"
+      ),
+      tr("Paired exact McNemar tests", "配对精确 McNemar 检验")
     ),
   ].join("\n");
 }
@@ -277,7 +314,10 @@ function drawForestPanel({
   rows,
   domain,
   favorableDirection,
-  xLabel = "Paired Full − Baseline difference (percentage points)",
+  xLabel = tr(
+    "Paired Full − Baseline difference (percentage points)",
+    "配对差值：完整方法 − 基线（百分点）"
+  ),
 }) {
   const out = [];
   out.push(rect(x, y, width, height, { fill: "#FBFCFE", stroke: COLORS.grid, strokeWidth: 2, radius: 18 }));
@@ -324,7 +364,7 @@ function drawForestPanel({
 }
 
 function figureSplitEffects(primary) {
-  const labels = [["pooled", "Pooled"], ["id", "ID"], ["ood", "OOD"]];
+  const labels = [["pooled", tr("Pooled", "合并")], ["id", "ID"], ["ood", "OOD"]];
   const successRows = labels.map(([key, label]) => {
     const d = primary.by_split[key].success_rate;
     return {
@@ -345,28 +385,34 @@ function figureSplitEffects(primary) {
   });
   return [
     baseSvg(
-      "Paired effects are consistent across ID and OOD splits",
-      "Raw Full − Baseline differences; points are paired effects and bars are Tango 95% confidence intervals"
+      tr(
+        "Paired effects are consistent across ID and OOD splits",
+        "ID 与 OOD 分层中的配对效应总体一致"
+      ),
+      tr(
+        "Raw Full − Baseline differences; points are paired effects and bars are Tango 95% confidence intervals",
+        "横轴为完整方法减基线；圆点为配对效应，误差线为 Tango 95% 置信区间"
+      )
     ),
     drawForestPanel({
       x: 80,
       y: 190,
       width: 710,
       height: 690,
-      titleValue: "Safe success difference",
+      titleValue: tr("Safe success difference", "安全成功率差值"),
       rows: successRows,
       domain: [-16, 16],
-      favorableDirection: "Right favors Full",
+      favorableDirection: tr("Right favors Full", "越右越有利于完整方法"),
     }),
     drawForestPanel({
       x: 830,
       y: 190,
       width: 690,
       height: 690,
-      titleValue: "Collision-rate difference",
+      titleValue: tr("Collision-rate difference", "碰撞率差值"),
       rows: collisionRows,
       domain: [-16, 6],
-      favorableDirection: "Left favors Full",
+      favorableDirection: tr("Left favors Full", "越左越有利于完整方法"),
     }),
     footer(),
   ].join("\n");
@@ -374,10 +420,10 @@ function figureSplitEffects(primary) {
 
 function figureFactorial(core) {
   const names = {
-    B00_strong_nominal_mppi: "B00\nNominal",
-    B10_learning_only: "B10\nLearning only",
-    B01_probability_only: "B01\nProbability only",
-    B11_full_proposed: "B11\nFull",
+    B00_strong_nominal_mppi: tr("B00\nNominal", "B00\n强标称基线"),
+    B10_learning_only: tr("B10\nLearning only", "B10\n仅学习包"),
+    B01_probability_only: tr("B01\nProbability only", "B01\n仅概率包"),
+    B11_full_proposed: tr("B11\nFull", "B11\n完整方法"),
   };
   const colors = {
     B00_strong_nominal_mppi: COLORS.baseline,
@@ -442,13 +488,22 @@ function figureFactorial(core) {
 
   return [
     baseSvg(
-      "Factorial mechanism comparison exposes the safety–completion trade-off",
-      "All four core arms use the same 360 paired seeds; L = learning package, P = probabilistic temporal package"
+      tr(
+        "Factorial mechanism comparison exposes the safety–completion trade-off",
+        "四个核心 Arm 揭示安全性与完成率之间的权衡"
+      ),
+      tr(
+        "All four core arms use the same 360 paired seeds; L = learning package, P = probabilistic temporal package",
+        "四个 Arm 共用 360 个配对种子；L 表示学习包，P 表示概率时序包"
+      )
     ),
-    panel(80, "Safe success rate", "safe_success", 1),
-    panel(820, "Collision rate", "collision", 0.25),
+    panel(80, tr("Safe success rate", "安全成功率"), "safe_success", 1),
+    panel(820, tr("Collision rate", "碰撞率"), "collision", 0.25),
     rect(80, 900, 1440, 48, { fill: COLORS.softGreen, radius: 12 }),
-    text(800, 932, "Probability-only is safest but conservative; adding learning recovers completion while retaining most collision reduction.", {
+    text(800, 932, tr(
+      "Probability-only is safest but conservative; adding learning recovers completion while retaining most collision reduction.",
+      "仅概率包最安全但较保守；加入学习包可恢复完成率，同时保留大部分碰撞下降收益。"
+    ), {
       size: 20,
       weight: 600,
       anchor: "middle",
@@ -460,9 +515,9 @@ function figureFactorial(core) {
 
 function figureAblations(ablation) {
   const labelMap = {
-    B11_full_proposed_minus_A_full_ordinary_imm: "Ordinary IMM",
-    B11_full_proposed_minus_A_no_icode: "No ICODE",
-    B11_full_proposed_minus_A_fixed_hss: "Fixed HSS",
+    B11_full_proposed_minus_A_full_ordinary_imm: tr("Ordinary IMM", "普通 IMM"),
+    B11_full_proposed_minus_A_no_icode: tr("No ICODE", "移除 ICODE"),
+    B11_full_proposed_minus_A_fixed_hss: tr("Fixed HSS", "固定 HSS"),
   };
   function rows(endpoint) {
     return ablation
@@ -476,44 +531,62 @@ function figureAblations(ablation) {
   }
   return [
     baseSvg(
-      "Full-system ablations: directional gains, but wide paired intervals",
-      "B11 Full minus each ablation on the shared 140-seed subset; negative collision difference favors Full"
+      tr(
+        "Full-system ablations: directional gains, but wide paired intervals",
+        "完整系统消融：效应方向有利，但配对置信区间仍较宽"
+      ),
+      tr(
+        "B11 Full minus each ablation on the shared 140-seed subset; negative collision difference favors Full",
+        "在共享的 140 种子子集上计算 B11 完整方法减各消融；碰撞差值为负时有利于完整方法"
+      )
     ),
     drawForestPanel({
       x: 80,
       y: 190,
       width: 710,
       height: 690,
-      titleValue: "Safe success: Full − ablation",
+      titleValue: tr("Safe success: Full − ablation", "安全成功率：完整方法 − 消融"),
       rows: rows("safe_success"),
       domain: [-8, 14],
-      favorableDirection: "Right favors Full",
-      xLabel: "Paired Full − ablation difference (percentage points)",
+      favorableDirection: tr("Right favors Full", "越右越有利于完整方法"),
+      xLabel: tr(
+        "Paired Full − ablation difference (percentage points)",
+        "配对差值：完整方法 − 消融（百分点）"
+      ),
     }),
     drawForestPanel({
       x: 830,
       y: 190,
       width: 690,
       height: 690,
-      titleValue: "Collision: Full − ablation",
+      titleValue: tr("Collision: Full − ablation", "碰撞率：完整方法 − 消融"),
       rows: rows("collision"),
       domain: [-12, 6],
-      favorableDirection: "Left favors Full",
-      xLabel: "Paired Full − ablation difference (percentage points)",
+      favorableDirection: tr("Left favors Full", "越左越有利于完整方法"),
+      xLabel: tr(
+        "Paired Full − ablation difference (percentage points)",
+        "配对差值：完整方法 − 消融（百分点）"
+      ),
     }),
     footer(
-      "Single dynamic obstacle v4 · full-system ablations · shared 140-seed subset",
-      "Error bars: paired Tango two-sided 95% CI"
+      tr(
+        "Single dynamic obstacle v4 · full-system ablations · shared 140-seed subset",
+        "单动态障碍 v4 · 完整系统消融 · 共享 140 种子子集"
+      ),
+      tr(
+        "Error bars: paired Tango two-sided 95% CI",
+        "误差线：配对 Tango 双侧 95% 置信区间"
+      )
     ),
   ].join("\n");
 }
 
 function figureMechanismTradeoff(continuous) {
   const wanted = [
-    ["minimum_clearance", "Minimum clearance", "cm", 100],
-    ["conflict_q05_clearance", "Conflict-window q05 clearance", "cm", 100],
-    ["stuck_steps", "Stuck steps", "steps", 1],
-    ["release_delay_max_s", "Maximum release delay", "s", 1],
+    ["minimum_clearance", tr("Minimum clearance", "最小净空"), tr("cm", "厘米"), 100],
+    ["conflict_q05_clearance", tr("Conflict-window q05 clearance", "冲突窗口 q05 净空"), tr("cm", "厘米"), 100],
+    ["stuck_steps", tr("Stuck steps", "停滞步数"), tr("steps", "步"), 1],
+    ["release_delay_max_s", tr("Maximum release delay", "最大风险解除延迟"), tr("s", "秒"), 1],
   ];
   const lookup = Object.fromEntries(
     continuous.filter((r) => r.split === "pooled").map((r) => [r.endpoint, r])
@@ -538,20 +611,21 @@ function figureMechanismTradeoff(continuous) {
     panels.push(line(scale(a), yy, scale(b), yy, { stroke: COLORS.full, width: 8 }));
     panels.push(circle(scale(a), yy, 14, { fill: COLORS.baseline, stroke: COLORS.paper, strokeWidth: 3 }));
     panels.push(circle(scale(b), yy, 14, { fill: COLORS.full, stroke: COLORS.paper, strokeWidth: 3 }));
-    panels.push(text(scale(a), yy + 48, `Baseline ${a.toFixed(unit === "cm" ? 1 : 2)}`, {
+    const clearanceUnit = unit === "cm" || unit === "厘米";
+    panels.push(text(scale(a), yy + 48, `${tr("Baseline", "基线")} ${a.toFixed(clearanceUnit ? 1 : 2)}`, {
       size: 18,
       fill: COLORS.baseline,
       weight: 700,
       anchor: "middle",
     }));
-    panels.push(text(scale(b), yy - 30, `Full ${b.toFixed(unit === "cm" ? 1 : 2)}`, {
+    panels.push(text(scale(b), yy - 30, `${tr("Full", "完整方法")} ${b.toFixed(clearanceUnit ? 1 : 2)}`, {
       size: 18,
       fill: COLORS.full,
       weight: 700,
       anchor: "middle",
     }));
     const diff = b - a;
-    panels.push(text(x + width / 2, y + height - 28, `Change: ${diff >= 0 ? "+" : "−"}${Math.abs(diff).toFixed(unit === "cm" ? 1 : 2)} ${unit}`, {
+    panels.push(text(x + width / 2, y + height - 28, `${tr("Change", "变化")}: ${diff >= 0 ? "+" : "−"}${Math.abs(diff).toFixed(clearanceUnit ? 1 : 2)} ${unit}`, {
       size: 20,
       weight: 700,
       anchor: "middle",
@@ -560,12 +634,21 @@ function figureMechanismTradeoff(continuous) {
   });
   return [
     baseSvg(
-      "Mechanism diagnostics explain why safety did not raise safe completion",
-      "Full creates substantially more clearance, but also increases post-conflict delay and stuck behavior"
+      tr(
+        "Mechanism diagnostics explain why safety did not raise safe completion",
+        "机制诊断解释了安全性提升为何没有转化为更高完成率"
+      ),
+      tr(
+        "Full creates substantially more clearance, but also increases post-conflict delay and stuck behavior",
+        "完整方法显著扩大净空，但同时增加冲突后的解除延迟与停滞行为"
+      )
     ),
     panels.join("\n"),
     rect(90, 880, 1420, 48, { fill: COLORS.softOrange, radius: 12 }),
-    text(800, 912, "Interpretation: collision avoidance improved; some rescued episodes were converted into safe non-completion.", {
+    text(800, 912, tr(
+      "Interpretation: collision avoidance improved; some rescued episodes were converted into safe non-completion.",
+      "解释：避碰能力得到提升，但部分避免碰撞的 episode 被转化为“安全但未完成”。"
+    ), {
       size: 20,
       weight: 600,
       anchor: "middle",
@@ -640,6 +723,7 @@ async function main() {
 
   const manifest = {
     generated_at: new Date().toISOString(),
+    language: LANG,
     source_analysis: ANALYSIS,
     source_files: sourceFiles,
     figures: written.map((file) => ({

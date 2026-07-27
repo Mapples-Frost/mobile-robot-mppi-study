@@ -1,0 +1,35 @@
+{
+  "status": "pass",
+  "scope": "evaluation_only",
+  "protocol_commit": "bb8e28c",
+  "implementation": {
+    "polyline_reference_revision": true,
+    "tracking_monitor_revision_sync": true,
+    "route_relative_state_reset": true,
+    "obstacle_reprojection": true,
+    "center_crossing_state_preserved": true,
+    "clamp_workaround_used": false
+  },
+  "frozen_contract": {
+    "planner_changed": false,
+    "actor_changed": false,
+    "risk_changed": false,
+    "icode_changed": false,
+    "safety_changed": false,
+    "maps_changed": false,
+    "mppi_cost_changed": false,
+    "rollout_budget_changed": false
+  },
+  "tests": {
+    "status": "pass",
+    "passed": 165,
+    "failed": 0,
+    "command": ".\\.venv\\Scripts\\python.exe -m pytest tests\\tracking\\test_tracking_reference_revision.py tests\\tracking tests\\platform\\test_static_astar_soft_reference.py tests\\planners\\test_paper_rl_driven_mppi.py tests\\dynamic_uncertainty\\test_complex_supervised_maneuver_gate_d.py tests\\dynamic_uncertainty\\test_probabilistic_collision_risk.py -q"
+  },
+  "sha256": {
+    "src/mobile_robot_mppi/core/references.py": "19BDB248500E46ED8DC2B9064F0010FC3668D37B981607AF5FCBBB4AFEBA29BD",
+    "src/mobile_robot_mppi/evaluation/tracking.py": "3B5300B7F05F5A7CAE30A18E998A8E2DE8F6977B438E70A97193830FAB24F393",
+    "tests/tracking/test_tracking_reference_revision.py": "3253E63E0AED25D03F5D12BBCD77E32F2B912911B9F7E5BDF507CBE6DB10D4E5"
+  },
+  "next_authorized_step": "apply identical evaluation-only patch to detached af691f1 reference worktree and verify source hashes before any episode"
+}

@@ -186,23 +186,44 @@ class TrackingEventMonitor:
             point = np.asarray(value, dtype=np.float64).reshape(-1)
             if point.size < 2 or not np.isfinite(point[:2]).all():
                 raise ValueError("obstacle positions must contain finite x/y")
-            projection = reference.project(point[:2])
-            positions.append(float(projection.progress))
-        self.obstacle_progress = tuple(sorted(positions))
+            positions.append(point[:2].copy())
+        self._obstacle_positions = tuple(positions)
+        self.obstacle_progress = ()
+        self._last_reference_revision = int(reference.revision)
         self.reset()
 
-    def reset(self) -> None:
+    def _project_obstacle_progress(self) -> Tuple[float, ...]:
+        positions = [
+            float(self.reference.project(point).progress)
+            for point in self._obstacle_positions
+        ]
+        return tuple(sorted(positions))
+
+    def _reset_route_state(self) -> None:
         self.progress = 0.0
+        self.obstacle_progress = self._project_obstacle_progress()
         self.next_obstacle = 0
         self.recovery_start_time = None
         self.recovery_start_progress = None
+
+    def reset(self) -> None:
+        self._reset_route_state()
+        self._last_reference_revision = int(self.reference.revision)
         self.center_crossing_count = 0
         self._inside_center_crossing = False
+
+    def _synchronize_reference_revision(self) -> None:
+        revision = int(self.reference.revision)
+        if revision == self._last_reference_revision:
+            return
+        self._reset_route_state()
+        self._last_reference_revision = revision
 
     def update(self, state: Sequence[float], timestamp: float) -> TrackingSample:
         timestamp = float(timestamp)
         if not np.isfinite(timestamp) or timestamp < 0.0:
             raise ValueError("tracking timestamp must be finite and non-negative")
+        self._synchronize_reference_revision()
         sample = tracking_sample(
             self.reference, state, self.corridor, minimum_progress=self.progress
         )

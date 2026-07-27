@@ -242,6 +242,13 @@ class PolylineReference:
         self.cumulative = np.concatenate(([0.0], np.cumsum(self.segment_lengths)))
         self.total_length = float(self.cumulative[-1])
         self.progress = 0.0
+        self._revision = 0
+
+    @property
+    def revision(self) -> int:
+        """Monotonic geometry revision for route-relative observers."""
+
+        return int(self._revision)
 
     def reset(self) -> None:
         self.progress = 0.0
@@ -269,6 +276,7 @@ class PolylineReference:
         self.cumulative = replacement.cumulative
         self.total_length = replacement.total_length
         self.progress = 0.0
+        self._revision += 1
 
     def project(
         self,

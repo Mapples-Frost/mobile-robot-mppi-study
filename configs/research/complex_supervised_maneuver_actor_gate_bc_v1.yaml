@@ -1,0 +1,55 @@
+schema_version: 1
+protocol: complex_supervised_maneuver_actor_gate_bc_v1
+scope: engineering_candidate_coverage_and_safety_not_confirmatory
+
+dataset:
+  protocol: configs/research/complex_supervised_maneuver_actor_dataset_v1.yaml
+  file: research_artifacts/complex_supervised_maneuver_actor_dataset_v1_bootstrap/student_dataset.npz
+  sha256: 6f9eb1f782d4eca2a64866183b3ab7fff51efd5cc5afe9942afc3db205590189
+  audit_split: validation
+
+actor:
+  checkpoint: research_artifacts/complex_supervised_maneuver_actor_training_v1_bootstrap/best.pt
+  sha256: 6b95e9ca384ced388b63a02c1337035bd1823b02d1469626fd5412b396b987fe
+  expected_heads: 3
+  expected_horizon: 36
+  execution_authority: proposal_only
+
+physical_audit:
+  minimum_static_clearance_m: 0.02
+  minimum_dynamic_clearance_m: 0.10
+  minimum_terminal_dynamic_clearance_m: 0.10
+  minimum_progress_m: 0.05
+  stopping_tail_steps: 0
+
+online_audit:
+  minimum_predicted_static_clearance_m: 0.02
+  safety_nonstop_minimum_v_mps: 0.02
+  safety_nonstop_minimum_omega_radps: 0.05
+  risk_icode_mppi_safety_frozen: true
+
+gate_b:
+  minimum_state_full_chain_coverage_fraction: 0.67
+  minimum_physical_safe_candidate_fraction: 0.33
+  minimum_risk_accepted_candidate_fraction: 0.10
+  minimum_progressing_full_chain_state_fraction: 0.50
+
+gate_c:
+  maximum_risk_accepted_true_collisions: 0
+  minimum_risk_accepted_physical_safety_precision: 1.00
+  minimum_safety_nonstop_fraction_of_risk_accepted: 0.90
+
+frozen_contract:
+  maps_changed: false
+  actor_checkpoint_changed: false
+  icode_changed: false
+  collision_risk_changed: false
+  mppi_changed: false
+  safety_changed: false
+  future_truth_used_by_actor: false
+  formal_server_launch_authorized: false
+
+post_gate:
+  fresh_seed_dataset_expansion_required_before_gate_d: true
+  current_three_maps_are_final_test_maps: false
+  formal_claim_authorized: false

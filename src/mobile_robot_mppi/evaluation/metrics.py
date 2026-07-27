@@ -1863,6 +1863,71 @@ class EpisodeMetrics:
                     "supervised_elite_weight_sum_final_iteration", 0.0
                 )
             ),
+            "supervised_counterfactual_available": float(
+                planner_diagnostics.get(
+                    "supervised_counterfactual_available", False
+                )
+            ),
+            "supervised_counterfactual_first_action_delta_norm": float(
+                planner_diagnostics.get(
+                    "supervised_counterfactual_first_action_delta_norm", 0.0
+                )
+            ),
+            "supervised_counterfactual_sequence_delta_norm": float(
+                planner_diagnostics.get(
+                    "supervised_counterfactual_sequence_delta_norm", 0.0
+                )
+            ),
+            "supervised_pre_guard_counterfactual_first_action_delta_norm": (
+                float(planner_diagnostics.get(
+                    "supervised_pre_guard_counterfactual_first_action_delta_norm",
+                    0.0,
+                ))
+            ),
+            "supervised_pre_guard_counterfactual_sequence_delta_norm": float(
+                planner_diagnostics.get(
+                    "supervised_pre_guard_counterfactual_sequence_delta_norm",
+                    0.0,
+                )
+            ),
+            "supervised_post_guard_counterfactual_first_action_delta_norm": (
+                float(planner_diagnostics.get(
+                    "supervised_post_guard_counterfactual_first_action_delta_norm",
+                    0.0,
+                ))
+            ),
+            "supervised_post_guard_counterfactual_sequence_delta_norm": float(
+                planner_diagnostics.get(
+                    "supervised_post_guard_counterfactual_sequence_delta_norm",
+                    0.0,
+                )
+            ),
+            "supervised_pre_guard_action": str(
+                planner_diagnostics.get("supervised_pre_guard_action", "")
+            ),
+            "supervised_post_guard_action": str(
+                planner_diagnostics.get("supervised_post_guard_action", "")
+            ),
+            "supervised_post_guard_action_delta_norm": float(
+                planner_diagnostics.get(
+                    "supervised_post_guard_action_delta_norm", 0.0
+                )
+            ),
+            "supervised_post_guard_replacement_reason": str(
+                planner_diagnostics.get(
+                    "supervised_post_guard_replacement_reason", "none"
+                )
+            ),
+            "supervised_influence_survived_guard": float(
+                planner_diagnostics.get(
+                    "supervised_influence_survived_guard", False
+                )
+            ),
+            "supervised_influence_survival_ratio": float(
+                planner_diagnostics.get(
+                    "supervised_influence_survival_ratio", 0.0
+                )
+            ),
             "supervised_selected_count": int(
                 planner_diagnostics.get("supervised_selected_count", 0)
             ),
@@ -2670,6 +2735,18 @@ class EpisodeMetrics:
             if row["safety_override"]:
                 reason = row["safety_reason"]
                 safety_reason_counts[reason] = safety_reason_counts.get(reason, 0) + 1
+        supervised_counterfactual_values = [
+            row for row in values
+            if row.get("supervised_counterfactual_available", 0.0) > 0.5
+        ]
+        supervised_replacement_reason_counts = {}
+        for row in supervised_counterfactual_values:
+            reason = row.get(
+                "supervised_post_guard_replacement_reason", "none"
+            )
+            supervised_replacement_reason_counts[reason] = (
+                supervised_replacement_reason_counts.get(reason, 0) + 1
+            )
         result = {
             "steps": len(values),
             "success": success,
@@ -3703,6 +3780,62 @@ class EpisodeMetrics:
                 row.get("supervised_elite_count", 0)
                 for row in values
             )),
+            "supervised_elite_weight_sum_final_iteration_mean": float(
+                np.mean([
+                    row.get(
+                        "supervised_elite_weight_sum_final_iteration", 0.0
+                    )
+                    for row in values
+                ])
+            ),
+            "supervised_counterfactual_available_fraction": float(
+                len(supervised_counterfactual_values) / len(values)
+            ),
+            "supervised_counterfactual_first_action_delta_norm_mean_active": (
+                float(np.mean([
+                    row.get(
+                        "supervised_counterfactual_first_action_delta_norm",
+                        0.0,
+                    )
+                    for row in supervised_counterfactual_values
+                ]))
+                if supervised_counterfactual_values else 0.0
+            ),
+            "supervised_counterfactual_sequence_delta_norm_mean_active": (
+                float(np.mean([
+                    row.get(
+                        "supervised_counterfactual_sequence_delta_norm", 0.0
+                    )
+                    for row in supervised_counterfactual_values
+                ]))
+                if supervised_counterfactual_values else 0.0
+            ),
+            "supervised_influence_survived_guard_fraction_active": (
+                float(np.mean([
+                    row.get("supervised_influence_survived_guard", 0.0)
+                    for row in supervised_counterfactual_values
+                ]))
+                if supervised_counterfactual_values else 0.0
+            ),
+            "supervised_influence_survival_ratio_mean_active": (
+                float(np.mean([
+                    row.get("supervised_influence_survival_ratio", 0.0)
+                    for row in supervised_counterfactual_values
+                ]))
+                if supervised_counterfactual_values else 0.0
+            ),
+            "supervised_post_guard_action_delta_norm_mean_active": (
+                float(np.mean([
+                    row.get(
+                        "supervised_post_guard_action_delta_norm", 0.0
+                    )
+                    for row in supervised_counterfactual_values
+                ]))
+                if supervised_counterfactual_values else 0.0
+            ),
+            "supervised_post_guard_replacement_reason_counts": (
+                supervised_replacement_reason_counts
+            ),
             "supervised_selected_count_total": int(sum(
                 row.get("supervised_selected_count", 0)
                 for row in values

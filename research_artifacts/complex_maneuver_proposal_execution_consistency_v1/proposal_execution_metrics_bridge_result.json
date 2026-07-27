@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "status": "pass",
+  "scope": "evaluation_only_proposal_execution_metrics_bridge",
+  "finding": "Phase Zero planner diagnostics were present in-memory but only supervised_elite_weight_sum_final_iteration was copied into episode records. Counterfactual and post-guard influence fields required by the frozen development gate were absent from trajectory.csv and metrics.json.",
+  "repair": {
+    "planner_behavior_changed": false,
+    "recorded_counterfactual_deltas": true,
+    "recorded_pre_and_post_guard_actions": true,
+    "recorded_guard_replacement_reason": true,
+    "recorded_influence_survival": true,
+    "summary_active_cycle_aggregates_added": true
+  },
+  "tests": {
+    "status": "pass",
+    "passed": 172,
+    "failed": 0
+  },
+  "sha256": {
+    "src/mobile_robot_mppi/evaluation/metrics.py": "37b675c1a2fddba416ea0a4393db3896c14c2966e11c54942f1136dd48948cfd",
+    "tests/evaluation/test_supervised_proposal_execution_metrics.py": "4d3cea71c5ae202a2c6021a11c069e5b47dc558de4f9dcf382ae8c0334ba8210"
+  },
+  "evidence_policy": {
+    "old_margin_zero_outcomes_remain_valid": true,
+    "old_margin_zero_mechanism_diagnostics_reusable": false,
+    "required_next_step": "rerun margin-zero Actor controls on all three already-opened development seeds with the evaluation-only bridge before running margin 0.02 treatments"
+  },
+  "authorization": {
+    "margin_0_02_episode": false,
+    "training": false,
+    "formal_or_paid_execution": false
+  }
+}

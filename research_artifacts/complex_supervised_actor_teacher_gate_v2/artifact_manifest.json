@@ -1,0 +1,8 @@
+{
+  "deployment_privileged_input": false,
+  "future_truth_training_only": true,
+  "git_sha": "6a7b94948a8ffde9288f65134c472a4a85d0cf1d",
+  "protocol_config_hash": "530c1d1834b667f32b403478baf8519210a563c07d24af8dccca9b1c007c18eb",
+  "protocol_sha256": "860b3b658c43593b4aa04cbc3d26374a02649e647f710ba637950f23146a9d4f",
+  "result_sha256": "960306b7991541be8fa9da6adf48ff4cda6d2a2e7d465c806bf88785a8f030b9"
+}

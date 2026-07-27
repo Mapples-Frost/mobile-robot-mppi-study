@@ -1,0 +1,91 @@
+schema_version: 2
+protocol: complex_supervised_actor_oracle_feasibility_timing_gate_v1
+scope: development_only_pretraining_oracle_audit
+
+question: >
+  With exact future truth, earlier conflict states, four-stage 8 s and 12 s
+  controls, deterministic structured search, and one CEM refinement family,
+  do Chapter 1 and Chapter 3 contain safe, progressing, recoverable teacher
+  sequences that the frozen online Risk and Safety contracts can execute?
+
+frozen_contract:
+  gate_v3_commit: b83ece4
+  gate_v3_tag: checkpoint/complex-supervised-actor-teacher-gate-v3-fail-20260727
+  maps_changed: false
+  obstacle_sizes_changed: false
+  obstacle_motions_changed: false
+  robot_dynamics_changed: false
+  action_bounds_changed: false
+  collision_radius_changed: false
+  actor_changed: false
+  change_aware_changed: false
+  risk_thresholds_changed: false
+  mppi_changed: false
+  safety_contract_changed: false
+
+saved_episodes:
+  chapter1:
+    artifact: research_artifacts/complex_actor_teacher_probe_v3/chapter1_seed791101003
+    conflict_rule: first_forecast_valid_hard_risk
+  chapter3:
+    artifact: research_artifacts/complex_actor_teacher_probe_v3/chapter3_seed791103003
+    conflict_rule: first_forecast_valid_hard_risk
+
+positive_control:
+  map: chapter2
+  gate_result: research_artifacts/complex_supervised_actor_teacher_gate_v3/teacher_gate_result.json
+
+oracle_search:
+  offsets_s: [-3.0, -2.5, -2.0, -1.5, -1.0, -0.5, 0.0]
+  horizons_s: [8.0, 12.0]
+  segments: 4
+  coarse_candidate_count: 2400
+  search_seed: 417041
+  cem_restarts: 4
+  cem_iterations: 2
+  cem_samples_per_restart: 96
+  cem_elite_count: 12
+  parallel_workers: 4
+  exact_mujoco_future_truth: true
+  future_truth_available_to_deployment: false
+  dynamic_obstacles_in_astar: false
+
+teacher_criteria:
+  deployment_prefix_steps: 36
+  minimum_local_target_progress_m: 0.20
+  minimum_static_clearance_m: 0.02
+  minimum_dynamic_clearance_m: 0.10
+  stopping_tail_s: 2.0
+  minimum_stopping_tail_dynamic_clearance_m: 0.10
+  minimum_terminal_dynamic_clearance_m: 0.15
+  minimum_predicted_static_clearance_m: 0.00
+
+gate:
+  require_physical_teacher_per_target_map: true
+  require_risk_accepted_teacher_per_target_map: true
+  require_safety_nonstop_teacher_per_target_map: true
+  minimum_accepted_behavior_family_count: 2
+  actor_training_authorized_only_on_pass: true
+  formal_server_launch_authorized: false
+
+stopping_rule:
+  maximum_oracle_audit_rounds: 1
+  action_if_no_physical_teacher: >
+    Stop using the current development maps for Actor training and redesign
+    training/test map generators with oracle feasibility certification.
+  forbidden_responses:
+    - shrink_obstacles
+    - reduce_collision_radius
+    - weaken_risk_thresholds
+    - bypass_safety
+    - expand_action_primitives_again
+    - train_on_unsafe_or_stationary_labels
+
+execution_amendment:
+  revision: 2
+  scientific_design_changed: false
+  reason: >
+    Attempt 1 used one sequential process and was stopped before its first
+    state result after roughly 776 active CPU seconds. Execute the identical
+    deterministic state jobs with four independent local workers and merge
+    results in the parent process.

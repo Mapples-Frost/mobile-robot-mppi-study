@@ -1,0 +1,23 @@
+Traceback (most recent call last):
+  File "D:\Projects\mobile-robot-mppi-study-gate-d-reference\experiments\dynamic_uncertainty\run_complex_supervised_maneuver_actor_gate_d.py", line 210, in <module>
+    raise SystemExit(main())
+  File "D:\Projects\mobile-robot-mppi-study-gate-d-reference\experiments\dynamic_uncertainty\run_complex_supervised_maneuver_actor_gate_d.py", line 199, in main
+    result = ExperimentRunner(
+  File "D:\Projects\mobile-robot-mppi-study-gate-d-reference\src\mobile_robot_mppi\runtime\experiment_runner.py", line 33, in __init__
+    self.components = make_components(self.config, self.project_root, rl_policy=rl_policy)
+  File "D:\Projects\mobile-robot-mppi-study-gate-d-reference\src\mobile_robot_mppi\runtime\factories.py", line 228, in make_components
+    residual_members = [
+  File "D:\Projects\mobile-robot-mppi-study-gate-d-reference\src\mobile_robot_mppi\runtime\factories.py", line 229, in <listcomp>
+    PlatformResidualDynamics.from_checkpoint(
+  File "D:\Projects\mobile-robot-mppi-study-gate-d-reference\src\mobile_robot_mppi\learning\models.py", line 236, in from_checkpoint
+    model, _ = load_platform_checkpoint(path, device)
+  File "D:\Projects\mobile-robot-mppi-study-gate-d-reference\src\mobile_robot_mppi\learning\models.py", line 173, in load_platform_checkpoint
+    payload = torch.load(path, map_location=device, weights_only=True)
+  File "D:\Projects\mobile-robot-mppi-study-single-v6\.venv\lib\site-packages\torch\serialization.py", line 1633, in load
+    raise pickle.UnpicklingError(_get_wo_message(str(e))) from None
+_pickle.UnpicklingError: Weights only load failed. In PyTorch 2.6, we changed the default value of the `weights_only` argument in `torch.load` from `False` to `True`. Re-running `torch.load` with `weights_only` set to `False` will likely succeed, but it can result in arbitrary code execution. Do it only if you got the file from a trusted source.
+Please file an issue with the following so that we can make `weights_only=True` compatible with your use case: WeightsUnpickler error: 
+
+Unsupported operand 118
+
+Check the documentation of torch.load to learn more about types accepted by default with weights_only https://pytorch.org/docs/stable/generated/torch.load.html.

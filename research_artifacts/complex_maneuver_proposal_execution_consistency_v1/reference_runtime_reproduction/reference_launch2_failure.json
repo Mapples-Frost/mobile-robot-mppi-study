@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "status": "infrastructure_failure_before_episode",
+  "reference_commit": "af691f184774094551d13fb4cde51d98bad2caf9",
+  "actor_checkpoint_hash_verified": true,
+  "failure": "A residual dynamics checkpoint remained a Git LFS pointer and torch.load rejected it.",
+  "episode_started": false,
+  "outcomes_opened": false,
+  "remediation": "Materialize all 29 available LFS objects in the detached reference worktree, preserve retry2 logs, and launch again with retry3 logs."
+}

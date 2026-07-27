@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "status": "pass",
+  "scope": "evaluation_revision_actor_on_margin_zero_equivalence",
+  "map": "chapter1",
+  "seed": 791101019,
+  "arm": "full_plus_bootstrap_actor",
+  "same_cycle_guided_relative_margin": 0.0,
+  "implementations": {
+    "current_commit": "d04366a",
+    "reference_commit": "af691f184774094551d13fb4cde51d98bad2caf9",
+    "shared_evaluation_patch_commit": "a547985"
+  },
+  "comparison_contract": {
+    "row_alignment": "exact",
+    "comparison_mode": "exact_string_equality",
+    "numeric_tolerance": null,
+    "excluded_timing_columns": [
+      "planner_compute_ms",
+      "profile_mppi_batch_rollout_ms",
+      "profile_mppi_cost_ms",
+      "profile_mppi_final_rollout_ms",
+      "profile_mppi_sampling_ms",
+      "profile_mppi_solve_total_ms",
+      "profile_mppi_weighting_update_ms",
+      "profile_planner_prior_ms",
+      "profile_planner_state_reference_ms"
+    ]
+  },
+  "trajectory_comparison": {
+    "rows_current": 1200,
+    "rows_reference": 1200,
+    "common_non_timing_columns": 593,
+    "exact_equal": true,
+    "mismatch_columns": 0,
+    "first_mismatch": null
+  },
+  "outcome": {
+    "current": {
+      "success": false,
+      "collision": false,
+      "termination_reason": "max_steps",
+      "steps": 1200
+    },
+    "reference": {
+      "success": false,
+      "collision": false,
+      "termination_reason": "max_steps",
+      "steps": 1200
+    },
+    "exact_equal": true
+  },
+  "proposal_budget_contract": {
+    "valid_600_cycles": 911,
+    "zero_rollout_cycles": 289,
+    "permitted_rollout_values": [0, 600],
+    "each_valid_cycle_has_one_proposal_from_each_head": true,
+    "zero_rollout_cycles_have_no_supervised_proposals": true,
+    "supervised_added_rollout_values": [0],
+    "supervised_added_rollout_count_total": 0,
+    "pass": true
+  },
+  "identity": {
+    "normalized_resolved_config_exact": true,
+    "normalized_resolved_config_sha256": "217b650b3c78a3b2d01adaf47253957bfb47542f0f1f446c7be176d8d6330844",
+    "actor_checkpoint_sha256": "6b95e9ca384ced388b63a02c1337035bd1823b02d1469626fd5412b396b987fe",
+    "protocol_canonical_git_blob_exact": true,
+    "risk_source_exact": true,
+    "icode_model_source_exact": true,
+    "safety_source_exact": true,
+    "reference_revision_source_canonical_git_blob_exact": true,
+    "tracking_revision_source_canonical_git_blob_exact": true
+  },
+  "evaluation_revision_result": {
+    "minimum_progress_outside_route_error": false,
+    "both_arms_completed_normally": true,
+    "stderr_empty": true
+  },
+  "trajectory_sha256": {
+    "current": "ff0b93a94a8824774ae21acdac9b888e73fca496dc019c3d39a06c51ab4b5cd5",
+    "reference": "579bf277f523a628d2759e09ad20ea9aba52843873cb4f9488a9fc91aba7ff7d"
+  },
+  "interpretation": "The evaluation-only reference revision repair removes the stale-route progress exception without changing Actor-on margin-zero behavior. This is an implementation-equivalence pass, not a navigation-success claim.",
+  "decision": "Actor-on margin-zero strict equivalence passes. Round 1 with the frozen shared relative margin 0.02 is now authorized on already-opened development seeds; training and formal execution remain forbidden."
+}

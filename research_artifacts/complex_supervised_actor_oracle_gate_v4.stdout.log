@@ -1,0 +1,1146 @@
+{
+  "accepted_behavior_families": [
+    "left",
+    "right",
+    "yield"
+  ],
+  "actor_training_authorized": true,
+  "behavior_diversity_gate_pass": true,
+  "formal_server_launch_authorized": false,
+  "maps": {
+    "chapter1": {
+      "accepted_behavior_families": [
+        "left",
+        "right",
+        "yield"
+      ],
+      "artifact": "D:\\Projects\\mobile-robot-mppi-study-single-v6\\research_artifacts\\complex_actor_teacher_probe_v3\\chapter1_seed791101003",
+      "config_sha256": "b8ee4666f2b1e8fc883bf1208be44ea797a9c23cf65d31682c942eef7e685e6f",
+      "conflict_index": 58,
+      "conflict_time_s": 5.899999999999572,
+      "physical_teacher_exists": true,
+      "risk_accepted_teacher_exists": true,
+      "root_cause": "v3_candidate_space_was_insufficient",
+      "safety_nonstop_teacher_exists": true,
+      "states": [
+        {
+          "accepted_behavior_families": [
+            "left",
+            "right",
+            "yield"
+          ],
+          "anchor_index": 27,
+          "anchor_time_s": 2.7999999999999132,
+          "best_physical_behavior": "cem3_yield_right_i0",
+          "best_physical_minimum_dynamic_clearance_m": 0.7555624607051905,
+          "best_physical_minimum_static_clearance_m": 0.349699220843227,
+          "best_physical_parameters": [
+            [
+              -0.2285428428143054,
+              0.000740622001626598
+            ],
+            [
+              0.6149493899376921,
+              0.17106180754123934
+            ],
+            [
+              0.10850071932648833,
+              -0.37418641076807535
+            ],
+            [
+              0.47134713020311964,
+              0.24017463188174215
+            ]
+          ],
+          "best_physical_progress_m": 1.3611048549637843,
+          "best_physical_stopping_tail_dynamic_clearance_m": 0.4043221646449458,
+          "candidate_count": 3168,
+          "cem_candidate_count": 768,
+          "coarse_candidate_count": 2400,
+          "forecast_count": 1,
+          "horizon_s": 8.0,
+          "map": "chapter1",
+          "offset_s": -3.0,
+          "physical_teacher_count": 325,
+          "physical_teacher_exists": true,
+          "risk_accepted_teacher_count": 325,
+          "safety_nonstop_teacher_count": 325,
+          "seed": 791101003
+        },
+        {
+          "accepted_behavior_families": [
+            "yield"
+          ],
+          "anchor_index": 27,
+          "anchor_time_s": 2.7999999999999132,
+          "best_physical_behavior": "cem0_yield_right_i1",
+          "best_physical_minimum_dynamic_clearance_m": 0.5220459757209714,
+          "best_physical_minimum_static_clearance_m": 0.4072968198583261,
+          "best_physical_parameters": [
+            [
+              -0.01775725108659701,
+              0.16554665309989264
+            ],
+            [
+              0.23021992066193653,
+              -0.4541959440948295
+            ],
+            [
+              -0.09994707508269668,
+              0.10853234999800893
+            ],
+            [
+              0.37559544386647137,
+              0.4546262192983004
+            ]
+          ],
+          "best_physical_progress_m": 1.2976939638818203,
+          "best_physical_stopping_tail_dynamic_clearance_m": 0.5123679878682084,
+          "candidate_count": 3168,
+          "cem_candidate_count": 768,
+          "coarse_candidate_count": 2400,
+          "forecast_count": 1,
+          "horizon_s": 12.0,
+          "map": "chapter1",
+          "offset_s": -3.0,
+          "physical_teacher_count": 102,
+          "physical_teacher_exists": true,
+          "risk_accepted_teacher_count": 102,
+          "safety_nonstop_teacher_count": 101,
+          "seed": 791101003
+        },
+        {
+          "accepted_behavior_families": [
+            "left",
+            "right",
+            "yield"
+          ],
+          "anchor_index": 32,
+          "anchor_time_s": 3.299999999999858,
+          "best_physical_behavior": "cem3_yield_left_i1",
+          "best_physical_minimum_dynamic_clearance_m": 0.29814918343197344,
+          "best_physical_minimum_static_clearance_m": 0.5058032717378261,
+          "best_physical_parameters": [
+            [
+              0.29827389215867295,
+              0.12912704726324034
+            ],
+            [
+              0.44948366922641664,
+              0.13189171569822694
+            ],
+            [
+              -0.029321304344611998,
+              -0.12328014014154456
+            ],
+            [
+              0.04278717576620117,
+              -0.7569674939477495
+            ]
+          ],
+          "best_physical_progress_m": 1.316002922699637,
+          "best_physical_stopping_tail_dynamic_clearance_m": 0.25178158574889015,
+          "candidate_count": 3168,
+          "cem_candidate_count": 768,
+          "coarse_candidate_count": 2400,
+          "forecast_count": 1,
+          "horizon_s": 8.0,
+          "map": "chapter1",
+          "offset_s": -2.5,
+          "physical_teacher_count": 342,
+          "physical_teacher_exists": true,
+          "risk_accepted_teacher_count": 342,
+          "safety_nonstop_teacher_count": 341,
+          "seed": 791101003
+        },
+        {
+          "accepted_behavior_families": [
+            "yield"
+          ],
+          "anchor_index": 32,
+          "anchor_time_s": 3.299999999999858,
+          "best_physical_behavior": "cem2_yield_right_i0",
+          "best_physical_minimum_dynamic_clearance_m": 0.5567354866957435,
+          "best_physical_minimum_static_clearance_m": 0.3607121060257774,
+          "best_physical_parameters": [
+            [
+              -0.09731285888774818,
+              0.3781216606371961
+            ],
+            [
+              0.27351243748350074,
+              -0.5287236143948352
+            ],
+            [
+              -0.028905976895465313,
+              -0.25123415117964687
+            ],
+            [
+              0.38908224510847506,
+              0.95
+            ]
+          ],
+          "best_physical_progress_m": 1.2251530997063098,
+          "best_physical_stopping_tail_dynamic_clearance_m": 0.5564553726944008,
+          "candidate_count": 3168,
+          "cem_candidate_count": 768,
+          "coarse_candidate_count": 2400,
+          "forecast_count": 1,
+          "horizon_s": 12.0,
+          "map": "chapter1",
+          "offset_s": -2.5,
+          "physical_teacher_count": 114,
+          "physical_teacher_exists": true,
+          "risk_accepted_teacher_count": 114,
+          "safety_nonstop_teacher_count": 113,
+          "seed": 791101003
+        },
+        {
+          "accepted_behavior_families": [
+            "left",
+            "yield"
+          ],
+          "anchor_index": 37,
+          "anchor_time_s": 3.799999999999803,
+          "best_physical_behavior": "cem3_yield_left_i0",
+          "best_physical_minimum_dynamic_clearance_m": 0.32466743033759765,
+          "best_physical_minimum_static_clearance_m": 0.5562063033719319,
+          "best_physical_parameters": [
+            [
+              -0.009022236341726247,
+              -0.26881644453658615
+            ],
+            [
+              0.33269510052919016,
+              0.5100616679838924
+            ],
+            [
+              0.2167075587043307,
+              0.30992058888672996
+            ],
+            [
+              0.10905638125747355,
+              -0.5289586006788601
+            ]
+          ],
+          "best_physical_progress_m": 1.2221982291556652,
+          "best_physical_stopping_tail_dynamic_clearance_m": 0.16807262205758383,
+          "candidate_count": 3168,
+          "cem_candidate_count": 768,
+          "coarse_candidate_count": 2400,
+          "forecast_count": 1,
+          "horizon_s": 8.0,
+          "map": "chapter1",
+          "offset_s": -2.0,
+          "physical_teacher_count": 313,
+          "physical_teacher_exists": true,
+          "risk_accepted_teacher_count": 313,
+          "safety_nonstop_teacher_count": 311,
+          "seed": 791101003
+        },
+        {
+          "accepted_behavior_families": [
+            "yield"
+          ],
+          "anchor_index": 37,
+          "anchor_time_s": 3.799999999999803,
+          "best_physical_behavior": "cem2_yield_right_i1",
+          "best_physical_minimum_dynamic_clearance_m": 0.18902479520726895,
+          "best_physical_minimum_static_clearance_m": 0.41018204980431305,
+          "best_physical_parameters": [
+            [
+              -0.10005694348876687,
+              0.5922021138992772
+            ],
+            [
+              0.12218108815913659,
+              -0.43102902740786386
+            ],
+            [
+              0.4231592800603007,
+              -0.3191511284061792
+            ],
+            [
+              0.07236001723617319,
+              0.6596927154095584
+            ]
+          ],
+          "best_physical_progress_m": 1.1888478999799512,
+          "best_physical_stopping_tail_dynamic_clearance_m": 0.28046412250469116,
+          "candidate_count": 3168,
+          "cem_candidate_count": 768,
+          "coarse_candidate_count": 2400,
+          "forecast_count": 1,
+          "horizon_s": 12.0,
+          "map": "chapter1",
+          "offset_s": -2.0,
+          "physical_teacher_count": 108,
+          "physical_teacher_exists": true,
+          "risk_accepted_teacher_count": 108,
+          "safety_nonstop_teacher_count": 108,
+          "seed": 791101003
+        },
+        {
+          "accepted_behavior_families": [
+            "left",
+            "yield"
+          ],
+          "anchor_index": 42,
+          "anchor_time_s": 4.2999999999997485,
+          "best_physical_behavior": "cem2_yield_left_i1",
+          "best_physical_minimum_dynamic_clearance_m": 0.2964317910139685,
+          "best_physical_minimum_static_clearance_m": 0.39088494167084653,
+          "best_physical_parameters": [
+            [
+              -0.2742770998740406,
+              -0.12049835422393117
+            ],
+            [
+              0.5084072012398189,
+              0.21979433642710422
+            ],
+            [
+              0.3755986756019435,
+              0.6022664727651413
+            ],
+            [
+              0.07903632844421507,
+              0.33267375233159985
+            ]
+          ],
+          "best_physical_progress_m": 1.038553916350867,
+          "best_physical_stopping_tail_dynamic_clearance_m": 0.17130191568162584,
+          "candidate_count": 3168,
+          "cem_candidate_count": 768,
+          "coarse_candidate_count": 2400,
+          "forecast_count": 1,
+          "horizon_s": 8.0,
+          "map": "chapter1",
+          "offset_s": -1.5,
+          "physical_teacher_count": 282,
+          "physical_teacher_exists": true,
+          "risk_accepted_teacher_count": 282,
+          "safety_nonstop_teacher_count": 281,
+          "seed": 791101003
+        },
+        {
+          "accepted_behavior_families": [
+            "yield"
+          ],
+          "anchor_index": 42,
+          "anchor_time_s": 4.2999999999997485,
+          "best_physical_behavior": "cem1_yield_left_i1",
+          "best_physical_minimum_dynamic_clearance_m": 0.399283143084776,
+          "best_physical_minimum_static_clearance_m": 0.6211136151725519,
+          "best_physical_parameters": [
+            [
+              0.036247525154237736,
+              -0.15776135905473262
+            ],
+            [
+              -0.011209886707598038,
+              0.17503750575911736
+            ],
+            [
+              0.20475243815832567,
+              0.18177093728903113
+            ],
+            [
+              0.16113371615702016,
+              -0.4039858940814385
+            ]
+          ],
+          "best_physical_progress_m": 1.158917062047075,
+          "best_physical_stopping_tail_dynamic_clearance_m": 0.23072653246472924,
+          "candidate_count": 3168,
+          "cem_candidate_count": 768,
+          "coarse_candidate_count": 2400,
+          "forecast_count": 1,
+          "horizon_s": 12.0,
+          "map": "chapter1",
+          "offset_s": -1.5,
+          "physical_teacher_count": 104,
+          "physical_teacher_exists": true,
+          "risk_accepted_teacher_count": 104,
+          "safety_nonstop_teacher_count": 104,
+          "seed": 791101003
+        },
+        {
+          "accepted_behavior_families": [
+            "left",
+            "yield"
+          ],
+          "anchor_index": 47,
+          "anchor_time_s": 4.799999999999693,
+          "best_physical_behavior": "cem0_yield_left_i0",
+          "best_physical_minimum_dynamic_clearance_m": 0.14749723624208383,
+          "best_physical_minimum_static_clearance_m": 0.5943673980934857,
+          "best_physical_parameters": [
+            [
+              -0.178374982255911,
+              -0.12983090197830546
+            ],
+            [
+              0.4623874954059649,
+              0.47207878038944084
+            ],
+            [
+              0.2726615486618584,
+              0.005226549123831026
+            ],
+            [
+              -0.10197573550177103,
+              -0.2487447383226452
+            ]
+          ],
+          "best_physical_progress_m": 0.8272986044019046,
+          "best_physical_stopping_tail_dynamic_clearance_m": 0.12305361013440869,
+          "candidate_count": 3168,
+          "cem_candidate_count": 768,
+          "coarse_candidate_count": 2400,
+          "forecast_count": 1,
+          "horizon_s": 8.0,
+          "map": "chapter1",
+          "offset_s": -1.0,
+          "physical_teacher_count": 187,
+          "physical_teacher_exists": true,
+          "risk_accepted_teacher_count": 187,
+          "safety_nonstop_teacher_count": 186,
+          "seed": 791101003
+        },
+        {
+          "accepted_behavior_families": [
+            "yield"
+          ],
+          "anchor_index": 47,
+          "anchor_time_s": 4.799999999999693,
+          "best_physical_behavior": "cem1_yield_right_i1",
+          "best_physical_minimum_dynamic_clearance_m": 0.6522860797723808,
+          "best_physical_minimum_static_clearance_m": 0.7012769968912494,
+          "best_physical_parameters": [
+            [
+              -0.3028701746913235,
+              0.9369312447685608
+            ],
+            [
+              0.18954949494298196,
+              -0.6947606819884842
+            ],
+            [
+              0.1185165112832246,
+              -0.39404165418091175
+            ],
+            [
+              0.31285021633041094,
+              0.7531884246509528
+            ]
+          ],
+          "best_physical_progress_m": 0.8936040711857665,
+          "best_physical_stopping_tail_dynamic_clearance_m": 0.15080618088462455,
+          "candidate_count": 3168,
+          "cem_candidate_count": 768,
+          "coarse_candidate_count": 2400,
+          "forecast_count": 1,
+          "horizon_s": 12.0,
+          "map": "chapter1",
+          "offset_s": -1.0,
+          "physical_teacher_count": 69,
+          "physical_teacher_exists": true,
+          "risk_accepted_teacher_count": 69,
+          "safety_nonstop_teacher_count": 68,
+          "seed": 791101003
+        },
+        {
+          "accepted_behavior_families": [
+            "yield"
+          ],
+          "anchor_index": 52,
+          "anchor_time_s": 5.299999999999638,
+          "best_physical_behavior": "yield_left",
+          "best_physical_minimum_dynamic_clearance_m": 0.11657640915514239,
+          "best_physical_minimum_static_clearance_m": 0.11967155307815674,
+          "best_physical_parameters": [
+            [
+              -0.15883020509640916,
+              -0.16733982540190467
+            ],
+            [
+              0.25226663504731156,
+              0.3517252949551106
+            ],
+            [
+              0.6229573965442233,
+              0.19844214339812122
+            ],
+            [
+              0.2619668202478568,
+              -0.41414046028510315
+            ]
+          ],
+          "best_physical_progress_m": 0.7066830712949262,
+          "best_physical_stopping_tail_dynamic_clearance_m": 0.15590574283108644,
+          "candidate_count": 3168,
+          "cem_candidate_count": 768,
+          "coarse_candidate_count": 2400,
+          "forecast_count": 1,
+          "horizon_s": 8.0,
+          "map": "chapter1",
+          "offset_s": -0.5,
+          "physical_teacher_count": 80,
+          "physical_teacher_exists": true,
+          "risk_accepted_teacher_count": 79,
+          "safety_nonstop_teacher_count": 79,
+          "seed": 791101003
+        },
+        {
+          "accepted_behavior_families": [
+            "yield"
+          ],
+          "anchor_index": 52,
+          "anchor_time_s": 5.299999999999638,
+          "best_physical_behavior": "cem3_yield_left_i1",
+          "best_physical_minimum_dynamic_clearance_m": 0.22737157795717317,
+          "best_physical_minimum_static_clearance_m": 0.1627103987807767,
+          "best_physical_parameters": [
+            [
+              -0.35,
+              -0.05735223844513121
+            ],
+            [
+              0.03531899016357487,
+              0.06976278070999609
+            ],
+            [
+              0.3671815988052285,
+              0.19615510842759526
+            ],
+            [
+              0.7,
+              -0.41340352138677117
+            ]
+          ],
+          "best_physical_progress_m": 0.7832917603115518,
+          "best_physical_stopping_tail_dynamic_clearance_m": 0.15272027600288413,
+          "candidate_count": 3168,
+          "cem_candidate_count": 768,
+          "coarse_candidate_count": 2400,
+          "forecast_count": 1,
+          "horizon_s": 12.0,
+          "map": "chapter1",
+          "offset_s": -0.5,
+          "physical_teacher_count": 33,
+          "physical_teacher_exists": true,
+          "risk_accepted_teacher_count": 33,
+          "safety_nonstop_teacher_count": 33,
+          "seed": 791101003
+        },
+        {
+          "accepted_behavior_families": [
+            "yield"
+          ],
+          "anchor_index": 58,
+          "anchor_time_s": 5.899999999999572,
+          "best_physical_behavior": "cem0_yield_left_i1",
+          "best_physical_minimum_dynamic_clearance_m": 0.13409452650355674,
+          "best_physical_minimum_static_clearance_m": 0.2282456137914462,
+          "best_physical_parameters": [
+            [
+              -0.35,
+              -0.045269017686526886
+            ],
+            [
+              0.7,
+              0.4307724640098163
+            ],
+            [
+              0.7,
+              -0.4215456246713391
+            ],
+            [
+              0.015070615209941463,
+              -0.08486341529067776
+            ]
+          ],
+          "best_physical_progress_m": 0.8809356900908633,
+          "best_physical_stopping_tail_dynamic_clearance_m": 0.1641769063799055,
+          "candidate_count": 3168,
+          "cem_candidate_count": 768,
+          "coarse_candidate_count": 2400,
+          "forecast_count": 1,
+          "horizon_s": 8.0,
+          "map": "chapter1",
+          "offset_s": 0.0,
+          "physical_teacher_count": 24,
+          "physical_teacher_exists": true,
+          "risk_accepted_teacher_count": 14,
+          "safety_nonstop_teacher_count": 14,
+          "seed": 791101003
+        },
+        {
+          "accepted_behavior_families": [
+            "yield"
+          ],
+          "anchor_index": 58,
+          "anchor_time_s": 5.899999999999572,
+          "best_physical_behavior": "cem2_yield_left_i0",
+          "best_physical_minimum_dynamic_clearance_m": 0.22594990070961812,
+          "best_physical_minimum_static_clearance_m": 0.18621810717678,
+          "best_physical_parameters": [
+            [
+              -0.35,
+              -0.37895634334719003
+            ],
+            [
+              0.4872344548885176,
+              0.11672631906060493
+            ],
+            [
+              0.3371689365418772,
+              0.5143328572379486
+            ],
+            [
+              0.1970958862580262,
+              -0.1618155248857032
+            ]
+          ],
+          "best_physical_progress_m": 0.7228565675399388,
+          "best_physical_stopping_tail_dynamic_clearance_m": 0.2950689769768004,
+          "candidate_count": 3168,
+          "cem_candidate_count": 768,
+          "coarse_candidate_count": 2400,
+          "forecast_count": 1,
+          "horizon_s": 12.0,
+          "map": "chapter1",
+          "offset_s": 0.0,
+          "physical_teacher_count": 18,
+          "physical_teacher_exists": true,
+          "risk_accepted_teacher_count": 18,
+          "safety_nonstop_teacher_count": 18,
+          "seed": 791101003
+        }
+      ],
+      "trajectory_sha256": "5dbad41b446e8d396c6d74cc01438cad69a89f4726579daba37f1051853c65cb"
+    },
+    "chapter3": {
+      "accepted_behavior_families": [
+        "left",
+        "yield"
+      ],
+      "artifact": "D:\\Projects\\mobile-robot-mppi-study-single-v6\\research_artifacts\\complex_actor_teacher_probe_v3\\chapter3_seed791103003",
+      "config_sha256": "66f7ab951f6603897a5533b1117fc52c151f3a3e2621f743b8ec340d448bed7c",
+      "conflict_index": 22,
+      "conflict_time_s": 2.2999999999999683,
+      "physical_teacher_exists": true,
+      "risk_accepted_teacher_exists": true,
+      "root_cause": "v3_candidate_space_was_insufficient",
+      "safety_nonstop_teacher_exists": true,
+      "states": [
+        {
+          "accepted_behavior_families": [],
+          "anchor_index": 0,
+          "anchor_time_s": 0.10000000000000007,
+          "best_physical_behavior": "cem3_yield_left_i0",
+          "best_physical_minimum_dynamic_clearance_m": 1.8184083601783028,
+          "best_physical_minimum_static_clearance_m": 0.19195432377711286,
+          "best_physical_parameters": [
+            [
+              0.008930941434738549,
+              0.04343613696599516
+            ],
+            [
+              0.4308012967250092,
+              0.7200647546093287
+            ],
+            [
+              0.14675725683726376,
+              0.9352912309448624
+            ],
+            [
+              0.20665321749179522,
+              -0.11707862499901886
+            ]
+          ],
+          "best_physical_progress_m": 0.8424940432203124,
+          "best_physical_stopping_tail_dynamic_clearance_m": 1.5066163971261635,
+          "candidate_count": 3168,
+          "cem_candidate_count": 768,
+          "coarse_candidate_count": 2400,
+          "forecast_count": 0,
+          "horizon_s": 8.0,
+          "map": "chapter3",
+          "offset_s": -3.0,
+          "physical_teacher_count": 261,
+          "physical_teacher_exists": true,
+          "risk_accepted_teacher_count": 0,
+          "safety_nonstop_teacher_count": 0,
+          "seed": 791103003
+        },
+        {
+          "accepted_behavior_families": [],
+          "anchor_index": 0,
+          "anchor_time_s": 0.10000000000000007,
+          "best_physical_behavior": "cem0_yield_left_i0",
+          "best_physical_minimum_dynamic_clearance_m": 1.6546604553584523,
+          "best_physical_minimum_static_clearance_m": 0.47680693112078887,
+          "best_physical_parameters": [
+            [
+              -0.06802131189832718,
+              -0.6208872459409883
+            ],
+            [
+              0.06441725242940599,
+              0.5029110186428905
+            ],
+            [
+              0.02245325052202085,
+              0.6723882323200893
+            ],
+            [
+              0.3093197691369428,
+              -0.22564428401752917
+            ]
+          ],
+          "best_physical_progress_m": 0.8111647341776885,
+          "best_physical_stopping_tail_dynamic_clearance_m": 3.034215477759736,
+          "candidate_count": 3168,
+          "cem_candidate_count": 768,
+          "coarse_candidate_count": 2400,
+          "forecast_count": 0,
+          "horizon_s": 12.0,
+          "map": "chapter3",
+          "offset_s": -3.0,
+          "physical_teacher_count": 59,
+          "physical_teacher_exists": true,
+          "risk_accepted_teacher_count": 0,
+          "safety_nonstop_teacher_count": 0,
+          "seed": 791103003
+        },
+        {
+          "accepted_behavior_families": [],
+          "anchor_index": 1,
+          "anchor_time_s": 0.20000000000000015,
+          "best_physical_behavior": "cem0_yield_left_i1",
+          "best_physical_minimum_dynamic_clearance_m": 1.7452026725874228,
+          "best_physical_minimum_static_clearance_m": 0.4283957152204415,
+          "best_physical_parameters": [
+            [
+              -0.12313674477871332,
+              0.3136379618654705
+            ],
+            [
+              0.19972028967780422,
+              0.2238189984876306
+            ],
+            [
+              0.2607750171198173,
+              0.3365974921716188
+            ],
+            [
+              0.07905840001286368,
+              -0.7838946387085619
+            ]
+          ],
+          "best_physical_progress_m": 0.8265131197920916,
+          "best_physical_stopping_tail_dynamic_clearance_m": 1.4492132663865072,
+          "candidate_count": 3168,
+          "cem_candidate_count": 768,
+          "coarse_candidate_count": 2400,
+          "forecast_count": 0,
+          "horizon_s": 8.0,
+          "map": "chapter3",
+          "offset_s": -2.0,
+          "physical_teacher_count": 295,
+          "physical_teacher_exists": true,
+          "risk_accepted_teacher_count": 0,
+          "safety_nonstop_teacher_count": 0,
+          "seed": 791103003
+        },
+        {
+          "accepted_behavior_families": [],
+          "anchor_index": 1,
+          "anchor_time_s": 0.20000000000000015,
+          "best_physical_behavior": "cem0_yield_left_i1",
+          "best_physical_minimum_dynamic_clearance_m": 1.7027382919574425,
+          "best_physical_minimum_static_clearance_m": 0.08150554719365455,
+          "best_physical_parameters": [
+            [
+              -0.2008379603279313,
+              -0.09072630605979219
+            ],
+            [
+              0.1755236313079478,
+              0.26284522701478163
+            ],
+            [
+              0.021967344148130147,
+              0.38706740840460985
+            ],
+            [
+              0.30528718055701576,
+              -0.3950880173406446
+            ]
+          ],
+          "best_physical_progress_m": 0.7878550331569529,
+          "best_physical_stopping_tail_dynamic_clearance_m": 3.0300840125828774,
+          "candidate_count": 3168,
+          "cem_candidate_count": 768,
+          "coarse_candidate_count": 2400,
+          "forecast_count": 0,
+          "horizon_s": 12.0,
+          "map": "chapter3",
+          "offset_s": -2.0,
+          "physical_teacher_count": 103,
+          "physical_teacher_exists": true,
+          "risk_accepted_teacher_count": 0,
+          "safety_nonstop_teacher_count": 0,
+          "seed": 791103003
+        },
+        {
+          "accepted_behavior_families": [],
+          "anchor_index": 6,
+          "anchor_time_s": 0.7000000000000005,
+          "best_physical_behavior": "cem0_yield_left_i1",
+          "best_physical_minimum_dynamic_clearance_m": 1.5636319343697302,
+          "best_physical_minimum_static_clearance_m": 0.12652391606750757,
+          "best_physical_parameters": [
+            [
+              -0.35,
+              -0.3394239455214847
+            ],
+            [
+              0.25170476372017314,
+              0.22825573646285766
+            ],
+            [
+              0.11770457810744028,
+              0.670798109162779
+            ],
+            [
+              0.7,
+              -0.4474052480367609
+            ]
+          ],
+          "best_physical_progress_m": 0.781912574765655,
+          "best_physical_stopping_tail_dynamic_clearance_m": 1.4811897190425556,
+          "candidate_count": 3168,
+          "cem_candidate_count": 768,
+          "coarse_candidate_count": 2400,
+          "forecast_count": 0,
+          "horizon_s": 8.0,
+          "map": "chapter3",
+          "offset_s": -1.5,
+          "physical_teacher_count": 261,
+          "physical_teacher_exists": true,
+          "risk_accepted_teacher_count": 0,
+          "safety_nonstop_teacher_count": 0,
+          "seed": 791103003
+        },
+        {
+          "accepted_behavior_families": [],
+          "anchor_index": 6,
+          "anchor_time_s": 0.7000000000000005,
+          "best_physical_behavior": "cem2_yield_left_i1",
+          "best_physical_minimum_dynamic_clearance_m": 1.3311157751158567,
+          "best_physical_minimum_static_clearance_m": 0.3106328737869951,
+          "best_physical_parameters": [
+            [
+              0.08996939781378932,
+              0.1676676842045313
+            ],
+            [
+              0.22220512819372898,
+              0.5311626900290763
+            ],
+            [
+              0.024904911957618056,
+              0.4572124242786324
+            ],
+            [
+              0.07367938132754862,
+              -0.606237429721284
+            ]
+          ],
+          "best_physical_progress_m": 0.7771629361982315,
+          "best_physical_stopping_tail_dynamic_clearance_m": 3.32528210676262,
+          "candidate_count": 3168,
+          "cem_candidate_count": 768,
+          "coarse_candidate_count": 2400,
+          "forecast_count": 0,
+          "horizon_s": 12.0,
+          "map": "chapter3",
+          "offset_s": -1.5,
+          "physical_teacher_count": 77,
+          "physical_teacher_exists": true,
+          "risk_accepted_teacher_count": 0,
+          "safety_nonstop_teacher_count": 0,
+          "seed": 791103003
+        },
+        {
+          "accepted_behavior_families": [],
+          "anchor_index": 11,
+          "anchor_time_s": 1.2000000000000008,
+          "best_physical_behavior": "cem2_yield_left_i1",
+          "best_physical_minimum_dynamic_clearance_m": 1.42649570819996,
+          "best_physical_minimum_static_clearance_m": 0.19744353669304782,
+          "best_physical_parameters": [
+            [
+              0.030846737029897514,
+              0.13653377279716106
+            ],
+            [
+              0.4190859608926214,
+              0.4639190018399814
+            ],
+            [
+              -0.02726244795776403,
+              0.8205671516897907
+            ],
+            [
+              0.1427009648142089,
+              -0.5330600956953844
+            ]
+          ],
+          "best_physical_progress_m": 0.8246780328206799,
+          "best_physical_stopping_tail_dynamic_clearance_m": 1.549452130936534,
+          "candidate_count": 3168,
+          "cem_candidate_count": 768,
+          "coarse_candidate_count": 2400,
+          "forecast_count": 0,
+          "horizon_s": 8.0,
+          "map": "chapter3",
+          "offset_s": -1.0,
+          "physical_teacher_count": 240,
+          "physical_teacher_exists": true,
+          "risk_accepted_teacher_count": 0,
+          "safety_nonstop_teacher_count": 0,
+          "seed": 791103003
+        },
+        {
+          "accepted_behavior_families": [],
+          "anchor_index": 11,
+          "anchor_time_s": 1.2000000000000008,
+          "best_physical_behavior": "cem3_yield_left_i1",
+          "best_physical_minimum_dynamic_clearance_m": 1.7354646693665978,
+          "best_physical_minimum_static_clearance_m": 0.3518006478398107,
+          "best_physical_parameters": [
+            [
+              -0.02664280994251878,
+              -0.1139113151220876
+            ],
+            [
+              -0.11051894082995961,
+              0.5025569142571235
+            ],
+            [
+              0.15001907751657761,
+              -0.1678885834166995
+            ],
+            [
+              0.25911689389321146,
+              -0.19096522232066027
+            ]
+          ],
+          "best_physical_progress_m": 0.8181737136698889,
+          "best_physical_stopping_tail_dynamic_clearance_m": 3.4560904213550363,
+          "candidate_count": 3168,
+          "cem_candidate_count": 768,
+          "coarse_candidate_count": 2400,
+          "forecast_count": 0,
+          "horizon_s": 12.0,
+          "map": "chapter3",
+          "offset_s": -1.0,
+          "physical_teacher_count": 72,
+          "physical_teacher_exists": true,
+          "risk_accepted_teacher_count": 0,
+          "safety_nonstop_teacher_count": 0,
+          "seed": 791103003
+        },
+        {
+          "accepted_behavior_families": [
+            "yield"
+          ],
+          "anchor_index": 16,
+          "anchor_time_s": 1.7000000000000013,
+          "best_physical_behavior": "cem0_yield_left_i1",
+          "best_physical_minimum_dynamic_clearance_m": 1.5530259734301144,
+          "best_physical_minimum_static_clearance_m": 0.39680517721253405,
+          "best_physical_parameters": [
+            [
+              -0.19161380721877544,
+              0.0796032821423884
+            ],
+            [
+              0.12151315980885519,
+              0.3099238662241619
+            ],
+            [
+              0.3406699724821155,
+              -0.10454343433652707
+            ],
+            [
+              0.15748521465284018,
+              -0.6110864118476398
+            ]
+          ],
+          "best_physical_progress_m": 0.8536861000315681,
+          "best_physical_stopping_tail_dynamic_clearance_m": 1.8603686829811255,
+          "candidate_count": 3168,
+          "cem_candidate_count": 768,
+          "coarse_candidate_count": 2400,
+          "forecast_count": 1,
+          "horizon_s": 8.0,
+          "map": "chapter3",
+          "offset_s": -0.5,
+          "physical_teacher_count": 248,
+          "physical_teacher_exists": true,
+          "risk_accepted_teacher_count": 248,
+          "safety_nonstop_teacher_count": 246,
+          "seed": 791103003
+        },
+        {
+          "accepted_behavior_families": [
+            "left",
+            "yield"
+          ],
+          "anchor_index": 16,
+          "anchor_time_s": 1.7000000000000013,
+          "best_physical_behavior": "cem0_yield_left_i1",
+          "best_physical_minimum_dynamic_clearance_m": 2.0345968791044626,
+          "best_physical_minimum_static_clearance_m": 0.2091857722775443,
+          "best_physical_parameters": [
+            [
+              -0.31276586900105585,
+              -0.6794315348168907
+            ],
+            [
+              0.021131942989208785,
+              0.5060144543732688
+            ],
+            [
+              0.02127827650110037,
+              0.19374924088058104
+            ],
+            [
+              0.45770065422763256,
+              -0.2043283878519639
+            ]
+          ],
+          "best_physical_progress_m": 0.8307626071732106,
+          "best_physical_stopping_tail_dynamic_clearance_m": 3.6904210165063973,
+          "candidate_count": 3168,
+          "cem_candidate_count": 768,
+          "coarse_candidate_count": 2400,
+          "forecast_count": 1,
+          "horizon_s": 12.0,
+          "map": "chapter3",
+          "offset_s": -0.5,
+          "physical_teacher_count": 85,
+          "physical_teacher_exists": true,
+          "risk_accepted_teacher_count": 81,
+          "safety_nonstop_teacher_count": 81,
+          "seed": 791103003
+        },
+        {
+          "accepted_behavior_families": [
+            "yield"
+          ],
+          "anchor_index": 22,
+          "anchor_time_s": 2.2999999999999683,
+          "best_physical_behavior": "cem3_yield_left_i1",
+          "best_physical_minimum_dynamic_clearance_m": 1.461354251429284,
+          "best_physical_minimum_static_clearance_m": 0.30380737726357787,
+          "best_physical_parameters": [
+            [
+              -0.27463615038213207,
+              -0.3978783043787237
+            ],
+            [
+              0.1775158153368005,
+              0.4884599975729036
+            ],
+            [
+              0.44606383480196105,
+              0.19732520314658394
+            ],
+            [
+              0.12766333889010084,
+              -0.09090560053560925
+            ]
+          ],
+          "best_physical_progress_m": 0.8558111561032657,
+          "best_physical_stopping_tail_dynamic_clearance_m": 2.2219168849420643,
+          "candidate_count": 3168,
+          "cem_candidate_count": 768,
+          "coarse_candidate_count": 2400,
+          "forecast_count": 2,
+          "horizon_s": 8.0,
+          "map": "chapter3",
+          "offset_s": 0.0,
+          "physical_teacher_count": 234,
+          "physical_teacher_exists": true,
+          "risk_accepted_teacher_count": 231,
+          "safety_nonstop_teacher_count": 227,
+          "seed": 791103003
+        },
+        {
+          "accepted_behavior_families": [
+            "left",
+            "yield"
+          ],
+          "anchor_index": 22,
+          "anchor_time_s": 2.2999999999999683,
+          "best_physical_behavior": "cem1_yield_left_i0",
+          "best_physical_minimum_dynamic_clearance_m": 1.8532117896285045,
+          "best_physical_minimum_static_clearance_m": 0.17081201803934287,
+          "best_physical_parameters": [
+            [
+              -0.30580661189308167,
+              0.04367607359250883
+            ],
+            [
+              0.7,
+              0.5586149544497571
+            ],
+            [
+              -0.09585700977786094,
+              -0.07672705609406111
+            ],
+            [
+              0.35230910123258036,
+              -0.9
+            ]
+          ],
+          "best_physical_progress_m": 0.7559475551854078,
+          "best_physical_stopping_tail_dynamic_clearance_m": 3.678802936840498,
+          "candidate_count": 3168,
+          "cem_candidate_count": 768,
+          "coarse_candidate_count": 2400,
+          "forecast_count": 2,
+          "horizon_s": 12.0,
+          "map": "chapter3",
+          "offset_s": 0.0,
+          "physical_teacher_count": 50,
+          "physical_teacher_exists": true,
+          "risk_accepted_teacher_count": 50,
+          "safety_nonstop_teacher_count": 50,
+          "seed": 791103003
+        }
+      ],
+      "trajectory_sha256": "657fc6d7741ccec117e81fab37516eb342f4b103766c6121e1c038c68d1cb36e"
+    }
+  },
+  "positive_control": {
+    "first_step_safety_nonstop": true,
+    "physical_teacher_exists": true,
+    "risk_accepted_teacher_exists": true,
+    "selected_mode": "reverse_left",
+    "source": "D:\\Projects\\mobile-robot-mppi-study-single-v6\\research_artifacts\\complex_supervised_actor_teacher_gate_v3\\teacher_gate_result.json",
+    "source_sha256": "2f94b18adfe49ed684f8cb2be5890447754d6759c6399339d5f7dcf3f6d0fca2"
+  },
+  "positive_control_gate_pass": true,
+  "protocol": "complex_supervised_actor_oracle_feasibility_timing_gate_v1",
+  "schema_version": 1,
+  "scope": "development_only_pretraining_oracle_audit",
+  "status": "pass",
+  "target_maps_gate_pass": true
+}

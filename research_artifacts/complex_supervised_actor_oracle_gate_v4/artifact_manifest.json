@@ -1,0 +1,11 @@
+{
+  "actor_training_started": false,
+  "deployment_privileged_input": false,
+  "future_truth_training_only": true,
+  "git_sha": "533f07176d2a98f345711a1ff258b809ea6d009a",
+  "parallel_workers": 4,
+  "progress_sha256": "7ea1d64f8716fe3e56dcfb4077e0280dea68b5a013d395d05188c37fe7035fbe",
+  "protocol_config_hash": "fd4255b2bdfaa62cbaa6dd32f1801a7f153259487160bfc2b106c7e24113e9d1",
+  "protocol_sha256": "1503bff3724608a2a58143385efbc7ab863a6cf4ab478956d9c9e48d17e5a80f",
+  "result_sha256": "e72152210c188ffb74f8b82c56b0c7077f0a95079401b89249d70b4f8b546171"
+}

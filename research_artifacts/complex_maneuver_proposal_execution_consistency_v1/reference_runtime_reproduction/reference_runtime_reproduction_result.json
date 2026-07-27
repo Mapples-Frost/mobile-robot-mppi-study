@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "scope": "phase_zero_reference_runtime_reproduction",
+  "status": "reference_artifact_not_bitwise_reproducible",
+  "reference_commit": "af691f184774094551d13fb4cde51d98bad2caf9",
+  "reference_import_verified": true,
+  "all_lfs_objects_materialized": true,
+  "map": "chapter1",
+  "seed": 791101019,
+  "arm": "frozen_full",
+  "comparison_contract": {
+    "row_alignment": "exact",
+    "string_comparison": "exact",
+    "excluded_timing_columns": [
+      "planner_compute_ms",
+      "profile_mppi_batch_rollout_ms",
+      "profile_mppi_cost_ms",
+      "profile_mppi_final_rollout_ms",
+      "profile_mppi_sampling_ms",
+      "profile_mppi_solve_total_ms",
+      "profile_mppi_weighting_update_ms",
+      "profile_planner_prior_ms",
+      "profile_planner_state_reference_ms"
+    ]
+  },
+  "sealed_original_vs_reference_rerun": {
+    "row_counts": [
+      211,
+      211
+    ],
+    "common_column_count": 581,
+    "deterministic_column_count": 572,
+    "exact_equal_excluding_timing": false,
+    "mismatch_column_count": 89,
+    "first_mismatch_row_any_column": 2,
+    "maximum_absolute_difference_all_numeric": 1.1908945452887565e-05,
+    "outcome_equal": true,
+    "outcome": {
+      "success": false,
+      "collision": true,
+      "termination_reason": "collision",
+      "steps": 211
+    },
+    "rollout_values_both": [
+      0,
+      600
+    ],
+    "trajectory_sha256": {
+      "sealed_original": "8428bfddc798a304226c5d3badac2ad1710daedc3c8c750b0b7a8c4e8d0a808c",
+      "reference_rerun": "e924ce5323ebceef5884b9b26ea06ea75610a6360cf006e2516781f32b14d711"
+    }
+  },
+  "current_diagnostic_vs_reference_rerun": {
+    "row_counts": [
+      211,
+      211
+    ],
+    "common_column_count": 602,
+    "deterministic_column_count": 593,
+    "exact_equal_excluding_timing": true,
+    "mismatch_column_count": 0,
+    "first_mismatch_row": null,
+    "maximum_absolute_difference_all_numeric": 0.0,
+    "outcome_equal": true,
+    "outcome": {
+      "success": false,
+      "collision": true,
+      "termination_reason": "collision",
+      "steps": 211
+    },
+    "rollout_values_both": [
+      0,
+      600
+    ],
+    "trajectory_sha256": {
+      "current_diagnostic": "187288c44909d2ae5de88708a94e34a5bb6739c46c44d636f2c96bd816eb34d3",
+      "reference_rerun": "e924ce5323ebceef5884b9b26ea06ea75610a6360cf006e2516781f32b14d711"
+    }
+  },
+  "interpretation": "The original af691f1 source, rerun under the current runtime with verified reference imports and materialized checkpoints, reproduces the current diagnostic build exactly on every non-timing common column but does not reproduce the previously sealed original trajectory. The earlier bitwise failure therefore cannot be attributed to Phase Zero diagnostics. The sealed original artifact has a runtime-level reproducibility boundary.",
+  "decision": "Stop source-level rollback. Do not authorize Actor-on or margin 0.02 until the equivalence protocol is explicitly reviewed and amended; do not silently relax the frozen gate."
+}

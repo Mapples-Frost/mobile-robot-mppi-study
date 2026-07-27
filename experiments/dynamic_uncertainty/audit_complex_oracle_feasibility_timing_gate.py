@@ -13,6 +13,7 @@ does not alter the paper method, and must never be used on formal test maps.
 from __future__ import annotations
 
 import argparse
+from concurrent.futures import ProcessPoolExecutor, as_completed
 import hashlib
 import json
 from pathlib import Path
@@ -86,6 +87,8 @@ def _load_protocol(path):
         raise ValueError("coarse search must contain 2000-5000 candidates")
     if sorted(float(item) for item in search["horizons_s"]) != [8.0, 12.0]:
         raise ValueError("Gate v4 must audit both 8 s and 12 s horizons")
+    if not 1 <= int(search.get("parallel_workers", 1)) <= 8:
+        raise ValueError("parallel_workers must be between 1 and 8")
     return value
 
 
@@ -804,9 +807,33 @@ def _dry_run(protocol):
             * search["cem_iterations"]
             * search["cem_samples_per_restart"]
         ),
+        "parallel_workers": int(search.get("parallel_workers", 1)),
         "formal_server_launch_authorized": False,
         "actor_training_started": False,
     }
+
+
+def _audit_state_job(
+    protocol_path,
+    map_name,
+    artifact,
+    anchor_index,
+    offset_s,
+    anchor_time_s,
+):
+    protocol = _load_protocol(protocol_path)
+    artifact = Path(artifact)
+    config = load_yaml(artifact / "config_resolved.yaml")
+    rows = _read_rows(artifact / "trajectory.csv")
+    return _audit_state(
+        map_name,
+        rows,
+        int(anchor_index),
+        float(offset_s),
+        float(anchor_time_s),
+        config,
+        protocol,
+    )
 
 
 def analyze(protocol_path, output):
@@ -826,9 +853,9 @@ def analyze(protocol_path, output):
     progress_path = output / "progress.json"
     offsets = protocol["oracle_search"]["offsets_s"]
     horizons = protocol["oracle_search"]["horizons_s"]
-    total = len(protocol["saved_episodes"]) * len(offsets) * len(horizons)
     completed = 0
     all_rows = {}
+    jobs = []
 
     for map_name, item in protocol["saved_episodes"].items():
         artifact = (ROOT / item["artifact"]).resolve()
@@ -837,52 +864,75 @@ def analyze(protocol_path, output):
         config = load_yaml(config_path)
         rows = _read_rows(trajectory_path)
         conflict_index = _anchor_index(rows, item["conflict_rule"])
-        state_rows = []
         for offset_s, anchor_index, anchor_time_s in _offset_indices(
             rows, conflict_index, offsets
         ):
-            state_rows.extend(_audit_state(
-                map_name,
-                rows,
-                anchor_index,
-                offset_s,
-                anchor_time_s,
-                config,
-                protocol,
+            jobs.append((
+                str(map_name),
+                str(artifact),
+                int(anchor_index),
+                float(offset_s),
+                float(anchor_time_s),
             ))
-            completed += len(horizons)
-            _write_json(progress_path, {
-                "status": "running",
-                "completed_state_horizons": int(completed),
-                "total_state_horizons": int(total),
-                "current_map": str(map_name),
-                "current_offset_s": float(offset_s),
-            })
         all_rows[str(map_name)] = {
             "artifact": str(artifact),
             "config_sha256": _sha256(config_path),
             "trajectory_sha256": _sha256(trajectory_path),
             "conflict_index": int(conflict_index),
             "conflict_time_s": float(rows[conflict_index]["time"]),
-            "states": state_rows,
-            "physical_teacher_exists": any(
-                row["physical_teacher_exists"] for row in state_rows
-            ),
-            "risk_accepted_teacher_exists": any(
-                row["risk_accepted_teacher_count"] > 0
-                for row in state_rows
-            ),
-            "safety_nonstop_teacher_exists": any(
-                row["safety_nonstop_teacher_count"] > 0
-                for row in state_rows
-            ),
-            "accepted_behavior_families": sorted({
-                family
-                for row in state_rows
-                for family in row["accepted_behavior_families"]
-            }),
-            "root_cause": _root_cause(state_rows),
+            "states": [],
         }
+
+    total = len(jobs) * len(horizons)
+    workers = int(protocol["oracle_search"].get("parallel_workers", 1))
+    with ProcessPoolExecutor(max_workers=workers) as executor:
+        futures = {
+            executor.submit(
+                _audit_state_job,
+                str(protocol_path),
+                *job,
+            ): job
+            for job in jobs
+        }
+        for future in as_completed(futures):
+            job = futures[future]
+            state_rows = future.result()
+            all_rows[job[0]]["states"].extend(state_rows)
+            completed += len(state_rows)
+            _write_json(progress_path, {
+                "status": "running",
+                "completed_state_horizons": int(completed),
+                "total_state_horizons": int(total),
+                "last_completed_map": str(job[0]),
+                "last_completed_offset_s": float(job[3]),
+                "parallel_workers": int(workers),
+            })
+
+    for map_name, summary in all_rows.items():
+        state_rows = sorted(
+            summary["states"],
+            key=lambda row: (
+                float(row["offset_s"]),
+                float(row["horizon_s"]),
+            ),
+        )
+        summary["states"] = state_rows
+        summary["physical_teacher_exists"] = any(
+            row["physical_teacher_exists"] for row in state_rows
+        )
+        summary["risk_accepted_teacher_exists"] = any(
+            row["risk_accepted_teacher_count"] > 0 for row in state_rows
+        )
+        summary["safety_nonstop_teacher_exists"] = any(
+            row["safety_nonstop_teacher_count"] > 0
+            for row in state_rows
+        )
+        summary["accepted_behavior_families"] = sorted({
+            family
+            for row in state_rows
+            for family in row["accepted_behavior_families"]
+        })
+        summary["root_cause"] = _root_cause(state_rows)
 
     positive = _positive_control(protocol)
     gate = protocol["gate"]
@@ -942,6 +992,7 @@ def analyze(protocol_path, output):
         "future_truth_training_only": True,
         "deployment_privileged_input": False,
         "actor_training_started": False,
+        "parallel_workers": int(workers),
     }
     _write_json(output / "artifact_manifest.json", manifest)
     print(json.dumps(result, indent=2, sort_keys=True), flush=True)

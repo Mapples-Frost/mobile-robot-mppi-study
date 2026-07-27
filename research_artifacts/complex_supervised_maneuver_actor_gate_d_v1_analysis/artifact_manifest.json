@@ -1,0 +1,8 @@
+{
+  "files": {
+    "gate_d_result.json": "aa3e0b036ff2953b232349ff457044ef08caaeaca965458984895d6f7d7b15e6",
+    "protocol_resolved.yaml": "d9b44e4de9d867ed33274e1b3d8cc9968bd6cc685e7bfed5e5c10615cd8fe767"
+  },
+  "schema_version": 1,
+  "status": "fail"
+}

@@ -1,0 +1,317 @@
+{
+  "checks": {
+    "maximum_actor_collision_regressions": true,
+    "maximum_actor_success_losses": true,
+    "minimum_maps_with_nonzero_supervised_proposals": true,
+    "minimum_maps_with_risk_feasible_supervised_proposals": true,
+    "minimum_total_supervised_elite_or_selected_count": true,
+    "same_rollout_budget": true,
+    "task_improvement": false
+  },
+  "cold_start_is_diagnostic_only": true,
+  "collision_regressions": 0,
+  "episode_count": 6,
+  "episodes": [
+    {
+      "active_paper_optimizer_budget_valid": true,
+      "arm": "frozen_full",
+      "cold_start": {
+        "early_window_forecast_availability_fraction": 0.8571428571428571,
+        "early_window_risk_unavailable_rejection_count": 0,
+        "early_window_safety_forced_stop_count": 0,
+        "first_dynamic_observation_time_s": 0.3000000000000002,
+        "first_forecast_available_time_s": 0.3000000000000002,
+        "first_imm_initialized_time_s": 0.3000000000000002,
+        "first_persistent_conflict_time_s": 5.899999999999572,
+        "history_frames_at_first_persistent_conflict": 8,
+        "stratum": "later_conflict_at_or_after_1_5s"
+      },
+      "collision": true,
+      "final_goal_distance": 5.319592391915956,
+      "map": "chapter1",
+      "minimum_clearance": -0.01274832646842694,
+      "missing_forecast_deterministic_stop_steps": 16,
+      "paper_total_rollouts_mean": 554.5023696682465,
+      "path_length": 5.109320826623073,
+      "per_cycle_rollout_counts": [
+        0,
+        600
+      ],
+      "provenance": {
+        "config_hash": "117fedbe67980a32ab817d2e38e10f09d10695e9f98b7cf8f8670683cebcec31",
+        "git_sha": "11b13469fd1e0c5f21945c2d7c4af5ffc5c97909"
+      },
+      "safe_success": false,
+      "safety_overrides": 7,
+      "seed": 791101019,
+      "steps": 211,
+      "success": false,
+      "supervised_added_rollout_count_total": 0,
+      "supervised_elite_count_total": 0,
+      "supervised_proposal_count_total": 0,
+      "supervised_risk_feasible_count_total": 0,
+      "supervised_selected_count_total": 0,
+      "termination_reason": "collision"
+    },
+    {
+      "active_paper_optimizer_budget_valid": true,
+      "arm": "full_plus_bootstrap_actor",
+      "cold_start": {
+        "early_window_forecast_availability_fraction": 0.8571428571428571,
+        "early_window_risk_unavailable_rejection_count": 0,
+        "early_window_safety_forced_stop_count": 0,
+        "first_dynamic_observation_time_s": 0.3000000000000002,
+        "first_forecast_available_time_s": 0.3000000000000002,
+        "first_imm_initialized_time_s": 0.3000000000000002,
+        "first_persistent_conflict_time_s": 5.599999999999605,
+        "history_frames_at_first_persistent_conflict": 8,
+        "stratum": "later_conflict_at_or_after_1_5s"
+      },
+      "collision": false,
+      "final_goal_distance": 2.655993850131478,
+      "map": "chapter1",
+      "minimum_clearance": 0.128408034954071,
+      "missing_forecast_deterministic_stop_steps": 752,
+      "paper_total_rollouts_mean": 224.0,
+      "path_length": 22.255177079679676,
+      "per_cycle_rollout_counts": [
+        0,
+        600
+      ],
+      "provenance": {
+        "config_hash": "fa4faf54db79422319efaf7668970cddfb6ec4c676e48326103859fc92c1c712",
+        "git_sha": "afcf3fbf664e8035fa7d55a393d8d672af1f17c0"
+      },
+      "safe_success": false,
+      "safety_overrides": 592,
+      "seed": 791101019,
+      "steps": 1200,
+      "success": false,
+      "supervised_added_rollout_count_total": 0,
+      "supervised_elite_count_total": 227,
+      "supervised_proposal_count_total": 1344,
+      "supervised_risk_feasible_count_total": 2456,
+      "supervised_selected_count_total": 3,
+      "termination_reason": "max_steps"
+    },
+    {
+      "active_paper_optimizer_budget_valid": true,
+      "arm": "full_plus_bootstrap_actor",
+      "cold_start": {
+        "early_window_forecast_availability_fraction": 0.14285714285714285,
+        "early_window_risk_unavailable_rejection_count": 0,
+        "early_window_safety_forced_stop_count": 0,
+        "first_dynamic_observation_time_s": 1.300000000000001,
+        "first_forecast_available_time_s": 1.300000000000001,
+        "first_imm_initialized_time_s": 1.300000000000001,
+        "first_persistent_conflict_time_s": 4.2999999999997485,
+        "history_frames_at_first_persistent_conflict": 3,
+        "stratum": "later_conflict_at_or_after_1_5s"
+      },
+      "collision": true,
+      "final_goal_distance": 8.637075947156427,
+      "map": "chapter2",
+      "minimum_clearance": -0.033931993985034686,
+      "missing_forecast_deterministic_stop_steps": 29,
+      "paper_total_rollouts_mean": 558.1730769230769,
+      "path_length": 8.214725393783262,
+      "per_cycle_rollout_counts": [
+        0,
+        600
+      ],
+      "provenance": {
+        "config_hash": "38f65c75f577af27eb49be5a72f1dd9eb93c147495dd8e8bd7e1787107bfa494",
+        "git_sha": "7721c8bf5d6ac7345ce8c82d05ee60d360a6c71f"
+      },
+      "safe_success": false,
+      "safety_overrides": 123,
+      "seed": 790202019,
+      "steps": 416,
+      "success": false,
+      "supervised_added_rollout_count_total": 0,
+      "supervised_elite_count_total": 197,
+      "supervised_proposal_count_total": 1161,
+      "supervised_risk_feasible_count_total": 1808,
+      "supervised_selected_count_total": 9,
+      "termination_reason": "collision"
+    },
+    {
+      "active_paper_optimizer_budget_valid": true,
+      "arm": "frozen_full",
+      "cold_start": {
+        "early_window_forecast_availability_fraction": 0.14285714285714285,
+        "early_window_risk_unavailable_rejection_count": 0,
+        "early_window_safety_forced_stop_count": 0,
+        "first_dynamic_observation_time_s": 1.300000000000001,
+        "first_forecast_available_time_s": 1.300000000000001,
+        "first_imm_initialized_time_s": 1.300000000000001,
+        "first_persistent_conflict_time_s": 12.300000000000777,
+        "history_frames_at_first_persistent_conflict": 8,
+        "stratum": "later_conflict_at_or_after_1_5s"
+      },
+      "collision": true,
+      "final_goal_distance": 8.801863368637168,
+      "map": "chapter2",
+      "minimum_clearance": -0.043219749518362244,
+      "missing_forecast_deterministic_stop_steps": 33,
+      "paper_total_rollouts_mean": 553.5211267605633,
+      "path_length": 7.602301425346916,
+      "per_cycle_rollout_counts": [
+        0,
+        600
+      ],
+      "provenance": {
+        "config_hash": "c4f57b197817d5237dd68606d1b932c266c9280ca16aa30844bb2a2cd4faa99c",
+        "git_sha": "bfe6a3af6e33ab534c53e3c319e301374b9ac922"
+      },
+      "safe_success": false,
+      "safety_overrides": 124,
+      "seed": 790202019,
+      "steps": 426,
+      "success": false,
+      "supervised_added_rollout_count_total": 0,
+      "supervised_elite_count_total": 0,
+      "supervised_proposal_count_total": 0,
+      "supervised_risk_feasible_count_total": 0,
+      "supervised_selected_count_total": 0,
+      "termination_reason": "collision"
+    },
+    {
+      "active_paper_optimizer_budget_valid": true,
+      "arm": "frozen_full",
+      "cold_start": {
+        "early_window_forecast_availability_fraction": 0.0,
+        "early_window_risk_unavailable_rejection_count": 0,
+        "early_window_safety_forced_stop_count": 0,
+        "first_dynamic_observation_time_s": 2.0000000000000013,
+        "first_forecast_available_time_s": 2.0000000000000013,
+        "first_imm_initialized_time_s": 2.0000000000000013,
+        "first_persistent_conflict_time_s": 9.299999999999775,
+        "history_frames_at_first_persistent_conflict": 8,
+        "stratum": "later_conflict_at_or_after_1_5s"
+      },
+      "collision": true,
+      "final_goal_distance": 2.380168889515545,
+      "map": "chapter3",
+      "minimum_clearance": -0.049046939807036005,
+      "missing_forecast_deterministic_stop_steps": 46,
+      "paper_total_rollouts_mean": 556.6718995290424,
+      "path_length": 18.52689122220757,
+      "per_cycle_rollout_counts": [
+        0,
+        600
+      ],
+      "provenance": {
+        "config_hash": "d7f71892fb5c2d4f37724cfbe46af18269c275aa2870f1fd516b37de26457643",
+        "git_sha": "ce5e9a9d85f7f7cc91815856b4d6e777582dd0bf"
+      },
+      "safe_success": false,
+      "safety_overrides": 110,
+      "seed": 791103019,
+      "steps": 637,
+      "success": false,
+      "supervised_added_rollout_count_total": 0,
+      "supervised_elite_count_total": 0,
+      "supervised_proposal_count_total": 0,
+      "supervised_risk_feasible_count_total": 0,
+      "supervised_selected_count_total": 0,
+      "termination_reason": "collision"
+    },
+    {
+      "active_paper_optimizer_budget_valid": true,
+      "arm": "full_plus_bootstrap_actor",
+      "cold_start": {
+        "early_window_forecast_availability_fraction": 0.0,
+        "early_window_risk_unavailable_rejection_count": 0,
+        "early_window_safety_forced_stop_count": 0,
+        "first_dynamic_observation_time_s": 2.0000000000000013,
+        "first_forecast_available_time_s": 2.0000000000000013,
+        "first_imm_initialized_time_s": 2.0000000000000013,
+        "first_persistent_conflict_time_s": 6.299999999999528,
+        "history_frames_at_first_persistent_conflict": 8,
+        "stratum": "later_conflict_at_or_after_1_5s"
+      },
+      "collision": true,
+      "final_goal_distance": 11.202386742126677,
+      "map": "chapter3",
+      "minimum_clearance": -0.014758996134822622,
+      "missing_forecast_deterministic_stop_steps": 157,
+      "paper_total_rollouts_mean": 503.779366700715,
+      "path_length": 15.691791284097805,
+      "per_cycle_rollout_counts": [
+        0,
+        600
+      ],
+      "provenance": {
+        "config_hash": "0c1086ecda3b097c25b959a5c4a16aa1de12a69f487589b7c8a578da46b8fdc3",
+        "git_sha": "b91d4e463e62d805d57cc66d10fc30e66ea685b1"
+      },
+      "safe_success": false,
+      "safety_overrides": 344,
+      "seed": 791103019,
+      "steps": 979,
+      "success": false,
+      "supervised_added_rollout_count_total": 0,
+      "supervised_elite_count_total": 592,
+      "supervised_proposal_count_total": 2466,
+      "supervised_risk_feasible_count_total": 4380,
+      "supervised_selected_count_total": 4,
+      "termination_reason": "collision"
+    }
+  ],
+  "fallback_applicable": false,
+  "fallback_pass": false,
+  "formal_experiment_authorized": false,
+  "maps_with_risk_feasible_supervised_proposals": 3,
+  "maps_with_supervised_proposals": 3,
+  "pair_count": 3,
+  "pair_revision_audits": [
+    {
+      "basis": "preoutcome_actor_off_equivalence_audit",
+      "control_git_sha": "11b13469fd1e0c5f21945c2d7c4af5ffc5c97909",
+      "equivalence_post_patch_git_sha": "fe2a0fb7a78f7d31573464f4f24c5ca51e9a58aa",
+      "map": "chapter1",
+      "non_artifact_changes": [
+        "configs/research/complex_supervised_maneuver_actor_gate_d_v1.yaml",
+        "experiments/dynamic_uncertainty/analyze_complex_supervised_maneuver_actor_gate_d.py",
+        "src/mobile_robot_mppi/evaluation/metrics.py",
+        "src/mobile_robot_mppi/planning/rl_driven_mppi.py",
+        "tests/dynamic_uncertainty/test_complex_supervised_maneuver_gate_d.py",
+        "tests/planners/test_paper_rl_driven_mppi.py"
+      ],
+      "post_audit_non_artifact_changes": [],
+      "seed": 791101019,
+      "status": "pass",
+      "treatment_git_sha": "afcf3fbf664e8035fa7d55a393d8d672af1f17c0"
+    },
+    {
+      "basis": "artifact_only_commits_between_arms",
+      "control_git_sha": "bfe6a3af6e33ab534c53e3c319e301374b9ac922",
+      "map": "chapter2",
+      "non_artifact_changes": [],
+      "seed": 790202019,
+      "status": "pass",
+      "treatment_git_sha": "7721c8bf5d6ac7345ce8c82d05ee60d360a6c71f"
+    },
+    {
+      "basis": "artifact_only_commits_between_arms",
+      "control_git_sha": "ce5e9a9d85f7f7cc91815856b4d6e777582dd0bf",
+      "map": "chapter3",
+      "non_artifact_changes": [],
+      "seed": 791103019,
+      "status": "pass",
+      "treatment_git_sha": "b91d4e463e62d805d57cc66d10fc30e66ea685b1"
+    }
+  ],
+  "scope": "engineering_paired_closed_loop_development_not_confirmatory",
+  "statistical_claim_authorized": false,
+  "status": "fail",
+  "success_gains": 0,
+  "success_losses": 0,
+  "terminal_goal_distance_gains_m": [
+    2.6635985417844776,
+    0.16478742148074055,
+    -8.822217852611132
+  ],
+  "total_supervised_elite_or_selected_count": 1032
+}

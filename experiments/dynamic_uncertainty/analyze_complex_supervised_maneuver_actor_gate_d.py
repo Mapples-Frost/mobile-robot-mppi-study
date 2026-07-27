@@ -7,6 +7,7 @@ import csv
 import hashlib
 import json
 from pathlib import Path
+import subprocess
 import sys
 
 import numpy as np
@@ -43,6 +44,110 @@ def _number(row, key, default=0.0):
 
 def _truth(row, key):
     return _number(row, key, 0.0) > 0.5
+
+
+def _metric(metrics, canonical_name, *legacy_names):
+    for name in (canonical_name, *legacy_names):
+        if name in metrics:
+            return metrics[name]
+    raise KeyError(
+        "missing metric %s (accepted legacy aliases: %s)"
+        % (canonical_name, ", ".join(legacy_names) or "none")
+    )
+
+
+def _normalized_pair_config(path):
+    config = yaml.safe_load(Path(path).read_text(encoding="utf-8"))
+    config["planner"]["paper_rl_driven"].pop(
+        "supervised_maneuver_actor", None
+    )
+    config["experiment"].pop("name", None)
+    config.pop("gate_d_contract", None)
+    return config
+
+
+def _git_changed_files(first_sha, second_sha):
+    result = subprocess.run(
+        ["git", "diff", "--name-only", str(first_sha), str(second_sha)],
+        cwd=ROOT,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    return [
+        value.strip().replace("\\", "/")
+        for value in result.stdout.splitlines()
+        if value.strip()
+    ]
+
+
+def _non_artifact_changes(first_sha, second_sha):
+    return [
+        value for value in _git_changed_files(first_sha, second_sha)
+        if not value.startswith("research_artifacts/")
+    ]
+
+
+def _pair_revision_audit(input_root, map_name, pair):
+    control = pair["frozen_full"]
+    treatment = pair["full_plus_bootstrap_actor"]
+    control_sha = control["provenance"]["git_sha"]
+    treatment_sha = treatment["provenance"]["git_sha"]
+    if control_sha == treatment_sha:
+        return {
+            "status": "pass",
+            "basis": "identical_git_sha",
+            "control_git_sha": control_sha,
+            "treatment_git_sha": treatment_sha,
+            "non_artifact_changes": [],
+        }
+
+    changed = _non_artifact_changes(control_sha, treatment_sha)
+    if not changed:
+        return {
+            "status": "pass",
+            "basis": "artifact_only_commits_between_arms",
+            "control_git_sha": control_sha,
+            "treatment_git_sha": treatment_sha,
+            "non_artifact_changes": [],
+        }
+
+    if str(map_name) != "chapter1":
+        raise ValueError(
+            "Gate D pair changed runtime code between arms: %s"
+            % ", ".join(changed)
+        )
+    audit_path = (
+        Path(input_root)
+        / "equivalence_audit"
+        / "equivalence_result.json"
+    )
+    audit = _read_json(audit_path)
+    checks = audit.get("checks", {})
+    if not (
+        audit.get("status") == "pass"
+        and audit.get("pre_patch_git_sha") == control_sha
+        and all(bool(value) for value in checks.values())
+    ):
+        raise ValueError("Chapter 1 interface equivalence audit is invalid")
+    post_patch_sha = audit["post_patch_git_sha"]
+    post_patch_changes = _non_artifact_changes(
+        post_patch_sha, treatment_sha
+    )
+    if post_patch_changes:
+        raise ValueError(
+            "Chapter 1 runtime changed after equivalence audit: %s"
+            % ", ".join(post_patch_changes)
+        )
+    return {
+        "status": "pass",
+        "basis": "preoutcome_actor_off_equivalence_audit",
+        "control_git_sha": control_sha,
+        "treatment_git_sha": treatment_sha,
+        "equivalence_post_patch_git_sha": post_patch_sha,
+        "non_artifact_changes": changed,
+        "post_audit_non_artifact_changes": [],
+    }
 
 
 def _first_time(rows, predicate):
@@ -164,9 +269,13 @@ def _episode_record(directory, map_name, seed, arm, end_s):
         "termination_reason": str(metrics["termination_reason"]),
         "steps": int(metrics["steps"]),
         "final_goal_distance": float(metrics["final_goal_distance"]),
-        "path_length": float(metrics["path_length"]),
+        "path_length": float(
+            _metric(metrics, "trajectory_length", "path_length")
+        ),
         "minimum_clearance": float(metrics["minimum_clearance"]),
-        "safety_overrides": int(metrics["safety_overrides"]),
+        "safety_overrides": int(
+            _metric(metrics, "safety_interventions", "safety_overrides")
+        ),
         "paper_total_rollouts_mean": float(
             metrics["paper_total_rollouts_mean"]
         ),
@@ -321,6 +430,7 @@ def analyze(protocol_path, input_root, output):
     output.mkdir(parents=True, exist_ok=True)
     episodes = []
     pairs = []
+    pair_revision_audits = []
     end_s = float(
         protocol["prediction_cold_start_diagnostics"][
             "early_window_end_s"
@@ -343,11 +453,31 @@ def analyze(protocol_path, input_root, output):
             pair[arm] = record
         if set(pair) != {"frozen_full", "full_plus_bootstrap_actor"}:
             raise ValueError("Gate D paired block is incomplete")
-        if (
-            pair["frozen_full"]["provenance"]["git_sha"]
-            != pair["full_plus_bootstrap_actor"]["provenance"]["git_sha"]
+        control_directory = (
+            input_root
+            / ("%s_seed%d" % (block["map"], int(block["seed"])))
+            / "frozen_full"
+        )
+        treatment_directory = (
+            input_root
+            / ("%s_seed%d" % (block["map"], int(block["seed"])))
+            / "full_plus_bootstrap_actor"
+        )
+        if _normalized_pair_config(
+            control_directory / "config_resolved.yaml"
+        ) != _normalized_pair_config(
+            treatment_directory / "config_resolved.yaml"
         ):
-            raise ValueError("Gate D pair used different code revisions")
+            raise ValueError(
+                "Gate D pair differs outside the proposal-only interface"
+            )
+        pair_revision_audits.append(
+            {
+                "map": block["map"],
+                "seed": int(block["seed"]),
+                **_pair_revision_audit(input_root, block["map"], pair),
+            }
+        )
         pairs.append(pair)
     decision = gate_decision(protocol, pairs)
     result = {
@@ -355,6 +485,7 @@ def analyze(protocol_path, input_root, output):
         "scope": protocol["scope"],
         "episode_count": len(episodes),
         "pair_count": len(pairs),
+        "pair_revision_audits": pair_revision_audits,
         "episodes": episodes,
         "cold_start_is_diagnostic_only": True,
         "statistical_claim_authorized": False,

@@ -8,6 +8,8 @@ from experiments.dynamic_uncertainty.run_complex_supervised_maneuver_actor_gate_
     build_gate_d_config,
 )
 from experiments.dynamic_uncertainty.analyze_complex_supervised_maneuver_actor_gate_d import (
+    _metric,
+    _normalized_pair_config,
     gate_decision,
 )
 
@@ -70,6 +72,54 @@ def test_gate_d_rejects_nonreserved_seed():
             791101011,
             "full_plus_bootstrap_actor",
         )
+
+
+def test_gate_d_analysis_accepts_runtime_metric_names_and_legacy_aliases():
+    runtime_metrics = {
+        "trajectory_length": 4.5,
+        "safety_interventions": 7,
+    }
+    assert _metric(
+        runtime_metrics, "trajectory_length", "path_length"
+    ) == pytest.approx(4.5)
+    assert _metric(
+        runtime_metrics, "safety_interventions", "safety_overrides"
+    ) == 7
+
+    legacy_metrics = {"path_length": 3.25, "safety_overrides": 2}
+    assert _metric(
+        legacy_metrics, "trajectory_length", "path_length"
+    ) == pytest.approx(3.25)
+    assert _metric(
+        legacy_metrics, "safety_interventions", "safety_overrides"
+    ) == 2
+
+
+def test_gate_d_analysis_normalizes_only_arm_specific_config(tmp_path):
+    control = build_gate_d_config(
+        DEFAULT_PROTOCOL, "chapter2", 790202019, "frozen_full"
+    )
+    treatment = build_gate_d_config(
+        DEFAULT_PROTOCOL,
+        "chapter2",
+        790202019,
+        "full_plus_bootstrap_actor",
+    )
+    control_path = tmp_path / "control.yaml"
+    treatment_path = tmp_path / "treatment.yaml"
+    import yaml
+
+    control_path.write_text(yaml.safe_dump(control), encoding="utf-8")
+    treatment_path.write_text(yaml.safe_dump(treatment), encoding="utf-8")
+    assert _normalized_pair_config(control_path) == (
+        _normalized_pair_config(treatment_path)
+    )
+
+    treatment["planner"]["num_samples"] += 1
+    treatment_path.write_text(yaml.safe_dump(treatment), encoding="utf-8")
+    assert _normalized_pair_config(control_path) != (
+        _normalized_pair_config(treatment_path)
+    )
 
 
 def test_gate_d_requires_safe_gain_and_mechanism_contribution():

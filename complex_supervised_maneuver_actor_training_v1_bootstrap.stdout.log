@@ -1,0 +1,35 @@
+{
+  "best_epoch": 23,
+  "best_validation_loss": 0.18053875863552094,
+  "checks": {
+    "all_heads_used_on_training": true,
+    "left_right_direction_consistency": true,
+    "validation_best_head_rmse": true,
+    "validation_first_segment_rmse": true
+  },
+  "closed_loop_gate_d_authorized": false,
+  "gate": "A_imitation_only",
+  "gate_b_c_still_required": true,
+  "normalizer_unique_train_state_count": 9,
+  "status": "pass",
+  "train": {
+    "assigned_head_counts": [
+      16,
+      9,
+      10
+    ],
+    "best_head_rmse": 0.3245115578174591,
+    "first_segment_rmse": 0.3100361227989197,
+    "left_right_direction_consistency": 1.0
+  },
+  "validation": {
+    "assigned_head_counts": [
+      13,
+      10,
+      6
+    ],
+    "best_head_rmse": 0.44048017263412476,
+    "first_segment_rmse": 0.35965463519096375,
+    "left_right_direction_consistency": 1.0
+  }
+}

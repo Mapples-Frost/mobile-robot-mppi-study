@@ -1,0 +1,12 @@
+{
+  "checkpoint_sha256": "6b95e9ca384ced388b63a02c1337035bd1823b02d1469626fd5412b396b987fe",
+  "dataset_sha256": "6f9eb1f782d4eca2a64866183b3ab7fff51efd5cc5afe9942afc3db205590189",
+  "execution_authority": "proposal_only",
+  "formal_server_launch_authorized": false,
+  "git_sha": "e8f712dab70050b48d35623ca59aecf3bcc90559",
+  "protocol_config_hash": "635f08f7fa02337afd45780b5549343422a49c6561f926ec8bc76be5553ec6c2",
+  "protocol_sha256": "ac50420cd078afe43e9c93780a0741d8f8b0b810f59086b5b421f0eb14d15908",
+  "result_sha256": "0a40afba573b99670d0890d7fb4e8277906f370609fe110faa37e6f7dea04479",
+  "risk_icode_mppi_safety_changed": false,
+  "student_input_contains_future_truth": false
+}

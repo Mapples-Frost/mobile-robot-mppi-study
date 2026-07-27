@@ -1,6 +1,11 @@
 schema_version: 1
 protocol: complex_supervised_maneuver_actor_closed_loop_gate_d_v1
 scope: engineering_paired_closed_loop_development_not_confirmatory
+preexecution_amendment:
+  revision: 2
+  reason: preregister_prediction_cold_start_diagnostics
+  outcomes_opened_before_amendment: false
+  primary_gate_changed: false
 
 prerequisites:
   gate_bc_result: research_artifacts/complex_supervised_maneuver_actor_gate_bc_v1/gate_bc_result.json
@@ -35,6 +40,40 @@ online_interface:
     - supervised_risk_feasible_count
     - supervised_elite_count
     - supervised_selected_count
+
+# Chapter 3 expansion exposed a forecast-history boundary near episode start.
+# This is a predeclared diagnostic stratum only: it cannot be used to exclude
+# an episode, replace a seed, or alter the primary Gate D decision.
+prediction_cold_start_diagnostics:
+  early_window_end_s: 1.50
+  record_every_control_cycle: true
+  required_fields:
+    - episode_time_s
+    - dynamic_track_observation_count
+    - dynamic_track_history_length
+    - imm_initialized
+    - forecast_available
+    - forecast_unavailable_reason
+    - risk_rejected_due_to_unavailable_forecast
+    - safety_forced_stop
+    - supervised_proposal_count
+    - supervised_risk_feasible_count
+  episode_summary_fields:
+    - first_dynamic_observation_time_s
+    - first_imm_initialized_time_s
+    - first_forecast_available_time_s
+    - first_persistent_conflict_time_s
+    - history_frames_at_first_persistent_conflict
+    - early_window_forecast_availability_fraction
+    - early_window_risk_unavailable_rejection_count
+    - early_window_safety_forced_stop_count
+  analysis_strata:
+    - early_conflict_before_1_5s
+    - later_conflict_at_or_after_1_5s
+    - no_persistent_conflict
+  may_change_primary_gate_decision: false
+  may_trigger_seed_exclusion: false
+  may_trigger_mid_gate_retraining: false
 
 arms:
   frozen_full:

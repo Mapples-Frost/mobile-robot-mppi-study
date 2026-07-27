@@ -1876,6 +1876,28 @@ class EpisodeMetrics:
                     "supervised_added_rollout_count", 0
                 )
             ),
+            **{
+                f"supervised_head_{head}_{field}": (
+                    str(planner_diagnostics.get(
+                        f"supervised_head_{head}_{field}", "disabled"
+                    ))
+                    if field in ("source_id", "behavior_label")
+                    else int(planner_diagnostics.get(
+                        f"supervised_head_{head}_{field}", -1
+                        if field == "insertion_index" else 0
+                    ))
+                )
+                for head in range(3)
+                for field in (
+                    "source_id",
+                    "insertion_index",
+                    "behavior_label",
+                    "proposal_count",
+                    "risk_feasible_count",
+                    "elite_count",
+                    "selected_count",
+                )
+            },
             "reliability_hss_enabled": float(
                 planner_diagnostics.get("reliability_hss_enabled", False)
             ),
@@ -3689,6 +3711,19 @@ class EpisodeMetrics:
                 row.get("supervised_added_rollout_count", 0)
                 for row in values
             )),
+            **{
+                f"supervised_head_{head}_{field}_total": int(sum(
+                    row.get(f"supervised_head_{head}_{field}", 0)
+                    for row in values
+                ))
+                for head in range(3)
+                for field in (
+                    "proposal_count",
+                    "risk_feasible_count",
+                    "elite_count",
+                    "selected_count",
+                )
+            },
             "reliability_hss_enabled_fraction": float(np.mean([
                 row.get("reliability_hss_enabled", 0.0)
                 for row in values

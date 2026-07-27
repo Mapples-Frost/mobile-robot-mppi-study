@@ -254,29 +254,102 @@ def test_supervised_maneuver_actor_replaces_guided_rows_without_more_rollouts():
             num_samples=20,
             dt=0.1,
             noise_sigma=(0.08, 0.20),
+            path_preview_enabled=True,
+            path_boundary_enabled=True,
+            path_boundary_violation_penalty=10000.0,
+            path_boundary_candidate_filter_enabled=True,
             seed=20260718,
         ),
         sampling_prior=EncodedJointBatchedDirectPolicy(),
         maneuver_proposal_policy=FixedSupervisedManeuverPolicy(),
         paper_rl_driven_config={
             "iterations": 3,
-            "guided_fraction": 0.25,
+            "guided_fraction": 0.0,
             "elite_fraction": 0.25,
             "terminal_value_weight": 0.0,
         },
     )
 
-    result = controller.plan(_observation(), PointGoal(1.0, 0.0))
+    reference = PolylineReference(
+        [(0.0, 0.0), (1.0, 0.0)],
+        corridor_half_width=1.0,
+        footprint_radius=0.2,
+    )
+    result = controller.plan(_observation(), reference)
     diagnostics = result.diagnostics
 
     assert diagnostics["supervised_maneuver_actor_enabled"]
     assert diagnostics["supervised_proposal_count"] == 3
     assert diagnostics["supervised_replaced_guided_count"] == 3
     assert diagnostics["supervised_added_rollout_count"] == 0
-    assert diagnostics["paper_guided_unique_sequences"] == 5
-    assert diagnostics["paper_gaussian_samples_per_iteration"] == 15
+    assert diagnostics["paper_guided_unique_sequences"] == 4
+    assert diagnostics["paper_gaussian_samples_per_iteration"] == 16
     assert diagnostics["paper_total_rollouts"] == 60
     assert diagnostics["supervised_risk_feasible_count"] == 9
+    assert [
+        diagnostics[f"supervised_head_{head}_source_id"]
+        for head in range(3)
+    ] == [
+        "supervised_head_0",
+        "supervised_head_1",
+        "supervised_head_2",
+    ]
+    assert [
+        diagnostics[f"supervised_head_{head}_insertion_index"]
+        for head in range(3)
+    ] == [1, 2, 3]
+    assert [
+        diagnostics[f"supervised_head_{head}_behavior_label"]
+        for head in range(3)
+    ] == ["left", "right", "yield"]
+    assert [
+        diagnostics[f"supervised_head_{head}_proposal_count"]
+        for head in range(3)
+    ] == [1, 1, 1]
+    assert sum(
+        diagnostics[f"supervised_head_{head}_elite_count"]
+        for head in range(3)
+    ) == diagnostics["supervised_elite_count"]
+
+
+def test_supervised_allocation_floor_is_inert_when_actor_is_disabled():
+    controller = PaperRLDrivenMppiController(
+        DynamicUnicyclePrediction(),
+        dynamic_unicycle_state(),
+        body_velocity_action((0.0, 0.5), 1.0),
+        MppiConfig(
+            horizon=5,
+            num_samples=20,
+            dt=0.1,
+            noise_sigma=(0.08, 0.20),
+            path_preview_enabled=True,
+            path_boundary_enabled=True,
+            path_boundary_violation_penalty=10000.0,
+            path_boundary_candidate_filter_enabled=True,
+            seed=20260718,
+        ),
+        sampling_prior=EncodedJointBatchedDirectPolicy(),
+        paper_rl_driven_config={
+            "iterations": 3,
+            "guided_fraction": 0.0,
+            "elite_fraction": 0.25,
+            "terminal_value_weight": 0.0,
+        },
+    )
+
+    reference = PolylineReference(
+        [(0.0, 0.0), (1.0, 0.0)],
+        corridor_half_width=1.0,
+        footprint_radius=0.2,
+    )
+    result = controller.plan(_observation(), reference)
+    diagnostics = result.diagnostics
+
+    assert not diagnostics["supervised_maneuver_actor_enabled"]
+    assert diagnostics["supervised_proposal_count"] == 0
+    assert diagnostics["paper_guided_unique_sequences"] == 0
+    assert diagnostics["paper_gaussian_samples_per_iteration"] == 20
+    assert diagnostics["paper_total_rollouts"] == 60
 
 
 def test_paper_optimizer_applies_shared_boundary_candidate_filter(monkeypatch):

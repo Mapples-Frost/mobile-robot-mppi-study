@@ -13,6 +13,17 @@ post_first_control_integrity_clarification:
   reason: distinguish_active_paper_budget_from_frozen_missing_forecast_stop
   primary_gate_changed: false
   seed_or_arm_changed: false
+pre_actor_outcome_interface_correction:
+  revision: 4
+  applied_after_first_control_outcome_opened: true
+  actor_outcomes_opened_before_correction: false
+  failed_actor_attempt_reached_first_control: false
+  reason: reserve_fixed_budget_rows_for_all_three_supervised_heads
+  primary_gate_changed: false
+  seed_or_arm_changed: false
+  frozen_full_equivalence_required_before_reusing_control: true
+  actor_checkpoint_changed: false
+  risk_icode_mppi_cost_safety_changed: false
 
 prerequisites:
   gate_bc_result: research_artifacts/complex_supervised_maneuver_actor_gate_bc_v1/gate_bc_result.json
@@ -39,6 +50,9 @@ online_interface:
   active_paper_optimizer_rollouts_per_decision: 600
   frozen_missing_forecast_deterministic_stop_rollouts: 0
   permitted_per_cycle_rollout_counts: [0, 600]
+  supervised_head_rows: 3
+  deterministic_braking_reserve_rows: 1
+  minimum_actor_enabled_guided_allocation: 4
   rollout_budget_may_increase: false
   actor_sequences_pass_through:
     - frozen_icode_rollout
@@ -50,6 +64,12 @@ online_interface:
     - supervised_risk_feasible_count
     - supervised_elite_count
     - supervised_selected_count
+    - supervised_head_0_source_id
+    - supervised_head_1_source_id
+    - supervised_head_2_source_id
+    - supervised_head_0_behavior_label
+    - supervised_head_1_behavior_label
+    - supervised_head_2_behavior_label
 
 # Chapter 3 expansion exposed a forecast-history boundary near episode start.
 # This is a predeclared diagnostic stratum only: it cannot be used to exclude

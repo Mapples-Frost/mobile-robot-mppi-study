@@ -23,6 +23,7 @@ def _without_arm_specific_fields(config):
 
 
 def test_gate_d_pair_differs_only_by_proposal_actor_interface():
+    protocol = _load_protocol(DEFAULT_PROTOCOL)
     control = build_gate_d_config(
         DEFAULT_PROTOCOL, "chapter1", 791101019, "frozen_full"
     )
@@ -48,6 +49,17 @@ def test_gate_d_pair_differs_only_by_proposal_actor_interface():
             * config["planner"]["paper_rl_driven"]["iterations"]
             == 600
         )
+    assert protocol["online_interface"]["supervised_head_rows"] == 3
+    assert (
+        protocol["online_interface"][
+            "minimum_actor_enabled_guided_allocation"
+        ]
+        == protocol["online_interface"]["supervised_head_rows"]
+        + protocol["online_interface"][
+            "deterministic_braking_reserve_rows"
+        ]
+        == 4
+    )
 
 
 def test_gate_d_rejects_nonreserved_seed():

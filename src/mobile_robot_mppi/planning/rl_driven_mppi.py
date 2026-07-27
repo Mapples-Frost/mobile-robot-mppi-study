@@ -1797,6 +1797,38 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
         guided_count = int(round(
             self.config.num_samples * applied_guided_fraction
         ))
+        hard_boundary_filter = bool(
+            self.config.path_boundary_candidate_filter_enabled
+        )
+        hard_static_filter = bool(
+            self.config.known_static_map_candidate_filter_enabled
+            and known_static_obstacles
+        )
+        risk_candidate_filter = bool(
+            self.config.probabilistic_obstacle_risk_enabled
+            and self.config.probabilistic_obstacle_candidate_filter_enabled
+        )
+        supervised_head_count = int(
+            getattr(self.maneuver_proposal_policy, "heads", 0)
+            if self.maneuver_proposal_policy is not None else 0
+        )
+        # Reserve the frozen proposal-only Actor's three rows inside K before
+        # any candidates are sampled.  A hard candidate filter also owns slot
+        # zero as the deterministic braking reserve, so that row cannot hold a
+        # supervised head.  Actor-off allocation and RNG consumption are
+        # untouched by this conditional floor.
+        supervised_reserved_rows = supervised_head_count + int(
+            hard_boundary_filter
+            or hard_static_filter
+            or risk_candidate_filter
+        )
+        if supervised_reserved_rows > self.config.num_samples:
+            raise ValueError(
+                "fixed candidate budget cannot hold supervised maneuver "
+                "proposals and the braking reserve"
+            )
+        if supervised_head_count:
+            guided_count = max(guided_count, supervised_reserved_rows)
         joint_actor_batch = callable(
             getattr(
                 self.sampling_prior,
@@ -1989,6 +2021,11 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
             state, observation, reference
         )
         supervised_count = int(supervised.shape[0])
+        if supervised_count != supervised_head_count:
+            raise ValueError(
+                "supervised maneuver proposal count changed after fixed "
+                "allocation"
+            )
         if supervised_count > guided_count:
             raise ValueError(
                 "fixed guided allocation cannot hold all supervised "
@@ -2015,7 +2052,29 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
         total_supervised_risk_feasible = 0
         total_supervised_opportunities = 0
         supervised_selected_count = 0
+        supervised_selected_head = -1
         supervised_elite_weight_sum = 0.0
+        supervised_head_risk_feasible = np.zeros(
+            supervised_count, dtype=np.int64
+        )
+        supervised_head_elites = np.zeros(
+            supervised_count, dtype=np.int64
+        )
+        supervised_head_selected = np.zeros(
+            supervised_count, dtype=np.int64
+        )
+        supervised_head_behavior = []
+        behavior_window = max(1, min(self.config.horizon, 12))
+        for head in range(supervised_count):
+            mean_omega = float(np.mean(
+                supervised[head, :behavior_window, 1]
+            ))
+            if mean_omega > 0.05:
+                supervised_head_behavior.append("left")
+            elif mean_omega < -0.05:
+                supervised_head_behavior.append("right")
+            else:
+                supervised_head_behavior.append("yield")
         total_guided_opportunities = 0
         total_gaussian_opportunities = 0
         guided_costs_by_iteration = []
@@ -2032,17 +2091,6 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
         terminal_diagnostics = {}
         constraints = None
         final_weights = None
-        hard_boundary_filter = bool(
-            self.config.path_boundary_candidate_filter_enabled
-        )
-        hard_static_filter = bool(
-            self.config.known_static_map_candidate_filter_enabled
-            and known_static_obstacles
-        )
-        risk_candidate_filter = bool(
-            self.config.probabilistic_obstacle_risk_enabled
-            and self.config.probabilistic_obstacle_candidate_filter_enabled
-        )
         boundary_feasible_fractions = []
         boundary_no_feasible_iterations = 0
         boundary_last_feasible = None
@@ -2242,7 +2290,9 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
                 np.zeros(gaussian_count, dtype=np.int8),
             ))
             if supervised_count:
-                labels[supervised_start:guided_count] = 2
+                labels[supervised_start:guided_count] = (
+                    2 + np.arange(supervised_count, dtype=np.int8)
+                )
             if (
                 hard_boundary_filter
                 or hard_static_filter
@@ -2476,8 +2526,8 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
             risk_last_costs = costs.copy()
             emergency_last_mask = emergency_mask.copy()
             traversal_last_index = int(traversal_index)
-            guided_mask = (labels == 1) | (labels == 2)
-            supervised_mask = labels == 2
+            guided_mask = labels >= 1
+            supervised_mask = labels >= 2
             gaussian_mask = labels == 0
             guided_boundary_feasible_count += int(np.sum(
                 boundary_feasible & guided_mask
@@ -2492,6 +2542,10 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
                 risk_feasible & supervised_mask
             ))
             total_supervised_opportunities += int(np.sum(supervised_mask))
+            for head in range(supervised_count):
+                supervised_head_risk_feasible[head] += int(np.sum(
+                    risk_feasible & (labels == 2 + head)
+                ))
             if hard_boundary_filter and np.any(guided_mask):
                 guided_boundary_violations = (
                     boundary_margins[guided_mask, 1:] < 0.0
@@ -2615,24 +2669,32 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
                 maximum_variance,
             )
             total_guided_elites += int(
-                np.sum(
-                    (labels[elite_indices] == 1)
-                    | (labels[elite_indices] == 2)
-                )
+                np.sum(labels[elite_indices] >= 1)
             )
             total_gaussian_elites += int(
                 np.sum(labels[elite_indices] == 0)
             )
-            supervised_elite_mask = labels[elite_indices] == 2
+            supervised_elite_mask = labels[elite_indices] >= 2
             total_supervised_elites += int(np.sum(
                 supervised_elite_mask
             ))
             supervised_elite_weight_sum = float(np.sum(
                 final_weights[supervised_elite_mask]
             ))
-            supervised_selected_count = int(
-                labels[elite_indices[int(np.argmax(final_weights))]] == 2
+            selected_label = int(
+                labels[elite_indices[int(np.argmax(final_weights))]]
             )
+            supervised_selected_count = int(selected_label >= 2)
+            supervised_selected_head = (
+                selected_label - 2 if selected_label >= 2 else -1
+            )
+            for head in range(supervised_count):
+                supervised_head_elites[head] += int(np.sum(
+                    labels[elite_indices] == 2 + head
+                ))
+                supervised_head_selected[head] = int(
+                    supervised_selected_head == head
+                )
             costs_by_iteration.append(costs)
 
         source_competence = {
@@ -3241,6 +3303,9 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
             "supervised_selected_count": int(
                 supervised_selected_count
             ),
+            "supervised_selected_head_index": int(
+                supervised_selected_head
+            ),
             "supervised_replaced_guided_count": int(supervised_count),
             "supervised_added_rollout_count": 0,
             "paper_gaussian_samples_per_iteration": int(gaussian_count),
@@ -3508,4 +3573,31 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
                 if residual_authority.size else 0.0
             ),
         })
+        for head in range(3):
+            present = head < supervised_count
+            diagnostics.update({
+                f"supervised_head_{head}_source_id": (
+                    f"supervised_head_{head}" if present else "disabled"
+                ),
+                f"supervised_head_{head}_insertion_index": (
+                    int(supervised_start + head) if present else -1
+                ),
+                f"supervised_head_{head}_behavior_label": (
+                    supervised_head_behavior[head]
+                    if present else "disabled"
+                ),
+                f"supervised_head_{head}_proposal_count": int(present),
+                f"supervised_head_{head}_risk_feasible_count": (
+                    int(supervised_head_risk_feasible[head])
+                    if present else 0
+                ),
+                f"supervised_head_{head}_elite_count": (
+                    int(supervised_head_elites[head])
+                    if present else 0
+                ),
+                f"supervised_head_{head}_selected_count": (
+                    int(supervised_head_selected[head])
+                    if present else 0
+                ),
+            })
         return action, sequence, trajectory, diagnostics

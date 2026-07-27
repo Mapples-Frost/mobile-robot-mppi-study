@@ -1,0 +1,10 @@
+Traceback (most recent call last):
+  File "D:\Projects\mobile-robot-mppi-study-single-v6\experiments\dynamic_uncertainty\audit_complex_privileged_teacher_gate.py", line 585, in <module>
+    raise SystemExit(main())
+  File "D:\Projects\mobile-robot-mppi-study-single-v6\experiments\dynamic_uncertainty\audit_complex_privileged_teacher_gate.py", line 526, in main
+    results = [
+  File "D:\Projects\mobile-robot-mppi-study-single-v6\experiments\dynamic_uncertainty\audit_complex_privileged_teacher_gate.py", line 527, in <listcomp>
+    _audit_map(map_name, item, teacher)
+  File "D:\Projects\mobile-robot-mppi-study-single-v6\experiments\dynamic_uncertainty\audit_complex_privileged_teacher_gate.py", line 357, in _audit_map
+    predicted = components["controller"].rollout(
+AttributeError: 'ResidualSafetyShieldController' object has no attribute 'rollout'

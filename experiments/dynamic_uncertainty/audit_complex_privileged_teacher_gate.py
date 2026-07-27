@@ -310,6 +310,20 @@ def _risk_config(controller):
     )
 
 
+def _icode_controller(controller):
+    """Return the frozen ICODE planner beneath an optional safety shield."""
+
+    value = getattr(controller, "residual_controller", controller)
+    if not hasattr(value, "rollout"):
+        raise TypeError("frozen ICODE controller does not expose rollout")
+    if str(getattr(value, "prediction_mode", "")) not in {
+        "",
+        "icode_residual",
+    }:
+        raise ValueError("teacher gate must audit the ICODE rollout")
+    return value
+
+
 def _audit_map(map_name, item, teacher):
     artifact = (ROOT / item["artifact"]).resolve()
     config_path = artifact / "config_resolved.yaml"
@@ -354,11 +368,12 @@ def _audit_map(map_name, item, teacher):
             target_xy,
         )
         prefix = int(teacher["deployment_prefix_steps"])
-        predicted = components["controller"].rollout(
+        icode = _icode_controller(components["controller"])
+        predicted = icode.rollout(
             state, candidates[:, :prefix]
         )
         forecast_key = (
-            components["controller"].config
+            icode.config
             .probabilistic_obstacle_forecast_key
         )
         forecasts = tuple(
@@ -369,7 +384,7 @@ def _audit_map(map_name, item, teacher):
         risk = evaluate_collision_risk(
             predicted[:, 1:, :2],
             forecasts,
-            _risk_config(components["controller"]),
+            _risk_config(icode),
         )
         predicted_static = np.asarray([
             min(

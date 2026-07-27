@@ -5,6 +5,7 @@ import yaml
 
 from experiments.dynamic_uncertainty.audit_complex_privileged_teacher_gate import (
     _candidate_lattice,
+    _icode_controller,
     _load_protocol,
 )
 from mobile_robot_mppi.core.spaces import ActionSpec
@@ -66,3 +67,18 @@ def test_teacher_lattice_is_bounded_deterministic_and_multimodal():
     assert any(label.startswith("reverse_") for label in labels)
     assert "stop" in labels
     assert "reverse" in labels
+
+
+def test_teacher_gate_unwraps_residual_safety_shield():
+    class Planner:
+        prediction_mode = "icode_residual"
+
+        def rollout(self):
+            pass
+
+    class Shield:
+        residual_controller = Planner()
+
+    planner = _icode_controller(Shield())
+
+    assert planner is Shield.residual_controller

@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "status": "pass",
+  "scope": "actor_off_interface_equivalence",
+  "map": "chapter1",
+  "seed": 791101019,
+  "arm": "frozen_full",
+  "pre_patch_git_sha": "11b13469fd1e0c5f21945c2d7c4af5ffc5c97909",
+  "post_patch_git_sha": "fe2a0fb7a78f7d31573464f4f24c5ca51e9a58aa",
+  "old_trajectory_sha256": "8428BFDDC798A304226C5D3BADAC2AD1710DAEDC3C8C750B0B7A8C4E8D0A808C",
+  "new_trajectory_sha256": "099EF158F1B320E608FD0873E1BA9EF5191444C585928008B61DAF58496DC411",
+  "new_metrics_sha256": "2640122DA8FC31D07BF27AEE260F29AAEA3E7F843B1F2B1F34EC0788845B4637",
+  "row_count_old": 211,
+  "row_count_new": 211,
+  "old_column_count": 581,
+  "new_column_count": 602,
+  "common_column_count": 581,
+  "deterministic_common_column_count": 572,
+  "deterministic_common_columns_exact": true,
+  "non_deterministic_timing_columns_excluded": [
+    "planner_compute_ms",
+    "profile_planner_state_reference_ms",
+    "profile_planner_prior_ms",
+    "profile_mppi_sampling_ms",
+    "profile_mppi_batch_rollout_ms",
+    "profile_mppi_cost_ms",
+    "profile_mppi_weighting_update_ms",
+    "profile_mppi_final_rollout_ms",
+    "profile_mppi_solve_total_ms"
+  ],
+  "checks": {
+    "control_sequence_exact": true,
+    "robot_trajectory_exact": true,
+    "risk_diagnostics_exact": true,
+    "per_cycle_rollout_count_exact": true,
+    "random_candidate_diagnostics_exact": true,
+    "success_exact": true,
+    "collision_exact": true,
+    "termination_reason_exact": true,
+    "steps_exact": true,
+    "final_goal_distance_exact": true
+  },
+  "outcome": {
+    "success": false,
+    "collision": true,
+    "termination_reason": "collision",
+    "steps": 211,
+    "final_goal_distance": 5.319592391915956,
+    "paper_total_rollouts_mean": 554.5023696682465
+  },
+  "decision": "reuse_pre_patch_frozen_full_control_and_run_only_paired_actor_arm",
+  "actor_outcomes_opened_before_decision": false
+}

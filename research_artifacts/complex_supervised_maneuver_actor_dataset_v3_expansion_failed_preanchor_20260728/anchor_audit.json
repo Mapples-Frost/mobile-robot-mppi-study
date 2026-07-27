@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "status": "fail",
+  "stage": "pre_oracle_anchor_validation",
+  "training_started": false,
+  "oracle_label_search_started": false,
+  "seed_replacement_authorized": false,
+  "failure_reason": "three of six frozen sources contain no forecast-valid hard-risk anchor",
+  "gate_consequence": {
+    "available_train_scenarios": 3,
+    "required_train_scenarios": 4,
+    "available_validation_scenarios": 0,
+    "required_validation_scenarios": 2,
+    "dataset_gate_can_pass": false
+  },
+  "sources": [
+    {
+      "map": "chapter1",
+      "seed": 791101031,
+      "split": "train",
+      "anchor_status": "missing"
+    },
+    {
+      "map": "chapter1",
+      "seed": 791101037,
+      "split": "train",
+      "anchor_status": "available",
+      "anchor_index": 62,
+      "anchor_time_s": 6.299999999999528
+    },
+    {
+      "map": "chapter3",
+      "seed": 791103031,
+      "split": "train",
+      "anchor_status": "available",
+      "anchor_index": 22,
+      "anchor_time_s": 2.2999999999999683
+    },
+    {
+      "map": "chapter3",
+      "seed": 791103037,
+      "split": "train",
+      "anchor_status": "available",
+      "anchor_index": 21,
+      "anchor_time_s": 2.1999999999999793
+    },
+    {
+      "map": "chapter2",
+      "seed": 790202031,
+      "split": "validation",
+      "anchor_status": "missing"
+    },
+    {
+      "map": "chapter2",
+      "seed": 790202037,
+      "split": "validation",
+      "anchor_status": "missing"
+    }
+  ],
+  "next_action": "preserve_failure_then_run_cross_layer_diagnosis_without_replacing_seeds"
+}

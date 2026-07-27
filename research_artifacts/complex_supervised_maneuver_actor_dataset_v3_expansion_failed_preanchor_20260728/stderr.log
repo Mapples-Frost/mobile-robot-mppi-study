@@ -1,0 +1,10 @@
+Traceback (most recent call last):
+  File "D:\Projects\mobile-robot-mppi-study-single-v6\experiments\dynamic_uncertainty\generate_complex_supervised_maneuver_dataset.py", line 561, in <module>
+    raise SystemExit(main())
+  File "D:\Projects\mobile-robot-mppi-study-single-v6\experiments\dynamic_uncertainty\generate_complex_supervised_maneuver_dataset.py", line 557, in main
+    return generate(args.protocol, args.output)
+  File "D:\Projects\mobile-robot-mppi-study-single-v6\experiments\dynamic_uncertainty\generate_complex_supervised_maneuver_dataset.py", line 426, in generate
+    conflict = _anchor_index(rows, item["conflict_rule"])
+  File "D:\Projects\mobile-robot-mppi-study-single-v6\experiments\dynamic_uncertainty\audit_complex_privileged_teacher_gate.py", line 181, in _anchor_index
+    raise ValueError("saved episode contains no forecast-valid hard-risk row")
+ValueError: saved episode contains no forecast-valid hard-risk row

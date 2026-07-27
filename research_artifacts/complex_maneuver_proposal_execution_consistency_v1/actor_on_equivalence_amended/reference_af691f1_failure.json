@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "status": "actor_on_margin_zero_reference_runtime_failure",
+  "reference_commit": "af691f184774094551d13fb4cde51d98bad2caf9",
+  "map": "chapter1",
+  "seed": 791101019,
+  "arm": "full_plus_bootstrap_actor",
+  "margin": 0.0,
+  "failure_layer": "evaluation_tracking_monitor",
+  "exception": "ValueError: minimum polyline progress is outside the route",
+  "exception_location": "src/mobile_robot_mppi/core/references.py:293",
+  "stderr_sha256": "8e7eedf8b2c9832ac9b88c9311bb84641137c20068ae271090ee466737cbffaa",
+  "source_comparison": {
+    "references_py_changed_since_af691f1": false,
+    "tracking_py_changed_since_af691f1": false,
+    "metrics_py_changed_since_af691f1": false
+  },
+  "complete_episode_produced": false,
+  "equivalence_decision_available": false,
+  "authorization": {
+    "current_diagnostic_actor_on_run": false,
+    "margin_0_02": false
+  },
+  "interpretation": "The amended Actor-on reference could not complete under the current runtime because the evaluation tracker supplied a minimum progress value outside a changed or shorter polyline reference. This is an unchanged evaluation-interface failure, not evidence for or against supervised proposal equivalence.",
+  "next_step": "Preserve the partial run. Audit reference identity/replanning transitions in the tracking monitor and freeze a shared evaluation-only fix before rerunning both reference and diagnostic Actor-on arms."
+}

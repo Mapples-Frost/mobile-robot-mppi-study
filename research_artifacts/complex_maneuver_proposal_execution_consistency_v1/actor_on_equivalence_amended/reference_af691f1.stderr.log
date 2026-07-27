@@ -1,0 +1,16 @@
+Traceback (most recent call last):
+  File "D:\Projects\mobile-robot-mppi-study-gate-d-reference\experiments\dynamic_uncertainty\run_complex_supervised_maneuver_actor_gate_d.py", line 210, in <module>
+    raise SystemExit(main())
+  File "D:\Projects\mobile-robot-mppi-study-gate-d-reference\experiments\dynamic_uncertainty\run_complex_supervised_maneuver_actor_gate_d.py", line 204, in main
+    ).run()
+  File "D:\Projects\mobile-robot-mppi-study-gate-d-reference\src\mobile_robot_mppi\runtime\experiment_runner.py", line 130, in run
+    metrics.update(
+  File "D:\Projects\mobile-robot-mppi-study-gate-d-reference\src\mobile_robot_mppi\evaluation\metrics.py", line 2623, in update
+    record.update(self._tracking_monitor.update(
+  File "D:\Projects\mobile-robot-mppi-study-gate-d-reference\src\mobile_robot_mppi\evaluation\tracking.py", line 206, in update
+    sample = tracking_sample(
+  File "D:\Projects\mobile-robot-mppi-study-gate-d-reference\src\mobile_robot_mppi\evaluation\tracking.py", line 127, in tracking_sample
+    projection = reference.project(value[:2], minimum_progress=minimum_progress)
+  File "D:\Projects\mobile-robot-mppi-study-gate-d-reference\src\mobile_robot_mppi\core\references.py", line 293, in project
+    raise ValueError("minimum polyline progress is outside the route")
+ValueError: minimum polyline progress is outside the route

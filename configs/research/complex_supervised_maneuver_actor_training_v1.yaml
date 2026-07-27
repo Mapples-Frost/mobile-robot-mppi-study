@@ -1,0 +1,52 @@
+schema_version: 1
+protocol: complex_supervised_maneuver_actor_training_v1
+scope: engineering_bootstrap_not_confirmatory
+
+dataset:
+  directory: research_artifacts/complex_supervised_maneuver_actor_dataset_v1_bootstrap
+  file: student_dataset.npz
+  expected_sha256: 6f9eb1f782d4eca2a64866183b3ab7fff51efd5cc5afe9942afc3db205590189
+  gate: dataset_gate_result.json
+  gate_expected_status: pass
+  require_engineering_training_authorized: true
+  split_unit: complete_scenario
+
+model:
+  heads: 3
+  horizon: 36
+  action_dim: 2
+  hidden_sizes: [128, 128]
+  output: normalized_physical_control_sequence
+  execution_authority: proposal_only
+
+training:
+  seed: 2026072705
+  device: cpu
+  torch_num_threads: 4
+  epochs: 3000
+  learning_rate: 0.001
+  weight_decay: 0.0001
+  batch_size: 35
+  early_stopping_patience: 350
+  diversity_margin: 0.08
+  diversity_weight: 0.02
+  gradient_clip_norm: 5.0
+  normalizer_fit: unique_train_causal_states_only
+
+gate_a:
+  maximum_validation_best_head_rmse: 0.48
+  maximum_validation_first_segment_rmse: 0.55
+  minimum_left_right_direction_consistency: 0.70
+  require_all_heads_used_on_training: true
+  actor_training_result_only: true
+  gate_b_c_still_required: true
+
+frozen_contract:
+  actor_input_causal_only: true
+  future_truth_in_student_input: false
+  risk_changed: false
+  icode_changed: false
+  mppi_changed: false
+  safety_changed: false
+  maps_changed: false
+  formal_server_launch_authorized: false

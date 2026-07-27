@@ -1,0 +1,233 @@
+{
+  "schema_version": 1,
+  "status": "complete",
+  "created_at": "2026-07-28T00:35:20+08:00",
+  "scope": "opened_development_evidence_only",
+  "base_commit": "d9d11bc",
+  "frozen_constraints": {
+    "actor_checkpoint_unchanged": true,
+    "risk_unchanged": true,
+    "icode_unchanged": true,
+    "mppi_unchanged": true,
+    "safety_unchanged": true,
+    "maps_unchanged": true,
+    "total_rollout_budget": 600,
+    "seeds_replaced": false,
+    "thresholds_lowered": false,
+    "training_started": false
+  },
+  "v3_source_diagnosis": [
+    {
+      "map": "chapter1",
+      "seed": 791101031,
+      "anchor_available": false,
+      "forecast_valid_steps": 112,
+      "total_steps": 120,
+      "forecast_valid_fraction": 0.9333,
+      "first_forecast_time_s": 0.3,
+      "hard_risk_steps": 0,
+      "first_hard_risk_time_s": null,
+      "minimum_dynamic_center_distance_m": 1.0688,
+      "collision": false,
+      "safety_interventions": 0,
+      "goal_progress_m": 1.1418,
+      "stuck_steps": 62,
+      "classification": "forecast_available_but_no_qualifying_hard_risk_encounter"
+    },
+    {
+      "map": "chapter1",
+      "seed": 791101037,
+      "anchor_available": true,
+      "forecast_valid_steps": 109,
+      "total_steps": 120,
+      "forecast_valid_fraction": 0.9083,
+      "first_forecast_time_s": 0.3,
+      "hard_risk_steps": 18,
+      "first_hard_risk_time_s": 6.3,
+      "minimum_dynamic_center_distance_m": 0.6521,
+      "collision": false,
+      "safety_interventions": 16,
+      "goal_progress_m": 1.2158,
+      "stuck_steps": 54,
+      "classification": "qualifying_anchor_available"
+    },
+    {
+      "map": "chapter2",
+      "seed": 790202031,
+      "anchor_available": false,
+      "forecast_valid_steps": 109,
+      "total_steps": 120,
+      "forecast_valid_fraction": 0.9083,
+      "first_forecast_time_s": 0.8,
+      "hard_risk_steps": 0,
+      "first_hard_risk_time_s": null,
+      "minimum_dynamic_center_distance_m": 2.6495,
+      "collision": false,
+      "safety_interventions": 8,
+      "goal_progress_m": 3.3029,
+      "stuck_steps": 21,
+      "classification": "forecast_available_but_no_dynamic_conflict_in_probe_horizon"
+    },
+    {
+      "map": "chapter2",
+      "seed": 790202037,
+      "anchor_available": false,
+      "forecast_valid_steps": 95,
+      "total_steps": 120,
+      "forecast_valid_fraction": 0.7917,
+      "first_forecast_time_s": 1.5,
+      "hard_risk_steps": 0,
+      "first_hard_risk_time_s": null,
+      "minimum_dynamic_center_distance_m": 2.318,
+      "collision": false,
+      "safety_interventions": 22,
+      "goal_progress_m": 3.4317,
+      "stuck_steps": 22,
+      "classification": "forecast_available_but_no_dynamic_conflict_in_probe_horizon"
+    },
+    {
+      "map": "chapter3",
+      "seed": 791103031,
+      "anchor_available": true,
+      "forecast_valid_steps": 88,
+      "total_steps": 120,
+      "forecast_valid_fraction": 0.7333,
+      "first_forecast_time_s": 2.3,
+      "hard_risk_steps": 15,
+      "first_hard_risk_time_s": 2.3,
+      "minimum_dynamic_center_distance_m": 1.8503,
+      "collision": false,
+      "safety_interventions": 41,
+      "goal_progress_m": 0.5055,
+      "stuck_steps": 41,
+      "classification": "qualifying_anchor_available"
+    },
+    {
+      "map": "chapter3",
+      "seed": 791103037,
+      "anchor_available": true,
+      "forecast_valid_steps": 97,
+      "total_steps": 120,
+      "forecast_valid_fraction": 0.8083,
+      "first_forecast_time_s": 1.2,
+      "hard_risk_steps": 1,
+      "first_hard_risk_time_s": 2.2,
+      "minimum_dynamic_center_distance_m": 1.8608,
+      "collision": false,
+      "safety_interventions": 33,
+      "goal_progress_m": 0.9868,
+      "stuck_steps": 32,
+      "classification": "qualifying_anchor_available"
+    }
+  ],
+  "v3_gate_implication": {
+    "available_training_scenarios": 3,
+    "required_training_scenarios": 4,
+    "available_validation_scenarios": 0,
+    "required_validation_scenarios": 2,
+    "training_authorized": false,
+    "root_cause": "dataset_source_encounter_coverage_failure",
+    "excluded_root_causes": [
+      "systematic_forecast_unavailability",
+      "systematic_predictor_cold_start",
+      "oracle_search_failure",
+      "risk_rejection_of_a_found_teacher",
+      "safety_rejection_of_a_found_teacher"
+    ],
+    "interpretation": "The fixed 120-step source probes did not guarantee a forecast-valid hard-risk interaction. Chapter 2 remained 2.3180-2.6495 m from dynamic obstacles, so the absence of a hard-risk anchor is consistent with a missing encounter rather than a missed forecast."
+  },
+  "bootstrap_gate_d_diagnosis": {
+    "gate_status": "fail",
+    "task_improvement": false,
+    "success_gain_by_map": {
+      "chapter1": 0,
+      "chapter2": 0,
+      "chapter3": 0
+    },
+    "collision_regressions": 0,
+    "actor_proposals_total": 4971,
+    "actor_elites_total": 1016,
+    "actor_elite_fraction": 0.2044,
+    "actor_selected_total": 16,
+    "actor_selected_fraction": 0.00322,
+    "per_map": [
+      {
+        "map": "chapter1",
+        "actor_proposals": 1344,
+        "actor_elites": 227,
+        "actor_selected": 3,
+        "actor_safety_interventions": 592,
+        "actor_steps": 1200,
+        "actor_safety_intervention_fraction": 0.4933,
+        "frozen_terminal": "collision_step_211",
+        "actor_terminal": "timeout_max_steps_1200"
+      },
+      {
+        "map": "chapter2",
+        "actor_proposals": 1161,
+        "actor_elites": 197,
+        "actor_selected": 9,
+        "actor_safety_interventions": 123,
+        "actor_steps": 416,
+        "actor_safety_intervention_fraction": 0.2957,
+        "frozen_terminal": "collision_step_426",
+        "actor_terminal": "collision_step_416"
+      },
+      {
+        "map": "chapter3",
+        "actor_proposals": 2466,
+        "actor_elites": 592,
+        "actor_selected": 4,
+        "actor_safety_interventions": 344,
+        "actor_steps": 979,
+        "actor_safety_intervention_fraction": 0.3514,
+        "frozen_terminal": "collision_step_637",
+        "actor_terminal": "collision_step_979"
+      }
+    ],
+    "root_cause": "bootstrap_actor_post_proposal_selection_bottleneck",
+    "interpretation": "The Actor repaired proposal coverage and frequently reached the elite set, but only 16 of 4971 proposals were selected. High Safety intervention pressure and zero success gain show that proposal quality did not reliably survive MPPI arbitration and execution."
+  },
+  "cross_layer_conclusions": [
+    "forecast_systematically_available_not_missing",
+    "v3_dataset_failure_is_encounter_coverage_not_prediction_failure",
+    "bootstrap_actor_post_proposal_selection_bottleneck",
+    "safety_execution_pressure_high"
+  ],
+  "next_falsifiable_mechanism_family": {
+    "name": "proposal_to_execution_consistency",
+    "allowed_scope": "shared MPPI proposal weighting and selection diagnostics only",
+    "frozen_components": [
+      "Actor checkpoint",
+      "Risk",
+      "ICODE",
+      "Safety",
+      "maps",
+      "total 600-rollout budget"
+    ],
+    "hypothesis": "Preserving the influence of physically and probabilistically feasible supervised maneuver sequences through MPPI weighting and selection will increase Actor-selected or Actor-influenced controls without increasing collision incidence.",
+    "development_gate": [
+      "increase Actor-selected or demonstrably Actor-influenced control fraction on all three opened maps",
+      "no collision regression on any opened map",
+      "improve terminal goal distance or success on all three opened maps",
+      "retain exactly 600 rollouts on every forecast-valid planning cycle",
+      "no map-specific logic"
+    ],
+    "stop_rule": "Stop this mechanism family after three rounds without core improvement or two consecutive safety regressions."
+  },
+  "evidence_sha256": {
+    "chapter1_seed791101031_metrics": "e495a29ba3e4c62b7ac4bac92f9f018357283515168011a29aee3365e912b5a1",
+    "chapter1_seed791101031_trajectory": "caeb0ba5f52ecab67ec60dbacd0ca444ddba5c952a522bdf310f5e7938740abe",
+    "chapter1_seed791101037_metrics": "f45cc972eb6adb1acbbec142e990c95c0ce6e18527c71fce7725cdba5cb4d454",
+    "chapter1_seed791101037_trajectory": "8816572d0f6bd7a0da0bdb86f43b1fb3c8ea17edab3f87a6be13d961f9754f3f",
+    "chapter2_seed790202031_metrics": "9009098b6c54a03df4281afb0c263a0b49e87fff763e2599544c704f16d64f43",
+    "chapter2_seed790202031_trajectory": "b100f87db23d246b406a2c8961ec42d97f0412ca1230ba43b22278a166f68435",
+    "chapter2_seed790202037_metrics": "f3829152d8c5791f840238708cefdf7fa2d38e879620d04273258dfd59bd6de6",
+    "chapter2_seed790202037_trajectory": "69213d51b3ed9d2bdd34fb51e936a01ce8e080ca99350487b687105359ef85b7",
+    "chapter3_seed791103031_metrics": "528a217ac4d11e19f5ff2b91606a250b37618d8ec076e7b87807dc5f4f520256",
+    "chapter3_seed791103031_trajectory": "3b7a88bd0b7d36caccb6203a011bdf1f7cd729233fd940c973d491d0c189790f",
+    "chapter3_seed791103037_metrics": "2ac78901659dbd9d7fc06c66aad3782a636e9349100ad535cf7f7632d09a0da6",
+    "chapter3_seed791103037_trajectory": "48f12ab5ba338cc9c9d938b2e45552307334915c0a7fb9040240a6257629bdb7",
+    "bootstrap_gate_d_result": "aa3e0b036ff2953b232349ff457044ef08caaeaca965458984895d6f7d7b15e6"
+  }
+}

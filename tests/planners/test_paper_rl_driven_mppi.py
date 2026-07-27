@@ -310,6 +310,29 @@ def test_supervised_maneuver_actor_replaces_guided_rows_without_more_rollouts():
         diagnostics[f"supervised_head_{head}_elite_count"]
         for head in range(3)
     ) == diagnostics["supervised_elite_count"]
+    np.testing.assert_array_equal(
+        result.proposed_control.values,
+        np.asarray([0.32470858059649493, -0.004770097037225252]),
+    )
+    np.testing.assert_array_equal(
+        result.control_sequence,
+        np.asarray([
+            [0.32470858059649493, -0.004770097037225252],
+            [0.28212660428824793, 0.08921941646733215],
+            [0.29098010513176364, 0.11951080485655323],
+            [0.2926401120921471, 0.08754005366770627],
+            [0.23511248928577788, 0.07120363593054763],
+        ]),
+    )
+    assert diagnostics["supervised_elite_weight_mass_final_iteration"] == (
+        diagnostics["supervised_elite_weight_sum_final_iteration"]
+    )
+    assert not diagnostics["supervised_counterfactual_available"]
+    assert diagnostics[
+        "supervised_counterfactual_first_action_delta_norm"
+    ] == 0.0
+    assert diagnostics["supervised_post_guard_replacement_reason"] == "none"
+    assert not diagnostics["supervised_influence_survived_guard"]
 
 
 def test_supervised_allocation_floor_is_inert_when_actor_is_disabled():
@@ -350,6 +373,90 @@ def test_supervised_allocation_floor_is_inert_when_actor_is_disabled():
     assert diagnostics["paper_guided_unique_sequences"] == 0
     assert diagnostics["paper_gaussian_samples_per_iteration"] == 20
     assert diagnostics["paper_total_rollouts"] == 60
+    np.testing.assert_array_equal(
+        result.proposed_control.values,
+        np.asarray([0.32246970121416796, -0.036771552698679544]),
+    )
+    np.testing.assert_array_equal(
+        result.control_sequence,
+        np.asarray([
+            [0.32246970121416796, -0.036771552698679544],
+            [0.31307942402313194, -0.062496531190312565],
+            [0.31145057551416006, 0.07726128559825347],
+            [0.28151730015128323, -0.0018641337559547628],
+            [0.2534580706056277, 0.02986351868300341],
+        ]),
+    )
+    assert not diagnostics["supervised_counterfactual_available"]
+    assert diagnostics[
+        "supervised_counterfactual_first_action_delta_norm"
+    ] == 0.0
+    assert diagnostics["supervised_post_guard_action_delta_norm"] == 0.0
+    assert diagnostics["supervised_post_guard_replacement_reason"] == "none"
+
+
+def test_supervised_counterfactual_diagnostics_do_not_change_control(
+    monkeypatch,
+):
+    controller = PaperRLDrivenMppiController(
+        DynamicUnicyclePrediction(),
+        dynamic_unicycle_state(),
+        body_velocity_action((0.0, 0.5), 1.0),
+        MppiConfig(
+            horizon=5,
+            num_samples=20,
+            dt=0.1,
+            noise_sigma=(0.08, 0.20),
+            path_preview_enabled=True,
+            path_boundary_enabled=True,
+            path_boundary_violation_penalty=10000.0,
+            path_boundary_candidate_filter_enabled=True,
+            seed=20260718,
+        ),
+        sampling_prior=EncodedJointBatchedDirectPolicy(),
+        maneuver_proposal_policy=FixedSupervisedManeuverPolicy(),
+        paper_rl_driven_config={
+            "iterations": 3,
+            "guided_fraction": 0.0,
+            "elite_fraction": 0.25,
+            "terminal_value_weight": 0.0,
+        },
+    )
+
+    def synthetic_cost(trajectories, controls, *args, **kwargs):
+        del trajectories, args, kwargs
+        costs = np.ones(len(controls), dtype=np.float64)
+        costs[0] = 2.0
+        costs[1:4] = 0.0
+        return costs
+
+    monkeypatch.setattr(controller, "_cost", synthetic_cost)
+    reference = PolylineReference(
+        [(0.0, 0.0), (1.0, 0.0)],
+        corridor_half_width=1.0,
+        footprint_radius=0.2,
+    )
+    result = controller.plan(_observation(), reference)
+    diagnostics = result.diagnostics
+
+    assert diagnostics["paper_total_rollouts"] == 60
+    assert diagnostics["supervised_counterfactual_available"]
+    assert diagnostics[
+        "supervised_elite_weight_mass_final_iteration"
+    ] > 0.0
+    assert diagnostics[
+        "supervised_counterfactual_first_action_delta_norm"
+    ] > 0.0
+    assert diagnostics[
+        "supervised_counterfactual_sequence_delta_norm"
+    ] > 0.0
+    assert diagnostics[
+        "supervised_pre_guard_counterfactual_first_action_delta_norm"
+    ] > 0.0
+    assert diagnostics["supervised_post_guard_action_delta_norm"] == 0.0
+    assert diagnostics["supervised_post_guard_replacement_reason"] == "none"
+    assert diagnostics["supervised_influence_survived_guard"]
+    assert diagnostics["supervised_influence_survival_ratio"] > 0.99
 
 
 def test_paper_optimizer_applies_shared_boundary_candidate_filter(monkeypatch):

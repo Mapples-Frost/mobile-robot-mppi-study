@@ -2054,6 +2054,8 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
         supervised_selected_count = 0
         supervised_selected_head = -1
         supervised_elite_weight_sum = 0.0
+        supervised_counterfactual_available = False
+        supervised_counterfactual_sequence = None
         supervised_head_risk_feasible = np.zeros(
             supervised_count, dtype=np.int64
         )
@@ -2681,6 +2683,28 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
             supervised_elite_weight_sum = float(np.sum(
                 final_weights[supervised_elite_mask]
             ))
+            nonsupervised_elite_mask = ~supervised_elite_mask
+            nonsupervised_weight_sum = float(np.sum(
+                final_weights[nonsupervised_elite_mask]
+            ))
+            if (
+                supervised_count
+                and np.any(supervised_elite_mask)
+                and nonsupervised_weight_sum > 1.0e-12
+            ):
+                # Observational counterfactual only: remove supervised heads
+                # from the final elite mixture and renormalize the unchanged
+                # weights.  This never feeds back into the optimizer.
+                supervised_counterfactual_sequence = np.sum(
+                    final_weights[
+                        nonsupervised_elite_mask, None, None
+                    ] * elites[nonsupervised_elite_mask],
+                    axis=0,
+                ) / nonsupervised_weight_sum
+                supervised_counterfactual_available = True
+            else:
+                supervised_counterfactual_sequence = mean.copy()
+                supervised_counterfactual_available = False
             selected_label = int(
                 labels[elite_indices[int(np.argmax(final_weights))]]
             )
@@ -2782,6 +2806,30 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
         sequence = np.clip(
             mean, self.action_spec.lower, self.action_spec.upper
         )
+        counterfactual_sequence = np.clip(
+            (
+                supervised_counterfactual_sequence
+                if supervised_counterfactual_sequence is not None
+                else mean
+            ),
+            self.action_spec.lower,
+            self.action_spec.upper,
+        )
+        counterfactual_sequence, counterfactual_constraints = (
+            self._terminal_constraints(
+                state,
+                target,
+                counterfactual_sequence[None, :, :],
+            )
+        )
+        (
+            counterfactual_action,
+            counterfactual_sequence,
+            _,
+        ) = self._finalize_terminal_action(
+            counterfactual_sequence[0],
+            counterfactual_constraints,
+        )
         sequence, constraints = self._terminal_constraints(
             state, target, sequence[None, :, :]
         )
@@ -2789,6 +2837,8 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
         action, sequence, terminal_action_diagnostics = (
             self._finalize_terminal_action(sequence, constraints)
         )
+        optimizer_weighted_action = action.copy()
+        optimizer_weighted_sequence = sequence.copy()
         trajectory = self.rollout(state, sequence)[0]
         boundary_fallback_used = False
         boundary_fallback_candidate_index = -1
@@ -2945,6 +2995,9 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
         traversal_context[
             "post_center_low_ttc_prefix_boundary_handoff_requested"
         ] = prefix_boundary_handoff_requested
+        pre_guard_action = action.copy()
+        pre_guard_sequence = sequence.copy()
+        static_fallback_used_before_guard = bool(static_fallback_used)
         action, sequence, trajectory, probabilistic_risk_diagnostics = (
             self._apply_probabilistic_obstacle_action_guard(
                 state,
@@ -3018,6 +3071,76 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
                     static_weighted_update_feasible = bool(
                         static_final_min_clearance >= 0.0
                     )
+        post_guard_action = action.copy()
+        post_guard_sequence = sequence.copy()
+        optimizer_counterfactual_first_action_delta_norm = float(
+            np.linalg.norm(
+                optimizer_weighted_action - counterfactual_action
+            )
+            if supervised_counterfactual_available else 0.0
+        )
+        optimizer_counterfactual_sequence_delta_norm = float(
+            np.linalg.norm(
+                optimizer_weighted_sequence - counterfactual_sequence
+            )
+            if supervised_counterfactual_available else 0.0
+        )
+        pre_guard_counterfactual_first_action_delta_norm = float(
+            np.linalg.norm(pre_guard_action - counterfactual_action)
+            if supervised_counterfactual_available else 0.0
+        )
+        pre_guard_counterfactual_sequence_delta_norm = float(
+            np.linalg.norm(pre_guard_sequence - counterfactual_sequence)
+            if supervised_counterfactual_available else 0.0
+        )
+        post_guard_counterfactual_first_action_delta_norm = float(
+            np.linalg.norm(post_guard_action - counterfactual_action)
+            if supervised_counterfactual_available else 0.0
+        )
+        post_guard_counterfactual_sequence_delta_norm = float(
+            np.linalg.norm(post_guard_sequence - counterfactual_sequence)
+            if supervised_counterfactual_available else 0.0
+        )
+        post_guard_action_delta_norm = float(
+            np.linalg.norm(post_guard_action - pre_guard_action)
+        )
+        if post_guard_action_delta_norm <= 1.0e-12:
+            post_guard_replacement_reason = "none"
+        elif (
+            static_fallback_used
+            and not static_fallback_used_before_guard
+        ):
+            post_guard_replacement_reason = "known_static_map_fallback"
+        elif probabilistic_risk_diagnostics.get(
+            "probabilistic_obstacle_active_fallback_used", False
+        ):
+            post_guard_replacement_reason = str(
+                probabilistic_risk_diagnostics.get(
+                    "probabilistic_obstacle_active_fallback_kind",
+                    "probabilistic_fallback",
+                )
+            )
+        elif probabilistic_risk_diagnostics.get(
+            "probabilistic_obstacle_emergency_candidate_selected", False
+        ):
+            post_guard_replacement_reason = "probabilistic_emergency_candidate"
+        elif probabilistic_risk_diagnostics.get(
+            "probabilistic_obstacle_traversal_candidate_selected", False
+        ):
+            post_guard_replacement_reason = "probabilistic_traversal_candidate"
+        else:
+            post_guard_replacement_reason = "probabilistic_action_guard"
+        supervised_influence_survived_guard = bool(
+            supervised_counterfactual_available
+            and post_guard_counterfactual_first_action_delta_norm > 1.0e-9
+        )
+        supervised_influence_survival_ratio = float(
+            post_guard_counterfactual_first_action_delta_norm
+            / max(optimizer_counterfactual_first_action_delta_norm, 1.0e-12)
+            if supervised_counterfactual_available
+            and optimizer_counterfactual_first_action_delta_norm > 1.0e-12
+            else 0.0
+        )
         all_costs = np.concatenate(costs_by_iteration)
         guided_costs = (
             np.concatenate(guided_costs_by_iteration)
@@ -3299,6 +3422,48 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
             "supervised_elite_count": int(total_supervised_elites),
             "supervised_elite_weight_sum_final_iteration": float(
                 supervised_elite_weight_sum
+            ),
+            "supervised_elite_weight_mass_final_iteration": float(
+                supervised_elite_weight_sum
+            ),
+            "supervised_counterfactual_available": bool(
+                supervised_counterfactual_available
+            ),
+            "supervised_counterfactual_first_action_delta_norm": float(
+                optimizer_counterfactual_first_action_delta_norm
+            ),
+            "supervised_counterfactual_sequence_delta_norm": float(
+                optimizer_counterfactual_sequence_delta_norm
+            ),
+            "supervised_pre_guard_counterfactual_first_action_delta_norm": (
+                float(pre_guard_counterfactual_first_action_delta_norm)
+            ),
+            "supervised_pre_guard_counterfactual_sequence_delta_norm": float(
+                pre_guard_counterfactual_sequence_delta_norm
+            ),
+            "supervised_post_guard_counterfactual_first_action_delta_norm": (
+                float(post_guard_counterfactual_first_action_delta_norm)
+            ),
+            "supervised_post_guard_counterfactual_sequence_delta_norm": float(
+                post_guard_counterfactual_sequence_delta_norm
+            ),
+            "supervised_pre_guard_action": ",".join(
+                "%.17g" % float(value) for value in pre_guard_action
+            ),
+            "supervised_post_guard_action": ",".join(
+                "%.17g" % float(value) for value in post_guard_action
+            ),
+            "supervised_post_guard_action_delta_norm": float(
+                post_guard_action_delta_norm
+            ),
+            "supervised_post_guard_replacement_reason": (
+                post_guard_replacement_reason
+            ),
+            "supervised_influence_survived_guard": bool(
+                supervised_influence_survived_guard
+            ),
+            "supervised_influence_survival_ratio": float(
+                supervised_influence_survival_ratio
             ),
             "supervised_selected_count": int(
                 supervised_selected_count

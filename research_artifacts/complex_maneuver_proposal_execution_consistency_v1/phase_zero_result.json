@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "status": "unit_pass_closed_loop_audit_pending",
+  "completed_at": "2026-07-28T01:05:20+08:00",
+  "scope": "diagnostic_only_no_behavior_change",
+  "protocol_commit": "c735845",
+  "protocol_tag": "checkpoint/complex-maneuver-proposal-execution-protocol-v1-20260728",
+  "implemented_diagnostics": [
+    "supervised_elite_weight_mass_final_iteration",
+    "supervised_counterfactual_available",
+    "supervised_counterfactual_first_action_delta_norm",
+    "supervised_counterfactual_sequence_delta_norm",
+    "supervised_pre_guard_counterfactual_first_action_delta_norm",
+    "supervised_pre_guard_counterfactual_sequence_delta_norm",
+    "supervised_post_guard_counterfactual_first_action_delta_norm",
+    "supervised_post_guard_counterfactual_sequence_delta_norm",
+    "supervised_pre_guard_action",
+    "supervised_post_guard_action",
+    "supervised_post_guard_action_delta_norm",
+    "supervised_post_guard_replacement_reason",
+    "supervised_influence_survived_guard",
+    "supervised_influence_survival_ratio"
+  ],
+  "behavioral_contract": {
+    "optimizer_inputs_changed": false,
+    "candidate_costs_changed": false,
+    "candidate_feasibility_changed": false,
+    "elite_weights_changed": false,
+    "final_action_guard_changed": false,
+    "actor_checkpoint_changed": false,
+    "risk_changed": false,
+    "icode_changed": false,
+    "safety_changed": false,
+    "maps_changed": false,
+    "rollout_budget_changed": false
+  },
+  "equivalence_checks": {
+    "unit_actor_off_golden_control_exact": true,
+    "unit_actor_off_golden_sequence_exact": true,
+    "unit_actor_on_margin_zero_golden_control_exact": true,
+    "unit_actor_on_margin_zero_golden_sequence_exact": true,
+    "counterfactual_is_observational_only": true,
+    "configured_closed_loop_permitted_rollout_counts": [
+      0,
+      600
+    ],
+    "closed_loop_equivalence_audit_complete": false
+  },
+  "tests": {
+    "command": ".venv\\Scripts\\python.exe -m pytest tests\\planners\\test_paper_rl_driven_mppi.py tests\\dynamic_uncertainty\\test_complex_supervised_maneuver_gate_d.py tests\\dynamic_uncertainty\\test_probabilistic_collision_risk.py -q",
+    "passed": 128,
+    "failed": 0,
+    "duration_s": 3.1
+  },
+  "source_sha256": "59d705179a1f03f82fe0ff1939ff118fb4892cb274f79a134fc325392cb2a8dd",
+  "test_sha256": "600b5f4dca9b7039955689a35892019e4f5472d94d6d3f546fe8c9cdb6e9b35a",
+  "next_step_authorized": "closed_loop_margin_zero_equivalence_audit",
+  "formal_or_paid_server_execution_authorized": false
+}

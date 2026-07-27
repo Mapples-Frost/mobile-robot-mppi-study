@@ -1,0 +1,42 @@
+schema_version: 2
+protocol: complex_actor_teacher_upper_bound_v1
+scope: development_only_not_deployment_method
+
+# Training-only upper-bound teacher. It changes compute, not the deployment
+# method, probability limits, or Safety contract.
+teacher:
+  optimizer: standard
+  sampling_prior: goal_warm_start
+  horizon: 36
+  num_samples: 2400
+  maximum_steps: 200
+  future_truth_used: false
+  dynamic_obstacles_in_astar: false
+  probability_thresholds_changed: false
+  safety_contract_changed: false
+
+# Chapter 1 now uses the separately versioned, feasibility-audited simplified
+# spiral map.  This seed is new and was frozen before its outcome was observed.
+development_seeds:
+  chapter1: [791101001]
+  chapter2: [790202007]
+  chapter3: [790203007]
+
+gate:
+  minimum_path_progress_m: 0.80
+  maximum_collisions: 0
+  maximum_boundary_violations: 0
+  require_nonzero_forward_motion: true
+  formal_server_launch_authorized: false
+
+amendment:
+  revision: 3
+  reason: >
+    Replace the infeasible original Chapter 1 development geometry with the
+    simplified three-ring version. Teacher capacity, risk limits, ICODE,
+    Safety, and all deployment contracts remain unchanged.
+  map_change_only: true
+  chapter1_map: mujoco_irregular_spiral_three_dynamic_v2_simplified
+  teacher_capacity_changed: false
+  probability_thresholds_changed: false
+  safety_contract_changed: false

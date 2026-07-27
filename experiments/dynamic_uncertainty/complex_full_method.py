@@ -31,7 +31,7 @@ MAPS = {
     "chapter1": (
         ROOT
         / "configs/research/"
-        "mujoco_irregular_spiral_three_dynamic_v1.yaml"
+        "mujoco_irregular_spiral_three_dynamic_v2_simplified.yaml"
     ),
     "chapter2": (
         ROOT

@@ -2683,28 +2683,23 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
             supervised_elite_weight_sum = float(np.sum(
                 final_weights[supervised_elite_mask]
             ))
-            nonsupervised_elite_mask = ~supervised_elite_mask
-            nonsupervised_weight_sum = float(np.sum(
-                final_weights[nonsupervised_elite_mask]
-            ))
-            if (
-                supervised_count
-                and np.any(supervised_elite_mask)
-                and nonsupervised_weight_sum > 1.0e-12
-            ):
-                # Observational counterfactual only: remove supervised heads
-                # from the final elite mixture and renormalize the unchanged
-                # weights.  This never feeds back into the optimizer.
-                supervised_counterfactual_sequence = np.sum(
-                    final_weights[
-                        nonsupervised_elite_mask, None, None
-                    ] * elites[nonsupervised_elite_mask],
-                    axis=0,
-                ) / nonsupervised_weight_sum
-                supervised_counterfactual_available = True
-            else:
-                supervised_counterfactual_sequence = mean.copy()
-                supervised_counterfactual_available = False
+            if supervised_count and np.any(supervised_elite_mask):
+                nonsupervised_elite_mask = ~supervised_elite_mask
+                nonsupervised_weight_sum = float(np.sum(
+                    final_weights[nonsupervised_elite_mask]
+                ))
+                if nonsupervised_weight_sum > 1.0e-12:
+                    # Observational counterfactual only: remove supervised
+                    # heads from the final elite mixture and renormalize the
+                    # unchanged weights.  The result is consumed only after
+                    # the behavior-producing action/guard path is complete.
+                    supervised_counterfactual_sequence = np.sum(
+                        final_weights[
+                            nonsupervised_elite_mask, None, None
+                        ] * elites[nonsupervised_elite_mask],
+                        axis=0,
+                    ) / nonsupervised_weight_sum
+                    supervised_counterfactual_available = True
             selected_label = int(
                 labels[elite_indices[int(np.argmax(final_weights))]]
             )
@@ -2805,30 +2800,6 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
 
         sequence = np.clip(
             mean, self.action_spec.lower, self.action_spec.upper
-        )
-        counterfactual_sequence = np.clip(
-            (
-                supervised_counterfactual_sequence
-                if supervised_counterfactual_sequence is not None
-                else mean
-            ),
-            self.action_spec.lower,
-            self.action_spec.upper,
-        )
-        counterfactual_sequence, counterfactual_constraints = (
-            self._terminal_constraints(
-                state,
-                target,
-                counterfactual_sequence[None, :, :],
-            )
-        )
-        (
-            counterfactual_action,
-            counterfactual_sequence,
-            _,
-        ) = self._finalize_terminal_action(
-            counterfactual_sequence[0],
-            counterfactual_constraints,
         )
         sequence, constraints = self._terminal_constraints(
             state, target, sequence[None, :, :]
@@ -3073,34 +3044,60 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
                     )
         post_guard_action = action.copy()
         post_guard_sequence = sequence.copy()
-        optimizer_counterfactual_first_action_delta_norm = float(
-            np.linalg.norm(
-                optimizer_weighted_action - counterfactual_action
+        optimizer_counterfactual_first_action_delta_norm = 0.0
+        optimizer_counterfactual_sequence_delta_norm = 0.0
+        pre_guard_counterfactual_first_action_delta_norm = 0.0
+        pre_guard_counterfactual_sequence_delta_norm = 0.0
+        post_guard_counterfactual_first_action_delta_norm = 0.0
+        post_guard_counterfactual_sequence_delta_norm = 0.0
+        if supervised_counterfactual_available:
+            # Keep this diagnostic branch strictly downstream of the complete
+            # behavior-producing path.  In particular, Actor-off execution
+            # performs none of the counterfactual reductions or terminal-law
+            # calls, preserving the frozen controller's arithmetic path.
+            counterfactual_sequence = np.clip(
+                supervised_counterfactual_sequence,
+                self.action_spec.lower,
+                self.action_spec.upper,
             )
-            if supervised_counterfactual_available else 0.0
-        )
-        optimizer_counterfactual_sequence_delta_norm = float(
-            np.linalg.norm(
-                optimizer_weighted_sequence - counterfactual_sequence
+            (
+                counterfactual_sequence,
+                counterfactual_constraints,
+            ) = self._terminal_constraints(
+                state,
+                target,
+                counterfactual_sequence[None, :, :],
             )
-            if supervised_counterfactual_available else 0.0
-        )
-        pre_guard_counterfactual_first_action_delta_norm = float(
-            np.linalg.norm(pre_guard_action - counterfactual_action)
-            if supervised_counterfactual_available else 0.0
-        )
-        pre_guard_counterfactual_sequence_delta_norm = float(
-            np.linalg.norm(pre_guard_sequence - counterfactual_sequence)
-            if supervised_counterfactual_available else 0.0
-        )
-        post_guard_counterfactual_first_action_delta_norm = float(
-            np.linalg.norm(post_guard_action - counterfactual_action)
-            if supervised_counterfactual_available else 0.0
-        )
-        post_guard_counterfactual_sequence_delta_norm = float(
-            np.linalg.norm(post_guard_sequence - counterfactual_sequence)
-            if supervised_counterfactual_available else 0.0
-        )
+            (
+                counterfactual_action,
+                counterfactual_sequence,
+                _,
+            ) = self._finalize_terminal_action(
+                counterfactual_sequence[0],
+                counterfactual_constraints,
+            )
+            optimizer_counterfactual_first_action_delta_norm = float(
+                np.linalg.norm(
+                    optimizer_weighted_action - counterfactual_action
+                )
+            )
+            optimizer_counterfactual_sequence_delta_norm = float(
+                np.linalg.norm(
+                    optimizer_weighted_sequence - counterfactual_sequence
+                )
+            )
+            pre_guard_counterfactual_first_action_delta_norm = float(
+                np.linalg.norm(pre_guard_action - counterfactual_action)
+            )
+            pre_guard_counterfactual_sequence_delta_norm = float(
+                np.linalg.norm(pre_guard_sequence - counterfactual_sequence)
+            )
+            post_guard_counterfactual_first_action_delta_norm = float(
+                np.linalg.norm(post_guard_action - counterfactual_action)
+            )
+            post_guard_counterfactual_sequence_delta_norm = float(
+                np.linalg.norm(post_guard_sequence - counterfactual_sequence)
+            )
         post_guard_action_delta_norm = float(
             np.linalg.norm(post_guard_action - pre_guard_action)
         )

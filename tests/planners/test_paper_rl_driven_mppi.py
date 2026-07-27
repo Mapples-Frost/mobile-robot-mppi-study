@@ -335,7 +335,9 @@ def test_supervised_maneuver_actor_replaces_guided_rows_without_more_rollouts():
     assert not diagnostics["supervised_influence_survived_guard"]
 
 
-def test_supervised_allocation_floor_is_inert_when_actor_is_disabled():
+def test_supervised_allocation_floor_is_inert_when_actor_is_disabled(
+    monkeypatch,
+):
     controller = PaperRLDrivenMppiController(
         DynamicUnicyclePrediction(),
         dynamic_unicycle_state(),
@@ -365,6 +367,31 @@ def test_supervised_allocation_floor_is_inert_when_actor_is_disabled():
         corridor_half_width=1.0,
         footprint_radius=0.2,
     )
+    terminal_constraint_calls = 0
+    terminal_finalize_calls = 0
+    original_terminal_constraints = controller._terminal_constraints
+    original_finalize_terminal_action = controller._finalize_terminal_action
+
+    def counted_terminal_constraints(*args, **kwargs):
+        nonlocal terminal_constraint_calls
+        terminal_constraint_calls += 1
+        return original_terminal_constraints(*args, **kwargs)
+
+    def counted_finalize_terminal_action(*args, **kwargs):
+        nonlocal terminal_finalize_calls
+        terminal_finalize_calls += 1
+        return original_finalize_terminal_action(*args, **kwargs)
+
+    monkeypatch.setattr(
+        controller,
+        "_terminal_constraints",
+        counted_terminal_constraints,
+    )
+    monkeypatch.setattr(
+        controller,
+        "_finalize_terminal_action",
+        counted_finalize_terminal_action,
+    )
     result = controller.plan(_observation(), reference)
     diagnostics = result.diagnostics
 
@@ -393,6 +420,11 @@ def test_supervised_allocation_floor_is_inert_when_actor_is_disabled():
     ] == 0.0
     assert diagnostics["supervised_post_guard_action_delta_norm"] == 0.0
     assert diagnostics["supervised_post_guard_replacement_reason"] == "none"
+    # The frozen planner uses three constraint calls while evaluating its
+    # existing candidate path plus one for the final action.  Actor-off
+    # diagnostics must not add a fifth counterfactual call.
+    assert terminal_constraint_calls == 4
+    assert terminal_finalize_calls == 1
 
 
 def test_supervised_counterfactual_diagnostics_do_not_change_control(

@@ -102,7 +102,7 @@ scene:
       position: [-4.97, -2.43]
       size: [0.18, 0.11]
       yaw: 1.57
-      radius: 0.22
+      radius: 0.18
       height: 0.34
       rgba: [0.96, 0.30, 0.16, 1.0]
       parts:
@@ -113,9 +113,9 @@ scene:
         end: [-6.25, -1.15]
         period_s: 12.0
         phase_s: 2.0
-        phase_jitter_s: 0.35
-        period_scale_range: [0.94, 1.06]
-        endpoint_jitter_m: 0.03
+        phase_jitter_s: 0.20
+        period_scale_range: [0.97, 1.03]
+        endpoint_jitter_m: 0.02
 
     - type: box
       position: [1.83, 1.97]

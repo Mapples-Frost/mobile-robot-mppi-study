@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "status": "pass",
+  "scope": "development_training_maps_only",
+  "audited_at": "2026-07-27T11:45:00+08:00",
+  "source_git_sha": "a777b7f2a9e10f2393ca71ddae5cf25485bd410e",
+  "risk_thresholds_changed": false,
+  "safety_contract_changed": false,
+  "deployment_method_changed": false,
+  "maps": {
+    "chapter1": {
+      "config": "configs/research/mujoco_irregular_spiral_three_dynamic_v2_simplified.yaml",
+      "config_sha256": "14f7303cf34fc72a78206b29df38be1ea257831f497ec8c35da2e02187f613f0",
+      "reference_clear": true,
+      "reference_minimum_clearance_m": 0.09465536441382316,
+      "free_path_exists": true,
+      "start_free": true,
+      "goal_free": true,
+      "dynamic_path_static_clearance_m": [
+        0.42826641504975943,
+        0.12502015917580003,
+        0.3956496077374505
+      ],
+      "required_dynamic_path_static_clearance_floor_m": 0.08,
+      "revision": "Reduce the first mover footprint and its randomization envelope after the frozen teacher gate found only near-zero-clearance branches."
+    },
+    "chapter3": {
+      "config": "configs/research/mujoco_scattered_clutter_three_loop_v1.yaml",
+      "config_sha256": "3f1ea3b2bc4d3824245503c820e3dae6d805bc852af77b0d22ea303e2394820a",
+      "reference_clear": true,
+      "reference_minimum_clearance_m": 0.19146819872989862,
+      "free_path_exists": true,
+      "start_free": true,
+      "goal_free": true,
+      "dynamic_path_static_clearance_m": [
+        0.3042757911247186,
+        0.3826749304751689,
+        0.21020275589070045
+      ],
+      "required_dynamic_path_static_clearance_floor_m": 0.04,
+      "revision": "Reduce mover footprints, slow all loops uniformly, and tighten motion randomization after the frozen teacher gate found no physically safe candidate."
+    }
+  },
+  "interpretation": "The revisions preserve static reachability and dynamic-path separation from static geometry. They change only development-map feasibility margins and do not relax Collision Risk or Safety."
+}

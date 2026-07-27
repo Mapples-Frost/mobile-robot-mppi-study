@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "status": "complete",
+  "scope": "development_training_maps_only",
+  "files": {
+    "geometry_audit.json": "294f51d2c6e6ec4c48ecfb85e6d203f69797aae472ef66ae48ec96c4e17cd7c4"
+  },
+  "source_configs": {
+    "configs/research/mujoco_irregular_spiral_three_dynamic_v2_simplified.yaml": "14f7303cf34fc72a78206b29df38be1ea257831f497ec8c35da2e02187f613f0",
+    "configs/research/mujoco_scattered_clutter_three_loop_v1.yaml": "3f1ea3b2bc4d3824245503c820e3dae6d805bc852af77b0d22ea303e2394820a"
+  }
+}

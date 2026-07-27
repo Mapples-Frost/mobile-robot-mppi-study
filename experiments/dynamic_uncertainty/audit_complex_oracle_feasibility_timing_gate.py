@@ -494,6 +494,7 @@ def _audit_risk_and_safety(
             "risk_accepted_count": 0,
             "safety_nonstop_count": 0,
             "accepted_behavior_families": [],
+            "safety_nonstop_indices": [],
             "selected": None,
             "forecast_count": 0,
         }
@@ -507,6 +508,7 @@ def _audit_risk_and_safety(
             "risk_accepted_count": 0,
             "safety_nonstop_count": 0,
             "accepted_behavior_families": [],
+            "safety_nonstop_indices": [],
             "selected": None,
             "forecast_count": 0,
         }
@@ -568,6 +570,10 @@ def _audit_risk_and_safety(
         "risk_accepted_count": int(accepted.size),
         "safety_nonstop_count": int(len(safety_indices)),
         "accepted_behavior_families": families,
+        # Expose the already-computed accepted rows for downstream supervised
+        # label export.  This does not alter candidate generation, ranking,
+        # Risk, Safety, or the frozen Gate v4 JSON contract.
+        "safety_nonstop_indices": list(safety_indices),
         "selected": selected,
         "forecast_count": int(len(forecasts)),
     }

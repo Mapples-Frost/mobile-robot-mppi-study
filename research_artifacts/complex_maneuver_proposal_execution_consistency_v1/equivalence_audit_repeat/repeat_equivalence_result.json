@@ -1,0 +1,107 @@
+{
+  "schema_version": 1,
+  "scope": "phase_zero_actor_off_repeat_equivalence_audit",
+  "status": "fail_phase_zero_strict_equivalence",
+  "map": "chapter1",
+  "seed": 791101019,
+  "arm": "frozen_full",
+  "diagnostic_commit": "996e048",
+  "reference_commit": "af691f1",
+  "comparison_contract": {
+    "row_alignment": "exact",
+    "string_comparison": "exact",
+    "excluded_timing_columns": [
+      "planner_compute_ms",
+      "profile_mppi_batch_rollout_ms",
+      "profile_mppi_cost_ms",
+      "profile_mppi_final_rollout_ms",
+      "profile_mppi_sampling_ms",
+      "profile_mppi_solve_total_ms",
+      "profile_mppi_weighting_update_ms",
+      "profile_planner_prior_ms",
+      "profile_planner_state_reference_ms"
+    ]
+  },
+  "post_diagnostics_vs_repeat": {
+    "row_counts": [
+      211,
+      211
+    ],
+    "common_column_count": 602,
+    "deterministic_column_count": 593,
+    "exact_equal_excluding_timing": true,
+    "mismatch_column_count": 0,
+    "first_mismatch_row": null,
+    "maximum_absolute_difference_all_numeric": 0.0,
+    "outcome_equal": true,
+    "outcome": {
+      "success": false,
+      "collision": true,
+      "termination_reason": "collision",
+      "steps": 211
+    },
+    "rollout_values_both": [
+      0,
+      600
+    ],
+    "trajectory_sha256": {
+      "post_diagnostics": "662e39c381184051947bf523c362ee3ca5c801d5f479c870e09696f93b14c2b8",
+      "repeat": "25925177b0e4d51d01aa5b38d088ee121eb0b853e1e12dd2ceb04097814e6764"
+    }
+  },
+  "original_vs_repeat": {
+    "row_counts": [
+      211,
+      211
+    ],
+    "common_column_count": 581,
+    "deterministic_column_count": 572,
+    "exact_equal_excluding_timing": false,
+    "mismatch_column_count": 89,
+    "first_mismatch_row_any_column": 2,
+    "first_core_mismatch_row": 56,
+    "first_core_mismatch_by_column": {
+      "applied_omega": 57,
+      "applied_v": 56,
+      "goal_distance": 56,
+      "proposed_omega": 57,
+      "proposed_v": 56,
+      "theta": 56,
+      "x": 56,
+      "y": 56
+    },
+    "maximum_absolute_difference_core": {
+      "applied_omega": 2.0182284246605953e-09,
+      "applied_v": 7.521104017360614e-10,
+      "goal_distance": 9.38296551566964e-10,
+      "proposed_omega": 2.5984615847907122e-09,
+      "proposed_v": 7.521641920416045e-10,
+      "theta": 6.58013754595288e-10,
+      "x": 8.608171953028432e-10,
+      "y": 4.438627243530391e-10
+    },
+    "maximum_absolute_difference_all_numeric": 1.1908945452887565e-05,
+    "outcome_equal": true,
+    "outcome": {
+      "success": false,
+      "collision": true,
+      "termination_reason": "collision",
+      "steps": 211
+    },
+    "rollout_values_both": [
+      0,
+      600
+    ],
+    "trajectory_sha256": {
+      "original": "8428bfddc798a304226c5d3badac2ad1710daedc3c8c750b0b7a8c4e8d0a808c",
+      "repeat": "25925177b0e4d51d01aa5b38d088ee121eb0b853e1e12dd2ceb04097814e6764"
+    }
+  },
+  "repeat_files": {
+    "trajectory_sha256": "25925177b0e4d51d01aa5b38d088ee121eb0b853e1e12dd2ceb04097814e6764",
+    "metrics_sha256": "9e50894fca016333e56dc8dd381b52271cd53ab995a5f860116be33c5f010be3",
+    "stderr_bytes": 0
+  },
+  "interpretation": "Two executions of the diagnostic implementation are exactly equal on all non-timing trajectory columns, while both differ from the pre-diagnostic reference beginning at core row 56. This rules out run-to-run numerical noise as the explanation under the frozen audit and attributes the strict-equivalence failure to the Phase Zero diagnostic implementation.",
+  "decision": "Do not run Actor-on or margin 0.02. Refactor or remove behavior-affecting diagnostic computations until Actor-off closed-loop output is strictly equivalent to the pre-diagnostic reference."
+}

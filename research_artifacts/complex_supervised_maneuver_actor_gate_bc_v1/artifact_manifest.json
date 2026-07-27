@@ -1,0 +1,11 @@
+{
+  "actor_checkpoint_sha256": "6b95e9ca384ced388b63a02c1337035bd1823b02d1469626fd5412b396b987fe",
+  "actor_future_truth_input": false,
+  "dataset_sha256": "6f9eb1f782d4eca2a64866183b3ab7fff51efd5cc5afe9942afc3db205590189",
+  "formal_server_launch_authorized": false,
+  "git_sha": "b77f84941cae3ad0f9ab41a49e585251c7fa6319",
+  "protocol_config_hash": "2211d96ba532baed745eb56ae30763c2dd9a7a0c1ba0bc7e14fb7022094868cd",
+  "protocol_sha256": "53854de1794cf1e7c7a4e3eef14507cf526336f29533ec61410f16d6d9f67777",
+  "result_sha256": "2f7542d02b3ca63c287f4f09a1520200ea30b67ca0abebcd3edba8f9a198cfb2",
+  "risk_icode_mppi_safety_changed": false
+}

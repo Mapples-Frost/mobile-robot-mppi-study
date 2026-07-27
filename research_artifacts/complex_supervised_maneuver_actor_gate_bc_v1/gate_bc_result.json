@@ -1,0 +1,414 @@
+{
+  "checks": {
+    "physical_safe_candidate_fraction": true,
+    "progressing_full_chain_state_fraction": true,
+    "risk_accepted_candidate_fraction": true,
+    "risk_accepted_physical_safety_precision": true,
+    "risk_accepted_true_collisions": true,
+    "safety_nonstop_fraction": true,
+    "state_full_chain_coverage": true
+  },
+  "closed_loop_gate_d_authorized": false,
+  "formal_claim_authorized": false,
+  "fresh_seed_expansion_authorized": true,
+  "gate_b_candidate_coverage_pass": true,
+  "gate_c_independent_safety_pass": true,
+  "metrics": {
+    "candidate_count": 18,
+    "physical_safe_candidate_fraction": 1.0,
+    "progressing_full_chain_state_fraction": 1.0,
+    "risk_accepted_candidate_fraction": 0.9444444444444444,
+    "risk_accepted_physical_safety_precision": 1.0,
+    "risk_accepted_true_collisions": 0,
+    "safety_nonstop_fraction_of_risk_accepted": 1.0,
+    "state_count": 6,
+    "state_full_chain_coverage_fraction": 1.0
+  },
+  "states": [
+    {
+      "anchor_index": 11,
+      "candidate_count": 3,
+      "first_segment_mean_yaw": [
+        0.544796375542674,
+        -0.16054972327893624,
+        -0.232545642872754
+      ],
+      "forecast_count": 1,
+      "full_chain": [
+        true,
+        true,
+        true
+      ],
+      "map": "chapter2",
+      "minimum_dynamic_clearance_m": [
+        3.0160433252264203,
+        3.0616286097603287,
+        2.8018936425869723
+      ],
+      "minimum_static_clearance_m": [
+        0.45960703344489395,
+        0.45963576197946476,
+        0.45963576197946476
+      ],
+      "offset_s": -3.0,
+      "progress_m": [
+        0.47288959791088725,
+        0.34300600961395733,
+        0.5108100543783354
+      ],
+      "risk_accepted": [
+        true,
+        true,
+        true
+      ],
+      "risk_maximum_probability": [
+        0.014554199913258825,
+        0.013202058742422931,
+        0.012867809086207983
+      ],
+      "safety_nonstop": [
+        true,
+        true,
+        true
+      ],
+      "scenario_id": "chapter2_seed790202007",
+      "seed": 790202007,
+      "true_collision": [
+        false,
+        false,
+        false
+      ],
+      "true_progressing": [
+        true,
+        true,
+        true
+      ],
+      "true_safe": [
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "anchor_index": 21,
+      "candidate_count": 3,
+      "first_segment_mean_yaw": [
+        0.5597812688320064,
+        -0.16334209344192435,
+        -0.3822921271404442
+      ],
+      "forecast_count": 1,
+      "full_chain": [
+        true,
+        true,
+        true
+      ],
+      "map": "chapter2",
+      "minimum_dynamic_clearance_m": [
+        2.5198489181318724,
+        2.525827109622047,
+        2.2746956048083495
+      ],
+      "minimum_static_clearance_m": [
+        0.6446664144274273,
+        0.6446071361372042,
+        0.6446071361372042
+      ],
+      "offset_s": -2.0,
+      "progress_m": [
+        0.38136223950937553,
+        0.4416734148762679,
+        0.5395152642867347
+      ],
+      "risk_accepted": [
+        true,
+        true,
+        true
+      ],
+      "risk_maximum_probability": [
+        0.00017317159346602997,
+        0.00011420701901278915,
+        7.279248916161299e-05
+      ],
+      "safety_nonstop": [
+        true,
+        true,
+        true
+      ],
+      "scenario_id": "chapter2_seed790202007",
+      "seed": 790202007,
+      "true_collision": [
+        false,
+        false,
+        false
+      ],
+      "true_progressing": [
+        true,
+        true,
+        true
+      ],
+      "true_safe": [
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "anchor_index": 26,
+      "candidate_count": 3,
+      "first_segment_mean_yaw": [
+        0.566483039686634,
+        -0.1453294104586045,
+        -0.4049204397178919
+      ],
+      "forecast_count": 2,
+      "full_chain": [
+        true,
+        true,
+        true
+      ],
+      "map": "chapter2",
+      "minimum_dynamic_clearance_m": [
+        2.4426857419200347,
+        2.692837185780433,
+        2.1244804486350715
+      ],
+      "minimum_static_clearance_m": [
+        0.7344958680163042,
+        0.7046435687761526,
+        0.7500028972058832
+      ],
+      "offset_s": -1.5,
+      "progress_m": [
+        0.21193206825850386,
+        0.16919112850196472,
+        0.45602120336269714
+      ],
+      "risk_accepted": [
+        true,
+        true,
+        true
+      ],
+      "risk_maximum_probability": [
+        0.008419954730991741,
+        0.009832645578996796,
+        0.003619163287937318
+      ],
+      "safety_nonstop": [
+        true,
+        true,
+        true
+      ],
+      "scenario_id": "chapter2_seed790202007",
+      "seed": 790202007,
+      "true_collision": [
+        false,
+        false,
+        false
+      ],
+      "true_progressing": [
+        true,
+        true,
+        true
+      ],
+      "true_safe": [
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "anchor_index": 31,
+      "candidate_count": 3,
+      "first_segment_mean_yaw": [
+        0.6738200889021672,
+        -0.157782417499471,
+        -0.4580903653623644
+      ],
+      "forecast_count": 1,
+      "full_chain": [
+        true,
+        true,
+        true
+      ],
+      "map": "chapter2",
+      "minimum_dynamic_clearance_m": [
+        2.2637690643403574,
+        2.5343136416609626,
+        1.962431081084258
+      ],
+      "minimum_static_clearance_m": [
+        0.7379319778815617,
+        0.7453502118551296,
+        0.8018212372574338
+      ],
+      "offset_s": -1.0,
+      "progress_m": [
+        0.2478778128464012,
+        0.09202305169590863,
+        0.4448662923626522
+      ],
+      "risk_accepted": [
+        true,
+        true,
+        true
+      ],
+      "risk_maximum_probability": [
+        0.0025102427715728904,
+        0.005615161584181006,
+        0.001656505157194776
+      ],
+      "safety_nonstop": [
+        true,
+        true,
+        true
+      ],
+      "scenario_id": "chapter2_seed790202007",
+      "seed": 790202007,
+      "true_collision": [
+        false,
+        false,
+        false
+      ],
+      "true_progressing": [
+        true,
+        true,
+        true
+      ],
+      "true_safe": [
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "anchor_index": 36,
+      "candidate_count": 3,
+      "first_segment_mean_yaw": [
+        0.6823952344736003,
+        -0.12347018364599227,
+        -0.4689251675311908
+      ],
+      "forecast_count": 2,
+      "full_chain": [
+        true,
+        true,
+        false
+      ],
+      "map": "chapter2",
+      "minimum_dynamic_clearance_m": [
+        2.039450010529859,
+        2.1296102191601314,
+        1.8246772435999246
+      ],
+      "minimum_static_clearance_m": [
+        0.8141592199165353,
+        0.7677369220724373,
+        0.6537851650925423
+      ],
+      "offset_s": -0.5,
+      "progress_m": [
+        0.35806217686428177,
+        0.2414621916630031,
+        0.4561550788034291
+      ],
+      "risk_accepted": [
+        true,
+        true,
+        false
+      ],
+      "risk_maximum_probability": [
+        0.16577025054628577,
+        0.15688241975829428,
+        0.21392202527327536
+      ],
+      "safety_nonstop": [
+        true,
+        true,
+        false
+      ],
+      "scenario_id": "chapter2_seed790202007",
+      "seed": 790202007,
+      "true_collision": [
+        false,
+        false,
+        false
+      ],
+      "true_progressing": [
+        true,
+        true,
+        true
+      ],
+      "true_safe": [
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "anchor_index": 42,
+      "candidate_count": 3,
+      "first_segment_mean_yaw": [
+        0.7661337170749903,
+        -0.17197831358450158,
+        -0.5763213545083999
+      ],
+      "forecast_count": 2,
+      "full_chain": [
+        false,
+        false,
+        true
+      ],
+      "map": "chapter2",
+      "minimum_dynamic_clearance_m": [
+        2.036071675903358,
+        2.1463365274306945,
+        1.945023124155373
+      ],
+      "minimum_static_clearance_m": [
+        0.8519828224424995,
+        0.7016025951850346,
+        0.740934251573783
+      ],
+      "offset_s": 0.0,
+      "progress_m": [
+        0.006005466359125133,
+        -0.24916228191825374,
+        0.15308985020628563
+      ],
+      "risk_accepted": [
+        true,
+        true,
+        true
+      ],
+      "risk_maximum_probability": [
+        0.19892877292086333,
+        0.19476789661995686,
+        0.19477928134770828
+      ],
+      "safety_nonstop": [
+        true,
+        true,
+        true
+      ],
+      "scenario_id": "chapter2_seed790202007",
+      "seed": 790202007,
+      "true_collision": [
+        false,
+        false,
+        false
+      ],
+      "true_progressing": [
+        false,
+        false,
+        true
+      ],
+      "true_safe": [
+        true,
+        true,
+        true
+      ]
+    }
+  ],
+  "status": "pass"
+}

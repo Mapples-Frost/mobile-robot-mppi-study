@@ -1,0 +1,31 @@
+{
+  "status": "pass",
+  "scope": "evaluation_only_reference_patch_sync",
+  "main_worktree": {
+    "path": "D:\\Projects\\mobile-robot-mppi-study-single-v6",
+    "implementation_commit": "a547985"
+  },
+  "reference_worktree": {
+    "path": "D:\\Projects\\mobile-robot-mppi-study-gate-d-reference",
+    "detached_head": "af691f184774094551d13fb4cde51d98bad2caf9"
+  },
+  "canonical_git_blob_hashes": {
+    "src/mobile_robot_mppi/core/references.py": {
+      "main": "940ca8a3cfdff70b97c0d5e942610c51611e31c2",
+      "reference": "940ca8a3cfdff70b97c0d5e942610c51611e31c2",
+      "exact_match": true
+    },
+    "src/mobile_robot_mppi/evaluation/tracking.py": {
+      "main": "90e41db4663655ee96d6e32e9b1346985d7c91dc",
+      "reference": "90e41db4663655ee96d6e32e9b1346985d7c91dc",
+      "exact_match": true
+    }
+  },
+  "content_diff_ignoring_worktree_eol": {
+    "references.py": "none",
+    "tracking.py": "none"
+  },
+  "reference_lfs_materialization_changes_excluded": true,
+  "episode_started": false,
+  "next_authorized_step": "run concurrent Actor-off equivalence regression under the patched current and af691f1 reference implementations"
+}

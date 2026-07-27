@@ -377,7 +377,7 @@ def _audit_map(map_name, item, teacher):
             .probabilistic_obstacle_forecast_key
         )
         forecasts = tuple(
-            perceived.observation.metadata.get(forecast_key, ())
+            perceived.observation.auxiliary.get(forecast_key, ())
         )
         if not forecasts:
             raise RuntimeError("selected conflict anchor has no forecasts")

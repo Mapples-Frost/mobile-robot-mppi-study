@@ -9,6 +9,7 @@ from experiments.dynamic_uncertainty.audit_complex_privileged_teacher_gate impor
     _load_protocol,
 )
 from mobile_robot_mppi.core.spaces import ActionSpec
+from mobile_robot_mppi.core.types import Pose2D, RobotObservation, Twist2D
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -82,3 +83,17 @@ def test_teacher_gate_unwraps_residual_safety_shield():
     planner = _icode_controller(Shield())
 
     assert planner is Shield.residual_controller
+
+
+def test_forecast_contract_is_carried_in_observation_auxiliary():
+    marker = object()
+    observation = RobotObservation(
+        timestamp=0.0,
+        pose=Pose2D(0.0, 0.0, 0.0),
+        twist=Twist2D(0.0, 0.0),
+        auxiliary={"probabilistic_obstacle_forecasts": (marker,)},
+    )
+
+    assert observation.auxiliary[
+        "probabilistic_obstacle_forecasts"
+    ] == (marker,)

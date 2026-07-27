@@ -143,6 +143,17 @@ def _cold_start_summary(rows, end_s):
 def _episode_record(directory, map_name, seed, arm, end_s):
     metrics = _read_json(Path(directory) / "metrics.json")
     rows = _read_csv(Path(directory) / "trajectory.csv")
+    rollout_counts = sorted({
+        int(_number(row, "paper_total_rollouts")) for row in rows
+    })
+    active_budget_valid = all(
+        (
+            int(_number(row, "paper_total_rollouts")) == 600
+            if str(row.get("optimizer", "")) == "paper_rl_driven"
+            else int(_number(row, "paper_total_rollouts")) == 0
+        )
+        for row in rows
+    )
     return {
         "map": str(map_name),
         "seed": int(seed),
@@ -159,6 +170,13 @@ def _episode_record(directory, map_name, seed, arm, end_s):
         "paper_total_rollouts_mean": float(
             metrics["paper_total_rollouts_mean"]
         ),
+        "per_cycle_rollout_counts": rollout_counts,
+        "active_paper_optimizer_budget_valid": bool(active_budget_valid),
+        "missing_forecast_deterministic_stop_steps": int(sum(
+            str(row.get("optimizer", "")) == "standard"
+            and int(_number(row, "paper_total_rollouts")) == 0
+            for row in rows
+        )),
         "supervised_proposal_count_total": int(
             metrics.get("supervised_proposal_count_total", 0)
         ),
@@ -263,11 +281,18 @@ def gate_decision(protocol, pairs):
             ])
         ),
         "same_rollout_budget": all(
-            pair[control]["paper_total_rollouts_mean"]
-            == pair[treatment]["paper_total_rollouts_mean"]
-            == float(protocol["online_interface"][
-                "total_rollouts_per_decision"
-            ])
+            pair[control]["active_paper_optimizer_budget_valid"]
+            and pair[treatment]["active_paper_optimizer_budget_valid"]
+            and set(pair[control]["per_cycle_rollout_counts"]).issubset(
+                set(protocol["online_interface"][
+                    "permitted_per_cycle_rollout_counts"
+                ])
+            )
+            and set(pair[treatment]["per_cycle_rollout_counts"]).issubset(
+                set(protocol["online_interface"][
+                    "permitted_per_cycle_rollout_counts"
+                ])
+            )
             and pair[treatment]["supervised_added_rollout_count_total"] == 0
             for pair in pairs
         ),

@@ -1,4 +1,5 @@
 from copy import deepcopy
+import hashlib
 from pathlib import Path
 
 from mobile_robot_mppi.core.references import reference_from_config
@@ -681,6 +682,38 @@ def make_components(config, project_root, rl_policy=None):
         controller_type = PaperRLDrivenMppiController
         paper_mapping = dict(planner_cfg.get("paper_rl_driven", {}))
         controller_kwargs["paper_rl_driven_config"] = paper_mapping
+        maneuver_mapping = dict(
+            paper_mapping.get("supervised_maneuver_actor", {})
+        )
+        if bool(maneuver_mapping.get("enabled", False)):
+            checkpoint = maneuver_mapping.get("checkpoint")
+            if not checkpoint:
+                raise ValueError(
+                    "supervised maneuver Actor requires a checkpoint"
+                )
+            checkpoint_path = Path(checkpoint)
+            if not checkpoint_path.is_absolute():
+                checkpoint_path = Path(project_root) / checkpoint_path
+            expected_sha256 = str(
+                maneuver_mapping.get("expected_sha256", "")
+            ).lower()
+            actual_sha256 = hashlib.sha256(
+                checkpoint_path.read_bytes()
+            ).hexdigest()
+            if expected_sha256 and actual_sha256 != expected_sha256:
+                raise ValueError(
+                    "supervised maneuver Actor checkpoint hash mismatch"
+                )
+            from mobile_robot_mppi.rl.maneuver_actor import (
+                FrozenManeuverProposalPolicy,
+            )
+
+            controller_kwargs["maneuver_proposal_policy"] = (
+                FrozenManeuverProposalPolicy.from_checkpoint(
+                    checkpoint_path,
+                    device=str(maneuver_mapping.get("device", "cpu")),
+                )
+            )
         sidecar = _build_frozen_hss_sidecar(
             paper_mapping.get("reliability_sidecar", {}),
             project_root,

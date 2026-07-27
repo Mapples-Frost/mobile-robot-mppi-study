@@ -751,6 +751,7 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
         paper_rl_driven_config=None,
         reliability_residual=None,
         reliability_nominal_dynamics=None,
+        maneuver_proposal_policy=None,
         **kwargs,
     ):
         MppiController.__init__(self, *args, **kwargs)
@@ -762,6 +763,7 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
             )
         self.reliability_residual = reliability_residual
         self.reliability_nominal_dynamics = reliability_nominal_dynamics
+        self.maneuver_proposal_policy = maneuver_proposal_policy
         if reliability_residual is not None:
             if (
                 int(reliability_residual.state_dim)
@@ -832,6 +834,15 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
         self._applied_guided_fraction = float(
             self.paper_rl_driven_config.guided_fraction
         )
+        if self.maneuver_proposal_policy is not None and (
+            int(self.maneuver_proposal_policy.horizon)
+            != int(self.config.horizon)
+            or int(self.maneuver_proposal_policy.action_dim)
+            != int(self.action_spec.dimension)
+        ):
+            raise ValueError(
+                "supervised maneuver Actor geometry disagrees with MPPI"
+            )
         required = (
             "action_distribution",
             "sample_actions",
@@ -1205,6 +1216,56 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
         if not np.isfinite(sequences).all():
             raise FloatingPointError("guided Actor rollout produced NaN or Inf")
         return sequences
+
+    def _supervised_maneuver_rollouts(
+        self, state, observation, reference
+    ):
+        policy = self.maneuver_proposal_policy
+        if policy is None:
+            return np.empty(
+                (0, self.config.horizon, self.action_spec.dimension),
+                dtype=np.float64,
+            )
+        encoder = getattr(self.sampling_prior, "_encoded_batch", None)
+        if not callable(encoder):
+            raise ValueError(
+                "supervised maneuver Actor requires the frozen paper "
+                "Actor causal observation encoder"
+            )
+        previous = np.asarray(
+            self.previous_action, dtype=np.float64
+        ).reshape(1, -1)
+        raw, _ = encoder(
+            np.asarray(state, dtype=np.float64).reshape(1, -1),
+            previous,
+            observation,
+            reference,
+            self.state_spec,
+            0.0,
+        )
+        proposals = np.asarray(
+            policy.propose(raw[0], self.action_spec), dtype=np.float64
+        )
+        expected = (
+            int(policy.heads),
+            int(self.config.horizon),
+            int(self.action_spec.dimension),
+        )
+        if proposals.shape != expected or not np.isfinite(proposals).all():
+            raise ValueError(
+                "supervised maneuver Actor returned invalid proposals"
+            )
+        # Enforce the same actuator slew contract as online execution at each
+        # step without changing any downstream optimizer or safety decision.
+        limited = np.empty_like(proposals)
+        for head in range(proposals.shape[0]):
+            prior = np.asarray(self.previous_action, dtype=np.float64)
+            for step in range(proposals.shape[1]):
+                prior = self.action_spec.clip(
+                    proposals[head, step], prior, self.config.dt
+                )
+                limited[head, step] = prior
+        return limited
 
     def _joint_actor_rollouts(
         self, state, observation, reference, guided_count, rng
@@ -1924,6 +1985,21 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
                 same_cycle_gaussian_actor_isolated
             ),
         })
+        supervised = self._supervised_maneuver_rollouts(
+            state, observation, reference
+        )
+        supervised_count = int(supervised.shape[0])
+        if supervised_count > guided_count:
+            raise ValueError(
+                "fixed guided allocation cannot hold all supervised "
+                "maneuver proposals"
+            )
+        supervised_start = guided_count - supervised_count
+        if supervised_count:
+            # Replace existing guided rows; never add samples or rollouts.
+            # Use the tail of the guided allocation because slot zero is the
+            # controller's existing deterministic braking reserve.
+            guided[supervised_start:guided_count] = supervised
         gaussian_count = self.config.num_samples - guided_count
         # Critical fidelity property: generated once, reused unchanged.
         minimum_variance = (
@@ -1935,6 +2011,11 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
 
         total_guided_elites = 0
         total_gaussian_elites = 0
+        total_supervised_elites = 0
+        total_supervised_risk_feasible = 0
+        total_supervised_opportunities = 0
+        supervised_selected_count = 0
+        supervised_elite_weight_sum = 0.0
         total_guided_opportunities = 0
         total_gaussian_opportunities = 0
         guided_costs_by_iteration = []
@@ -2160,6 +2241,8 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
                 np.ones(guided_count, dtype=np.int8),
                 np.zeros(gaussian_count, dtype=np.int8),
             ))
+            if supervised_count:
+                labels[supervised_start:guided_count] = 2
             if (
                 hard_boundary_filter
                 or hard_static_filter
@@ -2393,7 +2476,8 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
             risk_last_costs = costs.copy()
             emergency_last_mask = emergency_mask.copy()
             traversal_last_index = int(traversal_index)
-            guided_mask = labels == 1
+            guided_mask = (labels == 1) | (labels == 2)
+            supervised_mask = labels == 2
             gaussian_mask = labels == 0
             guided_boundary_feasible_count += int(np.sum(
                 boundary_feasible & guided_mask
@@ -2404,6 +2488,10 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
             guided_risk_feasible_count += int(np.sum(
                 risk_feasible & guided_mask
             ))
+            total_supervised_risk_feasible += int(np.sum(
+                risk_feasible & supervised_mask
+            ))
+            total_supervised_opportunities += int(np.sum(supervised_mask))
             if hard_boundary_filter and np.any(guided_mask):
                 guided_boundary_violations = (
                     boundary_margins[guided_mask, 1:] < 0.0
@@ -2527,10 +2615,23 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
                 maximum_variance,
             )
             total_guided_elites += int(
-                np.sum(labels[elite_indices] == 1)
+                np.sum(
+                    (labels[elite_indices] == 1)
+                    | (labels[elite_indices] == 2)
+                )
             )
             total_gaussian_elites += int(
                 np.sum(labels[elite_indices] == 0)
+            )
+            supervised_elite_mask = labels[elite_indices] == 2
+            total_supervised_elites += int(np.sum(
+                supervised_elite_mask
+            ))
+            supervised_elite_weight_sum = float(np.sum(
+                final_weights[supervised_elite_mask]
+            ))
+            supervised_selected_count = int(
+                labels[elite_indices[int(np.argmax(final_weights))]] == 2
             )
             costs_by_iteration.append(costs)
 
@@ -3038,6 +3139,27 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
             "dynamic_obstacle_tracker_cluster_count": int(
                 tracker_diagnostics.get("cluster_count", 0)
             ),
+            "dynamic_obstacle_tracker_observation_count": int(
+                tracker_diagnostics.get(
+                    "associated_observation_count", 0
+                )
+            ),
+            "dynamic_obstacle_tracker_history_length": int(
+                tracker_diagnostics.get(
+                    "measurement_history_length", 0
+                )
+            ),
+            "dynamic_obstacle_tracker_imm_initialized": bool(
+                tracker_diagnostics.get("imm_initialized", False)
+            ),
+            "dynamic_obstacle_tracker_imm_initialized_track_count": int(
+                tracker_diagnostics.get(
+                    "imm_initialized_track_count",
+                    int(bool(tracker_diagnostics.get(
+                        "imm_initialized", False
+                    ))),
+                )
+            ),
             "dynamic_obstacle_tracker_associated": bool(
                 tracker_diagnostics.get("associated", False)
             ),
@@ -3060,6 +3182,11 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
             ),
             "dynamic_obstacle_tracker_forecast_valid": bool(
                 tracker_diagnostics.get("forecast_valid", False)
+            ),
+            "dynamic_obstacle_tracker_forecast_unavailable_reason": str(
+                tracker_diagnostics.get(
+                    "forecast_unavailable_reason", "unknown"
+                )
             ),
             "dynamic_obstacle_tracker_forecast_availability": float(
                 tracker_diagnostics.get("forecast_availability", 0.0)
@@ -3092,6 +3219,30 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
             "paper_guided_unique_sequences": int(guided_count),
             "paper_guided_reuses": int(guided_count * cfg.iterations),
             "paper_guided_generation_calls": 1,
+            "supervised_maneuver_actor_enabled": bool(
+                self.maneuver_proposal_policy is not None
+            ),
+            "supervised_proposal_count": int(supervised_count),
+            "supervised_proposal_reuses": int(
+                supervised_count * cfg.iterations
+            ),
+            "supervised_risk_feasible_count": int(
+                total_supervised_risk_feasible
+            ),
+            "supervised_risk_feasible_fraction": float(
+                total_supervised_risk_feasible
+                / total_supervised_opportunities
+                if total_supervised_opportunities else 0.0
+            ),
+            "supervised_elite_count": int(total_supervised_elites),
+            "supervised_elite_weight_sum_final_iteration": float(
+                supervised_elite_weight_sum
+            ),
+            "supervised_selected_count": int(
+                supervised_selected_count
+            ),
+            "supervised_replaced_guided_count": int(supervised_count),
+            "supervised_added_rollout_count": 0,
             "paper_gaussian_samples_per_iteration": int(gaussian_count),
             "paper_guided_elite_count": int(total_guided_elites),
             "paper_gaussian_elite_count": int(total_gaussian_elites),

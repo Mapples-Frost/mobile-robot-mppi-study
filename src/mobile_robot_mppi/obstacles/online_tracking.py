@@ -485,6 +485,12 @@ class SingleObstacleChangeAwareTracker:
             self.forecast_count += 1
         diagnostics = {
             "enabled": True,
+            "update_count": int(self.update_count),
+            "associated_observation_count": int(self.associated_count),
+            "measurement_history_length": int(
+                len(self.measurement_history)
+            ),
+            "imm_initialized": bool(self.predictor.state is not None),
             "cluster_count": len(clusters),
             "associated": measurement is not None,
             "association_distance_m": association_distance,
@@ -520,6 +526,20 @@ class SingleObstacleChangeAwareTracker:
             ),
             "unobserved_duration_s": float(unobserved_duration),
             "forecast_valid": forecast is not None,
+            "forecast_unavailable_reason": (
+                "available"
+                if forecast is not None
+                else "imm_uninitialized"
+                if self.predictor.state is None
+                else "no_associated_observation"
+                if self.last_associated_timestamp is None
+                else "track_stale"
+                if unobserved_duration
+                > self.config.maximum_unobserved_duration_s + 1.0e-12
+                else "motion_history_insufficient"
+                if measurement_velocity is None
+                else "motion_not_confirmed"
+            ),
             "forecast_count": self.forecast_count,
             "update_count": self.update_count,
             "forecast_availability": float(

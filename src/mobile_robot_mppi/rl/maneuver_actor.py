@@ -127,7 +127,90 @@ def normalized_to_physical(sequences, lower, upper):
     )
 
 
+class FrozenManeuverProposalPolicy:
+    """Inference-only adapter for a frozen proposal-only Actor checkpoint."""
+
+    def __init__(self, model, observation_mean, observation_std, *, device):
+        self.model = model.eval()
+        self.device = torch.device(device)
+        self.observation_mean = np.asarray(
+            observation_mean, dtype=np.float32
+        ).reshape(-1)
+        self.observation_std = np.asarray(
+            observation_std, dtype=np.float32
+        ).reshape(-1)
+        if (
+            self.observation_mean.shape != (self.model.observation_dim,)
+            or self.observation_std.shape != self.observation_mean.shape
+            or not np.isfinite(self.observation_mean).all()
+            or not np.isfinite(self.observation_std).all()
+            or np.any(self.observation_std <= 0.0)
+        ):
+            raise ValueError("maneuver Actor normalizer is invalid")
+
+    @classmethod
+    def from_checkpoint(cls, path, *, device="cpu"):
+        payload = torch.load(
+            path, map_location=torch.device(device), weights_only=False
+        )
+        if int(payload.get("schema_version", -1)) != 1:
+            raise ValueError("unsupported maneuver Actor checkpoint schema")
+        if payload.get("execution_authority") != "proposal_only":
+            raise ValueError("maneuver Actor checkpoint is not proposal-only")
+        if not bool(payload.get("student_input_causal_only", False)):
+            raise ValueError("maneuver Actor checkpoint input is not causal")
+        config = dict(payload["model_config"])
+        model = ManeuverProposalActor(
+            int(payload["observation_dim"]),
+            heads=int(config["heads"]),
+            horizon=int(config["horizon"]),
+            action_dim=int(config["action_dim"]),
+            hidden_sizes=tuple(config["hidden_sizes"]),
+        ).to(torch.device(device))
+        model.load_state_dict(payload["model"])
+        for parameter in model.parameters():
+            parameter.requires_grad_(False)
+        return cls(
+            model,
+            payload["observation_mean"],
+            payload["observation_std"],
+            device=device,
+        )
+
+    @property
+    def heads(self):
+        return int(self.model.heads)
+
+    @property
+    def horizon(self):
+        return int(self.model.horizon)
+
+    @property
+    def action_dim(self):
+        return int(self.model.action_dim)
+
+    def propose(self, raw_observation, action_spec):
+        raw = np.asarray(raw_observation, dtype=np.float32).reshape(-1)
+        if raw.shape != self.observation_mean.shape or not np.isfinite(raw).all():
+            raise ValueError("maneuver Actor observation is invalid")
+        normalized = (raw - self.observation_mean) / self.observation_std
+        tensor = torch.as_tensor(
+            normalized[None, :], dtype=torch.float32, device=self.device
+        )
+        with torch.no_grad():
+            sequences = self.model(tensor)[0].cpu().numpy()
+        physical = normalized_to_physical(
+            sequences, action_spec.lower, action_spec.upper
+        )
+        if physical.shape != (
+            self.heads, self.horizon, self.action_dim
+        ):
+            raise ValueError("maneuver Actor proposal geometry is invalid")
+        return physical
+
+
 __all__ = [
+    "FrozenManeuverProposalPolicy",
     "ManeuverProposalActor",
     "best_of_m_loss",
     "normalized_to_physical",

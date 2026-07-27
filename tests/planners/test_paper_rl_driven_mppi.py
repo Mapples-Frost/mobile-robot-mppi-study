@@ -117,6 +117,43 @@ class JointBatchedDirectPolicy(AuditableDirectPolicy):
         )
 
 
+class EncodedJointBatchedDirectPolicy(JointBatchedDirectPolicy):
+    def _encoded_batch(
+        self,
+        states,
+        previous_controls,
+        observation,
+        reference,
+        state_spec,
+        time_offset,
+    ):
+        del (
+            previous_controls,
+            observation,
+            reference,
+            state_spec,
+            time_offset,
+        )
+        values = np.zeros((len(states), 4), dtype=np.float32)
+        return values, values
+
+
+class FixedSupervisedManeuverPolicy:
+    heads = 3
+    horizon = 5
+    action_dim = 2
+
+    def propose(self, raw_observation, action_spec):
+        assert np.asarray(raw_observation).shape == (4,)
+        values = np.zeros((self.heads, self.horizon, self.action_dim))
+        values[0, :, 0] = 0.15
+        values[0, :, 1] = 0.5
+        values[1, :, 0] = 0.20
+        values[1, :, 1] = -0.5
+        values[2, :, 0] = 0.05
+        return np.clip(values, action_spec.lower, action_spec.upper)
+
+
 class FixedMeanDirectPolicy(AuditableDirectPolicy):
     def __init__(self, mean):
         super().__init__()
@@ -205,6 +242,41 @@ def _controller(policy):
             "terminal_value_weight": 0.5,
         },
     )
+
+
+def test_supervised_maneuver_actor_replaces_guided_rows_without_more_rollouts():
+    controller = PaperRLDrivenMppiController(
+        DynamicUnicyclePrediction(),
+        dynamic_unicycle_state(),
+        body_velocity_action((0.0, 0.5), 1.0),
+        MppiConfig(
+            horizon=5,
+            num_samples=20,
+            dt=0.1,
+            noise_sigma=(0.08, 0.20),
+            seed=20260718,
+        ),
+        sampling_prior=EncodedJointBatchedDirectPolicy(),
+        maneuver_proposal_policy=FixedSupervisedManeuverPolicy(),
+        paper_rl_driven_config={
+            "iterations": 3,
+            "guided_fraction": 0.25,
+            "elite_fraction": 0.25,
+            "terminal_value_weight": 0.0,
+        },
+    )
+
+    result = controller.plan(_observation(), PointGoal(1.0, 0.0))
+    diagnostics = result.diagnostics
+
+    assert diagnostics["supervised_maneuver_actor_enabled"]
+    assert diagnostics["supervised_proposal_count"] == 3
+    assert diagnostics["supervised_replaced_guided_count"] == 3
+    assert diagnostics["supervised_added_rollout_count"] == 0
+    assert diagnostics["paper_guided_unique_sequences"] == 5
+    assert diagnostics["paper_gaussian_samples_per_iteration"] == 15
+    assert diagnostics["paper_total_rollouts"] == 60
+    assert diagnostics["supervised_risk_feasible_count"] == 9
 
 
 def test_paper_optimizer_applies_shared_boundary_candidate_filter(monkeypatch):

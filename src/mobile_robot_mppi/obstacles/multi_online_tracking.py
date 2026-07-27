@@ -221,6 +221,24 @@ class MultiObstacleChangeAwareTracker:
             "enabled": True,
             "multi_obstacle": True,
             "maximum_tracks": self.maximum_tracks,
+            "associated_observation_count": int(sum(
+                tracker.associated_count for tracker in self.trackers
+            )),
+            "measurement_history_length": int(max(
+                (
+                    len(tracker.measurement_history)
+                    for tracker in self.trackers
+                ),
+                default=0,
+            )),
+            "imm_initialized": bool(any(
+                tracker.predictor.state is not None
+                for tracker in self.trackers
+            )),
+            "imm_initialized_track_count": int(sum(
+                tracker.predictor.state is not None
+                for tracker in self.trackers
+            )),
             "track_count": sum(
                 tracker.predictor.state is not None
                 for tracker in self.trackers
@@ -233,6 +251,16 @@ class MultiObstacleChangeAwareTracker:
             "forecast_track_indices": forecast_track_indices,
             "valid_forecast_count": len(forecasts),
             "forecast_valid": bool(forecasts),
+            "forecast_unavailable_reason": (
+                "available"
+                if forecasts
+                else str(
+                    nearest_diagnostics.get(
+                        "forecast_unavailable_reason",
+                        "no_initialized_track",
+                    )
+                )
+            ),
             "update_count": self.update_count,
             "forecast_count": sum(
                 tracker.forecast_count for tracker in self.trackers

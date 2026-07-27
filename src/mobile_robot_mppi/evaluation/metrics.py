@@ -1329,6 +1329,26 @@ class EpisodeMetrics:
                     "dynamic_obstacle_tracker_cluster_count", 0
                 )
             ),
+            "dynamic_obstacle_tracker_observation_count": int(
+                planner_diagnostics.get(
+                    "dynamic_obstacle_tracker_observation_count", 0
+                )
+            ),
+            "dynamic_obstacle_tracker_history_length": int(
+                planner_diagnostics.get(
+                    "dynamic_obstacle_tracker_history_length", 0
+                )
+            ),
+            "dynamic_obstacle_tracker_imm_initialized": float(
+                planner_diagnostics.get(
+                    "dynamic_obstacle_tracker_imm_initialized", False
+                )
+            ),
+            "dynamic_obstacle_tracker_imm_initialized_track_count": int(
+                planner_diagnostics.get(
+                    "dynamic_obstacle_tracker_imm_initialized_track_count", 0
+                )
+            ),
             "dynamic_obstacle_tracker_associated": float(
                 planner_diagnostics.get(
                     "dynamic_obstacle_tracker_associated", False
@@ -1364,6 +1384,12 @@ class EpisodeMetrics:
             "dynamic_obstacle_tracker_forecast_valid": float(
                 planner_diagnostics.get(
                     "dynamic_obstacle_tracker_forecast_valid", False
+                )
+            ),
+            "dynamic_obstacle_tracker_forecast_unavailable_reason": str(
+                planner_diagnostics.get(
+                    "dynamic_obstacle_tracker_forecast_unavailable_reason",
+                    "unknown",
                 )
             ),
             "dynamic_obstacle_tracker_forecast_availability": float(
@@ -1807,6 +1833,48 @@ class EpisodeMetrics:
             ),
             "paper_guided_reuses": int(
                 planner_diagnostics.get("paper_guided_reuses", 0)
+            ),
+            "supervised_maneuver_actor_enabled": float(
+                planner_diagnostics.get(
+                    "supervised_maneuver_actor_enabled", False
+                )
+            ),
+            "supervised_proposal_count": int(
+                planner_diagnostics.get("supervised_proposal_count", 0)
+            ),
+            "supervised_proposal_reuses": int(
+                planner_diagnostics.get("supervised_proposal_reuses", 0)
+            ),
+            "supervised_risk_feasible_count": int(
+                planner_diagnostics.get(
+                    "supervised_risk_feasible_count", 0
+                )
+            ),
+            "supervised_risk_feasible_fraction": float(
+                planner_diagnostics.get(
+                    "supervised_risk_feasible_fraction", 0.0
+                )
+            ),
+            "supervised_elite_count": int(
+                planner_diagnostics.get("supervised_elite_count", 0)
+            ),
+            "supervised_elite_weight_sum_final_iteration": float(
+                planner_diagnostics.get(
+                    "supervised_elite_weight_sum_final_iteration", 0.0
+                )
+            ),
+            "supervised_selected_count": int(
+                planner_diagnostics.get("supervised_selected_count", 0)
+            ),
+            "supervised_replaced_guided_count": int(
+                planner_diagnostics.get(
+                    "supervised_replaced_guided_count", 0
+                )
+            ),
+            "supervised_added_rollout_count": int(
+                planner_diagnostics.get(
+                    "supervised_added_rollout_count", 0
+                )
             ),
             "reliability_hss_enabled": float(
                 planner_diagnostics.get("reliability_hss_enabled", False)
@@ -3596,6 +3664,30 @@ class EpisodeMetrics:
             ])),
             "paper_guided_reuses_total": int(sum(
                 row.get("paper_guided_reuses", 0) for row in values
+            )),
+            "supervised_maneuver_actor_enabled_fraction": float(np.mean([
+                row.get("supervised_maneuver_actor_enabled", 0.0)
+                for row in values
+            ])),
+            "supervised_proposal_count_total": int(sum(
+                row.get("supervised_proposal_count", 0)
+                for row in values
+            )),
+            "supervised_risk_feasible_count_total": int(sum(
+                row.get("supervised_risk_feasible_count", 0)
+                for row in values
+            )),
+            "supervised_elite_count_total": int(sum(
+                row.get("supervised_elite_count", 0)
+                for row in values
+            )),
+            "supervised_selected_count_total": int(sum(
+                row.get("supervised_selected_count", 0)
+                for row in values
+            )),
+            "supervised_added_rollout_count_total": int(sum(
+                row.get("supervised_added_rollout_count", 0)
+                for row in values
             )),
             "reliability_hss_enabled_fraction": float(np.mean([
                 row.get("reliability_hss_enabled", 0.0)

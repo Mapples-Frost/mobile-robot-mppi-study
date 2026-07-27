@@ -121,6 +121,27 @@ def _verify_source_gate(protocol):
     return gate_path
 
 
+def _source_items(protocol):
+    sources = protocol["sources"]
+    if isinstance(sources, dict):
+        return [
+            (str(map_name), item)
+            for map_name, item in sources.items()
+        ]
+    if not isinstance(sources, list) or not sources:
+        raise ValueError("dataset sources must be a non-empty mapping or list")
+    items = []
+    identities = set()
+    for item in sources:
+        map_name = str(item["map"])
+        identity = (map_name, str(item["artifact"]))
+        if identity in identities:
+            raise ValueError("dataset source is duplicated: %s" % (identity,))
+        identities.add(identity)
+        items.append((map_name, item))
+    return items
+
+
 def _previous_control(rows, anchor_index):
     if int(anchor_index) <= 0:
         return np.zeros(2, dtype=np.float64)
@@ -399,7 +420,7 @@ def generate(protocol_path, output):
 
     jobs = []
     offsets = protocol["oracle_export"]["offsets_s"]
-    for map_name, item in protocol["sources"].items():
+    for map_name, item in _source_items(protocol):
         artifact = (ROOT / item["artifact"]).resolve()
         rows = _read_rows(artifact / "trajectory.csv")
         conflict = _anchor_index(rows, item["conflict_rule"])

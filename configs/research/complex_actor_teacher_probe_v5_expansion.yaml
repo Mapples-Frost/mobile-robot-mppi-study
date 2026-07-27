@@ -1,0 +1,50 @@
+schema_version: 5
+protocol: complex_actor_teacher_upper_bound_v1
+scope: preregistered_v3_expansion_sources_not_closed_loop_test
+
+teacher:
+  optimizer: standard
+  sampling_prior: goal_warm_start
+  horizon: 36
+  num_samples: 2400
+  maximum_steps: 120
+  future_truth_used: false
+  dynamic_obstacles_in_astar: false
+  probability_thresholds_changed: false
+  safety_contract_changed: false
+
+# Frozen as one batch before any outcome below is opened. A failed source is
+# retained as negative evidence; no replacement seed is permitted.
+development_seeds:
+  chapter1: [791101031, 791101037]
+  chapter2: [790202031, 790202037]
+  chapter3: [791103031, 791103037]
+
+# These remain unopened during data generation, training, and Gates A-C.
+reserved_unopened_closed_loop_seeds:
+  chapter1: [791101049]
+  chapter2: [790202049]
+  chapter3: [791103049]
+
+gate:
+  minimum_path_progress_m: 0.20
+  maximum_collisions: 0
+  maximum_boundary_violations: 0
+  require_nonzero_forward_motion: true
+  formal_server_launch_authorized: false
+
+dataset_expansion_contract:
+  previous_dataset_gate_status: fail
+  previous_independent_train_states: 7
+  previous_required_train_states: 8
+  previous_failed_data_may_enter_training: false
+  bootstrap_gate_d_status: fail
+  maps_changed: false
+  teacher_capacity_changed: false
+  probability_thresholds_changed: false
+  icode_changed: false
+  safety_contract_changed: false
+  actor_used_by_source_probe: false
+  final_test_maps: false
+  formal_server_launch_authorized: false
+

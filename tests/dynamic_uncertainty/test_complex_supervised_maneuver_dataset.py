@@ -3,6 +3,7 @@ from pathlib import Path
 from experiments.dynamic_uncertainty.generate_complex_supervised_maneuver_dataset import (
     _dataset_gate,
     _load_protocol,
+    _source_items,
 )
 
 
@@ -82,3 +83,36 @@ def test_dataset_gate_rejects_scenario_leakage_even_with_enough_rows():
     assert result["status"] == "fail"
     assert not result["engineering_training_authorized"]
     assert not result["checks"]["scenario_split_disjoint"]
+
+
+def test_dataset_sources_support_multiple_frozen_seeds_per_map():
+    protocol = {
+        "sources": [
+            {"map": "chapter1", "artifact": "one", "split": "train"},
+            {"map": "chapter1", "artifact": "two", "split": "train"},
+            {
+                "map": "chapter2",
+                "artifact": "validation",
+                "split": "validation",
+            },
+        ]
+    }
+    items = _source_items(protocol)
+    assert [map_name for map_name, _ in items] == [
+        "chapter1",
+        "chapter1",
+        "chapter2",
+    ]
+
+
+def test_dataset_sources_reject_duplicate_artifacts():
+    protocol = {
+        "sources": [
+            {"map": "chapter1", "artifact": "same", "split": "train"},
+            {"map": "chapter1", "artifact": "same", "split": "train"},
+        ]
+    }
+    import pytest
+
+    with pytest.raises(ValueError, match="duplicated"):
+        _source_items(protocol)

@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "status": "pass",
+  "scope": "round1_development_execution_and_analysis_implementation",
+  "runner_contract": {
+    "control_margin": 0.0,
+    "treatment_margin": 0.02,
+    "allowed_blocks": [
+      ["chapter1", 791101019],
+      ["chapter2", 790202019],
+      ["chapter3", 791103019]
+    ],
+    "actor_enabled_both_arms": true,
+    "rollout_budget": 600,
+    "map_specific_logic": false,
+    "unopened_seed_rejected": true,
+    "margin_0_05_or_0_10_available": false
+  },
+  "analysis_contract": {
+    "per_map_collision_not_worse": true,
+    "per_map_task_improvement": true,
+    "per_map_counterfactual_first_action_increase": true,
+    "per_map_guard_survival_increase": true,
+    "pooled_selected_or_influential_cycles_increase": true,
+    "pooled_safety_intervention_fraction_not_increase": true,
+    "rollout_and_three_head_quota_audited": true,
+    "held_out_claim_authorized": false
+  },
+  "tests": {
+    "status": "pass",
+    "passed": 179,
+    "failed": 0,
+    "python_compile": "pass"
+  },
+  "sha256": {
+    "experiments/dynamic_uncertainty/run_complex_maneuver_proposal_execution_development.py": "3e2c61b319fa64ddb4156e3d51d88d39847815569e140e2ffc233afb830bd735",
+    "experiments/dynamic_uncertainty/analyze_complex_maneuver_proposal_execution_development.py": "0d4c6af5316f3f443e8c8047e0e99c7de6b3eb0df893b72352195f27c97b1fe2",
+    "tests/dynamic_uncertainty/test_complex_maneuver_proposal_execution_development.py": "02cc0ab25c3b15f56f07235b3726ea947e2fc69218e15d6ed25ee49cd5222a5f"
+  },
+  "next_authorized_step": "run margin0_control on chapter1 seed 791101019 only; complete and seal all three margin-zero controls before any margin0.02 episode"
+}

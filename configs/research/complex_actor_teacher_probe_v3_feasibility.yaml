@@ -1,0 +1,45 @@
+schema_version: 3
+protocol: complex_actor_teacher_upper_bound_v1
+scope: development_only_not_deployment_method
+
+# Training-only upper-bound teacher. It changes compute, not the deployment
+# method, probability limits, or Safety contract.
+teacher:
+  optimizer: standard
+  sampling_prior: goal_warm_start
+  horizon: 36
+  num_samples: 2400
+  maximum_steps: 200
+  future_truth_used: false
+  dynamic_obstacles_in_astar: false
+  probability_thresholds_changed: false
+  safety_contract_changed: false
+
+# Chapter 1 and Chapter 3 use fresh, previously unopened seeds frozen before
+# the feasibility-r3 outcomes. Chapter 2 already passed the unchanged teacher
+# gate and therefore is not rerun.
+development_seeds:
+  chapter1: [791101003]
+  chapter2: [790202007]
+  chapter3: [791103003]
+
+gate:
+  minimum_path_progress_m: 0.80
+  maximum_collisions: 0
+  maximum_boundary_violations: 0
+  require_nonzero_forward_motion: true
+  formal_server_launch_authorized: false
+
+amendment:
+  revision: 4
+  reason: >
+    Re-evaluate teacher support on two feasibility-margin revisions. Chapter 1
+    reduces the first mover footprint and uncertainty envelope; Chapter 3
+    uniformly reduces mover footprints, slows the three loops, and tightens
+    motion randomization. Collision Risk, ICODE, Safety, MPPI horizon, and
+    teacher compute remain unchanged.
+  training_maps_only: true
+  fresh_seed_outcomes_opened: false
+  teacher_capacity_changed: false
+  probability_thresholds_changed: false
+  safety_contract_changed: false

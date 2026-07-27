@@ -1,0 +1,904 @@
+[
+  {
+    "accepted_behavior_families": [
+      "left",
+      "right",
+      "yield"
+    ],
+    "accepted_count": 302,
+    "anchor_index": 28,
+    "anchor_time_s": 2.899999999999902,
+    "map": "chapter1",
+    "observation_contract": {
+      "absolute_pose_enabled": false,
+      "checkpoint": "D:\\Projects\\mobile-robot-mppi-study-single-v6\\research_artifacts\\dynamic_actor_temporal_bidirectional_correction_v5_amendment6\\checkpoints\\improved_update_000250.pt",
+      "checkpoint_sha256": "714694f8d179f02b90c14e56c9e3e4f29a0101b70ad53f3cc795eb72dea7a1b5",
+      "dimension": 84
+    },
+    "offset_s": -3.0,
+    "scenario_id": "chapter1_seed791101011",
+    "seed": 791101011,
+    "selected_count": 6,
+    "split": "train",
+    "teachers": [
+      {
+        "family": "left",
+        "minimum_dynamic_clearance_m": 0.9123803465305877,
+        "minimum_static_clearance_m": 0.15191555820627445,
+        "progress_m": 0.9717102898732447,
+        "score": 1.2422116211870917,
+        "stopping_tail_dynamic_clearance_m": 0.728337061871021,
+        "teacher_label": "s_left"
+      },
+      {
+        "family": "left",
+        "minimum_dynamic_clearance_m": 0.7295893620425988,
+        "minimum_static_clearance_m": 0.2669146747892306,
+        "progress_m": 0.9536301977343935,
+        "score": 1.1999507206599902,
+        "stopping_tail_dynamic_clearance_m": 0.737111830381538,
+        "teacher_label": "s_left"
+      },
+      {
+        "family": "right",
+        "minimum_dynamic_clearance_m": 0.4850438297664293,
+        "minimum_static_clearance_m": 0.45923643918932033,
+        "progress_m": 0.8818479280846063,
+        "score": 1.08092721709422,
+        "stopping_tail_dynamic_clearance_m": 0.5614687913739582,
+        "teacher_label": "s_right"
+      },
+      {
+        "family": "right",
+        "minimum_dynamic_clearance_m": 0.34378644237334194,
+        "minimum_static_clearance_m": 0.49306704562558723,
+        "progress_m": 0.7860170193426876,
+        "score": 0.9516387216270493,
+        "stopping_tail_dynamic_clearance_m": 0.4755770924713458,
+        "teacher_label": "s_right"
+      },
+      {
+        "family": "yield",
+        "minimum_dynamic_clearance_m": 0.6839291602758388,
+        "minimum_static_clearance_m": 0.48135974677477344,
+        "progress_m": 1.3725025158088415,
+        "score": 1.5993439284421964,
+        "stopping_tail_dynamic_clearance_m": 0.4191960590070954,
+        "teacher_label": "yield_left"
+      },
+      {
+        "family": "yield",
+        "minimum_dynamic_clearance_m": 0.6306914937921808,
+        "minimum_static_clearance_m": 0.44936146079733497,
+        "progress_m": 1.3750704843574737,
+        "score": 1.5918894677168227,
+        "stopping_tail_dynamic_clearance_m": 0.4574453852117952,
+        "teacher_label": "cem2_yield_left_i1"
+      }
+    ]
+  },
+  {
+    "accepted_behavior_families": [
+      "left",
+      "right",
+      "yield"
+    ],
+    "accepted_count": 299,
+    "anchor_index": 33,
+    "anchor_time_s": 3.399999999999847,
+    "map": "chapter1",
+    "observation_contract": {
+      "absolute_pose_enabled": false,
+      "checkpoint": "D:\\Projects\\mobile-robot-mppi-study-single-v6\\research_artifacts\\dynamic_actor_temporal_bidirectional_correction_v5_amendment6\\checkpoints\\improved_update_000250.pt",
+      "checkpoint_sha256": "714694f8d179f02b90c14e56c9e3e4f29a0101b70ad53f3cc795eb72dea7a1b5",
+      "dimension": 84
+    },
+    "offset_s": -2.5,
+    "scenario_id": "chapter1_seed791101011",
+    "seed": 791101011,
+    "selected_count": 6,
+    "split": "train",
+    "teachers": [
+      {
+        "family": "left",
+        "minimum_dynamic_clearance_m": 0.6841928997570035,
+        "minimum_static_clearance_m": 0.2849602265916267,
+        "progress_m": 1.0124005699567875,
+        "score": 1.2115451005183617,
+        "stopping_tail_dynamic_clearance_m": 0.3380992795101088,
+        "teacher_label": "s_left"
+      },
+      {
+        "family": "left",
+        "minimum_dynamic_clearance_m": 0.6500445142475735,
+        "minimum_static_clearance_m": 0.3239816544382864,
+        "progress_m": 0.8858169126618248,
+        "score": 1.0968950358018672,
+        "stopping_tail_dynamic_clearance_m": 0.4867105484669902,
+        "teacher_label": "s_left"
+      },
+      {
+        "family": "right",
+        "minimum_dynamic_clearance_m": 0.3325794598671859,
+        "minimum_static_clearance_m": 0.5021664394324308,
+        "progress_m": 0.6981688884630978,
+        "score": 0.858672494882434,
+        "stopping_tail_dynamic_clearance_m": 0.43771070502655945,
+        "teacher_label": "s_right"
+      },
+      {
+        "family": "right",
+        "minimum_dynamic_clearance_m": 0.30844843665868843,
+        "minimum_static_clearance_m": 0.502240272075516,
+        "progress_m": 0.6517667899335414,
+        "score": 0.8017063352643532,
+        "stopping_tail_dynamic_clearance_m": 0.38025830791522414,
+        "teacher_label": "s_right"
+      },
+      {
+        "family": "yield",
+        "minimum_dynamic_clearance_m": 0.4955295598084159,
+        "minimum_static_clearance_m": 0.3391465487451598,
+        "progress_m": 1.3442513233243711,
+        "score": 1.5081447228923512,
+        "stopping_tail_dynamic_clearance_m": 0.308728327317809,
+        "teacher_label": "cem2_yield_right_i1"
+      },
+      {
+        "family": "yield",
+        "minimum_dynamic_clearance_m": 0.29181509681963663,
+        "minimum_static_clearance_m": 0.5021465056327217,
+        "progress_m": 1.3497439872545356,
+        "score": 1.4877758750821113,
+        "stopping_tail_dynamic_clearance_m": 0.2945421790037633,
+        "teacher_label": "cem1_yield_left_i1"
+      }
+    ]
+  },
+  {
+    "accepted_behavior_families": [
+      "left",
+      "right",
+      "yield"
+    ],
+    "accepted_count": 286,
+    "anchor_index": 38,
+    "anchor_time_s": 3.899999999999792,
+    "map": "chapter1",
+    "observation_contract": {
+      "absolute_pose_enabled": false,
+      "checkpoint": "D:\\Projects\\mobile-robot-mppi-study-single-v6\\research_artifacts\\dynamic_actor_temporal_bidirectional_correction_v5_amendment6\\checkpoints\\improved_update_000250.pt",
+      "checkpoint_sha256": "714694f8d179f02b90c14e56c9e3e4f29a0101b70ad53f3cc795eb72dea7a1b5",
+      "dimension": 84
+    },
+    "offset_s": -2.0,
+    "scenario_id": "chapter1_seed791101011",
+    "seed": 791101011,
+    "selected_count": 6,
+    "split": "train",
+    "teachers": [
+      {
+        "family": "left",
+        "minimum_dynamic_clearance_m": 0.6186047444030331,
+        "minimum_static_clearance_m": 0.2859386452467223,
+        "progress_m": 0.7554344675907526,
+        "score": 0.9594534044972859,
+        "stopping_tail_dynamic_clearance_m": 0.5170412350125446,
+        "teacher_label": "s_left"
+      },
+      {
+        "family": "left",
+        "minimum_dynamic_clearance_m": 0.91500247254927,
+        "minimum_static_clearance_m": 0.06103020082842453,
+        "progress_m": 0.6258471268165459,
+        "score": 0.8812792836300383,
+        "stopping_tail_dynamic_clearance_m": 0.6632864222079591,
+        "teacher_label": "left"
+      },
+      {
+        "family": "right",
+        "minimum_dynamic_clearance_m": 0.3269252971870949,
+        "minimum_static_clearance_m": 0.43976990513402514,
+        "progress_m": 0.6015341235830142,
+        "score": 0.7535755988074329,
+        "stopping_tail_dynamic_clearance_m": 0.4267942527359712,
+        "teacher_label": "s_right"
+      },
+      {
+        "family": "right",
+        "minimum_dynamic_clearance_m": 0.29928514604666795,
+        "minimum_static_clearance_m": 0.5350221614213615,
+        "progress_m": 0.36052998562492633,
+        "score": 0.5250584613082531,
+        "stopping_tail_dynamic_clearance_m": 0.5116923033185703,
+        "teacher_label": "s_right"
+      },
+      {
+        "family": "yield",
+        "minimum_dynamic_clearance_m": 0.2212995266245869,
+        "minimum_static_clearance_m": 0.4411890242231089,
+        "progress_m": 1.266914918721055,
+        "score": 1.371173244422047,
+        "stopping_tail_dynamic_clearance_m": 0.1587951795376355,
+        "teacher_label": "cem3_yield_left_i1"
+      },
+      {
+        "family": "yield",
+        "minimum_dynamic_clearance_m": 0.3678169362135681,
+        "minimum_static_clearance_m": 0.39252489396911217,
+        "progress_m": 1.2162827311833353,
+        "score": 1.3505191557554679,
+        "stopping_tail_dynamic_clearance_m": 0.21420547932507555,
+        "teacher_label": "cem2_yield_left_i1"
+      }
+    ]
+  },
+  {
+    "accepted_behavior_families": [],
+    "accepted_count": 0,
+    "anchor_index": 43,
+    "anchor_time_s": 4.3999999999997375,
+    "map": "chapter1",
+    "observation_contract": {
+      "absolute_pose_enabled": false,
+      "checkpoint": "D:\\Projects\\mobile-robot-mppi-study-single-v6\\research_artifacts\\dynamic_actor_temporal_bidirectional_correction_v5_amendment6\\checkpoints\\improved_update_000250.pt",
+      "checkpoint_sha256": "714694f8d179f02b90c14e56c9e3e4f29a0101b70ad53f3cc795eb72dea7a1b5",
+      "dimension": 84
+    },
+    "offset_s": -1.5,
+    "scenario_id": "chapter1_seed791101011",
+    "seed": 791101011,
+    "selected_count": 0,
+    "split": "train",
+    "teachers": []
+  },
+  {
+    "accepted_behavior_families": [
+      "left",
+      "yield"
+    ],
+    "accepted_count": 211,
+    "anchor_index": 48,
+    "anchor_time_s": 4.899999999999682,
+    "map": "chapter1",
+    "observation_contract": {
+      "absolute_pose_enabled": false,
+      "checkpoint": "D:\\Projects\\mobile-robot-mppi-study-single-v6\\research_artifacts\\dynamic_actor_temporal_bidirectional_correction_v5_amendment6\\checkpoints\\improved_update_000250.pt",
+      "checkpoint_sha256": "714694f8d179f02b90c14e56c9e3e4f29a0101b70ad53f3cc795eb72dea7a1b5",
+      "dimension": 84
+    },
+    "offset_s": -1.0,
+    "scenario_id": "chapter1_seed791101011",
+    "seed": 791101011,
+    "selected_count": 4,
+    "split": "train",
+    "teachers": [
+      {
+        "family": "left",
+        "minimum_dynamic_clearance_m": 0.12281580742140025,
+        "minimum_static_clearance_m": 0.19179247384760778,
+        "progress_m": 0.5835426392215607,
+        "score": 0.6426117938218197,
+        "stopping_tail_dynamic_clearance_m": 0.15326745731218178,
+        "teacher_label": "s_left"
+      },
+      {
+        "family": "left",
+        "minimum_dynamic_clearance_m": 0.19059285818405053,
+        "minimum_static_clearance_m": 0.40687665299433384,
+        "progress_m": 0.4342860958767497,
+        "score": 0.5328141439211544,
+        "stopping_tail_dynamic_clearance_m": 0.19721811108161186,
+        "teacher_label": "left"
+      },
+      {
+        "family": "yield",
+        "minimum_dynamic_clearance_m": 0.2428591259965422,
+        "minimum_static_clearance_m": 0.6663617712905227,
+        "progress_m": 0.7131868387855008,
+        "score": 0.8436937566775512,
+        "stopping_tail_dynamic_clearance_m": 0.15298915563689658,
+        "teacher_label": "cem0_yield_left_i1"
+      },
+      {
+        "family": "yield",
+        "minimum_dynamic_clearance_m": 0.11450181935044518,
+        "minimum_static_clearance_m": 0.5416126831906513,
+        "progress_m": 0.7550668972745853,
+        "score": 0.8436229840542852,
+        "stopping_tail_dynamic_clearance_m": 0.11494454590545627,
+        "teacher_label": "cem1_yield_left_i0"
+      }
+    ]
+  },
+  {
+    "accepted_behavior_families": [
+      "yield"
+    ],
+    "accepted_count": 49,
+    "anchor_index": 53,
+    "anchor_time_s": 5.399999999999627,
+    "map": "chapter1",
+    "observation_contract": {
+      "absolute_pose_enabled": false,
+      "checkpoint": "D:\\Projects\\mobile-robot-mppi-study-single-v6\\research_artifacts\\dynamic_actor_temporal_bidirectional_correction_v5_amendment6\\checkpoints\\improved_update_000250.pt",
+      "checkpoint_sha256": "714694f8d179f02b90c14e56c9e3e4f29a0101b70ad53f3cc795eb72dea7a1b5",
+      "dimension": 84
+    },
+    "offset_s": -0.5,
+    "scenario_id": "chapter1_seed791101011",
+    "seed": 791101011,
+    "selected_count": 2,
+    "split": "train",
+    "teachers": [
+      {
+        "family": "yield",
+        "minimum_dynamic_clearance_m": 0.15607791594593728,
+        "minimum_static_clearance_m": 0.31987733794334705,
+        "progress_m": 0.5137032586785778,
+        "score": 0.5923803348942225,
+        "stopping_tail_dynamic_clearance_m": 0.15473759232122414,
+        "teacher_label": "cem1_yield_left_i1"
+      },
+      {
+        "family": "yield",
+        "minimum_dynamic_clearance_m": 0.1443889184216161,
+        "minimum_static_clearance_m": 0.3847337458004334,
+        "progress_m": 0.5071744111984007,
+        "score": 0.5890055292372326,
+        "stopping_tail_dynamic_clearance_m": 0.1447995977446535,
+        "teacher_label": "cem0_yield_left_i1"
+      }
+    ]
+  },
+  {
+    "accepted_behavior_families": [
+      "yield"
+    ],
+    "accepted_count": 1,
+    "anchor_index": 59,
+    "anchor_time_s": 5.999999999999561,
+    "map": "chapter1",
+    "observation_contract": {
+      "absolute_pose_enabled": false,
+      "checkpoint": "D:\\Projects\\mobile-robot-mppi-study-single-v6\\research_artifacts\\dynamic_actor_temporal_bidirectional_correction_v5_amendment6\\checkpoints\\improved_update_000250.pt",
+      "checkpoint_sha256": "714694f8d179f02b90c14e56c9e3e4f29a0101b70ad53f3cc795eb72dea7a1b5",
+      "dimension": 84
+    },
+    "offset_s": 0.0,
+    "scenario_id": "chapter1_seed791101011",
+    "seed": 791101011,
+    "selected_count": 1,
+    "split": "train",
+    "teachers": [
+      {
+        "family": "yield",
+        "minimum_dynamic_clearance_m": 0.21990167039117664,
+        "minimum_static_clearance_m": 0.6895646023055252,
+        "progress_m": 0.2734985903068565,
+        "score": 0.4227093682762715,
+        "stopping_tail_dynamic_clearance_m": 0.3627398366062711,
+        "teacher_label": "cem3_yield_left_i1"
+      }
+    ]
+  },
+  {
+    "accepted_behavior_families": [],
+    "accepted_count": 0,
+    "anchor_index": 0,
+    "anchor_time_s": 0.10000000000000007,
+    "map": "chapter3",
+    "observation_contract": {
+      "absolute_pose_enabled": false,
+      "checkpoint": "D:\\Projects\\mobile-robot-mppi-study-single-v6\\research_artifacts\\dynamic_actor_temporal_bidirectional_correction_v5_amendment6\\checkpoints\\improved_update_000250.pt",
+      "checkpoint_sha256": "714694f8d179f02b90c14e56c9e3e4f29a0101b70ad53f3cc795eb72dea7a1b5",
+      "dimension": 84
+    },
+    "offset_s": -3.0,
+    "scenario_id": "chapter3_seed791103011",
+    "seed": 791103011,
+    "selected_count": 0,
+    "split": "train",
+    "teachers": []
+  },
+  {
+    "accepted_behavior_families": [],
+    "accepted_count": 0,
+    "anchor_index": 1,
+    "anchor_time_s": 0.20000000000000015,
+    "map": "chapter3",
+    "observation_contract": {
+      "absolute_pose_enabled": false,
+      "checkpoint": "D:\\Projects\\mobile-robot-mppi-study-single-v6\\research_artifacts\\dynamic_actor_temporal_bidirectional_correction_v5_amendment6\\checkpoints\\improved_update_000250.pt",
+      "checkpoint_sha256": "714694f8d179f02b90c14e56c9e3e4f29a0101b70ad53f3cc795eb72dea7a1b5",
+      "dimension": 84
+    },
+    "offset_s": -1.0,
+    "scenario_id": "chapter3_seed791103011",
+    "seed": 791103011,
+    "selected_count": 0,
+    "split": "train",
+    "teachers": []
+  },
+  {
+    "accepted_behavior_families": [],
+    "accepted_count": 0,
+    "anchor_index": 6,
+    "anchor_time_s": 0.7000000000000005,
+    "map": "chapter3",
+    "observation_contract": {
+      "absolute_pose_enabled": false,
+      "checkpoint": "D:\\Projects\\mobile-robot-mppi-study-single-v6\\research_artifacts\\dynamic_actor_temporal_bidirectional_correction_v5_amendment6\\checkpoints\\improved_update_000250.pt",
+      "checkpoint_sha256": "714694f8d179f02b90c14e56c9e3e4f29a0101b70ad53f3cc795eb72dea7a1b5",
+      "dimension": 84
+    },
+    "offset_s": -0.5,
+    "scenario_id": "chapter3_seed791103011",
+    "seed": 791103011,
+    "selected_count": 0,
+    "split": "train",
+    "teachers": []
+  },
+  {
+    "accepted_behavior_families": [
+      "left",
+      "yield"
+    ],
+    "accepted_count": 235,
+    "anchor_index": 11,
+    "anchor_time_s": 1.2000000000000008,
+    "map": "chapter3",
+    "observation_contract": {
+      "absolute_pose_enabled": false,
+      "checkpoint": "D:\\Projects\\mobile-robot-mppi-study-single-v6\\research_artifacts\\dynamic_actor_temporal_bidirectional_correction_v5_amendment6\\checkpoints\\improved_update_000250.pt",
+      "checkpoint_sha256": "714694f8d179f02b90c14e56c9e3e4f29a0101b70ad53f3cc795eb72dea7a1b5",
+      "dimension": 84
+    },
+    "offset_s": 0.0,
+    "scenario_id": "chapter3_seed791103011",
+    "seed": 791103011,
+    "selected_count": 3,
+    "split": "train",
+    "teachers": [
+      {
+        "family": "left",
+        "minimum_dynamic_clearance_m": 1.5619318806790081,
+        "minimum_static_clearance_m": 0.37949013177725677,
+        "progress_m": 0.3029640365701738,
+        "score": 0.8532994258837012,
+        "stopping_tail_dynamic_clearance_m": 2.3148622787335604,
+        "teacher_label": "left"
+      },
+      {
+        "family": "yield",
+        "minimum_dynamic_clearance_m": 1.4295083188970397,
+        "minimum_static_clearance_m": 0.4211410439110259,
+        "progress_m": 0.7942743392503844,
+        "score": 1.3222901074208948,
+        "stopping_tail_dynamic_clearance_m": 2.014347343852975,
+        "teacher_label": "cem1_yield_left_i0"
+      },
+      {
+        "family": "yield",
+        "minimum_dynamic_clearance_m": 1.4148569137816984,
+        "minimum_static_clearance_m": 0.4106838660017651,
+        "progress_m": 0.7855038218503001,
+        "score": 1.3095435912068163,
+        "stopping_tail_dynamic_clearance_m": 2.072591920524564,
+        "teacher_label": "yield_left"
+      }
+    ]
+  },
+  {
+    "accepted_behavior_families": [
+      "left",
+      "right",
+      "yield"
+    ],
+    "accepted_count": 447,
+    "anchor_index": 11,
+    "anchor_time_s": 1.2000000000000008,
+    "map": "chapter2",
+    "observation_contract": {
+      "absolute_pose_enabled": false,
+      "checkpoint": "D:\\Projects\\mobile-robot-mppi-study-single-v6\\research_artifacts\\dynamic_actor_temporal_bidirectional_correction_v5_amendment6\\checkpoints\\improved_update_000250.pt",
+      "checkpoint_sha256": "714694f8d179f02b90c14e56c9e3e4f29a0101b70ad53f3cc795eb72dea7a1b5",
+      "dimension": 84
+    },
+    "offset_s": -3.0,
+    "scenario_id": "chapter2_seed790202007",
+    "seed": 790202007,
+    "selected_count": 6,
+    "split": "validation",
+    "teachers": [
+      {
+        "family": "left",
+        "minimum_dynamic_clearance_m": 2.696607677153316,
+        "minimum_static_clearance_m": 0.31608535404545224,
+        "progress_m": 0.9404376930670185,
+        "score": 1.5720462284715637,
+        "stopping_tail_dynamic_clearance_m": 2.800814064896415,
+        "teacher_label": "left"
+      },
+      {
+        "family": "left",
+        "minimum_dynamic_clearance_m": 2.325525064022051,
+        "minimum_static_clearance_m": 0.4588003312631338,
+        "progress_m": 0.7205166059090593,
+        "score": 1.3663966390353728,
+        "stopping_tail_dynamic_clearance_m": 2.758482266381046,
+        "teacher_label": "s_left"
+      },
+      {
+        "family": "right",
+        "minimum_dynamic_clearance_m": 2.325624847639949,
+        "minimum_static_clearance_m": 0.45874458906200555,
+        "progress_m": 0.7280323752765576,
+        "score": 1.373906834182758,
+        "stopping_tail_dynamic_clearance_m": 3.351066532920948,
+        "teacher_label": "s_right"
+      },
+      {
+        "family": "right",
+        "minimum_dynamic_clearance_m": 2.0272921775452906,
+        "minimum_static_clearance_m": 0.4051393659300113,
+        "progress_m": 0.6136029602632662,
+        "score": 1.2541168968562675,
+        "stopping_tail_dynamic_clearance_m": 2.484122315917082,
+        "teacher_label": "s_right"
+      },
+      {
+        "family": "yield",
+        "minimum_dynamic_clearance_m": 2.420790837536481,
+        "minimum_static_clearance_m": 0.4162423128432241,
+        "progress_m": 1.2454881497394454,
+        "score": 1.887112381023768,
+        "stopping_tail_dynamic_clearance_m": 3.024449145664962,
+        "teacher_label": "cem0_yield_left_i1"
+      },
+      {
+        "family": "yield",
+        "minimum_dynamic_clearance_m": 2.5946234602725444,
+        "minimum_static_clearance_m": 0.45869442385038306,
+        "progress_m": 1.2375919690877224,
+        "score": 1.8834614114727606,
+        "stopping_tail_dynamic_clearance_m": 3.022428415744733,
+        "teacher_label": "cem2_yield_left_i1"
+      }
+    ]
+  },
+  {
+    "accepted_behavior_families": [],
+    "accepted_count": 0,
+    "anchor_index": 16,
+    "anchor_time_s": 1.7000000000000013,
+    "map": "chapter2",
+    "observation_contract": {
+      "absolute_pose_enabled": false,
+      "checkpoint": "D:\\Projects\\mobile-robot-mppi-study-single-v6\\research_artifacts\\dynamic_actor_temporal_bidirectional_correction_v5_amendment6\\checkpoints\\improved_update_000250.pt",
+      "checkpoint_sha256": "714694f8d179f02b90c14e56c9e3e4f29a0101b70ad53f3cc795eb72dea7a1b5",
+      "dimension": 84
+    },
+    "offset_s": -2.5,
+    "scenario_id": "chapter2_seed790202007",
+    "seed": 790202007,
+    "selected_count": 0,
+    "split": "validation",
+    "teachers": []
+  },
+  {
+    "accepted_behavior_families": [
+      "left",
+      "right",
+      "yield"
+    ],
+    "accepted_count": 512,
+    "anchor_index": 21,
+    "anchor_time_s": 2.1999999999999793,
+    "map": "chapter2",
+    "observation_contract": {
+      "absolute_pose_enabled": false,
+      "checkpoint": "D:\\Projects\\mobile-robot-mppi-study-single-v6\\research_artifacts\\dynamic_actor_temporal_bidirectional_correction_v5_amendment6\\checkpoints\\improved_update_000250.pt",
+      "checkpoint_sha256": "714694f8d179f02b90c14e56c9e3e4f29a0101b70ad53f3cc795eb72dea7a1b5",
+      "dimension": 84
+    },
+    "offset_s": -2.0,
+    "scenario_id": "chapter2_seed790202007",
+    "seed": 790202007,
+    "selected_count": 6,
+    "split": "validation",
+    "teachers": [
+      {
+        "family": "left",
+        "minimum_dynamic_clearance_m": 2.3542244360457683,
+        "minimum_static_clearance_m": 0.33285570923521257,
+        "progress_m": 0.48999637234568805,
+        "score": 1.1232819432692094,
+        "stopping_tail_dynamic_clearance_m": 2.18556182864798,
+        "teacher_label": "s_left"
+      },
+      {
+        "family": "left",
+        "minimum_dynamic_clearance_m": 2.23552134848317,
+        "minimum_static_clearance_m": 0.1844135714106298,
+        "progress_m": 0.3960140389713308,
+        "score": 1.0144553961123939,
+        "stopping_tail_dynamic_clearance_m": 2.0825295812519764,
+        "teacher_label": "s_left"
+      },
+      {
+        "family": "right",
+        "minimum_dynamic_clearance_m": 2.5094597491587436,
+        "minimum_static_clearance_m": 0.6431086174184396,
+        "progress_m": 1.2093353158785305,
+        "score": 1.8736461776203746,
+        "stopping_tail_dynamic_clearance_m": 2.8876629014265105,
+        "teacher_label": "cem0_s_right_i1"
+      },
+      {
+        "family": "right",
+        "minimum_dynamic_clearance_m": 2.249805288363035,
+        "minimum_static_clearance_m": 0.5750533587112654,
+        "progress_m": 1.1023771961009747,
+        "score": 1.7598825319721014,
+        "stopping_tail_dynamic_clearance_m": 2.7600772113407075,
+        "teacher_label": "s_right"
+      },
+      {
+        "family": "yield",
+        "minimum_dynamic_clearance_m": 2.7936467621840637,
+        "minimum_static_clearance_m": 0.3367287322881206,
+        "progress_m": 1.157195396098973,
+        "score": 1.7908682693277849,
+        "stopping_tail_dynamic_clearance_m": 2.8515976357423547,
+        "teacher_label": "cem3_yield_right_i1"
+      },
+      {
+        "family": "yield",
+        "minimum_dynamic_clearance_m": 2.7112896182758583,
+        "minimum_static_clearance_m": 0.4406193059036404,
+        "progress_m": 1.142351656005871,
+        "score": 1.786413586596235,
+        "stopping_tail_dynamic_clearance_m": 2.8642153341429752,
+        "teacher_label": "cem2_yield_right_i1"
+      }
+    ]
+  },
+  {
+    "accepted_behavior_families": [
+      "left",
+      "right",
+      "yield"
+    ],
+    "accepted_count": 424,
+    "anchor_index": 26,
+    "anchor_time_s": 2.6999999999999242,
+    "map": "chapter2",
+    "observation_contract": {
+      "absolute_pose_enabled": false,
+      "checkpoint": "D:\\Projects\\mobile-robot-mppi-study-single-v6\\research_artifacts\\dynamic_actor_temporal_bidirectional_correction_v5_amendment6\\checkpoints\\improved_update_000250.pt",
+      "checkpoint_sha256": "714694f8d179f02b90c14e56c9e3e4f29a0101b70ad53f3cc795eb72dea7a1b5",
+      "dimension": 84
+    },
+    "offset_s": -1.5,
+    "scenario_id": "chapter2_seed790202007",
+    "seed": 790202007,
+    "selected_count": 5,
+    "split": "validation",
+    "teachers": [
+      {
+        "family": "left",
+        "minimum_dynamic_clearance_m": 2.2564241412449983,
+        "minimum_static_clearance_m": 0.2521570376421407,
+        "progress_m": 0.6703479855556702,
+        "score": 1.2955636893198843,
+        "stopping_tail_dynamic_clearance_m": 2.153296784614699,
+        "teacher_label": "s_left"
+      },
+      {
+        "family": "left",
+        "minimum_dynamic_clearance_m": 2.18307525654421,
+        "minimum_static_clearance_m": 0.09477527480207854,
+        "progress_m": 0.5892951550521527,
+        "score": 1.198198883770731,
+        "stopping_tail_dynamic_clearance_m": 1.9942620123837038,
+        "teacher_label": "s_left"
+      },
+      {
+        "family": "right",
+        "minimum_dynamic_clearance_m": 1.9191813300472185,
+        "minimum_static_clearance_m": 0.052392282315890826,
+        "progress_m": 0.21696646547871778,
+        "score": 0.8060419597197506,
+        "stopping_tail_dynamic_clearance_m": 2.348441568835972,
+        "teacher_label": "s_right"
+      },
+      {
+        "family": "yield",
+        "minimum_dynamic_clearance_m": 2.3114893587955097,
+        "minimum_static_clearance_m": 0.454849619345548,
+        "progress_m": 1.1789058029352502,
+        "score": 1.8243907648698048,
+        "stopping_tail_dynamic_clearance_m": 2.4178677459268587,
+        "teacher_label": "cem3_yield_right_i0"
+      },
+      {
+        "family": "yield",
+        "minimum_dynamic_clearance_m": 2.252994985804157,
+        "minimum_static_clearance_m": 0.4433225893058653,
+        "progress_m": 1.1638131930339888,
+        "score": 1.8081454519645754,
+        "stopping_tail_dynamic_clearance_m": 2.4117886970524425,
+        "teacher_label": "cem2_yield_right_i1"
+      }
+    ]
+  },
+  {
+    "accepted_behavior_families": [
+      "left",
+      "yield"
+    ],
+    "accepted_count": 373,
+    "anchor_index": 31,
+    "anchor_time_s": 3.199999999999869,
+    "map": "chapter2",
+    "observation_contract": {
+      "absolute_pose_enabled": false,
+      "checkpoint": "D:\\Projects\\mobile-robot-mppi-study-single-v6\\research_artifacts\\dynamic_actor_temporal_bidirectional_correction_v5_amendment6\\checkpoints\\improved_update_000250.pt",
+      "checkpoint_sha256": "714694f8d179f02b90c14e56c9e3e4f29a0101b70ad53f3cc795eb72dea7a1b5",
+      "dimension": 84
+    },
+    "offset_s": -1.0,
+    "scenario_id": "chapter2_seed790202007",
+    "seed": 790202007,
+    "selected_count": 3,
+    "split": "validation",
+    "teachers": [
+      {
+        "family": "left",
+        "minimum_dynamic_clearance_m": 2.1727003408740857,
+        "minimum_static_clearance_m": 0.13917956245934082,
+        "progress_m": 0.4833921008506562,
+        "score": 1.0780222494215514,
+        "stopping_tail_dynamic_clearance_m": 1.8071219232496114,
+        "teacher_label": "s_left"
+      },
+      {
+        "family": "yield",
+        "minimum_dynamic_clearance_m": 2.805417626319864,
+        "minimum_static_clearance_m": 0.34916589303759715,
+        "progress_m": 1.1370045656187484,
+        "score": 1.7719211549225082,
+        "stopping_tail_dynamic_clearance_m": 2.086870790748891,
+        "teacher_label": "cem3_yield_right_i1"
+      },
+      {
+        "family": "yield",
+        "minimum_dynamic_clearance_m": 2.684738280352841,
+        "minimum_static_clearance_m": 0.29747359484054636,
+        "progress_m": 1.1319674325730178,
+        "score": 1.7595134400362493,
+        "stopping_tail_dynamic_clearance_m": 1.9779864797917655,
+        "teacher_label": "cem3_yield_right_i1"
+      }
+    ]
+  },
+  {
+    "accepted_behavior_families": [
+      "left",
+      "yield"
+    ],
+    "accepted_count": 304,
+    "anchor_index": 36,
+    "anchor_time_s": 3.699999999999814,
+    "map": "chapter2",
+    "observation_contract": {
+      "absolute_pose_enabled": false,
+      "checkpoint": "D:\\Projects\\mobile-robot-mppi-study-single-v6\\research_artifacts\\dynamic_actor_temporal_bidirectional_correction_v5_amendment6\\checkpoints\\improved_update_000250.pt",
+      "checkpoint_sha256": "714694f8d179f02b90c14e56c9e3e4f29a0101b70ad53f3cc795eb72dea7a1b5",
+      "dimension": 84
+    },
+    "offset_s": -0.5,
+    "scenario_id": "chapter2_seed790202007",
+    "seed": 790202007,
+    "selected_count": 4,
+    "split": "validation",
+    "teachers": [
+      {
+        "family": "left",
+        "minimum_dynamic_clearance_m": 1.716644705553536,
+        "minimum_static_clearance_m": 0.1114505471079118,
+        "progress_m": 0.33295699351252395,
+        "score": 0.8874309893340224,
+        "stopping_tail_dynamic_clearance_m": 2.068248725889465,
+        "teacher_label": "left"
+      },
+      {
+        "family": "left",
+        "minimum_dynamic_clearance_m": 1.631693810843391,
+        "minimum_static_clearance_m": 0.04394030587762443,
+        "progress_m": 0.3324290813626617,
+        "score": 0.8631618741191023,
+        "stopping_tail_dynamic_clearance_m": 2.0205820431886696,
+        "teacher_label": "left"
+      },
+      {
+        "family": "yield",
+        "minimum_dynamic_clearance_m": 2.431726479144732,
+        "minimum_static_clearance_m": 0.2925669091132471,
+        "progress_m": 1.1575934359550906,
+        "score": 1.7784220251352538,
+        "stopping_tail_dynamic_clearance_m": 1.9157189826883858,
+        "teacher_label": "cem3_yield_left_i1"
+      },
+      {
+        "family": "yield",
+        "minimum_dynamic_clearance_m": 2.357284174697333,
+        "minimum_static_clearance_m": 0.28576100667939197,
+        "progress_m": 1.114778057417242,
+        "score": 1.7254412232782512,
+        "stopping_tail_dynamic_clearance_m": 1.8208706519306985,
+        "teacher_label": "cem1_yield_left_i1"
+      }
+    ]
+  },
+  {
+    "accepted_behavior_families": [
+      "left",
+      "yield"
+    ],
+    "accepted_count": 209,
+    "anchor_index": 42,
+    "anchor_time_s": 4.2999999999997485,
+    "map": "chapter2",
+    "observation_contract": {
+      "absolute_pose_enabled": false,
+      "checkpoint": "D:\\Projects\\mobile-robot-mppi-study-single-v6\\research_artifacts\\dynamic_actor_temporal_bidirectional_correction_v5_amendment6\\checkpoints\\improved_update_000250.pt",
+      "checkpoint_sha256": "714694f8d179f02b90c14e56c9e3e4f29a0101b70ad53f3cc795eb72dea7a1b5",
+      "dimension": 84
+    },
+    "offset_s": 0.0,
+    "scenario_id": "chapter2_seed790202007",
+    "seed": 790202007,
+    "selected_count": 4,
+    "split": "validation",
+    "teachers": [
+      {
+        "family": "left",
+        "minimum_dynamic_clearance_m": 1.9073410965833695,
+        "minimum_static_clearance_m": 0.08498112395195406,
+        "progress_m": 0.5287881525777692,
+        "score": 1.099118957932785,
+        "stopping_tail_dynamic_clearance_m": 1.803644736431465,
+        "teacher_label": "s_left"
+      },
+      {
+        "family": "left",
+        "minimum_dynamic_clearance_m": 1.7292802825772724,
+        "minimum_static_clearance_m": 0.0771257828402141,
+        "progress_m": 0.36495227925498064,
+        "score": 0.9185209140544566,
+        "stopping_tail_dynamic_clearance_m": 2.1244384354307555,
+        "teacher_label": "s_left"
+      },
+      {
+        "family": "yield",
+        "minimum_dynamic_clearance_m": 2.1761361710328946,
+        "minimum_static_clearance_m": 0.3009247107603422,
+        "progress_m": 1.1120469273758213,
+        "score": 1.727935948302368,
+        "stopping_tail_dynamic_clearance_m": 1.857965498505123,
+        "teacher_label": "cem1_yield_left_i1"
+      },
+      {
+        "family": "yield",
+        "minimum_dynamic_clearance_m": 2.2084947402258774,
+        "minimum_static_clearance_m": 0.27338715109465317,
+        "progress_m": 1.1009259749538547,
+        "score": 1.7166980833612933,
+        "stopping_tail_dynamic_clearance_m": 1.8843339329797337,
+        "teacher_label": "yield_left"
+      }
+    ]
+  }
+]

@@ -1,0 +1,117 @@
+schema_version: 2
+protocol: complex_supervised_maneuver_actor_dataset_v1
+scope: fresh_seed_training_expansion_not_confirmatory
+source_gate:
+  result: research_artifacts/complex_supervised_actor_oracle_gate_v4/oracle_gate_result.json
+  required_status: pass
+  required_actor_training_authorized: true
+  result_sha256: e72152210c188ffb74f8b82c56b0c7077f0a95079401b89249d70b4f8b546171
+  original_oracle_script_sha256: cd5a274d351a5873da94eb39ccd342067c724bf37e364e252f9d521d8939a29b
+  original_protocol_sha256: e28ea9a176b51e0bc4f32a4b17ca2e459d9441fe528f1908d7206e60e0826ba0
+frozen_contract:
+  maps_changed: false
+  obstacle_process_changed: false
+  robot_dynamics_changed: false
+  action_bounds_changed: false
+  collision_risk_changed: false
+  icode_changed: false
+  mppi_changed: false
+  safety_changed: false
+  teacher_search_changed: false
+  deployment_future_truth_allowed: false
+  formal_server_launch_authorized: false
+sources:
+  chapter1:
+    split: train
+    artifact: research_artifacts/complex_actor_teacher_probe_v4_dataset_expansion/chapter1_seed791101011
+    conflict_rule: first_forecast_valid_hard_risk
+  chapter2:
+    split: validation
+    artifact: research_artifacts/complex_actor_teacher_extended_preview_v1/chapter2_seed790202007
+    conflict_rule: first_forecast_valid_hard_risk
+  chapter3:
+    split: train
+    artifact: research_artifacts/complex_actor_teacher_probe_v4_dataset_expansion/chapter3_seed791103011
+    conflict_rule: first_forecast_valid_hard_risk
+oracle_export:
+  offsets_s:
+  - -3.0
+  - -2.5
+  - -2.0
+  - -1.5
+  - -1.0
+  - -0.5
+  - 0.0
+  horizon_s: 8.0
+  segments: 4
+  coarse_candidate_count: 2400
+  search_seed: 2026072706
+  cem_restarts: 4
+  cem_iterations: 2
+  cem_samples_per_restart: 96
+  cem_elite_count: 12
+  parallel_workers: 4
+  teachers_per_behavior_family_per_state: 2
+  deployment_prefix_steps: 36
+  stopping_tail_s: 1.5
+teacher_criteria:
+  minimum_local_target_progress_m: 0.2
+  minimum_static_clearance_m: 0.02
+  minimum_dynamic_clearance_m: 0.1
+  minimum_stopping_tail_dynamic_clearance_m: 0.1
+  minimum_terminal_dynamic_clearance_m: 0.15
+  minimum_predicted_static_clearance_m: 0.02
+  deployment_prefix_steps: 36
+  stopping_tail_s: 1.5
+student_input:
+  source: frozen_paper_direct_control_observation_encoder
+  actor_checkpoint: research_artifacts/dynamic_actor_temporal_bidirectional_correction_v5_amendment6/checkpoints/improved_update_000250.pt
+  causal_only: true
+  include_future_truth: false
+  include_future_obstacle_trajectory: false
+  include_privileged_change_label: false
+  include_absolute_simulator_pose: false
+  use_latest_real_scan_for_hypothetical_rollout: true
+label:
+  representation: physical_control_prefix
+  horizon_steps: 36
+  action_semantics:
+  - v_cmd
+  - omega_cmd
+  multimodal_behavior_families:
+  - left
+  - right
+  - yield
+  loss: best_of_m_time_weighted_mse
+  actor_proposal_heads: 3
+  execution_authority: proposal_only
+bootstrap_dataset_gate:
+  minimum_train_scenarios: 2
+  minimum_validation_scenarios: 1
+  minimum_train_causal_states: 8
+  minimum_validation_causal_states: 3
+  minimum_train_teacher_rows: 12
+  minimum_validation_teacher_rows: 3
+  minimum_train_behavior_families: 2
+  minimum_validation_behavior_families: 1
+  require_scenario_split_disjoint: true
+  require_no_privileged_student_fields: true
+  engineering_training_authorized_only_on_pass: true
+post_bootstrap_rule:
+  gate_a_to_c_required_before_expansion: true
+  fresh_seed_expansion_required_before_closed_loop_gate_d: true
+  current_three_maps_are_final_test_maps: false
+  final_test_maps_must_be_new_and_unseen: true
+  no_formal_claim_from_bootstrap: true
+expansion_lineage:
+  gate_bc_result: research_artifacts/complex_supervised_maneuver_actor_gate_bc_v1/gate_bc_result.json
+  gate_bc_status: pass
+  chapter2_seed790202011_has_no_forecast_valid_hard_risk: true
+  chapter2_seed790202011_retained_as_negative_evidence: true
+  replacement_seed_allowed: false
+  reserved_gate_d_seeds_remain_unopened: true
+stopping_rules:
+  maximum_dataset_pipeline_revisions: 2
+  maximum_actor_architecture_revisions: 2
+  stop_on_any_privileged_input_leakage: true
+  stop_on_any_risk_or_safety_bypass: true

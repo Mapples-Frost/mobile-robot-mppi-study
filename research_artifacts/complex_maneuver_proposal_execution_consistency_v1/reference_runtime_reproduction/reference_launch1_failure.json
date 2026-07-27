@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "status": "infrastructure_failure_before_episode",
+  "reference_commit": "af691f184774094551d13fb4cde51d98bad2caf9",
+  "import_source_verified": "D:\\Projects\\mobile-robot-mppi-study-gate-d-reference\\src\\mobile_robot_mppi\\planning\\rl_driven_mppi.py",
+  "failure": "Gate D Actor checkpoint hash mismatch",
+  "cause": "The detached worktree initially contained the Git LFS pointer instead of the materialized checkpoint object.",
+  "checkpoint_expected_sha256": "6b95e9ca384ced388b63a02c1337035bd1823b02d1469626fd5412b396b987fe",
+  "pointer_file_sha256": "973177d59642a5b72353ca4de16cdbd8349f634c8f654f359ff8906b376cddd9",
+  "episode_started": false,
+  "outcomes_opened": false,
+  "remediation": "Materialize the exact LFS object with git lfs checkout, preserve these failed-launch logs, and use new stdout/stderr filenames for the reference rerun."
+}

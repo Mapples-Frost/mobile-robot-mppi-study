@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "D:\Projects\mobile-robot-mppi-study-gate-d-reference\experiments\dynamic_uncertainty\run_complex_supervised_maneuver_actor_gate_d.py", line 210, in <module>
+    raise SystemExit(main())
+  File "D:\Projects\mobile-robot-mppi-study-gate-d-reference\experiments\dynamic_uncertainty\run_complex_supervised_maneuver_actor_gate_d.py", line 190, in main
+    protocol = _load_protocol(args.protocol)
+  File "D:\Projects\mobile-robot-mppi-study-gate-d-reference\experiments\dynamic_uncertainty\run_complex_supervised_maneuver_actor_gate_d.py", line 84, in _load_protocol
+    raise ValueError("Gate D Actor checkpoint hash mismatch")
+ValueError: Gate D Actor checkpoint hash mismatch

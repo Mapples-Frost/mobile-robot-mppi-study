@@ -1,0 +1,134 @@
+schema_version: 1
+protocol: complex_supervised_maneuver_actor_closed_loop_gate_d_v1
+scope: engineering_paired_closed_loop_development_not_confirmatory
+preexecution_amendment:
+  revision: 2
+  reason: preregister_prediction_cold_start_diagnostics
+  outcomes_opened_before_amendment: false
+  primary_gate_changed: false
+post_first_control_integrity_clarification:
+  revision: 3
+  applied_after_first_control_outcome_opened: true
+  actor_outcomes_opened_before_clarification: false
+  reason: distinguish_active_paper_budget_from_frozen_missing_forecast_stop
+  primary_gate_changed: false
+  seed_or_arm_changed: false
+prerequisites:
+  gate_bc_result: research_artifacts/complex_supervised_maneuver_actor_gate_bc_v1/gate_bc_result.json
+  gate_bc_result_sha256: 2f7542d02b3ca63c287f4f09a1520200ea30b67ca0abebcd3edba8f9a198cfb2
+  required_gate_bc_status: pass
+  failed_expansion_result: research_artifacts/complex_supervised_maneuver_actor_dataset_v2_expansion/dataset_gate_result.json
+  failed_expansion_result_sha256: 0ee526952ff82572548a8e6a7a69ba54419fe80a07c6c993fffc3bae96bf9788
+  expansion_data_may_enter_training: false
+actor:
+  checkpoint: research_artifacts/complex_supervised_maneuver_actor_training_v1_bootstrap/best.pt
+  sha256: 6b95e9ca384ced388b63a02c1337035bd1823b02d1469626fd5412b396b987fe
+  expected_heads: 3
+  expected_horizon: 36
+  execution_authority: proposal_only
+  privileged_future_inputs: false
+  retraining_authorized: false
+online_interface:
+  enabled_by_default: false
+  replace_existing_guided_candidates: true
+  maximum_supervised_sequences_per_decision: 3
+  total_rollouts_per_decision: 600
+  active_paper_optimizer_rollouts_per_decision: 600
+  frozen_missing_forecast_deterministic_stop_rollouts: 0
+  permitted_per_cycle_rollout_counts:
+  - 0
+  - 600
+  rollout_budget_may_increase: false
+  actor_sequences_pass_through:
+  - frozen_icode_rollout
+  - frozen_static_and_probability_risk_cost
+  - frozen_mppi_selection
+  - frozen_safety_execution_check
+  required_diagnostics:
+  - supervised_proposal_count
+  - supervised_risk_feasible_count
+  - supervised_elite_count
+  - supervised_selected_count
+prediction_cold_start_diagnostics:
+  early_window_end_s: 1.5
+  record_every_control_cycle: true
+  required_fields:
+  - episode_time_s
+  - dynamic_track_observation_count
+  - dynamic_track_history_length
+  - imm_initialized
+  - forecast_available
+  - forecast_unavailable_reason
+  - risk_rejected_due_to_unavailable_forecast
+  - safety_forced_stop
+  - supervised_proposal_count
+  - supervised_risk_feasible_count
+  episode_summary_fields:
+  - first_dynamic_observation_time_s
+  - first_imm_initialized_time_s
+  - first_forecast_available_time_s
+  - first_persistent_conflict_time_s
+  - history_frames_at_first_persistent_conflict
+  - early_window_forecast_availability_fraction
+  - early_window_risk_unavailable_rejection_count
+  - early_window_safety_forced_stop_count
+  analysis_strata:
+  - early_conflict_before_1_5s
+  - later_conflict_at_or_after_1_5s
+  - no_persistent_conflict
+  may_change_primary_gate_decision: false
+  may_trigger_seed_exclusion: false
+  may_trigger_mid_gate_retraining: false
+arms:
+  frozen_full:
+    supervised_maneuver_actor_enabled: false
+  full_plus_bootstrap_actor:
+    supervised_maneuver_actor_enabled: true
+paired_blocks:
+- map: chapter1
+  seed: 791101019
+  order:
+  - frozen_full
+  - full_plus_bootstrap_actor
+- map: chapter2
+  seed: 790202019
+  order:
+  - full_plus_bootstrap_actor
+  - frozen_full
+- map: chapter3
+  seed: 791103019
+  order:
+  - frozen_full
+  - full_plus_bootstrap_actor
+gate:
+  maximum_actor_collision_regressions: 0
+  maximum_actor_success_losses: 0
+  minimum_actor_success_gains: 1
+  minimum_maps_with_nonzero_supervised_proposals: 3
+  minimum_maps_with_risk_feasible_supervised_proposals: 2
+  minimum_total_supervised_elite_or_selected_count: 1
+  require_same_rollout_budget: true
+  require_identical_maps_and_dynamic_trajectories_within_pair: true
+  fallback_if_both_arms_safe_but_incomplete:
+    minimum_maps_with_positive_terminal_goal_distance_gain: 2
+    minimum_total_terminal_goal_distance_gain_m: 0.5
+  statistical_claim_authorized: false
+  formal_experiment_authorized: false
+stopping_rules:
+  interface_integrity_failure: stop_and_fix_interface_only
+  any_actor_collision_regression: stop_actor_path
+  any_actor_success_loss: stop_actor_path
+  no_supervised_elite_or_selected_contribution: stop_actor_path
+  gate_failure_after_valid_complete_pairs: stop_actor_path
+  seed_replacement_after_outcome_opening: forbidden
+frozen_contract:
+  maps_changed: false
+  actor_checkpoint_changed: false
+  icode_changed: false
+  collision_risk_changed: false
+  mppi_changed: false
+  safety_changed: false
+  rollout_budget_changed: false
+  map_specific_logic_allowed: false
+  paid_server_launch_authorized: false
+  current_three_maps_are_final_test_maps: false

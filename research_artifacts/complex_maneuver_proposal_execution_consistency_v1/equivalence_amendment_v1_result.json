@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "status": "amendment_frozen_actor_on_margin_zero_authorized",
+  "scope": "phase_zero_equivalence_reference_only",
+  "historical_numeric_tolerance_relaxed": false,
+  "historical_artifact_preserved": true,
+  "replacement_oracle": "concurrent_same_runtime_af691f1_reference_rerun",
+  "actor_off_equivalence_under_amended_oracle": {
+    "status": "pass",
+    "non_timing_common_columns": 593,
+    "mismatch_columns": 0,
+    "exact_string_equality": true,
+    "outcome_equal": true,
+    "rollout_values": [
+      0,
+      600
+    ]
+  },
+  "authorization": {
+    "actor_on_margin_zero_equivalence": true,
+    "margin_0_02": false,
+    "training_or_data_expansion": false,
+    "paid_server_or_formal_execution": false
+  },
+  "tests": {
+    "command": ".venv\\Scripts\\python.exe -m pytest tests\\dynamic_uncertainty\\test_complex_proposal_execution_equivalence_amendment.py tests\\planners\\test_paper_rl_driven_mppi.py tests\\dynamic_uncertainty\\test_complex_supervised_maneuver_gate_d.py tests\\dynamic_uncertainty\\test_probabilistic_collision_risk.py -q",
+    "passed": 131,
+    "failed": 0,
+    "duration_s": 3.67
+  },
+  "files": {
+    "amendment_yaml_sha256": "6e406e9e4290f10a6365fb3a8f51e256e637a659eb643985ca819a65b9e0c9f6",
+    "amendment_markdown_sha256": "b75e98fe14927071fcee230727a8cae7b9e955a6eefd46e8348c3e317973cb6a",
+    "amendment_test_sha256": "8374ccbd1266216426f60d664910a467b3ea45e53cdca6c102457782782b9021",
+    "reference_reproduction_result_sha256": "03c2daa406fb0d03bad2895a2b7866f603cd697c2e3db9e71c5ea0194df37f65"
+  },
+  "next_step": "Run Actor-on with margin exactly zero under the frozen current runtime and compare against the sealed pre-diagnostic Actor-on result using the same amended concurrent-reference principle. Do not run margin 0.02 unless this passes."
+}

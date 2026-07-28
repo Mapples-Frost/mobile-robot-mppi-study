@@ -1,0 +1,30 @@
+{
+  "status": "pass",
+  "map": "chapter1",
+  "seed": 791101019,
+  "arm": "margin0_control",
+  "outcome": {
+    "success": false,
+    "collision": false,
+    "termination_reason": "max_steps",
+    "steps": 1200,
+    "final_goal_distance": 4.76259393931515,
+    "safety_interventions": 510,
+    "stuck_steps": 443
+  },
+  "contract": {
+    "margin": 0.0,
+    "actor_enabled": true,
+    "required_counterfactual_and_guard_fields_present": true,
+    "rollout_values": [0, 600],
+    "valid_600_cycles": 911,
+    "three_head_quota_pass": true,
+    "added_rollout_values": [0],
+    "stderr_empty": true
+  },
+  "mechanism_counts": {
+    "counterfactual_active_cycles": 417,
+    "influence_survived_guard_cycles": 410
+  },
+  "interpretation": "Valid margin-zero mechanism control. This is not a navigation success: the episode remained collision-free but timed out."
+}

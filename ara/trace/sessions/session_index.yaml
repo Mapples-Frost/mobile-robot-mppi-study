@@ -140,3 +140,6 @@ sessions:
   - id: "2026-07-25_046"
     path: "trace/sessions/2026-07-25_046.yaml"
     summary: "Completed bounded Pareto single-obstacle repair and qualification, paused the non-generalizing three-obstacle extension, and verified a fresh causal 83.54 ms real-time single-obstacle success."
+  - id: "2026-07-28_047"
+    path: "trace/sessions/2026-07-28_047.yaml"
+    summary: "Repaired the real Paper-RL noise-basis path before execution, completed the frozen 12-pair Chapter 1 MuJoCo screen, and advanced AR(1) only to fresh-seed confirmation."

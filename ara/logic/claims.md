@@ -1116,3 +1116,12 @@
 - **Proof**: [`research_artifacts/dynamic_actor_v5a6_u000250_pareto_forward_commit_expanded_development_amendment2/gate.json`, `research_artifacts/dynamic_actor_v5a6_u000250_pareto_forward_commit_expanded_development_amendment2/summary.json`, `research_artifacts/dynamic_actor_v5a6_u000250_pareto_forward_commit_expanded_development_amendment2/integrity_audit.json`, `research_artifacts/dynamic_actor_v5a6_u000250_pareto_forward_commit_expanded_development_amendment2/formal_statistics.json`, `research_artifacts/dynamic_actor_v5a6_single_obstacle_final_confirmation_seed730100255/result.json`, `research_artifacts/dynamic_actor_v5a6_single_obstacle_final_confirmation_seed730100255/integrity_audit.json`, `ara/evidence/tables/table26_single_obstacle_final_validation.md`]
 - **Dependencies**: [C122, C123]
 - **Tags**: RL, Actor, Pareto-traversal, paired-development, single-obstacle, runtime, bounded-support, development-only
+
+## C125: AR(1) Gaussian sampling passes the Chapter 1 confirmatory-screen threshold without improving success
+- **Statement**: Under the frozen 12-pair Chapter 1 common-random-number screen, changing only the Paper-RL Gaussian noise basis from iid to `ar1:2.0` leaves both arms at zero successes, changes collisions from 9/12 to 6/12, produces one treatment-only collision, and improves the paired final-goal-distance median by 0.283041 m. This exceeds the preregistered 0.25 m screening threshold without reaching the two-pair safety-failure threshold, so the bounded verdict is `PASS_TO_CONFIRMATORY`, not demonstrated closed-loop efficacy.
+- **Status**: supported
+- **Provenance**: ai-suggested
+- **Falsification criteria**: Artifact reanalysis does not reproduce the 12 paired outcomes or 0.283041 m median reduction; any episode protocol hash differs from `f1dfd4098941bb9101c0efc525295ac31df3c49a6aa7bba79fa2d5c37cc68d0e`; the resolved arms differ behaviorally beyond `planner.noise_basis`; or a missing/nonempty-error episode invalidates the complete-pair analysis.
+- **Proof**: [`research_artifacts/noise_basis_ab_v1/ab_screen_result.json`, `research_artifacts/noise_basis_ab_v1/paired_results.csv`, `research_artifacts/ar1_closed_loop_screen_ch1/AUDIT.md`, `ara/evidence/tables/table27_ar1_noise_basis_screen.md`]
+- **Dependencies**: []
+- **Tags**: MPPI, AR1, correlated-sampling, Chapter-1, paired-screen, development-only, zero-success

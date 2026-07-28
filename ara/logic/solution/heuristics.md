@@ -594,3 +594,9 @@
 - **Provenance**: ai-suggested
 - **Sensitivity**: medium
 - **Code ref**: [`configs/research/dynamic_actor_v5a6_samecycle_expanded_development_amendment2.yaml`, `experiments/dynamic_uncertainty/run_dynamic_actor_expanded_development.py`, `research_artifacts/dynamic_actor_v5a6_u000250_pareto_forward_commit_expanded_development_amendment2/summary.json`, `research_artifacts/dynamic_actor_v5a6_u000250_pareto_forward_commit_expanded_development_amendment2/formal_statistics.json`]
+
+## H100: Verify that an experimental switch reaches the optimizer's real sampling entry point
+- **Rationale**: A configuration field and a tested base-class sampler do not prove treatment integrity when production dispatch selects a specialized optimizer. Before freezing an A/B run, resolve the full configuration, trace the actual candidate-generation call, add bit-exact and RNG-continuation tests at that concrete entry point, and execute a one-episode smoke test. This prevents differently labeled arms from silently running the same algorithm.
+- **Provenance**: ai-suggested
+- **Sensitivity**: high
+- **Code ref**: [`src/mobile_robot_mppi/planning/mppi.py`, `src/mobile_robot_mppi/planning/rl_driven_mppi.py`, `tests/test_noise_basis_regression.py`, `research_artifacts/ar1_closed_loop_screen_ch1/PRE_EXECUTION_AMENDMENT.md`]

@@ -1,0 +1,59 @@
+session:
+  id: "2026-07-28_047"
+  timestamp: "2026-07-28T01:40:00-04:00"
+  summary: "Repaired the real Paper-RL noise-basis path before execution, completed the frozen 12-pair Chapter 1 MuJoCo screen, and advanced AR(1) only to fresh-seed confirmation."
+
+events_logged:
+  - type: question
+    id: N191
+    provenance: user
+    summary: "Test whether AR(1)'s offline candidate-coverage advantage transfers to Chapter 1 closed-loop behavior under a one-parameter A/B."
+  - type: dead_end
+    id: N192
+    provenance: ai-executed
+    summary: "Found that the original base-class integration did not reach the resolved Paper-RL Gaussian sampler and would have left both measured arms iid."
+  - type: experiment
+    id: N193
+    provenance: ai-executed
+    summary: "Completed 24 episodes; both arms had zero successes, AR(1) had 6 versus 9 collisions, one treatment-only collision, and a 0.283041 m median paired distance improvement."
+  - type: decision
+    id: N194
+    provenance: user
+    summary: "Applied the preregistered PASS_TO_CONFIRMATORY rule and limited the next step to a fresh-seed n>=20 confirmation."
+  - type: claim
+    id: C125
+    provenance: ai-suggested
+    summary: "AR(1) passed the bounded distance-based screen without establishing a success improvement."
+  - type: heuristic
+    id: H100
+    provenance: ai-suggested
+    summary: "Verify experimental switches at the concrete runtime optimizer entry point, not only at a base class."
+
+ai_actions:
+  - action: "Audited configuration, tests, production dispatch, virtual environment, frozen protocol and process state before running MuJoCo."
+    provenance: ai-executed
+    files_changed: ["research_artifacts/ar1_closed_loop_screen_ch1/PRE_EXECUTION_AMENDMENT.md", "research_artifacts/ar1_closed_loop_screen_ch1/PRE_EXECUTION_MANIFEST.json"]
+  - action: "Connected iid/AR(1) branching to the real RL-driven and Paper-RL Gaussian paths while retaining literal iid RNG behavior, and added read-only rate telemetry."
+    provenance: ai-executed
+    files_changed: ["src/mobile_robot_mppi/planning/rl_driven_mppi.py", "src/mobile_robot_mppi/evaluation/metrics.py", "tests/test_noise_basis_regression.py"]
+  - action: "Froze machine-readable Gate thresholds and hardened the resumable runner and analyzer before any episode."
+    provenance: ai-executed
+    files_changed: ["configs/research/noise_basis_ab_development_v1.yaml", "experiments/dynamic_uncertainty/run_noise_basis_ab_development.py", "experiments/dynamic_uncertainty/analyze_noise_basis_ab_development.py", "scripts/run_noise_basis_ab.ps1"]
+  - action: "Ran 33 dedicated and 71 combined regression tests, one manual smoke episode, the remaining 23 resumable episodes, integrity checks and the frozen analyzer."
+    provenance: ai-executed
+    files_changed: ["research_artifacts/noise_basis_ab_v1/"]
+  - action: "Wrote the complete Chinese audit and separated candidate versus executed rate-limit semantics."
+    provenance: ai-executed
+    files_changed: ["research_artifacts/ar1_closed_loop_screen_ch1/AUDIT.md", "research_artifacts/ar1_closed_loop_screen_ch1/RATE_LIMIT_AUDIT.json"]
+
+claims_touched:
+  - id: C125
+    action: created
+    provenance: ai-suggested
+
+open_threads:
+  - "Preregister an n>=20 paired confirmatory experiment on fresh seeds before making any efficacy claim."
+  - "Keep the current importance-correction covariance approximation unchanged in this screen; study it separately only if confirmation is pursued."
+  - "Retain safety-first treatment-only collision monitoring because the screen contained one such pair."
+
+ai_suggestions_pending: []

@@ -1883,3 +1883,61 @@ tree:
                                                         timestamp: "2026-07-25T09:15:00+08:00"
                                                         result: "Unused seed730100255 reached the goal without collision in both arms. Candidate used 300 steps versus Source 316, triggered and vetted temporal escape for 17 cycles, retained exactly 600 rollouts on all 300 decisions, and achieved planner P95 83.54 ms. Nine raw files, checkpoint/config/code bindings, 156 regressions, compilation and git diff checks passed."
                                                         evidence: [C124, "research_artifacts/dynamic_actor_v5a6_single_obstacle_final_confirmation_seed730100255/result.json", "research_artifacts/dynamic_actor_v5a6_single_obstacle_final_confirmation_seed730100255/integrity_audit.json", "research_artifacts/dynamic_actor_v5a6_single_obstacle_final_confirmation_seed730100255/validation_report.md"]
+
+  - id: N191
+    type: question
+    title: "Does AR(1) Gaussian sampling transfer offline coverage into Chapter 1 closed-loop improvement?"
+    provenance: user
+    timestamp: "2026-07-27T22:45:00-04:00"
+    description: >
+      Run a strictly controlled 12-pair MuJoCo screen in which iid and
+      ar1:2.0 differ only by planner.noise_basis, preserve the complete
+      Actor/ICODE/risk/safety/map/budget/seed contract, and apply a frozen
+      safety-first Gate without adding another mechanism.
+    children:
+      - id: N192
+        type: dead_end
+        title: "Base-class-only noise-basis wiring would have produced a mislabeled A/B"
+        provenance: ai-executed
+        timestamp: "2026-07-27T23:20:00-04:00"
+        hypothesis: >
+          The existing MppiController._sample integration controlled the
+          Chapter 1 Gaussian population.
+        failure_mode: >
+          The resolved optimizer was paper_rl_driven, whose concrete
+          _gaussian_samples method still called iid rng.normal directly; the
+          original A/B labels would therefore not have changed the measured
+          candidates.
+        lesson: >
+          Trace a treatment switch through runtime optimizer dispatch and test
+          the concrete production entry point before generating formal data.
+      - id: N193
+        type: experiment
+        title: "Frozen Chapter 1 iid-versus-AR(1) paired screen"
+        provenance: ai-executed
+        timestamp: "2026-07-28T01:34:00-04:00"
+        result: >
+          All 24 episodes completed with matching protocol hashes and empty
+          stderr. Both arms had zero successes; collisions changed from 9/12
+          iid to 6/12 AR(1), with one treatment-only collision. The paired
+          final-goal-distance reduction median was 0.283041 m, exceeding the
+          frozen 0.25 m threshold. Zero-feasible steps fell from 230 to 92 and
+          post-limit Gaussian candidate slew violations were zero in both
+          arms. The safety-first analyzer returned PASS_TO_CONFIRMATORY.
+        evidence: [C125, H100, "research_artifacts/noise_basis_ab_v1/ab_screen_result.json", "research_artifacts/ar1_closed_loop_screen_ch1/AUDIT.md", "ara/evidence/tables/table27_ar1_noise_basis_screen.md"]
+        children:
+          - id: N194
+            type: decision
+            title: "Advance only to a fresh-seed confirmatory study"
+            provenance: user
+            timestamp: "2026-07-28T01:35:00-04:00"
+            choice: >
+              Because the frozen screening Gate passed, permit a separately
+              preregistered confirmatory experiment with at least 20 fresh
+              paired seeds; do not treat this screen as a success-rate or
+              statistical efficacy conclusion.
+            alternatives:
+              - "Declare AR(1) effective from the 12-pair zero-success screen"
+              - "Lower or retune the screening thresholds after observing results"
+              - "Add another mechanism before resolving the sampling question"
+            evidence: [C125, N193]

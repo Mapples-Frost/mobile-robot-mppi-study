@@ -57,6 +57,12 @@ class MppiConfig:
     # ("piecewise:<k>", "ar1:<tau_s>") preserve the per-step marginal variance
     # and change only the correlation across horizon steps.
     noise_basis: str = "iid"
+    # Segment obstacles: when False (default) the known-static-map clearance
+    # subtracts the full scene ``thickness``, reproducing historical behaviour
+    # exactly. When True it subtracts ``0.5 * thickness``, matching the geometry
+    # MuJoCo actually builds (model_factory.py) and the convention already used
+    # by mujoco_plant, scene_feasibility and static_astar.
+    known_static_map_segment_half_thickness: bool = False
     integrator: str = "rk4"
     goal_running_weight: float = 1.0
     goal_terminal_weight: float = 12.0
@@ -196,6 +202,9 @@ class MppiConfig:
             temperature=float(values.get("temperature", 4.0)),
             noise_sigma=tuple(float(v) for v in sigma),
             noise_basis=str(values.get("noise_basis", "iid")),
+            known_static_map_segment_half_thickness=bool(
+                values.get("known_static_map_segment_half_thickness", False)
+            ),
             integrator=str(values.get("integrator", "rk4")),
             goal_running_weight=float(values.get("goal_running_weight", 1.0)),
             goal_terminal_weight=float(values.get("goal_terminal_weight", 12.0)),
@@ -4103,9 +4112,20 @@ class MppiController:
                     centerline_distance = np.linalg.norm(
                         xy - projection, axis=-1
                     )
-                surface_distance = centerline_distance - float(
-                    obstacle.get("thickness", 0.10)
-                )
+                # Scene segment ``thickness`` is the full MuJoCo box width.
+                # ``model_factory`` builds the geom with half-extent
+                # ``0.5 * thickness``, and ``mujoco_plant``, ``scene_feasibility``
+                # and ``static_astar`` all measure against that half width.
+                # Subtracting the full thickness here treats the wall as twice
+                # its true half-width, which is over-conservative by
+                # ``0.5 * thickness`` (0.10-0.14 m on the chapter-1 maps).
+                #
+                # The corrected convention is gated so every frozen result
+                # remains bit-reproducible under the default.
+                segment_extent = float(obstacle.get("thickness", 0.10))
+                if self.config.known_static_map_segment_half_thickness:
+                    segment_extent *= 0.5
+                surface_distance = centerline_distance - segment_extent
             elif kind == "cylinder":
                 center = np.asarray(
                     obstacle["position"][:2], dtype=np.float64

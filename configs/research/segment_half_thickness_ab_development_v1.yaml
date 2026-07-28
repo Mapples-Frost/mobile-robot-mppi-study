@@ -1,0 +1,160 @@
+schema_version: 1
+protocol: segment_half_thickness_ab_development_v1
+mechanism_family: static_map_geometry_convention
+status: frozen_before_execution
+development_only: true
+formal_claim_authorized: false
+
+question: >-
+  Correcting the planner's segment-clearance convention from full thickness to
+  half thickness makes the known-static-map model agree with the geometry MuJoCo
+  actually builds. Does that correction relieve the chapter-1 candidate
+  starvation and the resulting deadlock, without causing static collisions?
+
+defect_under_test:
+  site: src/mobile_robot_mppi/planning/mppi.py, _known_static_map_clearance, segment branch
+  legacy_expression: surface_distance = centerline_distance - thickness
+  corrected_expression: surface_distance = centerline_distance - 0.5 * thickness
+  ground_truth: >-
+    model_factory.py:47 builds a segment as a MuJoCo box with half-extents
+    (0.5 * length, 0.5 * thickness). mujoco_plant.py:743, scene_feasibility.py:19
+    and static_astar.py:54 all measure against 0.5 * thickness. static_astar.py
+    carries an explicit comment stating this rule. Only the MPPI cost path
+    subtracts the full thickness.
+  measured_error: >-
+    Exactly 0.1000 m at all five recorded chapter-1 deadlock states; predicted
+    range 0.100-0.140 m for the map's thickness values {0.20, 0.21, 0.22, 0.28}.
+    Chapter-1 corridors carry ~0.17-0.19 m of true margin.
+  direction: >-
+    The correction REDUCES planner conservatism. It admits candidates previously
+    rejected. Static collision risk is the specific hazard this protocol tests.
+
+intervention:
+  parameter: planner.known_static_map_segment_half_thickness
+  control: false        # legacy full-thickness, bit-exact with all frozen results
+  treatment: true       # corrected half-thickness, matches the plant
+
+held_constant:
+  noise_basis: "ar1:2.0"
+  rationale: >-
+    The deadlock under test only appears reliably under AR(1): 6/12 AR(1)
+    episodes terminated in the barrier cluster at (1.2, -2.05) versus 3/12 for
+    i.i.d., and only the AR(1) timeouts clustered. Holding AR(1) in BOTH arms
+    isolates the thickness convention. Consequence: results describe the AR(1)
+    configuration, not the frozen i.i.d. baseline, and must be reported that way.
+
+map:
+  name: chapter1
+  reason: >-
+    All 36 static obstacles are segments, so the defect applies to every one of
+    them, and the recorded deadlock is on this map.
+
+design:
+  type: paired_common_random_numbers
+  pairs: 12
+  seeds: [791101301, 791101302, 791101303, 791101304, 791101305, 791101306,
+          791101307, 791101308, 791101309, 791101310, 791101311, 791101312]
+  seed_provenance: >-
+    Fresh band, disjoint from the noise-basis screen (791101201-212) and from all
+    previously opened chapter-1 seeds (791101003, 011, 019, 031, 037).
+  episodes: 24
+  seed_replacement_allowed: false
+  map_specific_logic_allowed: false
+
+power_statement: >-
+  TWELVE PAIRS IS A SCREENING SAMPLE. It cannot support a statistical claim and
+  no p-value governs the decision. Its purpose is to decide whether a
+  confirmatory run is warranted, and to detect a safety regression early.
+
+endpoints:
+  primary_binary: safe_success
+  co_primary_continuous: final_goal_distance_same_outcome_stratum
+  blocking_safety: collision
+  mechanism_diagnostic: known_static_map_candidate_feasible_fraction
+  secondary: [steps, minimum_clearance, stuck_steps, zero_feasible_step_count,
+              safety_override_fraction]
+
+confound_control:
+  issue: >-
+    In the noise-basis screen the median paired goal-distance gain (0.283 m) was
+    produced ENTIRELY by pairs whose outcome type changed (collision to timeout):
+    median +2.95 m in that stratum versus -0.025 m where the outcome type was
+    unchanged. The endpoint measured survival time, not navigation quality.
+  correction: >-
+    The co-primary here is computed ONLY over pairs whose outcome type is
+    identical in both arms. The changed-outcome stratum is reported separately
+    and is not gating. This is pre-specified, not chosen after seeing results.
+
+decision_rule:
+  evaluated_after: all_24_episodes_complete
+  order: safety_first
+  thresholds:
+    treatment_only_collision_pairs: 2
+    net_success_pairs: 2
+    median_goal_distance_reduction_m: 0.25
+    minimum_clearance_regression_m: 0.05
+  rules:
+    - id: FAIL_SAFETY
+      condition: >-
+        two or more pairs in which the treatment collides and the paired control
+        does not, OR the median paired reduction in true minimum clearance
+        exceeds 0.05 m
+      action: >-
+        stop, seal, revert the flag to false, do not run a confirmatory. A
+        conservatism reduction that costs clearance is not acceptable even if it
+        improves completion.
+    - id: PASS_TO_CONFIRMATORY
+      condition: >-
+        FAIL_SAFETY not triggered AND (net safe_success improvement at least +2
+        pairs OR same-outcome-stratum median goal-distance reduction at least
+        0.25 m)
+      action: pre-register and run a confirmatory at n >= 20 fresh paired seeds
+    - id: FAIL_NO_EFFECT
+      condition: neither of the above
+      action: >-
+        report that the correction is geometrically right but does not relieve
+        the chapter-1 deadlock; keep the flag available and default false
+
+frozen_components:
+  actor_checkpoint: unchanged
+  risk_thresholds: unchanged
+  icode_residual: unchanged
+  safety_contract: unchanged
+  mppi_cost_terms: unchanged
+  maps: unchanged
+  obstacle_motions: unchanged
+  action_bounds: unchanged
+  total_rollouts_per_forecast_valid_cycle: 600
+  horizon_steps: 36
+  control_dt: 0.10
+
+prohibitions:
+  - no formal server experiment
+  - no training
+  - no MuJoCo viewer during measured episodes
+  - no seed replacement after any outcome is seen
+  - failure evidence retained verbatim, never overwritten
+  - the default value of the flag is not changed by this protocol regardless of outcome
+
+evidence_sources:
+  - research_artifacts/static_filter_coverage_v1/AUDIT_RECORD.md
+  - research_artifacts/noise_basis_ab_v1/DEADLOCK_ROOT_CAUSE.md
+  - research_artifacts/noise_basis_ab_v1/POST_HOC_DIAGNOSIS.md
+
+known_open_risks:
+  - id: effect_size_unquantified
+    detail: >-
+      The bug is confirmed, but its quantitative effect on the candidate feasible
+      fraction was NOT established offline: the reconstruction in
+      static_filter_coverage_v1 was ~56x off the recorded value and its section 3
+      is void. This experiment is the first real measurement of the effect.
+  - id: other_full_thickness_sites
+    detail: >-
+      legacy_pipeline.py:151 also uses full thickness, but for dynamic-track
+      matching where over-inclusion is conservative in the safe direction.
+      static_astar.py:149 uses it for search-region padding. Neither is changed.
+  - id: reduced_conservatism
+    detail: >-
+      This is the first change in this workstream that makes the planner LESS
+      conservative. The FAIL_SAFETY rule is correspondingly stricter and includes
+      a clearance-regression trigger.

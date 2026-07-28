@@ -51,6 +51,12 @@ class MppiConfig:
     command_delay_s: float = 0.0
     temperature: float = 4.0
     noise_sigma: Tuple[float, ...] = (0.12, 0.35)
+    # Temporal correlation structure of the sampled control perturbation.
+    # "iid" reproduces the historical sampler exactly and is the default, so
+    # every frozen protocol keeps bit-identical behaviour. Alternatives
+    # ("piecewise:<k>", "ar1:<tau_s>") preserve the per-step marginal variance
+    # and change only the correlation across horizon steps.
+    noise_basis: str = "iid"
     integrator: str = "rk4"
     goal_running_weight: float = 1.0
     goal_terminal_weight: float = 12.0
@@ -189,6 +195,7 @@ class MppiConfig:
             command_delay_s=float(values.get("command_delay_s", 0.0)),
             temperature=float(values.get("temperature", 4.0)),
             noise_sigma=tuple(float(v) for v in sigma),
+            noise_basis=str(values.get("noise_basis", "iid")),
             integrator=str(values.get("integrator", "rk4")),
             goal_running_weight=float(values.get("goal_running_weight", 1.0)),
             goal_terminal_weight=float(values.get("goal_terminal_weight", 12.0)),
@@ -757,6 +764,12 @@ class MppiConfig:
             raise ValueError("MPPI temperature must be positive")
         if len(self.noise_sigma) != action_dim or any(value <= 0.0 for value in self.noise_sigma):
             raise ValueError("noise_sigma must contain one positive value per action dimension")
+        if self.noise_basis != "iid":
+            # Fail loudly at validation rather than silently sampling i.i.d.
+            # if a protocol carries a malformed basis spec.
+            from mobile_robot_mppi.sampling.bases import build_basis
+
+            build_basis(self.noise_basis, self.dt)
         numeric_costs = (
             self.goal_running_weight,
             self.goal_terminal_weight,
@@ -1650,7 +1663,20 @@ class MppiController:
         rng = self.rng if rng is None else rng
         shape = (self.config.num_samples, self.config.horizon, self.action_spec.dimension)
         if prior.covariance is None:
-            noise = rng.normal(size=shape) * np.asarray(self.config.noise_sigma)[None, None, :]
+            if self.config.noise_basis == "iid":
+                # Unchanged production path. Kept as a literal expression so the
+                # default draws the identical RNG stream in the identical order.
+                noise = rng.normal(size=shape) * np.asarray(self.config.noise_sigma)[None, None, :]
+            else:
+                # Imported locally so the default path does not change at all.
+                from mobile_robot_mppi.sampling.bases import build_basis
+
+                noise = build_basis(self.config.noise_basis, self.config.dt).sample(
+                    rng,
+                    self.config.num_samples,
+                    self.config.horizon,
+                    np.asarray(self.config.noise_sigma, dtype=np.float64),
+                )
         else:
             covariance = np.asarray(prior.covariance, dtype=np.float64)
             if covariance.shape == (self.action_spec.dimension, self.action_spec.dimension):

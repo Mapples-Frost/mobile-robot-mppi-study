@@ -195,9 +195,24 @@ class RLDrivenMppiController(MppiController):
                 else source_variances[name]
             )
             standard_deviation = np.sqrt(selected_variance)
-            noise = rng.normal(
-                size=(int(source_count),) + means[name].shape
-            ) * standard_deviation[None, :, :]
+            if self.config.noise_basis == "iid":
+                # Historical path: keep the draw shape, order, and
+                # multiplication expression unchanged for frozen protocols.
+                noise = rng.normal(
+                    size=(int(source_count),) + means[name].shape
+                ) * standard_deviation[None, :, :]
+            else:
+                from mobile_robot_mppi.sampling.bases import build_basis
+
+                standardized = build_basis(
+                    self.config.noise_basis, self.config.dt
+                ).sample(
+                    rng,
+                    int(source_count),
+                    self.config.horizon,
+                    np.ones(self.action_spec.dimension, dtype=np.float64),
+                )
+                noise = standardized * standard_deviation[None, :, :]
             values = means[name][None, :, :] + noise
             values = np.clip(
                 values, self.action_spec.lower, self.action_spec.upper
@@ -1542,14 +1557,56 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
         )
 
     def _gaussian_samples(self, mean, variance, count, rng):
-        samples = mean[None, :, :] + rng.normal(
-            size=(int(count),) + mean.shape
-        ) * np.sqrt(variance)[None, :, :]
+        standard_deviation = np.sqrt(variance)
+        if self.config.noise_basis == "iid":
+            # Historical Paper-RL path. This expression is intentionally kept
+            # literal so default runs consume the same RNG stream and remain
+            # bit-exact with every frozen result.
+            noise = rng.normal(
+                size=(int(count),) + mean.shape
+            ) * standard_deviation[None, :, :]
+        else:
+            from mobile_robot_mppi.sampling.bases import build_basis
+
+            standardized = build_basis(
+                self.config.noise_basis, self.config.dt
+            ).sample(
+                rng,
+                int(count),
+                self.config.horizon,
+                np.ones(self.action_spec.dimension, dtype=np.float64),
+            )
+            noise = standardized * standard_deviation[None, :, :]
+        samples = mean[None, :, :] + noise
         samples = np.clip(
             samples, self.action_spec.lower, self.action_spec.upper
         )
         if count > 0:
             samples[0] = mean
+        raw_rate_violation_fraction = 0.0
+        raw_rate_violating_candidate_fraction = 0.0
+        if self.action_spec.rate_limits is not None and count > 0:
+            previous = np.concatenate(
+                (
+                    np.broadcast_to(
+                        self.previous_action[None, None, :],
+                        (int(count), 1, self.action_spec.dimension),
+                    ),
+                    samples[:, :-1, :],
+                ),
+                axis=1,
+            )
+            tolerance = 1.0e-12
+            raw_violations = (
+                np.abs(samples - previous)
+                > self.action_spec.rate_limits[None, None, :]
+                * self.config.dt
+                + tolerance
+            )
+            raw_rate_violation_fraction = float(np.mean(raw_violations))
+            raw_rate_violating_candidate_fraction = float(
+                np.mean(np.any(raw_violations, axis=(1, 2)))
+            )
         previous = np.repeat(
             self.previous_action.reshape(1, -1), int(count), axis=0
         )
@@ -1560,6 +1617,33 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
                 dt=self.config.dt,
             )
             previous = samples[:, step, :]
+        post_rate_violation_fraction = 0.0
+        if self.action_spec.rate_limits is not None and count > 0:
+            previous = np.concatenate(
+                (
+                    np.broadcast_to(
+                        self.previous_action[None, None, :],
+                        (int(count), 1, self.action_spec.dimension),
+                    ),
+                    samples[:, :-1, :],
+                ),
+                axis=1,
+            )
+            post_violations = (
+                np.abs(samples - previous)
+                > self.action_spec.rate_limits[None, None, :]
+                * self.config.dt
+                + 1.0e-12
+            )
+            post_rate_violation_fraction = float(np.mean(post_violations))
+        self._last_gaussian_rate_limit_audit = {
+            "enabled": self.action_spec.rate_limits is not None,
+            "raw_violation_fraction": raw_rate_violation_fraction,
+            "raw_violating_candidate_fraction": (
+                raw_rate_violating_candidate_fraction
+            ),
+            "post_limit_violation_fraction": post_rate_violation_fraction,
+        }
         return samples
 
     def _paper_terminal_cost(
@@ -2282,9 +2366,13 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
         traversal_last_index = -1
         same_cycle_guided_filter_iterations = 0
         same_cycle_guided_filtered_candidates = 0
+        gaussian_rate_limit_audits = []
         for _ in range(cfg.iterations):
             gaussian = self._gaussian_samples(
                 mean, variance, gaussian_count, rng
+            )
+            gaussian_rate_limit_audits.append(
+                dict(self._last_gaussian_rate_limit_audit)
             )
             samples = np.concatenate((guided, gaussian), axis=0)
             labels = np.concatenate((
@@ -3471,6 +3559,27 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
             "supervised_replaced_guided_count": int(supervised_count),
             "supervised_added_rollout_count": 0,
             "paper_gaussian_samples_per_iteration": int(gaussian_count),
+            "paper_gaussian_raw_rate_limit_violation_fraction": float(
+                np.mean([
+                    value["raw_violation_fraction"]
+                    for value in gaussian_rate_limit_audits
+                ])
+                if gaussian_rate_limit_audits else 0.0
+            ),
+            "paper_gaussian_raw_rate_limit_violating_candidate_fraction": (
+                float(np.mean([
+                    value["raw_violating_candidate_fraction"]
+                    for value in gaussian_rate_limit_audits
+                ]))
+                if gaussian_rate_limit_audits else 0.0
+            ),
+            "paper_gaussian_post_rate_limit_violation_fraction": float(
+                np.mean([
+                    value["post_limit_violation_fraction"]
+                    for value in gaussian_rate_limit_audits
+                ])
+                if gaussian_rate_limit_audits else 0.0
+            ),
             "paper_guided_elite_count": int(total_guided_elites),
             "paper_gaussian_elite_count": int(total_gaussian_elites),
             "paper_guided_opportunity_count": int(

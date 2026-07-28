@@ -1,0 +1,42 @@
+{
+  "timestamp": "2026-07-27T23:32:40-04:00",
+  "git_head_before_pre_execution_commit": "32dcd193ace53278443832db616996bcb0e1a9f6",
+  "branch": "codex/complex-static-three-dynamic-v1",
+  "protocol": "configs/research/noise_basis_ab_development_v1.yaml",
+  "protocol_sha256": "f1dfd4098941bb9101c0efc525295ac31df3c49a6aa7bba79fa2d5c37cc68d0e",
+  "seeds": [
+    791101201,
+    791101202,
+    791101203,
+    791101204,
+    791101205,
+    791101206,
+    791101207,
+    791101208,
+    791101209,
+    791101210,
+    791101211,
+    791101212
+  ],
+  "arms": {
+    "control": "iid",
+    "treatment": "ar1:2.0"
+  },
+  "behavior_config_equal_except_noise_basis": true,
+  "regression": {
+    "noise_basis_tests": "33 passed in 0.89s",
+    "noise_basis_plus_rl_planner_tests": "71 passed in 0.87s"
+  },
+  "file_sha256": {
+    "configs/research/noise_basis_ab_development_v1.yaml": "f1dfd4098941bb9101c0efc525295ac31df3c49a6aa7bba79fa2d5c37cc68d0e",
+    "experiments/dynamic_uncertainty/analyze_noise_basis_ab_development.py": "de95179d089dafc38b8a3b8002d0c095c97038c3c9abadeb42db3dc51cc0cff7",
+    "experiments/dynamic_uncertainty/run_noise_basis_ab_development.py": "fb69aa2177885c7689d58873a033b1b5a279a1313d9e570b3207d07cff97709f",
+    "scripts/run_noise_basis_ab.ps1": "831b2b9190cdaef1e81eca75aaa5ec7c2a3bac69c2a94d8471b3eedbf1144571",
+    "src/mobile_robot_mppi/evaluation/metrics.py": "fa4495407a0190ac0c1c5ffefe65f53306293cc14227ce06b9fdb27a9847f71c",
+    "src/mobile_robot_mppi/planning/mppi.py": "5eecd1896d8679f4beaacce859dd558a717c737a63da94b81ae19bb89f6f202b",
+    "src/mobile_robot_mppi/planning/rl_driven_mppi.py": "fd6016515f12cd61532264fec9705995a6d911a8e6435b0f22ce897ed32f4f6a",
+    "src/mobile_robot_mppi/sampling/bases.py": "99a6778e2b49833b5ae96690a8e351b889e18778335a1c731b63e11ac9e13069",
+    "tests/test_noise_basis_regression.py": "61aeb2ee7464ce1fe02d175d015c50069b4d924ea82d6be976106db12daf5f6d"
+  },
+  "formal_episode_count_at_freeze": 0
+}

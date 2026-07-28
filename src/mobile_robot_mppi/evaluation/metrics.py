@@ -2215,6 +2215,22 @@ class EpisodeMetrics:
             "paper_gaussian_opportunity_count": int(
                 planner_diagnostics.get("paper_gaussian_opportunity_count", 0)
             ),
+            "paper_gaussian_raw_rate_limit_violation_fraction": float(
+                planner_diagnostics.get(
+                    "paper_gaussian_raw_rate_limit_violation_fraction", 0.0
+                )
+            ),
+            "paper_gaussian_raw_rate_limit_violating_candidate_fraction": (
+                float(planner_diagnostics.get(
+                    "paper_gaussian_raw_rate_limit_violating_candidate_fraction",
+                    0.0,
+                ))
+            ),
+            "paper_gaussian_post_rate_limit_violation_fraction": float(
+                planner_diagnostics.get(
+                    "paper_gaussian_post_rate_limit_violation_fraction", 0.0
+                )
+            ),
             "paper_same_cycle_guided_cost_filter_enabled": float(
                 planner_diagnostics.get(
                     "paper_same_cycle_guided_cost_filter_enabled", False
@@ -4242,6 +4258,33 @@ class EpisodeMetrics:
                 row.get("paper_gaussian_opportunity_count", 0)
                 for row in values
             )),
+            "paper_gaussian_raw_rate_limit_violation_fraction_mean": float(
+                np.mean([
+                    row.get(
+                        "paper_gaussian_raw_rate_limit_violation_fraction",
+                        0.0,
+                    )
+                    for row in values
+                ])
+            ),
+            "paper_gaussian_raw_rate_limit_violating_candidate_fraction_mean": (
+                float(np.mean([
+                    row.get(
+                        "paper_gaussian_raw_rate_limit_violating_candidate_fraction",
+                        0.0,
+                    )
+                    for row in values
+                ]))
+            ),
+            "paper_gaussian_post_rate_limit_violation_fraction_mean": float(
+                np.mean([
+                    row.get(
+                        "paper_gaussian_post_rate_limit_violation_fraction",
+                        0.0,
+                    )
+                    for row in values
+                ])
+            ),
             "paper_same_cycle_guided_cost_filter_enabled_fraction": float(
                 np.mean([
                     row.get(

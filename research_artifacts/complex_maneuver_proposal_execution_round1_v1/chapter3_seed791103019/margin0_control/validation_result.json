@@ -1,0 +1,30 @@
+{
+  "status": "pass",
+  "map": "chapter3",
+  "seed": 791103019,
+  "arm": "margin0_control",
+  "outcome": {
+    "success": false,
+    "collision": true,
+    "termination_reason": "collision",
+    "steps": 979,
+    "final_goal_distance": 11.202386742126677,
+    "safety_interventions": 344,
+    "stuck_steps": 197
+  },
+  "contract": {
+    "margin": 0.0,
+    "actor_enabled": true,
+    "required_counterfactual_and_guard_fields_present": true,
+    "rollout_values": [0, 600],
+    "valid_600_cycles": 822,
+    "three_head_quota_pass": true,
+    "added_rollout_values": [0],
+    "stderr_empty": true
+  },
+  "mechanism_counts": {
+    "counterfactual_active_cycles": 186,
+    "influence_survived_guard_cycles": 185
+  },
+  "interpretation": "Valid margin-zero mechanism control with a collision outcome. The failure is retained as development evidence and the seed is not replaced."
+}

@@ -1,0 +1,145 @@
+schema_version: 1
+status: frozen_before_implementation
+frozen_at: '2026-07-28T00:50:20+08:00'
+mechanism_family: proposal_to_execution_consistency
+development_only: true
+question: Does a bounded same-cycle acceptance margin allow already-qualified supervised
+  maneuver proposals to retain measurable influence through MPPI arbitration without
+  degrading collision safety?
+evidence_anchor:
+  diagnosis_commit: e9f2288
+  diagnosis_tag: checkpoint/complex-maneuver-cross-layer-diagnosis-v1-20260728
+  diagnosis_path: research_artifacts/complex_maneuver_cross_layer_diagnosis_v1/diagnosis.json
+  bootstrap_gate_d_path: research_artifacts/complex_supervised_maneuver_actor_gate_d_v1_analysis/gate_d_result.json
+  observed_actor_proposals: 4971
+  observed_actor_elites: 1016
+  observed_actor_selected: 16
+  observed_success_gain_all_maps: 0
+code_audit:
+  planner_path: src/mobile_robot_mppi/planning/rl_driven_mppi.py
+  candidate_insertion_lines:
+  - 1811
+  - 1847
+  - 2020
+  - 2040
+  feasibility_lines:
+  - 2432
+  - 2522
+  blanket_guided_filter_lines:
+  - 2602
+  - 2621
+  elite_weighted_update_lines:
+  - 2637
+  - 2669
+  selected_diagnostic_lines:
+  - 2684
+  - 2697
+  post_optimizer_guard_lines:
+  - 2948
+  - 2965
+  findings:
+  - The same-cycle filter removes the entire guided population whenever its best feasible
+    cost is above the best feasible Gaussian cost by more than the configured relative
+    margin.
+  - The current margin is zero, so any positive relative disadvantage can remove all
+    supervised heads even when individual heads are physically, geometrically, and
+    probabilistically feasible.
+  - supervised_selected_count identifies the minimum-cost elite label; the executed
+    sequence is instead a weighted elite mean and may later be replaced by geometry
+    or probabilistic action guards.
+  - Existing selected counts therefore do not quantify causal contribution of supervised
+    heads to the pre-guard or executed action.
+frozen_components:
+  actor_checkpoint: research_artifacts/complex_supervised_maneuver_actor_training_v1_bootstrap/best.pt
+  actor_architecture: unchanged
+  risk: unchanged
+  icode: unchanged
+  safety: unchanged
+  maps: unchanged
+  mppi_cost_components: unchanged
+  mppi_temperature: 2.5
+  samples_per_iteration: 300
+  iterations: 2
+  total_rollouts_per_forecast_valid_cycle: 600
+  gaussian_actor_isolation: true
+  seed_replacement_allowed: false
+  map_specific_logic_allowed: false
+opened_development_blocks:
+- map: chapter1
+  seed: 791101019
+- map: chapter2
+  seed: 790202019
+- map: chapter3
+  seed: 791103019
+phase_zero_instrumentation:
+  behavior_change_allowed: false
+  required_new_diagnostics:
+  - supervised_elite_weight_mass_final_iteration
+  - supervised_counterfactual_first_action_delta_norm
+  - supervised_counterfactual_sequence_delta_norm
+  - pre_guard_action
+  - post_guard_action
+  - post_guard_action_delta_norm
+  - post_guard_replacement_reason
+  - supervised_influence_survived_guard
+  equivalence_contract:
+    actor_off: exact trajectory equality with frozen implementation
+    actor_on: Exact control and trajectory equality before enabling a nonzero margin;
+      diagnostic-only fields may differ by being newly present.
+    permitted_rollout_counts:
+    - 0
+    - 600
+intervention:
+  parameter: paper_rl_driven.same_cycle_guided_relative_margin
+  baseline: 0.0
+  rationale: The existing filter is retained, but a small bounded cost disadvantage
+    is tolerated so that safe multi-stage maneuvers are not discarded solely because
+    a short-horizon Gaussian candidate is marginally cheaper.
+  rounds:
+  - round: 1
+    value: 0.02
+  - round: 2
+    value: 0.05
+  - round: 3
+    value: 0.1
+  escalation_rule: Run the next value only if the prior value has no collision regression
+    but fails the shared three-map improvement gate. Never skip a value or choose
+    a value per map.
+paired_execution:
+  control: frozen_full_plus_bootstrap_actor_margin_0
+  treatment: frozen_full_plus_bootstrap_actor_configured_margin
+  blocking_unit: map_seed
+  same_seed: true
+  same_run_order: treatment values in frozen ascending order
+  baseline_reuse: Existing margin-zero Actor episodes may be reused only after Phase
+    Zero proves exact actor-on behavioral equivalence. Otherwise rerun the complete
+    paired block under one commit.
+primary_development_gate:
+  must_hold_on_every_map:
+  - collision_not_worse
+  - terminal_goal_distance_or_success_strictly_better
+  - supervised_counterfactual_first_action_delta_norm_increases
+  - supervised_influence_survived_guard_fraction_increases
+  - rollout_counts_are_only_0_or_600
+  pooled_requirements:
+  - actor_selected_or_influential_cycles_increase
+  - safety_intervention_fraction_does_not_increase
+  forbidden_success_claims:
+  - development_gate_is_not_held_out_confirmation
+  - increased_selected_count_alone_is_not_task_improvement
+stopping_rules:
+  no_core_improvement_rounds: 3
+  consecutive_safety_regressions: 2
+  maximum_mechanism_families: 3
+  on_family_failure: Preserve all results and stop this family. Return to the cross-layer
+    diagnosis before selecting another shared mechanism.
+fresh_validation:
+  authorized_only_after_development_pass: true
+  seeds_must_be_unopened_and_disjoint: true
+  paired_control_and_treatment: true
+  formal_or_paid_server_execution_authorized: false
+integrity:
+  base_commit: e9f2288
+  planner_sha256: 8c45115fbf608a8f86be6d13e1180fe00d1e336612d644a8e85631ca0448d4ee
+  gate_d_protocol_sha256: e350729e97afded25ec791f567b155f7f27c5accbe4c017edeb89b64797c03e5
+  diagnosis_sha256: 98005d79046581e7e71321099a4a06633dd3416659e629d9eced020ad114c1ef

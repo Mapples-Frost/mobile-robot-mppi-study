@@ -1,0 +1,98 @@
+design:
+  episodes: 3
+  map_specific_logic_allowed: false
+  reference_artifacts: research_artifacts/segment_half_thickness_ab_v1
+  seed_replacement_allowed: false
+  seeds:
+  - 791101302
+  - 791101305
+  - 791101310
+  type: single_arm_continuation
+design_note: This is a CONTINUATION, not a paired A/B. Each run uses the identical
+  seed and configuration as the corresponding segment_half_thickness_ab_v1 treatment
+  episode, changing only experiment.max_steps. Steps 0-1199 must therefore reproduce
+  the existing artifact exactly; the analyzer verifies this and treats any divergence
+  as a protocol failure. The existing 1200-step episode is the reference arm, so no
+  control needs re-running.
+development_only: true
+endpoints:
+  primary: reached_goal_within_extended_budget
+  supporting:
+  - route_progress_fraction
+  - terminal_true_clearance_m
+  - terminal_safety_reason
+  - route_gain_final_300_steps_m
+  - step_at_which_1200_step_prefix_ends
+evidence_sources:
+- research_artifacts/segment_half_thickness_ab_v1
+- research_artifacts/route_budget_analysis_v1/AUDIT_RECORD.md
+- research_artifacts/arbiter_read_v1/AUDIT_RECORD.md
+formal_claim_authorized: false
+frozen_components:
+  actor_checkpoint: absent
+  actor_note: build_complex_full_config does not attach the supervised maneuver Actor.
+    This matches the reference episodes exactly. It is NOT the full LAR-MPPI stack
+    and no claim about the learning package may be drawn from this screen.
+  control_dt: 0.1
+  horizon_steps: 36
+  maps: unchanged
+  mppi_cost_terms: unchanged
+  risk_thresholds: unchanged
+  safety_contract: unchanged
+  total_rollouts_per_forecast_valid_cycle: 600
+held_constant:
+  known_static_map_segment_half_thickness: true
+  noise_basis: ar1:2.0
+  rationale: Both are the treatment configuration of segment_half_thickness_ab_v1,
+    so the continuation is exact.
+interpretation:
+  becomes_arrested: The episode enters the near_body_hard_stop trap given more time.
+    Budget is not the constraint and the static-stall recovery gap becomes the blocker.
+  collides: Extra time converts a timeout into a collision. Record as a safety finding
+    and stop the budget line.
+  finishes: Budget was the remaining constraint for this mode. Adopt the calibrated
+    budget and re-run the full chapter-1 matrix.
+  still_moving_at_2050: Progress is real but slower than the route requires. The constraint
+    is speed, not budget; investigate the front-sector slowdown scaling.
+intervention:
+  justification: Measured, not chosen for effect. Chapter-1 route length is 27.96
+    m and the median measured route-progress rate is 0.1638 m/s, requiring ~1708 steps.
+    2050 adds a 20% margin. This value was derived before the screen was run and applies
+    to the map, not to any particular outcome.
+  parameter: experiment.max_steps
+  reference: 1200
+  treatment: 2050
+map:
+  name: chapter1
+mechanism_family: episode_budget_calibration
+power_statement: THREE EPISODES IS A DIAGNOSTIC SCREEN. It cannot estimate a success
+  rate and no statistical claim follows. Its only purpose is to determine whether
+  the episode budget is the remaining constraint for the front_obstacle_slow mode.
+prohibitions:
+- no formal claim
+- no seed replacement after any outcome is seen
+- no tuning of any parameter other than experiment.max_steps
+- failure evidence retained verbatim
+- the arrested seeds (301, 307, 311) must not be added to this screen
+protocol: budget_extension_screen_v1
+question: Chapter-1 episodes that terminate in the `front_obstacle_slow` mode are
+  still gaining route at the 1200-step cutoff. Is the remaining constraint simply
+  time?
+schema_version: 1
+selection_rationale: 'The completed screen produced two distinct terminal modes.
+
+  near_body_hard_stop (seeds 301, 307, 311): true clearance 0.101-0.108 m, applied
+  speed 0.0003-0.006 m/s, route gain over the final 30 s of +0.002 to +0.174 m. These
+  are ARRESTED. arbiter.py:492 gates escape from near_body_hard_stop on `dynamic_obstacle_near_body_match`,
+  which is false beside a static wall, so v is held at zero with no legal escape.
+  Additional time cannot help them and they are deliberately EXCLUDED.
+
+  front_obstacle_slow (seeds 302, 305, 310, 312): true clearance 0.142-0.176 m, applied
+  speed 0.038-0.071 m/s, route gain over the final 30 s of +1.10 to +1.76 m, at 71-74%
+  route completion. These are STILL MOVING and are the only episodes for which the
+  time hypothesis is testable.
+
+  Note that route completion, not final x, drives this choice: the arrested episodes
+  sit at 67% completion while the moving ones are at 71-74%, despite the arrested
+  ones having larger x. Final x is misleading on a spiral.'
+status: frozen_before_execution

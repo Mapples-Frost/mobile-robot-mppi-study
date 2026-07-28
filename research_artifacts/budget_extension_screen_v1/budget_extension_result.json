@@ -1,0 +1,57 @@
+{
+  "protocol": "budget_extension_screen_v1",
+  "reference_max_steps": 1200,
+  "extended_max_steps": 2050,
+  "all_prefixes_reproduce": true,
+  "n_success": 0,
+  "n_collision": 0,
+  "n_still_moving": 3,
+  "n_arrested": 0,
+  "episodes": [
+    {
+      "seed": 791101302,
+      "prefix_reproduces_reference": true,
+      "prefix_note": "exact",
+      "reference_outcome": "max_steps",
+      "reference_steps": 1200,
+      "extended_outcome": "max_steps",
+      "extended_steps": 2050,
+      "route_fraction": 0.8479095890763056,
+      "route_remaining_m": 4.253007636689084,
+      "route_gain_final_300_steps_m": 0.8684432640711606,
+      "final_goal_distance": 3.2468738741827345,
+      "terminal_true_clearance_m": 0.08620373916417029,
+      "terminal_safety_reason": "near_body_hard_stop"
+    },
+    {
+      "seed": 791101305,
+      "prefix_reproduces_reference": true,
+      "prefix_note": "exact",
+      "reference_outcome": "max_steps",
+      "reference_steps": 1200,
+      "extended_outcome": "max_steps",
+      "extended_steps": 2050,
+      "route_fraction": 0.8482221400141204,
+      "route_remaining_m": 4.244267562168229,
+      "route_gain_final_300_steps_m": 1.4557069277546404,
+      "final_goal_distance": 3.246414501995921,
+      "terminal_true_clearance_m": 0.08006475556309534,
+      "terminal_safety_reason": "near_body_hard_stop"
+    },
+    {
+      "seed": 791101310,
+      "prefix_reproduces_reference": true,
+      "prefix_note": "exact",
+      "reference_outcome": "max_steps",
+      "reference_steps": 1200,
+      "extended_outcome": "max_steps",
+      "extended_steps": 2050,
+      "route_fraction": 0.8449910256571119,
+      "route_remaining_m": 4.334621411249927,
+      "route_gain_final_300_steps_m": 0.8866859212386196,
+      "final_goal_distance": 3.196146668809174,
+      "terminal_true_clearance_m": 0.10286226915862218,
+      "terminal_safety_reason": "near_body_hard_stop"
+    }
+  ]
+}

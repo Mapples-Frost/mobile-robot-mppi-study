@@ -1,0 +1,376 @@
+{
+  "protocol": "segment_half_thickness_ab_development_v1",
+  "verdict": "FAIL_NO_EFFECT",
+  "action": "The correction is geometrically right but does not relieve the chapter-1 deadlock. Keep the flag, default false, and look upstream.",
+  "n_pairs": 12,
+  "treatment_only_collisions": [],
+  "control_only_collisions": [
+    791101302,
+    791101303
+  ],
+  "median_clearance_regression_m": 1.903361041787066e-05,
+  "net_success_pairs": 0,
+  "success_gained": [],
+  "success_lost": [],
+  "median_goal_distance_reduction_same_outcome_m": -0.020576117893098544,
+  "n_same_outcome": 10,
+  "n_changed_outcome": 2,
+  "static_feasible_control": 0.018333333333333333,
+  "static_feasible_treatment": 0.08333333333333333,
+  "thresholds": {
+    "treatment_only_collision_pairs": 2,
+    "net_success_pairs": 2,
+    "median_goal_distance_reduction_m": 0.25,
+    "minimum_clearance_regression_m": 0.05
+  },
+  "pairs": [
+    {
+      "seed": 791101301,
+      "control": {
+        "outcome": "timeout",
+        "safe_success": false,
+        "collision": false,
+        "steps": 1200,
+        "final_goal_distance": 2.297528560711972,
+        "minimum_clearance": 0.12052361448924082,
+        "static_feasible_median": 0.043333333333333335,
+        "static_feasible_tail_median": 0.016666666666666666,
+        "safety_override_fraction": 0.4825,
+        "half_thickness": false,
+        "noise_basis": "ar1:2.0"
+      },
+      "treatment": {
+        "outcome": "timeout",
+        "safe_success": false,
+        "collision": false,
+        "steps": 1200,
+        "final_goal_distance": 2.750931482104442,
+        "minimum_clearance": 0.08687539110289216,
+        "static_feasible_median": 0.20500000000000002,
+        "static_feasible_tail_median": 0.08333333333333333,
+        "safety_override_fraction": 0.5841666666666666,
+        "half_thickness": true,
+        "noise_basis": "ar1:2.0"
+      }
+    },
+    {
+      "seed": 791101302,
+      "control": {
+        "outcome": "collision",
+        "safe_success": false,
+        "collision": true,
+        "steps": 89,
+        "final_goal_distance": 5.295530731121477,
+        "minimum_clearance": -0.022450664571529944,
+        "static_feasible_median": 0.36,
+        "static_feasible_tail_median": 0.36,
+        "safety_override_fraction": 0.12359550561797752,
+        "half_thickness": false,
+        "noise_basis": "ar1:2.0"
+      },
+      "treatment": {
+        "outcome": "timeout",
+        "safe_success": false,
+        "collision": false,
+        "steps": 1200,
+        "final_goal_distance": 2.2298707296511937,
+        "minimum_clearance": 0.03618660848551364,
+        "static_feasible_median": 0.16833333333333333,
+        "static_feasible_tail_median": 0.07833333333333334,
+        "safety_override_fraction": 0.6141666666666666,
+        "half_thickness": true,
+        "noise_basis": "ar1:2.0"
+      }
+    },
+    {
+      "seed": 791101303,
+      "control": {
+        "outcome": "collision",
+        "safe_success": false,
+        "collision": true,
+        "steps": 72,
+        "final_goal_distance": 5.978680425695778,
+        "minimum_clearance": -0.011005770342994936,
+        "static_feasible_median": 0.5925,
+        "static_feasible_tail_median": 0.5925,
+        "safety_override_fraction": 0.0,
+        "half_thickness": false,
+        "noise_basis": "ar1:2.0"
+      },
+      "treatment": {
+        "outcome": "timeout",
+        "safe_success": false,
+        "collision": false,
+        "steps": 1200,
+        "final_goal_distance": 2.1991395300325163,
+        "minimum_clearance": 0.10032445339172968,
+        "static_feasible_median": 0.16,
+        "static_feasible_tail_median": 0.08,
+        "safety_override_fraction": 0.6408333333333334,
+        "half_thickness": true,
+        "noise_basis": "ar1:2.0"
+      }
+    },
+    {
+      "seed": 791101304,
+      "control": {
+        "outcome": "collision",
+        "safe_success": false,
+        "collision": true,
+        "steps": 71,
+        "final_goal_distance": 5.8948647986363705,
+        "minimum_clearance": -0.008610210609309,
+        "static_feasible_median": 0.5883333333333334,
+        "static_feasible_tail_median": 0.5883333333333334,
+        "safety_override_fraction": 0.0,
+        "half_thickness": false,
+        "noise_basis": "ar1:2.0"
+      },
+      "treatment": {
+        "outcome": "collision",
+        "safe_success": false,
+        "collision": true,
+        "steps": 71,
+        "final_goal_distance": 5.870463013962512,
+        "minimum_clearance": -0.01875741778981077,
+        "static_feasible_median": 0.64,
+        "static_feasible_tail_median": 0.64,
+        "safety_override_fraction": 0.0,
+        "half_thickness": true,
+        "noise_basis": "ar1:2.0"
+      }
+    },
+    {
+      "seed": 791101305,
+      "control": {
+        "outcome": "timeout",
+        "safe_success": false,
+        "collision": false,
+        "steps": 1200,
+        "final_goal_distance": 2.3906557512148225,
+        "minimum_clearance": 0.10351438246379169,
+        "static_feasible_median": 0.06333333333333334,
+        "static_feasible_tail_median": 0.016666666666666666,
+        "safety_override_fraction": 0.47,
+        "half_thickness": false,
+        "noise_basis": "ar1:2.0"
+      },
+      "treatment": {
+        "outcome": "timeout",
+        "safe_success": false,
+        "collision": false,
+        "steps": 1200,
+        "final_goal_distance": 2.3185271109052747,
+        "minimum_clearance": 0.08731079019701354,
+        "static_feasible_median": 0.15333333333333332,
+        "static_feasible_tail_median": 0.08,
+        "safety_override_fraction": 0.6266666666666667,
+        "half_thickness": true,
+        "noise_basis": "ar1:2.0"
+      }
+    },
+    {
+      "seed": 791101306,
+      "control": {
+        "outcome": "collision",
+        "safe_success": false,
+        "collision": true,
+        "steps": 75,
+        "final_goal_distance": 6.002164657220643,
+        "minimum_clearance": -0.00745443363064946,
+        "static_feasible_median": 0.5916666666666667,
+        "static_feasible_tail_median": 0.5916666666666667,
+        "safety_override_fraction": 0.02666666666666667,
+        "half_thickness": false,
+        "noise_basis": "ar1:2.0"
+      },
+      "treatment": {
+        "outcome": "collision",
+        "safe_success": false,
+        "collision": true,
+        "steps": 73,
+        "final_goal_distance": 6.067718677680698,
+        "minimum_clearance": -0.009143960942358309,
+        "static_feasible_median": 0.7983333333333333,
+        "static_feasible_tail_median": 0.7983333333333333,
+        "safety_override_fraction": 0.0,
+        "half_thickness": true,
+        "noise_basis": "ar1:2.0"
+      }
+    },
+    {
+      "seed": 791101307,
+      "control": {
+        "outcome": "timeout",
+        "safe_success": false,
+        "collision": false,
+        "steps": 1200,
+        "final_goal_distance": 2.2951262632310936,
+        "minimum_clearance": 0.005698367389574743,
+        "static_feasible_median": 0.11166666666666666,
+        "static_feasible_tail_median": 0.016666666666666666,
+        "safety_override_fraction": 0.49333333333333335,
+        "half_thickness": false,
+        "noise_basis": "ar1:2.0"
+      },
+      "treatment": {
+        "outcome": "timeout",
+        "safe_success": false,
+        "collision": false,
+        "steps": 1200,
+        "final_goal_distance": 2.766760706731038,
+        "minimum_clearance": 0.09220465034912628,
+        "static_feasible_median": 0.25249999999999995,
+        "static_feasible_tail_median": 0.08666666666666667,
+        "safety_override_fraction": 0.5575,
+        "half_thickness": true,
+        "noise_basis": "ar1:2.0"
+      }
+    },
+    {
+      "seed": 791101308,
+      "control": {
+        "outcome": "timeout",
+        "safe_success": false,
+        "collision": false,
+        "steps": 1200,
+        "final_goal_distance": 2.3441391366515187,
+        "minimum_clearance": 0.12419591184609347,
+        "static_feasible_median": 0.04666666666666667,
+        "static_feasible_tail_median": 0.016666666666666666,
+        "safety_override_fraction": 0.49166666666666664,
+        "half_thickness": false,
+        "noise_basis": "ar1:2.0"
+      },
+      "treatment": {
+        "outcome": "timeout",
+        "safe_success": false,
+        "collision": false,
+        "steps": 1200,
+        "final_goal_distance": 2.4752246029793623,
+        "minimum_clearance": 0.0916815154742156,
+        "static_feasible_median": 0.245,
+        "static_feasible_tail_median": 0.09333333333333334,
+        "safety_override_fraction": 0.5316666666666666,
+        "half_thickness": true,
+        "noise_basis": "ar1:2.0"
+      }
+    },
+    {
+      "seed": 791101309,
+      "control": {
+        "outcome": "collision",
+        "safe_success": false,
+        "collision": true,
+        "steps": 72,
+        "final_goal_distance": 5.870425380991592,
+        "minimum_clearance": -0.009715908561160974,
+        "static_feasible_median": 0.7483333333333333,
+        "static_feasible_tail_median": 0.7483333333333333,
+        "safety_override_fraction": 0.0,
+        "half_thickness": false,
+        "noise_basis": "ar1:2.0"
+      },
+      "treatment": {
+        "outcome": "collision",
+        "safe_success": false,
+        "collision": true,
+        "steps": 83,
+        "final_goal_distance": 5.3614312906498585,
+        "minimum_clearance": -0.008064448470287866,
+        "static_feasible_median": 0.545,
+        "static_feasible_tail_median": 0.545,
+        "safety_override_fraction": 0.024096385542168676,
+        "half_thickness": true,
+        "noise_basis": "ar1:2.0"
+      }
+    },
+    {
+      "seed": 791101310,
+      "control": {
+        "outcome": "timeout",
+        "safe_success": false,
+        "collision": false,
+        "steps": 1200,
+        "final_goal_distance": 2.4635863738043753,
+        "minimum_clearance": 0.053332819559978206,
+        "static_feasible_median": 0.19666666666666666,
+        "static_feasible_tail_median": 0.02,
+        "safety_override_fraction": 0.44916666666666666,
+        "half_thickness": false,
+        "noise_basis": "ar1:2.0"
+      },
+      "treatment": {
+        "outcome": "timeout",
+        "safe_success": false,
+        "collision": false,
+        "steps": 1200,
+        "final_goal_distance": 2.248907936897499,
+        "minimum_clearance": 0.08667882586320141,
+        "static_feasible_median": 0.13666666666666666,
+        "static_feasible_tail_median": 0.08,
+        "safety_override_fraction": 0.6141666666666666,
+        "half_thickness": true,
+        "noise_basis": "ar1:2.0"
+      }
+    },
+    {
+      "seed": 791101311,
+      "control": {
+        "outcome": "timeout",
+        "safe_success": false,
+        "collision": false,
+        "steps": 1200,
+        "final_goal_distance": 2.338288199136603,
+        "minimum_clearance": 0.039974865980865915,
+        "static_feasible_median": 0.03333333333333333,
+        "static_feasible_tail_median": 0.016666666666666666,
+        "safety_override_fraction": 0.4975,
+        "half_thickness": false,
+        "noise_basis": "ar1:2.0"
+      },
+      "treatment": {
+        "outcome": "timeout",
+        "safe_success": false,
+        "collision": false,
+        "steps": 1200,
+        "final_goal_distance": 2.7744878967301747,
+        "minimum_clearance": 0.09402130551181553,
+        "static_feasible_median": 0.18,
+        "static_feasible_tail_median": 0.08333333333333333,
+        "safety_override_fraction": 0.585,
+        "half_thickness": true,
+        "noise_basis": "ar1:2.0"
+      }
+    },
+    {
+      "seed": 791101312,
+      "control": {
+        "outcome": "timeout",
+        "safe_success": false,
+        "collision": false,
+        "steps": 1200,
+        "final_goal_distance": 2.3635128857925976,
+        "minimum_clearance": 0.10945387639353199,
+        "static_feasible_median": 0.03666666666666667,
+        "static_feasible_tail_median": 0.016666666666666666,
+        "safety_override_fraction": 0.4508333333333333,
+        "half_thickness": false,
+        "noise_basis": "ar1:2.0"
+      },
+      "treatment": {
+        "outcome": "timeout",
+        "safe_success": false,
+        "collision": false,
+        "steps": 1200,
+        "final_goal_distance": 2.1803869096616255,
+        "minimum_clearance": 0.09840461333104061,
+        "static_feasible_median": 0.14083333333333334,
+        "static_feasible_tail_median": 0.08333333333333333,
+        "safety_override_fraction": 0.65,
+        "half_thickness": true,
+        "noise_basis": "ar1:2.0"
+      }
+    }
+  ]
+}

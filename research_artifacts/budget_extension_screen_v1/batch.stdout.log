@@ -1,0 +1,29 @@
+[1/3] run   seed 791101302  (max_steps 2050)  ->  success=False collision=False steps=2050 dist=3.25  [570s]
+[2/3] run   seed 791101305  (max_steps 2050)  ->  success=False collision=False steps=2050 dist=3.25  [406s]
+[3/3] run   seed 791101310  (max_steps 2050)  ->  success=False collision=False steps=2050 dist=3.20  [439s]
+
+All 3 episodes complete in 23.6 min.
+
+========================================================================================================
+CHAPTER-1 BUDGET EXTENSION SCREEN   1200 -> 2050 steps, 3 continuation episodes
+========================================================================================================
+  seed 791101302  prefix OK (exact)
+  seed 791101305  prefix OK (exact)
+  seed 791101310  prefix OK (exact)
+
+      seed        ref   extended  steps  route%  remain m  tail gain    clr                 reason
+--------------------------------------------------------------------------------------------------------
+ 791101302  max_steps  max_steps   2050   84.8%      4.25     +0.868  0.086    near_body_hard_stop
+ 791101305  max_steps  max_steps   2050   84.8%      4.24     +1.456  0.080    near_body_hard_stop
+ 791101310  max_steps  max_steps   2050   84.5%      4.33     +0.887  0.103    near_body_hard_stop
+--------------------------------------------------------------------------------------------------------
+
+========================================================================================================
+READING
+========================================================================================================
+  3/3 still gaining route at 2050 steps (tail gain > 0.30 m). Progress is real but slower than the route requires: the constraint is speed, not budget.
+
+  Three episodes is a diagnostic screen. No success rate and no statistical
+  claim follows, whichever way it goes.
+
+  written: D:\Projects\mobile-robot-mppi-study-single-v6\research_artifacts\budget_extension_screen_v1\budget_extension_result.json

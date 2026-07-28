@@ -1,0 +1,66 @@
+[1/24] skip  seed 791101301 control (already complete)
+[2/24] run   seed 791101301 treatment  ->  success=False collision=False steps=1200 dist=2.75  [396s]
+[3/24] run   seed 791101302 control  ->  success=False collision=True steps=89 dist=5.30  [47s]
+[4/24] run   seed 791101302 treatment  ->  success=False collision=False steps=1200 dist=2.23  [309s]
+[5/24] run   seed 791101303 control  ->  success=False collision=True steps=72 dist=5.98  [37s]
+[6/24] run   seed 791101303 treatment  ->  success=False collision=False steps=1200 dist=2.20  [311s]
+[7/24] run   seed 791101304 control  ->  success=False collision=True steps=71 dist=5.89  [26s]
+[8/24] run   seed 791101304 treatment  ->  success=False collision=True steps=71 dist=5.87  [43s]
+[9/24] run   seed 791101305 control  ->  success=False collision=False steps=1200 dist=2.39  [640s]
+[10/24] run   seed 791101305 treatment  ->  success=False collision=False steps=1200 dist=2.32  [649s]
+[11/24] run   seed 791101306 control  ->  success=False collision=True steps=75 dist=6.00  [64s]
+[12/24] run   seed 791101306 treatment  ->  success=False collision=True steps=73 dist=6.07  [64s]
+[13/24] run   seed 791101307 control  ->  success=False collision=False steps=1200 dist=2.30  [687s]
+[14/24] run   seed 791101307 treatment  ->  success=False collision=False steps=1200 dist=2.77  [848s]
+[15/24] run   seed 791101308 control  ->  success=False collision=False steps=1200 dist=2.34  [517s]
+[16/24] run   seed 791101308 treatment  ->  success=False collision=False steps=1200 dist=2.48  [773s]
+[17/24] run   seed 791101309 control  ->  success=False collision=True steps=72 dist=5.87  [65s]
+[18/24] run   seed 791101309 treatment  ->  success=False collision=True steps=83 dist=5.36  [70s]
+[19/24] run   seed 791101310 control  ->  success=False collision=False steps=1200 dist=2.46  [935s]
+[20/24] run   seed 791101310 treatment  ->  success=False collision=False steps=1200 dist=2.25  [706s]
+[21/24] run   seed 791101311 control  ->  success=False collision=False steps=1200 dist=2.34  [296s]
+[22/24] run   seed 791101311 treatment  ->  success=False collision=False steps=1200 dist=2.77  [296s]
+[23/24] run   seed 791101312 control  ->  success=False collision=False steps=1200 dist=2.36  [237s]
+[24/24] run   seed 791101312 treatment  ->  success=False collision=False steps=1200 dist=2.18  [255s]
+
+All 24 episodes complete in 137.9 min.
+
+========================================================================================================
+SEGMENT HALF-THICKNESS A/B  (chapter1, noise_basis held at ar1:2.0)
+control = legacy full thickness   treatment = corrected half thickness
+========================================================================================================
+      seed       ctrl        trt  ctrl dist  trt dist   d_dist  ctrl statF  trt statF  ctrl clr  trt clr
+--------------------------------------------------------------------------------------------------------
+ 791101301    timeout    timeout      2.298     2.751   -0.453      0.0167     0.0833     0.121    0.087
+ 791101302  collision    timeout      5.296     2.230   +3.066      0.3600     0.0783    -0.022    0.036
+ 791101303  collision    timeout      5.979     2.199   +3.780      0.5925     0.0800    -0.011    0.100
+ 791101304  collision  collision      5.895     5.870   +0.024      0.5883     0.6400    -0.009   -0.019
+ 791101305    timeout    timeout      2.391     2.319   +0.072      0.0167     0.0800     0.104    0.087
+ 791101306  collision  collision      6.002     6.068   -0.066      0.5917     0.7983    -0.007   -0.009
+ 791101307    timeout    timeout      2.295     2.767   -0.472      0.0167     0.0867     0.006    0.092
+ 791101308    timeout    timeout      2.344     2.475   -0.131      0.0167     0.0933     0.124    0.092
+ 791101309  collision  collision      5.870     5.361   +0.509      0.7483     0.5450    -0.010   -0.008
+ 791101310    timeout    timeout      2.464     2.249   +0.215      0.0200     0.0800     0.053    0.087
+ 791101311    timeout    timeout      2.338     2.774   -0.436      0.0167     0.0833     0.040    0.094
+ 791101312    timeout    timeout      2.364     2.180   +0.183      0.0167     0.0833     0.109    0.098
+--------------------------------------------------------------------------------------------------------
+
+  outcomes  control  : success 0  collision 5
+            treatment: success 0  collision 3
+  treatment-only collisions : 0 []
+  control-only collisions   : 2 [791101302, 791101303]
+  median clearance change   : -0.0000 m (negative = treatment has less clearance)
+  net safe_success pairs    : +0  (+0 [] / -0 [])
+  goal-distance reduction   : same-outcome stratum n=10 median -0.0206 m  [GATING]
+                            : changed-outcome stratum n=2 median +3.4226 m  [reported only]
+  MECHANISM static feasible fraction (tail median): control 0.0183 -> treatment 0.0833
+
+========================================================================================================
+VERDICT: FAIL_NO_EFFECT
+========================================================================================================
+  The correction is geometrically right but does not relieve the chapter-1 deadlock. Keep the flag, default false, and look upstream.
+
+  12 pairs is a screening sample. No statistical claim follows, either way.
+  The flag default is NOT changed by this protocol regardless of outcome.
+
+  written: D:\Projects\mobile-robot-mppi-study-single-v6\research_artifacts\segment_half_thickness_ab_v1\segment_half_thickness_result.json

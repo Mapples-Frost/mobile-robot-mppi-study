@@ -1,0 +1,52 @@
+{
+  "definition": {
+    "control_dt_s": 0.1,
+    "rate_limits_per_s": {
+      "v": 0.6,
+      "omega": 2.0
+    },
+    "per_step_limits": {
+      "v": 0.06,
+      "omega": 0.2
+    },
+    "violation_tolerance": 1e-12,
+    "candidate_raw_reference": "each sampled action versus the preceding sampled action, with step zero versus previous executed action",
+    "executed_reference": "each executed action versus the previous executed action",
+    "applied_note": "applied action is the plant-interval average and its adjacent-row count is diagnostic, not the planner candidate slew contract"
+  },
+  "control_iid": {
+    "steps": 6829,
+    "gaussian_raw_element_violation_fraction_episode_mean": 0.53656539,
+    "gaussian_raw_violating_candidate_fraction_episode_mean": 0.839965032,
+    "gaussian_post_limit_element_violation_fraction_episode_mean": 0.0,
+    "proposed_action_violation_count": 657,
+    "executed_action_violation_count": 813,
+    "applied_action_diagnostic_violation_count": 999,
+    "executed_violation_categories": {
+      "safety_override": 261,
+      "emergency_candidate_selected": 480,
+      "active_fallback": 11,
+      "regular_or_weighted": 61
+    }
+  },
+  "treatment_ar1_2_0": {
+    "steps": 8633,
+    "gaussian_raw_element_violation_fraction_episode_mean": 0.0947745018,
+    "gaussian_raw_violating_candidate_fraction_episode_mean": 0.648026445,
+    "gaussian_post_limit_element_violation_fraction_episode_mean": 0.0,
+    "proposed_action_violation_count": 364,
+    "executed_action_violation_count": 787,
+    "applied_action_diagnostic_violation_count": 771,
+    "executed_violation_categories": {
+      "safety_override": 553,
+      "emergency_candidate_selected": 220,
+      "active_fallback": 0,
+      "regular_or_weighted": 14
+    }
+  },
+  "interpretation": [
+    "The existing sequential limiter fully removes slew violations from Gaussian candidates in both arms.",
+    "Final-command violations are not evidence that the Gaussian candidate limiter failed: most are associated with existing emergency candidates or safety overrides.",
+    "No rate-limit handling was changed for this screen."
+  ]
+}

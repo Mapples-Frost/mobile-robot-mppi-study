@@ -1,0 +1,87 @@
+[1/24] skip  seed 791101201 control (already complete)
+[2/24] run   seed 791101201 treatment  ->  success=False collision=True steps=893 dist=6.61  [629s]
+[3/24] run   seed 791101202 control  ->  success=False collision=True steps=591 dist=5.23  [333s]
+[4/24] run   seed 791101202 treatment  ->  success=False collision=True steps=89 dist=5.31  [33s]
+[5/24] run   seed 791101203 control  ->  success=False collision=True steps=656 dist=6.00  [327s]
+[6/24] run   seed 791101203 treatment  ->  success=False collision=True steps=73 dist=6.10  [27s]
+[7/24] run   seed 791101204 control  ->  success=False collision=True steps=86 dist=6.05  [31s]
+[8/24] run   seed 791101204 treatment  ->  success=False collision=False steps=1200 dist=2.32  [248s]
+[9/24] run   seed 791101205 control  ->  success=False collision=False steps=1200 dist=4.67  [494s]
+[10/24] run   seed 791101205 treatment  ->  success=False collision=False steps=1200 dist=2.41  [426s]
+[11/24] run   seed 791101206 control  ->  success=False collision=False steps=1200 dist=4.04  [256s]
+[12/24] run   seed 791101206 treatment  ->  success=False collision=True steps=90 dist=5.26  [62s]
+[13/24] run   seed 791101207 control  ->  success=False collision=True steps=437 dist=5.48  [450s]
+[14/24] run   seed 791101207 treatment  ->  success=False collision=True steps=87 dist=5.27  [32s]
+[15/24] run   seed 791101208 control  ->  success=False collision=True steps=195 dist=6.03  [184s]
+[16/24] run   seed 791101208 treatment  ->  success=False collision=False steps=1200 dist=2.32  [501s]
+[17/24] run   seed 791101209 control  ->  success=False collision=True steps=209 dist=5.29  [246s]
+[18/24] run   seed 791101209 treatment  ->  success=False collision=False steps=1200 dist=2.37  [546s]
+[19/24] run   seed 791101210 control  ->  success=False collision=False steps=1200 dist=2.76  [492s]
+[20/24] run   seed 791101210 treatment  ->  success=False collision=False steps=1200 dist=2.40  [278s]
+[21/24] run   seed 791101211 control  ->  success=False collision=True steps=203 dist=5.38  [104s]
+[22/24] run   seed 791101211 treatment  ->  success=False collision=False steps=1200 dist=2.42  [305s]
+[23/24] run   seed 791101212 control  ->  success=False collision=True steps=449 dist=5.41  [185s]
+[24/24] run   seed 791101212 treatment  ->  success=False collision=True steps=201 dist=5.47  [105s]
+
+All 24 episodes complete in 104.9 min.
+
+========================================================================================
+NOISE-BASIS A/B CLOSED-LOOP SCREEN
+========================================================================================
+791101201  collision -> collision  distance 6.587 -> 6.612 m
+791101202  collision -> collision  distance 5.227 -> 5.312 m
+791101203  collision -> collision  distance 5.995 -> 6.102 m
+791101204  collision -> timeout    distance 6.055 -> 2.316 m
+791101205    timeout -> timeout    distance 4.668 -> 2.411 m
+791101206    timeout -> collision  distance 4.039 -> 5.256 m
+791101207  collision -> collision  distance 5.480 -> 5.273 m
+791101208  collision -> timeout    distance 6.027 -> 2.315 m
+791101209  collision -> timeout    distance 5.290 -> 2.367 m
+791101210    timeout -> timeout    distance 2.762 -> 2.403 m
+791101211  collision -> timeout    distance 5.375 -> 2.423 m
+791101212  collision -> collision  distance 5.408 -> 5.468 m
+{
+  "outcomes": {
+    "control": {
+      "success": 0,
+      "collision": 9,
+      "timeout": 3
+    },
+    "treatment": {
+      "success": 0,
+      "collision": 6,
+      "timeout": 6
+    }
+  },
+  "success_gained_seeds": [],
+  "success_lost_seeds": [],
+  "net_success_pairs": 0,
+  "treatment_only_collision_seeds": [
+    791101206
+  ],
+  "control_only_collision_seeds": [
+    791101204,
+    791101208,
+    791101209,
+    791101211
+  ],
+  "median_goal_distance_reduction_m": 0.28304066253704696,
+  "median_treatment_minus_control_steps": 0.0,
+  "median_treatment_minus_control_minimum_static_clearance_m": -0.017133848194510692,
+  "median_treatment_minus_control_minimum_overall_clearance_m": 0.022030187008292942,
+  "median_treatment_minus_control_zero_feasible_steps": -15.0,
+  "median_treatment_minus_control_stuck_steps": 14.5,
+  "median_treatment_minus_control_planner_p95_ms": -28.609892493113875,
+  "median_treatment_minus_control_raw_rate_violation_fraction": -0.4694220548810754,
+  "executed_rate_limit_violations": {
+    "control": 813,
+    "treatment": 787
+  },
+  "applied_rate_limit_violations": {
+    "control": 999,
+    "treatment": 771
+  }
+}
+VERDICT: PASS_TO_CONFIRMATORY
+Pre-register a fresh-seed confirmatory with n >= 20 paired seeds.
+Screening result only; no statistical efficacy claim is authorized.

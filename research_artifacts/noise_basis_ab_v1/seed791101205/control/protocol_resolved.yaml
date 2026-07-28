@@ -1,0 +1,143 @@
+decision_rule:
+  evaluated_after: all_24_episodes_complete
+  exhaustiveness: After the safety veto, PASS_TO_CONFIRMATORY applies when either
+    efficacy threshold is met; FAIL_NO_EFFECT applies otherwise. These conditions
+    are exhaustive, so no post-hoc INCONCLUSIVE category exists.
+  order: safety_first
+  rules:
+  - action: stop immediately, seal the evidence, close the sampling-geometry mechanism
+      family, do not run the confirmatory
+    condition: two or more discordant pairs in which the treatment collides and the
+      paired control does not
+    id: FAIL_SAFETY
+  - action: do not proceed to the confirmatory; report that the offline coverage gain
+      did not transfer
+    condition: net safe_success improvement below +2 pairs AND median paired reduction
+      in final_goal_distance below 0.25 m
+    id: FAIL_NO_EFFECT
+  - action: pre-register and run a confirmatory at n >= 20 fresh paired seeds with
+      exact McNemar on the primary and a Holm-corrected secondary family
+    condition: FAIL_SAFETY not triggered AND (net safe_success improvement at least
+      +2 pairs OR median paired reduction in final_goal_distance at least 0.25 m)
+    id: PASS_TO_CONFIRMATORY
+  thresholds:
+    median_goal_distance_reduction_m: 0.25
+    net_success_pairs: 2
+    treatment_only_collision_pairs: 2
+design:
+  episodes: 24
+  map_specific_logic_allowed: false
+  pairs: 12
+  seed_provenance: Fresh band, disjoint from every seed already opened on chapter1
+    (791101003 teacher probe, 791101011/031/037 expansion, 791101019 round 1).
+  seed_replacement_allowed: false
+  seeds:
+  - 791101201
+  - 791101202
+  - 791101203
+  - 791101204
+  - 791101205
+  - 791101206
+  - 791101207
+  - 791101208
+  - 791101209
+  - 791101210
+  - 791101211
+  - 791101212
+  type: paired_common_random_numbers
+development_only: true
+endpoints:
+  blocking_safety: collision
+  co_primary_continuous: final_goal_distance
+  primary_binary: safe_success
+  secondary:
+  - steps
+  - minimum_clearance
+  - stuck_steps
+  - candidate_feasible_fraction_mean
+  - zero_feasible_step_count
+  - planner_compute_ms_p95
+evidence_sources:
+- research_artifacts/rc1_sampling_geometry_probe_v1/AUDIT_RECORD.md
+- research_artifacts/candidate_coverage_v1/AUDIT_RECORD.md
+- research_artifacts/attrition_v1/AUDIT_RECORD.md
+- research_artifacts/noise_basis_integration_v1/AUDIT_RECORD.md
+formal_claim_authorized: false
+frozen_components:
+  action_bounds: unchanged
+  actor_checkpoint: unchanged
+  control_dt: 0.1
+  horizon_steps: 36
+  icode_residual: unchanged
+  maps: unchanged
+  mppi_cost_terms: unchanged
+  obstacle_motions: unchanged
+  risk_thresholds: unchanged
+  safety_contract: unchanged
+  total_rollouts_per_forecast_valid_cycle: 600
+intervention:
+  control: iid
+  note: Both arms preserve the per-step marginal variance exactly, verified in tests/test_noise_basis_regression.py.
+    The arms differ only in temporal correlation across horizon steps. The control
+    value reproduces the historical sampler bit-exactly.
+  parameter: planner.noise_basis
+  treatment: ar1:2.0
+known_open_risks:
+- detail: _sampling_covariance returns diag(sigma^2), correct as a marginal covariance
+    under every basis, but correlated bases have non-zero cross-step covariance that
+    a joint correction would model. Not audited.
+  id: importance_sampling_correction
+- detail: The Paper-RL Gaussian path already applies action_space.rate_limits (0.6,
+    2.0) sequentially after sampling. This screen records both the raw pre-limit violation
+    fraction and the post-limit violation fraction, without changing the limiter.
+  id: rate_limits_not_enforced
+- detail: The hybrid sampler splits its budget between actor and Gaussian sources.
+    This intervention changes only the Gaussian source; the effect on the reliability-adaptive
+    authority logic is unexamined.
+  id: actor_interaction
+map:
+  name: chapter1
+  reason: Worst measured production coverage (1.8% at 0.30 m, versus 26.0% on chapter3),
+    and its recorded margin-0 control terminates by timeout at 1200 steps 4.76 m from
+    goal rather than by collision. There is therefore headroom on both progress and
+    safety, and no collision floor effect.
+mechanism_family: sampling_geometry
+power_statement: TWELVE PAIRS IS A SCREENING SAMPLE, NOT A CONFIRMATORY ONE. It cannot
+  support a statistical claim and no p-value governs the decision below. Its only
+  job is to decide whether a confirmatory run at n >= 20 on fresh seeds is worth the
+  compute. Any claim requires that confirmatory run.
+pre_execution_amendment:
+  algorithm_changes_beyond_noise_basis: false
+  correction: Route only the Gaussian population in both RL-driven sampling paths
+    through planner.noise_basis. Preserve the literal historical rng.normal expression
+    when noise_basis is iid. Add bit-exact and RNG-stream regression tests for the
+    real Paper-RL Gaussian path, plus read-only rate-limit telemetry.
+  episodes_observed_before_correction: 0
+  issue: Static pre-execution inspection found that Chapter 1 resolves to the paper_rl_driven
+    optimizer, whose Gaussian population was sampled in _gaussian_samples and therefore
+    bypassed MppiController._sample. With the original wiring, the arm labels would
+    have differed while both measured arms still used i.i.d. Gaussian candidates.
+  timestamp: '2026-07-27T23:32:40-04:00'
+prohibitions:
+- no formal server experiment
+- no training of any kind
+- no MuJoCo viewer during measured runs
+- no seed replacement after seeing any outcome
+- no modification of the intervention parameter mid-protocol
+- failure evidence is retained verbatim and never overwritten
+protocol: noise_basis_ab_development_v1
+question: Does replacing the i.i.d. Gaussian control perturbation with a temporally
+  correlated one of identical per-step marginal variance improve closed-loop behaviour
+  on a complex map, at an unchanged rollout budget?
+rationale: 'Offline evidence, all additive and reproducible: rc1_sampling_geometry_probe_v1
+  - production i.i.d. sampling places 0/600 candidates at a committed 0.4 m lateral
+  offset and 0/24 seeds get past a blocking obstacle under the full MPPI mean-update
+  loop, while correlated bases at identical marginal variance reach 24/24. candidate_coverage_v1
+  - on 26 real Gate v4 oracle states, production coverage of the oracle maneuver is
+  13.0% at 0.30 m; at ten times the rollout budget it is 14.9%; AR(1) tau=2.0 s at
+  the original budget is 50.0%. attrition_v1 - 99.3% of oracle-quality maneuvers survive
+  the risk filter, predicted-static check and safety arbiter, so recovered candidates
+  are not destroyed downstream. None of this is closed-loop evidence. This protocol
+  produces the first.'
+schema_version: 1
+status: frozen_pre_execution_after_wiring_fix

@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "status": "fail_collision_regression",
+  "mechanism_family": "proposal_to_execution_consistency",
+  "round": 1,
+  "margin": 0.02,
+  "blocking_pair": {
+    "map": "chapter1",
+    "seed": 791101019,
+    "control": {
+      "collision": false,
+      "termination_reason": "max_steps",
+      "steps": 1200,
+      "final_goal_distance": 4.76259393931515
+    },
+    "treatment": {
+      "collision": true,
+      "termination_reason": "collision",
+      "steps": 210,
+      "final_goal_distance": 5.289540195900537
+    }
+  },
+  "contract_integrity": {
+    "rollout_budget_pass": true,
+    "three_head_quota_pass": true,
+    "added_rollout_count_zero": true,
+    "actor_checkpoint_frozen": true,
+    "risk_icode_safety_maps_frozen": true
+  },
+  "stopping_rule_applied": "A treatment collision where the paired control did not collide is an immediate safety regression.",
+  "not_run": [
+    "chapter2 margin0.02 treatment",
+    "chapter3 margin0.02 treatment",
+    "margin0.05",
+    "margin0.10"
+  ],
+  "interpretation": "Allowing a 2% guided cost disadvantage did not preserve useful proposal influence. It reduced the measured counterfactual first-action effect and guard-survival fraction, worsened terminal distance, and converted a collision-free timeout into an early collision.",
+  "next_step": "Close this margin mechanism family and return to the cross-layer diagnosis. Do not continue tuning the margin."
+}

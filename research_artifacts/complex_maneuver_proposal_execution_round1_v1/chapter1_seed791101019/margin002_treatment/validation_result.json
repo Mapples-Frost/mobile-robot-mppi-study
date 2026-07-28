@@ -1,0 +1,40 @@
+{
+  "status": "valid_episode_gate_fail",
+  "map": "chapter1",
+  "seed": 791101019,
+  "arm": "margin002_treatment",
+  "outcome": {
+    "success": false,
+    "collision": true,
+    "termination_reason": "collision",
+    "steps": 210,
+    "final_goal_distance": 5.289540195900537,
+    "safety_interventions": 61,
+    "stuck_steps": 33
+  },
+  "contract": {
+    "margin": 0.02,
+    "required_counterfactual_and_guard_fields_present": true,
+    "rollout_values": [0, 600],
+    "valid_600_cycles": 195,
+    "three_head_quota_pass": true,
+    "added_rollout_values": [0],
+    "stderr_empty": true
+  },
+  "mechanism": {
+    "counterfactual_active_cycles": 66,
+    "counterfactual_first_action_delta_norm_mean_active": 0.05712903198223658,
+    "influence_survived_guard_cycles": 64,
+    "influence_survived_guard_fraction_active": 0.9696969696969697,
+    "selected_cycles": 1
+  },
+  "paired_comparison": {
+    "control_collision": false,
+    "treatment_collision": true,
+    "collision_regression": true,
+    "goal_distance_delta_treatment_minus_control": 0.5269462565853873,
+    "counterfactual_first_action_delta_change": -0.028990065538016307,
+    "influence_survived_guard_fraction_change": -0.013516459559624994
+  },
+  "decision": "Stop Round 1 immediately. Do not run chapter2 or chapter3 treatment, and do not authorize margin 0.05 or 0.10."
+}

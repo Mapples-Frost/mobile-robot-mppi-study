@@ -458,6 +458,153 @@ def test_post_escape_live_hazard_preserves_bounded_reverse_and_steering():
     assert rejoin["commanded_omega_override_radps"] > 0.0
 
 
+def test_20260804_goal_behind_safe_reverse_is_not_flipped_forward():
+    supervisor = _DynamicPathGuardSupervisor()
+    supervisor.apply(
+        3.80, 1.15, -1.80, 5.0, 2.0, 0.50,
+        safety_reason="dynamic_active_escape",
+        proposed_omega=-0.60,
+        hazard_active=False,
+    )
+
+    # 20260804_014957 cycle 224: the path target was 152 degrees behind and
+    # MPPI/ScanGuard supplied a valid reverse.  The old rejoin branch replaced
+    # it with +0.20 m/s, which necessarily drove away from the target.
+    output_v, diagnostics = supervisor.apply(
+        3.848370715133504,
+        1.1915533709355022,
+        -1.8930460000089593,
+        5.0,
+        2.0,
+        -0.30,
+        safety_reason="front_clear",
+        proposed_omega=-0.60,
+        selected_probability=0.0,
+        selected_probability_mass=0.0,
+        hazard_active=False,
+    )
+
+    assert output_v == pytest.approx(-0.20)
+    assert diagnostics["reason"] == "goal_behind_reverse_rejoin"
+    assert diagnostics["commanded_omega_override_radps"] is None
+    assert diagnostics["goal_progress_projection_mps"] > 0.0
+
+
+def test_20260804_goal_behind_forward_proposal_turns_without_departing():
+    supervisor = _DynamicPathGuardSupervisor()
+    supervisor.apply(
+        2.30, 1.60, 2.00, 5.0, 2.0, 0.50,
+        safety_reason="dynamic_active_escape",
+        proposed_omega=0.60,
+        hazard_active=False,
+    )
+
+    # 20260804_020913 cycles 62--71: a positive command with a rear-hemisphere
+    # target produced sustained negative goal progress.  With no rear-clearance
+    # evidence, the supervisor may turn but must not invent reverse motion.
+    output_v, diagnostics = supervisor.apply(
+        2.2134581305902548,
+        1.6963273740443063,
+        2.166026000001257,
+        5.0,
+        2.0,
+        0.50,
+        safety_reason="front_clear",
+        proposed_omega=0.60,
+        maximum_omega_radps=0.60,
+        selected_probability=0.0,
+        selected_probability_mass=0.0,
+        hazard_active=False,
+    )
+
+    assert output_v == 0.0
+    assert diagnostics["reason"] == "goal_behind_turn_rejoin"
+    assert diagnostics["commanded_omega_override_radps"] == pytest.approx(
+        -0.60
+    )
+    assert diagnostics["goal_progress_projection_mps"] == 0.0
+
+    # A pose/measurement discontinuity across +/-pi cannot reverse the chosen
+    # turn side on the following cycle.
+    wrapped_v, wrapped = supervisor.apply(
+        1.9692636906208443,
+        1.9675749448856652,
+        2.592431999999411,
+        5.0,
+        2.0,
+        0.44,
+        safety_reason="front_clear",
+        proposed_omega=0.40,
+        maximum_omega_radps=0.60,
+        selected_probability=0.0,
+        selected_probability_mass=0.0,
+        hazard_active=False,
+    )
+    assert wrapped_v == 0.0
+    assert wrapped["heading_error_rad"] > 3.0
+    assert wrapped["commanded_omega_override_radps"] == pytest.approx(-0.60)
+
+
+def test_goal_behind_forward_escape_remains_authoritative_while_hazard_live():
+    supervisor = _DynamicPathGuardSupervisor()
+    supervisor.apply(
+        2.30, 1.60, 2.00, 5.0, 2.0, 0.50,
+        safety_reason="dynamic_active_escape",
+        proposed_omega=0.60,
+        hazard_active=True,
+    )
+    output_v, diagnostics = supervisor.apply(
+        2.21, 1.70, 2.17, 5.0, 2.0, 0.50,
+        safety_reason="front_clear",
+        proposed_omega=0.60,
+        selected_probability=0.0,
+        selected_probability_mass=0.0,
+        hazard_active=True,
+    )
+
+    assert output_v == pytest.approx(0.50)
+    assert diagnostics["reason"] == "dynamic_passage_commit"
+    assert diagnostics["hazard_active"] is True
+
+
+def test_goal_behind_turn_rejoin_converges_without_a_full_rotation():
+    supervisor = _DynamicPathGuardSupervisor()
+    x, y, yaw = 2.21, 1.70, 2.17
+    supervisor.apply(
+        x, y, yaw, 5.0, 2.0, 0.50,
+        safety_reason="dynamic_active_escape",
+        proposed_omega=0.60,
+        hazard_active=False,
+    )
+
+    turn_steps = 0
+    while turn_steps < 30:
+        output_v, diagnostics = supervisor.apply(
+            x, y, yaw, 5.0, 2.0, 0.50,
+            safety_reason="front_clear",
+            proposed_omega=0.60,
+            maximum_omega_radps=0.60,
+            selected_probability=0.0,
+            selected_probability_mass=0.0,
+            hazard_active=False,
+        )
+        omega = diagnostics["commanded_omega_override_radps"]
+        if diagnostics["reason"] != "goal_behind_turn_rejoin":
+            assert output_v > 0.0
+            break
+        assert output_v == 0.0
+        assert omega == pytest.approx(-0.60)
+        yaw = math.atan2(
+            math.sin(yaw + float(omega) * 0.10),
+            math.cos(yaw + float(omega) * 0.10),
+        )
+        turn_steps += 1
+    else:
+        pytest.fail("goal-behind turn did not return to forward rejoin")
+
+    assert 1 <= turn_steps < 20
+
+
 def test_explicit_safety_reverse_remains_authoritative():
     supervisor = _DynamicPathGuardSupervisor()
     reverse_v, reverse = supervisor.apply(

@@ -102,6 +102,8 @@ _GOAL_REJOIN_RISK_MASS_CEILING = 1.50
 _GOAL_REJOIN_RELEASE_HEADING_RAD = 0.25
 _GOAL_REJOIN_RELEASE_CROSS_TRACK_M = 0.65
 _GOAL_REJOIN_RELEASE_STEPS = 3
+_GOAL_REJOIN_REAR_HEMISPHERE_RAD = 0.5 * math.pi
+_GOAL_REJOIN_REVERSE_SPEED_MPS = 0.20
 
 # While a just-avoided dynamic hazard is still live, return toward the goal
 # as a full-speed arc.  Bounding only the opposite steering avoids both the
@@ -650,6 +652,7 @@ class _DynamicPathGuardSupervisor:
 
     def __init__(self):
         self._goal_rejoin_latched = False
+        self._goal_behind_turn_sign = 0.0
         self._last_dynamic_turn_sign = 0.0
         self._hazard_reverse_steps = 0
         self._hazard_hold_remaining = 0
@@ -658,6 +661,7 @@ class _DynamicPathGuardSupervisor:
 
     def reset(self):
         self._goal_rejoin_latched = False
+        self._goal_behind_turn_sign = 0.0
         self._last_dynamic_turn_sign = 0.0
         self._hazard_reverse_steps = 0
         self._hazard_hold_remaining = 0
@@ -714,6 +718,7 @@ class _DynamicPathGuardSupervisor:
             # a moderate heading error let the stochastic warm start turn away
             # again on the immediately following cycle (20260804_022501).
             self._goal_rejoin_latched = True
+            self._goal_behind_turn_sign = 0.0
             if abs(float(proposed_omega)) > 1.0e-6:
                 self._last_dynamic_turn_sign = float(
                     np.sign(float(proposed_omega))
@@ -796,6 +801,11 @@ class _DynamicPathGuardSupervisor:
         )
         heading_error = float(diagnostics["heading_error_rad"])
         cross_track = float(diagnostics["cross_track_error_m"])
+        goal_behind = bool(
+            abs(heading_error) > _GOAL_REJOIN_REAR_HEMISPHERE_RAD
+        )
+        if not goal_behind:
+            self._goal_behind_turn_sign = 0.0
         release_ready = bool(
             self._goal_rejoin_latched
             and not hazard_active
@@ -813,6 +823,7 @@ class _DynamicPathGuardSupervisor:
         )
         if released_to_planner:
             self._goal_rejoin_latched = False
+            self._goal_behind_turn_sign = 0.0
             self._last_dynamic_turn_sign = 0.0
             self._hazard_reverse_steps = 0
             self._goal_rejoin_release_count = 0
@@ -885,6 +896,47 @@ class _DynamicPathGuardSupervisor:
 
         if post_escape_reverse and risk_safe:
             self._hazard_reverse_steps = 0
+            if goal_behind:
+                # The planner-originated reverse has already passed ScanGuard,
+                # including the rear-direction and near-body checks.  Keep its
+                # sign while the path target is behind the chassis instead of
+                # replacing it with forward motion that has negative goal
+                # progress.  Limit only the magnitude for a controlled rejoin.
+                self._goal_behind_turn_sign = 0.0
+                output_v = max(
+                    float(proposed_v), -_GOAL_REJOIN_REVERSE_SPEED_MPS
+                )
+                goal_progress = output_v * math.cos(heading_error)
+                diagnostics.update({
+                    "active": bool(
+                        output_v > float(proposed_v) + 1.0e-12
+                    ),
+                    "reason": "goal_behind_reverse_rejoin",
+                    "bypassed": False,
+                    "bypass_reason": None,
+                    "would_be_active": bool(
+                        diagnostics.get("active", False)
+                    ),
+                    "would_be_reason": str(
+                        diagnostics.get("reason", "clear")
+                    ),
+                    "dynamic_authority": False,
+                    "goal_rejoin_latched": True,
+                    "goal_behind": True,
+                    "hazard_active": False,
+                    "goal_rejoin_selected_probability": selected_probability,
+                    "goal_rejoin_selected_probability_mass": (
+                        selected_probability_mass
+                    ),
+                    "goal_rejoin_reverse_speed_cap_mps": (
+                        _GOAL_REJOIN_REVERSE_SPEED_MPS
+                    ),
+                    "goal_progress_projection_mps": goal_progress,
+                    "commanded_omega_override_radps": None,
+                    "input_v_mps": float(proposed_v),
+                    "output_v_mps": output_v,
+                })
+                return output_v, diagnostics
             output_v = _GOAL_REJOIN_SPEED_MPS
             if abs(heading_error) > _GOAL_REJOIN_LARGE_HEADING_RAD:
                 output_v = min(
@@ -946,6 +998,54 @@ class _DynamicPathGuardSupervisor:
                 -abs(float(maximum_omega_radps)),
                 abs(float(maximum_omega_radps)),
             ))
+            goal_behind_turn = bool(goal_behind and not hazard_active)
+            if goal_behind_turn:
+                # A positive command cannot make progress when the path target
+                # is in the rear hemisphere.  Do not synthesize reverse without
+                # rear-clearance evidence; rotate at the configured yaw limit
+                # until the target re-enters the forward hemisphere.  Lock the
+                # initial side so the +/-pi wrap cannot flip steering each
+                # cycle and recreate the observed in-place indecision.
+                if self._goal_behind_turn_sign == 0.0:
+                    self._goal_behind_turn_sign = float(
+                        np.sign(heading_error)
+                    )
+                    if self._goal_behind_turn_sign == 0.0:
+                        self._goal_behind_turn_sign = 1.0
+                omega_override = float(
+                    self._goal_behind_turn_sign
+                    * abs(float(maximum_omega_radps))
+                )
+                output_v = 0.0
+                diagnostics.update({
+                    "active": True,
+                    "reason": "goal_behind_turn_rejoin",
+                    "bypassed": False,
+                    "bypass_reason": None,
+                    "would_be_active": bool(
+                        diagnostics.get("active", False)
+                    ),
+                    "would_be_reason": str(
+                        diagnostics.get("reason", "clear")
+                    ),
+                    "dynamic_authority": False,
+                    "goal_rejoin_latched": True,
+                    "goal_behind": True,
+                    "goal_behind_turn_sign": self._goal_behind_turn_sign,
+                    "goal_rejoin_selected_probability": (
+                        selected_probability
+                    ),
+                    "goal_rejoin_selected_probability_mass": (
+                        selected_probability_mass
+                    ),
+                    "goal_rejoin_speed_cap_mps": 0.0,
+                    "goal_progress_projection_mps": 0.0,
+                    "hazard_active": False,
+                    "commanded_omega_override_radps": omega_override,
+                    "input_v_mps": float(proposed_v),
+                    "output_v_mps": output_v,
+                })
+                return output_v, diagnostics
             passage_stabilized = bool(
                 hazard_active
                 and self._last_dynamic_turn_sign != 0.0

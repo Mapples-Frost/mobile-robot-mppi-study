@@ -55,6 +55,12 @@ DYNAMIC_REASONS = frozenset({
     "temporal_collision_risk",
     "temporal_slowdown",
 })
+GOAL_REJOIN_REASONS = frozenset({
+    "goal_heading_rejoin",
+    "stale_reverse_goal_rejoin",
+    "goal_behind_reverse_rejoin",
+    "goal_behind_turn_rejoin",
+})
 
 
 def _finite(value, default=None):
@@ -236,6 +242,11 @@ def _replay_run(rows, summary, action_spec, guard_config, planner_config):
     recorded_zero_cycles = 0
     max_dynamic_spin = 0
     dynamic_spin = 0
+    max_goal_behind_turn = 0
+    goal_behind_turn = 0
+    last_goal_behind_turn_sign = 0.0
+    max_negative_goal_progress_streak = 0
+    negative_goal_progress_streak = 0
     last_rear_sign = 0.0
     last_rear_cycle = -1000
     replay_series = []
@@ -352,6 +363,45 @@ def _replay_run(rows, summary, action_spec, guard_config, planner_config):
             decision.reason == "temporal_slowdown"
             and str(path.get("reason")) == "dynamic_authority"
         )
+        path_reason = str(path.get("reason", ""))
+        performance_events["goal_behind_reverse_rejoin_cycles"] += int(
+            path_reason == "goal_behind_reverse_rejoin"
+        )
+        performance_events["goal_behind_turn_rejoin_cycles"] += int(
+            path_reason == "goal_behind_turn_rejoin"
+        )
+
+        # A cleared-threat route-rejoin command must not keep translating in
+        # the negative direction of its own path target.  This is the exact
+        # cross-layer failure observed after successful avoidance: the planner
+        # proposed reverse with the target behind, then the deployment layer
+        # replaced it with positive speed for several cycles.  Require three
+        # consecutive negative-projection samples before flagging so a single
+        # pose wrap/noisy frame cannot fail an otherwise continuous run.
+        rejoin_heading_error = _finite(path.get("heading_error_rad"))
+        rejoin_progress = None
+        if rejoin_heading_error is not None:
+            rejoin_progress = float(
+                output_v * math.cos(rejoin_heading_error)
+            )
+        negative_rejoin_progress = bool(
+            path_reason in GOAL_REJOIN_REASONS
+            and not bool(path.get("hazard_active", False))
+            and rejoin_progress is not None
+            and rejoin_progress < -0.01
+        )
+        if negative_rejoin_progress:
+            negative_goal_progress_streak += 1
+            max_negative_goal_progress_streak = max(
+                max_negative_goal_progress_streak,
+                negative_goal_progress_streak,
+            )
+            if negative_goal_progress_streak == 3:
+                violation_examples[
+                    "sustained_negative_goal_rejoin_progress"
+                ].append(cycle)
+        else:
+            negative_goal_progress_streak = 0
 
         replay_values = np.asarray((output_v, output_omega))
         if np.any(replay_values < lower - 1.0e-12) or np.any(
@@ -434,6 +484,7 @@ def _replay_run(rows, summary, action_spec, guard_config, planner_config):
         dynamic_spin_active = bool(
             abs(output_v) < 0.02
             and abs(output_omega) >= 0.10
+            and path_reason != "goal_behind_turn_rejoin"
             and (
                 decision.reason in DYNAMIC_REASONS
                 or scenario is not None
@@ -447,6 +498,26 @@ def _replay_run(rows, summary, action_spec, guard_config, planner_config):
             max_dynamic_spin = max(max_dynamic_spin, dynamic_spin)
         else:
             dynamic_spin = 0
+
+        if path_reason == "goal_behind_turn_rejoin":
+            goal_behind_turn += 1
+            max_goal_behind_turn = max(
+                max_goal_behind_turn, goal_behind_turn
+            )
+            current_turn_sign = float(np.sign(output_omega))
+            if (
+                last_goal_behind_turn_sign != 0.0
+                and current_turn_sign != 0.0
+                and current_turn_sign != last_goal_behind_turn_sign
+            ):
+                violation_examples[
+                    "goal_behind_turn_sign_flip"
+                ].append(cycle)
+            if current_turn_sign != 0.0:
+                last_goal_behind_turn_sign = current_turn_sign
+        else:
+            goal_behind_turn = 0
+            last_goal_behind_turn_sign = 0.0
 
     if max_dynamic_spin > 9:
         violation_examples["unbounded_dynamic_spin"].append(max_dynamic_spin)
@@ -565,6 +636,10 @@ def _replay_run(rows, summary, action_spec, guard_config, planner_config):
         "recorded_zero_translation_cycles": recorded_zero_cycles,
         "replay_zero_translation_cycles": replay_zero_cycles,
         "maximum_dynamic_spin_cycles": max_dynamic_spin,
+        "maximum_goal_behind_turn_cycles": max_goal_behind_turn,
+        "maximum_negative_goal_rejoin_progress_cycles": (
+            max_negative_goal_progress_streak
+        ),
         "performance": performance,
         "recorded_safety_reasons": dict(safety_reasons),
         "replay_safety_reasons": dict(replay_reasons),
@@ -709,6 +784,18 @@ def audit(runs_root, weight_root, date_prefix):
         "dynamic_spin_is_bounded": (
             all_violation_counts["unbounded_dynamic_spin"] == 0
         ),
+        "cleared_rejoin_never_sustains_negative_goal_progress": (
+            all_violation_counts[
+                "sustained_negative_goal_rejoin_progress"
+            ] == 0
+        ),
+        "goal_behind_turn_side_is_stable": (
+            all_violation_counts["goal_behind_turn_sign_flip"] == 0
+        ),
+        "goal_behind_turn_is_bounded": all(
+            int(values["maximum_goal_behind_turn_cycles"]) <= 30
+            for values in run_reports.values()
+        ),
     }
     report = {
         "schema": "recorded_real_robot_day_audit_v1",
@@ -822,6 +909,8 @@ def _markdown(report):
         f"- Single-cycle stop pulses: {performance.get('recorded_single_cycle_stop_pulses', 0)} recorded -> {performance.get('replay_single_cycle_stop_pulses', 0)} replayed",
         f"- Moving turn-sign flips: {performance.get('recorded_moving_turn_sign_flips', 0)} recorded -> {performance.get('replay_moving_turn_sign_flips', 0)} replayed",
         f"- Temporal-slowdown path authority: {performance.get('temporal_slowdown_path_authority_cycles', 0)} cycles",
+        f"- Goal-behind safe reverse preserved: {performance.get('goal_behind_reverse_rejoin_cycles', 0)} cycles",
+        f"- Goal-behind unsupported forward suppressed: {performance.get('goal_behind_turn_rejoin_cycles', 0)} cycles",
         f"- Pi-applied single-cycle stop pulses: {performance.get('recorded_applied_single_cycle_stop_pulses', 0)} recorded -> {performance.get('replay_applied_single_cycle_stop_pulses', 0)} replayed",
         f"- Pi-applied moving turn-sign flips: {performance.get('recorded_applied_moving_turn_sign_flips', 0)} recorded -> {performance.get('replay_applied_moving_turn_sign_flips', 0)} replayed",
     ])

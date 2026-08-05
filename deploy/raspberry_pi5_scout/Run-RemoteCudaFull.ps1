@@ -94,9 +94,57 @@ $sshCommon = @(
     '-o', 'ConnectTimeout=5',
     '-o', 'StrictHostKeyChecking=yes'
 )
+
+function Invoke-PiSshCaptured {
+    param([Parameter(Mandatory = $true)][string]$RemoteCommand)
+    # Native stderr is promoted to a terminating error under the script-wide
+    # Stop preference.  Temporarily capture it so callers can replace raw SSH
+    # noise with one causal preflight message.
+    $previousPreference = $ErrorActionPreference
+    try {
+        $ErrorActionPreference = 'Continue'
+        $output = & ssh @sshCommon "pi@$piHost" $RemoteCommand 2>&1
+        $exitCode = $LASTEXITCODE
+    }
+    finally {
+        $ErrorActionPreference = $previousPreference
+    }
+    return [pscustomobject]@{
+        ExitCode = $exitCode
+        Output = @($output | ForEach-Object { "$_" })
+    }
+}
+
+$piSsh = Invoke-PiSshCaptured "printf pi_ssh_ready"
+if ($piSsh.ExitCode -ne 0 -or ($piSsh.Output -join '') -notmatch 'pi_ssh_ready') {
+    throw (
+        "Pi SSH preflight failed at ${piHost}:22; check Pi power and Wi-Fi. " +
+        "$($piSsh.Output -join ' ')"
+    )
+}
 $active = & ssh @sshCommon "pi@$piHost" "pgrep -af '[r]un_remote_pi_gateway|[r]lmppi_livox_udp_bridge' || true"
 if ($active) {
     throw "Another real-robot gateway is active. Refusing concurrent control: $active"
+}
+
+# Fail before CUDA warm-up when the dedicated MID360 Ethernet link is down.
+# Livox SDK reports this condition only as a generic `bind failed`, after
+# which the PC used to wait for a gateway socket that could never appear.
+$lidarLinkCommand = @'
+carrier=$(cat /sys/class/net/eth0/carrier 2>/dev/null || echo 0)
+if [ "$carrier" != "1" ]; then
+    echo "MID360 Ethernet preflight failed: eth0 has no carrier; check lidar power and cable" >&2
+    exit 20
+fi
+if ! ip -4 -o addr show dev eth0 | grep -q '192\.168\.1\.5/'; then
+    echo "MID360 Ethernet preflight failed: eth0 does not own 192.168.1.5" >&2
+    ip -4 -o addr show dev eth0 >&2 || true
+    exit 21
+fi
+'@
+$lidarLink = Invoke-PiSshCaptured $lidarLinkCommand
+if ($lidarLink.ExitCode -ne 0) {
+    throw "Pi MID360 link is not ready. $($lidarLink.Output -join ' ')"
 }
 
 $remoteCommand = "test ! -e '$remoteOut' && env " +
@@ -180,7 +228,31 @@ $runnerExit = 1
 $originalLocation = Get-Location
 try {
     Set-Location $projectRoot
-    Start-Sleep -Seconds 4
+    # Observe readiness without opening the single-client gateway socket.
+    # This also catches a bridge/gateway startup exit before paying the CUDA
+    # warm-start cost and returns the causal Pi logs instead of a TCP timeout.
+    $gatewayReadyCommand = @'
+for attempt in $(seq 1 40); do
+    if ss -H -ltn 'sport = :57720' | grep -q LISTEN; then
+        exit 0
+    fi
+    sleep 0.2
+done
+exit 1
+'@
+    $gatewayReady = Invoke-PiSshCaptured $gatewayReadyCommand
+    if ($gatewayReady.ExitCode -ne 0) {
+        $gatewayStartup = Invoke-PiSshCaptured (
+            "for file in '$remoteOut'/bridge.stderr.log " +
+            "'$remoteOut'/bridge.stdout.log '$remoteOut'/gateway.stderr.log; " +
+            "do if test -f `"`$file`"; then echo ===`$file===; tail -40 `"`$file`"; fi; done"
+        )
+        throw (
+            "Pi gateway did not become ready on port 57720. " +
+            "Readiness: $($gatewayReady.Output -join ' ') " +
+            "Startup logs: $($gatewayStartup.Output -join ' ')"
+        )
+    }
     & $python @runnerArgs
     $runnerExit = $LASTEXITCODE
 }

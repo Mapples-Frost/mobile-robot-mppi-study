@@ -51,6 +51,19 @@ if ! ip link show can0 | grep -q "UP"; then
   sudo ip link set can0 up
 fi
 
+# Livox SDK otherwise reduces a missing powered Ethernet peer to the opaque
+# message `bind failed`.  Report the physical prerequisite explicitly and do
+# not create a session directory that looks like a controller failure.
+if [[ "$(cat /sys/class/net/eth0/carrier 2>/dev/null || echo 0)" != "1" ]]; then
+  echo "MID360 Ethernet preflight failed: eth0 has no carrier; check lidar power and cable" >&2
+  exit 6
+fi
+if ! ip -4 -o addr show dev eth0 | grep -q '192\.168\.1\.5/'; then
+  echo "MID360 Ethernet preflight failed: eth0 does not own 192.168.1.5" >&2
+  ip -4 -o addr show dev eth0 >&2 || true
+  exit 7
+fi
+
 mkdir -p "${OUT}"
 "${BRIDGE}" "${SDK_CONFIG}" \
   >"${OUT}/bridge.stdout.log" 2>"${OUT}/bridge.stderr.log" &

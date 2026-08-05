@@ -232,6 +232,7 @@ class MaplessStaticDynamicFilter:
         self.next_dynamic_memory_id = 0
         self.dynamic_classification_temporal_corroboration_remaining = 0
         self.dynamic_classification_temporal_corroboration_current = False
+        self.dynamic_classification_temporal_corroboration_primed = False
 
     def reset(self):
         self.tracker.reset()
@@ -243,6 +244,12 @@ class MaplessStaticDynamicFilter:
             self.dynamic_classification_temporal_corroboration_remaining = (
                 self.dynamic_classification_temporal_corroboration_hold_cycles
             )
+            # Synthetic warm-start geometry has no TemporalScanFlow-to-cluster
+            # association because it is deliberately injected after that
+            # stage.  Permit the next disarmed update only; reset() clears this
+            # state before the Pi connection opens, so physical observations
+            # still require the production track-specific match.
+            self.dynamic_classification_temporal_corroboration_primed = True
 
     def _strong_motion_collision_course(self, evidence, track, observation):
         """Certify an early coherent track without radial scan-flow evidence.
@@ -585,6 +592,10 @@ class MaplessStaticDynamicFilter:
         return tuple(result)
 
     def update(self, observation):
+        synthetic_prime_current = bool(
+            self.dynamic_classification_temporal_corroboration_primed
+        )
+        self.dynamic_classification_temporal_corroboration_primed = False
         flow = dict(
             getattr(observation, "auxiliary", {}).get(
                 "temporal_scan_flow", {}
@@ -712,7 +723,10 @@ class MaplessStaticDynamicFilter:
             )
             track["mapless_temporal_flow_corroborated"] = bool(
                 self.dynamic_classification_temporal_corroboration_remaining > 0
-                and track_temporal_flow_hold > 0
+                and (
+                    track_temporal_flow_hold > 0
+                    or synthetic_prime_current
+                )
             )
             evidence = self._evidence(history)
             (

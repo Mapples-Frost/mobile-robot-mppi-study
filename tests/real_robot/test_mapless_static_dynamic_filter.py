@@ -477,6 +477,25 @@ def test_temporal_corroboration_is_scoped_to_the_matched_track():
     ] is False
 
 
+def test_explicit_synthetic_prime_warms_forecast_without_real_flow_match():
+    value, tracker = _filter()
+    value.dynamic_classification_temporal_corroboration_enabled = True
+    result = None
+    for index, lateral in enumerate((0.0, 0.19, 0.38)):
+        tracker.position = (1.5, lateral)
+        value.prime_dynamic_classification_temporal_corroboration()
+        result = value.update(_observation(0.28 * index))
+
+    assert result.forecast == ("forecast",)
+    assert result.diagnostics["mapless_dynamic_track_indices"] == (0,)
+    assert result.diagnostics["tracks"][0][
+        "mapless_temporal_flow_corroborated"
+    ] is True
+
+    value.reset_filter_state()
+    assert value.dynamic_classification_temporal_corroboration_primed is False
+
+
 def test_strong_collision_course_publishes_before_radial_flow():
     value, tracker = _filter()
     value.dynamic_classification_temporal_corroboration_enabled = True

@@ -55,6 +55,7 @@ _PLANNER_DIAGNOSTIC_PREFIXES = (
     "terminal_",
     "real_robot_forward_passage_",
     "physical_tracker_",
+    "physical_goal_",
     # build_pi5_full_config leaves profile_components enabled, so the planner
     # already computes a per-stage cost breakdown on every solve.  Without
     # this prefix every profile_* field was dropped before reaching the log,
@@ -116,6 +117,12 @@ _DYNAMIC_PASSAGE_REJOIN_OMEGA_RADPS = 0.30
 # A fresh arbiter escape is always authoritative.  Brief forecast/scan
 # fragmentation must not immediately reverse the selected passage side.
 _DYNAMIC_PASSAGE_HAZARD_HOLD_STEPS = 6
+
+# A fragmented safety reason may preserve a planner-vetted reverse exit for a
+# few cycles, but it must not turn into the 33-frame retreat recorded in
+# 20260805_003752.  The arbiter uses the same four-cycle allowance before its
+# one retry, so this downstream guard closes the identical temporal gap.
+_DYNAMIC_PASSAGE_MAX_HAZARD_REVERSE_STEPS = 4
 
 # Mid-360 fragmentation can drop a rear-only near-body cluster for one or two
 # cycles.  Preserve only forward authority across that brief ``front_clear``
@@ -328,6 +335,27 @@ def _physical_tracker_motion_context(
             "probabilistic_obstacle_escape_direction_refreshed"
         ] = True
     return context
+
+
+def _physical_goal_context(context, pose_x, pose_y, pose_yaw, goal_x, goal_y):
+    """Attach an odometry-derived goal bearing for final escape arbitration."""
+
+    enriched = dict(context or {})
+    dx = float(goal_x) - float(pose_x)
+    dy = float(goal_y) - float(pose_y)
+    distance = float(math.hypot(dx, dy))
+    if distance <= 1.0e-9:
+        bearing_error = 0.0
+    else:
+        bearing_error = math.atan2(
+            math.sin(math.atan2(dy, dx) - float(pose_yaw)),
+            math.cos(math.atan2(dy, dx) - float(pose_yaw)),
+        )
+    enriched.update({
+        "physical_goal_bearing_error_rad": float(bearing_error),
+        "physical_goal_distance_m": distance,
+    })
+    return enriched
 
 
 def _planner_diagnostic_trace(diagnostics):
@@ -866,6 +894,7 @@ class _DynamicPathGuardSupervisor:
         self._rear_only_goal_turn_sign = 0.0
         self._last_dynamic_turn_sign = 0.0
         self._hazard_reverse_steps = 0
+        self._hazard_reverse_limit_latched = False
         self._hazard_hold_remaining = 0
         self._goal_rejoin_release_count = 0
         self._rear_pass_through_hold_remaining = 0
@@ -876,6 +905,7 @@ class _DynamicPathGuardSupervisor:
         self._rear_only_goal_turn_sign = 0.0
         self._last_dynamic_turn_sign = 0.0
         self._hazard_reverse_steps = 0
+        self._hazard_reverse_limit_latched = False
         self._hazard_hold_remaining = 0
         self._goal_rejoin_release_count = 0
         self._rear_pass_through_hold_remaining = 0
@@ -896,6 +926,7 @@ class _DynamicPathGuardSupervisor:
         selected_probability_mass=0.0,
         hazard_active=False,
         rear_only_hazard=False,
+        reverse_escape_exhausted=False,
     ):
         reason = str(safety_reason)
         unconditional_stop = reason in _UNCONDITIONAL_TRANSLATION_STOP_REASONS
@@ -939,6 +970,15 @@ class _DynamicPathGuardSupervisor:
         elif self._hazard_hold_remaining > 0:
             self._hazard_hold_remaining -= 1
         hazard_active = bool(self._hazard_hold_remaining > 0)
+        if not hazard_active:
+            self._hazard_reverse_steps = 0
+            self._hazard_reverse_limit_latched = False
+        elif reverse_escape_exhausted:
+            self._hazard_reverse_limit_latched = True
+            self._hazard_reverse_steps = max(
+                self._hazard_reverse_steps,
+                _DYNAMIC_PASSAGE_MAX_HAZARD_REVERSE_STEPS,
+            )
         if dynamic_authority:
             # Once an avoidance event has occurred, keep a deterministic route
             # return available for the rest of the episode. Releasing this at
@@ -950,7 +990,15 @@ class _DynamicPathGuardSupervisor:
                 self._last_dynamic_turn_sign = float(
                     np.sign(float(proposed_omega))
                 )
-            self._hazard_reverse_steps = 0
+            if (
+                reason == "dynamic_hard_stop_escape"
+                or (
+                    float(proposed_v) > 0.0
+                    and not reverse_escape_exhausted
+                )
+            ):
+                self._hazard_reverse_steps = 0
+                self._hazard_reverse_limit_latched = False
             self._goal_rejoin_release_count = 0
         guarded_v, diagnostics = _path_deviation_guard(
             pose_x,
@@ -1129,14 +1177,77 @@ class _DynamicPathGuardSupervisor:
             and reason not in _UNCONDITIONAL_TRANSLATION_STOP_REASONS
             and float(proposed_v) < 0.0
         )
+        if (
+            post_escape_reverse
+            and hazard_active
+            and self._hazard_reverse_limit_latched
+        ):
+            if not goal_behind and risk_safe:
+                # The finite reverse has brought the path target back into the
+                # forward hemisphere and the instantaneous scan/arbiter did not
+                # request a stop.  Rejoin deliberately instead of preserving a
+                # now goal-negative reverse merely because a forecast remains.
+                output_v = _GOAL_REJOIN_SPEED_MPS
+                if abs(heading_error) > _GOAL_REJOIN_LARGE_HEADING_RAD:
+                    output_v = min(
+                        output_v, _GOAL_REJOIN_LARGE_HEADING_SPEED_MPS
+                    )
+                if cross_track > _GOAL_REJOIN_LARGE_CROSS_TRACK_M:
+                    output_v = min(
+                        output_v, _GOAL_REJOIN_LARGE_CROSS_TRACK_SPEED_MPS
+                    )
+                omega_override = float(np.clip(
+                    _GOAL_REJOIN_TURN_GAIN * heading_error,
+                    -abs(float(maximum_omega_radps)),
+                    abs(float(maximum_omega_radps)),
+                ))
+                diagnostics.update({
+                    "active": True,
+                    "reason": "dynamic_hazard_goal_rejoin",
+                    "bypassed": False,
+                    "bypass_reason": None,
+                    "would_be_active": bool(
+                        diagnostics.get("active", False)
+                    ),
+                    "would_be_reason": str(
+                        diagnostics.get("reason", "clear")
+                    ),
+                    "dynamic_authority": False,
+                    "goal_rejoin_latched": True,
+                    "hazard_active": True,
+                    "commanded_omega_override_radps": omega_override,
+                    "input_v_mps": float(proposed_v),
+                    "output_v_mps": output_v,
+                })
+                return output_v, diagnostics
+            # The live hazard is no longer safely behind the chassis, or the
+            # bounded reverse allowance has been consumed.  Do not translate
+            # either direction until a fresh arbiter decision or clear geometry
+            # permits deterministic goal rejoin.
+            diagnostics.update({
+                "active": True,
+                "reason": "dynamic_hazard_reverse_exhausted",
+                "bypassed": False,
+                "bypass_reason": None,
+                "would_be_active": bool(diagnostics.get("active", False)),
+                "would_be_reason": str(diagnostics.get("reason", "clear")),
+                "dynamic_authority": False,
+                "goal_rejoin_latched": True,
+                "hazard_active": True,
+                "dynamic_clearance_reverse_step": int(
+                    self._hazard_reverse_steps
+                ),
+                "commanded_omega_override_radps": 0.0,
+                "input_v_mps": float(proposed_v),
+                "output_v_mps": 0.0,
+            })
+            return 0.0, diagnostics
+
         if post_escape_reverse and hazard_active:
-            # A single sparse Livox frame must never flip a still-requested
-            # reverse escape into forward goal rejoin.  ``hazard_active`` is
-            # the bounded six-cycle evidence hold maintained above; it does
-            # not preserve an old command after the hold expires.
+            # Ordinary forecast fragmentation retains the historical vetted
+            # reverse behaviour.  The strict four-step cap is latched only
+            # after the arbiter has explicitly exhausted its one retry.
             self._hazard_reverse_steps = 0
-            output_v = float(proposed_v)
-            omega_override = None
             diagnostics.update({
                 "active": False,
                 "reason": "dynamic_hazard_reverse",
@@ -1148,14 +1259,13 @@ class _DynamicPathGuardSupervisor:
                 "goal_rejoin_latched": True,
                 "hazard_active": True,
                 "dynamic_clearance_reverse_step": 0,
-                "commanded_omega_override_radps": omega_override,
+                "commanded_omega_override_radps": None,
                 "input_v_mps": float(proposed_v),
-                "output_v_mps": output_v,
+                "output_v_mps": float(proposed_v),
             })
-            return output_v, diagnostics
+            return float(proposed_v), diagnostics
 
         if post_escape_reverse and risk_safe:
-            self._hazard_reverse_steps = 0
             if goal_behind:
                 # The planner-originated reverse has already passed ScanGuard,
                 # including the rear-direction and near-body checks.  Keep its
@@ -1838,6 +1948,14 @@ def main():
                     pose_yaw,
                     config["planner"],
                 )
+                planning_context = _physical_goal_context(
+                    planning_context,
+                    pose_x,
+                    pose_y,
+                    pose_yaw,
+                    args.goal_x,
+                    args.goal_y,
+                )
                 time.sleep(0)
                 decision = safety.arbitrate(
                     plan.proposed_control, perceived.guard, planning_context
@@ -1912,6 +2030,12 @@ def main():
                     ),
                     hazard_active=hazard_active,
                     rear_only_hazard=rear_only_hazard,
+                    reverse_escape_exhausted=bool(
+                        decision.diagnostics.get(
+                            "dynamic_escape_post_retry_reverse_exhausted",
+                            False,
+                        )
+                    ),
                 )
                 omega_override = path_guard.get(
                     "commanded_omega_override_radps"

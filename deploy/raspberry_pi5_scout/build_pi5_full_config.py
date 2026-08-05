@@ -377,6 +377,34 @@ def build_pi5_full_config(
             "dynamic_escape_persistent_front_retry_enabled": True,
             "dynamic_escape_vetted_reverse_retry_steps": 4,
             "dynamic_escape_persistent_front_max_retries": 1,
+            # A retry is corrective, not a second copy of the original
+            # ten-frame saturated turn.  Four frames visibly establish the
+            # retained side while leaving authority to recover toward goal.
+            "dynamic_escape_persistent_front_retry_commit_steps": 4,
+            # Release a stale turn once the goal is at least ~52 degrees on the
+            # opposite side.  This directly bounds the post-avoidance heading
+            # drift recorded in 003752 (75--106 degrees away from the goal).
+            "dynamic_escape_goal_divergence_release_rad": 0.90,
+            # After the single retry and four additional risk-vetted reverse
+            # samples, do not accept an unbounded reverse arc.  A persistent
+            # obstacle is held safely until the live geometry changes.
+            "dynamic_escape_post_retry_reverse_hold_enabled": True,
+            # While taking a finite planner-vetted reverse exit, unwind a
+            # clearly wrong goal heading instead of following arbitrary MPPI
+            # yaw noise farther away from the route.
+            "dynamic_escape_reverse_goal_realign_gain": 0.55,
+            "dynamic_escape_reverse_goal_realign_max_omega_radps": min(
+                0.30, max_omega_radps
+            ),
+            # Once the finite retreat has put a clearly lateral person at least
+            # 0.70 m from the footprint, translate straight along the already
+            # established tangent.  A centered or emergency obstacle still
+            # holds; this is the active side-pass exit from that hold.
+            "dynamic_escape_post_retry_side_forward_speed": min(
+                0.20, max_v_mps
+            ),
+            "dynamic_escape_post_retry_side_forward_min_bearing_rad": 0.65,
+            "dynamic_escape_post_retry_side_forward_min_surface_range_m": 0.70,
             # The simulation recovery controller assumes smooth continuous
             # actuation.  On the physical 10 Hz stack it can demand alignment
             # after the bounded in-place-yaw budget is already exhausted,
@@ -403,6 +431,10 @@ def build_pi5_full_config(
             "dynamic_escape_hard_stop_reverse_max_omega_radps": min(
                 0.45, max_omega_radps
             ),
+            # The original constant 0.45 rad/s reverse arc kept rotating for
+            # the full 12-frame retreat.  Taper it with transaction progress
+            # and suppress it as the goal moves to the opposite side.
+            "dynamic_escape_hard_stop_reverse_turn_decay_enabled": True,
             "dynamic_escape_hard_stop_min_rear_range": 0.80,
             "dynamic_escape_hard_stop_rear_sector_deg": 120.0,
             # A close crowd swaps the selected leg/person track frequently.

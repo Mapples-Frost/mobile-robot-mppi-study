@@ -23,6 +23,8 @@ def test_planner_diagnostic_trace_keeps_causal_fields_and_removes_duplicates():
         "optimizer_selected_cost_gap": 1.5,
         "physical_tracker_motion_fallback_applied": True,
         "physical_tracker_motion_refresh_requested": False,
+        "physical_goal_bearing_error_rad": -0.42,
+        "physical_goal_distance_m": 3.1,
         "dynamic_obstacle_tracker_trace": {"large": "separate"},
         "probabilistic_obstacle_forecast_trace": [{"large": "separate"}],
         "unrelated_internal_payload": np.ones((8, 8)),
@@ -38,6 +40,8 @@ def test_planner_diagnostic_trace_keeps_causal_fields_and_removes_duplicates():
     assert trace["optimizer_selected_cost_gap"] == 1.5
     assert trace["physical_tracker_motion_fallback_applied"] is True
     assert trace["physical_tracker_motion_refresh_requested"] is False
+    assert trace["physical_goal_bearing_error_rad"] == -0.42
+    assert trace["physical_goal_distance_m"] == 3.1
     assert "dynamic_obstacle_tracker_trace" not in trace
     assert "probabilistic_obstacle_forecast_trace" not in trace
     assert "unrelated_internal_payload" not in trace

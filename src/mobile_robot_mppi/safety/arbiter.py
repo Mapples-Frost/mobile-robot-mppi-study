@@ -305,6 +305,51 @@ class ScanGuardArbiter:
         self.dynamic_escape_persistent_front_max_retries = int(
             self.config.get("dynamic_escape_persistent_front_max_retries", 0)
         )
+        self.dynamic_escape_persistent_front_retry_commit_steps = int(
+            self.config.get(
+                "dynamic_escape_persistent_front_retry_commit_steps",
+                self.dynamic_escape_frontal_commit_steps,
+            )
+        )
+        # A passage-side commitment is useful only while it still leaves a
+        # plausible route back to the goal.  The physical deployment supplies
+        # a body-frame goal bearing and opts into this finite release gate;
+        # infinity preserves the historical behaviour for other profiles.
+        self.dynamic_escape_goal_divergence_release_rad = float(
+            self.config.get(
+                "dynamic_escape_goal_divergence_release_rad", float("inf")
+            )
+        )
+        self.dynamic_escape_post_retry_reverse_hold_enabled = bool(
+            self.config.get(
+                "dynamic_escape_post_retry_reverse_hold_enabled", False
+            )
+        )
+        self.dynamic_escape_reverse_goal_realign_gain = float(
+            self.config.get("dynamic_escape_reverse_goal_realign_gain", 0.0)
+        )
+        self.dynamic_escape_reverse_goal_realign_max_omega_radps = float(
+            self.config.get(
+                "dynamic_escape_reverse_goal_realign_max_omega_radps", 0.0
+            )
+        )
+        self.dynamic_escape_post_retry_side_forward_speed = float(
+            self.config.get(
+                "dynamic_escape_post_retry_side_forward_speed", 0.0
+            )
+        )
+        self.dynamic_escape_post_retry_side_forward_min_bearing_rad = float(
+            self.config.get(
+                "dynamic_escape_post_retry_side_forward_min_bearing_rad",
+                float("inf"),
+            )
+        )
+        self.dynamic_escape_post_retry_side_forward_min_surface_range_m = float(
+            self.config.get(
+                "dynamic_escape_post_retry_side_forward_min_surface_range_m",
+                float("inf"),
+            )
+        )
         # Close-range dynamic escape is a bounded transaction: establish a
         # passage side in place, then create a small amount of room by reversing
         # only when the rear sector is positively observed clear.  Forward
@@ -325,6 +370,11 @@ class ScanGuardArbiter:
             self.config.get(
                 "dynamic_escape_hard_stop_reverse_max_omega_radps",
                 self.dynamic_escape_coast_max_omega_radps,
+            )
+        )
+        self.dynamic_escape_hard_stop_reverse_turn_decay_enabled = bool(
+            self.config.get(
+                "dynamic_escape_hard_stop_reverse_turn_decay_enabled", False
             )
         )
         self.dynamic_escape_hard_stop_min_rear_range = float(
@@ -583,6 +633,17 @@ class ScanGuardArbiter:
             or self.dynamic_escape_hard_stop_reverse_max_omega_radps < 0.0
             or self.dynamic_escape_vetted_reverse_retry_steps < 0
             or self.dynamic_escape_persistent_front_max_retries < 0
+            or self.dynamic_escape_persistent_front_retry_commit_steps < 0
+            or self.dynamic_escape_goal_divergence_release_rad <= 0.0
+            or self.dynamic_escape_reverse_goal_realign_gain < 0.0
+            or self.dynamic_escape_reverse_goal_realign_max_omega_radps < 0.0
+            or self.dynamic_escape_post_retry_side_forward_speed < 0.0
+            or self.dynamic_escape_post_retry_side_forward_speed
+            > self.dynamic_escape_max_speed
+            or self.dynamic_escape_post_retry_side_forward_min_bearing_rad
+            <= 0.0
+            or self.dynamic_escape_post_retry_side_forward_min_surface_range_m
+            <= 0.0
             or self.dynamic_escape_hard_stop_min_rear_range <= 0.0
             or self.dynamic_escape_hard_stop_rear_clear_retry_steps < 1
             or self.dynamic_escape_max_zero_translation_turn_steps < 1
@@ -1439,8 +1500,11 @@ class ScanGuardArbiter:
         )
         recovery_heading_error = float(
             context.get(
-                "target_bearing_error",
-                context.get("terminal_bearing_error", float("nan")),
+                "physical_goal_bearing_error_rad",
+                context.get(
+                    "target_bearing_error",
+                    context.get("terminal_bearing_error", float("nan")),
+                ),
             )
         )
         recovery_goal_distance = float(
@@ -1935,7 +1999,32 @@ class ScanGuardArbiter:
             and "v_cmd" in self.action_spec.names
             and "omega_cmd" in self.action_spec.names
         )
-        persistent_front_retry_rearmed = bool(
+        goal_diverged_from_escape_side = bool(
+            np.isfinite(recovery_heading_error)
+            and np.isfinite(self.dynamic_escape_goal_divergence_release_rad)
+            and self._dynamic_escape_geometric_turn_sign != 0.0
+            and recovery_heading_error
+            * self._dynamic_escape_geometric_turn_sign
+            < 0.0
+            and abs(recovery_heading_error)
+            >= self.dynamic_escape_goal_divergence_release_rad
+        )
+        geometric_goal_release_applied = bool(
+            goal_diverged_from_escape_side
+            and (
+                self._dynamic_escape_direction_commit_remaining > 0
+                or self._dynamic_escape_coast_remaining != 0
+            )
+        )
+        if geometric_goal_release_applied:
+            # Recorded run 003752 kept a saturated right turn alive after the
+            # goal had moved 75--106 degrees to the left of the chassis.  End
+            # both phases atomically; a stale coast must not continue the same
+            # turn after the full-yaw prefix is released.
+            self._dynamic_escape_direction_commit_remaining = 0
+            self._dynamic_escape_direction_commit_values = None
+            self._dynamic_escape_coast_remaining = 0
+        persistent_front_retry_candidate = bool(
             self.dynamic_escape_persistent_front_retry_enabled
             and self.dynamic_escape_vetted_reverse_retry_steps > 0
             and self.dynamic_escape_persistent_front_max_retries > 0
@@ -1947,6 +2036,14 @@ class ScanGuardArbiter:
             and self._dynamic_escape_persistent_front_retry_count
             < self.dynamic_escape_persistent_front_max_retries
         )
+        persistent_front_retry_goal_rejected = bool(
+            persistent_front_retry_candidate
+            and goal_diverged_from_escape_side
+        )
+        persistent_front_retry_rearmed = bool(
+            persistent_front_retry_candidate
+            and not persistent_front_retry_goal_rejected
+        )
         if persistent_front_retry_rearmed:
             # The first finite arc did not move the live obstacle out of the
             # front half-plane and MPPI has spent its small reverse allowance.
@@ -1957,6 +2054,43 @@ class ScanGuardArbiter:
             self._dynamic_escape_direction_commit_values = None
             self._dynamic_escape_vetted_reverse_steps = 0
             self._dynamic_escape_persistent_front_retry_count += 1
+        elif persistent_front_retry_goal_rejected:
+            # Replaying the old side when the chassis already faces far away
+            # from the goal only deepens the failure.  Consume the one retry so
+            # the final bounded reverse/hold policy takes authority instead.
+            self._dynamic_escape_persistent_front_retry_count = (
+                self.dynamic_escape_persistent_front_max_retries
+            )
+        post_retry_reverse_exhausted = bool(
+            self.dynamic_escape_post_retry_reverse_hold_enabled
+            and self.dynamic_escape_vetted_reverse_retry_steps > 0
+            and front_geometric_escape_available
+            and self._dynamic_escape_geometric_commit_consumed
+            and self._dynamic_escape_coast_remaining == 0
+            and self._dynamic_escape_persistent_front_retry_count
+            >= self.dynamic_escape_persistent_front_max_retries
+            and self._dynamic_escape_vetted_reverse_steps
+            >= self.dynamic_escape_vetted_reverse_retry_steps
+        )
+        try:
+            dynamic_surface_range = float(
+                guard_result.get(
+                    "dynamic_obstacle_surface_range_m", float("nan")
+                )
+            )
+        except (TypeError, ValueError):
+            dynamic_surface_range = float("nan")
+        post_retry_side_forward_available = bool(
+            post_retry_reverse_exhausted
+            and not guard_result.get("emergency_stop", False)
+            and self.dynamic_escape_post_retry_side_forward_speed > 0.0
+            and np.isfinite(obstacle_bearing)
+            and abs(obstacle_bearing)
+            >= self.dynamic_escape_post_retry_side_forward_min_bearing_rad
+            and np.isfinite(dynamic_surface_range)
+            and dynamic_surface_range
+            >= self.dynamic_escape_post_retry_side_forward_min_surface_range_m
+        )
         geometric_forward_escape = bool(
             self.dynamic_escape_uncertainty_fusion_enabled
             and front_geometric_escape_available
@@ -2048,6 +2182,10 @@ class ScanGuardArbiter:
         hard_stop_rear_clear = False
         geometric_coast_direction_locked = False
         frontal_entry_speed_applied = False
+        reverse_goal_realign_applied = False
+        post_retry_reverse_hold_applied = False
+        post_retry_side_forward_applied = False
+        hard_stop_reverse_turn_scale = 1.0
         hard_fallback_planner_control = bool(
             self.dynamic_escape_preserve_hard_fallback_planner_control
             and dynamic_escape_allowed
@@ -2155,9 +2293,42 @@ class ScanGuardArbiter:
                     abs(float(self.action_spec.upper[omega_index])),
                     abs(float(self.action_spec.lower[omega_index])),
                 )
+                if self.dynamic_escape_hard_stop_reverse_turn_decay_enabled:
+                    hard_stop_reverse_turn_scale = min(
+                        1.0,
+                        max(
+                            0.0,
+                            float(
+                                self._dynamic_escape_hard_stop_reverse_remaining
+                            )
+                            / float(self.dynamic_escape_hard_stop_reverse_steps),
+                        ),
+                    )
+                    if (
+                        np.isfinite(recovery_heading_error)
+                        and self._dynamic_escape_hard_stop_turn_sign != 0.0
+                        and recovery_heading_error
+                        * self._dynamic_escape_hard_stop_turn_sign
+                        < 0.0
+                        and np.isfinite(
+                            self.dynamic_escape_goal_divergence_release_rad
+                        )
+                    ):
+                        goal_turn_scale = np.clip(
+                            1.0
+                            - abs(recovery_heading_error)
+                            / self.dynamic_escape_goal_divergence_release_rad,
+                            0.0,
+                            1.0,
+                        )
+                        hard_stop_reverse_turn_scale = min(
+                            hard_stop_reverse_turn_scale,
+                            float(goal_turn_scale),
+                        )
                 values[omega_index] = (
                     bounded_omega
                     * self._dynamic_escape_hard_stop_turn_sign
+                    * hard_stop_reverse_turn_scale
                 )
                 self._dynamic_escape_hard_stop_reverse_remaining -= 1
                 if self._dynamic_escape_hard_stop_reverse_remaining <= 0:
@@ -2274,6 +2445,11 @@ class ScanGuardArbiter:
                     if self._dynamic_escape_frontal_encounter_latched
                     else self.dynamic_escape_direction_commit_steps
                 )
+                if persistent_front_retry_rearmed:
+                    commit_steps = min(
+                        commit_steps,
+                        self.dynamic_escape_persistent_front_retry_commit_steps,
+                    )
                 if commit_steps > 0:
                     self._dynamic_escape_direction_commit_values = (
                         values.copy()
@@ -2384,9 +2560,61 @@ class ScanGuardArbiter:
                         reverse_escape = bool(
                             values[self.action_spec.index("v_cmd")] < 0.0
                         )
+                        if (
+                            reverse_escape
+                            and not post_retry_reverse_exhausted
+                            and front_geometric_escape_available
+                            and np.isfinite(recovery_heading_error)
+                            and self._dynamic_escape_geometric_turn_sign != 0.0
+                            and recovery_heading_error
+                            * self._dynamic_escape_geometric_turn_sign
+                            < 0.0
+                            and self.dynamic_escape_reverse_goal_realign_gain
+                            > 0.0
+                            and self.dynamic_escape_reverse_goal_realign_max_omega_radps
+                            > 0.0
+                            and "omega_cmd" in self.action_spec.names
+                        ):
+                            omega_index = self.action_spec.index("omega_cmd")
+                            values[omega_index] = np.clip(
+                                self.dynamic_escape_reverse_goal_realign_gain
+                                * recovery_heading_error,
+                                -self.dynamic_escape_reverse_goal_realign_max_omega_radps,
+                                self.dynamic_escape_reverse_goal_realign_max_omega_radps,
+                            )
+                            values = self.action_spec.clip(values)
+                            reverse_goal_realign_applied = True
+                        if reverse_escape and post_retry_reverse_exhausted:
+                            # The encounter has already spent its finite first
+                            # attempt, retry and reverse allowance.  Holding is
+                            # safer and far more goal-directed than accepting
+                            # another arbitrary MPPI reverse arc indefinitely.
+                            if post_retry_side_forward_available:
+                                values[self.action_spec.index("v_cmd")] = min(
+                                    self.dynamic_escape_post_retry_side_forward_speed,
+                                    self.action_spec.upper[
+                                        self.action_spec.index("v_cmd")
+                                    ],
+                                )
+                                if "omega_cmd" in self.action_spec.names:
+                                    values[
+                                        self.action_spec.index("omega_cmd")
+                                    ] = 0.0
+                                post_retry_side_forward_applied = True
+                            else:
+                                values[self.action_spec.index("v_cmd")] = 0.0
+                                if "omega_cmd" in self.action_spec.names:
+                                    values[
+                                        self.action_spec.index("omega_cmd")
+                                    ] = 0.0
+                                post_retry_reverse_hold_applied = True
+                            reverse_escape = False
                         if reverse_escape and front_geometric_escape_available:
                             self._dynamic_escape_vetted_reverse_steps += 1
-                        else:
+                        elif (
+                            self._dynamic_escape_persistent_front_retry_count
+                            < self.dynamic_escape_persistent_front_max_retries
+                        ):
                             self._dynamic_escape_vetted_reverse_steps = 0
                     reason = "dynamic_active_escape"
                 elif (
@@ -3046,11 +3274,35 @@ class ScanGuardArbiter:
         diagnostics["dynamic_escape_persistent_front_retry_rearmed"] = bool(
             persistent_front_retry_rearmed
         )
+        diagnostics[
+            "dynamic_escape_persistent_front_retry_goal_rejected"
+        ] = bool(persistent_front_retry_goal_rejected)
         diagnostics["dynamic_escape_persistent_front_retry_count"] = int(
             self._dynamic_escape_persistent_front_retry_count
         )
         diagnostics["dynamic_escape_vetted_reverse_steps"] = int(
             self._dynamic_escape_vetted_reverse_steps
+        )
+        diagnostics["dynamic_escape_goal_diverged_from_escape_side"] = bool(
+            goal_diverged_from_escape_side
+        )
+        diagnostics["dynamic_escape_geometric_goal_release_applied"] = bool(
+            geometric_goal_release_applied
+        )
+        diagnostics["dynamic_escape_post_retry_reverse_exhausted"] = bool(
+            post_retry_reverse_exhausted
+        )
+        diagnostics["dynamic_escape_post_retry_reverse_hold_applied"] = bool(
+            post_retry_reverse_hold_applied
+        )
+        diagnostics["dynamic_escape_post_retry_side_forward_available"] = bool(
+            post_retry_side_forward_available
+        )
+        diagnostics["dynamic_escape_post_retry_side_forward_applied"] = bool(
+            post_retry_side_forward_applied
+        )
+        diagnostics["dynamic_escape_reverse_goal_realign_applied"] = bool(
+            reverse_goal_realign_applied
         )
         diagnostics["dynamic_escape_hard_stop_enabled"] = bool(
             self.dynamic_escape_hard_stop_enabled
@@ -3081,6 +3333,9 @@ class ScanGuardArbiter:
         )
         diagnostics["dynamic_escape_hard_stop_reverse_authorized"] = bool(
             hard_stop_reverse_authorized
+        )
+        diagnostics["dynamic_escape_hard_stop_reverse_turn_scale"] = float(
+            hard_stop_reverse_turn_scale
         )
         diagnostics["dynamic_escape_hard_stop_rear_clear"] = bool(
             hard_stop_rear_clear

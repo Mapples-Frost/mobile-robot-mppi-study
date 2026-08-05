@@ -684,6 +684,7 @@ class ScanGuardArbiter:
         self._dynamic_escape_geometric_commit_consumed = False
         self._dynamic_escape_geometric_clear_streak = 0
         self._dynamic_escape_geometric_turn_sign = 0.0
+        self._dynamic_escape_geometric_direction_prediction_backed = False
         self._dynamic_escape_hard_stop_turn_remaining = 0
         self._dynamic_escape_hard_stop_reverse_remaining = 0
         self._dynamic_escape_hard_stop_turn_sign = 0.0
@@ -1229,6 +1230,7 @@ class ScanGuardArbiter:
             self._dynamic_escape_geometric_commit_consumed = False
             self._dynamic_escape_geometric_clear_streak = 0
             self._dynamic_escape_geometric_turn_sign = 0.0
+            self._dynamic_escape_geometric_direction_prediction_backed = False
         geometric_threat_evidence_active = bool(
             not rear_only_evidence
             and (
@@ -1254,10 +1256,14 @@ class ScanGuardArbiter:
                 ):
                     self._dynamic_escape_geometric_commit_consumed = False
                     self._dynamic_escape_geometric_turn_sign = 0.0
+                    self._dynamic_escape_geometric_direction_prediction_backed = (
+                        False
+                    )
         else:
             self._dynamic_escape_geometric_commit_consumed = False
             self._dynamic_escape_geometric_clear_streak = 0
             self._dynamic_escape_geometric_turn_sign = 0.0
+            self._dynamic_escape_geometric_direction_prediction_backed = False
         planner_temporal_escape_active = bool(
             context.get(
                 "probabilistic_obstacle_temporal_emergency_vetted", False
@@ -1616,10 +1622,66 @@ class ScanGuardArbiter:
                 and abs(lateral_motion_speed) >= refresh_minimum_speed
             )
         )
-        prediction_direction_refreshed = bool(
-            prediction_direction_refresh_requested
-            and prediction_direction_refresh_lateral_evidence
+        preferred_heading_error = context.get(
+            "probabilistic_obstacle_preferred_escape_heading_error_rad"
         )
+        try:
+            preferred_heading_error = float(preferred_heading_error)
+        except (TypeError, ValueError):
+            preferred_heading_error = float("nan")
+        preferred_turn_sign = (
+            float(np.sign(preferred_heading_error))
+            if math.isfinite(preferred_heading_error)
+            and abs(preferred_heading_error) >= 0.08
+            else 0.0
+        )
+        late_prediction_forward_sector = bool(
+            math.isfinite(obstacle_bearing)
+            and abs(obstacle_bearing) <= math.radians(
+                min(
+                    90.0,
+                    self.directional_forward_protected_half_angle_deg,
+                )
+            )
+        )
+        late_prediction_oblique_geometry = bool(
+            math.isfinite(obstacle_bearing)
+            and abs(obstacle_bearing) >= math.radians(12.0)
+        )
+        late_prediction_available = bool(
+            context.get(
+                "probabilistic_obstacle_forward_lateral_countermotion_applied",
+                False,
+            )
+            and prediction_direction_refresh_lateral_evidence
+            and preferred_turn_sign != 0.0
+            and self._dynamic_escape_geometric_turn_sign != 0.0
+            and not self._dynamic_escape_geometric_direction_prediction_backed
+            and late_prediction_forward_sector
+            and late_prediction_oblique_geometry
+        )
+        late_prediction_direction_refresh = bool(
+            late_prediction_available
+            and preferred_turn_sign
+            != self._dynamic_escape_geometric_turn_sign
+        )
+        prediction_direction_refreshed = bool(
+            (
+                prediction_direction_refresh_requested
+                and prediction_direction_refresh_lateral_evidence
+            )
+            or late_prediction_direction_refresh
+        )
+        if (
+            late_prediction_available
+            and not late_prediction_direction_refresh
+        ):
+            # The first strong crossing prediction agrees with the geometric
+            # fallback, so the selected side is now prediction-backed.  Later
+            # noisy leg-cluster reversals must use the planner's ordinary
+            # confirmation path instead of repeatedly exercising this one-time
+            # acquisition rule.
+            self._dynamic_escape_geometric_direction_prediction_backed = True
         if prediction_direction_refreshed:
             # A CA-IMM/causal-regression direction change starts a new finite
             # turn transaction immediately.  This is not a timer re-trigger:
@@ -1845,6 +1907,9 @@ class ScanGuardArbiter:
                 )
                 self._dynamic_escape_hard_stop_turn_sign = turn_sign
                 self._dynamic_escape_geometric_turn_sign = turn_sign
+                self._dynamic_escape_geometric_direction_prediction_backed = (
+                    geometric_turn_source == "predicted_relative_motion"
+                )
                 self._dynamic_escape_hard_stop_turn_remaining = (
                     self.dynamic_escape_hard_stop_turn_steps
                 )
@@ -1967,6 +2032,9 @@ class ScanGuardArbiter:
                     )
                 )
                 self._dynamic_escape_geometric_turn_sign = turn_sign
+                self._dynamic_escape_geometric_direction_prediction_backed = (
+                    geometric_turn_source == "predicted_relative_motion"
+                )
                 values[omega_index] = (
                     self.action_spec.upper[omega_index]
                     if turn_sign > 0.0
@@ -2642,6 +2710,23 @@ class ScanGuardArbiter:
         )
         diagnostics["dynamic_escape_prediction_direction_refreshed"] = bool(
             prediction_direction_refreshed
+        )
+        diagnostics[
+            "dynamic_escape_prediction_direction_late_acquisition_available"
+        ] = bool(late_prediction_available)
+        diagnostics[
+            "dynamic_escape_prediction_direction_late_acquisition_forward_sector"
+        ] = bool(late_prediction_forward_sector)
+        diagnostics[
+            "dynamic_escape_prediction_direction_late_acquisition_oblique_geometry"
+        ] = bool(late_prediction_oblique_geometry)
+        diagnostics[
+            "dynamic_escape_prediction_direction_late_acquisition_applied"
+        ] = bool(late_prediction_direction_refresh)
+        diagnostics[
+            "dynamic_escape_geometric_direction_prediction_backed"
+        ] = bool(
+            self._dynamic_escape_geometric_direction_prediction_backed
         )
         diagnostics[
             "dynamic_escape_prediction_direction_refresh_requested"

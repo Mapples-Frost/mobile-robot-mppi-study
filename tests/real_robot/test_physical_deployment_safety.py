@@ -1020,6 +1020,192 @@ def test_frontal_escape_rejects_noisy_side_reversal_and_locks_coast(tmp_path):
     ] is True
 
 
+def test_late_crossing_prediction_replaces_uninformed_clearance_side(tmp_path):
+    config = build_pi5_full_config(
+        _weight_root(tmp_path),
+        max_v_mps=0.5,
+        max_reverse_v_mps=0.3,
+        max_omega_radps=0.6,
+    )
+    arbiter = ScanGuardArbiter(
+        action_spec_from_config(config["action_space"]),
+        config["perception"]["scan_guard"],
+    )
+    guard = {
+        "emergency_stop": False,
+        "should_slow_down": True,
+        "slow_scale": 0.25,
+        "reason": "temporal_slowdown",
+        "dynamic_obstacle_scan_flow_match": True,
+        "temporal_scan_valid": True,
+        "temporal_scan_ttc_s": 1.5,
+        "dynamic_obstacle_bearing_rad": -0.45,
+        # This fallback selected left in both 20260804_213537 cycle 38 and
+        # 20260804_213648 cycle 32 before crossing motion was available.
+        "min_left_side_range": 1.60,
+        "min_right_side_range": 0.80,
+        "min_front_range": 1.45,
+    }
+    unavailable = {
+        "probabilistic_obstacle_active_avoidance_enabled": True,
+        "probabilistic_obstacle_preferred_escape_heading_error_rad": None,
+        "probabilistic_obstacle_escape_direction_refreshed": False,
+        "probabilistic_obstacle_forward_lateral_countermotion_applied": False,
+        "probabilistic_obstacle_motion_lateral_body_mps": 0.0,
+    }
+    initial = arbiter.arbitrate(
+        ControlCommand([0.35, 0.0]), guard, unavailable
+    )
+    assert initial.executed_control.omega == pytest.approx(0.60)
+    assert initial.diagnostics[
+        "dynamic_escape_geometric_direction_prediction_backed"
+    ] is False
+
+    crossing = dict(unavailable)
+    crossing.update({
+        # The person is moving left in the vehicle frame, therefore the robot
+        # must turn right even though this is the planner's first valid motion
+        # estimate rather than a later `escape_direction_refreshed` event.
+        "probabilistic_obstacle_preferred_escape_heading_error_rad": -0.88,
+        "probabilistic_obstacle_forward_lateral_countermotion_applied": True,
+        "probabilistic_obstacle_motion_lateral_body_mps": 0.38,
+    })
+    corrected = arbiter.arbitrate(
+        ControlCommand([0.35, 0.60]), guard, crossing
+    )
+
+    assert corrected.executed_control.v == pytest.approx(0.35)
+    assert corrected.executed_control.omega == pytest.approx(-0.60)
+    assert corrected.diagnostics[
+        "dynamic_escape_prediction_direction_late_acquisition_available"
+    ] is True
+    assert corrected.diagnostics[
+        "dynamic_escape_prediction_direction_late_acquisition_applied"
+    ] is True
+    assert corrected.diagnostics[
+        "dynamic_escape_geometric_direction_prediction_backed"
+    ] is True
+
+
+def test_late_crossing_prediction_does_not_flip_after_obstacle_passes_rear(
+    tmp_path,
+):
+    config = build_pi5_full_config(
+        _weight_root(tmp_path),
+        max_v_mps=0.5,
+        max_reverse_v_mps=0.3,
+        max_omega_radps=0.6,
+    )
+    arbiter = ScanGuardArbiter(
+        action_spec_from_config(config["action_space"]),
+        config["perception"]["scan_guard"],
+    )
+    guard = {
+        "emergency_stop": False,
+        "should_slow_down": True,
+        "slow_scale": 0.25,
+        "reason": "temporal_slowdown",
+        "dynamic_obstacle_scan_flow_match": True,
+        "temporal_scan_valid": True,
+        "temporal_scan_ttc_s": 1.5,
+        "dynamic_obstacle_bearing_rad": -0.45,
+        "min_left_side_range": 1.60,
+        "min_right_side_range": 0.80,
+        "min_front_range": 1.45,
+    }
+    unavailable = {
+        "probabilistic_obstacle_active_avoidance_enabled": True,
+        "probabilistic_obstacle_preferred_escape_heading_error_rad": None,
+        "probabilistic_obstacle_escape_direction_refreshed": False,
+        "probabilistic_obstacle_forward_lateral_countermotion_applied": False,
+        "probabilistic_obstacle_motion_lateral_body_mps": 0.0,
+    }
+    initial = arbiter.arbitrate(
+        ControlCommand([0.35, 0.0]), guard, unavailable
+    )
+    assert initial.executed_control.omega == pytest.approx(0.60)
+
+    rear_crossing = dict(unavailable)
+    rear_crossing.update({
+        "probabilistic_obstacle_preferred_escape_heading_error_rad": -0.88,
+        "probabilistic_obstacle_forward_lateral_countermotion_applied": True,
+        "probabilistic_obstacle_motion_lateral_body_mps": 0.45,
+    })
+    rear_guard = dict(guard)
+    rear_guard["dynamic_obstacle_bearing_rad"] = math.radians(110.0)
+    passed = arbiter.arbitrate(
+        ControlCommand([0.35, 0.60]), rear_guard, rear_crossing
+    )
+
+    assert passed.executed_control.omega == pytest.approx(0.60)
+    assert passed.diagnostics[
+        "dynamic_escape_prediction_direction_late_acquisition_forward_sector"
+    ] is False
+    assert passed.diagnostics[
+        "dynamic_escape_prediction_direction_late_acquisition_applied"
+    ] is False
+
+
+def test_late_crossing_prediction_does_not_flip_head_on_clearance_choice(
+    tmp_path,
+):
+    config = build_pi5_full_config(
+        _weight_root(tmp_path),
+        max_v_mps=0.5,
+        max_reverse_v_mps=0.3,
+        max_omega_radps=0.6,
+    )
+    arbiter = ScanGuardArbiter(
+        action_spec_from_config(config["action_space"]),
+        config["perception"]["scan_guard"],
+    )
+    guard = {
+        "emergency_stop": False,
+        "should_slow_down": True,
+        "slow_scale": 0.25,
+        "reason": "temporal_slowdown",
+        "dynamic_obstacle_scan_flow_match": True,
+        "temporal_scan_valid": True,
+        "temporal_scan_ttc_s": 1.5,
+        "dynamic_obstacle_bearing_rad": 0.05,
+        "min_left_side_range": 1.60,
+        "min_right_side_range": 0.80,
+        "min_front_range": 1.45,
+    }
+    unavailable = {
+        "probabilistic_obstacle_active_avoidance_enabled": True,
+        "probabilistic_obstacle_preferred_escape_heading_error_rad": None,
+        "probabilistic_obstacle_escape_direction_refreshed": False,
+        "probabilistic_obstacle_forward_lateral_countermotion_applied": False,
+        "probabilistic_obstacle_motion_lateral_body_mps": 0.0,
+    }
+    initial = arbiter.arbitrate(
+        ControlCommand([0.35, 0.0]), guard, unavailable
+    )
+    assert initial.executed_control.omega == pytest.approx(0.60)
+
+    noisy_leg_motion = dict(unavailable)
+    noisy_leg_motion.update({
+        "probabilistic_obstacle_preferred_escape_heading_error_rad": -0.88,
+        "probabilistic_obstacle_forward_lateral_countermotion_applied": True,
+        "probabilistic_obstacle_motion_lateral_body_mps": 0.45,
+    })
+    held = arbiter.arbitrate(
+        ControlCommand([0.35, 0.60]), guard, noisy_leg_motion
+    )
+
+    assert held.executed_control.omega == pytest.approx(0.60)
+    assert held.diagnostics[
+        "dynamic_escape_prediction_direction_late_acquisition_forward_sector"
+    ] is True
+    assert held.diagnostics[
+        "dynamic_escape_prediction_direction_late_acquisition_oblique_geometry"
+    ] is False
+    assert held.diagnostics[
+        "dynamic_escape_prediction_direction_late_acquisition_applied"
+    ] is False
+
+
 def test_front_speed_governor_caps_active_escape_final_command(tmp_path):
     config = build_pi5_full_config(
         _weight_root(tmp_path),

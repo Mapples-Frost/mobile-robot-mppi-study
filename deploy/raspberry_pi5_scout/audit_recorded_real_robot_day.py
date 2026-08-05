@@ -472,8 +472,15 @@ def _replay_run(rows, summary, action_spec, guard_config, planner_config):
         turn_source = str(decision.diagnostics.get(
             "dynamic_escape_geometric_turn_source", ""
         ))
-        if (
+        prediction_owned_turn = bool(
             turn_source == "predicted_relative_motion"
+            or decision.diagnostics.get(
+                "dynamic_escape_prediction_direction_late_acquisition_applied",
+                False,
+            )
+        )
+        if (
+            prediction_owned_turn
             and abs(lateral) >= 0.20
             and abs(output_omega) >= 0.10
             and output_v > 0.02

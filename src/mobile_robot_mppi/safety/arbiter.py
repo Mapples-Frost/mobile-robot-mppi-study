@@ -75,6 +75,11 @@ class ScanGuardArbiter:
                 "rear_pass_through_min_turn_omega_radps", 0.15
             )
         )
+        self.rear_pass_through_force_straight_enabled = bool(
+            self.config.get(
+                "rear_pass_through_force_straight_enabled", False
+            )
+        )
         self.rear_pass_through_direction_release_steps = int(
             self.config.get(
                 "rear_pass_through_direction_release_steps", 3
@@ -266,6 +271,35 @@ class ScanGuardArbiter:
         self.dynamic_escape_direction_refresh_confirmation_steps = int(
             self.config.get(
                 "dynamic_escape_direction_refresh_confirmation_steps", 1
+            )
+        )
+        # A causal lateral velocity is the physical crossing direction.  The
+        # higher-level preferred-heading heuristic may change sides as its
+        # sampled passage costs move, but it must not overrule the simple
+        # counter-motion contract used by the real robot: turn opposite the
+        # pedestrian's measured lateral motion.  This threshold is separate
+        # from the reversal gate so first acquisition can happen early while
+        # later direction changes still require confirmation.
+        self.dynamic_escape_crossing_minimum_lateral_speed_mps = float(
+            self.config.get(
+                "dynamic_escape_crossing_minimum_lateral_speed_mps",
+                self.dynamic_escape_direction_refresh_minimum_lateral_speed_mps,
+            )
+        )
+        # Temporal scan flow becomes valid one or two control frames before a
+        # tracked forecast.  An opt-in physical pre-turn spends those frames
+        # establishing a passage side instead of merely braking while gateway
+        # and chassis latency consume the remaining TTC.
+        self.dynamic_escape_temporal_preturn_enabled = bool(
+            self.config.get("dynamic_escape_temporal_preturn_enabled", False)
+        )
+        self.dynamic_escape_temporal_preturn_speed = float(
+            self.config.get("dynamic_escape_temporal_preturn_speed", 0.0)
+        )
+        self.dynamic_escape_temporal_preturn_max_bearing_rad = float(
+            self.config.get(
+                "dynamic_escape_temporal_preturn_max_bearing_rad",
+                0.5 * np.pi,
             )
         )
         self.dynamic_escape_coast_direction_lock_enabled = bool(
@@ -681,6 +715,13 @@ class ScanGuardArbiter:
             or self.dynamic_escape_direction_refresh_minimum_lateral_speed_mps
             < 0.0
             or self.dynamic_escape_direction_refresh_confirmation_steps < 1
+            or self.dynamic_escape_crossing_minimum_lateral_speed_mps < 0.0
+            or self.dynamic_escape_temporal_preturn_speed < 0.0
+            or self.dynamic_escape_temporal_preturn_speed
+            > self.dynamic_escape_max_speed
+            or not 0.0
+            < self.dynamic_escape_temporal_preturn_max_bearing_rad
+            <= np.pi
             or self.dynamic_escape_geometric_rearm_clear_steps < 1
             or self.dynamic_escape_coast_turn_gain <= 0.0
             or self.dynamic_escape_coast_max_omega_radps < 0.0
@@ -1116,10 +1157,7 @@ class ScanGuardArbiter:
             )
             and math.isfinite(lateral_speed)
             and abs(lateral_speed)
-            >= max(
-                0.35,
-                self.dynamic_escape_direction_refresh_minimum_lateral_speed_mps,
-            )
+            >= self.dynamic_escape_crossing_minimum_lateral_speed_mps
             and math.isfinite(lateral_fraction)
             and lateral_fraction >= 0.50
         )
@@ -1128,6 +1166,12 @@ class ScanGuardArbiter:
             and abs(obstacle_bearing) < math.radians(20.0)
             and not strong_lateral_crossing
         )
+        if not frontal_geometry and strong_lateral_crossing:
+            return (
+                -float(np.sign(lateral_speed)),
+                "measured_lateral_countermotion",
+            )
+
         if (
             not frontal_geometry
             and math.isfinite(heading_error)
@@ -1262,35 +1306,37 @@ class ScanGuardArbiter:
                 )
                 if "omega_cmd" in self.action_spec.names:
                     omega_index = self.action_spec.index("omega_cmd")
-                    omega_limit = min(
-                        self.rear_pass_through_max_omega_radps,
-                        abs(float(self.action_spec.lower[omega_index])),
-                        abs(float(self.action_spec.upper[omega_index])),
-                    )
-                    omega_value = float(np.clip(
-                        values[omega_index], -omega_limit, omega_limit
-                    ))
-                    turn_sign = self._rear_pass_through_turn_sign
-                    if turn_sign != 0.0:
-                        # Turn toward the obstacle's initially observed
-                        # lateral side so the *rear* of the chassis swings to
-                        # the opposite side while forward translation opens
-                        # distance.  Keep that side through scan fragmentation
-                        # instead of alternating the rear corner toward the
-                        # close person.
-                        omega_value = turn_sign * min(
-                            omega_limit,
-                            max(
-                                abs(omega_value),
-                                self.rear_pass_through_min_turn_omega_radps,
-                            ),
-                        )
-                    else:
-                        # A person centred directly behind is cleared most
-                        # safely by straight translation.  Passing through an
-                        # unrelated MPPI yaw here alternated +/-0.3 rad/s as
-                        # the rear leg cluster straddled the wrap boundary.
+                    if self.rear_pass_through_force_straight_enabled:
+                        # Once all causal evidence is behind the lateral plane,
+                        # forward translation already increases separation.
+                        # The older rear-corner steering rule imposed +/-0.6
+                        # rad/s for tens of frames after a successful pass and
+                        # dragged the robot away from its goal.  This physical
+                        # profile removes that downstream steering authority.
                         omega_value = 0.0
+                    else:
+                        omega_limit = min(
+                            self.rear_pass_through_max_omega_radps,
+                            abs(float(self.action_spec.lower[omega_index])),
+                            abs(float(self.action_spec.upper[omega_index])),
+                        )
+                        omega_value = float(np.clip(
+                            values[omega_index], -omega_limit, omega_limit
+                        ))
+                        turn_sign = self._rear_pass_through_turn_sign
+                        if turn_sign != 0.0:
+                            # Turn toward the obstacle's initially observed
+                            # lateral side so the *rear* of the chassis swings
+                            # away. Historical profiles retain this behaviour.
+                            omega_value = turn_sign * min(
+                                omega_limit,
+                                max(
+                                    abs(omega_value),
+                                    self.rear_pass_through_min_turn_omega_radps,
+                                ),
+                            )
+                        else:
+                            omega_value = 0.0
                     values[omega_index] = omega_value
         context = dict(planning_context or {})
         static_reverse_escape_held = False
@@ -1894,12 +1940,6 @@ class ScanGuardArbiter:
             preferred_heading_error = float(preferred_heading_error)
         except (TypeError, ValueError):
             preferred_heading_error = float("nan")
-        preferred_turn_sign = (
-            float(np.sign(preferred_heading_error))
-            if math.isfinite(preferred_heading_error)
-            and abs(preferred_heading_error) >= 0.08
-            else 0.0
-        )
         lateral_motion_fraction = context.get(
             "probabilistic_obstacle_motion_lateral_fraction", 0.0
         )
@@ -1907,14 +1947,28 @@ class ScanGuardArbiter:
             lateral_motion_fraction = float(lateral_motion_fraction)
         except (TypeError, ValueError):
             lateral_motion_fraction = 0.0
-        strong_lateral_crossing = bool(
+        measured_lateral_countermotion_available = bool(
             context.get(
                 "probabilistic_obstacle_forward_lateral_countermotion_applied",
                 False,
             )
-            and prediction_direction_refresh_lateral_evidence
+            and math.isfinite(lateral_motion_speed)
+            and abs(lateral_motion_speed)
+            >= self.dynamic_escape_crossing_minimum_lateral_speed_mps
             and math.isfinite(lateral_motion_fraction)
             and lateral_motion_fraction >= 0.50
+        )
+        preferred_turn_sign = (
+            -float(np.sign(lateral_motion_speed))
+            if measured_lateral_countermotion_available
+            else float(np.sign(preferred_heading_error))
+            if math.isfinite(preferred_heading_error)
+            and abs(preferred_heading_error) >= 0.08
+            else 0.0
+        )
+        strong_lateral_crossing = bool(
+            measured_lateral_countermotion_available
+            and prediction_direction_refresh_lateral_evidence
             and preferred_turn_sign != 0.0
         )
         late_prediction_forward_sector = bool(
@@ -2374,6 +2428,33 @@ class ScanGuardArbiter:
             and abs(away_heading_error) > 0.5 * np.pi
             and not geometric_forward_escape
         )
+        try:
+            temporal_preturn_bearing = float(
+                guard_result.get(
+                    "temporal_scan_center_angle_rad", float("nan")
+                )
+            )
+            temporal_preturn_ttc = float(
+                guard_result.get("temporal_scan_ttc_s", float("inf"))
+            )
+        except (TypeError, ValueError):
+            temporal_preturn_bearing = float("nan")
+            temporal_preturn_ttc = float("inf")
+        temporal_preturn_active = bool(
+            self.dynamic_escape_temporal_preturn_enabled
+            and reason == "temporal_slowdown"
+            and not guard_result.get("emergency_stop", False)
+            and guard_result.get("temporal_scan_valid", False)
+            and np.isfinite(temporal_preturn_bearing)
+            and abs(temporal_preturn_bearing)
+            <= self.dynamic_escape_temporal_preturn_max_bearing_rad
+            and np.isfinite(temporal_preturn_ttc)
+            and temporal_preturn_ttc <= self.dynamic_escape_trigger_ttc_s
+            and not rear_only_evidence
+            and "v_cmd" in self.action_spec.names
+            and "omega_cmd" in self.action_spec.names
+        )
+        temporal_preturn_applied = False
         vetted_forward_reverse_veto = False
         reverse_escape = False
         hard_stop_escape_phase = "inactive"
@@ -2448,7 +2529,10 @@ class ScanGuardArbiter:
                     )
                 )
                 self._dynamic_escape_geometric_direction_prediction_backed = (
-                    geometric_turn_source == "predicted_relative_motion"
+                    geometric_turn_source in {
+                        "predicted_relative_motion",
+                        "measured_lateral_countermotion",
+                    }
                 )
                 self._dynamic_escape_hard_stop_turn_remaining = (
                     self.dynamic_escape_hard_stop_turn_steps
@@ -2671,7 +2755,10 @@ class ScanGuardArbiter:
                     )
                 )
                 self._dynamic_escape_geometric_direction_prediction_backed = (
-                    geometric_turn_source == "predicted_relative_motion"
+                    geometric_turn_source in {
+                        "predicted_relative_motion",
+                        "measured_lateral_countermotion",
+                    }
                 )
                 if self._dynamic_escape_frontal_encounter_latched:
                     input_v = float(values[v_index])
@@ -2860,11 +2947,13 @@ class ScanGuardArbiter:
                             reverse_escape = False
                         if reverse_escape and front_geometric_escape_available:
                             self._dynamic_escape_vetted_reverse_steps += 1
-                        elif (
-                            self._dynamic_escape_persistent_front_retry_count
-                            < self.dynamic_escape_persistent_front_max_retries
-                        ):
-                            self._dynamic_escape_vetted_reverse_steps = 0
+                        # This is a finite authority budget, not a consecutive
+                        # streak.  Stochastic MPPI alternated forward/reverse
+                        # every scan in physical run 022756, so resetting on a
+                        # single forward sample let it accumulate 49 reverse
+                        # commands without ever reaching the four-step retry.
+                        # Clear/rear encounter release and the explicit retry
+                        # transaction reset the budget above.
                     reason = "dynamic_active_escape"
                 elif (
                     held_reactive_escape_allowed
@@ -3127,6 +3216,39 @@ class ScanGuardArbiter:
                         self._dynamic_recovery_progress_watch_remaining = 0
                         self._dynamic_recovery_progress_watch_samples = []
                         recovery_mode = "planner_release"
+        elif temporal_preturn_active:
+            # Scan flow has established a closing front-sector threat, but the
+            # tracker has not yet exported a forecast.  Start the same finite
+            # passage side now; waiting in straight-line slowdown consumed two
+            # of the roughly thirteen TTC frames in runs 022708/022756, plus
+            # two more frames of gateway/chassis response latency.
+            v_index = self.action_spec.index("v_cmd")
+            omega_index = self.action_spec.index("omega_cmd")
+            turn_sign, geometric_turn_source = (
+                self._select_dynamic_escape_turn_sign(
+                    guard_result, context, temporal_preturn_bearing
+                )
+            )
+            self._dynamic_escape_geometric_turn_sign = turn_sign
+            self._dynamic_escape_geometric_direction_prediction_backed = False
+            self._dynamic_escape_frontal_encounter_latched = bool(
+                self._dynamic_escape_frontal_encounter_latched
+                or abs(temporal_preturn_bearing) < math.radians(20.0)
+            )
+            values[v_index] = min(
+                self.dynamic_escape_temporal_preturn_speed,
+                self.action_spec.upper[v_index],
+            )
+            values[omega_index] = (
+                self.action_spec.upper[omega_index]
+                if turn_sign > 0.0
+                else self.action_spec.lower[omega_index]
+            )
+            values = self.action_spec.clip(values)
+            temporal_preturn_applied = True
+            # Keep the established reason so existing dynamic path authority
+            # preserves this scan-vetted command through the path supervisor.
+            reason = "temporal_slowdown"
         elif deadline_supervisor_active:
             if "v_cmd" in self.action_spec.names:
                 v_index = self.action_spec.index("v_cmd")
@@ -3414,6 +3536,9 @@ class ScanGuardArbiter:
         diagnostics["rear_pass_through_force_forward_ready"] = bool(
             rear_pass_force_forward_ready
         )
+        diagnostics["rear_pass_through_force_straight_enabled"] = bool(
+            self.rear_pass_through_force_straight_enabled
+        )
         diagnostics["rear_pass_through_front_clearance_m"] = (
             None
             if rear_pass_front_clearance is None
@@ -3465,6 +3590,18 @@ class ScanGuardArbiter:
         )
         diagnostics["dynamic_escape_geometric_turn_source"] = str(
             geometric_turn_source
+        )
+        diagnostics["dynamic_escape_temporal_preturn_enabled"] = bool(
+            self.dynamic_escape_temporal_preturn_enabled
+        )
+        diagnostics["dynamic_escape_temporal_preturn_applied"] = bool(
+            temporal_preturn_applied
+        )
+        diagnostics["dynamic_escape_temporal_preturn_bearing_rad"] = float(
+            temporal_preturn_bearing
+        )
+        diagnostics["dynamic_escape_measured_lateral_countermotion"] = bool(
+            measured_lateral_countermotion_available
         )
         diagnostics["dynamic_escape_prediction_direction_refreshed"] = bool(
             prediction_direction_refreshed

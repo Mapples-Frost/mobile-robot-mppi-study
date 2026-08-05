@@ -90,7 +90,9 @@ def test_physical_limits_are_shared_with_planner_and_safety(tmp_path):
     assert guard["dynamic_escape_uncertainty_fusion_enabled"] is True
     assert guard["dynamic_escape_direction_commit_steps"] == 4
     assert guard["dynamic_escape_frontal_commit_steps"] == 10
-    assert guard["dynamic_escape_coast_steps"] == 6
+    assert guard["dynamic_escape_coast_steps"] == 14
+    assert guard["dynamic_escape_temporal_preturn_enabled"] is True
+    assert guard["dynamic_escape_temporal_preturn_speed"] == pytest.approx(0.20)
     assert guard["dynamic_escape_frontal_entry_speed"] == pytest.approx(0.20)
     assert guard["dynamic_escape_persistent_front_retry_enabled"] is True
     assert guard["dynamic_escape_vetted_reverse_retry_steps"] == 4
@@ -118,7 +120,10 @@ def test_physical_limits_are_shared_with_planner_and_safety(tmp_path):
     ] == pytest.approx(0.70)
     assert guard[
         "dynamic_escape_direction_refresh_minimum_lateral_speed_mps"
-    ] == pytest.approx(0.35)
+    ] == pytest.approx(0.25)
+    assert guard[
+        "dynamic_escape_crossing_minimum_lateral_speed_mps"
+    ] == pytest.approx(0.25)
     assert guard[
         "dynamic_escape_direction_refresh_confirmation_steps"
     ] == 2
@@ -182,6 +187,7 @@ def test_physical_limits_are_shared_with_planner_and_safety(tmp_path):
         "directional_forward_protected_half_angle_deg"
     ] == pytest.approx(100.0)
     assert guard["rear_pass_through_force_forward_enabled"] is True
+    assert guard["rear_pass_through_force_straight_enabled"] is True
     assert guard[
         "rear_pass_through_min_front_clearance_m"
     ] == pytest.approx(0.90)
@@ -267,7 +273,7 @@ def test_physical_tracker_motion_fallback_drives_crossing_opposite_side(
     assert decision.executed_control.omega == pytest.approx(-0.60)
     assert decision.diagnostics[
         "dynamic_escape_geometric_turn_source"
-    ] == "predicted_relative_motion"
+    ] == "measured_lateral_countermotion"
 
 
 def test_physical_goal_context_uses_wrapped_body_frame_bearing():
@@ -1708,7 +1714,9 @@ def test_strong_crossing_inside_frontal_cone_uses_predicted_opposite_side(
     }
     context = {
         "probabilistic_obstacle_active_avoidance_enabled": True,
-        "probabilistic_obstacle_preferred_escape_heading_error_rad": -0.88,
+        # The sampled passage heuristic asks for the wrong (+) side in the
+        # failing physical frame. Direct lateral counter-motion must outrank it.
+        "probabilistic_obstacle_preferred_escape_heading_error_rad": 0.88,
         "probabilistic_obstacle_forward_lateral_countermotion_applied": True,
         "probabilistic_obstacle_motion_lateral_body_mps": 0.60,
         "probabilistic_obstacle_motion_lateral_fraction": 0.90,
@@ -1722,10 +1730,49 @@ def test_strong_crossing_inside_frontal_cone_uses_predicted_opposite_side(
     assert decision.executed_control.omega == pytest.approx(-0.60)
     assert decision.diagnostics[
         "dynamic_escape_geometric_turn_source"
-    ] == "predicted_relative_motion"
+    ] == "measured_lateral_countermotion"
     assert decision.diagnostics[
         "dynamic_escape_frontal_encounter_latched"
     ] is False
+
+
+def test_temporal_flow_preturns_before_forecast_tracker_acquisition(tmp_path):
+    config = build_pi5_full_config(
+        _weight_root(tmp_path),
+        max_v_mps=0.5,
+        max_reverse_v_mps=0.3,
+        max_omega_radps=0.6,
+    )
+    arbiter = ScanGuardArbiter(
+        action_spec_from_config(config["action_space"]),
+        config["perception"]["scan_guard"],
+    )
+    decision = arbiter.arbitrate(
+        ControlCommand([0.5, -0.1]),
+        {
+            "emergency_stop": False,
+            "should_slow_down": True,
+            "reason": "temporal_slowdown",
+            "temporal_scan_valid": True,
+            "temporal_scan_ttc_s": 1.25,
+            "temporal_scan_center_angle_rad": 0.02,
+            "min_left_side_range": 1.60,
+            "min_right_side_range": 0.75,
+            "min_front_range": 1.45,
+        },
+        {},
+    )
+
+    assert decision.reason == "temporal_slowdown"
+    assert decision.executed_control.values.tolist() == pytest.approx(
+        [0.20, 0.60]
+    )
+    assert decision.diagnostics[
+        "dynamic_escape_temporal_preturn_applied"
+    ] is True
+    assert decision.diagnostics[
+        "dynamic_escape_geometric_turn_sign"
+    ] == 1.0
 
 
 def test_persistent_front_retries_same_passage_side_after_bounded_reverse(
@@ -1767,7 +1814,9 @@ def test_persistent_front_retries_same_passage_side_after_bounded_reverse(
     assert first.executed_control.omega == pytest.approx(-0.60)
     for _ in range(3):
         arbiter.arbitrate(ControlCommand([-0.30, 0.60]), guard, context)
-    for _ in range(6):
+    for _ in range(
+        config["perception"]["scan_guard"]["dynamic_escape_coast_steps"]
+    ):
         arbiter.arbitrate(ControlCommand([-0.30, 0.60]), guard, context)
 
     reverse = None
@@ -1800,7 +1849,9 @@ def test_persistent_front_retries_same_passage_side_after_bounded_reverse(
 
     for _ in range(3):
         arbiter.arbitrate(ControlCommand([-0.30, 0.60]), guard, context)
-    for _ in range(6):
+    for _ in range(
+        config["perception"]["scan_guard"]["dynamic_escape_coast_steps"]
+    ):
         arbiter.arbitrate(ControlCommand([-0.30, 0.60]), guard, context)
     for _ in range(4):
         bounded_reverse = arbiter.arbitrate(
@@ -1878,6 +1929,58 @@ def test_goal_divergence_rejects_stale_retry_and_takes_lateral_exit(tmp_path):
     assert lateral_exit.diagnostics[
         "dynamic_escape_post_retry_side_forward_applied"
     ] is True
+
+
+def test_front_reverse_budget_accumulates_across_forward_proposal_gaps(
+        tmp_path):
+    config = build_pi5_full_config(
+        _weight_root(tmp_path),
+        max_v_mps=0.5,
+        max_reverse_v_mps=0.3,
+        max_omega_radps=0.6,
+    )
+    guard_config = config["perception"]["scan_guard"]
+    guard_config["dynamic_escape_direction_commit_steps"] = 1
+    guard_config["dynamic_escape_coast_steps"] = 0
+    arbiter = ScanGuardArbiter(
+        action_spec_from_config(config["action_space"]), guard_config
+    )
+    guard = {
+        "emergency_stop": False,
+        "should_slow_down": True,
+        "reason": "temporal_slowdown",
+        "dynamic_obstacle_scan_flow_match": True,
+        "temporal_scan_valid": True,
+        "temporal_scan_ttc_s": 1.2,
+        "dynamic_obstacle_bearing_rad": 0.45,
+        "min_left_side_range": 0.70,
+        "min_right_side_range": 1.60,
+        "min_front_range": 1.10,
+    }
+    context = {
+        "probabilistic_obstacle_active_avoidance_enabled": True,
+        "probabilistic_obstacle_preferred_escape_heading_error_rad": -0.88,
+        "probabilistic_obstacle_forward_lateral_countermotion_applied": True,
+        "probabilistic_obstacle_motion_lateral_body_mps": 0.60,
+        "probabilistic_obstacle_motion_lateral_fraction": 0.90,
+    }
+    arbiter.arbitrate(ControlCommand([0.5, -0.6]), guard, context)
+
+    decision = None
+    for index in range(7):
+        reverse = index % 2 == 0
+        decision = arbiter.arbitrate(
+            ControlCommand([-0.3 if reverse else 0.5, -0.6]),
+            guard,
+            context,
+        )
+    assert decision.diagnostics["dynamic_escape_vetted_reverse_steps"] == 4
+
+    retry = arbiter.arbitrate(ControlCommand([0.5, -0.6]), guard, context)
+    assert retry.diagnostics[
+        "dynamic_escape_persistent_front_retry_rearmed"
+    ] is True
+    assert retry.executed_control.v > 0.0
 
 
 def test_prediction_backed_crossing_side_survives_temporal_emergency(tmp_path):
@@ -2598,7 +2701,7 @@ def test_directional_guard_passes_rear_person_only_for_forward_motion(tmp_path):
 
     forward = arbiter.arbitrate(ControlCommand([0.5, 0.15]), guard, context)
     assert forward.executed_control.v == pytest.approx(0.5)
-    assert forward.executed_control.omega == pytest.approx(0.15)
+    assert forward.executed_control.omega == pytest.approx(0.0)
     assert forward.reason == "rear_pass_through"
     assert forward.diagnostics["emergency_stop"] is False
     assert forward.diagnostics["rear_pass_through_active"] is True
@@ -2606,7 +2709,7 @@ def test_directional_guard_passes_rear_person_only_for_forward_motion(tmp_path):
 
     reverse = arbiter.arbitrate(ControlCommand([-0.3, 0.15]), guard, context)
     assert reverse.executed_control.v == pytest.approx(0.35)
-    assert reverse.executed_control.omega == pytest.approx(0.15)
+    assert reverse.executed_control.omega == pytest.approx(0.0)
     assert reverse.reason == "rear_pass_through"
     assert reverse.diagnostics["rear_pass_through_active"] is True
     assert reverse.diagnostics[
@@ -2728,13 +2831,13 @@ def test_rear_pass_holds_one_turn_side_through_bearing_flips_and_scan_gaps(
     )
 
     assert first.executed_control.values.tolist() == pytest.approx(
-        [0.35, -0.3]
+        [0.35, 0.0]
     )
     assert opposite_fragment.executed_control.values.tolist() == pytest.approx(
-        [0.35, -0.3]
+        [0.35, 0.0]
     )
     assert after_gap.executed_control.values.tolist() == pytest.approx(
-        [0.35, -0.3]
+        [0.35, 0.0]
     )
     assert first.diagnostics[
         "rear_pass_through_direction_lock_started"

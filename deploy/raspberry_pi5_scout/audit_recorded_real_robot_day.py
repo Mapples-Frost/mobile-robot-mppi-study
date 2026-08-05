@@ -576,10 +576,16 @@ def _replay_run(rows, summary, action_spec, guard_config, planner_config):
             "dynamic_escape_geometric_turn_source", ""
         ))
         prediction_owned_turn = bool(
-            turn_source == "predicted_relative_motion"
-            or decision.diagnostics.get(
-                "dynamic_escape_prediction_direction_late_acquisition_applied",
-                False,
+            decision.reason == "dynamic_active_escape"
+            and (
+                turn_source in {
+                    "predicted_relative_motion",
+                    "measured_lateral_countermotion",
+                }
+                or decision.diagnostics.get(
+                    "dynamic_escape_prediction_direction_late_acquisition_applied",
+                    False,
+                )
             )
         )
         if (

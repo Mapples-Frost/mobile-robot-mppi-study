@@ -326,6 +326,10 @@ def build_pi5_full_config(
             "rear_pass_through_min_turn_omega_radps": min(
                 0.15, max_omega_radps
             ),
+            # Rear-only evidence authorizes forward separation, not another
+            # steering objective.  Full-yaw rear steering dominated the goal
+            # controller for 20--40 frames after successful physical passes.
+            "rear_pass_through_force_straight_enabled": True,
             # Hold the first causal rear-side steering sign through up to
             # three missing/side-switching scans.  A person cannot physically
             # cross behind the chassis in this 0.3 s interval, whereas Livox
@@ -353,7 +357,11 @@ def build_pi5_full_config(
             # fragmented leg-cluster velocity estimates (085438 cycles 46 and
             # 53: only 0.13--0.14 m/s lateral).  Keep the selected side unless
             # a genuinely lateral crossing/reversal supplies stronger motion.
-            "dynamic_escape_direction_refresh_minimum_lateral_speed_mps": 0.35,
+            "dynamic_escape_direction_refresh_minimum_lateral_speed_mps": 0.25,
+            # The real crossing contract is defined directly by measured
+            # pedestrian lateral velocity.  This must outrank a sampled
+            # preferred-heading sign that can change with passage cost.
+            "dynamic_escape_crossing_minimum_lateral_speed_mps": 0.25,
             # The physical CA-IMM/leg regression already exports a reversal
             # confirmation count.  Require two consecutive confirmations so
             # isolated left/right leg swaps cannot invert the committed arc;
@@ -367,11 +375,20 @@ def build_pi5_full_config(
             "dynamic_escape_coast_max_omega_radps": min(
                 0.30, max_omega_radps
             ),
-            # A live forecast used to keep this coast active indefinitely,
-            # producing the 9 m orbit in the 232404 physical run.  Six bounded
-            # coast cycles complete the sidestep, then authority returns to
-            # risk-vetted MPPI unless a hard-stop transaction is active.
-            "dynamic_escape_coast_steps": 6,
+            # Six frames returned authority while the person was still beside
+            # the chassis; per-frame MPPI then alternated forward/reverse.  A
+            # fourteen-frame bounded coast carries the established passage
+            # through the side sector, while the goal-divergence release still
+            # prevents the historical unbounded orbit.
+            "dynamic_escape_coast_steps": 14,
+            # Temporal flow becomes causal roughly two frames before the
+            # forecast tracker.  Start the clearance-selected arc immediately
+            # to compensate measured PC/gateway/chassis latency.
+            "dynamic_escape_temporal_preturn_enabled": True,
+            "dynamic_escape_temporal_preturn_speed": min(0.20, max_v_mps),
+            "dynamic_escape_temporal_preturn_max_bearing_rad": math.radians(
+                75.0
+            ),
             # During a head-on encounter, spend the short full-yaw prefix
             # turning instead of continuing to close at 0.35 m/s.  Normal and
             # crossing speed limits remain unchanged.

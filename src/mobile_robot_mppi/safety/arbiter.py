@@ -80,6 +80,32 @@ class ScanGuardArbiter:
                 "rear_pass_through_force_straight_enabled", False
             )
         )
+        self.rear_pass_through_goal_rejoin_enabled = bool(
+            self.config.get(
+                "rear_pass_through_goal_rejoin_enabled", False
+            )
+        )
+        self.rear_pass_through_goal_rejoin_min_front_clearance_m = float(
+            self.config.get(
+                "rear_pass_through_goal_rejoin_min_front_clearance_m",
+                1.50,
+            )
+        )
+        self.rear_pass_through_goal_rejoin_same_side_min_clearance_m = float(
+            self.config.get(
+                "rear_pass_through_goal_rejoin_same_side_min_clearance_m",
+                1.40,
+            )
+        )
+        self.rear_pass_through_goal_rejoin_opposite_min_clearance_m = float(
+            self.config.get(
+                "rear_pass_through_goal_rejoin_opposite_min_clearance_m",
+                2.00,
+            )
+        )
+        self.rear_pass_through_goal_rejoin_gain = float(
+            self.config.get("rear_pass_through_goal_rejoin_gain", 0.60)
+        )
         self.rear_pass_through_direction_release_steps = int(
             self.config.get(
                 "rear_pass_through_direction_release_steps", 3
@@ -108,6 +134,12 @@ class ScanGuardArbiter:
             or self.rear_pass_through_min_turn_omega_radps < 0.0
             or self.rear_pass_through_min_turn_omega_radps
             > self.rear_pass_through_max_omega_radps
+            or self.rear_pass_through_goal_rejoin_min_front_clearance_m <= 0.0
+            or self.rear_pass_through_goal_rejoin_same_side_min_clearance_m
+            <= 0.0
+            or self.rear_pass_through_goal_rejoin_opposite_min_clearance_m
+            < self.rear_pass_through_goal_rejoin_same_side_min_clearance_m
+            or self.rear_pass_through_goal_rejoin_gain < 0.0
             or self.rear_pass_through_direction_release_steps < 1
         ):
             raise ValueError("directional motion guard parameters are invalid")
@@ -1256,6 +1288,7 @@ class ScanGuardArbiter:
         self._dynamic_deadline_decision_count += 1
         values = self.action_spec.clip(proposed.values)
         guard_result = dict(guard_result)
+        context = dict(planning_context or {})
         reason = str(guard_result.get("reason", "front_clear"))
         proposed_v_for_direction = (
             float(values[self.action_spec.index("v_cmd")])
@@ -1299,6 +1332,10 @@ class ScanGuardArbiter:
                     np.sign(rear_pass_lateral)
                 )
         rear_pass_direction_lock_started = False
+        rear_pass_goal_rejoin_applied = False
+        rear_pass_goal_rejoin_heading_error = float("nan")
+        rear_pass_goal_rejoin_clearance = None
+        rear_pass_goal_rejoin_same_side = False
         if rear_only_evidence:
             # A Mid-360 leg/flow centre can alternate between the two sides of
             # the rear axis while it observes the same person.  Reversing the
@@ -1352,6 +1389,68 @@ class ScanGuardArbiter:
                         # dragged the robot away from its goal.  This physical
                         # profile removes that downstream steering authority.
                         omega_value = 0.0
+                        try:
+                            rear_pass_goal_rejoin_heading_error = float(
+                                context.get(
+                                    "physical_goal_bearing_error_rad",
+                                    float("nan"),
+                                )
+                            )
+                        except (TypeError, ValueError):
+                            rear_pass_goal_rejoin_heading_error = float("nan")
+                        if "temporal_flow" in rear_pass_through_sources:
+                            rear_pass_goal_rejoin_clearance = (
+                                self._finite_clearance(
+                                    guard_result,
+                                    "temporal_scan_clearance_m",
+                                )
+                            )
+                        elif "near_body" in rear_pass_through_sources:
+                            rear_pass_goal_rejoin_clearance = (
+                                self._finite_clearance(
+                                    guard_result, "min_near_body_range"
+                                )
+                            )
+                        rear_lateral = (
+                            math.sin(float(rear_pass_through_bearing))
+                            if rear_pass_through_bearing is not None
+                            else 0.0
+                        )
+                        rear_pass_goal_rejoin_same_side = bool(
+                            math.isfinite(
+                                rear_pass_goal_rejoin_heading_error
+                            )
+                            and abs(rear_lateral) >= 0.25
+                            and rear_lateral
+                            * rear_pass_goal_rejoin_heading_error
+                            > 0.0
+                        )
+                        goal_rejoin_clearance_threshold = (
+                            self.rear_pass_through_goal_rejoin_same_side_min_clearance_m
+                            if rear_pass_goal_rejoin_same_side
+                            else self.rear_pass_through_goal_rejoin_opposite_min_clearance_m
+                        )
+                        rear_pass_goal_rejoin_applied = bool(
+                            self.rear_pass_through_goal_rejoin_enabled
+                            and rear_pass_front_clearance is not None
+                            and rear_pass_front_clearance
+                            >= self.rear_pass_through_goal_rejoin_min_front_clearance_m
+                            and rear_pass_goal_rejoin_clearance is not None
+                            and rear_pass_goal_rejoin_clearance
+                            >= goal_rejoin_clearance_threshold
+                            and math.isfinite(
+                                rear_pass_goal_rejoin_heading_error
+                            )
+                            and abs(rear_pass_goal_rejoin_heading_error) >= 0.10
+                            and self.rear_pass_through_max_omega_radps > 0.0
+                        )
+                        if rear_pass_goal_rejoin_applied:
+                            omega_value = float(np.clip(
+                                self.rear_pass_through_goal_rejoin_gain
+                                * rear_pass_goal_rejoin_heading_error,
+                                -self.rear_pass_through_max_omega_radps,
+                                self.rear_pass_through_max_omega_radps,
+                            ))
                     else:
                         omega_limit = min(
                             self.rear_pass_through_max_omega_radps,
@@ -1376,7 +1475,6 @@ class ScanGuardArbiter:
                         else:
                             omega_value = 0.0
                     values[omega_index] = omega_value
-        context = dict(planning_context or {})
         static_reverse_escape_held = False
         if self._static_reverse_escape_cooldown_remaining > 0:
             self._static_reverse_escape_cooldown_remaining -= 1
@@ -3644,6 +3742,23 @@ class ScanGuardArbiter:
         )
         diagnostics["rear_pass_through_force_straight_enabled"] = bool(
             self.rear_pass_through_force_straight_enabled
+        )
+        diagnostics["rear_pass_through_goal_rejoin_enabled"] = bool(
+            self.rear_pass_through_goal_rejoin_enabled
+        )
+        diagnostics["rear_pass_through_goal_rejoin_applied"] = bool(
+            rear_pass_goal_rejoin_applied
+        )
+        diagnostics["rear_pass_through_goal_rejoin_heading_error_rad"] = (
+            float(rear_pass_goal_rejoin_heading_error)
+        )
+        diagnostics["rear_pass_through_goal_rejoin_clearance_m"] = (
+            None
+            if rear_pass_goal_rejoin_clearance is None
+            else float(rear_pass_goal_rejoin_clearance)
+        )
+        diagnostics["rear_pass_through_goal_rejoin_same_side"] = bool(
+            rear_pass_goal_rejoin_same_side
         )
         diagnostics["rear_pass_through_front_clearance_m"] = (
             None

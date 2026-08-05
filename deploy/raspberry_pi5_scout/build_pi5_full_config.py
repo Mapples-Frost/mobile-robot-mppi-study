@@ -330,6 +330,16 @@ def build_pi5_full_config(
             # steering objective.  Full-yaw rear steering dominated the goal
             # controller for 20--40 frames after successful physical passes.
             "rear_pass_through_force_straight_enabled": True,
+            # Straight rear escape remains the close-range default.  Once the
+            # causal rear return is separated and the front corridor is open,
+            # blend in bounded goal steering.  Turning toward the same lateral
+            # side as the rear person swings the chassis tail away, so it may
+            # begin at 1.40 m; the opposite turn waits for 2.00 m clearance.
+            "rear_pass_through_goal_rejoin_enabled": True,
+            "rear_pass_through_goal_rejoin_min_front_clearance_m": 1.50,
+            "rear_pass_through_goal_rejoin_same_side_min_clearance_m": 1.40,
+            "rear_pass_through_goal_rejoin_opposite_min_clearance_m": 2.00,
+            "rear_pass_through_goal_rejoin_gain": 0.60,
             # Hold the first causal rear-side steering sign through up to
             # three missing/side-switching scans.  A person cannot physically
             # cross behind the chassis in this 0.3 s interval, whereas Livox

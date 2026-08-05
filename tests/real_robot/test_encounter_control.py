@@ -147,10 +147,41 @@ def test_hard_stop_is_not_overridden_by_mode_speed_or_turn_authority():
         {"emergency_stop": True, "min_rear_range": 2.0},
     )
 
-    assert np.array_equal(
-        result.proposed_control.values, plan.proposed_control.values
-    )
+    assert np.array_equal(result.proposed_control.values, np.zeros(2))
     assert result.diagnostics["encounter_control_hard_safety_pending"] is True
+    assert result.diagnostics["encounter_control_motion_owner"] == "hard_stop"
+
+
+def test_mode_rejects_unrequested_planner_reverse_even_when_risk_is_high():
+    authority = EncounterControlAuthority(
+        EncounterControlConfig(enabled=True)
+    )
+
+    result = authority.apply(
+        _plan(
+            control=(-0.3, -0.6),
+            probabilistic_obstacle_hard_violation=True,
+            probabilistic_obstacle_maximum_step_probability=0.8,
+            probabilistic_obstacle_probability_mass=8.0,
+        ),
+        _intent(
+            encounter_phase="frontal_approach",
+            encounter_strategy="right_bypass",
+            encounter_locked_steering_side=-1,
+            encounter_temporary_waypoint=(2.0, -0.9),
+            encounter_distance_m=1.0,
+        ),
+        pose=(0.0, 0.0, 0.0),
+        guard_result={"emergency_stop": False, "min_rear_range": 0.5},
+    )
+
+    assert result.proposed_control.v == 0.32
+    assert result.proposed_control.omega < 0.0
+    assert result.diagnostics[
+        "encounter_control_planner_reverse_rejected"
+    ] is True
+    assert result.diagnostics["encounter_control_reverse_applied"] is False
+    assert result.diagnostics["encounter_control_motion_owner"] == "encounter"
 
 
 def test_rejoin_reference_returns_to_frozen_goal_line():
@@ -178,4 +209,8 @@ def test_planning_context_explicitly_revokes_competing_authorities():
     assert context["encounter_control_inhibit_rear_pass"] is True
     assert context["encounter_control_inhibit_forward_passage"] is True
     assert context["encounter_control_inhibit_dynamic_escape"] is True
+    assert context["encounter_control_stop_only_hard_safety"] is True
     assert context["encounter_control_hard_safety_retained"] is True
+    assert context[
+        "encounter_control_hard_stop_escape_motion_allowed"
+    ] is False

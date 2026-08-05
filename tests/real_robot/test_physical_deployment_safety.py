@@ -3050,7 +3050,7 @@ def test_encounter_authority_suppresses_rear_pass_and_retains_hard_stop(
     assert decision.diagnostics["encounter_control_hard_safety_retained"] is True
 
 
-def test_encounter_retains_bounded_front_hard_stop_escape_with_locked_side(
+def test_encounter_front_hard_stop_is_stop_only_and_never_starts_escape(
         tmp_path):
     config = build_pi5_full_config(
         _weight_root(tmp_path), max_v_mps=0.5,
@@ -3082,6 +3082,8 @@ def test_encounter_retains_bounded_front_hard_stop_escape_with_locked_side(
         "encounter_control_inhibit_dynamic_escape": True,
         "encounter_control_locked_steering_side": 1,
         "encounter_control_hard_safety_retained": True,
+        "encounter_control_stop_only_hard_safety": True,
+        "encounter_control_hard_stop_escape_motion_allowed": False,
         "probabilistic_obstacle_active_avoidance_enabled": True,
     }
 
@@ -3094,17 +3096,17 @@ def test_encounter_retains_bounded_front_hard_stop_escape_with_locked_side(
     )
 
     assert all(item.executed_control.v == 0.0 for item in turns)
-    assert all(item.executed_control.omega == pytest.approx(0.6)
-               for item in turns)
-    assert all(item.reason == "dynamic_hard_stop_escape" for item in turns)
-    assert reverse.executed_control.v == pytest.approx(-0.3)
-    assert reverse.executed_control.omega > 0.0
+    assert all(item.executed_control.omega == 0.0 for item in turns)
+    assert all(item.reason == "near_body_hard_stop" for item in turns)
+    assert reverse.executed_control.v == 0.0
+    assert reverse.executed_control.omega == 0.0
     assert reverse.diagnostics[
         "encounter_control_hard_stop_escape_retained"
+    ] is False
+    assert reverse.diagnostics[
+        "encounter_control_stop_only_hard_safety"
     ] is True
-    assert turns[0].diagnostics[
-        "dynamic_escape_geometric_turn_source"
-    ] == "encounter_mode_locked_side"
+    assert reverse.diagnostics["final_motion_owner"] == "hard_stop"
 
 
 def test_encounter_locked_side_is_authoritative_in_escape_side_selector(

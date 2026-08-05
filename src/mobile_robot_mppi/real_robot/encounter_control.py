@@ -207,7 +207,12 @@ class EncounterControlAuthority:
             "encounter_control_inhibit_rear_pass": active,
             "encounter_control_inhibit_forward_passage": active,
             "encounter_control_inhibit_dynamic_escape": active,
+            # While a semantic transaction owns direction, hard safety has a
+            # veto but no alternative motion generator.  In particular it may
+            # not replay the legacy turn/reverse escape transaction.
+            "encounter_control_stop_only_hard_safety": active,
             "encounter_control_hard_safety_retained": True,
+            "encounter_control_hard_stop_escape_motion_allowed": False,
         }
 
     def _target_speed(
@@ -306,10 +311,14 @@ class EncounterControlAuthority:
             and rear_range >= self.config.frontal_reverse_minimum_rear_range_m
             and not emergency
         )
+        planner_reverse_rejected = False
         if emergency:
-            # Do not pre-empt the arbiter's causal hard-stop diagnostics.  It
-            # will zero translation (and, where required, all motion) below.
-            reason = "hard_safety_pending"
+            # Preserve the independent scan veto, but hand it an unambiguous
+            # stop.  Passing the planner's emergency-template reverse through
+            # here allowed the downstream hard-stop escape state machine to
+            # turn and back up even though the semantic mode owned the side.
+            values[:2] = 0.0
+            reason = "hard_safety_stop_only"
         else:
             if reverse_available:
                 values[0] = max(
@@ -317,8 +326,12 @@ class EncounterControlAuthority:
                     -self.config.maximum_reverse_speed_mps,
                 )
                 reverse_applied = True
-            elif risk_safe:
-                values[0] = max(float(values[0]), target_speed)
+            else:
+                planner_reverse_rejected = bool(float(values[0]) < 0.0)
+                # Risk remains observable and the final scan guard can still
+                # slow or stop.  It cannot choose longitudinal direction once
+                # the mode has admitted and locked an avoidance transaction.
+                values[0] = target_speed
             proposed_omega = float(values[1])
             same_direction = bool(
                 target_omega == 0.0
@@ -373,6 +386,16 @@ class EncounterControlAuthority:
             "encounter_control_risk_safe": risk_safe,
             "encounter_control_reverse_available": reverse_available,
             "encounter_control_reverse_applied": reverse_applied,
+            "encounter_control_planner_reverse_rejected": bool(
+                planner_reverse_rejected
+            ),
+            "encounter_control_motion_owner": (
+                "hard_stop"
+                if emergency
+                else "explicit_frontal_reverse"
+                if reverse_applied
+                else "encounter"
+            ),
             "encounter_control_hard_safety_pending": emergency,
             "encounter_control_predicted_trajectory_recomputed": False,
         })

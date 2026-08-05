@@ -1284,7 +1284,13 @@ class ScanGuardArbiter:
         encounter_hard_stop_escape_retained = bool(
             encounter_control_authoritative
             and context.get(
-                "encounter_control_hard_safety_retained", False
+                "encounter_control_hard_stop_escape_motion_allowed", False
+            )
+        )
+        encounter_stop_only_hard_safety = bool(
+            encounter_control_authoritative
+            and context.get(
+                "encounter_control_stop_only_hard_safety", False
             )
         )
         reason = str(guard_result.get("reason", "front_clear"))
@@ -1577,6 +1583,19 @@ class ScanGuardArbiter:
             self._dynamic_escape_hold_values = None
             self._dynamic_escape_direction_commit_remaining = 0
             self._dynamic_escape_direction_commit_values = None
+            # A close-range turn/reverse transaction is also moving-command
+            # authority.  Clear it while the semantic transaction is active so
+            # it cannot resume from stale counters at rejoin handoff.
+            self._dynamic_escape_hard_stop_turn_remaining = 0
+            self._dynamic_escape_hard_stop_reverse_remaining = 0
+            self._dynamic_escape_hard_stop_turn_sign = 0.0
+            self._dynamic_escape_hard_stop_consumed = False
+            self._dynamic_escape_hard_stop_rear_blocked_latched = False
+            self._dynamic_escape_hard_stop_rear_clear_retry_used = False
+            self._dynamic_escape_hard_stop_rear_blocked_wait_remaining = 0
+            self._dynamic_escape_hard_stop_completed_hold_count = 0
+            self._dynamic_escape_hard_stop_side_rear_release_latched = False
+            self._dynamic_escape_hard_stop_side_rear_release_abort_count = 0
             self._dynamic_escape_corridor_remaining = 0
             self._dynamic_escape_corridor_turn_remaining = 0
             self._dynamic_escape_corridor_turn_sign = 0.0
@@ -2213,6 +2232,7 @@ class ScanGuardArbiter:
         )
         dynamic_hard_stop_geometric_event = bool(
             self.dynamic_escape_hard_stop_enabled
+            and not encounter_stop_only_hard_safety
             and (
                 not encounter_dynamic_escape_inhibited
                 or encounter_hard_stop_escape_retained
@@ -3532,6 +3552,11 @@ class ScanGuardArbiter:
             else:
                 self._static_reverse_escape_run_steps = 0
                 self._static_reverse_escape_last_v = 0.0
+            if (
+                encounter_stop_only_hard_safety
+                and "omega_cmd" in self.action_spec.names
+            ):
+                values[self.action_spec.index("omega_cmd")] = 0.0
         elif reason == "front_soft_block":
             # The legacy ROS bridge has a stateful, separately tested creep
             # recovery.  The Python-3 research runtime does not.  Treating a
@@ -3723,6 +3748,22 @@ class ScanGuardArbiter:
                 )
             )
         diagnostics["dynamic_escape_allowed"] = dynamic_escape_allowed
+        diagnostics["encounter_control_stop_only_hard_safety"] = bool(
+            encounter_stop_only_hard_safety
+        )
+        diagnostics["encounter_control_hard_stop_escape_retained"] = bool(
+            encounter_hard_stop_escape_retained
+        )
+        diagnostics["final_motion_owner"] = (
+            "hard_stop"
+            if encounter_stop_only_hard_safety
+            and guard_result.get("emergency_stop", False)
+            else "encounter"
+            if encounter_control_authoritative
+            else "safety"
+            if overridden
+            else "mppi"
+        )
         diagnostics["directional_motion_guard_enabled"] = bool(
             self.directional_motion_guard_enabled
         )

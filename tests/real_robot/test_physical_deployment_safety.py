@@ -201,13 +201,6 @@ def test_physical_limits_are_shared_with_planner_and_safety(tmp_path):
     ] == pytest.approx(100.0)
     assert guard["rear_pass_through_force_forward_enabled"] is True
     assert guard["rear_pass_through_force_straight_enabled"] is True
-    assert guard["rear_pass_through_goal_rejoin_enabled"] is True
-    assert guard[
-        "rear_pass_through_goal_rejoin_same_side_min_clearance_m"
-    ] == pytest.approx(1.40)
-    assert guard[
-        "rear_pass_through_goal_rejoin_opposite_min_clearance_m"
-    ] == pytest.approx(2.00)
     assert guard[
         "rear_pass_through_min_front_clearance_m"
     ] == pytest.approx(0.90)
@@ -3166,61 +3159,6 @@ def test_rear_pass_goes_straight_when_person_is_centered_behind(tmp_path):
     assert decision.executed_control.values.tolist() == pytest.approx(
         [0.35, 0.0]
     )
-
-
-def test_rear_pass_rejoins_goal_only_after_directional_clearance(tmp_path):
-    config = build_pi5_full_config(
-        _weight_root(tmp_path),
-        max_v_mps=0.5,
-        max_reverse_v_mps=0.3,
-        max_omega_radps=0.6,
-    )
-    action_spec = action_spec_from_config(config["action_space"])
-
-    def decide(clearance, goal_error):
-        arbiter = ScanGuardArbiter(
-            action_spec, config["perception"]["scan_guard"]
-        )
-        return arbiter.arbitrate(
-            ControlCommand([-0.3, -0.6]),
-            {
-                "emergency_stop": True,
-                "reason": "temporal_collision_risk",
-                "temporal_scan_valid": True,
-                "temporal_scan_ttc_s": 0.30,
-                "temporal_scan_center_angle_rad": math.radians(-140.0),
-                "temporal_scan_clearance_m": clearance,
-                "min_front_range": 2.0,
-            },
-            {"physical_goal_bearing_error_rad": goal_error},
-        )
-
-    same_side = decide(1.50, -0.70)
-    assert same_side.executed_control.values.tolist() == pytest.approx(
-        [0.35, -0.30]
-    )
-    assert same_side.diagnostics[
-        "rear_pass_through_goal_rejoin_applied"
-    ] is True
-    assert same_side.diagnostics[
-        "rear_pass_through_goal_rejoin_same_side"
-    ] is True
-
-    opposite_too_close = decide(1.50, 0.70)
-    assert opposite_too_close.executed_control.values.tolist() == pytest.approx(
-        [0.35, 0.0]
-    )
-    assert opposite_too_close.diagnostics[
-        "rear_pass_through_goal_rejoin_applied"
-    ] is False
-
-    opposite_clear = decide(2.10, 0.70)
-    assert opposite_clear.executed_control.values.tolist() == pytest.approx(
-        [0.35, 0.30]
-    )
-    assert opposite_clear.diagnostics[
-        "rear_pass_through_goal_rejoin_applied"
-    ] is True
 
 
 def test_dynamic_side_hard_stop_does_not_advance_inside_protected_sector(

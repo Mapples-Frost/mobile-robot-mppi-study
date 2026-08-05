@@ -378,11 +378,6 @@ def _replay_run(rows, summary, action_spec, guard_config, planner_config):
                 "dynamic_escape_geometric_goal_release_applied", False
             )
         ))
-        performance_events["rear_pass_goal_rejoin_cycles"] += int(bool(
-            decision.diagnostics.get(
-                "rear_pass_through_goal_rejoin_applied", False
-            )
-        ))
         performance_events["retry_goal_rejected_cycles"] += int(bool(
             decision.diagnostics.get(
                 "dynamic_escape_persistent_front_retry_goal_rejected", False
@@ -558,32 +553,15 @@ def _replay_run(rows, summary, action_spec, guard_config, planner_config):
             violation_examples["rear_force_forward"].append(cycle)
         if force_rear and output_v < 0.35 - 1.0e-12:
             violation_examples["rear_path_continuity"].append(cycle)
-        arbiter_rear_goal_steer = bool(decision.diagnostics.get(
-            "rear_pass_through_goal_rejoin_applied", False
-        ))
-        if (
-            force_rear
-            and abs(output_omega) > 0.05
-            and not arbiter_rear_goal_steer
-        ):
+        if force_rear and abs(output_omega) > 0.05:
             violation_examples["rear_path_steering_override"].append(cycle)
-        arbiter_rear_goal_heading = _finite(decision.diagnostics.get(
-            "rear_pass_through_goal_rejoin_heading_error_rad"
-        ))
-        if (
-            arbiter_rear_goal_steer
-            and arbiter_rear_goal_heading is not None
-            and output_omega * arbiter_rear_goal_heading <= 0.0
-        ):
-            violation_examples["rear_goal_steer_wrong_side"].append(cycle)
-        path_rear_goal_steer = bool(path.get(
+        rear_goal_steer = bool(path.get(
             "rear_only_goal_steer_active", False
         ))
-        rear_goal_steer = arbiter_rear_goal_steer or path_rear_goal_steer
         rear_goal_heading_error = _finite(path.get("heading_error_rad"))
         if (
             force_rear
-            and path_rear_goal_steer
+            and rear_goal_steer
             and rear_goal_heading_error is not None
             and abs(rear_goal_heading_error)
             <= _GOAL_REJOIN_REAR_HEMISPHERE_RAD

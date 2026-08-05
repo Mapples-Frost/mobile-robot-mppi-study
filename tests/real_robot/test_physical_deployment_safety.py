@@ -94,11 +94,16 @@ def test_physical_limits_are_shared_with_planner_and_safety(tmp_path):
     assert guard["dynamic_escape_geometric_rearm_clear_steps"] == 3
     assert guard["dynamic_escape_coast_turn_gain"] == pytest.approx(0.55)
     assert guard["dynamic_escape_coast_max_omega_radps"] == pytest.approx(0.30)
+    assert guard["dynamic_recovery_enabled"] is False
+    assert guard["dynamic_recovery_translation_enabled"] is False
     assert guard["dynamic_escape_reverse_speed"] == pytest.approx(0.30)
     assert guard["dynamic_escape_hard_stop_enabled"] is True
-    assert guard["dynamic_escape_hard_stop_turn_steps"] == 3
-    assert guard["dynamic_escape_hard_stop_reverse_steps"] == 6
+    assert guard["dynamic_escape_hard_stop_turn_steps"] == 4
+    assert guard["dynamic_escape_hard_stop_reverse_steps"] == 12
     assert guard["dynamic_escape_hard_stop_reverse_speed"] == pytest.approx(0.30)
+    assert guard[
+        "dynamic_escape_hard_stop_reverse_max_omega_radps"
+    ] == pytest.approx(0.45)
     assert guard["dynamic_escape_hard_stop_min_rear_range"] == pytest.approx(0.80)
     assert guard[
         "dynamic_escape_hard_stop_direction_refresh_enabled"
@@ -677,7 +682,7 @@ def test_front_dynamic_hard_stop_selects_side_then_reverses_only_if_rear_clear(
 
     turns = [
         arbiter.arbitrate(ControlCommand([0.5, 0.1]), guard, context)
-        for _ in range(3)
+        for _ in range(4)
     ]
     for decision in turns:
         assert decision.executed_control.v == 0.0
@@ -691,7 +696,7 @@ def test_front_dynamic_hard_stop_selects_side_then_reverses_only_if_rear_clear(
         ControlCommand([0.5, 0.1]), guard, context
     )
     assert reverse.executed_control.v == pytest.approx(-0.3)
-    assert reverse.executed_control.omega == pytest.approx(-0.3)
+    assert reverse.executed_control.omega == pytest.approx(-0.45)
     assert reverse.diagnostics[
         "dynamic_escape_hard_stop_reverse_authorized"
     ] is True
@@ -715,7 +720,7 @@ def test_front_dynamic_hard_stop_selects_side_then_reverses_only_if_rear_clear(
     blocked_arbiter = ScanGuardArbiter(
         action_spec, config["perception"]["scan_guard"]
     )
-    for _ in range(3):
+    for _ in range(4):
         blocked_arbiter.arbitrate(
             ControlCommand([0.5, 0.1]), blocked_guard, context
         )
@@ -794,14 +799,18 @@ def test_dynamic_hard_stop_transaction_survives_sparse_clear_frames(tmp_path):
     fourth = arbiter.arbitrate(
         ControlCommand([0.35, -0.6]), sparse_guard, {}
     )
+    fifth = arbiter.arbitrate(
+        ControlCommand([0.35, -0.6]), sparse_guard, {}
+    )
 
     assert [first.executed_control.v, second.executed_control.v,
             third.executed_control.v] == [0.0, 0.0, 0.0]
     assert third.diagnostics[
         "dynamic_escape_hard_stop_transaction_held"
     ] is True
-    assert fourth.executed_control.v == pytest.approx(-0.3)
-    assert fourth.diagnostics[
+    assert fourth.executed_control.v == 0.0
+    assert fifth.executed_control.v == pytest.approx(-0.3)
+    assert fifth.diagnostics[
         "dynamic_escape_hard_stop_reverse_authorized"
     ] is True
 
@@ -854,7 +863,7 @@ def test_close_crowd_track_switch_cannot_restart_bounded_turn(tmp_path):
     ] is False
     assert second.diagnostics[
         "dynamic_escape_hard_stop_turn_remaining"
-    ] == 1
+    ] == 2
 
 
 def test_blocked_crowd_stops_after_finite_turn_then_retries_open_rear_once(
@@ -891,7 +900,7 @@ def test_blocked_crowd_stops_after_finite_turn_then_retries_open_rear_once(
         arbiter.arbitrate(
             ControlCommand([-0.3, 0.6]), blocked_guard, context
         )
-        for _ in range(9)
+        for _ in range(16)
     ]
     held = [
         arbiter.arbitrate(
@@ -904,7 +913,7 @@ def test_blocked_crowd_stops_after_finite_turn_then_retries_open_rear_once(
         item.diagnostics["dynamic_escape_hard_stop_phase"]
         == "turn_in_place"
         for item in decisions
-    ) == 3
+    ) == 4
     assert all(item.executed_control.v == 0.0 for item in decisions)
     assert all(item.executed_control.v == 0.0 for item in held)
     assert all(item.executed_control.omega == 0.0 for item in held)
@@ -1011,8 +1020,20 @@ def test_frontal_escape_rejects_noisy_side_reversal_and_locks_coast(tmp_path):
     genuine_crossing_reversal[
         "probabilistic_obstacle_motion_lateral_body_mps"
     ] = -0.55
-    refreshed = arbiter.arbitrate(
+    still_frontal = arbiter.arbitrate(
         ControlCommand([0.35, -0.6]), guard, genuine_crossing_reversal
+    )
+    assert still_frontal.executed_control.omega > 0.0
+    assert still_frontal.diagnostics[
+        "dynamic_escape_prediction_direction_refresh_rejected"
+    ] is True
+
+    oblique_guard = dict(guard)
+    oblique_guard["dynamic_obstacle_bearing_rad"] = 0.45
+    refreshed = arbiter.arbitrate(
+        ControlCommand([0.35, -0.6]),
+        oblique_guard,
+        genuine_crossing_reversal,
     )
     assert refreshed.executed_control.omega == pytest.approx(-0.6)
     assert refreshed.diagnostics[
@@ -1084,6 +1105,142 @@ def test_late_crossing_prediction_replaces_uninformed_clearance_side(tmp_path):
     ] is True
     assert corrected.diagnostics[
         "dynamic_escape_geometric_direction_prediction_backed"
+    ] is True
+
+
+def test_prediction_backed_crossing_side_survives_temporal_emergency(tmp_path):
+    """Replay the control conflict from 220825 cycle 40.
+
+    A temporal TTC emergency is not a 0.50 m near-body event.  It must not hand
+    an already forecast-backed right passage back to a left-turning planner
+    sample.
+    """
+    config = build_pi5_full_config(
+        _weight_root(tmp_path),
+        max_v_mps=0.5,
+        max_reverse_v_mps=0.3,
+        max_omega_radps=0.6,
+    )
+    arbiter = ScanGuardArbiter(
+        action_spec_from_config(config["action_space"]),
+        config["perception"]["scan_guard"],
+    )
+    guard = {
+        "emergency_stop": False,
+        "should_slow_down": True,
+        "reason": "temporal_slowdown",
+        "dynamic_obstacle_scan_flow_match": True,
+        "temporal_scan_valid": True,
+        "temporal_scan_ttc_s": 1.5,
+        "dynamic_obstacle_bearing_rad": 0.48,
+        "min_left_side_range": 1.5,
+        "min_right_side_range": 1.5,
+        "min_front_range": 1.4,
+    }
+    context = {
+        "probabilistic_obstacle_active_avoidance_enabled": True,
+        "probabilistic_obstacle_preferred_escape_heading_error_rad": -0.95,
+        "probabilistic_obstacle_forward_lateral_countermotion_applied": True,
+        "probabilistic_obstacle_motion_lateral_body_mps": 0.48,
+    }
+    for _ in range(4):
+        decision = arbiter.arbitrate(
+            ControlCommand([0.5, 0.6]), guard, context
+        )
+        assert decision.executed_control.omega < 0.0
+
+    emergency = dict(guard)
+    emergency.update({
+        "emergency_stop": True,
+        "reason": "temporal_collision_risk",
+    })
+    decision = arbiter.arbitrate(
+        ControlCommand([0.5, 0.6]), emergency, context
+    )
+
+    assert decision.executed_control.v > 0.0
+    assert decision.executed_control.omega < 0.0
+    assert decision.diagnostics[
+        "dynamic_escape_prediction_backed_temporal_override"
+    ] is True
+
+
+def test_frontal_lateral_noise_cannot_late_flip_clearance_side(tmp_path):
+    """Replay the false crossing acquisition from 221026 cycle 41."""
+    config = build_pi5_full_config(
+        _weight_root(tmp_path),
+        max_v_mps=0.5,
+        max_reverse_v_mps=0.3,
+        max_omega_radps=0.6,
+    )
+    arbiter = ScanGuardArbiter(
+        action_spec_from_config(config["action_space"]),
+        config["perception"]["scan_guard"],
+    )
+    guard = {
+        "emergency_stop": False,
+        "should_slow_down": True,
+        "reason": "temporal_slowdown",
+        "dynamic_obstacle_scan_flow_match": True,
+        "temporal_scan_valid": True,
+        "temporal_scan_ttc_s": 1.5,
+        "dynamic_obstacle_bearing_rad": -0.23,
+        "min_left_side_range": 1.6,
+        "min_right_side_range": 0.7,
+        "min_front_range": 1.2,
+    }
+    initial_context = {
+        "probabilistic_obstacle_active_avoidance_enabled": True,
+        "probabilistic_obstacle_preferred_escape_heading_error_rad": 0.0,
+        "probabilistic_obstacle_forward_lateral_countermotion_applied": False,
+        "probabilistic_obstacle_motion_lateral_body_mps": 0.0,
+    }
+    initial = arbiter.arbitrate(
+        ControlCommand([0.5, 0.0]), guard, initial_context
+    )
+    assert initial.executed_control.omega > 0.0
+
+    noisy_leg = dict(initial_context)
+    noisy_leg.update({
+        "probabilistic_obstacle_escape_direction_refreshed": True,
+        "probabilistic_obstacle_preferred_escape_heading_error_rad": -0.9,
+        "probabilistic_obstacle_forward_lateral_countermotion_applied": True,
+        "probabilistic_obstacle_motion_lateral_body_mps": 0.99,
+    })
+    decision = arbiter.arbitrate(
+        ControlCommand([0.5, -0.6]), guard, noisy_leg
+    )
+
+    assert decision.executed_control.omega > 0.0
+    assert decision.diagnostics[
+        "dynamic_escape_prediction_direction_late_acquisition_available"
+    ] is False
+    assert decision.diagnostics[
+        "dynamic_escape_prediction_direction_refresh_requested"
+    ] is True
+    assert decision.diagnostics[
+        "dynamic_escape_prediction_direction_refresh_rejected"
+    ] is True
+
+    # Finish the finite side-selection prefix.  A subsequent temporal-only
+    # emergency must keep this clearance-selected side instead of accepting an
+    # opposite raw planner yaw.  The 0.50 m near-body event still preempts it.
+    for _ in range(2):
+        decision = arbiter.arbitrate(
+            ControlCommand([0.5, -0.6]), guard, noisy_leg
+        )
+        assert decision.executed_control.omega > 0.0
+    emergency = dict(guard)
+    emergency.update({
+        "emergency_stop": True,
+        "reason": "temporal_collision_risk",
+    })
+    decision = arbiter.arbitrate(
+        ControlCommand([0.5, -0.6]), emergency, noisy_leg
+    )
+    assert decision.executed_control.omega > 0.0
+    assert decision.diagnostics[
+        "dynamic_escape_geometric_temporal_override"
     ] is True
 
 
@@ -1799,6 +1956,57 @@ def test_dynamic_zero_translation_turn_budget_includes_prior_temporal_turns(
     assert decisions[-1].diagnostics[
         "dynamic_escape_zero_translation_turn_suppressed"
     ] is True
+
+
+def test_recovery_releases_when_zero_translation_turn_budget_is_exhausted(
+        tmp_path):
+    config = build_pi5_full_config(
+        _weight_root(tmp_path),
+        max_v_mps=0.5,
+        max_reverse_v_mps=0.3,
+        max_omega_radps=0.6,
+    )
+    guard_config = dict(config["perception"]["scan_guard"])
+    guard_config.update({
+        "dynamic_recovery_enabled": True,
+        "dynamic_recovery_translation_enabled": True,
+    })
+    arbiter = ScanGuardArbiter(
+        action_spec_from_config(config["action_space"]), guard_config
+    )
+    arbiter._dynamic_escape_seen = True
+    arbiter._dynamic_recovery_active = True
+    arbiter._dynamic_escape_zero_translation_turn_steps = (
+        arbiter.dynamic_escape_max_zero_translation_turn_steps
+    )
+    clear = {
+        "emergency_stop": False,
+        "should_slow_down": False,
+        "reason": "front_clear",
+        "temporal_scan_valid": False,
+    }
+    context = {
+        "target_bearing_error": 1.0,
+        "terminal_control_distance": 3.0,
+        "probabilistic_obstacle_maximum_step_probability": 0.0,
+    }
+
+    released = arbiter.arbitrate(
+        ControlCommand([0.4, 0.0]), clear, context
+    )
+    assert released.executed_control.values.tolist() == pytest.approx(
+        [0.0, 0.0]
+    )
+    assert released.reason == "dynamic_recovery_budget_release"
+    assert released.diagnostics[
+        "dynamic_recovery_zero_turn_budget_release"
+    ] is True
+    assert arbiter._dynamic_recovery_active is False
+
+    resumed = arbiter.arbitrate(
+        ControlCommand([0.4, 0.0]), clear, context
+    )
+    assert resumed.executed_control.v == pytest.approx(0.4)
 
 
 def test_directional_guard_ignores_rear_temporal_ttc_for_forward_motion(

@@ -360,21 +360,32 @@ def build_pi5_full_config(
             "dynamic_escape_coast_max_omega_radps": min(
                 0.30, max_omega_radps
             ),
+            # The simulation recovery controller assumes smooth continuous
+            # actuation.  On the physical 10 Hz stack it can demand alignment
+            # after the bounded in-place-yaw budget is already exhausted,
+            # permanently absorbing control at (0, 0).  Goal rejoin remains in
+            # the MPPI/reference stack; only this conflicting takeover is off.
+            "dynamic_recovery_enabled": False,
+            "dynamic_recovery_translation_enabled": False,
             # A continuous human encounter may consume the short geometric
-            # arc only once.  Forecast fragmentation no longer restarts six
-            # saturated turn steps until five genuinely clear cycles re-arm
+            # arc only once.  Forecast fragmentation no longer restarts the
+            # saturated turn prefix until three genuinely clear cycles re-arm
             # the mechanism.
             "dynamic_escape_geometric_single_commit_enabled": True,
             "dynamic_escape_geometric_rearm_clear_steps": 3,
             # A person inside the 0.50 m forward hard-stop envelope still
             # forbids forward translation.  Establish a side in place, then
-            # permit six short reverse commands only with positively observed
-            # rear headroom.  At 0.30 m/s and 10 Hz this transaction travels at
-            # most 0.18 m before it must re-arm on fresh evidence.
+            # permit a finite reverse arc only with positively observed rear
+            # headroom.  At 0.30 m/s and 10 Hz this transaction travels at most
+            # 0.36 m: enough to create room during a direct human approach,
+            # while remaining strictly bounded.
             "dynamic_escape_hard_stop_enabled": True,
-            "dynamic_escape_hard_stop_turn_steps": 3,
-            "dynamic_escape_hard_stop_reverse_steps": 6,
+            "dynamic_escape_hard_stop_turn_steps": 4,
+            "dynamic_escape_hard_stop_reverse_steps": 12,
             "dynamic_escape_hard_stop_reverse_speed": max_reverse_v_mps,
+            "dynamic_escape_hard_stop_reverse_max_omega_radps": min(
+                0.45, max_omega_radps
+            ),
             "dynamic_escape_hard_stop_min_rear_range": 0.80,
             "dynamic_escape_hard_stop_rear_sector_deg": 120.0,
             # A close crowd swaps the selected leg/person track frequently.

@@ -295,6 +295,12 @@ class ScanGuardArbiter:
         self.dynamic_escape_hard_stop_reverse_speed = float(
             self.config.get("dynamic_escape_hard_stop_reverse_speed", 0.20)
         )
+        self.dynamic_escape_hard_stop_reverse_max_omega_radps = float(
+            self.config.get(
+                "dynamic_escape_hard_stop_reverse_max_omega_radps",
+                self.dynamic_escape_coast_max_omega_radps,
+            )
+        )
         self.dynamic_escape_hard_stop_min_rear_range = float(
             self.config.get("dynamic_escape_hard_stop_min_rear_range", 0.80)
         )
@@ -543,6 +549,7 @@ class ScanGuardArbiter:
             or self.dynamic_escape_hard_stop_turn_steps < 1
             or self.dynamic_escape_hard_stop_reverse_steps < 1
             or self.dynamic_escape_hard_stop_reverse_speed <= 0.0
+            or self.dynamic_escape_hard_stop_reverse_max_omega_radps < 0.0
             or self.dynamic_escape_hard_stop_min_rear_range <= 0.0
             or self.dynamic_escape_hard_stop_rear_clear_retry_steps < 1
             or self.dynamic_escape_max_zero_translation_turn_steps < 1
@@ -1646,7 +1653,12 @@ class ScanGuardArbiter:
         )
         late_prediction_oblique_geometry = bool(
             math.isfinite(obstacle_bearing)
-            and abs(obstacle_bearing) >= math.radians(12.0)
+            # A frontal leg cluster can report a large lateral velocity for one
+            # frame while the person is actually approaching head-on.  Do not
+            # let that point-cloud fragmentation replace the clearance-selected
+            # passage side.  Genuine crossings in the recorded physical runs
+            # first appeared outside this 20 degree frontal cone.
+            and abs(obstacle_bearing) >= math.radians(20.0)
         )
         late_prediction_available = bool(
             context.get(
@@ -1665,10 +1677,15 @@ class ScanGuardArbiter:
             and preferred_turn_sign
             != self._dynamic_escape_geometric_turn_sign
         )
+        prediction_direction_refresh_geometry_allowed = bool(
+            self._dynamic_escape_geometric_direction_prediction_backed
+            or late_prediction_oblique_geometry
+        )
         prediction_direction_refreshed = bool(
             (
                 prediction_direction_refresh_requested
                 and prediction_direction_refresh_lateral_evidence
+                and prediction_direction_refresh_geometry_allowed
             )
             or late_prediction_direction_refresh
         )
@@ -1833,7 +1850,13 @@ class ScanGuardArbiter:
             self.dynamic_escape_uncertainty_fusion_enabled
             and self._dynamic_escape_direction_commit_remaining > 0
             and self._dynamic_escape_direction_commit_values is not None
-            and not guard_result.get("emergency_stop", False)
+            and (
+                not guard_result.get("emergency_stop", False)
+                or (
+                    self._dynamic_escape_geometric_turn_sign != 0.0
+                    and not dynamic_hard_stop_geometric_event
+                )
+            )
             and not rear_only_evidence
         )
         geometric_forward_coast = bool(
@@ -1851,7 +1874,23 @@ class ScanGuardArbiter:
                     and "omega_cmd" in self.action_spec.names
                 )
             )
-            and not guard_result.get("emergency_stop", False)
+            and (
+                not guard_result.get("emergency_stop", False)
+                or (
+                    self._dynamic_escape_geometric_turn_sign != 0.0
+                    and not dynamic_hard_stop_geometric_event
+                )
+            )
+        )
+        geometric_temporal_escape_override = bool(
+            guard_result.get("emergency_stop", False)
+            and not dynamic_hard_stop_geometric_event
+            and self._dynamic_escape_geometric_turn_sign != 0.0
+            and (committed_geometric_escape or geometric_forward_coast)
+        )
+        prediction_backed_temporal_escape_override = bool(
+            geometric_temporal_escape_override
+            and self._dynamic_escape_geometric_direction_prediction_backed
         )
         reactive_reverse_required = bool(
             reactive_escape_allowed
@@ -1949,7 +1988,7 @@ class ScanGuardArbiter:
                     self._dynamic_escape_hard_stop_rear_blocked_latched = True
                     hard_stop_escape_phase = "rear_blocked_turn_only"
                 bounded_omega = min(
-                    self.dynamic_escape_coast_max_omega_radps,
+                    self.dynamic_escape_hard_stop_reverse_max_omega_radps,
                     abs(float(self.action_spec.upper[omega_index])),
                     abs(float(self.action_spec.lower[omega_index])),
                 )
@@ -2602,6 +2641,7 @@ class ScanGuardArbiter:
             )
         )
         dynamic_zero_translation_turn_suppressed = False
+        dynamic_recovery_zero_turn_budget_release = False
         if "v_cmd" in self.action_spec.names and "omega_cmd" in (
             self.action_spec.names
         ):
@@ -2617,6 +2657,35 @@ class ScanGuardArbiter:
                     ):
                         values[omega_index] = 0.0
                         dynamic_zero_translation_turn_suppressed = True
+                        if (
+                            self._dynamic_recovery_active
+                            and reason in {
+                                "dynamic_recovery_align",
+                                "dynamic_recovery_align_creep",
+                            }
+                        ):
+                            # Recovery cannot satisfy its heading tolerance once
+                            # the independent zero-translation yaw budget has
+                            # expired.  Releasing it here prevents an absorbing
+                            # (v=0, omega=0) state and returns authority to the
+                            # planner on the following cycle.
+                            self._dynamic_recovery_active = False
+                            self._dynamic_escape_seen = False
+                            self._dynamic_recovery_clear_steps = 0
+                            self._dynamic_recovery_release_count = 0
+                            self._dynamic_recovery_advance_steps = 0
+                            self._dynamic_recovery_alignment_creep_latched = (
+                                False
+                            )
+                            self._dynamic_recovery_previous_scan_clearance = (
+                                float("nan")
+                            )
+                            self._dynamic_recovery_clearance_trend_steps = 0
+                            self._dynamic_recovery_progress_watch_active = False
+                            self._dynamic_recovery_progress_watch_remaining = 0
+                            self._dynamic_recovery_progress_watch_samples = []
+                            dynamic_recovery_zero_turn_budget_release = True
+                            reason = "dynamic_recovery_budget_release"
                     else:
                         self._dynamic_escape_zero_translation_turn_steps += 1
                 # Once the bounded budget is consumed, a suppressed zero-yaw
@@ -2738,6 +2807,9 @@ class ScanGuardArbiter:
             and not prediction_direction_refreshed
         )
         diagnostics[
+            "dynamic_escape_prediction_direction_refresh_geometry_allowed"
+        ] = bool(prediction_direction_refresh_geometry_allowed)
+        diagnostics[
             "dynamic_escape_prediction_direction_lateral_speed_mps"
         ] = (
             float(lateral_motion_speed)
@@ -2828,6 +2900,12 @@ class ScanGuardArbiter:
         diagnostics["dynamic_escape_geometric_threat_evidence_active"] = bool(
             geometric_threat_evidence_active
         )
+        diagnostics[
+            "dynamic_escape_prediction_backed_temporal_override"
+        ] = bool(prediction_backed_temporal_escape_override)
+        diagnostics[
+            "dynamic_escape_geometric_temporal_override"
+        ] = bool(geometric_temporal_escape_override)
         diagnostics["dynamic_escape_held"] = bool(
             held_reactive_escape_allowed
             and not fresh_reactive_escape_allowed
@@ -2879,6 +2957,9 @@ class ScanGuardArbiter:
         diagnostics["dynamic_recovery_enabled"] = (
             self.dynamic_recovery_enabled
         )
+        diagnostics[
+            "dynamic_recovery_zero_turn_budget_release"
+        ] = bool(dynamic_recovery_zero_turn_budget_release)
         diagnostics["planner_temporal_escape_active"] = (
             planner_temporal_escape_active
         )

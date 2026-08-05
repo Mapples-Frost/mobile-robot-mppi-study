@@ -217,44 +217,44 @@ def replay(runs_root, weight_root):
                 guard,
                 frontal_context,
             )
-            for _ in range(4)
+            for _ in range(5)
         ]
-        fourth = decisions[-1]
+        fifth = decisions[-1]
         supervisor = _DynamicPathGuardSupervisor()
         output_v, path = supervisor.apply(
             *frontal_row["pose"],
             5.0,
             2.0,
-            fourth.executed_control.v,
-            fourth.reason,
+            fifth.executed_control.v,
+            fifth.reason,
             emergency_stop=bool(
-                fourth.diagnostics.get("emergency_stop", False)
+                fifth.diagnostics.get("emergency_stop", False)
             ),
-            proposed_omega=fourth.executed_control.omega,
+            proposed_omega=fifth.executed_control.omega,
             maximum_omega_radps=0.6,
             hazard_active=True,
         )
-        output_omega = fourth.executed_control.omega
+        output_omega = fifth.executed_control.omega
         override = path.get("commanded_omega_override_radps")
         if override is not None:
             output_omega = float(override)
         frontal_results[label] = {
-            "first_three_commands": [
+            "first_four_commands": [
                 decision.executed_control.values.tolist()
-                for decision in decisions[:3]
+                for decision in decisions[:4]
             ],
-            "fourth_arbitrated": fourth.executed_control.values.tolist(),
-            "fourth_commanded": [float(output_v), float(output_omega)],
-            "phase": fourth.diagnostics[
+            "fifth_arbitrated": fifth.executed_control.values.tolist(),
+            "fifth_commanded": [float(output_v), float(output_omega)],
+            "phase": fifth.diagnostics[
                 "dynamic_escape_hard_stop_phase"
             ],
-            "reverse_authorized": bool(fourth.diagnostics[
+            "reverse_authorized": bool(fifth.diagnostics[
                 "dynamic_escape_hard_stop_reverse_authorized"
             ]),
             "immediate_translation_stop": bool(
                 _immediate_translation_stop_requested(
-                    fourth.reason,
-                    fourth.diagnostics,
+                    fifth.reason,
+                    fifth.diagnostics,
                     output_v,
                 )
             ),
@@ -295,7 +295,7 @@ def replay(runs_root, weight_root):
     for label, rear_range in (("rear_clear", 2.0), ("rear_blocked", 0.45)):
         arbiter = ScanGuardArbiter(action_spec, guard_config)
         decisions = []
-        for cycle in (67, 68, 69, 70):
+        for cycle in (67, 68, 69, 70, 71):
             row = latest_rows[cycle]
             guard = dict(row["diagnostics"]["safety"])
             guard["raw_points_base"] = _front_and_rear_points(
@@ -309,7 +309,7 @@ def replay(runs_root, weight_root):
         latest_front_results[label] = {
             "old_commands": [
                 latest_rows[cycle]["commanded"]
-                for cycle in (67, 68, 69, 70)
+                for cycle in (67, 68, 69, 70, 71)
             ],
             "new_commands": [
                 decision.executed_control.values.tolist()
@@ -327,7 +327,7 @@ def replay(runs_root, weight_root):
                 ))
                 for decision in decisions
             ],
-            "fourth_reverse_authorized": bool(
+            "fifth_reverse_authorized": bool(
                 decisions[-1].diagnostics[
                     "dynamic_escape_hard_stop_reverse_authorized"
                 ]
@@ -502,7 +502,7 @@ def replay(runs_root, weight_root):
         })
 
     report = {
-        "schema": "recorded_dynamic_escape_replay_v3",
+        "schema": "recorded_dynamic_escape_replay_v4",
         "crossing_071115_cycle_70": {
             **crossing_motion,
             "old_commanded": crossing_row["commanded"],
@@ -538,40 +538,40 @@ def replay(runs_root, weight_root):
                 report["crossing_071115_cycle_70"]["new_commanded"],
             )
         ),
-        "front_clear_reverses_after_three_turns": bool(
-            frontal_results["rear_clear"]["fourth_commanded"][0] < 0.0
+        "front_clear_reverses_after_four_turns": bool(
+            frontal_results["rear_clear"]["fifth_commanded"][0] < 0.0
             and not frontal_results["rear_clear"][
                 "immediate_translation_stop"
             ]
         ),
         "front_blocked_never_reverses": bool(
-            frontal_results["rear_blocked"]["fourth_commanded"][0] == 0.0
+            frontal_results["rear_blocked"]["fifth_commanded"][0] == 0.0
             and frontal_results["rear_blocked"]["immediate_translation_stop"]
         ),
         "deployment_preserves_reverse_steering": bool(
             new_v < 0.0 and abs(new_omega) > 0.1
         ),
-        "latest_front_runs_three_continuous_turns": bool(
+        "latest_front_runs_four_continuous_turns": bool(
             all(
                 command[0] == 0.0
                 for command in latest_front_results[
                     "rear_clear"
-                ]["new_commands"][:3]
+                ]["new_commands"][:4]
             )
         ),
         "latest_front_clear_then_reverses": bool(
-            latest_front_results["rear_clear"]["new_commands"][3][0] < 0.0
+            latest_front_results["rear_clear"]["new_commands"][4][0] < 0.0
             and latest_front_results[
                 "rear_clear"
-            ]["fourth_reverse_authorized"]
+            ]["fifth_reverse_authorized"]
         ),
         "latest_front_blocked_never_reverses": bool(
             latest_front_results[
                 "rear_blocked"
-            ]["new_commands"][3][0] == 0.0
+            ]["new_commands"][4][0] == 0.0
             and not latest_front_results[
                 "rear_blocked"
-            ]["fourth_reverse_authorized"]
+            ]["fifth_reverse_authorized"]
         ),
         "latest_deployment_never_flips_reverse_to_forward": bool(
             latest_deployment[-1]["old_arbitrated"][0] < 0.0
@@ -601,7 +601,7 @@ def replay(runs_root, weight_root):
                 item["cycle"]
                 for item in crowd_replay
                 if item["phase"] == "turn_in_place"
-            ] == [382, 383, 384]
+            ] == [382, 383, 384, 385]
         ),
         "crowd_track_switch_never_restarts_hard_stop_turn": bool(
             any(
@@ -613,10 +613,14 @@ def replay(runs_root, weight_root):
                 for item in crowd_replay
             )
         ),
-        "crowd_waits_without_spinning_after_bounded_transaction": bool(
+        "crowd_stops_after_zero_yaw_budget_then_holds": bool(
             all(
-                item["phase"] == "bounded_transaction_complete"
-                and np.allclose(item["new_arbitrated"], (0.0, 0.0))
+                np.allclose(item["new_arbitrated"], (0.0, 0.0))
+                and (
+                    item["phase"] == "rear_blocked_turn_only"
+                    if item["cycle"] < 398
+                    else item["phase"] == "bounded_transaction_complete"
+                )
                 for item in crowd_replay
                 if 391 <= item["cycle"] < 416
             )

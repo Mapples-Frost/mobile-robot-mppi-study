@@ -2,6 +2,7 @@
 """Run latest Full Proposed on a CUDA PC and command a guarded Pi gateway."""
 
 import argparse
+from dataclasses import asdict
 import hashlib
 import json
 import math
@@ -28,6 +29,8 @@ from mobile_robot_mppi.core.types import (
     Twist2D,
 )
 from mobile_robot_mppi.real_robot import (
+    EncounterModeConfig,
+    EncounterModeManager,
     ForwardPassageConfig,
     ForwardPassageController,
     LivoxPointCloudFrame,
@@ -1834,6 +1837,10 @@ def main():
         max_omega_radps=args.max_omega_radps,
     )
     apply_pi5_algorithm_features(config, algorithm_features)
+    encounter_mode_config = EncounterModeConfig(
+        enabled=bool(algorithm_features["change_aware_prediction"]),
+        shadow_only=True,
+    )
     config["planner"].update({
         "device": "cuda",
         "residual_device_rollout_enabled": bool(
@@ -1905,6 +1912,12 @@ def main():
         ),
         "goal_rejoin_release_steps": _GOAL_REJOIN_RELEASE_STEPS,
         "direction_reversal_zero_transition_steps": 1,
+        # Stage 1 records the new semantic interaction state without granting
+        # it command authority.  Live evidence is required before enabling
+        # its rear-pass/forward-passage inhibit intent.
+        "encounter_mode_shadow_enabled": bool(encounter_mode_config.enabled),
+        "encounter_mode_control_enabled": False,
+        "encounter_mode_config": asdict(encounter_mode_config),
     })
     # Parity with run_silent_full: the controller timestep and the tracker
     # forecast timestep must agree, otherwise every live forecast becomes
@@ -1952,6 +1965,7 @@ def main():
         maximum_probability_mass=float(args.forward_passage_mass_ceiling),
     )
     forward_passage = ForwardPassageController(forward_passage_config)
+    encounter_modes = EncounterModeManager(encounter_mode_config)
     controller.reset(20260803)
     perception.reset()
     safety.reset()
@@ -1973,7 +1987,9 @@ def main():
     print(json.dumps({"warm_start": warm_start}, indent=2, sort_keys=True),
           flush=True)
 
-    timings = {name: [] for name in ("receive", "scan", "perception", "plan", "total")}
+    timings = {name: [] for name in (
+        "receive", "scan", "perception", "encounter", "plan", "total"
+    )}
     rows = []
     sequence = 0
     pose_x = pose_y = pose_yaw = 0.0
@@ -2084,6 +2100,18 @@ def main():
                     perceived.diagnostics.get(
                         "dynamic_obstacle_tracker", {}
                     )
+                )
+                stage = time.perf_counter()
+                encounter_diagnostics = encounter_modes.update(
+                    timestamp_s=observation.timestamp,
+                    pose=(pose_x, pose_y, pose_yaw),
+                    goal=(args.goal_x, args.goal_y),
+                    robot_speed_mps=status.v_mps,
+                    tracker_diagnostics=tracker,
+                    local_obstacles=perceived.observation.local_obstacles,
+                )
+                timings["encounter"].append(
+                    1000.0 * (time.perf_counter() - stage)
                 )
                 # Admission continuity is based on measured chassis motion,
                 # never on a merely proposed/disarmed command.
@@ -2304,6 +2332,10 @@ def main():
                     "path_guard": path_guard,
                     "physical_command_slew_guard": physical_slew_guard,
                     "direction_reversal_guard": direction_guard,
+                    # Semantic mode recognition is deliberately read-only in
+                    # this collection release.  Every would-be authority
+                    # transfer remains visible here for causal validation.
+                    "encounter_mode_shadow": encounter_diagnostics,
                     "tracker_dynamic_indices": tracker.get("mapless_dynamic_track_indices", ()),
                     "tracker_static_indices": tracker.get("mapless_static_track_indices", ()),
                     "tracker_unknown_indices": tracker.get("mapless_unknown_track_indices", ()),
@@ -2389,6 +2421,11 @@ def main():
                 "reliability_sidecar"
             ].get("device"),
             "diagnostic_schema_version": "pc_pi_full_proposed_diagnostics_v2",
+            "encounter_mode_shadow_enabled": bool(
+                encounter_mode_config.enabled
+            ),
+            "encounter_mode_control_enabled": False,
+            "encounter_mode_config": asdict(encounter_mode_config),
             "diagnostic_log": str(log_path),
             "controller_dt_s": controller_dt_s,
             "forecast_dt_s": forecast_dt_s,

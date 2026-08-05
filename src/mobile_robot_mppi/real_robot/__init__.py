@@ -14,6 +14,12 @@ from .livox_scan_adapter import (
 from .mapless_static_dynamic_filter import MaplessStaticDynamicFilter
 from .motion_bootstrap_tracker import MotionBootstrapMultiObstacleTracker
 from .forward_passage import ForwardPassageConfig, ForwardPassageController
+from .encounter_modes import (
+    EncounterMode,
+    EncounterModeConfig,
+    EncounterModeManager,
+    PassageStrategy,
+)
 from .livox_udp import LivoxUdpReceiver, decode_livox_datagram
 from .scout_can import ScoutGuardedCanGateway, ScoutZeroOnlyCanGuard
 
@@ -26,6 +32,10 @@ __all__ = [
     "MotionBootstrapMultiObstacleTracker",
     "ForwardPassageConfig",
     "ForwardPassageController",
+    "EncounterMode",
+    "EncounterModeConfig",
+    "EncounterModeManager",
+    "PassageStrategy",
     "LivoxUdpReceiver",
     "decode_livox_datagram",
     "ScoutGuardedCanGateway",

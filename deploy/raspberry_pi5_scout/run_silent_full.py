@@ -137,6 +137,11 @@ def _install_mapless_tracker(perception, human_leg_mode=False):
             "dynamic_classification_temporal_corroboration_maximum_ttc_s": 6.0,
             "dynamic_classification_temporal_corroboration_hold_cycles": 12,
             "dynamic_classification_temporal_corroboration_minimum_support_beams": 3,
+            # A strict, robot-relative collision-course certificate may
+            # publish a coherent human track before radial scan flow becomes
+            # observable.  This is the early lateral-crossing path; ordinary
+            # compact/background motion still requires temporal corroboration.
+            "dynamic_classification_collision_course_bypass_enabled": True,
         }
     bootstrap_overrides = {}
     if human_leg_mode:

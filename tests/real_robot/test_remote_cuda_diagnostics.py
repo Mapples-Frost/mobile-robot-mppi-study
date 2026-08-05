@@ -199,3 +199,6 @@ def test_human_leg_tracker_profile_is_explicit_and_default_is_unchanged(
     assert profile[
         "dynamic_classification_temporal_corroboration_hold_cycles"
     ] == 12
+    assert profile[
+        "dynamic_classification_collision_course_bypass_enabled"
+    ] is True

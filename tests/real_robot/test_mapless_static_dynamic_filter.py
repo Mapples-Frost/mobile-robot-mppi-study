@@ -130,6 +130,7 @@ def _observation(timestamp, robot_x=0.0, temporal_flow=None):
     return SimpleNamespace(
         timestamp=float(timestamp),
         pose=SimpleNamespace(x=float(robot_x), y=0.0, theta=0.0),
+        twist=SimpleNamespace(v=0.0, omega=0.0),
         auxiliary=(
             {}
             if temporal_flow is None
@@ -406,6 +407,45 @@ def test_temporal_corroboration_rejects_static_cluster_hopping_but_holds_motion(
     assert result.diagnostics[
         "mapless_dynamic_classification_temporal_corroboration_remaining"
     ] > 0
+
+
+def test_strong_collision_course_publishes_before_radial_flow():
+    value, tracker = _filter()
+    value.dynamic_classification_temporal_corroboration_enabled = True
+    value.dynamic_classification_collision_course_bypass_enabled = True
+    result = None
+    for index in range(6):
+        tracker.position = (1.20, 1.00 - 0.16 * index)
+        observation = _observation(0.12 * index)
+        observation.twist.v = 0.50
+        result = value.update(observation)
+
+    assert result.forecast == ("forecast",)
+    assert result.diagnostics["mapless_dynamic_track_indices"] == (0,)
+    track = result.diagnostics["tracks"][0]
+    assert track["mapless_temporal_flow_corroborated"] is False
+    assert track["mapless_strong_motion_collision_course"] is True
+    course = track[
+        "mapless_strong_motion_collision_course_diagnostics"
+    ]
+    assert 0.0 < course["closest_approach_time_s"] <= 4.0
+    assert course["closest_approach_distance_m"] <= 1.20
+
+
+def test_collision_course_bypass_rejects_short_cluster_hop():
+    value, tracker = _filter()
+    value.dynamic_classification_temporal_corroboration_enabled = True
+    value.dynamic_classification_collision_course_bypass_enabled = True
+    result = None
+    for index, lateral in enumerate((0.0, 0.19, 0.38)):
+        tracker.position = (1.20, lateral)
+        result = value.update(_observation(0.20 * index))
+
+    assert result.forecast is None
+    assert result.diagnostics["mapless_dynamic_track_indices"] == ()
+    assert result.diagnostics[
+        "mapless_strong_motion_collision_course_track_indices"
+    ] == ()
 
 
 def test_confirmed_dynamic_identity_survives_track_reset_handoff():

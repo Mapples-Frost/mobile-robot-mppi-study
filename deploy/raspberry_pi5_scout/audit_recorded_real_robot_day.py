@@ -185,7 +185,9 @@ def _goal_for_rows(rows):
 
 def _replay_run(rows, summary, action_spec, guard_config, planner_config):
     arbiter = ScanGuardArbiter(action_spec, guard_config)
-    path_supervisor = _DynamicPathGuardSupervisor()
+    path_supervisor = _DynamicPathGuardSupervisor(
+        single_dynamic_authority=True
+    )
     goal_x, goal_y = _goal_for_rows(rows)
     violation_examples = defaultdict(list)
     scenario_cycles = defaultdict(list)

@@ -956,7 +956,13 @@ class _DynamicPathGuardSupervisor:
     motion and the heading has diverged.  No old command or timer is retained.
     """
 
-    def __init__(self):
+    def __init__(self, *, single_dynamic_authority=False):
+        # The legacy state below remains available only for recorded
+        # counterfactuals.  Physical deployment enables single authority: the
+        # MPPI planner owns clear-scene control and ScanGuard owns a dynamic
+        # transaction.  This supervisor then observes but never synthesizes a
+        # second speed/yaw command.
+        self._single_dynamic_authority = bool(single_dynamic_authority)
         self._goal_rejoin_latched = False
         self._goal_behind_turn_sign = 0.0
         self._rear_only_goal_turn_sign = 0.0
@@ -1001,6 +1007,55 @@ class _DynamicPathGuardSupervisor:
         arbiter_rejoin_requested=False,
     ):
         reason = str(safety_reason)
+        if self._single_dynamic_authority:
+            _, diagnostics = _path_deviation_guard(
+                pose_x,
+                pose_y,
+                pose_yaw,
+                goal_x,
+                goal_y,
+                proposed_v,
+            )
+            diagnostics = dict(diagnostics)
+            unconditional_stop = bool(
+                reason in _UNCONDITIONAL_TRANSLATION_STOP_REASONS
+            )
+            dynamic_owner = bool(
+                reason in _DYNAMIC_PATH_AUTHORITY_REASONS
+                or hazard_active
+            )
+            output_v = 0.0 if unconditional_stop else float(proposed_v)
+            diagnostics.update({
+                "active": unconditional_stop,
+                "reason": (
+                    reason
+                    if unconditional_stop
+                    else "single_dynamic_authority_passthrough"
+                ),
+                "bypassed": bool(
+                    not unconditional_stop
+                    and diagnostics.get("active", False)
+                ),
+                "bypass_reason": (
+                    None
+                    if unconditional_stop
+                    else "single_control_owner"
+                ),
+                "would_be_active": bool(diagnostics.get("active", False)),
+                "would_be_reason": str(
+                    diagnostics.get("reason", "clear")
+                ),
+                "dynamic_authority": dynamic_owner,
+                "single_dynamic_authority": True,
+                "single_control_owner": (
+                    "scan_guard" if dynamic_owner else "mppi"
+                ),
+                "goal_rejoin_latched": False,
+                "commanded_omega_override_radps": None,
+                "input_v_mps": float(proposed_v),
+                "output_v_mps": output_v,
+            })
+            return output_v, diagnostics
         unconditional_stop = reason in _UNCONDITIONAL_TRANSLATION_STOP_REASONS
         fresh_rear_pass_through = reason == "rear_pass_through"
         if fresh_rear_pass_through:
@@ -1927,7 +1982,9 @@ def main():
     log_path = args.output / "cycles.jsonl"
     goal_stop_triggered = False
     last_goal_distance_m = math.hypot(args.goal_x, args.goal_y)
-    path_guard_supervisor = _DynamicPathGuardSupervisor()
+    path_guard_supervisor = _DynamicPathGuardSupervisor(
+        single_dynamic_authority=True
+    )
     initial_chassis_fault = None
     initial_chassis_fault_labels = ()
     try:

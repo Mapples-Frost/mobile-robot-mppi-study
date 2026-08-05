@@ -404,8 +404,13 @@ def build_pi5_full_config(
             # to compensate measured PC/gateway/chassis latency.
             "dynamic_escape_temporal_preturn_enabled": True,
             "dynamic_escape_temporal_preturn_speed": min(0.20, max_v_mps),
+            # Range flow has no lateral-velocity sign.  Use blind scan-only
+            # yaw solely for a genuinely frontal approach, where either
+            # clearance-selected side is valid.  Oblique/crossing motion is
+            # slowed for one cycle and handed to the direction-aware tracker;
+            # this prevents the +0.6 -> -0.6 reversal measured in 034714.
             "dynamic_escape_temporal_preturn_max_bearing_rad": math.radians(
-                75.0
+                20.0
             ),
             # During a head-on encounter, spend the short full-yaw prefix
             # turning instead of continuing to close at 0.35 m/s.  Normal and
@@ -532,8 +537,18 @@ def build_pi5_full_config(
             # reacts to measured closing TTC, not distance alone.
             "enabled": True,
             "safety_enabled": True,
+            # The former 1.5 m observation cap was the dominant physical
+            # avoidance delay: the 20260805_034714/034804/034842 runs first
+            # produced causal flow only at 1.44/1.43/1.33 m.  Observe closing
+            # motion out to 3 m while retaining the rate, contiguous-beam and
+            # ego-motion gates, so this changes lead time rather than turning
+            # static range alone into an avoidance trigger.
+            "maximum_clearance_m": 3.0,
             "safety_hard_stop_ttc_s": 0.80,
-            "safety_slow_ttc_s": 2.00,
+            # The dynamic arbiter triggers at 3 s TTC.  Align the scan-only
+            # handoff with that same boundary instead of withholding its
+            # preturn authority until 2 s.
+            "safety_slow_ttc_s": 3.00,
             "safety_slow_scale": 0.25,
             "ego_motion_compensation_enabled": True,
             "safety_continuous_slowdown_enabled": True,

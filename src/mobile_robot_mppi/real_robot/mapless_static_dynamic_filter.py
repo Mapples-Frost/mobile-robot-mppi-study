@@ -72,6 +72,7 @@ class MaplessStaticDynamicFilter:
         dynamic_classification_temporal_corroboration_maximum_ttc_s=6.0,
         dynamic_classification_temporal_corroboration_hold_cycles=12,
         dynamic_classification_temporal_corroboration_minimum_support_beams=3,
+        dynamic_classification_collision_course_bypass_enabled=False,
     ):
         if not isinstance(tracker, MotionBootstrapMultiObstacleTracker):
             raise TypeError("mapless filter requires motion-bootstrap tracker")
@@ -186,6 +187,9 @@ class MaplessStaticDynamicFilter:
         self.dynamic_classification_temporal_corroboration_minimum_support_beams = int(
             dynamic_classification_temporal_corroboration_minimum_support_beams
         )
+        self.dynamic_classification_collision_course_bypass_enabled = bool(
+            dynamic_classification_collision_course_bypass_enabled
+        )
         if self.dynamic_hold_cycles < 0:
             raise ValueError("dynamic hold cycles cannot be negative")
         if not 0.0 <= self.recent_vehicle_minimum_direction_coherence <= 1.0:
@@ -239,6 +243,99 @@ class MaplessStaticDynamicFilter:
             self.dynamic_classification_temporal_corroboration_remaining = (
                 self.dynamic_classification_temporal_corroboration_hold_cycles
             )
+
+    def _strong_motion_collision_course(self, evidence, track, observation):
+        """Certify an early coherent track without radial scan-flow evidence.
+
+        Consecutive-beam range flow is deliberately conservative and becomes
+        observable late for a lateral crossing.  The odometry-frame tracker,
+        however, can already contain a smooth physical trajectory.  Admit
+        only the strict intersection of strong motion evidence and a
+        robot-relative closest-approach calculation.  This is not a generic
+        motion bypass: distant/background motion, incoherent cluster hopping,
+        rear motion and trajectories that miss the chassis remain gated by
+        temporal flow.
+        """
+
+        if not bool(getattr(
+            self,
+            "dynamic_classification_collision_course_bypass_enabled",
+            False,
+        )):
+            return False, {}
+        if not bool(track.get("associated", False)):
+            return False, {}
+        try:
+            position = np.asarray(
+                (track["measurement_x"], track["measurement_y"]),
+                dtype=np.float64,
+            )
+            track_velocity = np.asarray(
+                (
+                    evidence["fitted_velocity_x_mps"],
+                    evidence["fitted_velocity_y_mps"],
+                ),
+                dtype=np.float64,
+            )
+        except (KeyError, TypeError, ValueError):
+            return False, {}
+        if not np.isfinite(position).all() or not np.isfinite(
+            track_velocity
+        ).all():
+            return False, {}
+
+        pose = observation.pose
+        yaw = float(pose.theta)
+        relative_position = position - np.asarray(
+            (float(pose.x), float(pose.y)), dtype=np.float64
+        )
+        current_range = float(np.linalg.norm(relative_position))
+        bearing = float(np.arctan2(
+            np.sin(
+                np.arctan2(relative_position[1], relative_position[0]) - yaw
+            ),
+            np.cos(
+                np.arctan2(relative_position[1], relative_position[0]) - yaw
+            ),
+        ))
+        robot_velocity = float(observation.twist.v) * np.asarray(
+            (np.cos(yaw), np.sin(yaw)), dtype=np.float64
+        )
+        relative_velocity = track_velocity - robot_velocity
+        relative_speed_squared = float(relative_velocity @ relative_velocity)
+        closest_time = (
+            -float(relative_position @ relative_velocity)
+            / relative_speed_squared
+            if relative_speed_squared > 1.0e-4
+            else float("inf")
+        )
+        closest_position = (
+            relative_position + closest_time * relative_velocity
+            if np.isfinite(closest_time)
+            else relative_position
+        )
+        closest_distance = float(np.linalg.norm(closest_position))
+        diagnostics = {
+            "current_range_m": current_range,
+            "bearing_rad": bearing,
+            "closest_approach_time_s": closest_time,
+            "closest_approach_distance_m": closest_distance,
+        }
+        certified = bool(
+            int(evidence.get("sample_count", 0)) >= 6
+            and float(evidence.get("duration_s", 0.0)) >= 0.50
+            and float(evidence.get("fitted_speed_mps", 0.0)) >= 0.25
+            and float(evidence.get("net_displacement_m", 0.0)) >= 0.22
+            and float(evidence.get("direction_coherence", 0.0)) >= 0.70
+            and float(evidence.get("fit_residual_m", float("inf"))) <= 0.05
+            and float(evidence.get("maximum_step_m", float("inf"))) <= 0.18
+            and int(track.get("selected_support_beams", 0) or 0) >= 6
+            and current_range <= 3.50
+            and abs(bearing) <= 0.5 * np.pi
+            and 0.0 < closest_time <= 4.0
+            and closest_distance <= 1.20
+        )
+        return certified, diagnostics
 
     def _evidence(self, history):
         values = np.asarray(history, dtype=np.float64)
@@ -436,6 +533,9 @@ class MaplessStaticDynamicFilter:
                 or bool(diagnostics.get(
                     "mapless_temporal_flow_corroborated", False
                 ))
+                or bool(diagnostics.get(
+                    "mapless_strong_motion_collision_course", False
+                ))
             )
             and (
                 vehicle_dynamic
@@ -604,6 +704,18 @@ class MaplessStaticDynamicFilter:
                 self.dynamic_classification_temporal_corroboration_remaining > 0
             )
             evidence = self._evidence(history)
+            (
+                strong_collision_course,
+                strong_collision_course_diagnostics,
+            ) = self._strong_motion_collision_course(
+                evidence, track, observation
+            )
+            track["mapless_strong_motion_collision_course"] = bool(
+                strong_collision_course
+            )
+            track[
+                "mapless_strong_motion_collision_course_diagnostics"
+            ] = dict(strong_collision_course_diagnostics)
             candidate_label = self._classify(evidence, track)
             if (
                 candidate_label == "static"
@@ -867,6 +979,20 @@ class MaplessStaticDynamicFilter:
                 ),
                 "mapless_dynamic_classification_temporal_corroboration_remaining": int(
                     self.dynamic_classification_temporal_corroboration_remaining
+                ),
+                "mapless_dynamic_classification_collision_course_bypass_enabled": bool(
+                    getattr(
+                        self,
+                        "dynamic_classification_collision_course_bypass_enabled",
+                        False,
+                    )
+                ),
+                "mapless_strong_motion_collision_course_track_indices": tuple(
+                    index
+                    for index, track in enumerate(track_values)
+                    if bool(track.get(
+                        "mapless_strong_motion_collision_course", False
+                    ))
                 ),
                 "mapless_temporal_flow_provisional_track_indices": (
                     provisional_flow_indices

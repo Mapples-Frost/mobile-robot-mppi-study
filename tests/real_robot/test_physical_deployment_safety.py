@@ -84,7 +84,9 @@ def test_physical_limits_are_shared_with_planner_and_safety(tmp_path):
     assert envelope["slow_distance_m"] == pytest.approx(0.75625)
     temporal = config["perception"]["temporal_scan_guard"]
     assert temporal["safety_enabled"] is True
+    assert temporal["maximum_clearance_m"] == pytest.approx(3.0)
     assert temporal["safety_hard_stop_ttc_s"] == pytest.approx(0.80)
+    assert temporal["safety_slow_ttc_s"] == pytest.approx(3.00)
     assert temporal["ego_motion_compensation_enabled"] is True
     assert temporal["safety_continuous_slowdown_enabled"] is True
     assert guard["dynamic_escape_trigger_ttc_s"] == pytest.approx(3.00)
@@ -94,6 +96,9 @@ def test_physical_limits_are_shared_with_planner_and_safety(tmp_path):
     assert guard["dynamic_escape_coast_steps"] == 14
     assert guard["dynamic_escape_temporal_preturn_enabled"] is True
     assert guard["dynamic_escape_temporal_preturn_speed"] == pytest.approx(0.20)
+    assert guard[
+        "dynamic_escape_temporal_preturn_max_bearing_rad"
+    ] == pytest.approx(math.radians(20.0))
     assert guard["dynamic_escape_frontal_entry_speed"] == pytest.approx(0.20)
     assert guard["dynamic_escape_persistent_front_retry_enabled"] is True
     assert guard["dynamic_escape_vetted_reverse_retry_steps"] == 4
@@ -511,6 +516,33 @@ def test_path_supervisor_is_transparent_before_any_dynamic_event():
     assert diagnostics["would_be_active"] is True
     assert diagnostics["goal_rejoin_latched"] is False
     assert diagnostics["commanded_omega_override_radps"] is None
+
+
+def test_physical_single_authority_never_rewrites_dynamic_command():
+    supervisor = _DynamicPathGuardSupervisor(
+        single_dynamic_authority=True
+    )
+    output_v, diagnostics = supervisor.apply(
+        2.8,
+        3.2,
+        0.9,
+        5.0,
+        2.0,
+        0.50,
+        safety_reason="dynamic_active_escape",
+        emergency_stop=False,
+        proposed_omega=0.60,
+        maximum_omega_radps=0.60,
+        hazard_active=True,
+        arbiter_steering_authoritative=False,
+        arbiter_rejoin_requested=True,
+    )
+    assert output_v == pytest.approx(0.50)
+    assert diagnostics["single_dynamic_authority"] is True
+    assert diagnostics["single_control_owner"] == "scan_guard"
+    assert diagnostics["reason"] == "single_dynamic_authority_passthrough"
+    assert diagnostics["commanded_omega_override_radps"] is None
+    assert diagnostics["goal_rejoin_latched"] is False
 
 
 def test_dynamic_reason_does_not_imply_unbounded_steering_authority():

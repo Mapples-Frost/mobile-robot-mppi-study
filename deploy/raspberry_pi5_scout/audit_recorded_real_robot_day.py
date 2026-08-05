@@ -28,10 +28,10 @@ from deploy.raspberry_pi5_scout.run_remote_cuda_full import (
     _DYNAMIC_PATH_AUTHORITY_REASONS,
     _DynamicPathGuardSupervisor,
     _dynamic_hazard_sector,
+    _physical_tracker_motion_context,
 )
 from mobile_robot_mppi.core.spaces import action_spec_from_config
 from mobile_robot_mppi.core.types import ControlCommand
-from mobile_robot_mppi.planning.mppi import MppiController
 from mobile_robot_mppi.safety.arbiter import ScanGuardArbiter
 
 
@@ -92,75 +92,24 @@ def _load_rows(path):
 def _motion_context(row, planner_config):
     """Return current relative-motion context and body-frame motion values."""
 
-    context = dict(row.get("diagnostics", {}).get("planner", {}))
     tracker = dict(row.get("diagnostics", {}).get("tracker", {}))
-    vx = _finite(tracker.get("measurement_velocity_x_mps"))
-    vy = _finite(tracker.get("measurement_velocity_y_mps"))
     pose = row.get("pose", (0.0, 0.0, 0.0))
-    if vx is None or vy is None or len(pose) < 3:
-        longitudinal = _finite(context.get(
-            "probabilistic_obstacle_motion_longitudinal_body_mps"
-        ), 0.0)
-        lateral = _finite(context.get(
-            "probabilistic_obstacle_motion_lateral_body_mps"
-        ), 0.0)
-        fraction = _finite(context.get(
-            "probabilistic_obstacle_motion_lateral_fraction"
-        ), 0.0)
-        return context, longitudinal, lateral, fraction
-
-    theta = float(pose[2])
-    motion = np.asarray((vx, vy), dtype=np.float64)
-    direction, longitudinal, lateral, fraction = (
-        MppiController._forward_lateral_countermotion_direction(
-            motion,
-            theta,
-            float(planner_config[
-                "probabilistic_obstacle_forward_lateral_countermotion_weight"
-            ]),
-            float(planner_config[
-                "probabilistic_obstacle_forward_lateral_minimum_speed_mps"
-            ]),
-            float(planner_config[
-                "probabilistic_obstacle_forward_lateral_minimum_fraction"
-            ]),
-        )
+    yaw = float(pose[2]) if len(pose) >= 3 else 0.0
+    context = _physical_tracker_motion_context(
+        row.get("diagnostics", {}).get("planner", {}),
+        tracker,
+        yaw,
+        planner_config,
     )
-    context.update({
-        "probabilistic_obstacle_motion_longitudinal_body_mps": longitudinal,
-        "probabilistic_obstacle_motion_lateral_body_mps": lateral,
-        "probabilistic_obstacle_motion_lateral_fraction": fraction,
-    })
-    if direction is None:
-        context.update({
-            "probabilistic_obstacle_forward_lateral_countermotion_applied": (
-                False
-            ),
-            "probabilistic_obstacle_preferred_escape_heading_error_rad": 0.0,
-        })
-    else:
-        preferred_heading = float(np.arctan2(direction[1], direction[0]))
-        heading_error = float(np.arctan2(
-            np.sin(preferred_heading - theta),
-            np.cos(preferred_heading - theta),
-        ))
-        context.update({
-            "probabilistic_obstacle_forward_lateral_countermotion_applied": (
-                True
-            ),
-            "probabilistic_obstacle_preferred_escape_direction_x": float(
-                direction[0]
-            ),
-            "probabilistic_obstacle_preferred_escape_direction_y": float(
-                direction[1]
-            ),
-            "probabilistic_obstacle_preferred_escape_heading_error_rad": (
-                heading_error
-            ),
-            "probabilistic_obstacle_escape_direction_source": (
-                "recorded_measurement_forward_lateral_countermotion"
-            ),
-        })
+    longitudinal = _finite(context.get(
+        "probabilistic_obstacle_motion_longitudinal_body_mps"
+    ), 0.0)
+    lateral = _finite(context.get(
+        "probabilistic_obstacle_motion_lateral_body_mps"
+    ), 0.0)
+    fraction = _finite(context.get(
+        "probabilistic_obstacle_motion_lateral_fraction"
+    ), 0.0)
     return context, float(longitudinal), float(lateral), float(fraction)
 
 
@@ -487,6 +436,7 @@ def _replay_run(rows, summary, action_spec, guard_config, planner_config):
         if (
             prediction_owned_turn
             and abs(lateral) >= 0.20
+            and fraction >= 0.35
             and abs(output_omega) >= 0.10
             and output_v > 0.02
             and lateral * output_omega >= 0.0

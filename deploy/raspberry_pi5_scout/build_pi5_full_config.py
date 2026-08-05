@@ -343,10 +343,11 @@ def build_pi5_full_config(
             # Respect the physical reverse envelope when the probabilistic
             # planner or the bounded close-range transaction selects reverse.
             "dynamic_escape_reverse_speed": max_reverse_v_mps,
-            # Four full-yaw cycles establish a visible passage side.  Further
-            # live-threat cycles coast on the tangent instead of continuing a
-            # saturated circle, so the detour cannot wind up into a large arc.
+            # Four full-yaw cycles commit a crossing side without masking a
+            # genuine reversal for longer than the recorded confirmation
+            # window.  Head-on encounters use the separate longer prefix.
             "dynamic_escape_direction_commit_steps": 4,
+            "dynamic_escape_frontal_commit_steps": 6,
             # A frontal approach produced two false left/right reversals from
             # fragmented leg-cluster velocity estimates (085438 cycles 46 and
             # 53: only 0.13--0.14 m/s lateral).  Keep the selected side unless
@@ -360,6 +361,15 @@ def build_pi5_full_config(
             "dynamic_escape_coast_max_omega_radps": min(
                 0.30, max_omega_radps
             ),
+            # A live forecast used to keep this coast active indefinitely,
+            # producing the 9 m orbit in the 232404 physical run.  Six bounded
+            # coast cycles complete the sidestep, then authority returns to
+            # risk-vetted MPPI unless a hard-stop transaction is active.
+            "dynamic_escape_coast_steps": 6,
+            # During a head-on encounter, spend the short full-yaw prefix
+            # turning instead of continuing to close at 0.35 m/s.  Normal and
+            # crossing speed limits remain unchanged.
+            "dynamic_escape_frontal_entry_speed": min(0.20, max_v_mps),
             # The simulation recovery controller assumes smooth continuous
             # actuation.  On the physical 10 Hz stack it can demand alignment
             # after the bounded in-place-yaw budget is already exhausted,

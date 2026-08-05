@@ -15,6 +15,7 @@ from deploy.raspberry_pi5_scout.run_remote_cuda_full import (
     _direction_reversal_guard,
     _immediate_translation_stop_requested,
     _path_deviation_guard,
+    _physical_tracker_motion_context,
     _physical_command_slew_guard,
     _scout_fault_labels,
     _wait_for_complete_chassis_status,
@@ -87,6 +88,9 @@ def test_physical_limits_are_shared_with_planner_and_safety(tmp_path):
     assert guard["dynamic_escape_trigger_ttc_s"] == pytest.approx(3.00)
     assert guard["dynamic_escape_uncertainty_fusion_enabled"] is True
     assert guard["dynamic_escape_direction_commit_steps"] == 4
+    assert guard["dynamic_escape_frontal_commit_steps"] == 6
+    assert guard["dynamic_escape_coast_steps"] == 6
+    assert guard["dynamic_escape_frontal_entry_speed"] == pytest.approx(0.20)
     assert guard[
         "dynamic_escape_direction_refresh_minimum_lateral_speed_mps"
     ] == pytest.approx(0.35)
@@ -143,6 +147,172 @@ def test_physical_limits_are_shared_with_planner_and_safety(tmp_path):
     ] == pytest.approx(1.20)
     tracker = config["perception"]["dynamic_obstacle_tracker"]
     assert tracker["motion_confirmation_enabled"] is False
+
+
+def test_physical_tracker_motion_fallback_drives_crossing_opposite_side(
+        tmp_path):
+    """Replay 232323 cycle 34 where MPPI exported no direction."""
+    config = build_pi5_full_config(
+        _weight_root(tmp_path), max_v_mps=0.5,
+        max_reverse_v_mps=0.3, max_omega_radps=0.6,
+    )
+    context = _physical_tracker_motion_context(
+        {
+            "probabilistic_obstacle_active_avoidance_enabled": True,
+            "probabilistic_obstacle_forward_lateral_countermotion_applied": (
+                False
+            ),
+            "probabilistic_obstacle_preferred_escape_heading_error_rad": 0.0,
+        },
+        {
+            "associated": True,
+            "forecast_valid": True,
+            "motion_confirmed": True,
+            "selected_support_beams": 25,
+            "nearest_track_index": 2,
+            "mapless_dynamic_track_indices": (2,),
+            "measurement_velocity_x_mps": 0.09,
+            "measurement_velocity_y_mps": 0.52,
+        },
+        0.0,
+        config["planner"],
+    )
+
+    assert context["physical_tracker_motion_fallback_applied"] is True
+    assert context[
+        "probabilistic_obstacle_motion_lateral_body_mps"
+    ] > 0.0
+    assert context[
+        "probabilistic_obstacle_preferred_escape_heading_error_rad"
+    ] < 0.0
+
+    arbiter = ScanGuardArbiter(
+        action_spec_from_config(config["action_space"]),
+        config["perception"]["scan_guard"],
+    )
+    decision = arbiter.arbitrate(
+        ControlCommand([0.35, 0.60]),
+        {
+            "emergency_stop": False,
+            "should_slow_down": True,
+            "reason": "temporal_slowdown",
+            "dynamic_obstacle_scan_flow_match": True,
+            "temporal_scan_valid": True,
+            "temporal_scan_ttc_s": 2.10,
+            "dynamic_obstacle_bearing_rad": -0.48,
+            "min_left_side_range": 1.6,
+            "min_right_side_range": 0.8,
+            "min_front_range": 1.48,
+        },
+        context,
+    )
+    assert decision.executed_control.omega == pytest.approx(-0.60)
+    assert decision.diagnostics[
+        "dynamic_escape_geometric_turn_source"
+    ] == "predicted_relative_motion"
+
+
+def test_physical_tracker_motion_fallback_rejects_non_dynamic_track(tmp_path):
+    config = build_pi5_full_config(
+        _weight_root(tmp_path), max_v_mps=0.5,
+        max_reverse_v_mps=0.3, max_omega_radps=0.6,
+    )
+    context = _physical_tracker_motion_context(
+        {},
+        {
+            "associated": True,
+            "forecast_valid": True,
+            "motion_confirmed": True,
+            "selected_support_beams": 25,
+            "nearest_track_index": 0,
+            "mapless_dynamic_track_indices": (2,),
+            "measurement_velocity_x_mps": 0.0,
+            "measurement_velocity_y_mps": 0.8,
+        },
+        0.0,
+        config["planner"],
+    )
+    assert context["physical_tracker_motion_fallback_applied"] is False
+
+
+def test_physical_strong_lateral_motion_refreshes_stale_planner_side(
+        tmp_path):
+    """Replay the stale two-frame direction in 091643 cycle 11."""
+    config = build_pi5_full_config(
+        _weight_root(tmp_path), max_v_mps=0.5,
+        max_reverse_v_mps=0.3, max_omega_radps=0.6,
+    )
+    context = _physical_tracker_motion_context(
+        {
+            "probabilistic_obstacle_forward_lateral_countermotion_applied": (
+                True
+            ),
+            "probabilistic_obstacle_motion_lateral_body_mps": 0.56,
+            "probabilistic_obstacle_preferred_escape_heading_error_rad": 0.54,
+            "probabilistic_obstacle_escape_direction_refreshed": False,
+        },
+        {},
+        0.0,
+        config["planner"],
+    )
+    assert context["physical_tracker_motion_fallback_applied"] is True
+    assert context["physical_tracker_motion_refresh_requested"] is True
+    assert context[
+        "probabilistic_obstacle_escape_direction_refreshed"
+    ] is True
+    assert context[
+        "probabilistic_obstacle_preferred_escape_heading_error_rad"
+    ] < 0.0
+
+
+def test_physical_dynamic_coast_is_finite_then_returns_planner(tmp_path):
+    config = build_pi5_full_config(
+        _weight_root(tmp_path), max_v_mps=0.5,
+        max_reverse_v_mps=0.3, max_omega_radps=0.6,
+    )
+    guard_config = config["perception"]["scan_guard"]
+    arbiter = ScanGuardArbiter(
+        action_spec_from_config(config["action_space"]), guard_config
+    )
+    guard = {
+        "emergency_stop": False,
+        "should_slow_down": True,
+        "reason": "temporal_slowdown",
+        "dynamic_obstacle_scan_flow_match": True,
+        "temporal_scan_valid": True,
+        "temporal_scan_ttc_s": 1.5,
+        "dynamic_obstacle_bearing_rad": -0.45,
+        "min_left_side_range": 1.6,
+        "min_right_side_range": 0.8,
+        "min_front_range": 1.45,
+    }
+    context = {
+        "probabilistic_obstacle_active_avoidance_enabled": True,
+        "probabilistic_obstacle_forward_lateral_countermotion_applied": True,
+        "probabilistic_obstacle_preferred_escape_heading_error_rad": -0.88,
+        "probabilistic_obstacle_motion_lateral_body_mps": 0.55,
+    }
+
+    for _ in range(guard_config["dynamic_escape_direction_commit_steps"]):
+        decision = arbiter.arbitrate(
+            ControlCommand([0.35, 0.10]), guard, context
+        )
+        assert decision.executed_control.omega == pytest.approx(-0.60)
+    for expected in reversed(range(guard_config["dynamic_escape_coast_steps"])):
+        decision = arbiter.arbitrate(
+            ControlCommand([0.35, 0.10]), guard, context
+        )
+        assert decision.executed_control.omega < 0.0
+        assert decision.diagnostics[
+            "dynamic_escape_coast_remaining"
+        ] == expected
+
+    released = arbiter.arbitrate(
+        ControlCommand([0.35, 0.10]), guard, context
+    )
+    assert released.executed_control.omega == pytest.approx(0.10)
+    assert released.diagnostics["dynamic_escape_geometric_forward_coast"] is False
+    assert released.diagnostics["dynamic_escape_coast_remaining"] == 0
 
 
 def test_physical_limit_validation_matches_pi_gateway(tmp_path):
@@ -1064,8 +1234,14 @@ def test_frontal_escape_rejects_noisy_side_reversal_and_locks_coast(tmp_path):
 
     # Finish the finite full-yaw prefix, then verify that a noisy preferred
     # heading cannot bend the coast back toward the other side.
-    arbiter.arbitrate(ControlCommand([0.35, -0.6]), guard, noisy_reversal)
-    arbiter.arbitrate(ControlCommand([0.35, -0.6]), guard, noisy_reversal)
+    for _ in range(
+        config["perception"]["scan_guard"][
+            "dynamic_escape_frontal_commit_steps"
+        ] - 2
+    ):
+        arbiter.arbitrate(
+            ControlCommand([0.35, -0.6]), guard, noisy_reversal
+        )
     coast = arbiter.arbitrate(
         ControlCommand([0.35, -0.6]), guard, noisy_reversal
     )
@@ -1305,7 +1481,11 @@ def test_frontal_lateral_noise_cannot_late_flip_clearance_side(tmp_path):
     # Finish the finite side-selection prefix.  A subsequent temporal-only
     # emergency must keep this clearance-selected side instead of accepting an
     # opposite raw planner yaw.  The 0.50 m near-body event still preempts it.
-    for _ in range(2):
+    for _ in range(
+        config["perception"]["scan_guard"][
+            "dynamic_escape_frontal_commit_steps"
+        ] - 2
+    ):
         decision = arbiter.arbitrate(
             ControlCommand([0.5, -0.6]), guard, noisy_leg
         )
@@ -1383,7 +1563,11 @@ def test_frontal_encounter_stays_latched_after_robot_turns(tmp_path):
         "dynamic_escape_frontal_encounter_latched"
     ] is True
 
-    for _ in range(2):
+    for _ in range(
+        config["perception"]["scan_guard"][
+            "dynamic_escape_frontal_commit_steps"
+        ] - 2
+    ):
         decision = arbiter.arbitrate(
             ControlCommand([-0.30, 0.0]),
             turned_guard,
@@ -1569,7 +1753,7 @@ def test_front_speed_governor_caps_active_escape_final_command(tmp_path):
     )
     assert 0.0 < decision.executed_control.v < 0.35
     assert decision.diagnostics[
-        "physical_front_speed_governor_applied"
+        "dynamic_escape_frontal_entry_speed_applied"
     ] is True
 
 

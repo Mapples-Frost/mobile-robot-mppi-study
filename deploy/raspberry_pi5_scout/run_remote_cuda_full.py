@@ -34,6 +34,7 @@ from mobile_robot_mppi.real_robot import (
     LivoxScanAdapter,
 )
 from mobile_robot_mppi.real_robot.remote_transport import RemoteDeploymentClient
+from mobile_robot_mppi.planning.mppi import MppiController
 from mobile_robot_mppi.runtime.factories import make_components
 
 
@@ -160,6 +161,172 @@ def _dynamic_hazard_sector(hazard_active, safety_diagnostics):
         for angle in bearings
     )
     return bool(forward_hazard), bool(not forward_hazard)
+
+
+def _physical_tracker_motion_context(
+    plan_diagnostics, tracker_diagnostics, pose_yaw, planner_config
+):
+    """Fill a missing passage direction from the associated physical track.
+
+    Scan TTC can activate avoidance one solve before MPPI exports its motion
+    direction.  The ego-compensated physical tracker already has that causal
+    velocity; dropping it made the arbiter choose whichever side looked wider
+    even during a clear crossing.  A strong opposite physical lateral motion
+    also requests the arbiter's normal direction-refresh gate; weak conflicts
+    keep the existing MPPI direction.
+    """
+
+    context = dict(plan_diagnostics or {})
+    context["physical_tracker_motion_fallback_applied"] = False
+    preferred = context.get(
+        "probabilistic_obstacle_preferred_escape_heading_error_rad"
+    )
+    try:
+        preferred = float(preferred)
+    except (TypeError, ValueError):
+        preferred = float("nan")
+    planner_direction_available = bool(
+        bool(context.get(
+            "probabilistic_obstacle_forward_lateral_countermotion_applied",
+            False,
+        ))
+        and math.isfinite(preferred)
+        and abs(preferred) >= 0.08
+    )
+    try:
+        planner_lateral = float(context.get(
+            "probabilistic_obstacle_motion_lateral_body_mps", 0.0
+        ))
+        yaw = float(pose_yaw)
+    except (TypeError, ValueError):
+        planner_lateral = 0.0
+        yaw = float("nan")
+    stale_planner_side = bool(
+        planner_direction_available
+        and math.isfinite(yaw)
+        and abs(planner_lateral) >= 0.35
+        # Same signs mean the retained robot heading follows rather than
+        # opposes the measured human lateral motion.
+        and preferred * planner_lateral > 0.0
+    )
+    if stale_planner_side:
+        lateral_weight = float(planner_config[
+            "probabilistic_obstacle_forward_lateral_countermotion_weight"
+        ])
+        heading_error = -math.copysign(
+            math.atan(lateral_weight), planner_lateral
+        )
+        heading = yaw + heading_error
+        context.update({
+            "probabilistic_obstacle_preferred_escape_direction_x": (
+                math.cos(heading)
+            ),
+            "probabilistic_obstacle_preferred_escape_direction_y": (
+                math.sin(heading)
+            ),
+            "probabilistic_obstacle_preferred_escape_heading_error_rad": (
+                heading_error
+            ),
+            "probabilistic_obstacle_escape_direction_refreshed": True,
+            "probabilistic_obstacle_escape_direction_source": (
+                "physical_strong_lateral_stale_direction_refresh"
+            ),
+            "physical_tracker_motion_fallback_applied": True,
+            "physical_tracker_motion_refresh_requested": True,
+        })
+        return context
+
+    tracker = dict(tracker_diagnostics or {})
+    dynamic_indices = {
+        int(value)
+        for value in tracker.get("mapless_dynamic_track_indices", ())
+    }
+    nearest_index = tracker.get("nearest_track_index")
+    try:
+        nearest_index = int(nearest_index)
+    except (TypeError, ValueError):
+        nearest_index = None
+    if (
+        not bool(tracker.get("associated", False))
+        or not bool(tracker.get("forecast_valid", False))
+        or not bool(tracker.get("motion_confirmed", False))
+        or int(tracker.get("selected_support_beams", 0) or 0) < 3
+        or nearest_index is None
+        or nearest_index not in dynamic_indices
+    ):
+        return context
+
+    try:
+        velocity = np.asarray((
+            float(tracker["measurement_velocity_x_mps"]),
+            float(tracker["measurement_velocity_y_mps"]),
+        ), dtype=np.float64)
+        yaw = float(pose_yaw)
+    except (KeyError, TypeError, ValueError):
+        return context
+    if not np.isfinite(velocity).all() or not math.isfinite(yaw):
+        return context
+
+    direction, longitudinal, lateral, fraction = (
+        MppiController._forward_lateral_countermotion_direction(
+            velocity,
+            yaw,
+            float(planner_config[
+                "probabilistic_obstacle_forward_lateral_countermotion_weight"
+            ]),
+            float(planner_config[
+                "probabilistic_obstacle_forward_lateral_minimum_speed_mps"
+            ]),
+            float(planner_config[
+                "probabilistic_obstacle_forward_lateral_minimum_fraction"
+            ]),
+        )
+    )
+    context.update({
+        "probabilistic_obstacle_motion_longitudinal_body_mps": float(
+            longitudinal
+        ),
+        "probabilistic_obstacle_motion_lateral_body_mps": float(lateral),
+        "probabilistic_obstacle_motion_lateral_fraction": float(fraction),
+    })
+    if direction is None:
+        return context
+
+    preferred_heading = float(np.arctan2(direction[1], direction[0]))
+    heading_error = float(np.arctan2(
+        np.sin(preferred_heading - yaw),
+        np.cos(preferred_heading - yaw),
+    ))
+    if planner_direction_available:
+        same_side = bool(preferred * heading_error > 0.0)
+        strong_reversal = bool(abs(float(lateral)) >= 0.35)
+        if same_side or not strong_reversal:
+            return context
+    context.update({
+        "probabilistic_obstacle_forward_lateral_countermotion_applied": True,
+        "probabilistic_obstacle_preferred_escape_direction_x": float(
+            direction[0]
+        ),
+        "probabilistic_obstacle_preferred_escape_direction_y": float(
+            direction[1]
+        ),
+        "probabilistic_obstacle_preferred_escape_heading_error_rad": (
+            heading_error
+        ),
+        "probabilistic_obstacle_escape_direction_source": (
+            "physical_tracker_measurement_forward_lateral_countermotion"
+        ),
+        "physical_tracker_motion_fallback_applied": True,
+        "physical_tracker_motion_refresh_requested": bool(
+            planner_direction_available
+        ),
+        "physical_tracker_motion_fallback_track_index": nearest_index,
+    })
+    if planner_direction_available:
+        context[
+            "probabilistic_obstacle_escape_direction_refreshed"
+        ] = True
+    return context
 
 
 def _planner_diagnostic_trace(diagnostics):
@@ -1630,9 +1797,15 @@ def main():
                 torch.cuda.synchronize()
                 timings["plan"].append(1000.0 * (time.perf_counter() - stage))
                 plan = forward_passage.apply(plan)
+                planning_context = _physical_tracker_motion_context(
+                    plan.diagnostics,
+                    tracker,
+                    pose_yaw,
+                    config["planner"],
+                )
                 time.sleep(0)
                 decision = safety.arbitrate(
-                    plan.proposed_control, perceived.guard, plan.diagnostics
+                    plan.proposed_control, perceived.guard, planning_context
                 )
                 sequence += 1
                 armed_command = bool(args.publish and len(rows) >= args.warmup_cycles)
@@ -1654,7 +1827,7 @@ def main():
                     armed_command = False
                 hazard_active = bool(
                     int(tracker.get("valid_forecast_count", 0) or 0) > 0
-                    or plan.diagnostics.get(
+                    or planning_context.get(
                         "probabilistic_obstacle_temporal_emergency_triggered",
                         False,
                     )
@@ -1691,14 +1864,14 @@ def main():
                             float(decision.diagnostics.get(
                                 "dynamic_escape_selected_probability", 0.0
                             ) or 0.0),
-                            float(plan.diagnostics.get(
+                            float(planning_context.get(
                                 "probabilistic_obstacle_maximum_step_probability",
                                 0.0,
                             ) or 0.0),
                         )
                     ),
                     selected_probability_mass=float(
-                        plan.diagnostics.get(
+                        planning_context.get(
                             "probabilistic_obstacle_probability_mass", 0.0
                         ) or 0.0
                     ),
@@ -1844,7 +2017,7 @@ def main():
                         config["planner"]["robot_radius"],
                     ),
                     "diagnostics": _real_robot_diagnostic_payload(
-                        tracker, plan.diagnostics, decision.diagnostics
+                        tracker, planning_context, decision.diagnostics
                     ),
                     "scan": scan_diagnostics.__dict__,
                     "livox_motion_compensation": deskew_diagnostics,

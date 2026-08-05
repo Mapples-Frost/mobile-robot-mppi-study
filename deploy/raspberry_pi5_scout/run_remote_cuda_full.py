@@ -79,6 +79,7 @@ _DYNAMIC_PATH_AUTHORITY_REASONS = frozenset({
     "dynamic_active_escape",
     "dynamic_corridor_escape",
     "dynamic_hard_stop_escape",
+    "dynamic_hard_stop_side_rear_release",
     "dynamic_recovery_advance",
     "dynamic_recovery_align_creep",
     "rear_pass_through",
@@ -970,6 +971,14 @@ class _DynamicPathGuardSupervisor:
         elif self._hazard_hold_remaining > 0:
             self._hazard_hold_remaining -= 1
         hazard_active = bool(self._hazard_hold_remaining > 0)
+        dynamic_authority = bool(
+            dynamic_authority
+            or (
+                hazard_active
+                and reason == "front_obstacle_slow"
+                and float(proposed_v) > 0.0
+            )
+        )
         if not hazard_active:
             self._hazard_reverse_steps = 0
             self._hazard_reverse_limit_latched = False
@@ -1050,7 +1059,9 @@ class _DynamicPathGuardSupervisor:
             output_v = float(proposed_v)
             omega_override = None
             rear_only_goal_steer_active = bool(
-                rear_only_hazard and output_v > 0.0
+                rear_only_hazard
+                and output_v > 0.0
+                and reason != "dynamic_hard_stop_side_rear_release"
             )
             if rear_only_goal_steer_active:
                 # A person that has passed behind the chassis no longer owns

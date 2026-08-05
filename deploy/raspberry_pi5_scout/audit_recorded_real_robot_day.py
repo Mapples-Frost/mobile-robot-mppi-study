@@ -51,6 +51,7 @@ DYNAMIC_REASONS = frozenset({
     "dynamic_active_escape",
     "dynamic_corridor_escape",
     "dynamic_hard_stop_escape",
+    "dynamic_hard_stop_side_rear_release",
     "dynamic_recovery_advance",
     "dynamic_recovery_align",
     "dynamic_recovery_align_creep",
@@ -194,6 +195,8 @@ def _replay_run(rows, summary, action_spec, guard_config, planner_config):
     recorded_zero_cycles = 0
     max_dynamic_spin = 0
     dynamic_spin = 0
+    max_completed_transaction_hold = 0
+    completed_transaction_hold = 0
     max_goal_behind_turn = 0
     goal_behind_turn = 0
     last_goal_behind_turn_sign = 0.0
@@ -384,6 +387,24 @@ def _replay_run(rows, summary, action_spec, guard_config, planner_config):
         performance_events["path_hazard_goal_rejoin_cycles"] += int(
             path_reason == "dynamic_hazard_goal_rejoin"
         )
+        performance_events["hard_stop_side_rear_release_cycles"] += int(
+            decision.reason == "dynamic_hard_stop_side_rear_release"
+        )
+
+        bounded_complete_zero = bool(
+            decision.diagnostics.get(
+                "dynamic_escape_hard_stop_phase", ""
+            ) == "bounded_transaction_complete"
+            and abs(output_v) < 0.02
+        )
+        if bounded_complete_zero:
+            completed_transaction_hold += 1
+            max_completed_transaction_hold = max(
+                max_completed_transaction_hold,
+                completed_transaction_hold,
+            )
+        else:
+            completed_transaction_hold = 0
 
         # A cleared-threat route-rejoin command must not keep translating in
         # the negative direction of its own path target.  This is the exact
@@ -444,6 +465,33 @@ def _replay_run(rows, summary, action_spec, guard_config, planner_config):
             violation_examples["invalid_post_retry_side_forward"].append(
                 cycle
             )
+        hard_stop_side_rear_release = bool(decision.diagnostics.get(
+            "dynamic_escape_hard_stop_side_rear_release_applied", False
+        ))
+        if hard_stop_side_rear_release:
+            release_front_range = _finite(
+                decision.diagnostics.get("min_front_range")
+            )
+            if (
+                output_v <= 0.0
+                or output_v
+                > float(guard_config.get(
+                    "dynamic_escape_hard_stop_side_rear_release_speed", 0.0
+                )) + 1.0e-12
+                or abs(output_omega) > 1.0e-12
+                or release_front_range is None
+                or release_front_range
+                < float(guard_config.get(
+                    "dynamic_escape_hard_stop_side_rear_release_min_front_range_m",
+                    float("inf"),
+                ))
+                or not decision.diagnostics.get(
+                    "dynamic_escape_hard_stop_side_rear_release_latched", False
+                )
+            ):
+                violation_examples[
+                    "invalid_hard_stop_side_rear_release"
+                ].append(cycle)
 
         original_reason = str(guard.get("reason", "front_clear"))
         original_bearing = None
@@ -473,6 +521,7 @@ def _replay_run(rows, summary, action_spec, guard_config, planner_config):
             and original_reason in HARD_FRONT_REASONS
             and original_bearing is not None
             and abs(original_bearing) <= math.radians(100.0)
+            and not hard_stop_side_rear_release
             and output_v > 1.0e-12
         ):
             violation_examples["protected_front_advance"].append(cycle)
@@ -583,6 +632,15 @@ def _replay_run(rows, summary, action_spec, guard_config, planner_config):
 
     if max_dynamic_spin > 9:
         violation_examples["unbounded_dynamic_spin"].append(max_dynamic_spin)
+    if (
+        max_completed_transaction_hold
+        > int(guard_config.get(
+            "dynamic_escape_hard_stop_completed_hold_steps", 1
+        ))
+    ):
+        violation_examples["unbounded_completed_transaction_hold"].append(
+            max_completed_transaction_hold
+        )
 
     def single_cycle_pulses(series):
         return sum(
@@ -740,6 +798,9 @@ def _replay_run(rows, summary, action_spec, guard_config, planner_config):
         ),
         "replay_maximum_reverse_streak": maximum_reverse_streak(
             replay_series
+        ),
+        "replay_maximum_completed_transaction_hold": (
+            max_completed_transaction_hold
         ),
         **dict(performance_events),
     }

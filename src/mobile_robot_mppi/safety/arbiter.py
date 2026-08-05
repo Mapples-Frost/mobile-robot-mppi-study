@@ -259,6 +259,15 @@ class ScanGuardArbiter:
                 0.0,
             )
         )
+        # A physical leg cluster can swap sides for one scan even while the
+        # person keeps walking in one direction.  Explicit direction changes
+        # therefore need a short run of consistent estimator confirmations;
+        # first-time prediction acquisition remains immediate below.
+        self.dynamic_escape_direction_refresh_confirmation_steps = int(
+            self.config.get(
+                "dynamic_escape_direction_refresh_confirmation_steps", 1
+            )
+        )
         self.dynamic_escape_coast_direction_lock_enabled = bool(
             self.config.get(
                 "dynamic_escape_coast_direction_lock_enabled", False
@@ -405,6 +414,57 @@ class ScanGuardArbiter:
             self.config.get(
                 "dynamic_escape_hard_stop_rear_clear_retry_steps",
                 self.dynamic_escape_hard_stop_reverse_steps,
+            )
+        )
+        # Blocked rear observations and actual reverse motion are separate
+        # resources.  A blocked scan may spend a finite wait budget, but must
+        # never silently consume a reverse frame that was not executed.
+        self.dynamic_escape_hard_stop_rear_blocked_wait_steps = int(
+            self.config.get(
+                "dynamic_escape_hard_stop_rear_blocked_wait_steps",
+                self.dynamic_escape_hard_stop_reverse_steps,
+            )
+        )
+        self.dynamic_escape_hard_stop_completed_hold_steps = int(
+            self.config.get(
+                "dynamic_escape_hard_stop_completed_hold_steps", 1
+            )
+        )
+        # After the finite transaction, a live obstacle centre that has moved
+        # behind the lateral plane and a positively clear front corridor make
+        # forward translation an opening motion.  This is intentionally an
+        # opt-in physical escape; historical profiles remain fail-closed.
+        self.dynamic_escape_hard_stop_side_rear_release_enabled = bool(
+            self.config.get(
+                "dynamic_escape_hard_stop_side_rear_release_enabled", False
+            )
+        )
+        self.dynamic_escape_hard_stop_side_rear_release_min_bearing_rad = float(
+            self.config.get(
+                "dynamic_escape_hard_stop_side_rear_release_min_bearing_rad",
+                math.pi,
+            )
+        )
+        self.dynamic_escape_hard_stop_side_rear_release_min_front_range_m = float(
+            self.config.get(
+                "dynamic_escape_hard_stop_side_rear_release_min_front_range_m",
+                float("inf"),
+            )
+        )
+        self.dynamic_escape_hard_stop_side_rear_release_speed = float(
+            self.config.get(
+                "dynamic_escape_hard_stop_side_rear_release_speed", 0.0
+            )
+        )
+        self.dynamic_escape_hard_stop_side_rear_release_hold_min_bearing_rad = float(
+            self.config.get(
+                "dynamic_escape_hard_stop_side_rear_release_hold_min_bearing_rad",
+                self.dynamic_escape_hard_stop_side_rear_release_min_bearing_rad,
+            )
+        )
+        self.dynamic_escape_hard_stop_side_rear_release_abort_steps = int(
+            self.config.get(
+                "dynamic_escape_hard_stop_side_rear_release_abort_steps", 1
             )
         )
         self.dynamic_escape_max_zero_translation_turn_steps = int(
@@ -620,6 +680,7 @@ class ScanGuardArbiter:
             or self.dynamic_escape_frontal_commit_steps < 0
             or self.dynamic_escape_direction_refresh_minimum_lateral_speed_mps
             < 0.0
+            or self.dynamic_escape_direction_refresh_confirmation_steps < 1
             or self.dynamic_escape_geometric_rearm_clear_steps < 1
             or self.dynamic_escape_coast_turn_gain <= 0.0
             or self.dynamic_escape_coast_max_omega_radps < 0.0
@@ -646,6 +707,20 @@ class ScanGuardArbiter:
             <= 0.0
             or self.dynamic_escape_hard_stop_min_rear_range <= 0.0
             or self.dynamic_escape_hard_stop_rear_clear_retry_steps < 1
+            or self.dynamic_escape_hard_stop_rear_blocked_wait_steps < 1
+            or self.dynamic_escape_hard_stop_completed_hold_steps < 0
+            or not 0.5 * np.pi
+            < self.dynamic_escape_hard_stop_side_rear_release_min_bearing_rad
+            <= np.pi
+            or self.dynamic_escape_hard_stop_side_rear_release_min_front_range_m
+            <= 0.0
+            or self.dynamic_escape_hard_stop_side_rear_release_speed < 0.0
+            or self.dynamic_escape_hard_stop_side_rear_release_speed
+            > self.dynamic_escape_max_speed
+            or not 0.5 * np.pi
+            <= self.dynamic_escape_hard_stop_side_rear_release_hold_min_bearing_rad
+            <= self.dynamic_escape_hard_stop_side_rear_release_min_bearing_rad
+            or self.dynamic_escape_hard_stop_side_rear_release_abort_steps < 1
             or self.dynamic_escape_max_zero_translation_turn_steps < 1
             or not 0.0
             < self.dynamic_escape_hard_stop_rear_sector_deg
@@ -797,6 +872,10 @@ class ScanGuardArbiter:
         self._dynamic_escape_hard_stop_clear_streak = 0
         self._dynamic_escape_hard_stop_rear_blocked_latched = False
         self._dynamic_escape_hard_stop_rear_clear_retry_used = False
+        self._dynamic_escape_hard_stop_rear_blocked_wait_remaining = 0
+        self._dynamic_escape_hard_stop_completed_hold_count = 0
+        self._dynamic_escape_hard_stop_side_rear_release_latched = False
+        self._dynamic_escape_hard_stop_side_rear_release_abort_count = 0
         self._rear_pass_through_turn_sign = 0.0
         self._rear_pass_through_direction_clear_streak = 0
         self._dynamic_escape_zero_translation_turn_steps = 0
@@ -1771,6 +1850,22 @@ class ScanGuardArbiter:
                 "probabilistic_obstacle_escape_direction_refreshed", False
             )
         )
+        try:
+            prediction_direction_refresh_confirmation_count = int(
+                context.get(
+                    "probabilistic_obstacle_escape_direction_reversal_confirmation_count",
+                    0,
+                )
+                or 0
+            )
+        except (TypeError, ValueError):
+            prediction_direction_refresh_confirmation_count = 0
+        prediction_direction_refresh_confirmed = bool(
+            not prediction_direction_refresh_requested
+            or self.dynamic_escape_direction_refresh_confirmation_steps <= 1
+            or prediction_direction_refresh_confirmation_count
+            >= self.dynamic_escape_direction_refresh_confirmation_steps
+        )
         lateral_motion_speed = context.get(
             "probabilistic_obstacle_motion_lateral_body_mps"
         )
@@ -1786,6 +1881,10 @@ class ScanGuardArbiter:
             or (
                 math.isfinite(lateral_motion_speed)
                 and abs(lateral_motion_speed) >= refresh_minimum_speed
+            )
+            or (
+                prediction_direction_refresh_requested
+                and prediction_direction_refresh_confirmed
             )
         )
         preferred_heading_error = context.get(
@@ -1867,6 +1966,7 @@ class ScanGuardArbiter:
         prediction_direction_refreshed = bool(
             (
                 prediction_direction_refresh_requested
+                and prediction_direction_refresh_confirmed
                 and prediction_direction_refresh_lateral_evidence
                 and prediction_direction_refresh_geometry_allowed
             )
@@ -1945,6 +2045,10 @@ class ScanGuardArbiter:
                 self._dynamic_escape_hard_stop_consumed = False
                 self._dynamic_escape_hard_stop_rear_blocked_latched = False
                 self._dynamic_escape_hard_stop_rear_clear_retry_used = False
+                self._dynamic_escape_hard_stop_rear_blocked_wait_remaining = 0
+                self._dynamic_escape_hard_stop_completed_hold_count = 0
+                self._dynamic_escape_hard_stop_side_rear_release_latched = False
+                self._dynamic_escape_hard_stop_side_rear_release_abort_count = 0
         hard_stop_direction_refresh_applied = bool(
             prediction_direction_refreshed
             and dynamic_hard_stop_event
@@ -1958,11 +2062,87 @@ class ScanGuardArbiter:
             self._dynamic_escape_hard_stop_consumed = False
             self._dynamic_escape_hard_stop_rear_blocked_latched = False
             self._dynamic_escape_hard_stop_rear_clear_retry_used = False
+            self._dynamic_escape_hard_stop_rear_blocked_wait_remaining = 0
+            self._dynamic_escape_hard_stop_completed_hold_count = 0
+            self._dynamic_escape_hard_stop_side_rear_release_latched = False
+            self._dynamic_escape_hard_stop_side_rear_release_abort_count = 0
+        hard_stop_front_clearance = self._finite_clearance(
+            guard_result, "min_front_range"
+        )
+        hard_stop_side_rear_base_available = bool(
+            self.dynamic_escape_hard_stop_side_rear_release_enabled
+            and self._dynamic_escape_hard_stop_consumed
+            and dynamic_hard_stop_geometric_event
+            and (
+                guard_result.get("dynamic_obstacle_near_body_match", False)
+                or guard_result.get("dynamic_obstacle_scan_flow_match", False)
+                or dynamic_hard_stop_prediction_evidence
+            )
+            and hard_stop_front_clearance is not None
+            and hard_stop_front_clearance
+            >= self.dynamic_escape_hard_stop_side_rear_release_min_front_range_m
+        )
+        hard_stop_side_rear_acquire = bool(
+            hard_stop_side_rear_base_available
+            and np.isfinite(obstacle_bearing)
+            and abs(obstacle_bearing)
+            >= self.dynamic_escape_hard_stop_side_rear_release_min_bearing_rad
+        )
+        hard_stop_side_rear_hold_bearing = (
+            abs(obstacle_bearing)
+            if np.isfinite(obstacle_bearing)
+            else 0.0
+        )
+        try:
+            hard_stop_temporal_bearing = float(
+                guard_result.get(
+                    "temporal_scan_center_angle_rad", float("nan")
+                )
+            )
+            hard_stop_temporal_ttc = float(
+                guard_result.get("temporal_scan_ttc_s", float("inf"))
+            )
+        except (TypeError, ValueError):
+            hard_stop_temporal_bearing = float("nan")
+            hard_stop_temporal_ttc = float("inf")
+        if (
+            guard_result.get("temporal_scan_valid", False)
+            and np.isfinite(hard_stop_temporal_bearing)
+            and hard_stop_temporal_ttc <= self.dynamic_escape_trigger_ttc_s
+        ):
+            hard_stop_side_rear_hold_bearing = max(
+                hard_stop_side_rear_hold_bearing,
+                abs(hard_stop_temporal_bearing),
+            )
+        if not hard_stop_side_rear_base_available:
+            self._dynamic_escape_hard_stop_side_rear_release_latched = False
+            self._dynamic_escape_hard_stop_side_rear_release_abort_count = 0
+        elif hard_stop_side_rear_acquire:
+            self._dynamic_escape_hard_stop_side_rear_release_latched = True
+            self._dynamic_escape_hard_stop_side_rear_release_abort_count = 0
+        elif self._dynamic_escape_hard_stop_side_rear_release_latched:
+            if (
+                hard_stop_side_rear_hold_bearing
+                >= self.dynamic_escape_hard_stop_side_rear_release_hold_min_bearing_rad
+            ):
+                self._dynamic_escape_hard_stop_side_rear_release_abort_count = 0
+            else:
+                self._dynamic_escape_hard_stop_side_rear_release_abort_count += 1
+                if (
+                    self._dynamic_escape_hard_stop_side_rear_release_abort_count
+                    >= self.dynamic_escape_hard_stop_side_rear_release_abort_steps
+                ):
+                    self._dynamic_escape_hard_stop_side_rear_release_latched = False
+        hard_stop_side_rear_geometry_available = bool(
+            hard_stop_side_rear_base_available
+            and self._dynamic_escape_hard_stop_side_rear_release_latched
+        )
         hard_stop_rear_clear_retry_started = False
         if (
             self.dynamic_escape_hard_stop_rear_clear_retry_enabled
             and dynamic_hard_stop_geometric_event
             and self._dynamic_escape_hard_stop_consumed
+            and not hard_stop_side_rear_geometry_available
             and self._dynamic_escape_hard_stop_rear_blocked_latched
             and not self._dynamic_escape_hard_stop_rear_clear_retry_used
             and self._rear_sector_clear(
@@ -1977,6 +2157,10 @@ class ScanGuardArbiter:
             self._dynamic_escape_hard_stop_consumed = False
             self._dynamic_escape_hard_stop_rear_blocked_latched = False
             self._dynamic_escape_hard_stop_rear_clear_retry_used = True
+            self._dynamic_escape_hard_stop_rear_blocked_wait_remaining = (
+                self.dynamic_escape_hard_stop_rear_blocked_wait_steps
+            )
+            self._dynamic_escape_hard_stop_completed_hold_count = 0
             hard_stop_rear_clear_retry_started = True
         hard_stop_transaction_active = bool(
             self.dynamic_escape_hard_stop_enabled
@@ -1986,11 +2170,26 @@ class ScanGuardArbiter:
                 or self._dynamic_escape_hard_stop_reverse_remaining > 0
             )
         )
-        hard_stop_transaction_completed_hold = bool(
+        hard_stop_transaction_completed_candidate = bool(
             self.dynamic_escape_hard_stop_enabled
             and self._dynamic_escape_hard_stop_consumed
             and self._dynamic_escape_hard_stop_turn_sign != 0.0
             and dynamic_hard_stop_geometric_event
+        )
+        hard_stop_side_rear_release_available = bool(
+            hard_stop_transaction_completed_candidate
+            and hard_stop_side_rear_geometry_available
+        )
+        hard_stop_transaction_completed_hold = bool(
+            hard_stop_transaction_completed_candidate
+            and not hard_stop_side_rear_release_available
+            and self._dynamic_escape_hard_stop_completed_hold_count
+            < self.dynamic_escape_hard_stop_completed_hold_steps
+        )
+        hard_stop_transaction_completed_fail_closed = bool(
+            hard_stop_transaction_completed_candidate
+            and not hard_stop_side_rear_release_available
+            and not hard_stop_transaction_completed_hold
         )
         front_geometric_escape_available = bool(
             reactive_escape_allowed
@@ -2210,7 +2409,8 @@ class ScanGuardArbiter:
             and float(values[self.action_spec.index("v_cmd")]) >= 0.0
         )
         if (
-            dynamic_hard_stop_event
+            (dynamic_hard_stop_event
+             and not self._dynamic_escape_hard_stop_consumed)
             or hard_stop_transaction_active
             or hard_stop_transaction_completed_hold
         ):
@@ -2258,6 +2458,12 @@ class ScanGuardArbiter:
                 )
                 self._dynamic_escape_hard_stop_rear_blocked_latched = False
                 self._dynamic_escape_hard_stop_rear_clear_retry_used = False
+                self._dynamic_escape_hard_stop_rear_blocked_wait_remaining = (
+                    self.dynamic_escape_hard_stop_rear_blocked_wait_steps
+                )
+                self._dynamic_escape_hard_stop_completed_hold_count = 0
+                self._dynamic_escape_hard_stop_side_rear_release_latched = False
+                self._dynamic_escape_hard_stop_side_rear_release_abort_count = 0
             values[v_index] = 0.0
             if self._dynamic_escape_hard_stop_turn_remaining > 0:
                 values[omega_index] = (
@@ -2287,7 +2493,16 @@ class ScanGuardArbiter:
                     )
                 else:
                     self._dynamic_escape_hard_stop_rear_blocked_latched = True
-                    hard_stop_escape_phase = "rear_blocked_turn_only"
+                    self._dynamic_escape_hard_stop_rear_blocked_wait_remaining -= 1
+                    if (
+                        self._dynamic_escape_hard_stop_rear_blocked_wait_remaining
+                        <= 0
+                    ):
+                        self._dynamic_escape_hard_stop_reverse_remaining = 0
+                        self._dynamic_escape_hard_stop_consumed = True
+                        hard_stop_escape_phase = "rear_blocked_wait_exhausted"
+                    else:
+                        hard_stop_escape_phase = "rear_blocked_turn_only"
                 bounded_omega = min(
                     self.dynamic_escape_hard_stop_reverse_max_omega_radps,
                     abs(float(self.action_spec.upper[omega_index])),
@@ -2330,16 +2545,50 @@ class ScanGuardArbiter:
                     * self._dynamic_escape_hard_stop_turn_sign
                     * hard_stop_reverse_turn_scale
                 )
-                self._dynamic_escape_hard_stop_reverse_remaining -= 1
-                if self._dynamic_escape_hard_stop_reverse_remaining <= 0:
-                    self._dynamic_escape_hard_stop_consumed = True
+                if hard_stop_rear_clear:
+                    self._dynamic_escape_hard_stop_reverse_remaining -= 1
+                    if self._dynamic_escape_hard_stop_reverse_remaining <= 0:
+                        self._dynamic_escape_hard_stop_consumed = True
             else:
                 values[omega_index] = 0.0
                 hard_stop_escape_phase = "bounded_transaction_complete"
                 self._dynamic_escape_hard_stop_consumed = True
+                self._dynamic_escape_hard_stop_completed_hold_count += 1
             values = self.action_spec.clip(values)
             reverse_escape = bool(values[v_index] < 0.0)
             reason = "dynamic_hard_stop_escape"
+        elif hard_stop_side_rear_release_available:
+            # The transaction has put the live obstacle behind the lateral
+            # plane while the measured front corridor is open.  A short,
+            # straight forward command increases separation; continuing to
+            # hold (0, 0) here reproduced the 42-cycle physical deadlock.
+            v_index = self.action_spec.index("v_cmd")
+            omega_index = self.action_spec.index("omega_cmd")
+            values[v_index] = min(
+                self.dynamic_escape_hard_stop_side_rear_release_speed,
+                self.action_spec.upper[v_index],
+            )
+            values[omega_index] = 0.0
+            values = self.action_spec.clip(values)
+            guard_result["emergency_stop"] = False
+            guard_result["should_slow_down"] = False
+            guard_result["slow_scale"] = 1.0
+            self._dynamic_escape_hard_stop_reverse_remaining = 0
+            self._dynamic_escape_hard_stop_rear_blocked_wait_remaining = 0
+            self._dynamic_escape_hard_stop_rear_clear_retry_used = True
+            reverse_escape = False
+            hard_stop_escape_phase = "side_rear_forward_release"
+            reason = "dynamic_hard_stop_side_rear_release"
+        elif hard_stop_transaction_completed_fail_closed:
+            # No direction of translation is positively certified.  End the
+            # completed transaction's ownership after its finite diagnostic
+            # hold, but retain the underlying instantaneous hard stop.
+            v_index = self.action_spec.index("v_cmd")
+            omega_index = self.action_spec.index("omega_cmd")
+            values[v_index] = 0.0
+            values[omega_index] = 0.0
+            values = self.action_spec.clip(values)
+            hard_stop_escape_phase = "completed_fail_closed"
         elif (
             dynamic_escape_allowed
             or corridor_commit_active
@@ -3244,6 +3493,12 @@ class ScanGuardArbiter:
             "dynamic_escape_prediction_direction_refresh_requested"
         ] = bool(prediction_direction_refresh_requested)
         diagnostics[
+            "dynamic_escape_prediction_direction_refresh_confirmation_count"
+        ] = int(prediction_direction_refresh_confirmation_count)
+        diagnostics[
+            "dynamic_escape_prediction_direction_refresh_confirmed"
+        ] = bool(prediction_direction_refresh_confirmed)
+        diagnostics[
             "dynamic_escape_prediction_direction_refresh_rejected"
         ] = bool(
             prediction_direction_refresh_requested
@@ -3314,7 +3569,8 @@ class ScanGuardArbiter:
             dynamic_hard_stop_geometric_event
         )
         diagnostics["dynamic_escape_hard_stop_transaction_active"] = bool(
-            dynamic_hard_stop_event
+            (dynamic_hard_stop_event
+             and not self._dynamic_escape_hard_stop_consumed)
             or hard_stop_transaction_active
             or hard_stop_transaction_completed_hold
         )
@@ -3355,6 +3611,32 @@ class ScanGuardArbiter:
         diagnostics[
             "dynamic_escape_hard_stop_rear_clear_retry_used"
         ] = bool(self._dynamic_escape_hard_stop_rear_clear_retry_used)
+        diagnostics[
+            "dynamic_escape_hard_stop_rear_blocked_wait_remaining"
+        ] = int(self._dynamic_escape_hard_stop_rear_blocked_wait_remaining)
+        diagnostics[
+            "dynamic_escape_hard_stop_completed_hold_count"
+        ] = int(self._dynamic_escape_hard_stop_completed_hold_count)
+        diagnostics[
+            "dynamic_escape_hard_stop_completed_fail_closed"
+        ] = bool(hard_stop_transaction_completed_fail_closed)
+        diagnostics[
+            "dynamic_escape_hard_stop_side_rear_release_available"
+        ] = bool(hard_stop_side_rear_release_available)
+        diagnostics[
+            "dynamic_escape_hard_stop_side_rear_release_applied"
+        ] = bool(
+            hard_stop_escape_phase == "side_rear_forward_release"
+        )
+        diagnostics[
+            "dynamic_escape_hard_stop_side_rear_release_latched"
+        ] = bool(self._dynamic_escape_hard_stop_side_rear_release_latched)
+        diagnostics[
+            "dynamic_escape_hard_stop_side_rear_release_abort_count"
+        ] = int(self._dynamic_escape_hard_stop_side_rear_release_abort_count)
+        diagnostics[
+            "dynamic_escape_hard_stop_side_rear_release_hold_bearing_rad"
+        ] = float(hard_stop_side_rear_hold_bearing)
         diagnostics["dynamic_escape_hard_stop_turn_remaining"] = int(
             self._dynamic_escape_hard_stop_turn_remaining
         )

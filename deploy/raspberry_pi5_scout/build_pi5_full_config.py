@@ -1,6 +1,7 @@
 """Resolve the current Full Proposed stack for map-free Pi 5 shadow use."""
 
 from copy import deepcopy
+import math
 from pathlib import Path
 
 from experiments.dynamic_uncertainty.complex_full_method import (
@@ -353,6 +354,11 @@ def build_pi5_full_config(
             # 53: only 0.13--0.14 m/s lateral).  Keep the selected side unless
             # a genuinely lateral crossing/reversal supplies stronger motion.
             "dynamic_escape_direction_refresh_minimum_lateral_speed_mps": 0.35,
+            # The physical CA-IMM/leg regression already exports a reversal
+            # confirmation count.  Require two consecutive confirmations so
+            # isolated left/right leg swaps cannot invert the committed arc;
+            # a first valid crossing direction still acquires immediately.
+            "dynamic_escape_direction_refresh_confirmation_steps": 2,
             "dynamic_escape_coast_direction_lock_enabled": True,
             # Once the finite full-yaw prefix has selected a passage side,
             # continue tracking the forecast-relative heading with bounded yaw
@@ -445,6 +451,31 @@ def build_pi5_full_config(
             # opens, take that exit once without replaying the turn phase.
             "dynamic_escape_hard_stop_rear_clear_retry_enabled": True,
             "dynamic_escape_hard_stop_rear_clear_retry_steps": 6,
+            # Rear-blocked scans spend their own finite wait budget.  They do
+            # not consume the twelve frames of actual reverse translation.
+            "dynamic_escape_hard_stop_rear_blocked_wait_steps": 6,
+            # A completed transaction may expose its terminal stop for only a
+            # short diagnostic prefix.  It must not absorb control for the 43
+            # cycles observed in run 20260805_013048.
+            "dynamic_escape_hard_stop_completed_hold_steps": 2,
+            # If the tracked person is beyond the lateral plane and the front
+            # scan is open, straight forward motion increases separation even
+            # when a few close side returns remain.  This is the finite escape
+            # from the physical side/rear crowd deadlock.
+            "dynamic_escape_hard_stop_side_rear_release_enabled": True,
+            "dynamic_escape_hard_stop_side_rear_release_min_bearing_rad": 1.75,
+            "dynamic_escape_hard_stop_side_rear_release_min_front_range_m": 0.90,
+            "dynamic_escape_hard_stop_side_rear_release_speed": min(
+                0.35, max_v_mps
+            ),
+            # Keep the opening motion through one/two noisy centre-bearing
+            # swaps while either tracker or temporal flow still places the
+            # person behind the lateral plane.  Three consecutive non-rear
+            # frames abort immediately back to the hard stop.
+            "dynamic_escape_hard_stop_side_rear_release_hold_min_bearing_rad": (
+                math.pi / 2.0
+            ),
+            "dynamic_escape_hard_stop_side_rear_release_abort_steps": 3,
             # Include any stop-only temporal turn immediately preceding the
             # close-range transaction in one 0.9 s yaw budget.  Once consumed,
             # wait or translate instead of continuing to rotate in a crowd.

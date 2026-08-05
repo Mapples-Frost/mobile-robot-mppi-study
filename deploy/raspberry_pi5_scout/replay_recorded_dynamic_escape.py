@@ -442,6 +442,12 @@ def replay(runs_root, weight_root):
             "rear_retry_started": bool(decision.diagnostics.get(
                 "dynamic_escape_hard_stop_rear_clear_retry_started", False
             )),
+            "reverse_remaining": int(decision.diagnostics.get(
+                "dynamic_escape_hard_stop_reverse_remaining", 0
+            )),
+            "rear_wait_remaining": int(decision.diagnostics.get(
+                "dynamic_escape_hard_stop_rear_blocked_wait_remaining", 0
+            )),
         })
 
     # 092133 is the oblique/rear approach.  Compact logs omit point payloads,
@@ -502,7 +508,7 @@ def replay(runs_root, weight_root):
         })
 
     report = {
-        "schema": "recorded_dynamic_escape_replay_v4",
+        "schema": "recorded_dynamic_escape_replay_v5",
         "crossing_071115_cycle_70": {
             **crossing_motion,
             "old_commanded": crossing_row["commanded"],
@@ -613,16 +619,30 @@ def replay(runs_root, weight_root):
                 for item in crowd_replay
             )
         ),
-        "crowd_stops_after_zero_yaw_budget_then_holds": bool(
+        "crowd_blocked_wait_does_not_spend_reverse_budget": bool(
+            all(
+                item["reverse_remaining"] == 12
+                for item in crowd_replay
+                if 386 <= item["cycle"] < 391
+            )
+            and crowd_replay[391 - 382]["phase"]
+            == "rear_blocked_wait_exhausted"
+        ),
+        "crowd_completed_transaction_hold_is_finite": bool(
             all(
                 np.allclose(item["new_arbitrated"], (0.0, 0.0))
-                and (
-                    item["phase"] == "rear_blocked_turn_only"
-                    if item["cycle"] < 398
-                    else item["phase"] == "bounded_transaction_complete"
-                )
                 for item in crowd_replay
                 if 391 <= item["cycle"] < 416
+            )
+            and [
+                item["cycle"]
+                for item in crowd_replay
+                if item["phase"] == "bounded_transaction_complete"
+            ] == [392, 393]
+            and all(
+                item["phase"] == "completed_fail_closed"
+                for item in crowd_replay
+                if 394 <= item["cycle"] < 416
             )
         ),
         "crowd_open_rear_retries_reverse_without_new_turn": bool(

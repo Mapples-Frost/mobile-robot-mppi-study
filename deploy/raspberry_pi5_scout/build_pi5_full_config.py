@@ -352,7 +352,10 @@ def build_pi5_full_config(
             # genuine reversal for longer than the recorded confirmation
             # window.  Head-on encounters use the separate longer prefix.
             "dynamic_escape_direction_commit_steps": 4,
-            "dynamic_escape_frontal_commit_steps": 10,
+            # Establish the side for 0.6 s, then enter the faster forward
+            # coast.  The old 1.0 s low-speed saturated turn looked hesitant
+            # and accumulated excessive heading before lateral translation.
+            "dynamic_escape_frontal_commit_steps": 6,
             # A frontal approach produced two false left/right reversals from
             # fragmented leg-cluster velocity estimates (085438 cycles 46 and
             # 53: only 0.13--0.14 m/s lateral).  Keep the selected side unless
@@ -367,6 +370,11 @@ def build_pi5_full_config(
             # isolated left/right leg swaps cannot invert the committed arc;
             # a first valid crossing direction still acquires immediately.
             "dynamic_escape_direction_refresh_confirmation_steps": 2,
+            # The first crossing velocity frame can be the opposite leg
+            # fragment.  Once a side is locked, three consecutive direct
+            # lateral counter-motion measurements may overturn it without
+            # waiting for the higher-level predictor's refresh flag.
+            "dynamic_escape_measured_reversal_confirmation_steps": 3,
             "dynamic_escape_coast_direction_lock_enabled": True,
             # Once the finite full-yaw prefix has selected a passage side,
             # continue tracking the forecast-relative heading with bounded yaw
@@ -381,6 +389,16 @@ def build_pi5_full_config(
             # through the side sector, while the goal-divergence release still
             # prevents the historical unbounded orbit.
             "dynamic_escape_coast_steps": 14,
+            # A frontal pass has a geometric end condition: the person has
+            # moved outside the forward corridor, front range is open, and
+            # the goal now lies counter to the avoidance turn.  End the yaw
+            # transaction there instead of spending the whole coast budget.
+            "dynamic_escape_passage_completion_enabled": True,
+            "dynamic_escape_passage_completion_min_bearing_rad": 1.0,
+            "dynamic_escape_passage_completion_min_front_clearance_m": 1.50,
+            "dynamic_escape_passage_completion_min_goal_counter_heading_rad": (
+                0.55
+            ),
             # Temporal flow becomes causal roughly two frames before the
             # forecast tracker.  Start the clearance-selected arc immediately
             # to compensate measured PC/gateway/chassis latency.

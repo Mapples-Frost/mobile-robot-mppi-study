@@ -878,6 +878,73 @@ def _path_deviation_guard(
     }
 
 
+def _arbiter_steering_authoritative(safety_reason, safety_diagnostics):
+    """Whether ScanGuard intentionally owns yaw in this exact cycle.
+
+    ``dynamic_active_escape`` is also used when ScanGuard merely accepts a
+    risk-vetted MPPI sample after its finite geometric turn has ended.  Treating
+    the reason string itself as yaw authority allowed those later samples to
+    revive the completed turn and drive away from the goal.  This contract
+    exposes actual state-machine ownership instead of inferring it from a broad
+    label.
+    """
+
+    reason = str(safety_reason)
+    diagnostics = dict(safety_diagnostics or {})
+    if reason == "rear_pass_through":
+        # The arbiter deliberately requests straight forward separation.
+        return True
+    if reason in {
+        "dynamic_corridor_escape",
+        "dynamic_hard_stop_escape",
+        "dynamic_hard_stop_side_rear_release",
+        "dynamic_recovery_advance",
+        "dynamic_recovery_align",
+        "dynamic_recovery_align_creep",
+    }:
+        return True
+    if reason == "temporal_slowdown":
+        return bool(diagnostics.get(
+            "dynamic_escape_temporal_preturn_applied", False
+        ))
+    if reason != "dynamic_active_escape":
+        return False
+    try:
+        commit_remaining = int(diagnostics.get(
+            "dynamic_escape_direction_commit_remaining", 0
+        ) or 0)
+        coast_remaining = int(diagnostics.get(
+            "dynamic_escape_coast_remaining", 0
+        ) or 0)
+    except (TypeError, ValueError):
+        commit_remaining = 0
+        coast_remaining = 0
+    reactive_owned = bool(
+        diagnostics.get("dynamic_escape_reactive", False)
+        and not diagnostics.get(
+            "dynamic_escape_vetted_planner_control", False
+        )
+    )
+    return bool(
+        commit_remaining > 0
+        or coast_remaining != 0
+        or diagnostics.get("dynamic_escape_geometric_forward", False)
+        or diagnostics.get("dynamic_escape_geometric_forward_coast", False)
+        or diagnostics.get("dynamic_escape_geometric_temporal_override", False)
+        or diagnostics.get(
+            "dynamic_escape_hard_stop_transaction_active", False
+        )
+        or diagnostics.get("dynamic_escape_held", False)
+        or diagnostics.get(
+            "dynamic_escape_post_retry_reverse_hold_applied", False
+        )
+        or diagnostics.get(
+            "dynamic_escape_post_retry_side_forward_applied", False
+        )
+        or reactive_owned
+    )
+
+
 class _DynamicPathGuardSupervisor:
     """Keep dynamic avoidance authoritative and make path recovery controllable.
 
@@ -899,6 +966,7 @@ class _DynamicPathGuardSupervisor:
         self._hazard_hold_remaining = 0
         self._goal_rejoin_release_count = 0
         self._rear_pass_through_hold_remaining = 0
+        self._dynamic_goal_rejoin_requested = False
 
     def reset(self):
         self._goal_rejoin_latched = False
@@ -910,6 +978,7 @@ class _DynamicPathGuardSupervisor:
         self._hazard_hold_remaining = 0
         self._goal_rejoin_release_count = 0
         self._rear_pass_through_hold_remaining = 0
+        self._dynamic_goal_rejoin_requested = False
 
     def apply(
         self,
@@ -928,6 +997,8 @@ class _DynamicPathGuardSupervisor:
         hazard_active=False,
         rear_only_hazard=False,
         reverse_escape_exhausted=False,
+        arbiter_steering_authoritative=True,
+        arbiter_rejoin_requested=False,
     ):
         reason = str(safety_reason)
         unconditional_stop = reason in _UNCONDITIONAL_TRANSLATION_STOP_REASONS
@@ -1009,6 +1080,13 @@ class _DynamicPathGuardSupervisor:
                 self._hazard_reverse_steps = 0
                 self._hazard_reverse_limit_latched = False
             self._goal_rejoin_release_count = 0
+            if arbiter_rejoin_requested:
+                self._dynamic_goal_rejoin_requested = True
+            elif (
+                arbiter_steering_authoritative
+                and reason not in {"rear_pass_through", "temporal_slowdown"}
+            ):
+                self._dynamic_goal_rejoin_requested = False
         guarded_v, diagnostics = _path_deviation_guard(
             pose_x,
             pose_y,
@@ -1058,45 +1136,51 @@ class _DynamicPathGuardSupervisor:
             # the bounded close-range reverse transaction.
             output_v = float(proposed_v)
             omega_override = None
-            rear_only_goal_steer_active = bool(
-                rear_only_hazard
+            heading_error = float(diagnostics["heading_error_rad"])
+            dynamic_goal_rejoin_active = bool(
+                self._dynamic_goal_rejoin_requested
+                and not arbiter_steering_authoritative
                 and output_v > 0.0
-                and reason != "dynamic_hard_stop_side_rear_release"
+                and abs(heading_error) > _GOAL_REJOIN_RELEASE_HEADING_RAD
             )
-            if rear_only_goal_steer_active:
-                # A person that has passed behind the chassis no longer owns
-                # the avoidance yaw.  Keep the arbiter's forward authority,
-                # but turn directly back toward the goal.  Preserving a stale
-                # rear-pass sign drove long lateral arcs in the physical logs
-                # (235747 and 000034), including turns opposite the goal.
-                heading_error = float(diagnostics["heading_error_rad"])
-                if abs(heading_error) > _GOAL_REJOIN_REAR_HEMISPHERE_RAD:
-                    if self._rear_only_goal_turn_sign == 0.0:
-                        self._rear_only_goal_turn_sign = float(
-                            np.sign(heading_error)
-                        )
-                        if self._rear_only_goal_turn_sign == 0.0:
-                            self._rear_only_goal_turn_sign = 1.0
-                    omega_override = float(
-                        self._rear_only_goal_turn_sign
-                        * abs(float(maximum_omega_radps))
-                    )
-                else:
-                    self._rear_only_goal_turn_sign = 0.0
-                    omega_override = float(np.clip(
-                        _GOAL_REJOIN_TURN_GAIN * heading_error,
-                        -abs(float(maximum_omega_radps)),
-                        abs(float(maximum_omega_radps)),
-                    ))
+            if dynamic_goal_rejoin_active:
+                # ScanGuard has explicitly completed/released its finite turn.
+                # Preserve its translation authority, but do not let a later
+                # risk-vetted MPPI sample resurrect yaw away from the goal.
+                # The bounded counter-turn avoids a +0.6 -> -0.6 snap.
+                omega_limit = min(
+                    abs(float(maximum_omega_radps)),
+                    _DYNAMIC_PASSAGE_REJOIN_OMEGA_RADPS,
+                )
+                omega_override = float(np.clip(
+                    _GOAL_REJOIN_TURN_GAIN * heading_error,
+                    -omega_limit,
+                    omega_limit,
+                ))
+                if abs(heading_error) > _GOAL_REJOIN_HEADING_RAD:
+                    output_v = min(output_v, _GOAL_REJOIN_SPEED_MPS)
+            rear_only_goal_steer_active = False
             diagnostics.update({
-                "active": False,
-                "reason": "dynamic_authority",
+                "active": bool(dynamic_goal_rejoin_active),
+                "reason": (
+                    "dynamic_goal_rejoin_authority"
+                    if dynamic_goal_rejoin_active
+                    else "dynamic_authority"
+                ),
                 "bypassed": would_be_active,
                 "bypass_reason": reason,
                 "would_be_active": would_be_active,
                 "would_be_reason": would_be_reason,
                 "dynamic_authority": True,
                 "goal_rejoin_latched": True,
+                "arbiter_steering_authoritative": bool(
+                    arbiter_steering_authoritative
+                ),
+                "arbiter_rejoin_requested": bool(arbiter_rejoin_requested),
+                "dynamic_goal_rejoin_requested": bool(
+                    self._dynamic_goal_rejoin_requested
+                ),
+                "dynamic_goal_rejoin_active": dynamic_goal_rejoin_active,
                 "rear_only_goal_steer_active": rear_only_goal_steer_active,
                 "rear_only_goal_turn_sign": float(
                     self._rear_only_goal_turn_sign
@@ -1146,6 +1230,7 @@ class _DynamicPathGuardSupervisor:
             self._last_dynamic_turn_sign = 0.0
             self._hazard_reverse_steps = 0
             self._goal_rejoin_release_count = 0
+            self._dynamic_goal_rejoin_requested = False
         # A geometric deviation by itself is not evidence that deployment
         # safety owns the manoeuvre.  The Full Proposed planner is expected to
         # turn away from the start-to-goal chord in both static and dynamic
@@ -2044,6 +2129,21 @@ def main():
                     reverse_escape_exhausted=bool(
                         decision.diagnostics.get(
                             "dynamic_escape_post_retry_reverse_exhausted",
+                            False,
+                        )
+                    ),
+                    arbiter_steering_authoritative=(
+                        _arbiter_steering_authoritative(
+                            decision.reason, decision.diagnostics
+                        )
+                    ),
+                    arbiter_rejoin_requested=bool(
+                        decision.diagnostics.get(
+                            "dynamic_escape_geometric_goal_release_applied",
+                            False,
+                        )
+                        or decision.diagnostics.get(
+                            "dynamic_escape_geometric_passage_completion_applied",
                             False,
                         )
                     ),

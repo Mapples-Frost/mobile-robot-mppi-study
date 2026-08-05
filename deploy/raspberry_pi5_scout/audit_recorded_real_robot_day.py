@@ -28,6 +28,7 @@ from deploy.raspberry_pi5_scout.run_remote_cuda_full import (
     _DYNAMIC_PATH_AUTHORITY_REASONS,
     _GOAL_REJOIN_REAR_HEMISPHERE_RAD,
     _DynamicPathGuardSupervisor,
+    _arbiter_steering_authoritative,
     _dynamic_hazard_sector,
     _physical_goal_context,
     _physical_tracker_motion_context,
@@ -271,6 +272,20 @@ def _replay_run(rows, summary, action_spec, guard_config, planner_config):
             reverse_escape_exhausted=bool(
                 decision.diagnostics.get(
                     "dynamic_escape_post_retry_reverse_exhausted", False
+                )
+            ),
+            arbiter_steering_authoritative=(
+                _arbiter_steering_authoritative(
+                    decision.reason, decision.diagnostics
+                )
+            ),
+            arbiter_rejoin_requested=bool(
+                decision.diagnostics.get(
+                    "dynamic_escape_geometric_goal_release_applied", False
+                )
+                or decision.diagnostics.get(
+                    "dynamic_escape_geometric_passage_completion_applied",
+                    False,
                 )
             ),
         )
@@ -536,6 +551,8 @@ def _replay_run(rows, summary, action_spec, guard_config, planner_config):
             violation_examples["rear_force_forward"].append(cycle)
         if force_rear and output_v < 0.35 - 1.0e-12:
             violation_examples["rear_path_continuity"].append(cycle)
+        if force_rear and abs(output_omega) > 0.05:
+            violation_examples["rear_path_steering_override"].append(cycle)
         rear_goal_steer = bool(path.get(
             "rear_only_goal_steer_active", False
         ))
@@ -968,6 +985,9 @@ def audit(runs_root, weight_root, date_prefix):
         ),
         "rear_only_path_preserves_forward": (
             all_violation_counts["rear_path_continuity"] == 0
+        ),
+        "rear_only_path_preserves_straight_escape": (
+            all_violation_counts["rear_path_steering_override"] == 0
         ),
         "rear_only_turn_side_is_stable": (
             all_violation_counts["rear_turn_sign_flip"] == 0

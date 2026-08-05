@@ -273,6 +273,12 @@ class ScanGuardArbiter:
                 "dynamic_escape_direction_refresh_confirmation_steps", 1
             )
         )
+        self.dynamic_escape_measured_reversal_confirmation_steps = int(
+            self.config.get(
+                "dynamic_escape_measured_reversal_confirmation_steps",
+                self.dynamic_escape_direction_refresh_confirmation_steps,
+            )
+        )
         # A causal lateral velocity is the physical crossing direction.  The
         # higher-level preferred-heading heuristic may change sides as its
         # sampled passage costs move, but it must not overrule the simple
@@ -330,6 +336,28 @@ class ScanGuardArbiter:
         )
         self.dynamic_escape_coast_steps = int(
             self.config.get("dynamic_escape_coast_steps", -1)
+        )
+        self.dynamic_escape_passage_completion_enabled = bool(
+            self.config.get(
+                "dynamic_escape_passage_completion_enabled", False
+            )
+        )
+        self.dynamic_escape_passage_completion_min_bearing_rad = float(
+            self.config.get(
+                "dynamic_escape_passage_completion_min_bearing_rad", 1.0
+            )
+        )
+        self.dynamic_escape_passage_completion_min_front_clearance_m = float(
+            self.config.get(
+                "dynamic_escape_passage_completion_min_front_clearance_m",
+                1.5,
+            )
+        )
+        self.dynamic_escape_passage_completion_min_goal_counter_heading_rad = (
+            float(self.config.get(
+                "dynamic_escape_passage_completion_min_goal_counter_heading_rad",
+                0.55,
+            ))
         )
         self.dynamic_escape_frontal_entry_speed = float(
             self.config.get(
@@ -715,6 +743,7 @@ class ScanGuardArbiter:
             or self.dynamic_escape_direction_refresh_minimum_lateral_speed_mps
             < 0.0
             or self.dynamic_escape_direction_refresh_confirmation_steps < 1
+            or self.dynamic_escape_measured_reversal_confirmation_steps < 1
             or self.dynamic_escape_crossing_minimum_lateral_speed_mps < 0.0
             or self.dynamic_escape_temporal_preturn_speed < 0.0
             or self.dynamic_escape_temporal_preturn_speed
@@ -726,6 +755,13 @@ class ScanGuardArbiter:
             or self.dynamic_escape_coast_turn_gain <= 0.0
             or self.dynamic_escape_coast_max_omega_radps < 0.0
             or self.dynamic_escape_coast_steps < -1
+            or not 0.0
+            < self.dynamic_escape_passage_completion_min_bearing_rad
+            <= np.pi
+            or self.dynamic_escape_passage_completion_min_front_clearance_m
+            <= 0.0
+            or self.dynamic_escape_passage_completion_min_goal_counter_heading_rad
+            < 0.0
             or self.dynamic_escape_frontal_entry_speed < 0.0
             or self.dynamic_escape_frontal_entry_speed
             > self.dynamic_escape_max_speed
@@ -902,6 +938,8 @@ class ScanGuardArbiter:
         self._dynamic_escape_geometric_clear_streak = 0
         self._dynamic_escape_geometric_turn_sign = 0.0
         self._dynamic_escape_geometric_direction_prediction_backed = False
+        self._dynamic_escape_measured_reversal_candidate_sign = 0.0
+        self._dynamic_escape_measured_reversal_confirmation_count = 0
         self._dynamic_escape_frontal_encounter_latched = False
         self._dynamic_escape_coast_remaining = 0
         self._dynamic_escape_vetted_reverse_steps = 0
@@ -1989,6 +2027,38 @@ class ScanGuardArbiter:
             # first appeared outside this 20 degree frontal cone.
             and abs(obstacle_bearing) >= math.radians(20.0)
         )
+        measured_reversal_candidate = bool(
+            measured_lateral_countermotion_available
+            and not self._dynamic_escape_frontal_encounter_latched
+            and late_prediction_forward_sector
+            and late_prediction_oblique_geometry
+            and preferred_turn_sign != 0.0
+            and self._dynamic_escape_geometric_turn_sign != 0.0
+            and preferred_turn_sign
+            != self._dynamic_escape_geometric_turn_sign
+        )
+        if measured_reversal_candidate:
+            if (
+                preferred_turn_sign
+                == self._dynamic_escape_measured_reversal_candidate_sign
+            ):
+                self._dynamic_escape_measured_reversal_confirmation_count += 1
+            else:
+                self._dynamic_escape_measured_reversal_candidate_sign = (
+                    preferred_turn_sign
+                )
+                self._dynamic_escape_measured_reversal_confirmation_count = 1
+        else:
+            self._dynamic_escape_measured_reversal_candidate_sign = 0.0
+            self._dynamic_escape_measured_reversal_confirmation_count = 0
+        measured_reversal_confirmation_count = int(
+            self._dynamic_escape_measured_reversal_confirmation_count
+        )
+        measured_reversal_confirmed = bool(
+            measured_reversal_candidate
+            and measured_reversal_confirmation_count
+            >= self.dynamic_escape_measured_reversal_confirmation_steps
+        )
         late_prediction_available = bool(
             context.get(
                 "probabilistic_obstacle_forward_lateral_countermotion_applied",
@@ -2025,6 +2095,7 @@ class ScanGuardArbiter:
                 and prediction_direction_refresh_geometry_allowed
             )
             or late_prediction_direction_refresh
+            or measured_reversal_confirmed
         )
         if (
             late_prediction_available
@@ -2044,6 +2115,8 @@ class ScanGuardArbiter:
             self._dynamic_escape_direction_commit_remaining = 0
             self._dynamic_escape_direction_commit_values = None
             self._dynamic_escape_coast_remaining = 0
+            self._dynamic_escape_measured_reversal_candidate_sign = 0.0
+            self._dynamic_escape_measured_reversal_confirmation_count = 0
         dynamic_hard_stop_prediction_evidence = bool(
             context.get(
                 "probabilistic_obstacle_active_avoidance_enabled", False
@@ -2262,6 +2335,27 @@ class ScanGuardArbiter:
             and abs(recovery_heading_error)
             >= self.dynamic_escape_goal_divergence_release_rad
         )
+        passage_completion_front_clearance = self._finite_clearance(
+            guard_result, "min_front_range"
+        )
+        frontal_passage_completion_ready = bool(
+            self.dynamic_escape_passage_completion_enabled
+            and self._dynamic_escape_frontal_encounter_latched
+            and self._dynamic_escape_geometric_turn_sign != 0.0
+            and np.isfinite(obstacle_bearing)
+            and abs(obstacle_bearing)
+            >= self.dynamic_escape_passage_completion_min_bearing_rad
+            and obstacle_bearing
+            * self._dynamic_escape_geometric_turn_sign < 0.0
+            and passage_completion_front_clearance is not None
+            and passage_completion_front_clearance
+            >= self.dynamic_escape_passage_completion_min_front_clearance_m
+            and np.isfinite(recovery_heading_error)
+            and recovery_heading_error
+            * self._dynamic_escape_geometric_turn_sign < 0.0
+            and abs(recovery_heading_error)
+            >= self.dynamic_escape_passage_completion_min_goal_counter_heading_rad
+        )
         geometric_goal_release_applied = bool(
             goal_diverged_from_escape_side
             and (
@@ -2269,11 +2363,23 @@ class ScanGuardArbiter:
                 or self._dynamic_escape_coast_remaining != 0
             )
         )
-        if geometric_goal_release_applied:
+        geometric_passage_completion_applied = bool(
+            frontal_passage_completion_ready
+            and (
+                self._dynamic_escape_direction_commit_remaining > 0
+                or self._dynamic_escape_coast_remaining != 0
+            )
+        )
+        if (
+            geometric_goal_release_applied
+            or geometric_passage_completion_applied
+        ):
             # Recorded run 003752 kept a saturated right turn alive after the
             # goal had moved 75--106 degrees to the left of the chassis.  End
-            # both phases atomically; a stale coast must not continue the same
-            # turn after the full-yaw prefix is released.
+            # both phases atomically.  A frontal pass also completes as soon
+            # as the person is outside the forward corridor, the front opens,
+            # and the goal lies counter to the avoidance turn.  In either
+            # case a stale coast must not continue the same yaw transaction.
             self._dynamic_escape_direction_commit_remaining = 0
             self._dynamic_escape_direction_commit_values = None
             self._dynamic_escape_coast_remaining = 0
@@ -3603,6 +3709,15 @@ class ScanGuardArbiter:
         diagnostics["dynamic_escape_measured_lateral_countermotion"] = bool(
             measured_lateral_countermotion_available
         )
+        diagnostics["dynamic_escape_measured_reversal_candidate"] = bool(
+            measured_reversal_candidate
+        )
+        diagnostics[
+            "dynamic_escape_measured_reversal_confirmation_count"
+        ] = int(measured_reversal_confirmation_count)
+        diagnostics["dynamic_escape_measured_reversal_confirmed"] = bool(
+            measured_reversal_confirmed
+        )
         diagnostics["dynamic_escape_prediction_direction_refreshed"] = bool(
             prediction_direction_refreshed
         )
@@ -3681,6 +3796,12 @@ class ScanGuardArbiter:
         diagnostics["dynamic_escape_geometric_goal_release_applied"] = bool(
             geometric_goal_release_applied
         )
+        diagnostics["dynamic_escape_frontal_passage_completion_ready"] = bool(
+            frontal_passage_completion_ready
+        )
+        diagnostics[
+            "dynamic_escape_geometric_passage_completion_applied"
+        ] = bool(geometric_passage_completion_applied)
         diagnostics["dynamic_escape_post_retry_reverse_exhausted"] = bool(
             post_retry_reverse_exhausted
         )

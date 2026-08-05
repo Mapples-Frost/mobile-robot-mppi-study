@@ -10,6 +10,7 @@ from deploy.raspberry_pi5_scout.build_pi5_full_config import (
 )
 from deploy.raspberry_pi5_scout.run_remote_cuda_full import (
     _DynamicPathGuardSupervisor,
+    _arbiter_steering_authoritative,
     _deskew_livox_frame,
     _dynamic_hazard_sector,
     _direction_reversal_guard,
@@ -89,7 +90,7 @@ def test_physical_limits_are_shared_with_planner_and_safety(tmp_path):
     assert guard["dynamic_escape_trigger_ttc_s"] == pytest.approx(3.00)
     assert guard["dynamic_escape_uncertainty_fusion_enabled"] is True
     assert guard["dynamic_escape_direction_commit_steps"] == 4
-    assert guard["dynamic_escape_frontal_commit_steps"] == 10
+    assert guard["dynamic_escape_frontal_commit_steps"] == 6
     assert guard["dynamic_escape_coast_steps"] == 14
     assert guard["dynamic_escape_temporal_preturn_enabled"] is True
     assert guard["dynamic_escape_temporal_preturn_speed"] == pytest.approx(0.20)
@@ -127,7 +128,14 @@ def test_physical_limits_are_shared_with_planner_and_safety(tmp_path):
     assert guard[
         "dynamic_escape_direction_refresh_confirmation_steps"
     ] == 2
+    assert guard[
+        "dynamic_escape_measured_reversal_confirmation_steps"
+    ] == 3
     assert guard["dynamic_escape_coast_direction_lock_enabled"] is True
+    assert guard["dynamic_escape_passage_completion_enabled"] is True
+    assert guard[
+        "dynamic_escape_passage_completion_min_bearing_rad"
+    ] == pytest.approx(1.0)
     assert guard["dynamic_escape_geometric_single_commit_enabled"] is True
     assert guard["dynamic_escape_geometric_rearm_clear_steps"] == 3
     assert guard["dynamic_escape_coast_turn_gain"] == pytest.approx(0.55)
@@ -503,6 +511,31 @@ def test_path_supervisor_is_transparent_before_any_dynamic_event():
     assert diagnostics["would_be_active"] is True
     assert diagnostics["goal_rejoin_latched"] is False
     assert diagnostics["commanded_omega_override_radps"] is None
+
+
+def test_dynamic_reason_does_not_imply_unbounded_steering_authority():
+    assert _arbiter_steering_authoritative(
+        "dynamic_active_escape",
+        {
+            "dynamic_escape_coast_remaining": 14,
+            "dynamic_escape_vetted_planner_control": True,
+        },
+    ) is True
+    assert _arbiter_steering_authoritative(
+        "dynamic_active_escape",
+        {
+            "dynamic_escape_coast_remaining": 0,
+            "dynamic_escape_direction_commit_remaining": 0,
+            "dynamic_escape_vetted_planner_control": True,
+        },
+    ) is False
+    assert _arbiter_steering_authoritative(
+        "rear_pass_through", {}
+    ) is True
+    assert _arbiter_steering_authoritative(
+        "temporal_slowdown",
+        {"dynamic_escape_temporal_preturn_applied": False},
+    ) is False
 
 
 def test_goal_rejoin_releases_back_to_planner_after_stable_clear_alignment():
@@ -953,12 +986,12 @@ def test_front_dynamic_escape_preserves_safety_arbiter_reverse_and_steering():
     assert forward["commanded_omega_override_radps"] is None
 
 
-def test_rear_only_dynamic_authority_turns_toward_goal():
+def test_rear_only_dynamic_authority_preserves_arbiter_straight_yaw():
     supervisor = _DynamicPathGuardSupervisor()
     output_v, decision = supervisor.apply(
         1.65, -0.31, 1.27, 5.0, 0.0, 0.50,
         safety_reason="rear_pass_through",
-        proposed_omega=0.30,
+        proposed_omega=0.0,
         maximum_omega_radps=0.60,
         hazard_active=False,
         rear_only_hazard=True,
@@ -966,33 +999,74 @@ def test_rear_only_dynamic_authority_turns_toward_goal():
 
     assert output_v == pytest.approx(0.50)
     assert decision["dynamic_authority"] is True
-    assert decision["rear_only_goal_steer_active"] is True
+    assert decision["rear_only_goal_steer_active"] is False
     assert decision["heading_error_rad"] < 0.0
-    assert decision["commanded_omega_override_radps"] == pytest.approx(-0.60)
+    assert decision["commanded_omega_override_radps"] is None
 
 
-def test_rear_only_goal_steer_does_not_flip_at_pi_wrap():
+def test_rear_only_arbiter_yaw_is_not_replaced_at_pi_wrap():
     supervisor = _DynamicPathGuardSupervisor()
     _, before_wrap = supervisor.apply(
         0.52, -0.12, -2.79, 5.0, 0.0, 0.50,
         safety_reason="rear_pass_through",
-        proposed_omega=-0.30,
+        proposed_omega=0.0,
         maximum_omega_radps=0.60,
         rear_only_hazard=True,
     )
     _, after_wrap = supervisor.apply(
         0.53, -0.12, 3.10, 5.0, 0.0, 0.50,
         safety_reason="rear_pass_through",
-        proposed_omega=-0.30,
+        proposed_omega=0.0,
         maximum_omega_radps=0.60,
         rear_only_hazard=True,
     )
 
     assert before_wrap["heading_error_rad"] > 0.0
     assert after_wrap["heading_error_rad"] < 0.0
-    assert before_wrap["commanded_omega_override_radps"] == pytest.approx(0.60)
-    assert after_wrap["commanded_omega_override_radps"] == pytest.approx(0.60)
-    assert after_wrap["rear_only_goal_turn_sign"] == pytest.approx(1.0)
+    assert before_wrap["commanded_omega_override_radps"] is None
+    assert after_wrap["commanded_omega_override_radps"] is None
+    assert after_wrap["rear_only_goal_turn_sign"] == pytest.approx(0.0)
+
+
+def test_completed_dynamic_turn_rejoins_goal_without_reviving_mppi_yaw():
+    supervisor = _DynamicPathGuardSupervisor()
+    supervisor.apply(
+        2.20, 0.90, 1.00, 5.0, 2.0, 0.20,
+        safety_reason="dynamic_active_escape",
+        proposed_omega=0.60,
+        hazard_active=True,
+        arbiter_steering_authoritative=True,
+    )
+
+    output_v, completed = supervisor.apply(
+        2.35, 1.05, 1.35, 5.0, 2.0, 0.50,
+        safety_reason="dynamic_active_escape",
+        proposed_omega=0.60,
+        maximum_omega_radps=0.60,
+        hazard_active=True,
+        arbiter_steering_authoritative=False,
+        arbiter_rejoin_requested=True,
+    )
+    assert completed["heading_error_rad"] < -0.70
+    assert output_v == pytest.approx(0.30)
+    assert completed["reason"] == "dynamic_goal_rejoin_authority"
+    assert completed["active"] is True
+    assert completed["commanded_omega_override_radps"] == pytest.approx(-0.30)
+
+    # The completion event is one cycle, but its ownership transition must
+    # persist while the safety reason remains dynamically active.
+    output_v, held = supervisor.apply(
+        2.38, 1.08, 1.32, 5.0, 2.0, 0.50,
+        safety_reason="dynamic_active_escape",
+        proposed_omega=0.60,
+        maximum_omega_radps=0.60,
+        hazard_active=True,
+        arbiter_steering_authoritative=False,
+        arbiter_rejoin_requested=False,
+    )
+    assert output_v == pytest.approx(0.30)
+    assert held["dynamic_goal_rejoin_requested"] is True
+    assert held["commanded_omega_override_radps"] == pytest.approx(-0.30)
 
 
 def test_front_dynamic_hard_stop_selects_side_then_reverses_only_if_rear_clear(
@@ -1720,6 +1794,7 @@ def test_strong_crossing_inside_frontal_cone_uses_predicted_opposite_side(
         "probabilistic_obstacle_forward_lateral_countermotion_applied": True,
         "probabilistic_obstacle_motion_lateral_body_mps": 0.60,
         "probabilistic_obstacle_motion_lateral_fraction": 0.90,
+        "probabilistic_obstacle_preferred_escape_heading_error_rad": -0.88,
     }
 
     decision = arbiter.arbitrate(
@@ -1734,6 +1809,124 @@ def test_strong_crossing_inside_frontal_cone_uses_predicted_opposite_side(
     assert decision.diagnostics[
         "dynamic_escape_frontal_encounter_latched"
     ] is False
+
+
+def test_three_direct_countermotion_frames_correct_a_wrong_first_crossing(
+        tmp_path):
+    config = build_pi5_full_config(
+        _weight_root(tmp_path),
+        max_v_mps=0.5,
+        max_reverse_v_mps=0.3,
+        max_omega_radps=0.6,
+    )
+    guard_config = config["perception"]["scan_guard"]
+    guard_config["dynamic_escape_direction_commit_steps"] = 1
+    arbiter = ScanGuardArbiter(
+        action_spec_from_config(config["action_space"]), guard_config
+    )
+    guard = {
+        "emergency_stop": False,
+        "should_slow_down": True,
+        "reason": "temporal_slowdown",
+        "dynamic_obstacle_scan_flow_match": True,
+        "temporal_scan_valid": True,
+        "temporal_scan_ttc_s": 1.2,
+        "dynamic_obstacle_bearing_rad": 0.45,
+        "min_left_side_range": 1.40,
+        "min_right_side_range": 0.70,
+        "min_front_range": 1.10,
+    }
+    initial_context = {
+        "probabilistic_obstacle_active_avoidance_enabled": True,
+        "probabilistic_obstacle_forward_lateral_countermotion_applied": True,
+        "probabilistic_obstacle_motion_lateral_body_mps": 0.60,
+        "probabilistic_obstacle_motion_lateral_fraction": 0.90,
+    }
+    initial = arbiter.arbitrate(
+        ControlCommand([0.5, 0.6]), guard, initial_context
+    )
+    assert initial.executed_control.omega == pytest.approx(-0.60)
+
+    opposite_context = dict(initial_context)
+    opposite_context[
+        "probabilistic_obstacle_motion_lateral_body_mps"
+    ] = -0.60
+    opposite_context[
+        "probabilistic_obstacle_preferred_escape_heading_error_rad"
+    ] = 0.88
+    first = arbiter.arbitrate(
+        ControlCommand([0.5, -0.6]), guard, opposite_context
+    )
+    second = arbiter.arbitrate(
+        ControlCommand([0.5, -0.6]), guard, opposite_context
+    )
+    corrected = arbiter.arbitrate(
+        ControlCommand([0.5, -0.6]), guard, opposite_context
+    )
+
+    assert first.executed_control.omega < 0.0
+    assert second.executed_control.omega < 0.0
+    assert corrected.executed_control.omega == pytest.approx(0.60)
+    assert corrected.diagnostics[
+        "dynamic_escape_measured_reversal_confirmation_count"
+    ] == 3
+    assert corrected.diagnostics[
+        "dynamic_escape_measured_reversal_confirmed"
+    ] is True
+    assert corrected.diagnostics[
+        "dynamic_escape_geometric_turn_source"
+    ] == "measured_lateral_countermotion"
+
+
+def test_frontal_passage_completion_ends_turn_when_corridor_is_clear(tmp_path):
+    config = build_pi5_full_config(
+        _weight_root(tmp_path),
+        max_v_mps=0.5,
+        max_reverse_v_mps=0.3,
+        max_omega_radps=0.6,
+    )
+    arbiter = ScanGuardArbiter(
+        action_spec_from_config(config["action_space"]),
+        config["perception"]["scan_guard"],
+    )
+    frontal_guard = {
+        "emergency_stop": False,
+        "should_slow_down": True,
+        "reason": "temporal_slowdown",
+        "dynamic_obstacle_scan_flow_match": True,
+        "temporal_scan_valid": True,
+        "temporal_scan_ttc_s": 1.2,
+        "dynamic_obstacle_bearing_rad": 0.05,
+        "min_left_side_range": 1.50,
+        "min_right_side_range": 0.70,
+        "min_front_range": 1.10,
+    }
+    context = {
+        "probabilistic_obstacle_active_avoidance_enabled": True,
+        "target_bearing_error": -0.10,
+    }
+    first = arbiter.arbitrate(
+        ControlCommand([0.5, 0.6]), frontal_guard, context
+    )
+    assert first.executed_control.values.tolist() == pytest.approx([0.20, 0.60])
+
+    completed_guard = dict(frontal_guard)
+    completed_guard.update({
+        "dynamic_obstacle_bearing_rad": -1.10,
+        "min_front_range": 2.00,
+    })
+    completed_context = dict(context)
+    completed_context["target_bearing_error"] = -0.65
+    completed = arbiter.arbitrate(
+        ControlCommand([0.5, 0.6]), completed_guard, completed_context
+    )
+    assert completed.diagnostics[
+        "dynamic_escape_geometric_passage_completion_applied"
+    ] is True
+    assert completed.diagnostics["dynamic_escape_coast_remaining"] == 0
+    assert completed.diagnostics[
+        "dynamic_escape_direction_commit_remaining"
+    ] == 0
 
 
 def test_temporal_flow_preturns_before_forecast_tracker_acquisition(tmp_path):

@@ -157,6 +157,11 @@ class ScanGuardArbiter:
                 "dynamic_escape_use_vetted_planner_control", False
             )
         )
+        self.dynamic_escape_preserve_vetted_planner_reverse = bool(
+            self.config.get(
+                "dynamic_escape_preserve_vetted_planner_reverse", False
+            )
+        )
         self.dynamic_escape_use_vetted_emergency_candidate = bool(
             self.config.get(
                 "dynamic_escape_use_vetted_emergency_candidate", False
@@ -2450,9 +2455,47 @@ class ScanGuardArbiter:
             and dynamic_surface_range
             >= self.dynamic_escape_post_retry_side_forward_min_surface_range_m
         )
+        proposed_v = (
+            float(proposed.values[self.action_spec.index("v_cmd")])
+            if "v_cmd" in self.action_spec.names
+            else 0.0
+        )
+        vetted_planner_reverse_preferred = bool(
+            self.dynamic_escape_preserve_vetted_planner_reverse
+            and self.dynamic_escape_use_vetted_planner_control
+            and proposed_v < -self.directional_motion_minimum_speed_mps
+            and not rear_reverse_blocked
+            and context.get(
+                "probabilistic_obstacle_active_avoidance_enabled", False
+            )
+            and context.get(
+                "probabilistic_obstacle_emergency_candidate_selected", False
+            )
+            and context.get(
+                "probabilistic_obstacle_temporal_emergency_vetted", False
+            )
+            and self._rear_sector_clear(
+                guard_result,
+                self.dynamic_escape_hard_stop_rear_sector_deg,
+                self.dynamic_escape_hard_stop_min_rear_range,
+            )
+        )
+        if vetted_planner_reverse_preferred:
+            # The optimizer has already selected a temporally risk-vetted
+            # reverse and the live 360-degree scan positively certifies rear
+            # headroom.  End the stale reactive turn/coast transaction rather
+            # than converting that optimal retreat back into forward motion.
+            # Mark the geometric prefix consumed so it cannot restart on the
+            # next noisy scan; the existing finite retry budget still bounds
+            # how long planner reverse may retain authority.
+            self._dynamic_escape_direction_commit_remaining = 0
+            self._dynamic_escape_direction_commit_values = None
+            self._dynamic_escape_coast_remaining = 0
+            self._dynamic_escape_geometric_commit_consumed = True
         geometric_forward_escape = bool(
             self.dynamic_escape_uncertainty_fusion_enabled
             and front_geometric_escape_available
+            and not vetted_planner_reverse_preferred
             and (
                 not self.dynamic_escape_geometric_single_commit_enabled
                 or not self._dynamic_escape_geometric_commit_consumed
@@ -2483,6 +2526,7 @@ class ScanGuardArbiter:
         corridor_turning = False
         committed_geometric_escape = bool(
             self.dynamic_escape_uncertainty_fusion_enabled
+            and not vetted_planner_reverse_preferred
             and self._dynamic_escape_direction_commit_remaining > 0
             and self._dynamic_escape_direction_commit_values is not None
             and (
@@ -2496,6 +2540,7 @@ class ScanGuardArbiter:
         )
         geometric_forward_coast = bool(
             self.dynamic_escape_uncertainty_fusion_enabled
+            and not vetted_planner_reverse_preferred
             and self.dynamic_escape_geometric_single_commit_enabled
             and self._dynamic_escape_geometric_commit_consumed
             and self._dynamic_escape_coast_remaining != 0
@@ -3690,6 +3735,9 @@ class ScanGuardArbiter:
         )
         diagnostics["dynamic_escape_geometric_forward_coast"] = bool(
             geometric_forward_coast
+        )
+        diagnostics["dynamic_escape_vetted_planner_reverse_preferred"] = bool(
+            vetted_planner_reverse_preferred
         )
         diagnostics["dynamic_escape_geometric_turn_sign"] = float(
             self._dynamic_escape_geometric_turn_sign

@@ -384,11 +384,11 @@ def build_pi5_full_config(
                 0.30, max_omega_radps
             ),
             # Six frames returned authority while the person was still beside
-            # the chassis; per-frame MPPI then alternated forward/reverse.  A
-            # fourteen-frame bounded coast carries the established passage
-            # through the side sector, while the goal-divergence release still
-            # prevents the historical unbounded orbit.
-            "dynamic_escape_coast_steps": 14,
+            # the chassis, while fourteen frames over-held the tangent in the
+            # 20260805 physical runs.  Ten frames is the replay-screened
+            # midpoint: it carries the established passage through scan
+            # fragmentation but returns authority four cycles earlier.
+            "dynamic_escape_coast_steps": 10,
             # A frontal pass has a geometric end condition: the person has
             # moved outside the forward corridor, front range is open, and
             # the goal now lies counter to the avoidance turn.  End the yaw
@@ -464,15 +464,20 @@ def build_pi5_full_config(
             # the mechanism.
             "dynamic_escape_geometric_single_commit_enabled": True,
             "dynamic_escape_geometric_rearm_clear_steps": 3,
+            # A temporally risk-vetted MPPI reverse is already the optimizer's
+            # selected escape.  When the live rear sector is positively open,
+            # let it terminate the reactive turn/coast instead of rewriting it
+            # to forward motion (as recorded in 042538 cycles 44 and 52).
+            "dynamic_escape_preserve_vetted_planner_reverse": True,
             # A person inside the 0.50 m forward hard-stop envelope still
             # forbids forward translation.  Establish a side in place, then
             # permit a finite reverse arc only with positively observed rear
             # headroom.  At 0.30 m/s and 10 Hz this transaction travels at most
-            # 0.36 m: enough to create room during a direct human approach,
-            # while remaining strictly bounded.
+            # 0.24 m: enough to create room during a direct human approach,
+            # while avoiding the visibly excessive 1.2 s retreat.
             "dynamic_escape_hard_stop_enabled": True,
             "dynamic_escape_hard_stop_turn_steps": 4,
-            "dynamic_escape_hard_stop_reverse_steps": 12,
+            "dynamic_escape_hard_stop_reverse_steps": 8,
             "dynamic_escape_hard_stop_reverse_speed": max_reverse_v_mps,
             "dynamic_escape_hard_stop_reverse_max_omega_radps": min(
                 0.45, max_omega_radps

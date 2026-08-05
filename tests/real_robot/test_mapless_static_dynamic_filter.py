@@ -391,6 +391,7 @@ def test_temporal_corroboration_rejects_static_cluster_hopping_but_holds_motion(
 
     value, tracker = _filter()
     value.dynamic_classification_temporal_corroboration_enabled = True
+    tracker.temporal_flow_threat_hold_cycles = 6
     for index, (timestamp, lateral) in enumerate(positions):
         tracker.position = (1.5, lateral)
         flow = (
@@ -407,6 +408,73 @@ def test_temporal_corroboration_rejects_static_cluster_hopping_but_holds_motion(
     assert result.diagnostics[
         "mapless_dynamic_classification_temporal_corroboration_remaining"
     ] > 0
+
+
+def test_temporal_corroboration_is_scoped_to_the_matched_track():
+    value, tracker = _filter()
+    value.dynamic_classification_temporal_corroboration_enabled = True
+    call_count = 0
+
+    def update(_observation_value):
+        nonlocal call_count
+        call_count += 1
+        lateral = 0.19 * (call_count - 1)
+
+        def track(index, y_value, flow_hold):
+            return {
+                "track_index": index,
+                "update_count": call_count,
+                "associated": True,
+                "association_distance_m": 0.02,
+                "measurement_x": 1.5 + 0.4 * index,
+                "measurement_y": y_value,
+                "change_triggered": False,
+                "recovery_active": False,
+                "dropout_guard_triggered": False,
+                "forecast_valid": True,
+                "measurement_speed_mps": 0.70,
+                "selected_support_beams": 10,
+                "vehicle_extent_m": None,
+                "vehicle_geometry_confirmed": None,
+                "temporal_flow_threat_matched": flow_hold > 0,
+                "temporal_flow_threat_hold_cycles": flow_hold,
+            }
+
+        return OnlineTrackingUpdate(
+            measurement=None,
+            forecast=("matched", "background"),
+            diagnostics={
+                "tracks": (
+                    track(0, lateral, 6),
+                    track(1, -lateral, 0),
+                    {},
+                ),
+                "forecast_track_indices": (0, 1),
+                "nearest_track_index": 0,
+            },
+        )
+
+    tracker.update = update
+    result = None
+    for index in range(3):
+        result = value.update(_observation(
+            0.28 * index,
+            temporal_flow=(
+                {"valid": True, "ttc_s": 4.0, "support_beams": 4}
+                if index == 0
+                else None
+            ),
+        ))
+
+    assert result.forecast == ("matched",)
+    assert result.diagnostics["mapless_dynamic_track_indices"] == (0,)
+    assert result.diagnostics["mapless_unknown_track_indices"] == (1, 2)
+    assert result.diagnostics["tracks"][0][
+        "mapless_temporal_flow_corroborated"
+    ] is True
+    assert result.diagnostics["tracks"][1][
+        "mapless_temporal_flow_corroborated"
+    ] is False
 
 
 def test_strong_collision_course_publishes_before_radial_flow():

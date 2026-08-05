@@ -93,7 +93,7 @@ def test_physical_limits_are_shared_with_planner_and_safety(tmp_path):
     assert guard["dynamic_escape_uncertainty_fusion_enabled"] is True
     assert guard["dynamic_escape_direction_commit_steps"] == 4
     assert guard["dynamic_escape_frontal_commit_steps"] == 6
-    assert guard["dynamic_escape_coast_steps"] == 14
+    assert guard["dynamic_escape_coast_steps"] == 10
     assert guard["dynamic_escape_temporal_preturn_enabled"] is True
     assert guard["dynamic_escape_temporal_preturn_speed"] == pytest.approx(0.20)
     assert guard[
@@ -153,7 +153,10 @@ def test_physical_limits_are_shared_with_planner_and_safety(tmp_path):
     ] == pytest.approx(1.50)
     assert guard["dynamic_escape_hard_stop_enabled"] is True
     assert guard["dynamic_escape_hard_stop_turn_steps"] == 4
-    assert guard["dynamic_escape_hard_stop_reverse_steps"] == 12
+    assert guard["dynamic_escape_hard_stop_reverse_steps"] == 8
+    assert guard[
+        "dynamic_escape_preserve_vetted_planner_reverse"
+    ] is True
     assert guard["dynamic_escape_hard_stop_reverse_speed"] == pytest.approx(0.30)
     assert guard[
         "dynamic_escape_hard_stop_reverse_max_omega_radps"
@@ -1197,7 +1200,9 @@ def test_front_dynamic_hard_stop_selects_side_then_reverses_only_if_rear_clear(
     ] == "rear_blocked_turn_only"
     assert blocked.diagnostics[
         "dynamic_escape_hard_stop_reverse_remaining"
-    ] == 12
+    ] == config["perception"]["scan_guard"][
+        "dynamic_escape_hard_stop_reverse_steps"
+    ]
     assert blocked.diagnostics[
         "dynamic_escape_hard_stop_rear_blocked_wait_remaining"
     ] == 5
@@ -1220,6 +1225,71 @@ def test_front_dynamic_hard_stop_selects_side_then_reverses_only_if_rear_clear(
     assert head_on.diagnostics[
         "dynamic_escape_geometric_turn_source"
     ] == "measured_side_clearance"
+
+
+def test_vetted_planner_reverse_ends_stale_forward_escape_when_rear_is_clear(
+        tmp_path):
+    """Replay the authority conflict in 20260805_042538 cycles 44/52."""
+    config = build_pi5_full_config(
+        _weight_root(tmp_path),
+        max_v_mps=0.5,
+        max_reverse_v_mps=0.3,
+        max_omega_radps=0.6,
+    )
+    action_spec = action_spec_from_config(config["action_space"])
+    guard = {
+        "emergency_stop": False,
+        "should_slow_down": True,
+        "reason": "temporal_slowdown",
+        "dynamic_obstacle_scan_flow_match": True,
+        "temporal_scan_valid": True,
+        "temporal_scan_ttc_s": 0.94,
+        "dynamic_obstacle_bearing_rad": -0.52,
+        "min_front_range": 1.22,
+        "min_left_side_range": 1.4,
+        "min_right_side_range": 0.8,
+        "raw_points_base": (
+            {"base_angle": -0.52, "range": 1.22},
+            {"base_angle": math.pi, "range": 2.0},
+        ),
+    }
+    context = {
+        "probabilistic_obstacle_active_avoidance_enabled": True,
+        "probabilistic_obstacle_emergency_candidate_selected": True,
+        "probabilistic_obstacle_temporal_emergency_vetted": True,
+        "probabilistic_obstacle_preferred_escape_heading_error_rad": 0.8,
+    }
+
+    clear_arbiter = ScanGuardArbiter(
+        action_spec, config["perception"]["scan_guard"]
+    )
+    clear = clear_arbiter.arbitrate(
+        ControlCommand([-0.30, 0.60]), guard, context
+    )
+    assert clear.executed_control.values.tolist() == pytest.approx(
+        [-0.30, 0.60]
+    )
+    assert clear.diagnostics[
+        "dynamic_escape_vetted_planner_reverse_preferred"
+    ] is True
+    assert clear.diagnostics["dynamic_escape_direction_commit_remaining"] == 0
+    assert clear.diagnostics["dynamic_escape_coast_remaining"] == 0
+
+    blocked_guard = dict(guard)
+    blocked_guard["raw_points_base"] = (
+        {"base_angle": -0.52, "range": 1.22},
+        {"base_angle": math.pi, "range": 0.45},
+    )
+    blocked_arbiter = ScanGuardArbiter(
+        action_spec, config["perception"]["scan_guard"]
+    )
+    blocked = blocked_arbiter.arbitrate(
+        ControlCommand([-0.30, 0.60]), blocked_guard, context
+    )
+    assert blocked.executed_control.v > 0.0
+    assert blocked.diagnostics[
+        "dynamic_escape_vetted_planner_reverse_preferred"
+    ] is False
 
 
 def test_dynamic_hard_stop_transaction_survives_sparse_clear_frames(tmp_path):
@@ -3179,10 +3249,15 @@ def test_hard_stop_reverse_turn_decays_across_bounded_transaction(tmp_path):
 
     assert first_reverse.executed_control.v == pytest.approx(-0.30)
     assert abs(first_reverse.executed_control.omega) == pytest.approx(0.45)
-    assert abs(second_reverse.executed_control.omega) == pytest.approx(0.4125)
+    reverse_steps = config["perception"]["scan_guard"][
+        "dynamic_escape_hard_stop_reverse_steps"
+    ]
+    assert abs(second_reverse.executed_control.omega) == pytest.approx(
+        0.45 * (reverse_steps - 1) / reverse_steps
+    )
     assert second_reverse.diagnostics[
         "dynamic_escape_hard_stop_reverse_turn_scale"
-    ] == pytest.approx(11.0 / 12.0)
+    ] == pytest.approx((reverse_steps - 1) / reverse_steps)
 
 
 def test_path_supervisor_recovers_forward_after_exhausted_reverse():

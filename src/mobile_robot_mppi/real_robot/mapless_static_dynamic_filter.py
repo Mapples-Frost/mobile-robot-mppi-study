@@ -700,8 +700,19 @@ class MaplessStaticDynamicFilter:
             track["mapless_vehicle_shape_recent"] = bool(
                 self.vehicle_shape_hold[index] > 0
             )
+            # A scan-flow alert belongs only to the cluster/track that the
+            # bootstrap tracker spatially matched.  The old global hold
+            # broadcast one distant Livox range-flow fluctuation to every IMM
+            # track, so unrelated background fragments could all become
+            # dynamic and fight for the escape direction.  Keep the global
+            # hold as the temporal validity window, but intersect it with the
+            # track-specific match/hold maintained by MotionBootstrapTracker.
+            track_temporal_flow_hold = int(
+                track.get("temporal_flow_threat_hold_cycles") or 0
+            )
             track["mapless_temporal_flow_corroborated"] = bool(
                 self.dynamic_classification_temporal_corroboration_remaining > 0
+                and track_temporal_flow_hold > 0
             )
             evidence = self._evidence(history)
             (

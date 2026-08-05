@@ -621,7 +621,8 @@ def replay(runs_root, weight_root):
         ),
         "crowd_blocked_wait_does_not_spend_reverse_budget": bool(
             all(
-                item["reverse_remaining"] == 12
+                item["reverse_remaining"]
+                == guard_config["dynamic_escape_hard_stop_reverse_steps"]
                 for item in crowd_replay
                 if 386 <= item["cycle"] < 391
             )

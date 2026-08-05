@@ -54,6 +54,7 @@ _PLANNER_DIAGNOSTIC_PREFIXES = (
     "boundary_",
     "terminal_",
     "real_robot_forward_passage_",
+    "physical_tracker_",
     # build_pi5_full_config leaves profile_components enabled, so the planner
     # already computes a per-stage cost breakdown on every solve.  Without
     # this prefix every profile_* field was dropped before reaching the log,
@@ -862,6 +863,7 @@ class _DynamicPathGuardSupervisor:
     def __init__(self):
         self._goal_rejoin_latched = False
         self._goal_behind_turn_sign = 0.0
+        self._rear_only_goal_turn_sign = 0.0
         self._last_dynamic_turn_sign = 0.0
         self._hazard_reverse_steps = 0
         self._hazard_hold_remaining = 0
@@ -871,6 +873,7 @@ class _DynamicPathGuardSupervisor:
     def reset(self):
         self._goal_rejoin_latched = False
         self._goal_behind_turn_sign = 0.0
+        self._rear_only_goal_turn_sign = 0.0
         self._last_dynamic_turn_sign = 0.0
         self._hazard_reverse_steps = 0
         self._hazard_hold_remaining = 0
@@ -998,6 +1001,34 @@ class _DynamicPathGuardSupervisor:
             # the bounded close-range reverse transaction.
             output_v = float(proposed_v)
             omega_override = None
+            rear_only_goal_steer_active = bool(
+                rear_only_hazard and output_v > 0.0
+            )
+            if rear_only_goal_steer_active:
+                # A person that has passed behind the chassis no longer owns
+                # the avoidance yaw.  Keep the arbiter's forward authority,
+                # but turn directly back toward the goal.  Preserving a stale
+                # rear-pass sign drove long lateral arcs in the physical logs
+                # (235747 and 000034), including turns opposite the goal.
+                heading_error = float(diagnostics["heading_error_rad"])
+                if abs(heading_error) > _GOAL_REJOIN_REAR_HEMISPHERE_RAD:
+                    if self._rear_only_goal_turn_sign == 0.0:
+                        self._rear_only_goal_turn_sign = float(
+                            np.sign(heading_error)
+                        )
+                        if self._rear_only_goal_turn_sign == 0.0:
+                            self._rear_only_goal_turn_sign = 1.0
+                    omega_override = float(
+                        self._rear_only_goal_turn_sign
+                        * abs(float(maximum_omega_radps))
+                    )
+                else:
+                    self._rear_only_goal_turn_sign = 0.0
+                    omega_override = float(np.clip(
+                        _GOAL_REJOIN_TURN_GAIN * heading_error,
+                        -abs(float(maximum_omega_radps)),
+                        abs(float(maximum_omega_radps)),
+                    ))
             diagnostics.update({
                 "active": False,
                 "reason": "dynamic_authority",
@@ -1007,6 +1038,10 @@ class _DynamicPathGuardSupervisor:
                 "would_be_reason": would_be_reason,
                 "dynamic_authority": True,
                 "goal_rejoin_latched": True,
+                "rear_only_goal_steer_active": rear_only_goal_steer_active,
+                "rear_only_goal_turn_sign": float(
+                    self._rear_only_goal_turn_sign
+                ),
                 "commanded_omega_override_radps": omega_override,
                 "input_v_mps": float(proposed_v),
                 "output_v_mps": output_v,

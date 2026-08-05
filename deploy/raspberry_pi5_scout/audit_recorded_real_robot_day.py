@@ -26,6 +26,7 @@ from deploy.raspberry_pi5_scout.replay_recorded_dynamic_escape import (
 )
 from deploy.raspberry_pi5_scout.run_remote_cuda_full import (
     _DYNAMIC_PATH_AUTHORITY_REASONS,
+    _GOAL_REJOIN_REAR_HEMISPHERE_RAD,
     _DynamicPathGuardSupervisor,
     _dynamic_hazard_sector,
     _physical_tracker_motion_context,
@@ -232,9 +233,11 @@ def _replay_run(rows, summary, action_spec, guard_config, planner_config):
         selected_mass = _finite(context.get(
             "probabilistic_obstacle_probability_mass"
         ), 0.0)
-        hazard_active = bool(row.get("path_guard", {}).get(
-            "fresh_hazard_active", False
-        ))
+        recorded_path = row.get("path_guard", {})
+        hazard_active = bool(
+            recorded_path.get("fresh_hazard_active", False)
+            or recorded_path.get("rear_only_hazard", False)
+        )
         hazard_active, rear_only_hazard = _dynamic_hazard_sector(
             hazard_active, decision.diagnostics
         )
@@ -405,7 +408,25 @@ def _replay_run(rows, summary, action_spec, guard_config, planner_config):
             violation_examples["rear_force_forward"].append(cycle)
         if force_rear and output_v < 0.35 - 1.0e-12:
             violation_examples["rear_path_continuity"].append(cycle)
-        if force_rear and abs(output_omega) >= 0.10:
+        rear_goal_steer = bool(path.get(
+            "rear_only_goal_steer_active", False
+        ))
+        rear_goal_heading_error = _finite(path.get("heading_error_rad"))
+        if (
+            force_rear
+            and rear_goal_steer
+            and rear_goal_heading_error is not None
+            and abs(rear_goal_heading_error)
+            <= _GOAL_REJOIN_REAR_HEMISPHERE_RAD
+            and abs(output_omega) >= 0.10
+            and output_omega * rear_goal_heading_error < 0.0
+        ):
+            violation_examples["rear_goal_steer_wrong_side"].append(cycle)
+        if (
+            force_rear
+            and not rear_goal_steer
+            and abs(output_omega) >= 0.10
+        ):
             rear_sign = float(np.sign(output_omega))
             if (
                 cycle - last_rear_cycle <= 3
@@ -739,6 +760,7 @@ def audit(runs_root, weight_root, date_prefix):
         ),
         "rear_only_turn_side_is_stable": (
             all_violation_counts["rear_turn_sign_flip"] == 0
+            and all_violation_counts["rear_goal_steer_wrong_side"] == 0
         ),
         "dynamic_path_never_rezeros_authorized_forward_motion": (
             all_violation_counts["dynamic_path_zero_override"] == 0

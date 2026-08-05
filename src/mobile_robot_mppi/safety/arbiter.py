@@ -294,6 +294,17 @@ class ScanGuardArbiter:
                 self.dynamic_escape_max_speed,
             )
         )
+        self.dynamic_escape_persistent_front_retry_enabled = bool(
+            self.config.get(
+                "dynamic_escape_persistent_front_retry_enabled", False
+            )
+        )
+        self.dynamic_escape_vetted_reverse_retry_steps = int(
+            self.config.get("dynamic_escape_vetted_reverse_retry_steps", 0)
+        )
+        self.dynamic_escape_persistent_front_max_retries = int(
+            self.config.get("dynamic_escape_persistent_front_max_retries", 0)
+        )
         # Close-range dynamic escape is a bounded transaction: establish a
         # passage side in place, then create a small amount of room by reversing
         # only when the rear sector is positively observed clear.  Forward
@@ -570,6 +581,8 @@ class ScanGuardArbiter:
             or self.dynamic_escape_hard_stop_reverse_steps < 1
             or self.dynamic_escape_hard_stop_reverse_speed <= 0.0
             or self.dynamic_escape_hard_stop_reverse_max_omega_radps < 0.0
+            or self.dynamic_escape_vetted_reverse_retry_steps < 0
+            or self.dynamic_escape_persistent_front_max_retries < 0
             or self.dynamic_escape_hard_stop_min_rear_range <= 0.0
             or self.dynamic_escape_hard_stop_rear_clear_retry_steps < 1
             or self.dynamic_escape_max_zero_translation_turn_steps < 1
@@ -714,6 +727,8 @@ class ScanGuardArbiter:
         self._dynamic_escape_geometric_direction_prediction_backed = False
         self._dynamic_escape_frontal_encounter_latched = False
         self._dynamic_escape_coast_remaining = 0
+        self._dynamic_escape_vetted_reverse_steps = 0
+        self._dynamic_escape_persistent_front_retry_count = 0
         self._dynamic_escape_hard_stop_turn_remaining = 0
         self._dynamic_escape_hard_stop_reverse_remaining = 0
         self._dynamic_escape_hard_stop_turn_sign = 0.0
@@ -942,9 +957,36 @@ class ScanGuardArbiter:
             heading_error = float(heading_error)
         except (TypeError, ValueError):
             heading_error = float("nan")
+        lateral_speed = context.get(
+            "probabilistic_obstacle_motion_lateral_body_mps", 0.0
+        )
+        lateral_fraction = context.get(
+            "probabilistic_obstacle_motion_lateral_fraction", 0.0
+        )
+        try:
+            lateral_speed = float(lateral_speed)
+            lateral_fraction = float(lateral_fraction)
+        except (TypeError, ValueError):
+            lateral_speed = 0.0
+            lateral_fraction = 0.0
+        strong_lateral_crossing = bool(
+            context.get(
+                "probabilistic_obstacle_forward_lateral_countermotion_applied",
+                False,
+            )
+            and math.isfinite(lateral_speed)
+            and abs(lateral_speed)
+            >= max(
+                0.35,
+                self.dynamic_escape_direction_refresh_minimum_lateral_speed_mps,
+            )
+            and math.isfinite(lateral_fraction)
+            and lateral_fraction >= 0.50
+        )
         frontal_geometry = bool(
             math.isfinite(obstacle_bearing)
             and abs(obstacle_bearing) < math.radians(20.0)
+            and not strong_lateral_crossing
         )
         if (
             not frontal_geometry
@@ -952,6 +994,16 @@ class ScanGuardArbiter:
             and abs(heading_error) >= 0.08
         ):
             return float(np.sign(heading_error)), "predicted_relative_motion"
+
+        if (
+            frontal_geometry
+            and self._dynamic_escape_frontal_encounter_latched
+            and self._dynamic_escape_geometric_turn_sign != 0.0
+        ):
+            # Direct approaches do not have a meaningful left/right human
+            # crossing direction.  Keep the already established clearance
+            # side instead of allowing alternating leg fragments to swap it.
+            return self._dynamic_escape_geometric_turn_sign, "previous_side"
 
         left_clearance = self._finite_clearance(
             guard_result, "min_left_side_range"
@@ -1275,6 +1327,8 @@ class ScanGuardArbiter:
             self._dynamic_escape_geometric_direction_prediction_backed = False
             self._dynamic_escape_frontal_encounter_latched = False
             self._dynamic_escape_coast_remaining = 0
+            self._dynamic_escape_vetted_reverse_steps = 0
+            self._dynamic_escape_persistent_front_retry_count = 0
         geometric_threat_evidence_active = bool(
             not rear_only_evidence
             and (
@@ -1305,6 +1359,8 @@ class ScanGuardArbiter:
                     )
                     self._dynamic_escape_frontal_encounter_latched = False
                     self._dynamic_escape_coast_remaining = 0
+                    self._dynamic_escape_vetted_reverse_steps = 0
+                    self._dynamic_escape_persistent_front_retry_count = 0
         else:
             self._dynamic_escape_geometric_commit_consumed = False
             self._dynamic_escape_geometric_clear_streak = 0
@@ -1681,6 +1737,23 @@ class ScanGuardArbiter:
             and abs(preferred_heading_error) >= 0.08
             else 0.0
         )
+        lateral_motion_fraction = context.get(
+            "probabilistic_obstacle_motion_lateral_fraction", 0.0
+        )
+        try:
+            lateral_motion_fraction = float(lateral_motion_fraction)
+        except (TypeError, ValueError):
+            lateral_motion_fraction = 0.0
+        strong_lateral_crossing = bool(
+            context.get(
+                "probabilistic_obstacle_forward_lateral_countermotion_applied",
+                False,
+            )
+            and prediction_direction_refresh_lateral_evidence
+            and math.isfinite(lateral_motion_fraction)
+            and lateral_motion_fraction >= 0.50
+            and preferred_turn_sign != 0.0
+        )
         late_prediction_forward_sector = bool(
             math.isfinite(obstacle_bearing)
             and abs(obstacle_bearing) <= math.radians(
@@ -1718,10 +1791,13 @@ class ScanGuardArbiter:
             != self._dynamic_escape_geometric_turn_sign
         )
         prediction_direction_refresh_geometry_allowed = bool(
-            self._dynamic_escape_geometric_direction_prediction_backed
-            or (
+            not self._dynamic_escape_frontal_encounter_latched
+            and (
+                self._dynamic_escape_geometric_direction_prediction_backed
+                or (
                 late_prediction_oblique_geometry
-                and not self._dynamic_escape_frontal_encounter_latched
+                    and strong_lateral_crossing
+                )
             )
         )
         prediction_direction_refreshed = bool(
@@ -1859,6 +1935,28 @@ class ScanGuardArbiter:
             and "v_cmd" in self.action_spec.names
             and "omega_cmd" in self.action_spec.names
         )
+        persistent_front_retry_rearmed = bool(
+            self.dynamic_escape_persistent_front_retry_enabled
+            and self.dynamic_escape_vetted_reverse_retry_steps > 0
+            and self.dynamic_escape_persistent_front_max_retries > 0
+            and front_geometric_escape_available
+            and self._dynamic_escape_geometric_commit_consumed
+            and self._dynamic_escape_coast_remaining == 0
+            and self._dynamic_escape_vetted_reverse_steps
+            >= self.dynamic_escape_vetted_reverse_retry_steps
+            and self._dynamic_escape_persistent_front_retry_count
+            < self.dynamic_escape_persistent_front_max_retries
+        )
+        if persistent_front_retry_rearmed:
+            # The first finite arc did not move the live obstacle out of the
+            # front half-plane and MPPI has spent its small reverse allowance.
+            # Retry the established passage side once instead of accepting an
+            # unbounded sequence of risk-vetted reverse samples.
+            self._dynamic_escape_geometric_commit_consumed = False
+            self._dynamic_escape_direction_commit_remaining = 0
+            self._dynamic_escape_direction_commit_values = None
+            self._dynamic_escape_vetted_reverse_steps = 0
+            self._dynamic_escape_persistent_front_retry_count += 1
         geometric_forward_escape = bool(
             self.dynamic_escape_uncertainty_fusion_enabled
             and front_geometric_escape_available
@@ -1981,6 +2079,7 @@ class ScanGuardArbiter:
             # A near-body transaction supersedes the earlier forward pass.
             # Never resume its stale coast after turning/reversing in place.
             self._dynamic_escape_coast_remaining = 0
+            self._dynamic_escape_vetted_reverse_steps = 0
             v_index = self.action_spec.index("v_cmd")
             omega_index = self.action_spec.index("omega_cmd")
             if (
@@ -2007,6 +2106,7 @@ class ScanGuardArbiter:
                     or (
                         math.isfinite(obstacle_bearing)
                         and abs(obstacle_bearing) < math.radians(20.0)
+                        and not strong_lateral_crossing
                     )
                 )
                 self._dynamic_escape_geometric_direction_prediction_backed = (
@@ -2128,17 +2228,26 @@ class ScanGuardArbiter:
                     self.dynamic_escape_max_speed,
                     self.action_spec.upper[v_index],
                 )
-                turn_sign, geometric_turn_source = (
-                    self._select_dynamic_escape_turn_sign(
-                        guard_result, context, obstacle_bearing
+                if (
+                    persistent_front_retry_rearmed
+                    and self._dynamic_escape_geometric_turn_sign != 0.0
+                ):
+                    turn_sign = self._dynamic_escape_geometric_turn_sign
+                    geometric_turn_source = "persistent_front_previous_side"
+                else:
+                    turn_sign, geometric_turn_source = (
+                        self._select_dynamic_escape_turn_sign(
+                            guard_result, context, obstacle_bearing
+                        )
                     )
-                )
                 self._dynamic_escape_geometric_turn_sign = turn_sign
+                self._dynamic_escape_vetted_reverse_steps = 0
                 self._dynamic_escape_frontal_encounter_latched = bool(
                     self._dynamic_escape_frontal_encounter_latched
                     or (
                         math.isfinite(obstacle_bearing)
                         and abs(obstacle_bearing) < math.radians(20.0)
+                        and not strong_lateral_crossing
                     )
                 )
                 self._dynamic_escape_geometric_direction_prediction_backed = (
@@ -2275,6 +2384,10 @@ class ScanGuardArbiter:
                         reverse_escape = bool(
                             values[self.action_spec.index("v_cmd")] < 0.0
                         )
+                        if reverse_escape and front_geometric_escape_available:
+                            self._dynamic_escape_vetted_reverse_steps += 1
+                        else:
+                            self._dynamic_escape_vetted_reverse_steps = 0
                     reason = "dynamic_active_escape"
                 elif (
                     held_reactive_escape_allowed
@@ -2926,6 +3039,18 @@ class ScanGuardArbiter:
         )
         diagnostics["dynamic_escape_frontal_entry_speed_applied"] = bool(
             frontal_entry_speed_applied
+        )
+        diagnostics["dynamic_escape_persistent_front_retry_enabled"] = bool(
+            self.dynamic_escape_persistent_front_retry_enabled
+        )
+        diagnostics["dynamic_escape_persistent_front_retry_rearmed"] = bool(
+            persistent_front_retry_rearmed
+        )
+        diagnostics["dynamic_escape_persistent_front_retry_count"] = int(
+            self._dynamic_escape_persistent_front_retry_count
+        )
+        diagnostics["dynamic_escape_vetted_reverse_steps"] = int(
+            self._dynamic_escape_vetted_reverse_steps
         )
         diagnostics["dynamic_escape_hard_stop_enabled"] = bool(
             self.dynamic_escape_hard_stop_enabled

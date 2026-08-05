@@ -21,6 +21,8 @@ def test_planner_diagnostic_trace_keeps_causal_fields_and_removes_duplicates():
         "supervised_influence_survived_guard": False,
         "residual_policy_authority_mean": 0.25,
         "optimizer_selected_cost_gap": 1.5,
+        "physical_tracker_motion_fallback_applied": True,
+        "physical_tracker_motion_refresh_requested": False,
         "dynamic_obstacle_tracker_trace": {"large": "separate"},
         "probabilistic_obstacle_forecast_trace": [{"large": "separate"}],
         "unrelated_internal_payload": np.ones((8, 8)),
@@ -34,6 +36,8 @@ def test_planner_diagnostic_trace_keeps_causal_fields_and_removes_duplicates():
     assert trace["supervised_influence_survived_guard"] is False
     assert trace["residual_policy_authority_mean"] == 0.25
     assert trace["optimizer_selected_cost_gap"] == 1.5
+    assert trace["physical_tracker_motion_fallback_applied"] is True
+    assert trace["physical_tracker_motion_refresh_requested"] is False
     assert "dynamic_obstacle_tracker_trace" not in trace
     assert "probabilistic_obstacle_forecast_trace" not in trace
     assert "unrelated_internal_payload" not in trace

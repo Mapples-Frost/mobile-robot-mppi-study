@@ -347,7 +347,7 @@ def build_pi5_full_config(
             # genuine reversal for longer than the recorded confirmation
             # window.  Head-on encounters use the separate longer prefix.
             "dynamic_escape_direction_commit_steps": 4,
-            "dynamic_escape_frontal_commit_steps": 6,
+            "dynamic_escape_frontal_commit_steps": 10,
             # A frontal approach produced two false left/right reversals from
             # fragmented leg-cluster velocity estimates (085438 cycles 46 and
             # 53: only 0.13--0.14 m/s lateral).  Keep the selected side unless
@@ -370,6 +370,13 @@ def build_pi5_full_config(
             # turning instead of continuing to close at 0.35 m/s.  Normal and
             # crossing speed limits remain unchanged.
             "dynamic_escape_frontal_entry_speed": min(0.20, max_v_mps),
+            # If one bounded passage prefix leaves the obstacle in the front
+            # sector, permit only 0.4 s of planner reverse before retrying the
+            # same side once.  This replaces the 77-frame retreat in 235952
+            # without creating an indefinitely re-triggered turning orbit.
+            "dynamic_escape_persistent_front_retry_enabled": True,
+            "dynamic_escape_vetted_reverse_retry_steps": 4,
+            "dynamic_escape_persistent_front_max_retries": 1,
             # The simulation recovery controller assumes smooth continuous
             # actuation.  On the physical 10 Hz stack it can demand alignment
             # after the bounded in-place-yaw budget is already exhausted,
@@ -471,7 +478,7 @@ def build_pi5_full_config(
         "path_boundary_candidate_filter_enabled": False,
         "probabilistic_obstacle_missing_forecast_action": "scan_only",
         "probabilistic_obstacle_emergency_candidate_trigger_ttc_s": 3.00,
-        "probabilistic_obstacle_emergency_candidate_trigger_distance_m": 1.20,
+        "probabilistic_obstacle_emergency_candidate_trigger_distance_m": 1.50,
         "probabilistic_obstacle_emergency_candidate_rearm_ttc_s": 3.40,
         # Real differential drive cannot instantly realize a counterflow vector
         # that lies behind it.  Significant lateral human motion therefore

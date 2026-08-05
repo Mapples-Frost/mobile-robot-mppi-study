@@ -298,8 +298,13 @@ def test_crossing_frozen_goal_line_enters_rejoin_without_returning_to_idle():
         result = _update(manager, 0.1 * step, (2.0, y), (0.0, -0.5))
     assert result["encounter_phase"] == "straight_crossing"
 
-    crossed = _update(manager, 0.3, (2.0, 0.08), (0.0, -0.5))
+    first_evidence = _update(
+        manager, 0.3, (2.0, 0.08), (0.0, -0.5)
+    )
+    crossed = _update(manager, 0.4, (2.0, -0.02), (0.0, -0.5))
 
+    assert first_evidence["encounter_completion_evidence"] is True
+    assert first_evidence["encounter_line_crossed"] is False
     assert crossed["encounter_line_crossed"] is True
     assert crossed["encounter_phase"] == "rejoin"
     assert crossed["encounter_temporary_waypoint"][1] == pytest.approx(0.0)
@@ -309,13 +314,13 @@ def test_crossing_frozen_goal_line_enters_rejoin_without_returning_to_idle():
 
 def test_rejoin_requires_consecutive_goal_alignment_and_risk_clearance():
     manager = EncounterModeManager(EncounterModeConfig(rejoin_clear_cycles=3))
-    for step, y in enumerate((0.40, 0.30, 0.20, 0.08)):
+    for step, y in enumerate((0.40, 0.30, 0.20, 0.08, -0.02)):
         _update(manager, 0.1 * step, (2.0, y), (0.0, -0.5))
 
     result = None
     for step in range(3):
         result = manager.update(
-            timestamp_s=0.4 + 0.1 * step,
+            timestamp_s=0.5 + 0.1 * step,
             pose=(0.2, 0.0, 0.0),
             goal=(5.0, 0.0),
             robot_speed_mps=0.4,
@@ -325,6 +330,41 @@ def test_rejoin_requires_consecutive_goal_alignment_and_risk_clearance():
     assert result["encounter_phase"] == "idle"
     assert result["encounter_strategy"] == "none"
     assert result["encounter_rear_pass_inhibited_shadow"] is False
+
+
+def test_stationary_robot_cannot_complete_off_center_frontal_bypass():
+    manager = EncounterModeManager()
+    result = None
+    for step, x in enumerate((2.0, 1.95, 1.90, 1.85, 1.80)):
+        result = _update(
+            manager, 0.1 * step, (x, -0.80), (-0.5, 0.0)
+        )
+
+    assert result["encounter_phase"] == "frontal_approach"
+    assert result["encounter_line_crossed"] is False
+    assert result["encounter_completion_evidence"] is False
+
+
+def test_active_encounter_rejects_spatially_unrelated_track_slot():
+    manager = EncounterModeManager()
+    for step, x in enumerate((2.0, 1.95, 1.90)):
+        entered = _update(
+            manager, 0.1 * step, (x, -0.10), (-0.5, 0.0)
+        )
+    assert entered["encounter_phase"] == "frontal_approach"
+
+    unrelated = _update(
+        manager,
+        0.3,
+        (-0.4, -0.7),
+        (0.1, 0.0),
+        index=4,
+    )
+
+    assert unrelated["encounter_track_index"] is None
+    assert unrelated["encounter_phase"] == "frontal_approach"
+    assert unrelated["encounter_line_crossed"] is False
+    assert unrelated["encounter_lost_track_cycles"] == 1
 
 
 def test_same_track_reversal_is_detected_but_new_track_identity_is_not():

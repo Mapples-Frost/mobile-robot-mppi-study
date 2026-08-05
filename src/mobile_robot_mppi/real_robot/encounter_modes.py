@@ -61,6 +61,7 @@ class EncounterModeConfig:
     track_jump_minimum_m: float = 0.75
     track_jump_speed_scale: float = 3.0
     maximum_track_gap_s: float = 0.50
+    active_track_reacquisition_maximum_m: float = 0.65
     nominal_ego_speed_mps: float = 0.40
     cpa_horizon_s: float = 5.0
     forecast_behavior_lookahead_s: float = 0.60
@@ -72,6 +73,7 @@ class EncounterModeConfig:
     rejoin_heading_tolerance_deg: float = 12.0
     rejoin_cross_track_tolerance_m: float = 0.25
     rejoin_clear_cycles: int = 4
+    completion_confirmation_cycles: int = 2
     lost_track_grace_cycles: int = 3
     front_pass_time_margin_s: float = 0.70
     robot_intersection_clearance_m: float = 0.75
@@ -93,6 +95,10 @@ class EncounterModeConfig:
             raise ValueError("ordinary confirmation cycles must be positive")
         if self.abrupt_confirmation_cycles < 1:
             raise ValueError("abrupt confirmation cycles must be positive")
+        if self.active_track_reacquisition_maximum_m <= 0.0:
+            raise ValueError("active track reacquisition distance must be positive")
+        if self.completion_confirmation_cycles < 1:
+            raise ValueError("completion confirmation cycles must be positive")
         if self.forecast_behavior_lookahead_s <= 0.0:
             raise ValueError("forecast behaviour lookahead must be positive")
         if min(
@@ -177,6 +183,7 @@ class EncounterModeManager:
         self._locked_steering_side = 0
         self._lost_track_cycles = 0
         self._rejoin_clear_streak = 0
+        self._completion_evidence_streak = 0
         self._strategy_timing = {
             "human_time_to_intersection_s": float("inf"),
             "robot_clear_time_s": float("inf"),
@@ -555,6 +562,9 @@ class EncounterModeManager:
         robot_speed_mps: float,
     ) -> Tuple[Optional[_TrackSample], Dict[str, float]]:
         ranked = []
+        active_track_lock = bool(
+            self._phase in _ACTIVE_MODES and self._last_track is not None
+        )
         for track in tracks:
             values = self._kinematics(
                 track, robot_position, goal_direction, robot_speed_mps
@@ -565,7 +575,25 @@ class EncounterModeManager:
                 and values["d_cpa_m"] <= self.config.engagement_cpa_distance_m
             )
             in_range = values["distance_m"] <= self.config.engagement_distance_m
+            active_residual = float("inf")
+            active_continuous = False
+            if active_track_lock:
+                dt_s = track.timestamp_s - self._last_track.timestamp_s
+                if 0.0 < dt_s <= self.config.maximum_track_gap_s:
+                    expected = (
+                        self._last_track.position
+                        + self._last_track.semantic_velocity * dt_s
+                    )
+                    active_residual = float(np.linalg.norm(
+                        track.position - expected
+                    ))
+                    active_continuous = bool(
+                        active_residual
+                        <= self.config.active_track_reacquisition_maximum_m
+                    )
             rank = (
+                0 if not active_track_lock or active_continuous else 1,
+                active_residual if active_track_lock else 0.0,
                 0 if collision_course and ahead and in_range else 1,
                 0 if ahead else 1,
                 values["t_cpa_s"] if math.isfinite(values["t_cpa_s"]) else 99.0,
@@ -576,7 +604,12 @@ class EncounterModeManager:
             ranked.append((rank, track, values))
         if not ranked:
             return None, {}
-        _, track, values = min(ranked, key=lambda item: item[0])
+        rank, track, values = min(ranked, key=lambda item: item[0])
+        if active_track_lock and rank[0] != 0:
+            # Do not let a different leg slot or an unrelated cluster finish
+            # the current person's manoeuvre.  The active mode's ordinary
+            # lost-track grace will handle a genuine temporary disappearance.
+            return None, {}
         return track, values
 
     def _classify(
@@ -941,6 +974,7 @@ class EncounterModeManager:
         )
         self._temporary_waypoint = waypoint
         self._rejoin_clear_streak = 0
+        self._completion_evidence_streak = 0
         return timing
 
     def _set_rejoin_waypoint(self, robot_position: np.ndarray) -> None:
@@ -971,7 +1005,10 @@ class EncounterModeManager:
         if previous is None:
             return False
         tolerance = self.config.crossing_line_tolerance_m
-        had_separation = abs(previous) > tolerance
+        had_separation = bool(
+            abs(previous) > tolerance
+            or self._completion_evidence_streak > 0
+        )
         reached_line = abs(current) <= tolerance
         crossed_sign = previous * current < 0.0
         return bool(had_separation and (reached_line or crossed_sign))
@@ -979,13 +1016,13 @@ class EncounterModeManager:
     def _frontal_complete(
         self, track: _TrackSample, robot_position: np.ndarray
     ) -> bool:
-        if self._entry_human_position is None or self._entry_goal_direction is None:
+        if self._entry_goal_origin is None or self._entry_goal_direction is None:
             return False
         lateral_direction = np.asarray((
             -self._entry_goal_direction[1], self._entry_goal_direction[0]
         ))
         robot_lateral = float(np.dot(
-            robot_position - self._entry_human_position, lateral_direction
+            robot_position - self._entry_goal_origin, lateral_direction
         ))
         human_ahead = float(np.dot(
             track.position - robot_position, self._entry_goal_direction
@@ -1143,6 +1180,7 @@ class EncounterModeManager:
         )
         timing = dict(self._strategy_timing)
         line_crossed = False
+        completion_evidence = False
         phase_before = self._phase
         verified_transition = bool(
             self._confirmed_behavior in _ACTIVE_MODES
@@ -1174,10 +1212,25 @@ class EncounterModeManager:
         if self._phase in (
             EncounterMode.STRAIGHT_CROSSING,
             EncounterMode.OBLIQUE_CROSSING,
-        ) and selected is not None:
-            line_crossed = self._crossing_complete(selected)
-        elif self._phase == EncounterMode.FRONTAL_APPROACH and selected is not None:
-            line_crossed = self._frontal_complete(selected, robot_position)
+        ) and selected is not None and continuous:
+            completion_evidence = self._crossing_complete(selected)
+        elif (
+            self._phase == EncounterMode.FRONTAL_APPROACH
+            and selected is not None
+            and continuous
+        ):
+            completion_evidence = self._frontal_complete(
+                selected, robot_position
+            )
+        if self._phase in _ACTIVE_MODES:
+            self._completion_evidence_streak = (
+                self._completion_evidence_streak + 1
+                if completion_evidence else 0
+            )
+            line_crossed = bool(
+                self._completion_evidence_streak
+                >= self.config.completion_confirmation_cycles
+            )
         if self._phase in _ACTIVE_MODES and (
             line_crossed
             or (
@@ -1223,6 +1276,10 @@ class EncounterModeManager:
             "encounter_strategy": self._strategy.value,
             "encounter_locked_steering_side": int(self._locked_steering_side),
             "encounter_line_crossed": bool(line_crossed),
+            "encounter_completion_evidence": bool(completion_evidence),
+            "encounter_completion_evidence_streak": int(
+                self._completion_evidence_streak
+            ),
             "encounter_dangerous": bool(dangerous),
             "encounter_interaction_relevant": interaction_relevant,
             "encounter_predicted_goal_line_crossing_time_s": float(
@@ -1332,8 +1389,9 @@ class EncounterModeManager:
                 ))) else None
             ),
         }
-        self._selected_track_index = selected_index
-        self._last_track = selected
+        if selected is not None or self._phase not in _ACTIVE_MODES:
+            self._selected_track_index = selected_index
+            self._last_track = selected
         return diagnostics
 
 

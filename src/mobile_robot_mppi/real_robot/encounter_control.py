@@ -56,12 +56,6 @@ class EncounterControlConfig:
     frontal_reverse_trigger_m: float = 0.85
     frontal_reverse_speed_mps: float = 0.18
     frontal_reverse_minimum_rear_range_m: float = 0.90
-    frontal_commit_clearance_m: float = 0.65
-    frontal_commit_minimum_omega_radps: float = 0.28
-    frontal_side_progress_minimum_bearing_rad: float = 1.15
-    frontal_side_progress_minimum_front_range_m: float = 0.90
-    frontal_side_progress_minimum_distance_m: float = 0.52
-    frontal_side_progress_speed_mps: float = 0.18
     control_prefix_steps: int = 3
     reference_lookahead_m: float = 1.0
     reference_corridor_half_width_m: float = 0.95
@@ -77,15 +71,6 @@ class EncounterControlConfig:
             raise ValueError("encounter heading blend must be in [0,1]")
         if self.control_prefix_steps < 1:
             raise ValueError("encounter control prefix must be positive")
-        if min(
-            self.frontal_commit_clearance_m,
-            self.frontal_commit_minimum_omega_radps,
-            self.frontal_side_progress_minimum_bearing_rad,
-            self.frontal_side_progress_minimum_front_range_m,
-            self.frontal_side_progress_minimum_distance_m,
-            self.frontal_side_progress_speed_mps,
-        ) <= 0.0:
-            raise ValueError("frontal commit and side progress limits must be positive")
 
 
 class EncounterReferenceAuthority:
@@ -207,7 +192,6 @@ class EncounterControlAuthority:
     ) -> Dict[str, Any]:
         phase = str(diagnostics.get("encounter_phase", "idle"))
         active = bool(self.config.enabled and phase in _ACTIVE_PHASES)
-        semantic_stack_enabled = bool(self.config.enabled)
         return {
             "encounter_control_authoritative": active,
             "encounter_control_phase": phase,
@@ -222,32 +206,8 @@ class EncounterControlAuthority:
             ),
             "encounter_control_inhibit_rear_pass": active,
             "encounter_control_inhibit_forward_passage": active,
-            # When the semantic stack is enabled, unconfirmed tracks may still
-            # slow or hard-stop the robot, but cannot inject an ordinary legacy
-            # escape arc before encounter admission has selected a side.
-            "encounter_control_inhibit_dynamic_escape": semantic_stack_enabled,
+            "encounter_control_inhibit_dynamic_escape": active,
             "encounter_control_hard_safety_retained": True,
-            "encounter_control_frontal_side_progress_enabled": bool(
-                active and phase == "frontal_approach"
-            ),
-            "encounter_control_frontal_side_progress_minimum_bearing_rad": (
-                self.config.frontal_side_progress_minimum_bearing_rad
-            ),
-            "encounter_control_frontal_side_progress_minimum_front_range_m": (
-                self.config.frontal_side_progress_minimum_front_range_m
-            ),
-            "encounter_control_frontal_side_progress_minimum_distance_m": (
-                self.config.frontal_side_progress_minimum_distance_m
-            ),
-            "encounter_control_frontal_side_progress_speed_mps": (
-                self.config.frontal_side_progress_speed_mps
-            ),
-            "encounter_control_frontal_commit_minimum_omega_radps": (
-                self.config.frontal_commit_minimum_omega_radps
-            ),
-            "encounter_control_distance_m": _finite(
-                diagnostics.get("encounter_distance_m"), float("inf")
-            ),
         }
 
     def _target_speed(
@@ -317,40 +277,6 @@ class EncounterControlAuthority:
             )
         else:
             target_omega = 0.0
-
-        entry_origin = EncounterReferenceAuthority._point(
-            diagnostics.get("encounter_entry_goal_origin")
-        )
-        entry_heading = _finite(
-            diagnostics.get("encounter_entry_goal_heading_rad"),
-            float("nan"),
-        )
-        locked_side = int(
-            diagnostics.get("encounter_locked_steering_side", 0) or 0
-        )
-        frontal_commit_active = False
-        frontal_lateral_progress = 0.0
-        if (
-            phase == "frontal_approach"
-            and locked_side != 0
-            and entry_origin is not None
-            and math.isfinite(entry_heading)
-        ):
-            lateral_direction = np.asarray((
-                -math.sin(entry_heading), math.cos(entry_heading)
-            ))
-            frontal_lateral_progress = float(
-                np.dot(pose_values[:2] - entry_origin, lateral_direction)
-            )
-            frontal_commit_active = bool(
-                frontal_lateral_progress * locked_side
-                < self.config.frontal_commit_clearance_m
-            )
-            if frontal_commit_active:
-                target_omega = float(locked_side) * max(
-                    abs(target_omega),
-                    self.config.frontal_commit_minimum_omega_radps,
-                )
 
         values = np.asarray(plan.proposed_control.values, dtype=np.float64).copy()
         original = values.copy()
@@ -448,10 +374,6 @@ class EncounterControlAuthority:
             "encounter_control_reverse_available": reverse_available,
             "encounter_control_reverse_applied": reverse_applied,
             "encounter_control_hard_safety_pending": emergency,
-            "encounter_control_frontal_commit_active": frontal_commit_active,
-            "encounter_control_frontal_lateral_progress_m": float(
-                frontal_lateral_progress
-            ),
             "encounter_control_predicted_trajectory_recomputed": False,
         })
         command = ControlCommand(

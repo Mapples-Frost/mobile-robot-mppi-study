@@ -194,9 +194,6 @@ class EncounterModeManager:
     def reset(self) -> None:
         self._selected_track_index = None  # type: Optional[int]
         self._last_track = None  # type: Optional[_TrackSample]
-        self._active_person_id = None  # type: Optional[int]
-        self._completed_person_id = None  # type: Optional[int]
-        self._completed_person_track = None  # type: Optional[_TrackSample]
         self._person_tracks = {}  # type: Dict[int, _TrackSample]
         self._next_person_id = 0
         self._temporal_frontal_streaks = {}  # type: Dict[int, int]
@@ -1307,7 +1304,6 @@ class EncounterModeManager:
         local_obstacles: Sequence[Sequence[float]],
     ) -> Dict[str, Any]:
         self._phase = mode
-        self._active_person_id = int(track.index)
         self._entry_goal_origin = robot_position.copy()
         self._entry_goal_direction = goal_direction.copy()
         self._entry_goal_point = goal_point.copy()
@@ -1449,47 +1445,6 @@ class EncounterModeManager:
             and human_ahead <= self.config.robot_intersection_clearance_m
         )
 
-    def _frontal_lateral_complete(self, robot_position: np.ndarray) -> bool:
-        if self._entry_goal_origin is None or self._entry_goal_direction is None:
-            return False
-        lateral_direction = np.asarray((
-            -self._entry_goal_direction[1], self._entry_goal_direction[0]
-        ))
-        robot_lateral = float(np.dot(
-            robot_position - self._entry_goal_origin, lateral_direction
-        ))
-        return bool(
-            self._locked_steering_side != 0
-            and robot_lateral * self._locked_steering_side
-            >= self.config.frontal_clearance_m
-        )
-
-    def _same_completed_person(
-        self, track: Optional[_TrackSample]
-    ) -> bool:
-        if track is None or self._completed_person_track is None:
-            return bool(
-                track is not None
-                and self._completed_person_id is not None
-                and track.index == self._completed_person_id
-            )
-        if (
-            self._completed_person_id is not None
-            and track.index == self._completed_person_id
-        ):
-            return True
-        dt_s = track.timestamp_s - self._completed_person_track.timestamp_s
-        if dt_s < 0.0 or dt_s > self.config.maximum_track_gap_s:
-            return False
-        expected = (
-            self._completed_person_track.position
-            + self._completed_person_track.semantic_velocity * dt_s
-        )
-        return bool(
-            float(np.linalg.norm(track.position - expected))
-            <= self.config.active_track_reacquisition_maximum_m
-        )
-
     def _update_rejoin(
         self,
         robot_position: np.ndarray,
@@ -1532,9 +1487,6 @@ class EncounterModeManager:
             self._entry_goal_direction = None
             self._entry_goal_point = None
             self._temporary_waypoint = None
-            self._active_person_id = None
-            self._completed_person_id = None
-            self._completed_person_track = None
         return cross_track, heading_error
 
     def update(
@@ -1635,15 +1587,10 @@ class EncounterModeManager:
             and selected is not None
             and interaction_relevant
         )
-        same_completed_person = self._same_completed_person(selected)
         rejoin_interrupted = bool(
             self._phase == EncounterMode.REJOIN
             and confirmed_this_cycle
             and self._confirmed_behavior == candidate
-            and (
-                not same_completed_person
-                or candidate == EncounterMode.FRONTAL_APPROACH
-            )
         )
         stable_active_reclassification = bool(
             self._phase in (
@@ -1701,38 +1648,14 @@ class EncounterModeManager:
                 self._completion_evidence_streak
                 >= self.config.completion_confirmation_cycles
             )
-        frontal_lateral_complete = self._frontal_lateral_complete(
-            robot_position
-        )
-        fallback_exit_allowed = bool(
-            self._phase != EncounterMode.FRONTAL_APPROACH
-            or frontal_lateral_complete
-        )
-        fallback_exit = bool(
-            fallback_exit_allowed
-            and (
-                (
-                    self._confirmed_behavior == EncounterMode.RECEDING
-                    and not dangerous
-                )
-                or self._lost_track_cycles
-                > self.config.lost_track_grace_cycles
+        if self._phase in _ACTIVE_MODES and (
+            line_crossed
+            or (
+                self._confirmed_behavior == EncounterMode.RECEDING
+                and not dangerous
             )
-        )
-        if self._phase in _ACTIVE_MODES and (line_crossed or fallback_exit):
-            completed_track = (
-                selected
-                if selected is not None and continuous
-                else self._last_track
-            )
-            self._completed_person_track = completed_track
-            self._completed_person_id = (
-                self._active_person_id
-                if self._active_person_id is not None
-                else (
-                    None if completed_track is None else completed_track.index
-                )
-            )
+            or self._lost_track_cycles > self.config.lost_track_grace_cycles
+        ):
             self._phase = EncounterMode.REJOIN
             self._rejoin_clear_streak = 0
             self._set_rejoin_waypoint(robot_position)
@@ -1783,14 +1706,6 @@ class EncounterModeManager:
             "encounter_strategy": self._strategy.value,
             "encounter_locked_steering_side": int(self._locked_steering_side),
             "encounter_line_crossed": bool(line_crossed),
-            "encounter_frontal_lateral_complete": bool(
-                frontal_lateral_complete
-            ),
-            "encounter_fallback_exit_allowed": bool(fallback_exit_allowed),
-            "encounter_fallback_exit": bool(fallback_exit),
-            "encounter_same_completed_person": bool(same_completed_person),
-            "encounter_active_person_id": self._active_person_id,
-            "encounter_completed_person_id": self._completed_person_id,
             "encounter_completion_evidence": bool(completion_evidence),
             "encounter_completion_evidence_streak": int(
                 self._completion_evidence_streak

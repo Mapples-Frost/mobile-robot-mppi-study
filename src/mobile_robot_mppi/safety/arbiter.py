@@ -1278,7 +1278,8 @@ class ScanGuardArbiter:
             and context.get("encounter_control_inhibit_rear_pass", False)
         )
         encounter_dynamic_escape_inhibited = bool(
-            context.get("encounter_control_inhibit_dynamic_escape", False)
+            encounter_control_authoritative
+            and context.get("encounter_control_inhibit_dynamic_escape", False)
         )
         encounter_hard_stop_escape_retained = bool(
             encounter_control_authoritative
@@ -2410,63 +2411,6 @@ class ScanGuardArbiter:
             and not hard_stop_side_rear_release_available
             and not hard_stop_transaction_completed_hold
         )
-        encounter_frontal_side_progress_enabled = bool(
-            encounter_control_authoritative
-            and context.get(
-                "encounter_control_frontal_side_progress_enabled", False
-            )
-        )
-        try:
-            encounter_locked_side = int(context.get(
-                "encounter_control_locked_steering_side", 0
-            ) or 0)
-            encounter_side_minimum_bearing = float(context.get(
-                "encounter_control_frontal_side_progress_minimum_bearing_rad",
-                float("inf"),
-            ))
-            encounter_side_minimum_front_range = float(context.get(
-                "encounter_control_frontal_side_progress_minimum_front_range_m",
-                float("inf"),
-            ))
-            encounter_side_minimum_distance = float(context.get(
-                "encounter_control_frontal_side_progress_minimum_distance_m",
-                float("inf"),
-            ))
-            encounter_side_progress_speed = float(context.get(
-                "encounter_control_frontal_side_progress_speed_mps", 0.0
-            ))
-            encounter_side_minimum_omega = float(context.get(
-                "encounter_control_frontal_commit_minimum_omega_radps", 0.0
-            ))
-            encounter_distance = float(context.get(
-                "encounter_control_distance_m", float("inf")
-            ))
-        except (TypeError, ValueError):
-            encounter_locked_side = 0
-            encounter_side_minimum_bearing = float("inf")
-            encounter_side_minimum_front_range = float("inf")
-            encounter_side_minimum_distance = float("inf")
-            encounter_side_progress_speed = 0.0
-            encounter_side_minimum_omega = 0.0
-            encounter_distance = float("inf")
-        encounter_frontal_side_progress_available = bool(
-            encounter_frontal_side_progress_enabled
-            and encounter_locked_side != 0
-            and guard_result.get("emergency_stop", False)
-            and not rear_only_evidence
-            and math.isfinite(obstacle_bearing)
-            and abs(obstacle_bearing) >= encounter_side_minimum_bearing
-            and obstacle_bearing * encounter_locked_side < 0.0
-            and hard_stop_front_clearance is not None
-            and hard_stop_front_clearance
-            >= encounter_side_minimum_front_range
-            and math.isfinite(encounter_distance)
-            and encounter_distance >= encounter_side_minimum_distance
-            and encounter_side_progress_speed > 0.0
-            and encounter_side_minimum_omega > 0.0
-            and "v_cmd" in self.action_spec.names
-            and "omega_cmd" in self.action_spec.names
-        )
         front_geometric_escape_available = bool(
             reactive_escape_allowed
             and np.isfinite(obstacle_bearing)
@@ -2745,39 +2689,7 @@ class ScanGuardArbiter:
             and "v_cmd" in self.action_spec.names
             and float(values[self.action_spec.index("v_cmd")]) >= 0.0
         )
-        if encounter_frontal_side_progress_available:
-            # The person is outside the protected forward sector, the measured
-            # front corridor is clear, and the locked encounter side turns the
-            # chassis farther away.  Retain a conservative speed but end the
-            # stale turn/reverse transaction instead of holding translation at
-            # zero after the frontal hazard has become a side hazard.
-            v_index = self.action_spec.index("v_cmd")
-            omega_index = self.action_spec.index("omega_cmd")
-            values[v_index] = min(
-                encounter_side_progress_speed,
-                self.action_spec.upper[v_index],
-            )
-            values[omega_index] = float(encounter_locked_side) * min(
-                max(
-                    encounter_side_minimum_omega,
-                    abs(float(values[omega_index])),
-                ),
-                abs(float(self.action_spec.upper[omega_index])),
-                abs(float(self.action_spec.lower[omega_index])),
-            )
-            values = self.action_spec.clip(values)
-            guard_result["emergency_stop"] = False
-            guard_result["should_slow_down"] = False
-            guard_result["slow_scale"] = 1.0
-            self._dynamic_escape_hard_stop_turn_remaining = 0
-            self._dynamic_escape_hard_stop_reverse_remaining = 0
-            self._dynamic_escape_hard_stop_consumed = True
-            self._dynamic_escape_hard_stop_rear_blocked_latched = False
-            self._dynamic_escape_hard_stop_rear_blocked_wait_remaining = 0
-            reverse_escape = False
-            hard_stop_escape_phase = "encounter_frontal_side_progress"
-            reason = "encounter_frontal_side_progress"
-        elif (
+        if (
             (dynamic_hard_stop_event
              and not self._dynamic_escape_hard_stop_consumed)
             or hard_stop_transaction_active
@@ -3837,12 +3749,6 @@ class ScanGuardArbiter:
         )
         diagnostics["encounter_control_hard_stop_escape_retained"] = bool(
             encounter_hard_stop_escape_retained
-        )
-        diagnostics["encounter_control_frontal_side_progress_available"] = bool(
-            encounter_frontal_side_progress_available
-        )
-        diagnostics["encounter_control_frontal_side_progress_applied"] = bool(
-            reason == "encounter_frontal_side_progress"
         )
         diagnostics["rear_reverse_blocked"] = bool(rear_reverse_blocked)
         diagnostics["rear_pass_through_force_forward_enabled"] = bool(

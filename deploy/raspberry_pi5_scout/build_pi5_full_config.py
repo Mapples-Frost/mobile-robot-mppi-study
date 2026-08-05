@@ -464,11 +464,6 @@ def build_pi5_full_config(
             # the mechanism.
             "dynamic_escape_geometric_single_commit_enabled": True,
             "dynamic_escape_geometric_rearm_clear_steps": 3,
-            # A temporally risk-vetted MPPI reverse is already the optimizer's
-            # selected escape.  When the live rear sector is positively open,
-            # let it terminate the reactive turn/coast instead of rewriting it
-            # to forward motion (as recorded in 042538 cycles 44 and 52).
-            "dynamic_escape_preserve_vetted_planner_reverse": True,
             # A person inside the 0.50 m forward hard-stop envelope still
             # forbids forward translation.  Establish a side in place, then
             # permit a finite reverse arc only with positively observed rear

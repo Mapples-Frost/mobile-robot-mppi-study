@@ -190,18 +190,20 @@ def analyze_rows(
         steering_side = diagnostics.get("encounter_locked_steering_side")
         if (
             phase in CROSSING_MODES
-            and strategy in ("behind_pass", "front_pass")
+            and strategy in ("behind_pass", "front_pass", "yield")
             and lateral_velocity is not None
             and abs(lateral_velocity) > 1.0e-6
-            and steering_side in (-1, 1)
+            and steering_side in (-1, 0, 1)
         ):
             # Keep the audit independent of the manager implementation:
-            # behind-pass steers opposite human motion, while front-pass
-            # steers into the human's forward side.
+            # historical behind-pass steers opposite human motion, front-pass
+            # steers into the human's forward side, and yield owns no side.
             if strategy == "behind_pass":
                 expected_side = -1 if lateral_velocity > 0.0 else 1
-            else:
+            elif strategy == "front_pass":
                 expected_side = 1 if lateral_velocity > 0.0 else -1
+            else:
+                expected_side = 0
             direction_samples.append({
                 "cycle": int(row.get("cycle", 0) or 0),
                 "strategy": strategy,

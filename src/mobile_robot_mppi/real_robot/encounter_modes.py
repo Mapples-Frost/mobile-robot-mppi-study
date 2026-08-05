@@ -32,7 +32,7 @@ class PassageStrategy(Enum):
 
     NONE = "none"
     FRONT_PASS = "front_pass"
-    BEHIND_PASS = "behind_pass"
+    YIELD = "yield"
     LEFT_BYPASS = "left_bypass"
     RIGHT_BYPASS = "right_bypass"
 
@@ -223,6 +223,7 @@ class EncounterModeManager:
             "robot_clear_time_s": float("inf"),
             "front_space_clear": None,
             "front_pass_feasible": False,
+            "yield_required": False,
         }
         self._temporary_waypoint = None  # type: Optional[np.ndarray]
 
@@ -1221,13 +1222,18 @@ class EncounterModeManager:
                 strategy = PassageStrategy.FRONT_PASS
                 side = 1 if human_lateral > 0.0 else -1
             else:
-                strategy = PassageStrategy.BEHIND_PASS
-                side = -1 if human_lateral > 0.0 else 1
+                # An unsafe front pass is a right-of-way decision, not a
+                # request to chase the pedestrian's wake.  Keep the goal
+                # reference straight and let the control authority cap only
+                # forward translation until the person crosses the line.
+                strategy = PassageStrategy.YIELD
+                side = 0
             return strategy, side, {
                 "human_time_to_intersection_s": t_human,
                 "robot_clear_time_s": t_robot_clear,
                 "front_space_clear": front_space_clear,
                 "front_pass_feasible": front_pass_feasible,
+                "yield_required": not front_pass_feasible,
             }
         # For a frontal approach, compare the complete robot-to-bypass
         # segments against measured local geometry.  The tracked human is
@@ -1290,6 +1296,7 @@ class EncounterModeManager:
                 "robot_clear_time_s": float("inf"),
                 "front_space_clear": None,
                 "front_pass_feasible": False,
+                "yield_required": False,
                 "left_bypass_clearance_m": left_clearance,
                 "right_bypass_clearance_m": right_clearance,
             },
@@ -1515,12 +1522,12 @@ class EncounterModeManager:
         heading_error = math.atan2(
             math.sin(goal_heading - robot_yaw), math.cos(goal_heading - robot_yaw)
         )
-        clear = bool(
-            abs(cross_track) <= self.config.rejoin_cross_track_tolerance_m
-            and abs(math.degrees(heading_error))
-            <= self.config.rejoin_heading_tolerance_deg
-            and not dangerous
-        )
+        # REJOIN now supplies a short-lived MPPI reference only.  Requiring
+        # semantic cross-track and heading convergence kept the old direct
+        # controller alive for tens of seconds after the person was clear.
+        # A small consecutive risk-clear window is enough before returning the
+        # ordinary goal reference and full control authority to MPPI.
+        clear = bool(not dangerous)
         self._rejoin_clear_streak = (
             self._rejoin_clear_streak + 1 if clear else 0
         )
@@ -1704,10 +1711,10 @@ class EncounterModeManager:
         frontal_lateral_complete = self._frontal_lateral_complete(
             robot_position
         )
-        fallback_exit_allowed = bool(
-            self._phase != EncounterMode.FRONTAL_APPROACH
-            or frontal_lateral_complete
-        )
+        # Loss of the person track must release a frontal encounter after the
+        # existing grace window.  Lateral clearance remains valid completion
+        # evidence, but can no longer trap the controller on a stale side.
+        fallback_exit_allowed = True
         fallback_exit = bool(
             fallback_exit_allowed
             and (
@@ -1911,6 +1918,9 @@ class EncounterModeManager:
             "encounter_robot_clear_time_s": timing["robot_clear_time_s"],
             "encounter_front_space_clear": timing["front_space_clear"],
             "encounter_front_pass_feasible": timing["front_pass_feasible"],
+            "encounter_yield_required": bool(
+                timing.get("yield_required", False)
+            ),
             "encounter_left_bypass_clearance_m": (
                 float(timing["left_bypass_clearance_m"])
                 if math.isfinite(float(timing.get(

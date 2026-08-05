@@ -75,6 +75,8 @@ def test_physical_limits_are_shared_with_planner_and_safety(tmp_path):
     )
     assert guard["front_soft_block_max_speed"] == 0.0
     assert guard["physical_front_speed_governor_enabled"] is True
+    assert guard["slowdown_curvature_limit_enabled"] is True
+    assert guard["slowdown_minimum_turn_radius_m"] == pytest.approx(0.60)
     local_layer = config["perception"]["local_obstacle_layer"]
     assert local_layer["local_obstacle_hard_filter_enabled"] is True
     assert local_layer[
@@ -3214,7 +3216,7 @@ def test_frontal_side_progress_resumes_after_obstacle_leaves_front_sector(
         "encounter_control_frontal_side_progress_minimum_front_range_m": 0.90,
         "encounter_control_frontal_side_progress_minimum_distance_m": 0.52,
         "encounter_control_frontal_side_progress_speed_mps": 0.18,
-        "encounter_control_frontal_commit_minimum_omega_radps": 0.28,
+        "encounter_control_frontal_side_progress_minimum_omega_radps": 0.28,
         "encounter_control_distance_m": 0.60,
     }
 
@@ -3228,6 +3230,38 @@ def test_frontal_side_progress_resumes_after_obstacle_leaves_front_sector(
     assert decision.diagnostics[
         "encounter_control_frontal_side_progress_applied"
     ] is True
+
+
+def test_temporal_slowdown_limits_curvature_without_changing_turn_side(
+        tmp_path):
+    config = build_pi5_full_config(
+        _weight_root(tmp_path), max_v_mps=0.5,
+        max_reverse_v_mps=0.3, max_omega_radps=0.6,
+    )
+    arbiter = ScanGuardArbiter(
+        action_spec_from_config(config["action_space"]),
+        config["perception"]["scan_guard"],
+    )
+    decision = arbiter.arbitrate(
+        ControlCommand([0.32, -0.55]),
+        {
+            "emergency_stop": False,
+            "should_slow_down": True,
+            "slow_scale": 0.5,
+            "reason": "temporal_slowdown",
+            "min_front_range": 2.0,
+        },
+        {"encounter_control_inhibit_dynamic_escape": True},
+    )
+
+    assert decision.executed_control.v == pytest.approx(0.16)
+    assert decision.executed_control.omega == pytest.approx(
+        -0.16 / 0.60
+    )
+    assert decision.diagnostics["slowdown_curvature_limit_applied"] is True
+    assert decision.diagnostics[
+        "slowdown_curvature_omega_before_radps"
+    ] == pytest.approx(-0.55)
 
 
 def test_directional_guard_keeps_front_person_fail_closed(tmp_path):

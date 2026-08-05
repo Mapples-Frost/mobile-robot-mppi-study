@@ -84,7 +84,7 @@ def _forecast(points, *, dt=0.2, std=0.05):
     )
 
 
-def test_left_to_right_crossing_confirms_and_locks_opposite_rear_pass_side():
+def test_unsafe_front_pass_yields_without_locking_a_pursuit_side():
     manager = EncounterModeManager()
     result = None
     for step, y in enumerate((1.0, 0.95, 0.90)):
@@ -93,10 +93,10 @@ def test_left_to_right_crossing_confirms_and_locks_opposite_rear_pass_side():
     assert result["encounter_candidate_mode"] == "straight_crossing"
     assert result["encounter_confirmed_mode"] == "straight_crossing"
     assert result["encounter_phase"] == "straight_crossing"
-    assert result["encounter_strategy"] == "behind_pass"
-    # Positive is the robot's left, opposite a left-to-right human velocity.
-    assert result["encounter_locked_steering_side"] == 1
-    assert result["encounter_temporary_waypoint"][1] > 0.0
+    assert result["encounter_strategy"] == "yield"
+    assert result["encounter_yield_required"] is True
+    assert result["encounter_locked_steering_side"] == 0
+    assert result["encounter_temporary_waypoint"][1] == pytest.approx(0.0)
     assert result["encounter_rear_pass_inhibited_shadow"] is True
     assert result["encounter_control_enabled"] is False
 
@@ -225,7 +225,7 @@ def test_crossing_front_pass_is_selected_only_with_time_and_space_margin():
     assert result["encounter_temporary_waypoint"][1] < 0.0
 
 
-def test_person_stopping_in_active_crossing_does_not_cancel_bypass():
+def test_person_stopping_in_active_crossing_does_not_cancel_yield():
     manager = EncounterModeManager()
     for step, y in enumerate((0.8, 0.75, 0.70)):
         _update(manager, 0.1 * step, (1.2, y), (0.0, -0.5))
@@ -236,7 +236,7 @@ def test_person_stopping_in_active_crossing_does_not_cancel_bypass():
 
     assert result["encounter_confirmed_mode"] == "stationary"
     assert result["encounter_phase"] == "straight_crossing"
-    assert result["encounter_strategy"] == "behind_pass"
+    assert result["encounter_strategy"] == "yield"
 
 
 def test_crossing_to_frontal_change_uses_two_cycle_fast_path():
@@ -597,10 +597,10 @@ def test_completed_person_cannot_reenter_crossing_during_rejoin():
     assert result["encounter_crossing_admissible"] is True
     assert result["encounter_same_completed_person"] is True
     assert result["encounter_phase"] == "rejoin"
-    assert result["encounter_locked_steering_side"] == 1
+    assert result["encounter_locked_steering_side"] == 0
 
 
-def test_incomplete_frontal_bypass_survives_receding_and_track_loss():
+def test_incomplete_frontal_bypass_releases_on_receding_or_track_loss():
     manager = EncounterModeManager()
     for step, x in enumerate((2.0, 1.95, 1.90)):
         result = _update(
@@ -614,10 +614,11 @@ def test_incomplete_frontal_bypass_survives_receding_and_track_loss():
         )
     assert result["encounter_confirmed_mode"] == "receding"
     assert result["encounter_frontal_lateral_complete"] is False
-    assert result["encounter_fallback_exit_allowed"] is False
-    assert result["encounter_phase"] == "frontal_approach"
+    assert result["encounter_fallback_exit_allowed"] is True
+    assert result["encounter_fallback_exit"] is True
+    assert result["encounter_phase"] == "rejoin"
 
-    for step in range(6, 11):
+    for step in range(6, 10):
         result = manager.update(
             timestamp_s=0.1 * step,
             pose=(0.0, 0.0, 0.0),
@@ -625,15 +626,45 @@ def test_incomplete_frontal_bypass_survives_receding_and_track_loss():
             robot_speed_mps=0.4,
             tracker_diagnostics={"tracks": ()},
         )
-    assert result["encounter_lost_track_cycles"] > 3
+    assert result["encounter_phase"] == "idle"
+
+
+def test_frontal_track_loss_exits_without_lateral_clearance():
+    manager = EncounterModeManager()
+    for step, x in enumerate((2.0, 1.95, 1.90)):
+        result = _update(
+            manager, 0.1 * step, (x, 0.05), (-0.5, 0.0)
+        )
     assert result["encounter_phase"] == "frontal_approach"
 
-    result = manager.update(
-        timestamp_s=1.1,
-        pose=(0.8, 0.70, 0.0),
-        goal=(5.0, 0.0),
-        robot_speed_mps=0.4,
-        tracker_diagnostics={"tracks": ()},
-    )
-    assert result["encounter_frontal_lateral_complete"] is True
+    for step in range(3, 7):
+        result = manager.update(
+            timestamp_s=0.1 * step,
+            pose=(0.0, 0.0, 0.0),
+            goal=(5.0, 0.0),
+            robot_speed_mps=0.4,
+            tracker_diagnostics={"tracks": ()},
+        )
+
+    assert result["encounter_lost_track_cycles"] == 4
+    assert result["encounter_frontal_lateral_complete"] is False
+    assert result["encounter_fallback_exit"] is True
     assert result["encounter_phase"] == "rejoin"
+
+
+def test_rejoin_releases_after_risk_clear_even_when_pose_is_misaligned():
+    manager = EncounterModeManager(EncounterModeConfig(rejoin_clear_cycles=3))
+    for step, y in enumerate((0.40, 0.30, 0.20, 0.08, -0.02)):
+        result = _update(manager, 0.1 * step, (2.0, y), (0.0, -0.5))
+    assert result["encounter_phase"] == "rejoin"
+
+    for step in range(3):
+        result = manager.update(
+            timestamp_s=0.5 + 0.1 * step,
+            pose=(0.2, 1.0, 2.4),
+            goal=(5.0, 0.0),
+            robot_speed_mps=0.2,
+            tracker_diagnostics={"tracks": ()},
+        )
+
+    assert result["encounter_phase"] == "idle"

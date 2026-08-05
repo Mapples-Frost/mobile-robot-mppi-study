@@ -304,6 +304,12 @@ def build_pi5_full_config(
             "physical_front_speed_governor_deceleration_mps2": (
                 envelope["assumed_deceleration_mps2"]
             ),
+            # When a temporal guard reduces forward speed, reduce yaw authority
+            # with it so a safe slowdown cannot turn a planned avoidance arc
+            # into a sub-wheelbase circle.  Emergency/near-body hard stops use
+            # their separate fail-closed branches and are not relaxed here.
+            "slowdown_curvature_limit_enabled": True,
+            "slowdown_minimum_turn_radius_m": 0.60,
             # Keep the protected front/side sector fail-closed, while a
             # rear-only return cannot stop continued forward translation.
             # Reverse commands still stop for rear obstacles.

@@ -17,8 +17,11 @@ from mobile_robot_mppi.core.references import PolylineReference
 from mobile_robot_mppi.core.types import ControlCommand, PlanResult
 
 
-_ACTIVE_PHASES = frozenset({
+_REFERENCE_PHASES = frozenset({
     "straight_crossing", "oblique_crossing", "frontal_approach", "rejoin"
+})
+_CONTROL_PHASES = frozenset({
+    "straight_crossing", "oblique_crossing", "frontal_approach"
 })
 
 
@@ -44,6 +47,7 @@ class EncounterControlConfig:
     oblique_crossing_speed_mps: float = 0.36
     frontal_approach_speed_mps: float = 0.32
     front_pass_speed_mps: float = 0.48
+    crossing_yield_speed_mps: float = 0.08
     rejoin_speed_mps: float = 0.36
     rejoin_alignment_speed_mps: float = 0.15
     heading_gain: float = 1.35
@@ -56,12 +60,11 @@ class EncounterControlConfig:
     frontal_reverse_trigger_m: float = 0.85
     frontal_reverse_speed_mps: float = 0.18
     frontal_reverse_minimum_rear_range_m: float = 0.90
-    frontal_commit_clearance_m: float = 0.65
-    frontal_commit_minimum_omega_radps: float = 0.28
     frontal_side_progress_minimum_bearing_rad: float = 1.15
     frontal_side_progress_minimum_front_range_m: float = 0.90
     frontal_side_progress_minimum_distance_m: float = 0.52
     frontal_side_progress_speed_mps: float = 0.18
+    frontal_side_progress_minimum_omega_radps: float = 0.28
     control_prefix_steps: int = 3
     reference_lookahead_m: float = 1.0
     reference_corridor_half_width_m: float = 0.95
@@ -77,15 +80,20 @@ class EncounterControlConfig:
             raise ValueError("encounter heading blend must be in [0,1]")
         if self.control_prefix_steps < 1:
             raise ValueError("encounter control prefix must be positive")
+        if not (
+            0.0
+            <= self.crossing_yield_speed_mps
+            <= self.maximum_forward_speed_mps
+        ):
+            raise ValueError("crossing yield speed must be within forward limits")
         if min(
-            self.frontal_commit_clearance_m,
-            self.frontal_commit_minimum_omega_radps,
             self.frontal_side_progress_minimum_bearing_rad,
             self.frontal_side_progress_minimum_front_range_m,
             self.frontal_side_progress_minimum_distance_m,
             self.frontal_side_progress_speed_mps,
+            self.frontal_side_progress_minimum_omega_radps,
         ) <= 0.0:
-            raise ValueError("frontal commit and side progress limits must be positive")
+            raise ValueError("frontal side progress limits must be positive")
 
 
 class EncounterReferenceAuthority:
@@ -117,7 +125,12 @@ class EncounterReferenceAuthority:
         """Return the base reference or the current encounter polyline."""
 
         phase = str(diagnostics.get("encounter_phase", "idle"))
-        if not self.config.enabled or phase not in _ACTIVE_PHASES:
+        strategy = str(diagnostics.get("encounter_strategy", "none"))
+        if (
+            not self.config.enabled
+            or phase not in _REFERENCE_PHASES
+            or (strategy == "yield" and phase != "rejoin")
+        ):
             self.reset()
             return base_reference
         waypoint = self._point(diagnostics.get("encounter_temporary_waypoint"))
@@ -206,7 +219,7 @@ class EncounterControlAuthority:
         self, diagnostics: Mapping[str, Any]
     ) -> Dict[str, Any]:
         phase = str(diagnostics.get("encounter_phase", "idle"))
-        active = bool(self.config.enabled and phase in _ACTIVE_PHASES)
+        active = bool(self.config.enabled and phase in _CONTROL_PHASES)
         semantic_stack_enabled = bool(self.config.enabled)
         return {
             "encounter_control_authoritative": active,
@@ -242,8 +255,8 @@ class EncounterControlAuthority:
             "encounter_control_frontal_side_progress_speed_mps": (
                 self.config.frontal_side_progress_speed_mps
             ),
-            "encounter_control_frontal_commit_minimum_omega_radps": (
-                self.config.frontal_commit_minimum_omega_radps
+            "encounter_control_frontal_side_progress_minimum_omega_radps": (
+                self.config.frontal_side_progress_minimum_omega_radps
             ),
             "encounter_control_distance_m": _finite(
                 diagnostics.get("encounter_distance_m"), float("inf")
@@ -253,7 +266,9 @@ class EncounterControlAuthority:
     def _target_speed(
         self, phase: str, strategy: str, heading_error: float
     ) -> float:
-        if phase == "straight_crossing":
+        if strategy == "yield":
+            speed = self.config.crossing_yield_speed_mps
+        elif phase == "straight_crossing":
             speed = self.config.straight_crossing_speed_mps
         elif phase == "oblique_crossing":
             speed = self.config.oblique_crossing_speed_mps
@@ -280,7 +295,7 @@ class EncounterControlAuthority:
         """Apply semantic admissibility while preserving hard-safety vetoes."""
 
         phase = str(diagnostics.get("encounter_phase", "idle"))
-        if not self.config.enabled or phase not in _ACTIVE_PHASES:
+        if not self.config.enabled or phase not in _CONTROL_PHASES:
             return plan
         source = dict(plan.diagnostics or {})
         output_diagnostics = dict(source)
@@ -318,40 +333,6 @@ class EncounterControlAuthority:
         else:
             target_omega = 0.0
 
-        entry_origin = EncounterReferenceAuthority._point(
-            diagnostics.get("encounter_entry_goal_origin")
-        )
-        entry_heading = _finite(
-            diagnostics.get("encounter_entry_goal_heading_rad"),
-            float("nan"),
-        )
-        locked_side = int(
-            diagnostics.get("encounter_locked_steering_side", 0) or 0
-        )
-        frontal_commit_active = False
-        frontal_lateral_progress = 0.0
-        if (
-            phase == "frontal_approach"
-            and locked_side != 0
-            and entry_origin is not None
-            and math.isfinite(entry_heading)
-        ):
-            lateral_direction = np.asarray((
-                -math.sin(entry_heading), math.cos(entry_heading)
-            ))
-            frontal_lateral_progress = float(
-                np.dot(pose_values[:2] - entry_origin, lateral_direction)
-            )
-            frontal_commit_active = bool(
-                frontal_lateral_progress * locked_side
-                < self.config.frontal_commit_clearance_m
-            )
-            if frontal_commit_active:
-                target_omega = float(locked_side) * max(
-                    abs(target_omega),
-                    self.config.frontal_commit_minimum_omega_radps,
-                )
-
         values = np.asarray(plan.proposed_control.values, dtype=np.float64).copy()
         original = values.copy()
         probability = _finite(source.get(
@@ -384,6 +365,23 @@ class EncounterControlAuthority:
             # Do not pre-empt the arbiter's causal hard-stop diagnostics.  It
             # will zero translation (and, where required, all motion) below.
             reason = "hard_safety_pending"
+        elif strategy == "yield":
+            # Do not synthesize a passage side or a pursuit arc.  Preserve any
+            # planner braking/reverse command and cap only forward progress
+            # while the pedestrian owns the intersection.
+            if values[0] > self.config.crossing_yield_speed_mps:
+                values[0] = self.config.crossing_yield_speed_mps
+            values[0] = float(np.clip(
+                values[0],
+                -self.config.maximum_reverse_speed_mps,
+                self.config.maximum_forward_speed_mps,
+            ))
+            values[1] = float(np.clip(
+                values[1],
+                -self.config.maximum_omega_radps,
+                self.config.maximum_omega_radps,
+            ))
+            reason = "crossing_yield"
         else:
             if reverse_available:
                 values[0] = max(
@@ -448,10 +446,8 @@ class EncounterControlAuthority:
             "encounter_control_reverse_available": reverse_available,
             "encounter_control_reverse_applied": reverse_applied,
             "encounter_control_hard_safety_pending": emergency,
-            "encounter_control_frontal_commit_active": frontal_commit_active,
-            "encounter_control_frontal_lateral_progress_m": float(
-                frontal_lateral_progress
-            ),
+            "encounter_control_frontal_commit_active": False,
+            "encounter_control_frontal_lateral_progress_m": 0.0,
             "encounter_control_predicted_trajectory_recomputed": False,
         })
         command = ControlCommand(

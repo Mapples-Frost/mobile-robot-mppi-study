@@ -6,7 +6,7 @@ authority module can consume its diagnostics behind an explicit deployment
 switch, while the default configuration remains read-only shadow mode.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from enum import Enum
 import math
 from typing import Any, Dict, Iterable, Mapping, Optional, Sequence, Tuple
@@ -62,12 +62,20 @@ class EncounterModeConfig:
     track_jump_speed_scale: float = 3.0
     maximum_track_gap_s: float = 0.50
     active_track_reacquisition_maximum_m: float = 0.65
+    person_fusion_position_m: float = 0.55
+    person_fusion_velocity_difference_mps: float = 0.70
+    person_fusion_direction_difference_deg: float = 60.0
+    person_association_maximum_m: float = 0.75
     nominal_ego_speed_mps: float = 0.40
     cpa_horizon_s: float = 5.0
     forecast_behavior_lookahead_s: float = 0.60
     engagement_distance_m: float = 5.5
     engagement_cpa_distance_m: float = 1.35
+    admission_cpa_margin_m: float = 0.20
     rear_engagement_allowance_m: float = 0.45
+    frontal_minimum_longitudinal_m: float = 0.05
+    frontal_corridor_base_half_width_m: float = 0.70
+    frontal_corridor_width_per_m: float = 0.25
     crossing_line_tolerance_m: float = 0.12
     frontal_clearance_m: float = 0.65
     rejoin_heading_tolerance_deg: float = 12.0
@@ -97,6 +105,21 @@ class EncounterModeConfig:
             raise ValueError("abrupt confirmation cycles must be positive")
         if self.active_track_reacquisition_maximum_m <= 0.0:
             raise ValueError("active track reacquisition distance must be positive")
+        if min(
+            self.person_fusion_position_m,
+            self.person_fusion_velocity_difference_mps,
+            self.person_association_maximum_m,
+            self.frontal_corridor_base_half_width_m,
+        ) <= 0.0:
+            raise ValueError("person association and frontal corridor limits must be positive")
+        if not (0.0 < self.person_fusion_direction_difference_deg <= 180.0):
+            raise ValueError("person fusion direction limit must be in (0, 180]")
+        if self.frontal_minimum_longitudinal_m < 0.0:
+            raise ValueError("frontal minimum longitudinal distance cannot be negative")
+        if self.frontal_corridor_width_per_m < 0.0:
+            raise ValueError("frontal corridor expansion cannot be negative")
+        if self.admission_cpa_margin_m < 0.0:
+            raise ValueError("encounter admission CPA margin cannot be negative")
         if self.completion_confirmation_cycles < 1:
             raise ValueError("completion confirmation cycles must be positive")
         if self.forecast_behavior_lookahead_s <= 0.0:
@@ -128,6 +151,10 @@ class _TrackSample:
     forecast_positions: Optional[np.ndarray]
     forecast_times_s: Optional[np.ndarray]
     forecast_position_std_m: Optional[np.ndarray]
+    member_track_indices: Tuple[int, ...] = ()
+    fused: bool = False
+    person_association_residual_m: float = float("inf")
+    temporal_velocity: Optional[np.ndarray] = None
 
 
 def _finite_float(value: Any, default: float = float("nan")) -> float:
@@ -167,6 +194,9 @@ class EncounterModeManager:
     def reset(self) -> None:
         self._selected_track_index = None  # type: Optional[int]
         self._last_track = None  # type: Optional[_TrackSample]
+        self._person_tracks = {}  # type: Dict[int, _TrackSample]
+        self._next_person_id = 0
+        self._temporal_frontal_streaks = {}  # type: Dict[int, int]
         self._candidate = EncounterMode.UNKNOWN
         self._candidate_streak = 0
         self._candidate_fast_path = False
@@ -175,6 +205,7 @@ class EncounterModeManager:
         self._strategy = PassageStrategy.NONE
         self._entry_goal_origin = None  # type: Optional[np.ndarray]
         self._entry_goal_direction = None  # type: Optional[np.ndarray]
+        self._entry_goal_point = None  # type: Optional[np.ndarray]
         self._entry_human_line_offset = None  # type: Optional[float]
         self._last_human_line_offset = None  # type: Optional[float]
         self._entry_human_position = None  # type: Optional[np.ndarray]
@@ -296,7 +327,190 @@ class EncounterModeManager:
                     else forecast_evidence[3]
                 ),
             ))
-        return tuple(records)
+        return self._fuse_person_tracks(tuple(records), float(timestamp_s))
+
+    def _same_person_cluster(
+        self, first: _TrackSample, second: _TrackSample
+    ) -> bool:
+        if float(np.linalg.norm(first.position - second.position)) > (
+            self.config.person_fusion_position_m
+        ):
+            return False
+        velocity_difference = float(np.linalg.norm(
+            first.semantic_velocity - second.semantic_velocity
+        ))
+        if velocity_difference > self.config.person_fusion_velocity_difference_mps:
+            return False
+        first_direction = _unit(first.semantic_velocity)
+        second_direction = _unit(second.semantic_velocity)
+        if first_direction is None or second_direction is None:
+            return True
+        direction_difference = abs(math.degrees(_signed_angle(
+            first_direction, second_direction
+        )))
+        return bool(
+            direction_difference
+            <= self.config.person_fusion_direction_difference_deg
+        )
+
+    def _fuse_cluster(
+        self, members: Sequence[_TrackSample], timestamp_s: float
+    ) -> _TrackSample:
+        weights = np.asarray(
+            [max(1, member.support_beams) for member in members],
+            dtype=np.float64,
+        )
+        weights /= float(np.sum(weights))
+        position = np.sum(
+            np.asarray([member.position for member in members])
+            * weights[:, None],
+            axis=0,
+        )
+        velocity = np.sum(
+            np.asarray([member.velocity for member in members])
+            * weights[:, None],
+            axis=0,
+        )
+        semantic_velocity = np.sum(
+            np.asarray([member.semantic_velocity for member in members])
+            * weights[:, None],
+            axis=0,
+        )
+        forecast_member = max(
+            members,
+            key=lambda member: (
+                member.forecast_positions is not None,
+                member.support_beams,
+            ),
+        )
+        member_indices = tuple(sorted(
+            index
+            for member in members
+            for index in (member.member_track_indices or (member.index,))
+        ))
+        return _TrackSample(
+            index=-1,
+            timestamp_s=float(timestamp_s),
+            position=position,
+            velocity=velocity,
+            semantic_velocity=semantic_velocity,
+            velocity_source=(
+                "person_fused_forecast"
+                if any(member.forecast_positions is not None for member in members)
+                else "person_fused_tracker_velocity"
+            ) if len(members) > 1 else members[0].velocity_source,
+            speed_mps=float(np.linalg.norm(semantic_velocity)),
+            innovation_nis=float(np.sum(
+                weights * np.asarray([member.innovation_nis for member in members])
+            )),
+            change_triggered=any(member.change_triggered for member in members),
+            support_beams=sum(member.support_beams for member in members),
+            forecast_valid=any(member.forecast_valid for member in members),
+            associated=any(member.associated for member in members),
+            forecast_positions=forecast_member.forecast_positions,
+            forecast_times_s=forecast_member.forecast_times_s,
+            forecast_position_std_m=forecast_member.forecast_position_std_m,
+            member_track_indices=member_indices,
+            fused=len(member_indices) > 1,
+        )
+
+    def _fuse_person_tracks(
+        self,
+        records: Sequence[_TrackSample],
+        timestamp_s: float,
+    ) -> Tuple[_TrackSample, ...]:
+        """Fuse leg-sized tracks and retain a causal person identity.
+
+        Upstream track slots are deliberately treated as measurements, not as
+        identities: a person's two legs may occupy different slots every scan.
+        """
+
+        if not records:
+            self._person_tracks = {
+                person_id: track
+                for person_id, track in self._person_tracks.items()
+                if timestamp_s - track.timestamp_s
+                <= self.config.maximum_track_gap_s
+            }
+            return ()
+        # Complete-link grouping prevents a chain of nearby legs in a crowd
+        # from collapsing several people into one long cluster.
+        grouped = []  # type: list[list[_TrackSample]]
+        for record in sorted(records, key=lambda item: item.index):
+            compatible = [
+                group
+                for group in grouped
+                if all(self._same_person_cluster(record, member) for member in group)
+            ]
+            if compatible:
+                nearest = min(
+                    compatible,
+                    key=lambda group: float(np.linalg.norm(
+                        record.position
+                        - np.mean(
+                            np.asarray([member.position for member in group]),
+                            axis=0,
+                        )
+                    )),
+                )
+                nearest.append(record)
+            else:
+                grouped.append([record])
+        fused = [
+            self._fuse_cluster(members, timestamp_s)
+            for members in grouped
+        ]
+
+        viable_previous = {
+            person_id: track
+            for person_id, track in self._person_tracks.items()
+            if 0.0 < timestamp_s - track.timestamp_s
+            <= self.config.maximum_track_gap_s
+        }
+        possible = []
+        for current_index, current in enumerate(fused):
+            for person_id, previous in viable_previous.items():
+                dt_s = timestamp_s - previous.timestamp_s
+                expected = previous.position + previous.semantic_velocity * dt_s
+                residual = float(np.linalg.norm(current.position - expected))
+                if residual <= self.config.person_association_maximum_m:
+                    possible.append((residual, current_index, person_id))
+        assigned_current = set()
+        assigned_previous = set()
+        identified = []
+        assignments = {}
+        for residual, current_index, person_id in sorted(possible):
+            if current_index in assigned_current or person_id in assigned_previous:
+                continue
+            assignments[current_index] = (person_id, residual)
+            assigned_current.add(current_index)
+            assigned_previous.add(person_id)
+        for current_index, current in enumerate(fused):
+            assignment = assignments.get(current_index)
+            if assignment is None:
+                person_id = self._next_person_id
+                self._next_person_id += 1
+                residual = float("inf")
+                temporal_velocity = None
+            else:
+                person_id, residual = assignment
+                previous = viable_previous[person_id]
+                dt_s = timestamp_s - previous.timestamp_s
+                temporal_velocity = (current.position - previous.position) / dt_s
+            identified.append(replace(
+                current,
+                index=int(person_id),
+                person_association_residual_m=float(residual),
+                temporal_velocity=temporal_velocity,
+            ))
+        retained = {
+            person_id: track
+            for person_id, track in self._person_tracks.items()
+            if timestamp_s - track.timestamp_s <= self.config.maximum_track_gap_s
+        }
+        retained.update({track.index: track for track in identified})
+        self._person_tracks = retained
+        return tuple(identified)
 
     def _forecast_evidence(
         self,
@@ -489,6 +703,35 @@ class EncounterModeManager:
                 behavior_velocity, relative_position / distance
             ))
         )
+        temporal_velocity = track.temporal_velocity
+        temporal_velocity_valid = bool(
+            temporal_velocity is not None
+            and np.isfinite(temporal_velocity).all()
+        )
+        if temporal_velocity_valid:
+            temporal_longitudinal = float(np.dot(
+                temporal_velocity, goal_direction
+            ))
+            temporal_lateral = float(np.dot(
+                temporal_velocity, lateral_direction
+            ))
+            temporal_radial = (
+                0.0 if distance <= 1.0e-9
+                else float(np.dot(
+                    temporal_velocity, relative_position / distance
+                ))
+            )
+            temporal_speed = float(np.linalg.norm(temporal_velocity))
+            temporal_approach_angle = math.degrees(math.atan2(
+                max(0.0, -temporal_longitudinal),
+                max(1.0e-9, abs(temporal_lateral)),
+            ))
+        else:
+            temporal_longitudinal = 0.0
+            temporal_lateral = 0.0
+            temporal_radial = 0.0
+            temporal_speed = 0.0
+            temporal_approach_angle = 0.0
         ego_speed = max(float(robot_speed_mps), self.config.nominal_ego_speed_mps)
         relative_velocity = behavior_velocity - ego_speed * goal_direction
         relative_speed_sq = float(np.dot(relative_velocity, relative_velocity))
@@ -507,6 +750,8 @@ class EncounterModeManager:
                 d_cpa = float(np.linalg.norm(
                     relative_position + t_cpa * relative_velocity
                 ))
+        kinematic_t_cpa = t_cpa
+        kinematic_d_cpa = d_cpa
         forecast_geometry = self._forecast_geometry(
             track, robot_position, goal_direction, ego_speed
         )
@@ -545,9 +790,17 @@ class EncounterModeManager:
             "human_longitudinal_mps": human_longitudinal,
             "human_lateral_mps": human_lateral,
             "radial_velocity_mps": radial_velocity,
+            "temporal_velocity_valid": temporal_velocity_valid,
+            "temporal_speed_mps": temporal_speed,
+            "temporal_longitudinal_mps": temporal_longitudinal,
+            "temporal_lateral_mps": temporal_lateral,
+            "temporal_radial_velocity_mps": temporal_radial,
+            "temporal_approach_angle_deg": temporal_approach_angle,
             "approach_angle_deg": approach_angle,
             "t_cpa_s": t_cpa,
             "d_cpa_m": d_cpa,
+            "kinematic_t_cpa_s": kinematic_t_cpa,
+            "kinematic_d_cpa_m": kinematic_d_cpa,
             "goal_line_crossing_time_s": crossing_time,
             "goal_line_crossing_position_m": crossing_position,
             "forecast_goal_line_crossing_used": forecast_crossing_used,
@@ -631,7 +884,32 @@ class EncounterModeManager:
         speed = float(track.speed_mps)
         radial = float(values["radial_velocity_mps"])
         angle = float(values["approach_angle_deg"])
-        if speed < self.config.minimum_motion_speed_mps:
+        temporal_frontal_evidence = bool(
+            values.get("temporal_velocity_valid", False)
+            and float(values.get("temporal_speed_mps", 0.0))
+            >= self.config.minimum_motion_speed_mps
+            and -float(values.get("temporal_radial_velocity_mps", 0.0))
+            >= self.config.minimum_approach_speed_mps
+            and float(values.get("temporal_approach_angle_deg", 0.0))
+            >= self.config.oblique_crossing_maximum_deg
+        )
+        temporal_frontal_streak = (
+            self._temporal_frontal_streaks.get(track.index, 0) + 1
+            if temporal_frontal_evidence else 0
+        )
+        self._temporal_frontal_streaks[track.index] = temporal_frontal_streak
+        temporal_frontal = bool(temporal_frontal_streak >= 2)
+        if temporal_frontal:
+            mode = EncounterMode.FRONTAL_APPROACH
+            confidence = float(np.clip(
+                0.65 + 0.35 * (
+                    float(values["temporal_approach_angle_deg"])
+                    - self.config.oblique_crossing_maximum_deg
+                ) / (90.0 - self.config.oblique_crossing_maximum_deg),
+                0.0,
+                1.0,
+            ))
+        elif speed < self.config.minimum_motion_speed_mps:
             mode = EncounterMode.STATIONARY
             confidence = float(np.clip(
                 1.0 - speed / self.config.minimum_motion_speed_mps, 0.0, 1.0
@@ -697,6 +975,109 @@ class EncounterModeManager:
         }
         return mode, confidence, probabilities
 
+    def _crossing_admissible(
+        self,
+        candidate: EncounterMode,
+        values: Mapping[str, float],
+    ) -> bool:
+        """Require an actual future intersection, not an angle label alone."""
+
+        crossing_time = float(values.get(
+            "goal_line_crossing_time_s", float("inf")
+        ))
+        crossing_position = float(values.get(
+            "goal_line_crossing_position_m", float("inf")
+        ))
+        cpa_candidates = (
+            (
+                float(values.get("t_cpa_s", float("inf"))),
+                float(values.get("d_cpa_m", float("inf"))),
+            ),
+            (
+                float(values.get("kinematic_t_cpa_s", float("inf"))),
+                float(values.get("kinematic_d_cpa_m", float("inf"))),
+            ),
+        )
+        cpa_relevant = any(
+            0.0 < time_s <= self.config.cpa_horizon_s
+            and distance_m <= (
+                self.config.engagement_cpa_distance_m
+                + self.config.admission_cpa_margin_m
+            )
+            for time_s, distance_m in cpa_candidates
+        )
+        return bool(
+            candidate in (
+                EncounterMode.STRAIGHT_CROSSING,
+                EncounterMode.OBLIQUE_CROSSING,
+            )
+            and values.get("longitudinal_m", -float("inf"))
+            >= -self.config.rear_engagement_allowance_m
+            and 0.0 < crossing_time <= self.config.cpa_horizon_s
+            and -self.config.rear_engagement_allowance_m
+            <= crossing_position <= self.config.engagement_distance_m
+            and cpa_relevant
+        )
+
+    def _frontal_admissible(
+        self,
+        candidate: EncounterMode,
+        values: Mapping[str, float],
+    ) -> bool:
+        """Gate frontal mode to the expanding corridor in front of the car."""
+
+        longitudinal = float(values.get("longitudinal_m", -float("inf")))
+        lateral = abs(float(values.get("lateral_m", float("inf"))))
+        distance = float(values.get("distance_m", float("inf")))
+        corridor_half_width = (
+            self.config.frontal_corridor_base_half_width_m
+            + self.config.frontal_corridor_width_per_m * max(0.0, longitudinal)
+        )
+        semantic_closing = bool(
+            -float(values.get("human_longitudinal_mps", 0.0))
+            >= self.config.minimum_approach_speed_mps
+            or -float(values.get("radial_velocity_mps", 0.0))
+            >= self.config.minimum_approach_speed_mps
+        )
+        temporal_closing = bool(
+            values.get("temporal_velocity_valid", False)
+            and (
+                -float(values.get("temporal_longitudinal_mps", 0.0))
+                >= self.config.minimum_approach_speed_mps
+                or -float(values.get("temporal_radial_velocity_mps", 0.0))
+                >= self.config.minimum_approach_speed_mps
+            )
+        )
+        cpa_limit = (
+            self.config.engagement_cpa_distance_m
+            + self.config.admission_cpa_margin_m
+        )
+        cpa_relevant = bool(
+            any(
+                0.0 < time_s <= self.config.cpa_horizon_s
+                and distance_m <= cpa_limit
+                for time_s, distance_m in (
+                    (
+                        float(values.get("t_cpa_s", float("inf"))),
+                        float(values.get("d_cpa_m", float("inf"))),
+                    ),
+                    (
+                        float(values.get("kinematic_t_cpa_s", float("inf"))),
+                        float(values.get("kinematic_d_cpa_m", float("inf"))),
+                    ),
+                )
+            )
+            or distance <= self.config.engagement_cpa_distance_m
+        )
+        return bool(
+            candidate == EncounterMode.FRONTAL_APPROACH
+            and longitudinal >= self.config.frontal_minimum_longitudinal_m
+            and lateral <= corridor_half_width
+            and distance <= self.config.engagement_distance_m
+            and (semantic_closing or temporal_closing)
+            and cpa_relevant
+        )
+
     def _continuity_and_change(
         self,
         track: Optional[_TrackSample],
@@ -706,6 +1087,23 @@ class EncounterModeManager:
         if track is None or previous is None:
             return False, False, 0.0, "no_track_history", 0.0
         if track.index != previous.index:
+            shared_measurement_slot = bool(
+                set(track.member_track_indices)
+                & set(previous.member_track_indices)
+            )
+            if shared_measurement_slot:
+                dt_s = track.timestamp_s - previous.timestamp_s
+                if 0.0 < dt_s <= self.config.maximum_track_gap_s:
+                    predicted = previous.position + previous.velocity * dt_s
+                    residual = float(np.linalg.norm(track.position - predicted))
+                    jump_limit = max(
+                        self.config.track_jump_minimum_m,
+                        self.config.track_jump_speed_scale
+                        * max(previous.speed_mps, track.speed_mps)
+                        * dt_s,
+                    )
+                    if residual > jump_limit:
+                        return False, False, 0.0, "position_jump", residual
             return False, False, 0.0, "track_index_changed", 0.0
         dt_s = track.timestamp_s - previous.timestamp_s
         if dt_s <= 0.0 or dt_s > self.config.maximum_track_gap_s:
@@ -900,6 +1298,7 @@ class EncounterModeManager:
         track: _TrackSample,
         values: Mapping[str, float],
         robot_position: np.ndarray,
+        goal_point: np.ndarray,
         goal_direction: np.ndarray,
         robot_speed_mps: float,
         local_obstacles: Sequence[Sequence[float]],
@@ -907,6 +1306,7 @@ class EncounterModeManager:
         self._phase = mode
         self._entry_goal_origin = robot_position.copy()
         self._entry_goal_direction = goal_direction.copy()
+        self._entry_goal_point = goal_point.copy()
         lateral_direction = np.asarray(
             (-goal_direction[1], goal_direction[0]), dtype=np.float64
         )
@@ -978,17 +1378,28 @@ class EncounterModeManager:
         return timing
 
     def _set_rejoin_waypoint(self, robot_position: np.ndarray) -> None:
-        if self._entry_goal_origin is None or self._entry_goal_direction is None:
+        if (
+            self._entry_goal_origin is None
+            or self._entry_goal_direction is None
+            or self._entry_goal_point is None
+        ):
             self._temporary_waypoint = None
             return
         progress = float(np.dot(
             robot_position - self._entry_goal_origin,
             self._entry_goal_direction,
         ))
+        goal_progress = max(0.0, float(np.dot(
+            self._entry_goal_point - self._entry_goal_origin,
+            self._entry_goal_direction,
+        )))
+        lookahead_progress = min(
+            progress + self.config.rejoin_lookahead_m,
+            goal_progress,
+        )
         self._temporary_waypoint = (
             self._entry_goal_origin
-            + (progress + self.config.rejoin_lookahead_m)
-            * self._entry_goal_direction
+            + lookahead_progress * self._entry_goal_direction
         )
 
     def _crossing_complete(self, track: _TrackSample) -> bool:
@@ -1043,6 +1454,10 @@ class EncounterModeManager:
         if self._entry_goal_origin is None or self._entry_goal_direction is None:
             self._phase = EncounterMode.IDLE
             return 0.0, 0.0
+        # The reference is a moving lookahead on the frozen entry goal line.
+        # Recomputing it every cycle prevents the controller from pursuing a
+        # waypoint that has already fallen behind the chassis.
+        self._set_rejoin_waypoint(robot_position)
         lateral_direction = np.asarray((
             -self._entry_goal_direction[1], self._entry_goal_direction[0]
         ))
@@ -1070,6 +1485,7 @@ class EncounterModeManager:
             self._locked_steering_side = 0
             self._entry_goal_origin = None
             self._entry_goal_direction = None
+            self._entry_goal_point = None
             self._temporary_waypoint = None
         return cross_track, heading_error
 
@@ -1156,27 +1572,11 @@ class EncounterModeManager:
         crossing_position = float(values.get(
             "goal_line_crossing_position_m", float("inf")
         ))
-        crossing_relevant = bool(
-            candidate in (
-                EncounterMode.STRAIGHT_CROSSING,
-                EncounterMode.OBLIQUE_CROSSING,
-            )
-            and 0.0 < crossing_time <= self.config.cpa_horizon_s
-            and -self.config.rear_engagement_allowance_m <= crossing_position
-            <= self.config.engagement_distance_m
-        )
-        frontal_relevant = bool(
-            candidate == EncounterMode.FRONTAL_APPROACH
-            and values.get("longitudinal_m", -float("inf"))
-            >= -self.config.rear_engagement_allowance_m
-            and values.get("distance_m", float("inf"))
-            <= self.config.engagement_distance_m
-            and -values.get("human_longitudinal_mps", 0.0)
-            >= self.config.minimum_approach_speed_mps
-        )
+        crossing_relevant = self._crossing_admissible(candidate, values)
+        frontal_relevant = self._frontal_admissible(candidate, values)
         interaction_relevant = bool(
             selected is not None
-            and (dangerous or crossing_relevant or frontal_relevant)
+            and (crossing_relevant or frontal_relevant)
         )
         timing = dict(self._strategy_timing)
         line_crossed = False
@@ -1187,13 +1587,29 @@ class EncounterModeManager:
             and selected is not None
             and interaction_relevant
         )
+        rejoin_interrupted = bool(
+            self._phase == EncounterMode.REJOIN
+            and confirmed_this_cycle
+            and self._confirmed_behavior == candidate
+        )
+        stable_active_reclassification = bool(
+            self._phase in (
+                EncounterMode.STRAIGHT_CROSSING,
+                EncounterMode.OBLIQUE_CROSSING,
+            )
+            and confirmed_this_cycle
+            and continuous
+            and self._confirmed_behavior == EncounterMode.FRONTAL_APPROACH
+            and candidate == EncounterMode.FRONTAL_APPROACH
+        )
         if verified_transition and (
             self._phase == EncounterMode.IDLE
+            or rejoin_interrupted
+            or stable_active_reclassification
             or (
                 self._confirmed_behavior != previous_confirmed
                 and self._candidate_fast_path
                 and continuous
-                and self._phase != EncounterMode.REJOIN
             )
         ):
             timing = self._enter_active(
@@ -1201,6 +1617,7 @@ class EncounterModeManager:
                 selected,
                 values,
                 robot_position,
+                goal_values,
                 goal_direction,
                 float(robot_speed_mps),
                 local_obstacles,
@@ -1267,6 +1684,19 @@ class EncounterModeManager:
             "encounter_confidence": float(confidence),
             "encounter_mode_probabilities": probabilities,
             "encounter_track_index": selected_index,
+            "encounter_person_count": int(len(tracks)),
+            "encounter_person_id": selected_index,
+            "encounter_person_member_track_indices": (
+                () if selected is None else selected.member_track_indices
+            ),
+            "encounter_person_fused": bool(
+                selected is not None and selected.fused
+            ),
+            "encounter_person_association_residual_m": (
+                float("inf")
+                if selected is None
+                else float(selected.person_association_residual_m)
+            ),
             "encounter_track_continuous": bool(continuous),
             "encounter_track_switched": track_switched,
             "encounter_track_residual_m": float(residual),
@@ -1282,6 +1712,13 @@ class EncounterModeManager:
             ),
             "encounter_dangerous": bool(dangerous),
             "encounter_interaction_relevant": interaction_relevant,
+            "encounter_crossing_admissible": bool(crossing_relevant),
+            "encounter_frontal_admissible": bool(frontal_relevant),
+            "encounter_frontal_corridor_half_width_m": float(
+                self.config.frontal_corridor_base_half_width_m
+                + self.config.frontal_corridor_width_per_m
+                * max(0.0, float(values.get("longitudinal_m", 0.0)))
+            ),
             "encounter_predicted_goal_line_crossing_time_s": float(
                 crossing_time
             ),
@@ -1312,6 +1749,19 @@ class EncounterModeManager:
             ),
             "encounter_human_lateral_velocity_mps": _finite_float(
                 values.get("human_lateral_mps")
+            ),
+            "encounter_person_temporal_velocity_valid": bool(
+                values.get("temporal_velocity_valid", False)
+            ),
+            "encounter_person_temporal_frontal_streak": int(
+                0 if selected is None
+                else self._temporal_frontal_streaks.get(selected.index, 0)
+            ),
+            "encounter_person_temporal_longitudinal_velocity_mps": _finite_float(
+                values.get("temporal_longitudinal_mps")
+            ),
+            "encounter_person_temporal_lateral_velocity_mps": _finite_float(
+                values.get("temporal_lateral_mps")
             ),
             "encounter_human_longitudinal_position_m": _finite_float(
                 values.get("longitudinal_m")

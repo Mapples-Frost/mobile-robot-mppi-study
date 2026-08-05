@@ -32,12 +32,6 @@ class ScanGuardArbiter:
                 "physical_front_speed_governor_deceleration_mps2", 0.80
             )
         )
-        self.slowdown_curvature_limit_enabled = bool(
-            self.config.get("slowdown_curvature_limit_enabled", False)
-        )
-        self.slowdown_minimum_turn_radius_m = float(
-            self.config.get("slowdown_minimum_turn_radius_m", 0.60)
-        )
         # The raw near-body guard is intentionally omnidirectional, but the
         # final control boundary also knows the commanded translation sign. A
         # rear-only return cannot be struck while the base keeps translating
@@ -103,8 +97,6 @@ class ScanGuardArbiter:
             raise ValueError(
                 "physical_front_speed_governor_deceleration_mps2 must be positive"
             )
-        if self.slowdown_minimum_turn_radius_m <= 0.0:
-            raise ValueError("slowdown_minimum_turn_radius_m must be positive")
         if (
             not 90.0
             <= self.directional_forward_protected_half_angle_deg
@@ -2444,8 +2436,7 @@ class ScanGuardArbiter:
                 "encounter_control_frontal_side_progress_speed_mps", 0.0
             ))
             encounter_side_minimum_omega = float(context.get(
-                "encounter_control_frontal_side_progress_minimum_omega_radps",
-                0.0,
+                "encounter_control_frontal_commit_minimum_omega_radps", 0.0
             ))
             encounter_distance = float(context.get(
                 "encounter_control_distance_m", float("inf")
@@ -2754,9 +2745,6 @@ class ScanGuardArbiter:
             and "v_cmd" in self.action_spec.names
             and float(values[self.action_spec.index("v_cmd")]) >= 0.0
         )
-        slowdown_curvature_limit_applied = False
-        slowdown_curvature_omega_before = 0.0
-        slowdown_curvature_omega_limit = float("inf")
         if encounter_frontal_side_progress_available:
             # The person is outside the protected forward sector, the measured
             # front corridor is clear, and the locked encounter side turns the
@@ -3644,7 +3632,6 @@ class ScanGuardArbiter:
                     max(0.0, values[index]), self.front_soft_block_max_speed
                 )
         elif bool(guard_result.get("should_slow_down", False)):
-            forward_slowdown = False
             if "v_cmd" in self.action_spec.names:
                 index = self.action_spec.index("v_cmd")
                 # A front-sector slowdown constrains motion *toward* the
@@ -3654,7 +3641,6 @@ class ScanGuardArbiter:
                 # Emergency and near-body hard stops are handled above and
                 # remain fail-closed.
                 if values[index] > 0.0:
-                    forward_slowdown = True
                     values[index] *= float(
                         guard_result.get("slow_scale", 1.0)
                     )
@@ -3679,28 +3665,6 @@ class ScanGuardArbiter:
                                 ),
                             )
                             values[index] = min(values[index], speed_cap)
-            if (
-                self.slowdown_curvature_limit_enabled
-                and forward_slowdown
-                and "v_cmd" in self.action_spec.names
-                and "omega_cmd" in self.action_spec.names
-            ):
-                v_index = self.action_spec.index("v_cmd")
-                omega_index = self.action_spec.index("omega_cmd")
-                slowdown_curvature_omega_before = float(values[omega_index])
-                slowdown_curvature_omega_limit = float(
-                    max(0.0, values[v_index])
-                    / self.slowdown_minimum_turn_radius_m
-                )
-                values[omega_index] = float(np.clip(
-                    values[omega_index],
-                    -slowdown_curvature_omega_limit,
-                    slowdown_curvature_omega_limit,
-                ))
-                slowdown_curvature_limit_applied = bool(
-                    abs(float(values[omega_index])
-                        - slowdown_curvature_omega_before) > 1.0e-12
-                )
         # Apply the physical front-clearance governor to the final selected
         # command, including active-avoidance and planner-vetted branches.  The
         # earlier implementation applied it only inside the ordinary slowdown
@@ -3879,21 +3843,6 @@ class ScanGuardArbiter:
         )
         diagnostics["encounter_control_frontal_side_progress_applied"] = bool(
             reason == "encounter_frontal_side_progress"
-        )
-        diagnostics["slowdown_curvature_limit_enabled"] = bool(
-            self.slowdown_curvature_limit_enabled
-        )
-        diagnostics["slowdown_curvature_limit_applied"] = bool(
-            slowdown_curvature_limit_applied
-        )
-        diagnostics["slowdown_minimum_turn_radius_m"] = float(
-            self.slowdown_minimum_turn_radius_m
-        )
-        diagnostics["slowdown_curvature_omega_before_radps"] = float(
-            slowdown_curvature_omega_before
-        )
-        diagnostics["slowdown_curvature_omega_limit_radps"] = float(
-            slowdown_curvature_omega_limit
         )
         diagnostics["rear_reverse_blocked"] = bool(rear_reverse_blocked)
         diagnostics["rear_pass_through_force_forward_enabled"] = bool(

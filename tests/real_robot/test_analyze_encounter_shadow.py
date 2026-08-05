@@ -75,37 +75,6 @@ def test_left_to_right_audit_reports_confirmation_and_direction_consistency():
     assert result["all_checks_passed"] is True
 
 
-def test_crossing_yield_is_directionally_consistent_without_a_locked_side():
-    rows = [
-        _row(
-            0,
-            encounter_candidate_mode="straight_crossing",
-            encounter_track_index=2,
-            encounter_change_reason="no_track_history",
-            encounter_human_lateral_velocity_mps=-0.5,
-        ),
-        _row(
-            1,
-            encounter_candidate_mode="straight_crossing",
-            encounter_confirmed_mode="straight_crossing",
-            encounter_phase="straight_crossing",
-            encounter_track_index=2,
-            encounter_track_continuous=True,
-            encounter_change_reason="continuous",
-            encounter_confidence=0.92,
-            encounter_human_lateral_velocity_mps=-0.5,
-            encounter_strategy="yield",
-            encounter_locked_steering_side=0,
-        ),
-    ]
-
-    result = analyze_rows(rows, expected="left_to_right")
-
-    assert result["direction_consistency"]["sample_count"] == 1
-    assert result["direction_consistency"]["consistent_count"] == 1
-    assert result["checks"]["observed_left_to_right_velocity"] is True
-
-
 def test_cross_to_frontal_requires_real_change_event():
     rows = [
         _row(

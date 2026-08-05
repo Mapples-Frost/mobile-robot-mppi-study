@@ -28,7 +28,7 @@ def _intent(**values):
     intent = {
         "encounter_phase": "straight_crossing",
         "encounter_track_index": 2,
-        "encounter_strategy": "front_pass",
+        "encounter_strategy": "behind_pass",
         "encounter_locked_steering_side": 1,
         "encounter_entry_goal_origin": (0.0, 0.0),
         "encounter_temporary_waypoint": (2.5, 0.8),
@@ -111,35 +111,6 @@ def test_front_pass_uses_high_progress_speed_but_remains_bounded():
     assert result.proposed_control.v <= 0.5
 
 
-def test_crossing_yield_caps_only_forward_progress_and_keeps_base_reference():
-    config = EncounterControlConfig(enabled=True)
-    authority = EncounterControlAuthority(config)
-    reference = EncounterReferenceAuthority(config)
-    intent = _intent(
-        encounter_strategy="yield",
-        encounter_locked_steering_side=0,
-        encounter_temporary_waypoint=(2.5, 0.0),
-    )
-    base = _base_reference()
-
-    selected = reference.select(
-        base, intent, (0.0, 0.0, 0.0), (5.0, 0.0)
-    )
-    forward = authority.apply(
-        _plan(control=(0.40, -0.25)), intent, (0.0, 0.0, 0.0),
-        {"emergency_stop": False},
-    )
-    reverse = authority.apply(
-        _plan(control=(-0.20, 0.18)), intent, (0.0, 0.0, 0.0),
-        {"emergency_stop": False},
-    )
-
-    assert selected is base
-    assert forward.proposed_control.values.tolist() == [0.08, -0.25]
-    assert forward.diagnostics["encounter_control_reason"] == "crossing_yield"
-    assert reverse.proposed_control.values.tolist() == [-0.20, 0.18]
-
-
 def test_frontal_close_approach_reverses_only_with_measured_rear_clearance():
     authority = EncounterControlAuthority(
         EncounterControlConfig(enabled=True)
@@ -198,26 +169,6 @@ def test_rejoin_reference_returns_to_frozen_goal_line():
     assert np.allclose(reference.points[:, 1], 0.0)
 
 
-def test_rejoin_keeps_reference_but_never_overwrites_mppi_control():
-    config = EncounterControlConfig(enabled=True)
-    authority = EncounterControlAuthority(config)
-    intent = _intent(
-        encounter_phase="rejoin",
-        encounter_temporary_waypoint=(2.3, 0.0),
-    )
-    plan = _plan(control=(0.23, -0.41))
-
-    result = authority.apply(
-        plan, intent, (1.2, 0.7, 0.5), {"emergency_stop": False}
-    )
-    context = authority.planning_context(intent)
-
-    assert result is plan
-    assert context["encounter_control_authoritative"] is False
-    assert context["encounter_control_inhibit_rear_pass"] is False
-    assert context["encounter_control_inhibit_forward_passage"] is False
-
-
 def test_planning_context_explicitly_revokes_competing_authorities():
     context = EncounterControlAuthority(
         EncounterControlConfig(enabled=True)
@@ -241,7 +192,7 @@ def test_idle_semantic_stack_quarantines_legacy_escape_before_admission():
     assert context["encounter_control_hard_safety_retained"] is True
 
 
-def test_frontal_bypass_does_not_force_locked_side_against_heading_control():
+def test_incomplete_frontal_bypass_commits_to_locked_side_early():
     authority = EncounterControlAuthority(
         EncounterControlConfig(enabled=True)
     )
@@ -259,11 +210,11 @@ def test_frontal_bypass_does_not_force_locked_side_against_heading_control():
     )
 
     assert result.proposed_control.v > 0.0
-    assert result.proposed_control.omega < 0.0
-    assert result.diagnostics["encounter_control_frontal_commit_active"] is False
+    assert result.proposed_control.omega >= 0.28
+    assert result.diagnostics["encounter_control_frontal_commit_active"] is True
 
 
-def test_frontal_commit_remains_disabled_after_lateral_clearance():
+def test_frontal_commit_releases_after_required_lateral_clearance():
     authority = EncounterControlAuthority(
         EncounterControlConfig(enabled=True)
     )

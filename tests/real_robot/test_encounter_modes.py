@@ -579,3 +579,61 @@ def test_confirmed_new_frontal_encounter_interrupts_rejoin():
     assert result["encounter_frontal_admissible"] is True
     assert result["encounter_confirmed_mode"] == "frontal_approach"
     assert result["encounter_phase"] == "frontal_approach"
+
+
+def test_completed_person_cannot_reenter_crossing_during_rejoin():
+    manager = EncounterModeManager()
+    for step, y in enumerate((0.40, 0.30, 0.20, 0.08, -0.02)):
+        result = _update(manager, 0.1 * step, (2.0, y), (0.0, -0.5))
+    assert result["encounter_phase"] == "rejoin"
+
+    # The same person reverses and approaches the frozen goal line again.  The
+    # geometry remains a valid future crossing, so staying in REJOIN must come
+    # from the completed-person epoch guard rather than failed admission.
+    for step, y in enumerate((-0.12, -0.07), start=5):
+        result = _update(manager, 0.1 * step, (2.0, y), (0.0, 0.5))
+
+    assert result["encounter_candidate_mode"] == "straight_crossing"
+    assert result["encounter_crossing_admissible"] is True
+    assert result["encounter_same_completed_person"] is True
+    assert result["encounter_phase"] == "rejoin"
+    assert result["encounter_locked_steering_side"] == 1
+
+
+def test_incomplete_frontal_bypass_survives_receding_and_track_loss():
+    manager = EncounterModeManager()
+    for step, x in enumerate((2.0, 1.95, 1.90)):
+        result = _update(
+            manager, 0.1 * step, (x, 0.05), (-0.5, 0.0)
+        )
+    assert result["encounter_phase"] == "frontal_approach"
+
+    for step, x in enumerate((1.95, 2.00, 2.05), start=3):
+        result = _update(
+            manager, 0.1 * step, (x, 0.05), (0.5, 0.0)
+        )
+    assert result["encounter_confirmed_mode"] == "receding"
+    assert result["encounter_frontal_lateral_complete"] is False
+    assert result["encounter_fallback_exit_allowed"] is False
+    assert result["encounter_phase"] == "frontal_approach"
+
+    for step in range(6, 11):
+        result = manager.update(
+            timestamp_s=0.1 * step,
+            pose=(0.0, 0.0, 0.0),
+            goal=(5.0, 0.0),
+            robot_speed_mps=0.4,
+            tracker_diagnostics={"tracks": ()},
+        )
+    assert result["encounter_lost_track_cycles"] > 3
+    assert result["encounter_phase"] == "frontal_approach"
+
+    result = manager.update(
+        timestamp_s=1.1,
+        pose=(0.8, 0.70, 0.0),
+        goal=(5.0, 0.0),
+        robot_speed_mps=0.4,
+        tracker_diagnostics={"tracks": ()},
+    )
+    assert result["encounter_frontal_lateral_complete"] is True
+    assert result["encounter_phase"] == "rejoin"

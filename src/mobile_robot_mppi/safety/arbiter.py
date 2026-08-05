@@ -692,6 +692,7 @@ class ScanGuardArbiter:
         self._dynamic_escape_geometric_clear_streak = 0
         self._dynamic_escape_geometric_turn_sign = 0.0
         self._dynamic_escape_geometric_direction_prediction_backed = False
+        self._dynamic_escape_frontal_encounter_latched = False
         self._dynamic_escape_hard_stop_turn_remaining = 0
         self._dynamic_escape_hard_stop_reverse_remaining = 0
         self._dynamic_escape_hard_stop_turn_sign = 0.0
@@ -827,6 +828,7 @@ class ScanGuardArbiter:
             return False, None, ()
         reason = str(guard_result.get("reason", "front_clear"))
         if reason not in {
+            "front_clear",
             "near_body_hard_stop",
             "temporal_collision_risk",
             "temporal_slowdown",
@@ -919,7 +921,15 @@ class ScanGuardArbiter:
             heading_error = float(heading_error)
         except (TypeError, ValueError):
             heading_error = float("nan")
-        if math.isfinite(heading_error) and abs(heading_error) >= 0.08:
+        frontal_geometry = bool(
+            math.isfinite(obstacle_bearing)
+            and abs(obstacle_bearing) < math.radians(20.0)
+        )
+        if (
+            not frontal_geometry
+            and math.isfinite(heading_error)
+            and abs(heading_error) >= 0.08
+        ):
             return float(np.sign(heading_error)), "predicted_relative_motion"
 
         left_clearance = self._finite_clearance(
@@ -932,6 +942,9 @@ class ScanGuardArbiter:
             clearance_delta = left_clearance - right_clearance
             if abs(clearance_delta) >= 0.05:
                 return float(np.sign(clearance_delta)), "measured_side_clearance"
+
+        if math.isfinite(heading_error) and abs(heading_error) >= 0.08:
+            return float(np.sign(heading_error)), "predicted_relative_motion"
 
         if math.isfinite(obstacle_bearing) and abs(obstacle_bearing) >= 0.05:
             return (-1.0 if obstacle_bearing >= 0.0 else 1.0), "obstacle_bearing"
@@ -1014,6 +1027,7 @@ class ScanGuardArbiter:
             ):
                 self._rear_pass_through_turn_sign = 0.0
         if rear_pass_through_active and reason in {
+            "front_clear",
             "near_body_hard_stop",
             "temporal_collision_risk",
             "temporal_slowdown",
@@ -1238,6 +1252,7 @@ class ScanGuardArbiter:
             self._dynamic_escape_geometric_clear_streak = 0
             self._dynamic_escape_geometric_turn_sign = 0.0
             self._dynamic_escape_geometric_direction_prediction_backed = False
+            self._dynamic_escape_frontal_encounter_latched = False
         geometric_threat_evidence_active = bool(
             not rear_only_evidence
             and (
@@ -1266,6 +1281,7 @@ class ScanGuardArbiter:
                     self._dynamic_escape_geometric_direction_prediction_backed = (
                         False
                     )
+                    self._dynamic_escape_frontal_encounter_latched = False
         else:
             self._dynamic_escape_geometric_commit_consumed = False
             self._dynamic_escape_geometric_clear_streak = 0
@@ -1665,6 +1681,7 @@ class ScanGuardArbiter:
                 "probabilistic_obstacle_forward_lateral_countermotion_applied",
                 False,
             )
+            and not self._dynamic_escape_frontal_encounter_latched
             and prediction_direction_refresh_lateral_evidence
             and preferred_turn_sign != 0.0
             and self._dynamic_escape_geometric_turn_sign != 0.0
@@ -1679,7 +1696,10 @@ class ScanGuardArbiter:
         )
         prediction_direction_refresh_geometry_allowed = bool(
             self._dynamic_escape_geometric_direction_prediction_backed
-            or late_prediction_oblique_geometry
+            or (
+                late_prediction_oblique_geometry
+                and not self._dynamic_escape_frontal_encounter_latched
+            )
         )
         prediction_direction_refreshed = bool(
             (
@@ -1939,13 +1959,27 @@ class ScanGuardArbiter:
                 and self._dynamic_escape_hard_stop_turn_remaining <= 0
                 and self._dynamic_escape_hard_stop_reverse_remaining <= 0
             ):
-                turn_sign, geometric_turn_source = (
-                    self._select_dynamic_escape_turn_sign(
-                        guard_result, context, obstacle_bearing
+                if (
+                    self._dynamic_escape_frontal_encounter_latched
+                    and self._dynamic_escape_geometric_turn_sign != 0.0
+                ):
+                    turn_sign = self._dynamic_escape_geometric_turn_sign
+                    geometric_turn_source = "frontal_encounter_side"
+                else:
+                    turn_sign, geometric_turn_source = (
+                        self._select_dynamic_escape_turn_sign(
+                            guard_result, context, obstacle_bearing
+                        )
                     )
-                )
                 self._dynamic_escape_hard_stop_turn_sign = turn_sign
                 self._dynamic_escape_geometric_turn_sign = turn_sign
+                self._dynamic_escape_frontal_encounter_latched = bool(
+                    self._dynamic_escape_frontal_encounter_latched
+                    or (
+                        math.isfinite(obstacle_bearing)
+                        and abs(obstacle_bearing) < math.radians(20.0)
+                    )
+                )
                 self._dynamic_escape_geometric_direction_prediction_backed = (
                     geometric_turn_source == "predicted_relative_motion"
                 )
@@ -2071,6 +2105,13 @@ class ScanGuardArbiter:
                     )
                 )
                 self._dynamic_escape_geometric_turn_sign = turn_sign
+                self._dynamic_escape_frontal_encounter_latched = bool(
+                    self._dynamic_escape_frontal_encounter_latched
+                    or (
+                        math.isfinite(obstacle_bearing)
+                        and abs(obstacle_bearing) < math.radians(20.0)
+                    )
+                )
                 self._dynamic_escape_geometric_direction_prediction_backed = (
                     geometric_turn_source == "predicted_relative_motion"
                 )
@@ -2132,6 +2173,16 @@ class ScanGuardArbiter:
                         self.dynamic_escape_coast_max_omega_radps,
                     )
                     geometric_turn_source = "predicted_relative_motion_coast"
+                elif (
+                    self._dynamic_escape_frontal_encounter_latched
+                    and self._dynamic_escape_geometric_turn_sign != 0.0
+                    and self.dynamic_escape_coast_max_omega_radps > 0.0
+                ):
+                    values[omega_index] = (
+                        self._dynamic_escape_geometric_turn_sign
+                        * self.dynamic_escape_coast_max_omega_radps
+                    )
+                    geometric_turn_source = "frontal_encounter_coast"
                 else:
                     values[omega_index] = 0.0
                 values = self.action_spec.clip(values)
@@ -2797,6 +2848,9 @@ class ScanGuardArbiter:
         ] = bool(
             self._dynamic_escape_geometric_direction_prediction_backed
         )
+        diagnostics[
+            "dynamic_escape_frontal_encounter_latched"
+        ] = bool(self._dynamic_escape_frontal_encounter_latched)
         diagnostics[
             "dynamic_escape_prediction_direction_refresh_requested"
         ] = bool(prediction_direction_refresh_requested)

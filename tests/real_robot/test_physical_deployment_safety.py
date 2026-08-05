@@ -11,6 +11,7 @@ from deploy.raspberry_pi5_scout.build_pi5_full_config import (
 from deploy.raspberry_pi5_scout.run_remote_cuda_full import (
     _DynamicPathGuardSupervisor,
     _deskew_livox_frame,
+    _dynamic_hazard_sector,
     _direction_reversal_guard,
     _immediate_translation_stop_requested,
     _path_deviation_guard,
@@ -411,6 +412,67 @@ def test_live_crossing_uses_smooth_rejoin_until_forecast_clears():
     assert clear_v == pytest.approx(0.20)
     assert clear["reason"] == "goal_heading_rejoin"
     assert clear["commanded_omega_override_radps"] == pytest.approx(-0.60)
+
+
+def test_rear_only_forecast_releases_weak_passage_rejoin_limit():
+    supervisor = _DynamicPathGuardSupervisor()
+    supervisor.apply(
+        1.78, -0.15, -0.68, 5.0, 0.0, 0.50,
+        safety_reason="dynamic_active_escape",
+        proposed_omega=-0.60,
+        hazard_active=True,
+    )
+    # Arm the short scan-gap bridge used by a real rear pass.  Rear-sector
+    # evidence on the following front-clear frame must cancel this bridge,
+    # otherwise two stale planner-yaw frames precede goal rejoin.
+    supervisor.apply(
+        1.90, -0.28, -0.75, 5.0, 0.0, 0.50,
+        safety_reason="rear_pass_through",
+        proposed_omega=0.30,
+        hazard_active=False,
+        rear_only_hazard=True,
+    )
+
+    front_hazard, rear_only_hazard = _dynamic_hazard_sector(
+        True,
+        {
+            "dynamic_obstacle_bearing_rad": 2.13,
+            "temporal_scan_valid": False,
+        },
+    )
+    assert front_hazard is False
+    assert rear_only_hazard is True
+    output_v, rejoin = supervisor.apply(
+        2.01, -0.40, -0.82, 5.0, 0.0, 0.50,
+        safety_reason="front_clear",
+        proposed_omega=0.49,
+        maximum_omega_radps=0.60,
+        selected_probability=0.0,
+        selected_probability_mass=0.0,
+        hazard_active=front_hazard,
+        rear_only_hazard=rear_only_hazard,
+    )
+
+    assert output_v == pytest.approx(0.20)
+    assert rejoin["reason"] == "goal_heading_rejoin"
+    assert rejoin["hazard_active"] is False
+    assert rejoin["rear_only_hazard"] is True
+    assert rejoin["rear_pass_through_hold_active"] is False
+    assert rejoin["commanded_omega_override_radps"] == pytest.approx(0.60)
+
+
+def test_front_temporal_evidence_keeps_hazard_front_protected():
+    front_hazard, rear_only_hazard = _dynamic_hazard_sector(
+        True,
+        {
+            "dynamic_obstacle_bearing_rad": 2.13,
+            "temporal_scan_valid": True,
+            "temporal_scan_ttc_s": 1.2,
+            "temporal_scan_center_angle_rad": 0.4,
+        },
+    )
+    assert front_hazard is True
+    assert rear_only_hazard is False
 
 
 def test_post_escape_live_hazard_preserves_bounded_reverse_and_steering():
@@ -855,8 +917,16 @@ def test_close_crowd_track_switch_cannot_restart_bounded_turn(tmp_path):
 
     assert first.executed_control.omega == pytest.approx(0.6)
     assert second.executed_control.omega == pytest.approx(0.6)
+    # A tracker identity/motion flip inside the same frontal close-crowd
+    # encounter is not permission to change the already selected free side.
     assert second.diagnostics[
         "dynamic_escape_prediction_direction_refreshed"
+    ] is False
+    assert second.diagnostics[
+        "dynamic_escape_prediction_direction_refresh_requested"
+    ] is True
+    assert second.diagnostics[
+        "dynamic_escape_prediction_direction_refresh_rejected"
     ] is True
     assert second.diagnostics[
         "dynamic_escape_hard_stop_direction_refresh_applied"
@@ -1028,6 +1098,10 @@ def test_frontal_escape_rejects_noisy_side_reversal_and_locks_coast(tmp_path):
         "dynamic_escape_prediction_direction_refresh_rejected"
     ] is True
 
+    # The chassis turning about 26 degrees makes a stationary frontal person
+    # appear oblique in body coordinates.  Keep the encounter latch until the
+    # threat clears or moves behind; accepting this refresh caused the
+    # 20260804_225524 cycle-57 wrong-side reversal.
     oblique_guard = dict(guard)
     oblique_guard["dynamic_obstacle_bearing_rad"] = 0.45
     refreshed = arbiter.arbitrate(
@@ -1035,9 +1109,15 @@ def test_frontal_escape_rejects_noisy_side_reversal_and_locks_coast(tmp_path):
         oblique_guard,
         genuine_crossing_reversal,
     )
-    assert refreshed.executed_control.omega == pytest.approx(-0.6)
+    assert refreshed.executed_control.omega > 0.0
     assert refreshed.diagnostics[
         "dynamic_escape_prediction_direction_refreshed"
+    ] is False
+    assert refreshed.diagnostics[
+        "dynamic_escape_prediction_direction_refresh_rejected"
+    ] is True
+    assert refreshed.diagnostics[
+        "dynamic_escape_frontal_encounter_latched"
     ] is True
 
 
@@ -1242,6 +1322,97 @@ def test_frontal_lateral_noise_cannot_late_flip_clearance_side(tmp_path):
     assert decision.diagnostics[
         "dynamic_escape_geometric_temporal_override"
     ] is True
+
+
+def test_frontal_encounter_stays_latched_after_robot_turns(tmp_path):
+    """Replay 225524 cycles 54-57 without ego-turn reclassification."""
+    config = build_pi5_full_config(
+        _weight_root(tmp_path),
+        max_v_mps=0.5,
+        max_reverse_v_mps=0.3,
+        max_omega_radps=0.6,
+    )
+    arbiter = ScanGuardArbiter(
+        action_spec_from_config(config["action_space"]),
+        config["perception"]["scan_guard"],
+    )
+    guard = {
+        "emergency_stop": False,
+        "should_slow_down": True,
+        "reason": "temporal_slowdown",
+        "dynamic_obstacle_scan_flow_match": True,
+        "temporal_scan_valid": True,
+        "temporal_scan_ttc_s": 1.27,
+        "dynamic_obstacle_bearing_rad": -0.166,
+        "min_left_side_range": 0.70,
+        "min_right_side_range": 1.55,
+        "min_front_range": 1.42,
+    }
+    initial_context = {
+        "probabilistic_obstacle_active_avoidance_enabled": True,
+        "probabilistic_obstacle_preferred_escape_heading_error_rad": 0.0,
+        "probabilistic_obstacle_forward_lateral_countermotion_applied": False,
+        "probabilistic_obstacle_motion_lateral_body_mps": 0.0,
+    }
+    initial = arbiter.arbitrate(
+        ControlCommand([0.35, 0.53]), guard, initial_context
+    )
+    assert initial.executed_control.omega == pytest.approx(-0.60)
+    assert initial.diagnostics[
+        "dynamic_escape_frontal_encounter_latched"
+    ] is True
+
+    turned_guard = dict(guard)
+    turned_guard["dynamic_obstacle_bearing_rad"] = -0.419
+    noisy_relative_motion = dict(initial_context)
+    noisy_relative_motion.update({
+        "probabilistic_obstacle_escape_direction_refreshed": True,
+        "probabilistic_obstacle_preferred_escape_heading_error_rad": 0.876,
+        "probabilistic_obstacle_forward_lateral_countermotion_applied": True,
+        "probabilistic_obstacle_motion_lateral_body_mps": -0.515,
+    })
+    decision = arbiter.arbitrate(
+        ControlCommand([-0.30, 0.0]), turned_guard, noisy_relative_motion
+    )
+
+    assert decision.executed_control.omega == pytest.approx(-0.60)
+    assert decision.diagnostics[
+        "dynamic_escape_prediction_direction_refresh_rejected"
+    ] is True
+    assert decision.diagnostics[
+        "dynamic_escape_frontal_encounter_latched"
+    ] is True
+
+    for _ in range(2):
+        decision = arbiter.arbitrate(
+            ControlCommand([-0.30, 0.0]),
+            turned_guard,
+            noisy_relative_motion,
+        )
+        assert decision.executed_control.omega < 0.0
+    coast = arbiter.arbitrate(
+        ControlCommand([-0.30, 0.0]), turned_guard, initial_context
+    )
+    assert coast.executed_control.omega == pytest.approx(-0.30)
+    assert coast.diagnostics[
+        "dynamic_escape_geometric_turn_source"
+    ] == "frontal_encounter_coast"
+
+    hard_guard = dict(turned_guard)
+    hard_guard.update({
+        "emergency_stop": True,
+        "reason": "hard_stop",
+        "dynamic_obstacle_near_body_match": True,
+        "dynamic_obstacle_bearing_rad": -0.585,
+    })
+    hard = arbiter.arbitrate(
+        ControlCommand([-0.30, 0.60]), hard_guard, initial_context
+    )
+    assert hard.executed_control.v == 0.0
+    assert hard.executed_control.omega == pytest.approx(-0.60)
+    assert hard.diagnostics[
+        "dynamic_escape_geometric_turn_source"
+    ] == "frontal_encounter_side"
 
 
 def test_late_crossing_prediction_does_not_flip_after_obstacle_passes_rear(
@@ -2039,6 +2210,42 @@ def test_directional_guard_ignores_rear_temporal_ttc_for_forward_motion(
     assert decision.diagnostics["directional_guard_original_reason"] == (
         "temporal_collision_risk"
     )
+
+
+def test_front_clear_reactive_window_uses_rear_temporal_pass_through(tmp_path):
+    """Replay 225246 cycle 62: scan guard clear, reactive TTC still live."""
+    config = build_pi5_full_config(
+        _weight_root(tmp_path),
+        max_v_mps=0.5,
+        max_reverse_v_mps=0.3,
+        max_omega_radps=0.6,
+    )
+    arbiter = ScanGuardArbiter(
+        action_spec_from_config(config["action_space"]),
+        config["perception"]["scan_guard"],
+    )
+    rear_angle = math.radians(108.0)
+    decision = arbiter.arbitrate(
+        ControlCommand([0.5, -0.6]),
+        {
+            "emergency_stop": False,
+            "should_slow_down": False,
+            "reason": "front_clear",
+            "temporal_scan_valid": True,
+            "temporal_scan_ttc_s": 2.72,
+            "temporal_scan_center_angle_rad": rear_angle,
+            "dynamic_obstacle_scan_flow_match": True,
+            "dynamic_obstacle_bearing_rad": math.radians(120.0),
+            "min_front_range": 1.85,
+        },
+        {"probabilistic_obstacle_active_avoidance_enabled": True},
+    )
+
+    assert decision.reason == "rear_pass_through"
+    assert decision.executed_control.v == pytest.approx(0.5)
+    assert abs(decision.executed_control.omega) <= 0.30
+    assert decision.diagnostics["rear_pass_through_active"] is True
+    assert decision.diagnostics["dynamic_escape_allowed"] is False
 
 
 def test_directional_guard_never_grants_tracker_only_global_release(tmp_path):

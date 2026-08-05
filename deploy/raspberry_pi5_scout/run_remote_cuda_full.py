@@ -120,6 +120,48 @@ _DYNAMIC_PASSAGE_HAZARD_HOLD_STEPS = 6
 # gap; any explicit front/temporal stop still preempts immediately.
 _REAR_PASS_THROUGH_HOLD_STEPS = 3
 
+
+def _dynamic_hazard_sector(hazard_active, safety_diagnostics):
+    """Split a live dynamic hazard into forward and explicit rear-only state."""
+
+    hazard_active = bool(hazard_active)
+    if not hazard_active:
+        return False, False
+    diagnostics = dict(safety_diagnostics or {})
+    bearings = []
+    obstacle_bearing = diagnostics.get("dynamic_obstacle_bearing_rad")
+    try:
+        obstacle_bearing = float(obstacle_bearing)
+    except (TypeError, ValueError):
+        obstacle_bearing = float("nan")
+    if math.isfinite(obstacle_bearing):
+        bearings.append(obstacle_bearing)
+
+    temporal_bearing = diagnostics.get("temporal_scan_center_angle_rad")
+    temporal_ttc = diagnostics.get("temporal_scan_ttc_s", float("inf"))
+    try:
+        temporal_bearing = float(temporal_bearing)
+        temporal_ttc = float(temporal_ttc)
+    except (TypeError, ValueError):
+        temporal_bearing = float("nan")
+        temporal_ttc = float("inf")
+    if (
+        diagnostics.get("temporal_scan_valid", False)
+        and math.isfinite(temporal_bearing)
+        and temporal_ttc <= 3.0
+    ):
+        bearings.append(temporal_bearing)
+
+    if not bearings:
+        return True, False
+    half_angle = math.radians(100.0)
+    forward_hazard = any(
+        abs(math.atan2(math.sin(angle), math.cos(angle))) <= half_angle
+        for angle in bearings
+    )
+    return bool(forward_hazard), bool(not forward_hazard)
+
+
 def _planner_diagnostic_trace(diagnostics):
     """Keep decision-relevant Full Proposed diagnostics without changing it.
 
@@ -683,6 +725,7 @@ class _DynamicPathGuardSupervisor:
         selected_probability=0.0,
         selected_probability_mass=0.0,
         hazard_active=False,
+        rear_only_hazard=False,
     ):
         reason = str(safety_reason)
         unconditional_stop = reason in _UNCONDITIONAL_TRANSLATION_STOP_REASONS
@@ -693,6 +736,14 @@ class _DynamicPathGuardSupervisor:
             )
         elif self._rear_pass_through_hold_remaining > 0:
             self._rear_pass_through_hold_remaining -= 1
+        rear_only_hazard = bool(rear_only_hazard)
+        if rear_only_hazard and not fresh_rear_pass_through:
+            # Explicit rear-sector evidence ends the scan-gap bridge as soon
+            # as the arbiter no longer requests rear pass-through itself.
+            # Keeping this hold alive for two extra front-clear cycles replayed
+            # stale avoidance yaw after the pedestrian had already crossed
+            # behind the chassis (20260804_225246 cycles 64--65).
+            self._rear_pass_through_hold_remaining = 0
         rear_pass_through_hold_active = bool(
             self._rear_pass_through_hold_remaining > 0
         )
@@ -704,8 +755,14 @@ class _DynamicPathGuardSupervisor:
                 and float(proposed_v) > 0.0
             )
         )
-        fresh_hazard_active = bool(hazard_active)
-        if fresh_hazard_active:
+        fresh_hazard_active = bool(hazard_active and not rear_only_hazard)
+        if rear_only_hazard:
+            # Once every causal live bearing is behind the protected forward
+            # sector, the old front-passage smoothing must not keep limiting
+            # the goalward turn.  Rear-pass authority above still bridges scan
+            # gaps and remains independently bounded.
+            self._hazard_hold_remaining = 0
+        elif fresh_hazard_active:
             self._hazard_hold_remaining = (
                 _DYNAMIC_PASSAGE_HAZARD_HOLD_STEPS
             )
@@ -737,6 +794,7 @@ class _DynamicPathGuardSupervisor:
         diagnostics.update({
             "fresh_hazard_active": fresh_hazard_active,
             "hazard_active": hazard_active,
+            "rear_only_hazard": rear_only_hazard,
             "fresh_rear_pass_through": fresh_rear_pass_through,
             "rear_pass_through_hold_active": (
                 rear_pass_through_hold_active
@@ -1612,6 +1670,9 @@ def main():
                         )) <= 3.0
                     )
                 )
+                hazard_active, rear_only_hazard = _dynamic_hazard_sector(
+                    hazard_active, decision.diagnostics
+                )
                 commanded_v, path_guard = path_guard_supervisor.apply(
                     pose_x,
                     pose_y,
@@ -1642,6 +1703,7 @@ def main():
                         ) or 0.0
                     ),
                     hazard_active=hazard_active,
+                    rear_only_hazard=rear_only_hazard,
                 )
                 omega_override = path_guard.get(
                     "commanded_omega_override_radps"

@@ -27,6 +27,7 @@ from deploy.raspberry_pi5_scout.replay_recorded_dynamic_escape import (
 from deploy.raspberry_pi5_scout.run_remote_cuda_full import (
     _DYNAMIC_PATH_AUTHORITY_REASONS,
     _DynamicPathGuardSupervisor,
+    _dynamic_hazard_sector,
 )
 from mobile_robot_mppi.core.spaces import action_spec_from_config
 from mobile_robot_mppi.core.types import ControlCommand
@@ -285,6 +286,9 @@ def _replay_run(rows, summary, action_spec, guard_config, planner_config):
         hazard_active = bool(row.get("path_guard", {}).get(
             "fresh_hazard_active", False
         ))
+        hazard_active, rear_only_hazard = _dynamic_hazard_sector(
+            hazard_active, decision.diagnostics
+        )
         output_v, path = path_supervisor.apply(
             *pose,
             goal_x,
@@ -299,6 +303,7 @@ def _replay_run(rows, summary, action_spec, guard_config, planner_config):
             selected_probability=selected_probability,
             selected_probability_mass=selected_mass,
             hazard_active=hazard_active,
+            rear_only_hazard=rear_only_hazard,
         )
         output_omega = float(decision.executed_control.omega)
         omega_override = path.get("commanded_omega_override_radps")

@@ -279,10 +279,41 @@ class ForwardPassageController:
             diagnostics=diagnostics,
         )
 
-    def apply(self, plan: PlanResult) -> PlanResult:
+    def apply(
+        self, plan: PlanResult, inhibit_reason: Optional[str] = None
+    ) -> PlanResult:
         """Apply or maintain a safe forward continuation before arbitration."""
         if not self.config.enabled:
             return plan
+
+        if inhibit_reason is not None:
+            was_active = self.active
+            self._clear_transaction(
+                cooldown=True,
+                reason="externally_inhibited_%s" % str(inhibit_reason),
+            )
+            diagnostics = dict(plan.diagnostics or {})
+            diagnostics.update({
+                "real_robot_forward_passage_enabled": True,
+                "real_robot_forward_passage_applied": False,
+                "real_robot_forward_passage_started": False,
+                "real_robot_forward_passage_active": False,
+                "real_robot_forward_passage_externally_inhibited": True,
+                "real_robot_forward_passage_inhibit_reason": str(
+                    inhibit_reason
+                ),
+                "real_robot_forward_passage_release": (
+                    "externally_inhibited"
+                    if was_active else "external_inhibit_idle"
+                ),
+                "real_robot_forward_passage_cooldown_remaining": int(
+                    self._cooldown_remaining
+                ),
+            })
+            # The release is already represented in this cycle.  Do not emit
+            # it again when ordinary passage resumes.
+            self._pending_release_reason = None
+            return self._diagnostic_plan(plan, diagnostics)
 
         source = dict(plan.diagnostics or {})
         diagnostics: Dict[str, Any] = dict(source)

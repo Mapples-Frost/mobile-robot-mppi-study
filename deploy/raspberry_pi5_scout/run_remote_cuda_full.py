@@ -29,8 +29,11 @@ from mobile_robot_mppi.core.types import (
     Twist2D,
 )
 from mobile_robot_mppi.real_robot import (
+    EncounterControlAuthority,
+    EncounterControlConfig,
     EncounterModeConfig,
     EncounterModeManager,
+    EncounterReferenceAuthority,
     ForwardPassageConfig,
     ForwardPassageController,
     LivoxPointCloudFrame,
@@ -59,6 +62,7 @@ _PLANNER_DIAGNOSTIC_PREFIXES = (
     "real_robot_forward_passage_",
     "physical_tracker_",
     "physical_goal_",
+    "encounter_control_",
     # build_pi5_full_config leaves profile_components enabled, so the planner
     # already computes a per-stage cost breakdown on every solve.  Without
     # this prefix every profile_* field was dropped before reaching the log,
@@ -1801,6 +1805,7 @@ def main():
     parser.add_argument("--goal-stop-radius-m", type=float, default=0.0)
     parser.add_argument("--until-goal", action="store_true")
     parser.add_argument("--disable-residual-learning", action="store_true")
+    parser.add_argument("--enable-encounter-control", action="store_true")
     parser.add_argument("--publish", action="store_true")
     args = parser.parse_args()
     if args.until_goal and not args.publish:
@@ -1824,6 +1829,14 @@ def main():
         )
     except ValueError as error:
         parser.error(str(error))
+    if args.enable_encounter_control and not (
+        algorithm_features["change_aware_prediction"]
+        and algorithm_features["probabilistic_risk"]
+    ):
+        parser.error(
+            "--enable-encounter-control requires change-aware prediction "
+            "and probabilistic risk"
+        )
     args.output.mkdir(parents=True, exist_ok=False)
     if not torch.cuda.is_available():
         raise RuntimeError("CUDA is required for remote MPPI deployment")
@@ -1839,7 +1852,13 @@ def main():
     apply_pi5_algorithm_features(config, algorithm_features)
     encounter_mode_config = EncounterModeConfig(
         enabled=bool(algorithm_features["change_aware_prediction"]),
-        shadow_only=True,
+        shadow_only=not bool(args.enable_encounter_control),
+    )
+    encounter_control_config = EncounterControlConfig(
+        enabled=bool(args.enable_encounter_control),
+        maximum_forward_speed_mps=float(args.max_v_mps),
+        maximum_reverse_speed_mps=float(args.max_reverse_v_mps),
+        maximum_omega_radps=float(args.max_omega_radps),
     )
     config["planner"].update({
         "device": "cuda",
@@ -1912,12 +1931,14 @@ def main():
         ),
         "goal_rejoin_release_steps": _GOAL_REJOIN_RELEASE_STEPS,
         "direction_reversal_zero_transition_steps": 1,
-        # Stage 1 records the new semantic interaction state without granting
-        # it command authority.  Live evidence is required before enabling
-        # its rear-pass/forward-passage inhibit intent.
+        # Recognition is always logged; the independent authority switch
+        # selects shadow observation or actual competing-layer inhibition.
         "encounter_mode_shadow_enabled": bool(encounter_mode_config.enabled),
-        "encounter_mode_control_enabled": False,
+        "encounter_mode_control_enabled": bool(
+            encounter_control_config.enabled
+        ),
         "encounter_mode_config": asdict(encounter_mode_config),
+        "encounter_control_config": asdict(encounter_control_config),
     })
     # Parity with run_silent_full: the controller timestep and the tracker
     # forecast timestep must agree, otherwise every live forecast becomes
@@ -1931,6 +1952,11 @@ def main():
         raise RuntimeError("physical deployment requires v/omega rate limits")
     forecast_dt_s = float(
         config["perception"]["dynamic_obstacle_tracker"]["forecast_dt_s"]
+    )
+    forecast_auxiliary_key = str(
+        config["perception"]["dynamic_obstacle_tracker"].get(
+            "forecast_auxiliary_key", "probabilistic_obstacle_forecasts"
+        )
     )
     if abs(controller_dt_s - forecast_dt_s) > 1.0e-12:
         raise RuntimeError(
@@ -1966,6 +1992,10 @@ def main():
     )
     forward_passage = ForwardPassageController(forward_passage_config)
     encounter_modes = EncounterModeManager(encounter_mode_config)
+    encounter_reference = EncounterReferenceAuthority(
+        encounter_control_config
+    )
+    encounter_control = EncounterControlAuthority(encounter_control_config)
     controller.reset(20260803)
     perception.reset()
     safety.reset()
@@ -1988,7 +2018,8 @@ def main():
           flush=True)
 
     timings = {name: [] for name in (
-        "receive", "scan", "perception", "encounter", "plan", "total"
+        "receive", "scan", "perception", "encounter", "plan", "authority",
+        "total"
     )}
     rows = []
     sequence = 0
@@ -2108,6 +2139,9 @@ def main():
                     goal=(args.goal_x, args.goal_y),
                     robot_speed_mps=status.v_mps,
                     tracker_diagnostics=tracker,
+                    forecasts=perceived.observation.auxiliary.get(
+                        forecast_auxiliary_key, ()
+                    ),
                     local_obstacles=perceived.observation.local_obstacles,
                 )
                 timings["encounter"].append(
@@ -2119,10 +2153,39 @@ def main():
                     ControlCommand([status.v_mps, status.omega_radps])
                 )
                 stage = time.perf_counter()
-                plan = controller.plan(perceived.observation, reference)
+                planning_reference = encounter_reference.select(
+                    reference,
+                    encounter_diagnostics,
+                    (pose_x, pose_y, pose_yaw),
+                    (args.goal_x, args.goal_y),
+                )
+                plan = controller.plan(
+                    perceived.observation, planning_reference
+                )
                 torch.cuda.synchronize()
                 timings["plan"].append(1000.0 * (time.perf_counter() - stage))
-                plan = forward_passage.apply(plan)
+                stage = time.perf_counter()
+                plan = encounter_control.apply(
+                    plan,
+                    encounter_diagnostics,
+                    (pose_x, pose_y, pose_yaw),
+                    perceived.guard,
+                )
+                encounter_context = encounter_control.planning_context(
+                    encounter_diagnostics
+                )
+                forward_inhibit_reason = (
+                    "encounter_mode:%s" % str(
+                        encounter_diagnostics.get("encounter_phase", "idle")
+                    )
+                    if encounter_context[
+                        "encounter_control_inhibit_forward_passage"
+                    ]
+                    else None
+                )
+                plan = forward_passage.apply(
+                    plan, inhibit_reason=forward_inhibit_reason
+                )
                 planning_context = _physical_tracker_motion_context(
                     plan.diagnostics,
                     tracker,
@@ -2136,6 +2199,12 @@ def main():
                     pose_yaw,
                     args.goal_x,
                     args.goal_y,
+                )
+                # Semantic ownership is injected after physical tracker
+                # fallbacks so no lower layer can silently replace its side.
+                planning_context.update(encounter_context)
+                timings["authority"].append(
+                    1000.0 * (time.perf_counter() - stage)
                 )
                 time.sleep(0)
                 decision = safety.arbitrate(
@@ -2332,9 +2401,9 @@ def main():
                     "path_guard": path_guard,
                     "physical_command_slew_guard": physical_slew_guard,
                     "direction_reversal_guard": direction_guard,
-                    # Semantic mode recognition is deliberately read-only in
-                    # this collection release.  Every would-be authority
-                    # transfer remains visible here for causal validation.
+                    # The stable field name preserves shadow-run tooling.  Its
+                    # own control_enabled bit states whether this run merely
+                    # observed or exercised semantic authority.
                     "encounter_mode_shadow": encounter_diagnostics,
                     "tracker_dynamic_indices": tracker.get("mapless_dynamic_track_indices", ()),
                     "tracker_static_indices": tracker.get("mapless_static_track_indices", ()),
@@ -2424,8 +2493,31 @@ def main():
             "encounter_mode_shadow_enabled": bool(
                 encounter_mode_config.enabled
             ),
-            "encounter_mode_control_enabled": False,
+            "encounter_mode_control_enabled": bool(
+                encounter_control_config.enabled
+            ),
             "encounter_mode_config": asdict(encounter_mode_config),
+            "encounter_control_config": asdict(encounter_control_config),
+            "encounter_control_applied_cycles": sum(
+                bool(
+                    row.get("diagnostics", {})
+                    .get("planner", {})
+                    .get("encounter_control_applied", False)
+                )
+                for row in rows
+            ),
+            "encounter_phase_counts": {
+                phase: sum(
+                    row.get("encounter_mode_shadow", {}).get(
+                        "encounter_phase"
+                    ) == phase
+                    for row in rows
+                )
+                for phase in (
+                    "idle", "straight_crossing", "oblique_crossing",
+                    "frontal_approach", "rejoin",
+                )
+            },
             "diagnostic_log": str(log_path),
             "controller_dt_s": controller_dt_s,
             "forecast_dt_s": forecast_dt_s,

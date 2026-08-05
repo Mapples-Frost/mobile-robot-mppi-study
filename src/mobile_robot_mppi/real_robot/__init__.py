@@ -20,6 +20,11 @@ from .encounter_modes import (
     EncounterModeManager,
     PassageStrategy,
 )
+from .encounter_control import (
+    EncounterControlAuthority,
+    EncounterControlConfig,
+    EncounterReferenceAuthority,
+)
 from .livox_udp import LivoxUdpReceiver, decode_livox_datagram
 from .scout_can import ScoutGuardedCanGateway, ScoutZeroOnlyCanGuard
 
@@ -36,6 +41,9 @@ __all__ = [
     "EncounterModeConfig",
     "EncounterModeManager",
     "PassageStrategy",
+    "EncounterControlAuthority",
+    "EncounterControlConfig",
+    "EncounterReferenceAuthority",
     "LivoxUdpReceiver",
     "decode_livox_datagram",
     "ScoutGuardedCanGateway",

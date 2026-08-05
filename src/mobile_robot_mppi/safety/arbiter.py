@@ -1169,6 +1169,19 @@ class ScanGuardArbiter:
         a near head-on approach, choose the side with more measured clearance;
         only then fall back to turning away from the current bearing.
         """
+        if bool(context.get("encounter_control_authoritative", False)):
+            try:
+                encounter_side = int(context.get(
+                    "encounter_control_locked_steering_side", 0
+                ) or 0)
+            except (TypeError, ValueError):
+                encounter_side = 0
+            if encounter_side != 0:
+                return (
+                    1.0 if encounter_side > 0 else -1.0,
+                    "encounter_mode_locked_side",
+                )
+
         heading_error = context.get(
             "probabilistic_obstacle_preferred_escape_heading_error_rad"
         )
@@ -1256,6 +1269,24 @@ class ScanGuardArbiter:
         self._dynamic_deadline_decision_count += 1
         values = self.action_spec.clip(proposed.values)
         guard_result = dict(guard_result)
+        context = dict(planning_context or {})
+        encounter_control_authoritative = bool(
+            context.get("encounter_control_authoritative", False)
+        )
+        encounter_rear_pass_inhibited = bool(
+            encounter_control_authoritative
+            and context.get("encounter_control_inhibit_rear_pass", False)
+        )
+        encounter_dynamic_escape_inhibited = bool(
+            encounter_control_authoritative
+            and context.get("encounter_control_inhibit_dynamic_escape", False)
+        )
+        encounter_hard_stop_escape_retained = bool(
+            encounter_control_authoritative
+            and context.get(
+                "encounter_control_hard_safety_retained", False
+            )
+        )
         reason = str(guard_result.get("reason", "front_clear"))
         proposed_v_for_direction = (
             float(values[self.action_spec.index("v_cmd")])
@@ -1267,6 +1298,14 @@ class ScanGuardArbiter:
             rear_pass_through_bearing,
             rear_pass_through_sources,
         ) = self._rear_pass_through_evidence(guard_result)
+        rear_pass_through_raw_evidence = bool(rear_only_evidence)
+        rear_pass_through_suppressed = bool(
+            encounter_rear_pass_inhibited and rear_only_evidence
+        )
+        if encounter_rear_pass_inhibited:
+            rear_only_evidence = False
+            rear_pass_through_bearing = None
+            rear_pass_through_sources = ()
         rear_pass_front_clearance = self._finite_clearance(
             guard_result, "min_front_range"
         )
@@ -1376,7 +1415,6 @@ class ScanGuardArbiter:
                         else:
                             omega_value = 0.0
                     values[omega_index] = omega_value
-        context = dict(planning_context or {})
         static_reverse_escape_held = False
         if self._static_reverse_escape_cooldown_remaining > 0:
             self._static_reverse_escape_cooldown_remaining -= 1
@@ -1524,6 +1562,56 @@ class ScanGuardArbiter:
         dynamic_escape_allowed = bool(
             planned_escape_allowed or reactive_escape_allowed
         )
+        if encounter_dynamic_escape_inhibited:
+            # The semantic manager owns the passage side and MPPI already
+            # optimized against its temporary route.  Revoke all stale
+            # ordinary escape/recovery transactions; the instantaneous hard
+            # stop below remains untouched and may still veto translation.
+            dynamic_escape_allowed = False
+            planned_escape_allowed = False
+            reactive_escape_allowed = False
+            fresh_reactive_escape_allowed = False
+            held_reactive_escape_allowed = False
+            uncertainty_fusion_escape_allowed = False
+            self._dynamic_escape_hold_remaining = 0
+            self._dynamic_escape_hold_values = None
+            self._dynamic_escape_direction_commit_remaining = 0
+            self._dynamic_escape_direction_commit_values = None
+            self._dynamic_escape_corridor_remaining = 0
+            self._dynamic_escape_corridor_turn_remaining = 0
+            self._dynamic_escape_corridor_turn_sign = 0.0
+            self._dynamic_escape_geometric_commit_consumed = False
+            self._dynamic_escape_geometric_clear_streak = 0
+            self._dynamic_escape_geometric_turn_sign = 0.0
+            self._dynamic_escape_geometric_direction_prediction_backed = False
+            self._dynamic_escape_frontal_encounter_latched = False
+            self._dynamic_escape_coast_remaining = 0
+            self._dynamic_escape_vetted_reverse_steps = 0
+            self._dynamic_escape_persistent_front_retry_count = 0
+            # Ordinary forecast/scan escape no longer owns the command, but
+            # the bounded close-range turn/reverse transaction is part of the
+            # retained hard-safety boundary.  Keeping its state lets a front
+            # near-body stop actually create separation when the measured rear
+            # sector is clear; resetting it every encounter cycle would leave
+            # the robot permanently stopped in front of a close pedestrian.
+            if not encounter_hard_stop_escape_retained:
+                self._dynamic_escape_hard_stop_turn_remaining = 0
+                self._dynamic_escape_hard_stop_reverse_remaining = 0
+                self._dynamic_escape_hard_stop_turn_sign = 0.0
+                self._dynamic_escape_hard_stop_consumed = False
+                self._dynamic_escape_hard_stop_rear_blocked_latched = False
+                self._dynamic_escape_hard_stop_side_rear_release_latched = False
+            self._dynamic_recovery_active = False
+            self._dynamic_escape_seen = False
+            self._dynamic_recovery_clear_steps = 0
+            self._dynamic_recovery_release_count = 0
+            self._dynamic_recovery_advance_steps = 0
+            self._dynamic_recovery_alignment_creep_latched = False
+            self._dynamic_recovery_progress_watch_active = False
+            self._dynamic_recovery_progress_watch_remaining = 0
+            self._dynamic_recovery_progress_watch_samples = []
+            self._dynamic_deadline_conflict_seen = False
+            self._dynamic_deadline_clear_steps = 0
         if rear_only_evidence:
             # Once all causal evidence lies in the rear cone, stale avoidance
             # transactions must not replay their earlier stop/saturated-turn
@@ -1591,7 +1679,8 @@ class ScanGuardArbiter:
             self._dynamic_escape_geometric_turn_sign = 0.0
             self._dynamic_escape_geometric_direction_prediction_backed = False
         planner_temporal_escape_active = bool(
-            context.get(
+            not encounter_dynamic_escape_inhibited
+            and context.get(
                 "probabilistic_obstacle_temporal_emergency_vetted", False
             )
             and context.get(
@@ -2124,6 +2213,10 @@ class ScanGuardArbiter:
         )
         dynamic_hard_stop_geometric_event = bool(
             self.dynamic_escape_hard_stop_enabled
+            and (
+                not encounter_dynamic_escape_inhibited
+                or encounter_hard_stop_escape_retained
+            )
             and reason in {"near_body_hard_stop", "hard_stop"}
             and guard_result.get("emergency_stop", False)
             and not rear_only_evidence
@@ -2548,6 +2641,7 @@ class ScanGuardArbiter:
             temporal_preturn_ttc = float("inf")
         temporal_preturn_active = bool(
             self.dynamic_escape_temporal_preturn_enabled
+            and not encounter_dynamic_escape_inhibited
             and reason == "temporal_slowdown"
             and not guard_result.get("emergency_stop", False)
             and guard_result.get("temporal_scan_valid", False)
@@ -3634,6 +3728,27 @@ class ScanGuardArbiter:
         )
         diagnostics["rear_pass_through_active"] = bool(
             rear_pass_through_active
+        )
+        diagnostics["rear_pass_through_raw_evidence"] = bool(
+            rear_pass_through_raw_evidence
+        )
+        diagnostics["rear_pass_through_suppressed_by_encounter"] = bool(
+            rear_pass_through_suppressed
+        )
+        diagnostics["encounter_control_authoritative"] = bool(
+            encounter_control_authoritative
+        )
+        diagnostics["encounter_control_rear_pass_inhibited"] = bool(
+            encounter_rear_pass_inhibited
+        )
+        diagnostics["encounter_control_dynamic_escape_inhibited"] = bool(
+            encounter_dynamic_escape_inhibited
+        )
+        diagnostics["encounter_control_hard_safety_retained"] = bool(
+            context.get("encounter_control_hard_safety_retained", False)
+        )
+        diagnostics["encounter_control_hard_stop_escape_retained"] = bool(
+            encounter_hard_stop_escape_retained
         )
         diagnostics["rear_reverse_blocked"] = bool(rear_reverse_blocked)
         diagnostics["rear_pass_through_force_forward_enabled"] = bool(

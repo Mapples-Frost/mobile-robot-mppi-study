@@ -1,9 +1,9 @@
-"""Shadow-mode recognition for structured human/robot encounters.
+"""Semantic recognition for structured human/robot encounters.
 
 The manager owns *semantic* interaction state (crossing, frontal approach,
-and goal-line rejoin) but deliberately has no command-writing API.  This
-first deployment stage is therefore safe to run on the physical robot while
-new, scenario-specific evidence is collected.
+and goal-line rejoin) but deliberately has no command-writing API.  A separate
+authority module can consume its diagnostics behind an explicit deployment
+switch, while the default configuration remains read-only shadow mode.
 """
 
 from dataclasses import dataclass
@@ -63,6 +63,7 @@ class EncounterModeConfig:
     maximum_track_gap_s: float = 0.50
     nominal_ego_speed_mps: float = 0.40
     cpa_horizon_s: float = 5.0
+    forecast_behavior_lookahead_s: float = 0.60
     engagement_distance_m: float = 5.5
     engagement_cpa_distance_m: float = 1.35
     rear_engagement_allowance_m: float = 0.45
@@ -76,6 +77,11 @@ class EncounterModeConfig:
     robot_intersection_clearance_m: float = 0.75
     static_clearance_probe_m: float = 1.20
     static_clearance_half_width_m: float = 0.45
+    crossing_detour_clearance_m: float = 0.80
+    oblique_detour_clearance_m: float = 0.90
+    frontal_detour_clearance_m: float = 0.90
+    passage_forward_clearance_m: float = 0.65
+    rejoin_lookahead_m: float = 1.10
 
     def __post_init__(self) -> None:
         if not (0.0 < self.straight_crossing_maximum_deg
@@ -87,6 +93,16 @@ class EncounterModeConfig:
             raise ValueError("ordinary confirmation cycles must be positive")
         if self.abrupt_confirmation_cycles < 1:
             raise ValueError("abrupt confirmation cycles must be positive")
+        if self.forecast_behavior_lookahead_s <= 0.0:
+            raise ValueError("forecast behaviour lookahead must be positive")
+        if min(
+            self.crossing_detour_clearance_m,
+            self.oblique_detour_clearance_m,
+            self.frontal_detour_clearance_m,
+            self.passage_forward_clearance_m,
+            self.rejoin_lookahead_m,
+        ) <= 0.0:
+            raise ValueError("encounter detour and rejoin clearances must be positive")
 
 
 @dataclass
@@ -95,12 +111,17 @@ class _TrackSample:
     timestamp_s: float
     position: np.ndarray
     velocity: np.ndarray
+    semantic_velocity: np.ndarray
+    velocity_source: str
     speed_mps: float
     innovation_nis: float
     change_triggered: bool
     support_beams: int
     forecast_valid: bool
     associated: bool
+    forecast_positions: Optional[np.ndarray]
+    forecast_times_s: Optional[np.ndarray]
+    forecast_position_std_m: Optional[np.ndarray]
 
 
 def _finite_float(value: Any, default: float = float("nan")) -> float:
@@ -129,9 +150,8 @@ def _signed_angle(first: np.ndarray, second: np.ndarray) -> float:
 class EncounterModeManager:
     """Recognize and latch a single causally continuous human encounter.
 
-    ``update`` only returns diagnostics.  In particular, the inhibit flags are
-    stated as *shadow intent* and are not connected to rear-pass, forward
-    passage, MPPI, or the safety arbiter in this stage.
+    ``update`` only returns diagnostics.  It never writes chassis commands;
+    shadow or active authority is selected by the deployment composition.
     """
 
     def __init__(self, config: EncounterModeConfig = EncounterModeConfig()):
@@ -163,11 +183,13 @@ class EncounterModeManager:
             "front_space_clear": None,
             "front_pass_feasible": False,
         }
+        self._temporary_waypoint = None  # type: Optional[np.ndarray]
 
-    @staticmethod
     def _track_records(
+        self,
         timestamp_s: float,
         diagnostics: Mapping[str, Any],
+        forecasts: Sequence[Any] = (),
     ) -> Tuple[_TrackSample, ...]:
         dynamic = {
             int(value)
@@ -184,6 +206,16 @@ class EncounterModeManager:
             )
         }
         eligible = dynamic | forecast | temporal
+        forecast_values = tuple(forecasts or ())
+        forecast_indices = tuple(
+            int(value)
+            for value in diagnostics.get("forecast_track_indices", ())
+        )
+        forecast_by_track = {
+            track_index: forecast_values[ordinal]
+            for ordinal, track_index in enumerate(forecast_indices)
+            if ordinal < len(forecast_values)
+        }
         records = []
         for ordinal, raw in enumerate(diagnostics.get("tracks", ()) or ()):
             track = dict(raw or {})
@@ -209,23 +241,219 @@ class EncounterModeManager:
             ), dtype=np.float64)
             if not np.isfinite(position).all() or not np.isfinite(velocity).all():
                 continue
-            speed = _finite_float(
-                track.get("measurement_speed_mps"),
-                float(np.linalg.norm(velocity)),
+            raw_forecast = forecast_by_track.get(index)
+            # The single-target tracker predates forecast_track_indices.  Its
+            # sole forecast is still unambiguous, so retain compatibility
+            # without guessing when several tracks/forecasts are present.
+            if (
+                raw_forecast is None
+                and len(forecast_values) == 1
+                and len(tuple(diagnostics.get("tracks", ()) or ())) == 1
+            ):
+                raw_forecast = forecast_values[0]
+            forecast_evidence = self._forecast_evidence(
+                position, raw_forecast
+            )
+            semantic_velocity = (
+                forecast_evidence[0]
+                if forecast_evidence is not None
+                else velocity
             )
             records.append(_TrackSample(
                 index=index,
                 timestamp_s=float(timestamp_s),
                 position=position,
                 velocity=velocity,
-                speed_mps=speed,
+                semantic_velocity=semantic_velocity,
+                velocity_source=(
+                    "gaussian_mixture_forecast"
+                    if forecast_evidence is not None
+                    else "tracker_velocity"
+                ),
+                speed_mps=float(np.linalg.norm(semantic_velocity)),
                 innovation_nis=_finite_float(track.get("innovation_nis"), 0.0),
                 change_triggered=bool(track.get("change_triggered", False)),
                 support_beams=int(track.get("selected_support_beams", 0) or 0),
                 forecast_valid=forecast_valid,
                 associated=associated,
+                forecast_positions=(
+                    None if forecast_evidence is None
+                    else forecast_evidence[1]
+                ),
+                forecast_times_s=(
+                    None if forecast_evidence is None
+                    else forecast_evidence[2]
+                ),
+                forecast_position_std_m=(
+                    None if forecast_evidence is None
+                    else forecast_evidence[3]
+                ),
             ))
         return tuple(records)
+
+    def _forecast_evidence(
+        self,
+        position: np.ndarray,
+        forecast: Any,
+    ) -> Optional[Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]]:
+        """Reduce one Gaussian mixture to causal semantic path evidence.
+
+        MPPI continues to consume the complete mixture.  The encounter
+        classifier only needs its probability-weighted mean path and total
+        positional uncertainty; malformed or absent payloads fall back to the
+        tracker's fitted velocity without affecting control availability.
+        """
+
+        if forecast is None:
+            return None
+        try:
+            means = np.asarray(
+                forecast.component_means, dtype=np.float64
+            )
+            covariances = np.asarray(
+                forecast.component_covariances, dtype=np.float64
+            )
+            weights = np.asarray(
+                forecast.component_weights, dtype=np.float64
+            )
+            dt_s = float(forecast.dt)
+        except (AttributeError, TypeError, ValueError):
+            return None
+        if (
+            means.ndim != 3
+            or means.shape[-1] != 2
+            or covariances.shape != means.shape[:2] + (2, 2)
+            or weights.shape != means.shape[:2]
+            or means.shape[0] < 1
+            or not math.isfinite(dt_s)
+            or dt_s <= 0.0
+            or not np.isfinite(means).all()
+            or not np.isfinite(covariances).all()
+            or not np.isfinite(weights).all()
+        ):
+            return None
+        row_sums = np.sum(weights, axis=1)
+        if np.any(weights < 0.0) or np.any(row_sums <= 1.0e-12):
+            return None
+        normalized = weights / row_sums[:, None]
+        expected = np.sum(means * normalized[..., None], axis=1)
+        deltas = means - expected[:, None, :]
+        total_covariance = np.sum(
+            normalized[..., None, None]
+            * (
+                covariances
+                + deltas[..., :, None] * deltas[..., None, :]
+            ),
+            axis=1,
+        )
+        eigenvalues = np.linalg.eigvalsh(total_covariance)
+        position_std = np.sqrt(np.maximum(eigenvalues[:, -1], 0.0))
+        times = dt_s * np.arange(1, expected.shape[0] + 1, dtype=np.float64)
+        lookahead_index = int(np.searchsorted(
+            times, self.config.forecast_behavior_lookahead_s, side="left"
+        ))
+        lookahead_index = min(lookahead_index, len(times) - 1)
+        semantic_velocity = (
+            expected[lookahead_index] - position
+        ) / times[lookahead_index]
+        if not np.isfinite(semantic_velocity).all():
+            return None
+        return semantic_velocity, expected, times, position_std
+
+    def _forecast_geometry(
+        self,
+        track: _TrackSample,
+        robot_position: np.ndarray,
+        goal_direction: np.ndarray,
+        ego_speed_mps: float,
+    ) -> Dict[str, float]:
+        """Project forecast mean/covariance onto goal-line interaction facts."""
+
+        positions = track.forecast_positions
+        times = track.forecast_times_s
+        std_values = track.forecast_position_std_m
+        if positions is None or times is None or std_values is None:
+            return {
+                "forecast_available": False,
+                "forecast_horizon_s": 0.0,
+                "forecast_position_std_m": float("nan"),
+                "forecast_goal_line_crossing": False,
+                "forecast_crossing_time_s": float("inf"),
+                "forecast_crossing_position_m": float("inf"),
+                "forecast_cpa": False,
+                "forecast_t_cpa_s": float("inf"),
+                "forecast_d_cpa_mean_m": float("inf"),
+                "forecast_d_cpa_conservative_m": float("inf"),
+            }
+        lateral_direction = np.asarray(
+            (-goal_direction[1], goal_direction[0]), dtype=np.float64
+        )
+        path = np.vstack((track.position[None, :], positions))
+        path_times = np.concatenate(([0.0], times))
+        lateral = (path - robot_position[None, :]) @ lateral_direction
+        crossing_time = float("inf")
+        crossing_position = float("inf")
+        for index in range(1, len(path)):
+            before = float(lateral[index - 1])
+            after = float(lateral[index])
+            if (
+                abs(after) > self.config.crossing_line_tolerance_m
+                and before * after > 0.0
+            ):
+                continue
+            denominator = abs(before) + abs(after)
+            fraction = (
+                1.0 if denominator <= 1.0e-12
+                else float(np.clip(abs(before) / denominator, 0.0, 1.0))
+            )
+            point = path[index - 1] + fraction * (
+                path[index] - path[index - 1]
+            )
+            crossing_time = float(
+                path_times[index - 1]
+                + fraction * (path_times[index] - path_times[index - 1])
+            )
+            crossing_position = float(np.dot(
+                point - robot_position, goal_direction
+            ))
+            break
+
+        valid = times <= self.config.cpa_horizon_s + 1.0e-12
+        if np.any(valid):
+            robot_path = (
+                robot_position[None, :]
+                + ego_speed_mps * times[valid, None] * goal_direction[None, :]
+            )
+            mean_distances = np.linalg.norm(
+                positions[valid] - robot_path, axis=1
+            )
+            conservative = np.maximum(
+                0.0, mean_distances - std_values[valid]
+            )
+            selected = int(np.argmin(conservative))
+            valid_times = times[valid]
+            valid_std = std_values[valid]
+            t_cpa = float(valid_times[selected])
+            d_cpa_mean = float(mean_distances[selected])
+            d_cpa_conservative = float(conservative[selected])
+            position_std = float(valid_std[selected])
+        else:
+            t_cpa = float("inf")
+            d_cpa_mean = float("inf")
+            d_cpa_conservative = float("inf")
+            position_std = float(std_values[-1])
+        return {
+            "forecast_available": True,
+            "forecast_horizon_s": float(times[-1]),
+            "forecast_position_std_m": position_std,
+            "forecast_goal_line_crossing": math.isfinite(crossing_time),
+            "forecast_crossing_time_s": crossing_time,
+            "forecast_crossing_position_m": crossing_position,
+            "forecast_cpa": math.isfinite(t_cpa),
+            "forecast_t_cpa_s": t_cpa,
+            "forecast_d_cpa_mean_m": d_cpa_mean,
+            "forecast_d_cpa_conservative_m": d_cpa_conservative,
+        }
 
     def _kinematics(
         self,
@@ -241,14 +469,21 @@ class EncounterModeManager:
         distance = float(np.linalg.norm(relative_position))
         longitudinal = float(np.dot(relative_position, goal_direction))
         lateral = float(np.dot(relative_position, lateral_direction))
-        human_longitudinal = float(np.dot(track.velocity, goal_direction))
-        human_lateral = float(np.dot(track.velocity, lateral_direction))
+        behavior_velocity = track.semantic_velocity
+        human_longitudinal = float(np.dot(
+            behavior_velocity, goal_direction
+        ))
+        human_lateral = float(np.dot(
+            behavior_velocity, lateral_direction
+        ))
         radial_velocity = (
             0.0 if distance <= 1.0e-9
-            else float(np.dot(track.velocity, relative_position / distance))
+            else float(np.dot(
+                behavior_velocity, relative_position / distance
+            ))
         )
         ego_speed = max(float(robot_speed_mps), self.config.nominal_ego_speed_mps)
-        relative_velocity = track.velocity - ego_speed * goal_direction
+        relative_velocity = behavior_velocity - ego_speed * goal_direction
         relative_speed_sq = float(np.dot(relative_velocity, relative_velocity))
         if relative_speed_sq <= 1.0e-9:
             t_cpa = float("inf")
@@ -265,6 +500,33 @@ class EncounterModeManager:
                 d_cpa = float(np.linalg.norm(
                     relative_position + t_cpa * relative_velocity
                 ))
+        forecast_geometry = self._forecast_geometry(
+            track, robot_position, goal_direction, ego_speed
+        )
+        if forecast_geometry["forecast_cpa"]:
+            t_cpa = float(forecast_geometry["forecast_t_cpa_s"])
+            d_cpa = float(
+                forecast_geometry["forecast_d_cpa_conservative_m"]
+            )
+        if forecast_geometry["forecast_goal_line_crossing"]:
+            crossing_time = float(
+                forecast_geometry["forecast_crossing_time_s"]
+            )
+            crossing_position = float(
+                forecast_geometry["forecast_crossing_position_m"]
+            )
+            forecast_crossing_used = True
+        elif abs(human_lateral) > 1.0e-9:
+            crossing_time = -lateral / human_lateral
+            crossing_position = (
+                longitudinal + human_longitudinal * crossing_time
+                if crossing_time > 0.0 else float("inf")
+            )
+            forecast_crossing_used = False
+        else:
+            crossing_time = float("inf")
+            crossing_position = float("inf")
+            forecast_crossing_used = False
         approach_angle = math.degrees(math.atan2(
             max(0.0, -human_longitudinal),
             max(1.0e-9, abs(human_lateral)),
@@ -279,6 +541,10 @@ class EncounterModeManager:
             "approach_angle_deg": approach_angle,
             "t_cpa_s": t_cpa,
             "d_cpa_m": d_cpa,
+            "goal_line_crossing_time_s": crossing_time,
+            "goal_line_crossing_position_m": crossing_position,
+            "forecast_goal_line_crossing_used": forecast_crossing_used,
+            **forecast_geometry,
         }
 
     def _select_track(
@@ -421,8 +687,8 @@ class EncounterModeManager:
         )
         if residual > jump_limit:
             return False, False, 0.0, "position_jump", residual
-        previous_direction = _unit(previous.velocity)
-        current_direction = _unit(track.velocity)
+        previous_direction = _unit(previous.semantic_velocity)
+        current_direction = _unit(track.semantic_velocity)
         direction_change_deg = 0.0
         if previous_direction is not None and current_direction is not None:
             direction_change_deg = abs(math.degrees(
@@ -450,7 +716,11 @@ class EncounterModeManager:
         if nis_score > 0.0:
             reasons.append("innovation")
         if direction_score > 0.0:
-            reasons.append("velocity_direction")
+            reasons.append(
+                "forecast_direction"
+                if track.velocity_source == "gaussian_mixture_forecast"
+                else "velocity_direction"
+            )
         if class_score > 0.0:
             reasons.append("mode_distribution")
         return True, detected, score, "+".join(reasons) or "continuous", residual
@@ -460,7 +730,7 @@ class EncounterModeManager:
         track: _TrackSample,
         local_obstacles: Sequence[Sequence[float]],
     ) -> bool:
-        direction = _unit(track.velocity)
+        direction = _unit(track.semantic_velocity)
         if direction is None:
             return False
         lateral = np.asarray((-direction[1], direction[0]), dtype=np.float64)
@@ -486,6 +756,8 @@ class EncounterModeManager:
         mode: EncounterMode,
         track: _TrackSample,
         values: Mapping[str, float],
+        robot_position: np.ndarray,
+        goal_direction: np.ndarray,
         robot_speed_mps: float,
         local_obstacles: Sequence[Sequence[float]],
     ) -> Tuple[PassageStrategy, int, Dict[str, Any]]:
@@ -494,17 +766,11 @@ class EncounterModeManager:
             EncounterMode.STRAIGHT_CROSSING,
             EncounterMode.OBLIQUE_CROSSING,
         ):
-            lateral = float(values["lateral_m"])
-            if abs(human_lateral) <= 1.0e-9:
+            t_human = float(values["goal_line_crossing_time_s"])
+            if t_human <= 0.0:
                 t_human = float("inf")
-            else:
-                t_human = -lateral / human_lateral
-                if t_human <= 0.0:
-                    t_human = float("inf")
-            intersection_longitudinal = (
-                float(values["longitudinal_m"])
-                + float(values["human_longitudinal_mps"]) * t_human
-                if math.isfinite(t_human) else float("inf")
+            intersection_longitudinal = float(
+                values["goal_line_crossing_position_m"]
             )
             ego_speed = max(float(robot_speed_mps), self.config.nominal_ego_speed_mps)
             t_robot_clear = (
@@ -529,11 +795,59 @@ class EncounterModeManager:
                 "front_space_clear": front_space_clear,
                 "front_pass_feasible": front_pass_feasible,
             }
-        # For a frontal approach, choose the side away from the current human
-        # lateral offset.  A centred encounter uses deterministic left and is
-        # then locked until completion or a verified behaviour change.
+        # For a frontal approach, compare the complete robot-to-bypass
+        # segments against measured local geometry.  The tracked human is
+        # excluded from this *static-space* comparison because its risk is
+        # already represented by the encounter itself.
+        lateral_direction = np.asarray(
+            (-goal_direction[1], goal_direction[0]), dtype=np.float64
+        )
+        bypass_forward = track.position + (
+            self.config.passage_forward_clearance_m * goal_direction
+        )
+
+        def segment_clearance(side_value: int) -> float:
+            endpoint = (
+                bypass_forward
+                + float(side_value)
+                * self.config.frontal_detour_clearance_m
+                * lateral_direction
+            )
+            segment = endpoint - robot_position
+            length_sq = float(np.dot(segment, segment))
+            clearance = float("inf")
+            for raw in local_obstacles or ():
+                try:
+                    point = np.asarray(raw[:2], dtype=np.float64)
+                except (TypeError, ValueError, IndexError):
+                    continue
+                if not np.isfinite(point).all():
+                    continue
+                if float(np.linalg.norm(point - track.position)) <= 0.60:
+                    continue
+                fraction = (
+                    0.0 if length_sq <= 1.0e-9
+                    else float(np.clip(
+                        np.dot(point - robot_position, segment) / length_sq,
+                        0.0,
+                        1.0,
+                    ))
+                )
+                distance = float(np.linalg.norm(
+                    point - (robot_position + fraction * segment)
+                ))
+                clearance = min(clearance, distance)
+            return clearance
+
+        left_clearance = segment_clearance(1)
+        right_clearance = segment_clearance(-1)
         human_side = float(values["lateral_m"])
-        side = -1 if human_side > 0.10 else 1
+        if abs(left_clearance - right_clearance) >= 0.10:
+            side = 1 if left_clearance > right_clearance else -1
+        else:
+            # Equal space falls away from an off-centre human; a centred
+            # encounter uses deterministic left and remains locked.
+            side = -1 if human_side > 0.10 else 1
         return (
             PassageStrategy.LEFT_BYPASS if side > 0 else PassageStrategy.RIGHT_BYPASS,
             side,
@@ -542,6 +856,8 @@ class EncounterModeManager:
                 "robot_clear_time_s": float("inf"),
                 "front_space_clear": None,
                 "front_pass_feasible": False,
+                "left_bypass_clearance_m": left_clearance,
+                "right_bypass_clearance_m": right_clearance,
             },
         )
 
@@ -567,7 +883,7 @@ class EncounterModeManager:
         self._entry_human_line_offset = offset
         self._last_human_line_offset = offset
         self._entry_human_position = track.position.copy()
-        self._entry_human_direction = _unit(track.velocity)
+        self._entry_human_direction = _unit(track.semantic_velocity)
         if self._entry_human_direction is not None:
             self._entry_robot_human_line_offset = float(
                 self._entry_human_direction[0]
@@ -578,13 +894,68 @@ class EncounterModeManager:
         else:
             self._entry_robot_human_line_offset = None
         strategy, side, timing = self._choose_strategy(
-            mode, track, values, robot_speed_mps, local_obstacles
+            mode,
+            track,
+            values,
+            robot_position,
+            goal_direction,
+            robot_speed_mps,
+            local_obstacles,
         )
         self._strategy = strategy
         self._locked_steering_side = int(side)
         self._strategy_timing = dict(timing)
+        if mode == EncounterMode.FRONTAL_APPROACH:
+            forward = max(
+                0.60,
+                float(values.get("longitudinal_m", 0.0))
+                + self.config.passage_forward_clearance_m,
+            )
+            lateral_clearance = self.config.frontal_detour_clearance_m
+        else:
+            crossing_time = float(timing["human_time_to_intersection_s"])
+            intersection_longitudinal = (
+                float(values.get("longitudinal_m", 0.0))
+                + float(values.get("human_longitudinal_mps", 0.0))
+                * crossing_time
+                if math.isfinite(crossing_time)
+                else float(values.get("longitudinal_m", 0.0))
+            )
+            forward = max(
+                0.60,
+                intersection_longitudinal
+                + self.config.passage_forward_clearance_m,
+            )
+            lateral_clearance = (
+                self.config.crossing_detour_clearance_m
+                if mode == EncounterMode.STRAIGHT_CROSSING
+                else self.config.oblique_detour_clearance_m
+            )
+        lateral_direction = np.asarray((
+            -goal_direction[1], goal_direction[0]
+        ), dtype=np.float64)
+        waypoint = (
+            self._entry_goal_origin
+            + forward * goal_direction
+            + float(side) * lateral_clearance * lateral_direction
+        )
+        self._temporary_waypoint = waypoint
         self._rejoin_clear_streak = 0
         return timing
+
+    def _set_rejoin_waypoint(self, robot_position: np.ndarray) -> None:
+        if self._entry_goal_origin is None or self._entry_goal_direction is None:
+            self._temporary_waypoint = None
+            return
+        progress = float(np.dot(
+            robot_position - self._entry_goal_origin,
+            self._entry_goal_direction,
+        ))
+        self._temporary_waypoint = (
+            self._entry_goal_origin
+            + (progress + self.config.rejoin_lookahead_m)
+            * self._entry_goal_direction
+        )
 
     def _crossing_complete(self, track: _TrackSample) -> bool:
         if self._entry_goal_origin is None or self._entry_goal_direction is None:
@@ -662,6 +1033,7 @@ class EncounterModeManager:
             self._locked_steering_side = 0
             self._entry_goal_origin = None
             self._entry_goal_direction = None
+            self._temporary_waypoint = None
         return cross_track, heading_error
 
     def update(
@@ -672,6 +1044,7 @@ class EncounterModeManager:
         goal: Sequence[float],
         robot_speed_mps: float,
         tracker_diagnostics: Mapping[str, Any],
+        forecasts: Sequence[Any] = (),
         local_obstacles: Sequence[Sequence[float]] = (),
     ) -> Dict[str, Any]:
         """Advance the semantic state machine and return JSON-safe facts."""
@@ -690,7 +1063,9 @@ class EncounterModeManager:
         goal_direction = _unit(goal_values - robot_position)
         if goal_direction is None:
             goal_direction = np.asarray((math.cos(pose_values[2]), math.sin(pose_values[2])))
-        tracks = self._track_records(float(timestamp_s), tracker_diagnostics)
+        tracks = self._track_records(
+            float(timestamp_s), tracker_diagnostics, forecasts
+        )
         selected, values = self._select_track(
             tracks, robot_position, goal_direction, float(robot_speed_mps)
         )
@@ -738,16 +1113,12 @@ class EncounterModeManager:
             and values.get("longitudinal_m", -float("inf"))
             >= -self.config.rear_engagement_allowance_m
         )
-        human_lateral = values.get("human_lateral_mps", 0.0)
-        if abs(human_lateral) > 1.0e-9:
-            crossing_time = -values.get("lateral_m", 0.0) / human_lateral
-        else:
-            crossing_time = float("inf")
-        crossing_position = (
-            values.get("longitudinal_m", float("inf"))
-            + values.get("human_longitudinal_mps", 0.0) * crossing_time
-            if math.isfinite(crossing_time) else float("inf")
-        )
+        crossing_time = float(values.get(
+            "goal_line_crossing_time_s", float("inf")
+        ))
+        crossing_position = float(values.get(
+            "goal_line_crossing_position_m", float("inf")
+        ))
         crossing_relevant = bool(
             candidate in (
                 EncounterMode.STRAIGHT_CROSSING,
@@ -809,13 +1180,15 @@ class EncounterModeManager:
             line_crossed = self._frontal_complete(selected, robot_position)
         if self._phase in _ACTIVE_MODES and (
             line_crossed
-            or self._confirmed_behavior in (
-                EncounterMode.RECEDING, EncounterMode.STATIONARY,
+            or (
+                self._confirmed_behavior == EncounterMode.RECEDING
+                and not dangerous
             )
             or self._lost_track_cycles > self.config.lost_track_grace_cycles
         ):
             self._phase = EncounterMode.REJOIN
             self._rejoin_clear_streak = 0
+            self._set_rejoin_waypoint(robot_position)
         cross_track = 0.0
         heading_error = 0.0
         if self._phase == EncounterMode.REJOIN:
@@ -861,6 +1234,15 @@ class EncounterModeManager:
             "encounter_rear_pass_inhibited_shadow": active_or_rejoin,
             "encounter_forward_passage_inhibited_shadow": active_or_rejoin,
             "encounter_dynamic_escape_direction_owned_shadow": active_or_rejoin,
+            "encounter_rear_pass_inhibited": bool(
+                active_or_rejoin and not self.config.shadow_only
+            ),
+            "encounter_forward_passage_inhibited": bool(
+                active_or_rejoin and not self.config.shadow_only
+            ),
+            "encounter_dynamic_escape_inhibited": bool(
+                active_or_rejoin and not self.config.shadow_only
+            ),
             "encounter_rejoin_cross_track_m": float(cross_track),
             "encounter_rejoin_heading_error_rad": float(heading_error),
             "encounter_rejoin_clear_streak": int(self._rejoin_clear_streak),
@@ -886,12 +1268,69 @@ class EncounterModeManager:
             "encounter_d_cpa_m": _finite_float(
                 values.get("d_cpa_m"), float("inf")
             ),
+            "encounter_distance_m": _finite_float(
+                values.get("distance_m"), float("inf")
+            ),
+            "encounter_velocity_source": (
+                "none" if selected is None else selected.velocity_source
+            ),
+            "encounter_forecast_available": bool(
+                values.get("forecast_available", False)
+            ),
+            "encounter_forecast_horizon_s": _finite_float(
+                values.get("forecast_horizon_s"), 0.0
+            ),
+            "encounter_forecast_position_std_m": _finite_float(
+                values.get("forecast_position_std_m")
+            ),
+            "encounter_forecast_goal_line_crossing_used": bool(
+                values.get("forecast_goal_line_crossing_used", False)
+            ),
+            "encounter_forecast_cpa_used": bool(
+                values.get("forecast_cpa", False)
+            ),
+            "encounter_forecast_d_cpa_mean_m": _finite_float(
+                values.get("forecast_d_cpa_mean_m"), float("inf")
+            ),
+            "encounter_forecast_d_cpa_conservative_m": _finite_float(
+                values.get("forecast_d_cpa_conservative_m"), float("inf")
+            ),
+            "encounter_entry_goal_origin": (
+                None
+                if self._entry_goal_origin is None
+                else tuple(float(value) for value in self._entry_goal_origin)
+            ),
+            "encounter_entry_goal_heading_rad": (
+                None
+                if self._entry_goal_direction is None
+                else float(math.atan2(
+                    self._entry_goal_direction[1],
+                    self._entry_goal_direction[0],
+                ))
+            ),
+            "encounter_temporary_waypoint": (
+                None
+                if self._temporary_waypoint is None
+                else tuple(float(value) for value in self._temporary_waypoint)
+            ),
             "encounter_human_time_to_intersection_s": timing[
                 "human_time_to_intersection_s"
             ],
             "encounter_robot_clear_time_s": timing["robot_clear_time_s"],
             "encounter_front_space_clear": timing["front_space_clear"],
             "encounter_front_pass_feasible": timing["front_pass_feasible"],
+            "encounter_left_bypass_clearance_m": (
+                float(timing["left_bypass_clearance_m"])
+                if math.isfinite(float(timing.get(
+                    "left_bypass_clearance_m", float("inf")
+                ))) else None
+            ),
+            "encounter_right_bypass_clearance_m": (
+                float(timing["right_bypass_clearance_m"])
+                if math.isfinite(float(timing.get(
+                    "right_bypass_clearance_m", float("inf")
+                ))) else None
+            ),
         }
         self._selected_track_index = selected_index
         self._last_track = selected

@@ -61,6 +61,32 @@ def test_disabled_mode_returns_bit_exact_original_object():
     assert controller.apply(plan) is plan
 
 
+def test_semantic_mode_inhibit_releases_transaction_and_never_changes_plan():
+    controller = _controller()
+    _prime_forward(controller)
+    started = controller.apply(_plan([
+        _candidate(1, 0.4, 0.1, cost=0.1),
+    ]))
+    assert controller.active
+
+    original = _plan([
+        _candidate(2, 0.4, -0.1, cost=0.1),
+    ], proposed=(0.2, -0.2))
+    inhibited = controller.apply(
+        original, inhibit_reason="encounter_mode:straight_crossing"
+    )
+
+    assert not controller.active
+    assert inhibited.proposed_control is original.proposed_control
+    assert inhibited.diagnostics[
+        "real_robot_forward_passage_externally_inhibited"
+    ] is True
+    assert inhibited.diagnostics["real_robot_forward_passage_inhibit_reason"] == (
+        "encounter_mode:straight_crossing"
+    )
+    assert started.diagnostics["real_robot_forward_passage_applied"] is True
+
+
 def test_reverse_or_stopped_history_cannot_start_forward_transaction():
     controller = _controller()
     plan = _plan([_candidate(1, 0.7, 0.0)])

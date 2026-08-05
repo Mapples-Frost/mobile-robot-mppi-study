@@ -16,6 +16,7 @@ param(
     [switch]$EnableForwardPassage,
     [switch]$ForwardPassageV3,
     [switch]$DisableResidualLearning,
+    [switch]$EnableEncounterControl,
     [switch]$UntilGoal,
     [switch]$Shadow
 )
@@ -51,6 +52,9 @@ if ($TraditionalMPPI -and $explicitEnhancement) {
 }
 if ($EnableResidualLearning -and $DisableResidualLearning) {
     throw 'Residual learning cannot be both enabled and disabled.'
+}
+if ($EnableEncounterControl -and -not $FullProposed) {
+    throw 'EnableEncounterControl currently requires FullProposed.'
 }
 $actorEffective = $FullProposed -or $EnableActorGuidance
 $hssEffective = $FullProposed -or $EnableHSSReliability
@@ -206,6 +210,9 @@ if ($EnableForwardPassage -or $ForwardPassageV3) {
 }
 if ($DisableResidualLearning) {
     $runnerArgs += '--disable-residual-learning'
+}
+if ($EnableEncounterControl) {
+    $runnerArgs += '--enable-encounter-control'
 }
 if ($UntilGoal) {
     $runnerArgs += '--until-goal'

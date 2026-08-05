@@ -2999,6 +2999,140 @@ def test_directional_guard_passes_rear_person_only_for_forward_motion(tmp_path):
     assert reverse.diagnostics["rear_reverse_blocked"] is True
 
 
+def test_encounter_authority_suppresses_rear_pass_and_retains_hard_stop(
+        tmp_path):
+    config = build_pi5_full_config(
+        _weight_root(tmp_path),
+        max_v_mps=0.5,
+        max_reverse_v_mps=0.3,
+        max_omega_radps=0.6,
+    )
+    arbiter = ScanGuardArbiter(
+        action_spec_from_config(config["action_space"]),
+        config["perception"]["scan_guard"],
+    )
+    rear_angle = math.radians(165.0)
+    rear_point = {
+        "base_angle": rear_angle,
+        "range": 0.30,
+        "x": 0.30 * math.cos(rear_angle),
+        "y": 0.30 * math.sin(rear_angle),
+    }
+    decision = arbiter.arbitrate(
+        ControlCommand([0.4, 0.2]),
+        {
+            "emergency_stop": True,
+            "reason": "near_body_hard_stop",
+            "near_body_points": (rear_point,),
+            "min_front_range": 2.0,
+            "dynamic_obstacle_bearing_rad": rear_angle,
+            "dynamic_obstacle_near_body_match": True,
+        },
+        {
+            "encounter_control_authoritative": True,
+            "encounter_control_inhibit_rear_pass": True,
+            "encounter_control_inhibit_dynamic_escape": True,
+            "encounter_control_locked_steering_side": 1,
+            "encounter_control_hard_safety_retained": True,
+        },
+    )
+
+    assert decision.executed_control.v == 0.0
+    assert decision.reason == "near_body_hard_stop"
+    assert decision.diagnostics["rear_pass_through_raw_evidence"] is True
+    assert decision.diagnostics[
+        "rear_pass_through_suppressed_by_encounter"
+    ] is True
+    assert decision.diagnostics["rear_pass_through_active"] is False
+    assert decision.diagnostics[
+        "encounter_control_dynamic_escape_inhibited"
+    ] is True
+    assert decision.diagnostics["encounter_control_hard_safety_retained"] is True
+
+
+def test_encounter_retains_bounded_front_hard_stop_escape_with_locked_side(
+        tmp_path):
+    config = build_pi5_full_config(
+        _weight_root(tmp_path), max_v_mps=0.5,
+        max_reverse_v_mps=0.3, max_omega_radps=0.6,
+    )
+    arbiter = ScanGuardArbiter(
+        action_spec_from_config(config["action_space"]),
+        config["perception"]["scan_guard"],
+    )
+    front_point = {
+        "base_angle": 0.0, "range": 0.30, "x": 0.30, "y": 0.0,
+    }
+    rear_point = {
+        "base_angle": math.pi, "range": 2.0, "x": -2.0, "y": 0.0,
+    }
+    guard = {
+        "emergency_stop": True,
+        "reason": "near_body_hard_stop",
+        "near_body_points": (front_point,),
+        "raw_points_base": (front_point, rear_point),
+        "dynamic_obstacle_near_body_match": True,
+        "dynamic_obstacle_bearing_rad": 0.0,
+        "min_left_side_range": 0.4,
+        "min_right_side_range": 2.0,
+    }
+    context = {
+        "encounter_control_authoritative": True,
+        "encounter_control_inhibit_rear_pass": True,
+        "encounter_control_inhibit_dynamic_escape": True,
+        "encounter_control_locked_steering_side": 1,
+        "encounter_control_hard_safety_retained": True,
+        "probabilistic_obstacle_active_avoidance_enabled": True,
+    }
+
+    turns = [
+        arbiter.arbitrate(ControlCommand([0.4, -0.2]), guard, context)
+        for _ in range(4)
+    ]
+    reverse = arbiter.arbitrate(
+        ControlCommand([0.4, -0.2]), guard, context
+    )
+
+    assert all(item.executed_control.v == 0.0 for item in turns)
+    assert all(item.executed_control.omega == pytest.approx(0.6)
+               for item in turns)
+    assert all(item.reason == "dynamic_hard_stop_escape" for item in turns)
+    assert reverse.executed_control.v == pytest.approx(-0.3)
+    assert reverse.executed_control.omega > 0.0
+    assert reverse.diagnostics[
+        "encounter_control_hard_stop_escape_retained"
+    ] is True
+    assert turns[0].diagnostics[
+        "dynamic_escape_geometric_turn_source"
+    ] == "encounter_mode_locked_side"
+
+
+def test_encounter_locked_side_is_authoritative_in_escape_side_selector(
+        tmp_path):
+    config = build_pi5_full_config(
+        _weight_root(tmp_path), max_v_mps=0.5,
+        max_reverse_v_mps=0.3, max_omega_radps=0.6,
+    )
+    arbiter = ScanGuardArbiter(
+        action_spec_from_config(config["action_space"]),
+        config["perception"]["scan_guard"],
+    )
+
+    sign, source = arbiter._select_dynamic_escape_turn_sign(
+        {"min_left_side_range": 0.4, "min_right_side_range": 3.0},
+        {
+            "encounter_control_authoritative": True,
+            "encounter_control_locked_steering_side": 1,
+            "probabilistic_obstacle_motion_lateral_body_mps": 0.8,
+            "probabilistic_obstacle_forward_lateral_countermotion_applied": True,
+        },
+        obstacle_bearing=0.0,
+    )
+
+    assert sign == 1.0
+    assert source == "encounter_mode_locked_side"
+
+
 def test_directional_guard_keeps_front_person_fail_closed(tmp_path):
     config = build_pi5_full_config(
         _weight_root(tmp_path),

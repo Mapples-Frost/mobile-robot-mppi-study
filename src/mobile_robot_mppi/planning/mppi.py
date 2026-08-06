@@ -181,6 +181,13 @@ class MppiConfig:
     probabilistic_obstacle_emergency_candidate_trigger_distance_m: float = 0.0
     probabilistic_obstacle_emergency_candidate_critical_distance_m: float = 0.0
     probabilistic_obstacle_emergency_candidate_intent_hold_steps: int = 0
+    # Real-robot emergency takeover must be supported by a trustworthy causal
+    # scan flow.  These gates are opt-in so frozen simulation profiles retain
+    # their historical admission rule.
+    probabilistic_obstacle_emergency_min_support_beams: int = 0
+    probabilistic_obstacle_emergency_max_rejected_jump_fraction: float = 1.0
+    probabilistic_obstacle_emergency_require_scan_quality: bool = False
+    probabilistic_obstacle_emergency_candidate_slew_enabled: bool = False
     probabilistic_obstacle_emergency_forecast_corroboration_enabled: bool = False
     probabilistic_obstacle_front_obstacle_forward_turn_enabled: bool = False
     probabilistic_obstacle_counterflow_escape_enabled: bool = False
@@ -1170,6 +1177,27 @@ class MppiConfig:
                     "safety_recovery_translation_stop_threshold", 1.0e-6
                 )
             ),
+            probabilistic_obstacle_emergency_min_support_beams=int(
+                values.get("probabilistic_obstacle_emergency_min_support_beams", 0)
+            ),
+            probabilistic_obstacle_emergency_max_rejected_jump_fraction=float(
+                values.get(
+                    "probabilistic_obstacle_emergency_max_rejected_jump_fraction",
+                    1.0,
+                )
+            ),
+            probabilistic_obstacle_emergency_require_scan_quality=bool(
+                values.get(
+                    "probabilistic_obstacle_emergency_require_scan_quality",
+                    False,
+                )
+            ),
+            probabilistic_obstacle_emergency_candidate_slew_enabled=bool(
+                values.get(
+                    "probabilistic_obstacle_emergency_candidate_slew_enabled",
+                    False,
+                )
+            ),
             probabilistic_obstacle_forward_lateral_countermotion_enabled=bool(
                 values.get(
                     "probabilistic_obstacle_forward_lateral_countermotion_enabled",
@@ -1554,6 +1582,14 @@ class MppiConfig:
             raise ValueError(
                 "probabilistic counterflow weight must be finite and "
                 "non-negative"
+            )
+        if self.probabilistic_obstacle_emergency_min_support_beams < 0:
+            raise ValueError(
+                "probabilistic emergency minimum support must be non-negative"
+            )
+        if not 0.0 <= self.probabilistic_obstacle_emergency_max_rejected_jump_fraction <= 1.0:
+            raise ValueError(
+                "probabilistic emergency rejected-jump ceiling must be in [0, 1]"
             )
         if (
             not np.isfinite(
@@ -2523,6 +2559,10 @@ class MppiController:
                 "closing_observed": False,
                 "scan_valid": False,
                 "scan_flow_match": False,
+                "scan_quality_ok": False,
+                "scan_support_beams": 0,
+                "scan_rejected_jump_fraction": 1.0,
+                "forecast_evidence_ok": False,
                 "intent_held": False,
                 "away_heading_error_rad": None,
                 "obstacle_bearing_rad": None,
@@ -2560,6 +2600,25 @@ class MppiController:
         scan_valid = bool(context.get("temporal_scan_valid", False))
         scan_flow_match = bool(
             context.get("dynamic_obstacle_scan_flow_match", False)
+        )
+        scan_support_beams = int(
+            context.get("temporal_scan_support_beams", 0) or 0
+        )
+        scan_rejected_jump_fraction = float(
+            context.get("temporal_scan_rejected_jump_fraction", 1.0)
+            or 0.0
+        )
+        if not np.isfinite(scan_rejected_jump_fraction):
+            scan_rejected_jump_fraction = 1.0
+        scan_quality_ok = bool(
+            not self.config.probabilistic_obstacle_emergency_require_scan_quality
+            or (
+                scan_valid
+                and scan_support_beams
+                >= self.config.probabilistic_obstacle_emergency_min_support_beams
+                and scan_rejected_jump_fraction
+                <= self.config.probabilistic_obstacle_emergency_max_rejected_jump_fraction
+            )
         )
         safety_hard_stop_ttc_s = float(
             context.get("temporal_scan_safety_hard_stop_ttc_s", 0.0)
@@ -2623,19 +2682,32 @@ class MppiController:
                 >= self.config.probabilistic_obstacle_hard_threshold
                 - 1.0e-12
             )
+        forecast_evidence_ok = bool(
+            context.get("dynamic_obstacle_tracker_forecast_valid", False)
+            and context.get("dynamic_obstacle_tracker_associated", False)
+        )
         noncritical_trigger = bool(
             (
                 threshold > 0.0
                 and closing_observed
+                and scan_quality_ok
                 and ttc_s <= threshold
             )
-            or near_distance_triggered
+            or (
+                near_distance_triggered
+                and scan_quality_ok
+            )
         )
         raw_triggered = bool(
             critical_distance_triggered
             or (
                 noncritical_trigger
                 and forecast_corroborated
+                and (
+                    not forecast_corroboration_enabled
+                    or not self.config.probabilistic_obstacle_emergency_require_scan_quality
+                    or forecast_evidence_ok
+                )
             )
         )
         start_intent = bool(
@@ -2674,6 +2746,10 @@ class MppiController:
             "closing_observed": closing_observed,
             "scan_valid": scan_valid,
             "scan_flow_match": scan_flow_match,
+            "scan_quality_ok": scan_quality_ok,
+            "scan_support_beams": scan_support_beams,
+            "scan_rejected_jump_fraction": scan_rejected_jump_fraction,
+            "forecast_evidence_ok": forecast_evidence_ok,
             "intent_held": intent_held,
             "away_heading_error_rad": away_heading_error,
             "obstacle_bearing_rad": obstacle_bearing,
@@ -3320,6 +3396,20 @@ class MppiController:
             samples[index] = proposal_mean
             samples[index, :prefix, v_index] = speed
             samples[index, :prefix, omega_index] = yaw_rate
+            if self.config.probabilistic_obstacle_emergency_candidate_slew_enabled:
+                # Emergency candidates remain decisive, but enter through the
+                # same actuator contract as nominal MPPI.  Without this pass a
+                # 0 -> +/-v and 0 -> +/-omega jump was injected into the first
+                # command and the next 1.2 s of the prefix, producing the
+                # observed reverse/turn snap and command staircasing.
+                previous = np.asarray(
+                    self.previous_action, dtype=np.float64
+                ).copy()
+                for step in range(prefix):
+                    samples[index, step] = self.action_spec.clip(
+                        samples[index, step], previous, self.config.dt
+                    )
+                    previous = samples[index, step].copy()
             if (
                 self.config
                 .probabilistic_obstacle_emergency_candidate_hold_tail_enabled
@@ -8949,6 +9039,7 @@ class MppiController:
             # rotate-in-place degree of freedom.
             action[v_index] *= terminal_translation_scale
         sequence[0] = action
+        nominal_action_before_risk = np.asarray(action, dtype=np.float64).copy()
         mark("weighting_update")
         updated_trajectory = self.rollout(state, sequence)[0]
         boundary_weighted_update_feasible = True
@@ -9037,7 +9128,28 @@ class MppiController:
                     static_updated_min_clearance >= 0.0
                 )
         optimizer_diagnostics = {
-            "optimizer_diagnostics_enabled": False,
+            "optimizer_diagnostics_enabled": bool(
+                self.config.optimizer_diagnostics_enabled
+            ),
+            "optimizer_candidate_count": int(self.config.num_samples),
+            "optimizer_boundary_feasible_count": int(
+                np.sum(boundary_candidate_feasible)
+            ),
+            "optimizer_static_feasible_count": int(
+                np.sum(static_candidate_feasible)
+            ),
+            "optimizer_risk_feasible_count": int(
+                np.sum(risk_candidate_feasible)
+            ),
+            "optimizer_jointly_feasible_count": int(
+                np.sum(jointly_feasible)
+            ),
+            "optimizer_emergency_candidate_count": int(
+                np.sum(emergency_candidate_mask)
+            ),
+            "optimizer_emergency_candidate_selected_index": -1,
+            "optimizer_fallback_used": False,
+            "optimizer_fallback_kind": "none",
             "optimizer_best_candidate_cost": 0.0,
             "optimizer_selected_sequence_cost": 0.0,
             "optimizer_selected_cost_gap": 0.0,
@@ -9088,6 +9200,25 @@ class MppiController:
             )
             optimizer_diagnostics = {
                 "optimizer_diagnostics_enabled": True,
+                "optimizer_candidate_count": int(self.config.num_samples),
+                "optimizer_boundary_feasible_count": int(
+                    np.sum(boundary_candidate_feasible)
+                ),
+                "optimizer_static_feasible_count": int(
+                    np.sum(static_candidate_feasible)
+                ),
+                "optimizer_risk_feasible_count": int(
+                    np.sum(risk_candidate_feasible)
+                ),
+                "optimizer_jointly_feasible_count": int(
+                    np.sum(jointly_feasible)
+                ),
+                "optimizer_emergency_candidate_count": int(
+                    np.sum(emergency_candidate_mask)
+                ),
+                "optimizer_emergency_candidate_selected_index": -1,
+                "optimizer_fallback_used": False,
+                "optimizer_fallback_kind": "none",
                 "optimizer_best_candidate_cost": float(costs[best_index]),
                 "optimizer_selected_sequence_cost": selected_cost,
                 "optimizer_selected_cost_gap": (
@@ -9114,6 +9245,9 @@ class MppiController:
                 ),
             }
         mark("final_rollout")
+        fallback_candidate_index = -1
+        fallback_used = False
+        fallback_kind = "none"
         if (
             self.config.probabilistic_obstacle_risk_enabled
             and probabilistic_obstacles
@@ -9272,16 +9406,16 @@ class MppiController:
                     sequence = samples[
                         fallback_candidate_index
                     ].copy()
-                    if emergency_candidate_mask[
-                        fallback_candidate_index
-                    ]:
-                        action = self.action_spec.clip(sequence[0])
-                    else:
-                        action = self.action_spec.clip(
-                            sequence[0],
-                            self.previous_action,
-                            self.config.dt,
-                        )
+                    # Emergency candidates are generated with a slew-limited
+                    # prefix when enabled, and the selected first command is
+                    # always clipped once more at the final authority
+                    # boundary.  This prevents a direct sign flip even when a
+                    # fallback is selected after risk filtering.
+                    action = self.action_spec.clip(
+                        sequence[0],
+                        self.previous_action,
+                        self.config.dt,
+                    )
                     sequence[0] = action
                     updated_trajectory = self.rollout(
                         state, sequence
@@ -9364,6 +9498,15 @@ class MppiController:
                 "probabilistic_obstacle_initial_hard_violation": (
                     initial_hard_violation
                 ),
+                "probabilistic_obstacle_nominal_first_action": [
+                    float(value) for value in nominal_action_before_risk
+                ],
+                "probabilistic_obstacle_selected_first_action": [
+                    float(value) for value in action
+                ],
+                "probabilistic_obstacle_fallback_action_delta_norm": float(
+                    np.linalg.norm(action - nominal_action_before_risk)
+                ),
                 "probabilistic_obstacle_candidate_feasible_fraction": float(
                     np.mean(risk_candidate_feasible)
                     if candidate_risk is not None
@@ -9394,12 +9537,46 @@ class MppiController:
                 "probabilistic_obstacle_emergency_candidate_count": int(
                     np.sum(emergency_candidate_mask)
                 ),
+                "probabilistic_obstacle_emergency_candidate_slew_enabled": bool(
+                    self.config
+                    .probabilistic_obstacle_emergency_candidate_slew_enabled
+                ),
+                "probabilistic_obstacle_emergency_candidate_prefix_steps": int(
+                    self.config
+                    .probabilistic_obstacle_emergency_candidate_prefix_steps
+                ),
+                "probabilistic_obstacle_emergency_candidate_intent_hold_steps": int(
+                    self.config
+                    .probabilistic_obstacle_emergency_candidate_intent_hold_steps
+                ),
                 "probabilistic_obstacle_emergency_candidate_selected": bool(
                     fallback_candidate_index >= 0
                     and emergency_candidate_mask[fallback_candidate_index]
                 ),
                 "probabilistic_obstacle_temporal_emergency_triggered": bool(
                     emergency_context["triggered"]
+                ),
+                "probabilistic_obstacle_emergency_raw_triggered": bool(
+                    emergency_context.get("raw_triggered", False)
+                ),
+                "probabilistic_obstacle_emergency_scan_quality_ok": bool(
+                    emergency_context.get("scan_quality_ok", False)
+                ),
+                "probabilistic_obstacle_emergency_scan_support_beams": int(
+                    emergency_context.get("scan_support_beams", 0) or 0
+                ),
+                "probabilistic_obstacle_emergency_scan_rejected_jump_fraction": float(
+                    emergency_context.get("scan_rejected_jump_fraction", 1.0)
+                    or 0.0
+                ),
+                "probabilistic_obstacle_emergency_forecast_evidence_ok": bool(
+                    emergency_context.get("forecast_evidence_ok", False)
+                ),
+                "probabilistic_obstacle_emergency_rearm_ready": bool(
+                    emergency_context.get("rearm_ready", False)
+                ),
+                "probabilistic_obstacle_emergency_rearm_clear_count": int(
+                    emergency_context.get("rearm_clear_count", 0) or 0
                 ),
                 "probabilistic_obstacle_temporal_emergency_vetted": bool(
                     emergency_context["triggered"]
@@ -9573,6 +9750,17 @@ class MppiController:
                     known_static_obstacles,
                 )[0, 1:]
             ))
+        if self.config.optimizer_diagnostics_enabled:
+            optimizer_diagnostics.update({
+                "optimizer_emergency_candidate_selected_index": int(
+                    fallback_candidate_index
+                    if fallback_candidate_index >= 0
+                    and emergency_candidate_mask[fallback_candidate_index]
+                    else -1
+                ),
+                "optimizer_fallback_used": bool(fallback_used),
+                "optimizer_fallback_kind": str(fallback_kind),
+            })
         diagnostics = {
             "cost_min": float(costs.min()),
             "cost_mean": float(costs.mean()),

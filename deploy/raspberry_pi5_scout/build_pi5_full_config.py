@@ -550,6 +550,11 @@ def build_pi5_full_config(
             # preturn authority until 2 s.
             "safety_slow_ttc_s": 3.00,
             "safety_slow_scale": 0.25,
+            # Do not convert a sparse, jump-heavy temporal estimate directly
+            # into a translation hard stop; it remains visible in diagnostics
+            # and can still contribute a soft slowdown.
+            "safety_min_support_beams": 4,
+            "safety_max_rejected_jump_fraction": 0.60,
             "ego_motion_compensation_enabled": True,
             "safety_continuous_slowdown_enabled": True,
         })

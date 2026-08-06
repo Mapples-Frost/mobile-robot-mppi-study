@@ -33,6 +33,8 @@ def _inverse_activation(value: float, hard: float, soft: float) -> float:
 class ScanFlowConfig:
     enabled: bool = False
     safety_enabled: bool = False
+    ego_motion_compensation_enabled: bool = False
+    safety_continuous_slowdown_enabled: bool = False
     field_of_view_deg: float = 270.0
     window_beams: int = 7
     minimum_support_beams: int = 4
@@ -48,6 +50,11 @@ class ScanFlowConfig:
     safety_slow_ttc_s: float = 2.00
     safety_slow_scale: float = 0.25
     hold_s: float = 0.40
+    # A temporal-flow hard stop is allowed only when the closing consensus is
+    # sufficiently dense and not dominated by rejected beam jumps.  Defaults
+    # preserve the historical safety contract; physical deployment opts in.
+    safety_min_support_beams: int = 0
+    safety_max_rejected_jump_fraction: float = 1.0
 
     @classmethod
     def from_mapping(cls, values: Optional[Mapping[str, Any]] = None):
@@ -57,16 +64,28 @@ class ScanFlowConfig:
             name: values.get(name, getattr(defaults, name))
             for name in asdict(defaults)
         }
-        for name in ("enabled", "safety_enabled"):
+        for name in (
+            "enabled",
+            "safety_enabled",
+            "ego_motion_compensation_enabled",
+            "safety_continuous_slowdown_enabled",
+        ):
             kwargs[name] = bool(kwargs[name])
-        for name in ("window_beams", "minimum_support_beams"):
+        for name in (
+            "window_beams",
+            "minimum_support_beams",
+            "safety_min_support_beams",
+        ):
             kwargs[name] = int(kwargs[name])
         for name in kwargs:
             if name not in (
                 "enabled",
                 "safety_enabled",
+                "ego_motion_compensation_enabled",
+                "safety_continuous_slowdown_enabled",
                 "window_beams",
                 "minimum_support_beams",
+                "safety_min_support_beams",
             ):
                 kwargs[name] = float(kwargs[name])
         return cls(**kwargs)
@@ -105,6 +124,27 @@ class ScanFlowConfig:
             raise ValueError("temporal safety slow scale must not exceed one")
         if not np.isfinite(self.hold_s) or self.hold_s < 0.0:
             raise ValueError("temporal scan hold_s must be finite and non-negative")
+        if self.safety_min_support_beams < 0:
+            raise ValueError("temporal safety support floor must be non-negative")
+        if not 0.0 <= self.safety_max_rejected_jump_fraction <= 1.0:
+            raise ValueError(
+                "temporal safety rejected-jump ceiling must be in [0, 1]"
+            )
+
+    def safety_slowdown_scale(self, ttc_s: float) -> float:
+        """Return a continuous soft-braking scale without weakening hard stop."""
+
+        if not self.safety_continuous_slowdown_enabled:
+            return float(self.safety_slow_scale)
+        span = self.safety_slow_ttc_s - self.safety_hard_stop_ttc_s
+        fraction = (
+            float(ttc_s) - self.safety_hard_stop_ttc_s
+        ) / span
+        return float(np.clip(
+            max(self.safety_slow_scale, fraction),
+            self.safety_slow_scale,
+            1.0,
+        ))
 
 
 @dataclass(frozen=True)
@@ -141,6 +181,7 @@ class RobustScanFlowEstimator:
         self._previous_ranges = None
         self._previous_timestamp = None
         self._previous_geometry = None
+        self._previous_pose = None
         self._held_estimate = None
         self._hold_until = None
 
@@ -149,7 +190,23 @@ class RobustScanFlowEstimator:
         value = scan.timestamp if timestamp is None else timestamp
         return float(value)
 
-    def _remember(self, ranges, scan, timestamp):
+    @staticmethod
+    def _pose_values(pose):
+        if pose is None:
+            return None
+        if hasattr(pose, "as_array"):
+            values = np.asarray(pose.as_array(), dtype=np.float64).reshape(-1)
+        elif all(hasattr(pose, name) for name in ("x", "y", "yaw")):
+            values = np.asarray(
+                (pose.x, pose.y, pose.yaw), dtype=np.float64
+            )
+        else:
+            values = np.asarray(pose, dtype=np.float64).reshape(-1)
+        if values.size < 3 or not np.isfinite(values[:3]).all():
+            raise ValueError("temporal scan pose must contain finite x/y/yaw")
+        return values[:3].copy()
+
+    def _remember(self, ranges, scan, timestamp, pose):
         self._previous_ranges = ranges.copy()
         self._previous_timestamp = float(timestamp)
         self._previous_geometry = (
@@ -157,6 +214,77 @@ class RobustScanFlowEstimator:
             float(scan.angle_min),
             float(scan.angle_increment),
         )
+        self._previous_pose = self._pose_values(pose)
+
+    @staticmethod
+    def _contiguous_runs(indices):
+        if indices.size == 0:
+            return ()
+        boundaries = np.flatnonzero(np.diff(indices) > 1) + 1
+        return tuple(np.split(indices, boundaries))
+
+    def _warp_previous_ranges(self, previous, scan, previous_pose, pose):
+        """Reproject previous endpoints into the current robot frame.
+
+        Interpolation is restricted to contiguous valid beam runs, so the
+        warp cannot bridge an unobserved angular gap or invent an obstacle.
+        """
+
+        current_pose = self._pose_values(pose)
+        if previous_pose is None or current_pose is None:
+            return previous
+        beam_angles = float(scan.angle_min) + np.arange(previous.size) * float(
+            scan.angle_increment
+        )
+        warped = np.full(previous.size, np.nan, dtype=np.float64)
+        valid_indices = np.flatnonzero(np.isfinite(previous))
+        previous_x, previous_y, previous_yaw = previous_pose
+        current_x, current_y, current_yaw = current_pose
+        cp = np.cos(previous_yaw)
+        sp = np.sin(previous_yaw)
+        cc = np.cos(current_yaw)
+        sc = np.sin(current_yaw)
+
+        for run in self._contiguous_runs(valid_indices):
+            local_x = previous[run] * np.cos(beam_angles[run])
+            local_y = previous[run] * np.sin(beam_angles[run])
+            world_x = previous_x + cp * local_x - sp * local_y
+            world_y = previous_y + sp * local_x + cp * local_y
+            dx = world_x - current_x
+            dy = world_y - current_y
+            transformed_x = cc * dx + sc * dy
+            transformed_y = -sc * dx + cc * dy
+            transformed_ranges = np.hypot(transformed_x, transformed_y)
+            transformed_angles = np.unwrap(
+                np.arctan2(transformed_y, transformed_x)
+            )
+            order = np.argsort(transformed_angles)
+            transformed_angles = transformed_angles[order]
+            transformed_ranges = transformed_ranges[order]
+            if transformed_angles.size == 1:
+                candidates = beam_angles + 2.0 * np.pi * np.round(
+                    (transformed_angles[0] - beam_angles) / (2.0 * np.pi)
+                )
+                index = int(np.argmin(np.abs(candidates - transformed_angles[0])))
+                warped[index] = transformed_ranges[0]
+                continue
+            for shift in (-2.0 * np.pi, 0.0, 2.0 * np.pi):
+                targets = beam_angles + shift
+                inside = (
+                    targets >= transformed_angles[0]
+                ) & (targets <= transformed_angles[-1])
+                if not np.any(inside):
+                    continue
+                interpolated = np.interp(
+                    targets[inside], transformed_angles, transformed_ranges
+                )
+                indices = np.flatnonzero(inside)
+                empty = ~np.isfinite(warped[indices])
+                warped[indices[empty]] = interpolated[empty]
+                warped[indices[~empty]] = np.minimum(
+                    warped[indices[~empty]], interpolated[~empty]
+                )
+        return warped
 
     def _hold_or(self, estimate, timestamp):
         if estimate.valid and estimate.risk_alpha > 0.0:
@@ -175,7 +303,7 @@ class RobustScanFlowEstimator:
         self._hold_until = None
         return estimate
 
-    def update(self, scan, timestamp=None) -> ScanFlowEstimate:
+    def update(self, scan, timestamp=None, pose=None) -> ScanFlowEstimate:
         if not self.config.enabled:
             return ScanFlowEstimate(reason="disabled")
         if scan is None:
@@ -190,16 +318,21 @@ class RobustScanFlowEstimator:
         current = np.where(current_valid, raw, np.nan)
         geometry = (raw.size, float(scan.angle_min), float(scan.angle_increment))
         if self._previous_ranges is None:
-            self._remember(current, scan, now)
+            self._remember(current, scan, now, pose)
             return ScanFlowEstimate(reason="warmup")
         if geometry != self._previous_geometry:
-            self._remember(current, scan, now)
+            self._remember(current, scan, now, pose)
             return ScanFlowEstimate(reason="geometry_changed")
         dt = now - float(self._previous_timestamp)
         previous = self._previous_ranges
-        self._remember(current, scan, now)
+        previous_pose = self._previous_pose
+        self._remember(current, scan, now, pose)
         if not np.isfinite(dt) or dt <= 1e-9 or dt > self.config.maximum_dt_s:
             return self._hold_or(ScanFlowEstimate(reason="invalid_dt"), now)
+        if self.config.ego_motion_compensation_enabled:
+            previous = self._warp_previous_ranges(
+                previous, scan, previous_pose, pose
+            )
 
         angles = float(scan.angle_min) + np.arange(raw.size) * float(
             scan.angle_increment

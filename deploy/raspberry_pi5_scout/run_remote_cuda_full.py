@@ -597,7 +597,7 @@ def _real_robot_diagnostic_payload(tracker, plan_diagnostics, safety_diagnostics
     tracker_values = dict(tracker or {})
     planner_values = dict(plan_diagnostics or {})
     return {
-        "schema_version": "pc_pi_full_proposed_diagnostics_v2",
+        "schema_version": "pc_pi_full_proposed_diagnostics_v3",
         # Preserve the producer's complete per-track records.  These include
         # position, fitted velocity, support/extent, association quality,
         # static/dynamic/unknown classification, and the raw motion evidence.
@@ -611,6 +611,109 @@ def _real_robot_diagnostic_payload(tracker, plan_diagnostics, safety_diagnostics
         # This is the final post-planner safety boundary, including override,
         # hard-stop, recovery, and applied-command diagnostics.
         "safety": _safety_diagnostic_trace(safety_diagnostics),
+    }
+
+
+def _control_cause_chain(
+    *,
+    plan,
+    planning_context,
+    decision,
+    path_guard,
+    commanded_v,
+    commanded_omega,
+    goal_stop_triggered,
+    status,
+    heartbeat,
+):
+    """Persist the command ownership chain without logging large payloads.
+
+    This is deliberately a causal summary, not a second controller.  It lets
+    a replay answer which layer changed the command and whether the change was
+    an emergency candidate, a hard safety stop, a path guard, the goal stop,
+    or merely the nominal MPPI output.
+    """
+    planner = dict(getattr(plan, "diagnostics", {}) or {})
+    safety = dict(getattr(decision, "diagnostics", {}) or {})
+    guard = dict(path_guard or {})
+    fallback_kind = str(
+        planning_context.get("probabilistic_obstacle_active_fallback_kind", "none")
+    )
+    emergency_selected = bool(
+        planning_context.get(
+            "probabilistic_obstacle_emergency_candidate_selected", False
+        )
+    )
+    if goal_stop_triggered:
+        dominant = "goal_stop"
+    elif str(decision.reason) in _UNCONDITIONAL_TRANSLATION_STOP_REASONS:
+        dominant = str(decision.reason)
+    elif guard.get("active", False):
+        dominant = str(guard.get("reason", "path_guard"))
+    elif emergency_selected:
+        dominant = "probabilistic_emergency_candidate"
+    elif bool(decision.overridden):
+        dominant = str(decision.reason)
+    else:
+        dominant = "nominal_mppi"
+    if hasattr(status, "target_v_mps"):
+        heartbeat_status = {
+            "gateway_target": [
+                float(status.target_v_mps), float(status.target_omega_radps)
+            ],
+            "gateway_applied": [
+                float(status.applied_v_mps), float(status.applied_omega_radps)
+            ],
+        }
+    else:
+        heartbeat_status = dict(status or {})
+    return {
+        "dominant_cause": dominant,
+        "planner_proposed": [
+            float(plan.proposed_control.v),
+            float(plan.proposed_control.omega),
+        ],
+        "planner_fallback_kind": fallback_kind,
+        "planner_emergency_candidate_selected": emergency_selected,
+        "planner_emergency_candidate_index": int(
+            planning_context.get(
+                "probabilistic_obstacle_active_fallback_index", -1
+            )
+            or -1
+        ),
+        "planner_optimizer_best_first": [
+            float(planning_context.get("optimizer_best_first_v", 0.0) or 0.0),
+            float(planning_context.get("optimizer_best_first_omega", 0.0) or 0.0),
+        ],
+        "planner_optimizer_selected_first": [
+            float(planning_context.get("optimizer_selected_first_v", 0.0) or 0.0),
+            float(planning_context.get("optimizer_selected_first_omega", 0.0) or 0.0),
+        ],
+        "planner_optimizer_cost_gap": float(
+            planning_context.get("optimizer_selected_cost_gap", 0.0) or 0.0
+        ),
+        "safety_reason": str(decision.reason),
+        "safety_overridden": bool(decision.overridden),
+        "safety_executed": [
+            float(decision.executed_control.v),
+            float(decision.executed_control.omega),
+        ],
+        "path_guard_active": bool(guard.get("active", False)),
+        "path_guard_reason": str(guard.get("reason", "none")),
+        "path_guard_output": [float(commanded_v), float(commanded_omega)],
+        "goal_stop_triggered": bool(goal_stop_triggered),
+        "heartbeat_target": [
+            float(heartbeat_status.get("gateway_target", [0.0, 0.0])[0]),
+            float(heartbeat_status.get("gateway_target", [0.0, 0.0])[1]),
+        ],
+        "pi_applied": [
+            float(heartbeat_status.get("gateway_applied", [0.0, 0.0])[0]),
+            float(heartbeat_status.get("gateway_applied", [0.0, 0.0])[1]),
+        ],
+        "heartbeat_refresh_count": int(getattr(heartbeat, "refresh_count", 0)),
+        "heartbeat_lease_expiry_count": int(
+            getattr(heartbeat, "lease_expiry_count", 0)
+        ),
     }
 
 
@@ -2125,6 +2228,23 @@ def main():
             algorithm_features["probabilistic_risk"]
         ),
         "probabilistic_obstacle_risk_cuda_device": "cuda",
+        # Real-robot emergency admission: ordinary probabilistic risk remains
+        # in the MPPI cost, while direct takeover requires a short, reliable
+        # causal scan certificate.  Critical near-body hard stops remain
+        # authoritative below this planner boundary.
+        "probabilistic_obstacle_emergency_candidate_trigger_ttc_s": 1.6,
+        "probabilistic_obstacle_emergency_candidate_trigger_distance_m": 0.85,
+        "probabilistic_obstacle_emergency_candidate_prefix_steps": 5,
+        "probabilistic_obstacle_emergency_candidate_intent_hold_steps": 5,
+        "probabilistic_obstacle_emergency_candidate_rearm_ttc_s": 2.0,
+        "probabilistic_obstacle_emergency_candidate_rearm_clear_steps": 3,
+        "probabilistic_obstacle_emergency_require_scan_quality": True,
+        "probabilistic_obstacle_emergency_min_support_beams": 4,
+        "probabilistic_obstacle_emergency_max_rejected_jump_fraction": 0.60,
+        "probabilistic_obstacle_emergency_candidate_slew_enabled": True,
+        # Keep the full candidate/feasibility evidence in the asynchronous
+        # audit stream; no candidate arrays are serialized.
+        "optimizer_diagnostics_enabled": True,
         "residual_device_rollout_enabled": bool(
             algorithm_features["residual_learning"]
         ),
@@ -2766,6 +2886,17 @@ def main():
                     "path_guard": path_guard,
                     "physical_command_slew_guard": physical_slew_guard,
                     "direction_reversal_guard": direction_guard,
+                    "control_cause_chain": _control_cause_chain(
+                        plan=plan,
+                        planning_context=planning_context,
+                        decision=decision,
+                        path_guard=path_guard,
+                        commanded_v=commanded_v,
+                        commanded_omega=commanded_omega,
+                        goal_stop_triggered=goal_stop_triggered,
+                        status=status,
+                        heartbeat=heartbeat,
+                    ),
                     # The stable field name preserves shadow-run tooling.  Its
                     # own control_enabled bit states whether this run merely
                     # observed or exercised semantic authority.
@@ -2871,7 +3002,7 @@ def main():
             "hss_device": config["planner"]["paper_rl_driven"][
                 "reliability_sidecar"
             ].get("device"),
-            "diagnostic_schema_version": "pc_pi_full_proposed_diagnostics_v2",
+            "diagnostic_schema_version": "pc_pi_full_proposed_diagnostics_v3",
             "encounter_mode_shadow_enabled": bool(
                 encounter_mode_config.enabled
             ),

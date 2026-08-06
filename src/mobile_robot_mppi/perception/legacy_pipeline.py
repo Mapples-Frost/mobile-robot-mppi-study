@@ -40,6 +40,21 @@ class LegacyScanPipeline:
         self.scan_guard = _load_module("mppi_scan_guard_compat", scripts / "scan_guard.py")
         self.local_layer = _load_module("mppi_local_layer_compat", scripts / "local_obstacle_layer.py")
         self.config = dict(config)
+        local_layer_config = self.config.get("local_obstacle_layer", {})
+        self.local_obstacle_hard_filter_enabled = bool(
+            local_layer_config.get(
+                "local_obstacle_hard_filter_enabled", False
+            )
+        )
+        self.local_obstacle_hard_filter_max_obstacles = int(
+            local_layer_config.get(
+                "local_obstacle_hard_filter_max_obstacles", 16
+            )
+        )
+        if self.local_obstacle_hard_filter_max_obstacles < 1:
+            raise ValueError(
+                "local_obstacle_hard_filter_max_obstacles must be positive"
+            )
         self.temporal_scan_flow = RobustScanFlowEstimator(
             self.config.get("temporal_scan_guard", {})
         )
@@ -54,8 +69,34 @@ class LegacyScanPipeline:
                 "known_static_filter_tolerance_m", 0.06
             )
         )
+        # The raw scan remains the source for geometric collision guarding.
+        # When enabled, temporal closing-rate/TTC inference instead consumes
+        # the scan after known-static beam masking.  This prevents wall
+        # returns from being interpreted as moving obstacles while preserving
+        # the independent raw geometric safety guard.  Default off preserves
+        # historical behavior exactly.
+        self.known_static_temporal_flow_filter_enabled = bool(
+            tracker_config.get(
+                "known_static_temporal_flow_filter_enabled", False
+            )
+        )
         self.known_static_obstacles = tuple(
             tracker_config.get("known_static_obstacles", ())
+        )
+        # Cluster-centre static rejection.  The scan filter above screens beam
+        # endpoints; survivors are clustered, so a cluster centre can still sit
+        # on a wall and be tracked as a moving obstacle.  This second test runs
+        # on the cluster CENTRE, where real and phantom obstacles separate
+        # cleanly: a real obstacle's centre cannot approach a wall closer than
+        # its own half-extent plus the scene's dynamic clearance floor.
+        # Default off, which reproduces the historical behaviour exactly.
+        self.known_static_track_rejection_enabled = bool(
+            tracker_config.get("known_static_track_rejection_enabled", False)
+        )
+        self.known_static_track_rejection_distance_m = float(
+            tracker_config.get(
+                "known_static_track_rejection_distance_m", 0.15
+            )
         )
         if (
             self.known_static_filter_enabled
@@ -63,6 +104,17 @@ class LegacyScanPipeline:
         ):
             raise ValueError(
                 "known static filtering requires injected static geometry"
+            )
+        if (
+            self.known_static_track_rejection_enabled
+            and not self.known_static_obstacles
+        ):
+            raise ValueError(
+                "known static track rejection requires injected static geometry"
+            )
+        if self.known_static_track_rejection_distance_m < 0.0:
+            raise ValueError(
+                "known_static_track_rejection_distance_m must be non-negative"
             )
         maximum_tracks = int(tracker_config.get("maximum_tracks", 1))
         tracker_type = (
@@ -75,6 +127,47 @@ class LegacyScanPipeline:
             if bool(tracker_config.get("enabled", False))
             else None
         )
+        if (
+            self.known_static_track_rejection_enabled
+            and self.dynamic_obstacle_tracker is not None
+        ):
+            if not hasattr(
+                self.dynamic_obstacle_tracker, "static_cluster_rejection"
+            ):
+                raise ValueError(
+                    "known static track rejection requires the multi-target "
+                    "tracker; the single-target tracker has no cluster stage"
+                )
+            self.dynamic_obstacle_tracker.static_cluster_rejection = (
+                self._static_cluster_rejection
+            )
+
+    def _static_cluster_rejection(self, centers):
+        """Reject cluster centres lying on known static geometry.
+
+        Reuses the same geometry as the scan filter, but with
+        ``segment_half_thickness=True`` so the comparison is against the true
+        wall SURFACE rather than a doubled thickness, and with its own wider
+        tolerance.
+        """
+
+        return self._known_static_hit_mask(
+            centers,
+            segment_half_thickness=True,
+            tolerance=self.known_static_track_rejection_distance_m,
+        )
+
+    def _temporal_flow_scan(self, raw_observation, planner_observation):
+        """Choose the scan supplied to temporal dynamic-risk inference.
+
+        The geometric scan guard must continue to inspect the raw scan.  The
+        temporal estimator is a separate dynamic-only signal and may use the
+        known-static-filtered scan when explicitly enabled.
+        """
+
+        if self.known_static_temporal_flow_filter_enabled:
+            return planner_observation.scan
+        return raw_observation.scan
 
     @staticmethod
     def _forecast_sequence(forecast):
@@ -110,10 +203,16 @@ class LegacyScanPipeline:
         projections = start[None, :] + fraction[:, None] * delta[None, :]
         return np.linalg.norm(points - projections, axis=1)
 
-    def _known_static_hit_mask(self, points):
+    def _known_static_hit_mask(
+        self, points, *, segment_half_thickness=False, tolerance=None
+    ):
         points = np.asarray(points, dtype=np.float64)
         matched = np.zeros(points.shape[0], dtype=bool)
-        tolerance = self.known_static_filter_tolerance_m
+        tolerance = (
+            self.known_static_filter_tolerance_m
+            if tolerance is None
+            else float(tolerance)
+        )
         for obstacle in self.known_static_obstacles:
             kind = str(obstacle.get("type", "cylinder"))
             if kind == "box":
@@ -148,7 +247,12 @@ class LegacyScanPipeline:
                     points, obstacle["start"], obstacle["end"]
                 )
                 matched |= distance <= (
-                    float(obstacle.get("thickness", 0.10))
+                    (
+                        0.5
+                        if segment_half_thickness
+                        else 1.0
+                    )
+                    * float(obstacle.get("thickness", 0.10))
                     + tolerance
                 )
             elif kind == "cylinder":
@@ -277,8 +381,30 @@ class LegacyScanPipeline:
             side_angle_deg=float(guard_cfg.get("side_angle_deg", 125.0)),
             near_body_stop_radius=float(guard_cfg.get("near_body_stop_radius", 0.20)),
         ))
-        flow = self.temporal_scan_flow.update(scan, observation.timestamp)
+        # Filter known-static returns before temporal dynamic inference only
+        # when the new opt-in is enabled.  The raw ``scan`` above remains the
+        # input to the geometric safety guard.
+        planner_observation = self._dynamic_tracker_observation(
+            observation
+        )
+        flow_scan = self._temporal_flow_scan(
+            observation, planner_observation
+        )
+        flow = self.temporal_scan_flow.update(
+            flow_scan, observation.timestamp, observation.pose
+        )
         flow_values = flow.to_dict()
+        # The motion-bootstrap tracker must see the same causal flow estimate
+        # that is logged and consumed by the geometric safety layer below.
+        # Previously this value was added only to the final output auxiliary,
+        # after dynamic_obstacle_tracker.update() had already run, so a close
+        # moving person could trigger TTC braking without ever reaching the
+        # CA-IMM slot-selection path.
+        planner_auxiliary = dict(planner_observation.auxiliary)
+        planner_auxiliary["temporal_scan_flow"] = flow_values
+        planner_observation = replace(
+            planner_observation, auxiliary=planner_auxiliary
+        )
         guard.update({
             "temporal_scan_valid": flow.valid,
             "temporal_scan_reason": flow.reason,
@@ -291,12 +417,20 @@ class LegacyScanPipeline:
             "temporal_scan_rejected_jump_fraction": (
                 flow.rejected_jump_fraction
             ),
+            "temporal_scan_center_angle_rad": flow.center_angle_rad,
             "temporal_scan_held": flow.held,
         })
         flow_cfg = self.temporal_scan_flow.config
+        flow_safety_quality_ok = bool(
+            flow.support_beams >= flow_cfg.safety_min_support_beams
+            and flow.rejected_jump_fraction
+            <= flow_cfg.safety_max_rejected_jump_fraction
+        )
+        guard["temporal_scan_safety_quality_ok"] = flow_safety_quality_ok
         if flow_cfg.safety_enabled and flow.valid:
             if (
                 flow.ttc_s <= flow_cfg.safety_hard_stop_ttc_s
+                and flow_safety_quality_ok
                 and not bool(guard.get("emergency_stop", False))
             ):
                 guard["emergency_stop"] = True
@@ -310,7 +444,10 @@ class LegacyScanPipeline:
                 != "front_soft_block"
             ):
                 legacy_scale = float(guard.get("slow_scale", 1.0))
-                temporal_scale = min(legacy_scale, flow_cfg.safety_slow_scale)
+                temporal_scale = min(
+                    legacy_scale,
+                    flow_cfg.safety_slowdown_scale(flow.ttc_s),
+                )
                 if temporal_scale < legacy_scale - 1e-12:
                     guard["reason"] = "temporal_slowdown"
                 guard["should_slow_down"] = True
@@ -321,9 +458,6 @@ class LegacyScanPipeline:
         # returns.  Feeding known-static hits into both representations
         # double-counts walls as dense inflated circles and can make every
         # low-risk forward action look worse than stopping.
-        planner_observation = self._dynamic_tracker_observation(
-            observation
-        )
         planner_scan = planner_observation.scan
         values = (
             planner_scan.obstacle_ranges
@@ -375,11 +509,38 @@ class LegacyScanPipeline:
         )
         auxiliary = dict(observation.auxiliary)
         auxiliary["temporal_scan_flow"] = flow_values
-        if self.known_static_obstacles:
-            auxiliary["known_static_obstacles"] = (
-                self.known_static_obstacles
+        hard_filter_obstacles = list(self.known_static_obstacles)
+        if self.local_obstacle_hard_filter_enabled:
+            for ox, oy, radius in normalized[
+                    :self.local_obstacle_hard_filter_max_obstacles]:
+                hard_filter_obstacles.append({
+                    "type": "cylinder",
+                    "position": [float(ox), float(oy), 0.0],
+                    "radius": float(radius),
+                    "source": "causal_local_scan",
+                })
+        if hard_filter_obstacles:
+            # Reuse the planner's already tested hard static-feasibility
+            # machinery for the current causal scan.  The geometry is rebuilt
+            # every cycle, so no moving person is frozen across observations;
+            # it simply prevents MPPI's weighted mean from cutting through a
+            # currently occupied footprint when dynamic classification drops.
+            auxiliary["known_static_obstacles"] = tuple(
+                hard_filter_obstacles
             )
         diagnostics = dict(debug)
+        diagnostics["local_obstacle_count"] = len(normalized)
+        diagnostics["local_obstacle_hard_filter_enabled"] = bool(
+            self.local_obstacle_hard_filter_enabled
+        )
+        diagnostics["local_obstacle_hard_filter_count"] = int(
+            max(0, len(hard_filter_obstacles) - len(self.known_static_obstacles))
+        )
+        diagnostics["temporal_flow_scan_source"] = (
+            "known_static_filtered"
+            if self.known_static_temporal_flow_filter_enabled
+            else "raw"
+        )
         diagnostics["temporal_scan_flow"] = flow_values
         static_filter_diagnostics = (
             planner_observation.auxiliary.get("known_static_filter")
@@ -500,9 +661,76 @@ class LegacyScanPipeline:
                 auxiliary[key] = self._forecast_sequence(
                     tracker_update.forecast
                 )
+        near_body_points = tuple(guard.get("near_body_points", ()))
+        known_static_near_body_match = False
+        if self.known_static_obstacles and near_body_points:
+            local_points = np.asarray(
+                [
+                    (float(point["x"]), float(point["y"]))
+                    for point in near_body_points
+                ],
+                dtype=np.float64,
+            )
+            theta = float(observation.pose.theta)
+            cosine = float(np.cos(theta))
+            sine = float(np.sin(theta))
+            rotation = np.asarray(
+                ((cosine, -sine), (sine, cosine)),
+                dtype=np.float64,
+            )
+            sensor_offset = (
+                0.0
+                if self.dynamic_obstacle_tracker is None
+                else float(
+                    self.dynamic_obstacle_tracker.config
+                    .sensor_forward_offset_m
+                )
+            )
+            sensor_origin = np.asarray(
+                (
+                    observation.pose.x + sensor_offset * cosine,
+                    observation.pose.y + sensor_offset * sine,
+                ),
+                dtype=np.float64,
+            )
+            world_points = (
+                local_points @ rotation.T + sensor_origin[None, :]
+            )
+            known_static_near_body_match = bool(
+                np.any(self._known_static_hit_mask(
+                    world_points,
+                    segment_half_thickness=True,
+                ))
+            )
+        auxiliary["known_static_near_body_match"] = (
+            known_static_near_body_match
+        )
+        auxiliary["static_near_body_hard_stop"] = bool(
+            guard.get("emergency_stop", False)
+            and guard.get("reason") == "near_body_hard_stop"
+            and known_static_near_body_match
+            and not guard.get(
+                "dynamic_obstacle_near_body_match", False
+            )
+            and not guard.get(
+                "dynamic_obstacle_scan_flow_match", False
+            )
+        )
         auxiliary["dynamic_obstacle_escape_context"] = {
             "temporal_scan_valid": bool(flow.valid),
             "temporal_scan_ttc_s": float(flow.ttc_s),
+            "temporal_scan_clearance_m": float(flow.clearance_m),
+            "temporal_scan_support_beams": int(flow.support_beams),
+            "temporal_scan_support_fraction": float(flow.support_fraction),
+            "temporal_scan_rejected_jump_fraction": float(
+                flow.rejected_jump_fraction
+            ),
+            "temporal_scan_safety_quality_ok": bool(
+                flow.support_beams >= flow_cfg.safety_min_support_beams
+                and flow.rejected_jump_fraction
+                <= flow_cfg.safety_max_rejected_jump_fraction
+            ),
+            "temporal_scan_held": bool(flow.held),
             "temporal_scan_safety_hard_stop_ttc_s": float(
                 flow_cfg.safety_hard_stop_ttc_s
             ),
@@ -531,6 +759,21 @@ class LegacyScanPipeline:
                 else tracker_diagnostics.get(
                     "measurement_velocity_y_mps"
                 )
+            ),
+            "dynamic_obstacle_tracker_change_triggered": bool(
+                False
+                if self.dynamic_obstacle_tracker is None
+                else tracker_diagnostics.get("change_triggered", False)
+            ),
+            "dynamic_obstacle_tracker_forecast_valid": bool(
+                False
+                if self.dynamic_obstacle_tracker is None
+                else tracker_diagnostics.get("forecast_valid", False)
+            ),
+            "dynamic_obstacle_tracker_associated": bool(
+                False
+                if self.dynamic_obstacle_tracker is None
+                else tracker_diagnostics.get("associated", False)
             ),
             "dynamic_obstacle_forecast_index": (
                 0

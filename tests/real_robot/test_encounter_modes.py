@@ -396,6 +396,26 @@ def test_rejoin_is_not_restarted_by_same_confirmed_crossing_track():
     assert continued["encounter_temporary_waypoint"][1] == pytest.approx(0.0)
 
 
+def test_rejoin_releases_near_goal_instead_of_overshooting_forever():
+    manager = EncounterModeManager()
+    for step, y in enumerate((0.40, 0.30, 0.20, 0.08, -0.02)):
+        result = _update(manager, 0.1 * step, (2.0, y), (0.0, -0.5))
+    assert result["encounter_phase"] == "rejoin"
+
+    released = None
+    for step in range(4):
+        released = manager.update(
+            timestamp_s=0.6 + 0.1 * step,
+            pose=(5.0, 0.30, 0.0),
+            goal=(5.0, 0.0),
+            robot_speed_mps=0.2,
+            tracker_diagnostics={"tracks": ()},
+        )
+
+    assert released["encounter_phase"] == "idle"
+    assert released["encounter_strategy"] == "none"
+
+
 def test_stationary_robot_cannot_complete_off_center_frontal_bypass():
     manager = EncounterModeManager()
     result = None

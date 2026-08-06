@@ -1117,6 +1117,7 @@ class _DynamicPathGuardSupervisor:
         reverse_escape_exhausted=False,
         arbiter_steering_authoritative=True,
         arbiter_rejoin_requested=False,
+        dynamic_safety_arbitration_enabled=True,
     ):
         reason = str(safety_reason)
         if self._single_dynamic_authority:
@@ -1133,8 +1134,11 @@ class _DynamicPathGuardSupervisor:
                 reason in _UNCONDITIONAL_TRANSLATION_STOP_REASONS
             )
             dynamic_owner = bool(
-                reason in _DYNAMIC_PATH_AUTHORITY_REASONS
-                or hazard_active
+                dynamic_safety_arbitration_enabled
+                and (
+                    reason in _DYNAMIC_PATH_AUTHORITY_REASONS
+                    or hazard_active
+                )
             )
             output_v = 0.0 if unconditional_stop else float(proposed_v)
             diagnostics.update({
@@ -2493,6 +2497,11 @@ def main():
                         or decision.diagnostics.get(
                             "dynamic_escape_geometric_passage_completion_applied",
                             False,
+                        )
+                    ),
+                    dynamic_safety_arbitration_enabled=bool(
+                        decision.diagnostics.get(
+                            "dynamic_safety_arbitration_enabled", True
                         )
                     ),
                 )

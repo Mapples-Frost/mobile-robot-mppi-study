@@ -170,6 +170,7 @@ $runnerArgs = @(
     '--max-v-mps', $MaxVMps,
     '--max-reverse-v-mps', $MaxReverseVMps,
     '--max-omega-radps', $MaxOmegaRadps,
+    '--human-leg-mode',
     '--goal-stop-radius-m', 0.25,
     '--warmup-cycles', 3
 )

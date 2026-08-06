@@ -1888,6 +1888,7 @@ def main():
     parser.add_argument("--warm-start-forecast-cycles", type=int, default=14)
     parser.add_argument("--warm-start-dt-s", type=float, default=0.08)
     parser.add_argument("--allow-cold-forecast-path", action="store_true")
+    parser.add_argument("--human-leg-mode", action="store_true")
     parser.add_argument("--full-proposed", action="store_true")
     parser.add_argument("--traditional-mppi", action="store_true")
     parser.add_argument("--enable-actor-guidance", action="store_true")
@@ -1993,7 +1994,10 @@ def main():
         "computer": "windows_cuda_pc",
         "publish_enabled": bool(args.publish),
         "pi_gateway": args.pi_host,
-        "human_leg_dynamic_filter": False,
+        "human_leg_dynamic_filter": bool(
+            args.human_leg_mode
+            and algorithm_features["change_aware_prediction"]
+        ),
         "goal_stop_radius_m": float(args.goal_stop_radius_m),
         "residual_learning_enabled": bool(
             algorithm_features["residual_learning"]
@@ -2083,9 +2087,12 @@ def main():
     safety = components["safety"]
     reference = components["reference"]
     if algorithm_features["change_aware_prediction"]:
-        # Use the same causal mapless tracker profile as simulation.  The
-        # physical human-leg specialisation is intentionally not injected.
-        _install_mapless_tracker(perception, human_leg_mode=False)
+        # Human-leg handling and static filtering are required physical
+        # perception gates; they do not grant any semantic encounter-control
+        # authority to the final command.
+        _install_mapless_tracker(
+            perception, human_leg_mode=args.human_leg_mode
+        )
     forward_passage_config = ForwardPassageConfig(
         enabled=False,
         maximum_probability=float(args.forward_passage_risk_ceiling),
@@ -2701,7 +2708,10 @@ def main():
             "controller_dt_s": controller_dt_s,
             "forecast_dt_s": forecast_dt_s,
             "warm_start": warm_start,
-            "human_leg_mode": False,
+            "human_leg_mode": bool(
+                args.human_leg_mode
+                and algorithm_features["change_aware_prediction"]
+            ),
             "real_robot_forward_passage": False,
             "forward_passage_policy": "disabled_simulation_parity",
             "forward_passage_risk_ceiling": float(

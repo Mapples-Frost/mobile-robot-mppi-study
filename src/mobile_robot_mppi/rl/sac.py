@@ -483,6 +483,40 @@ class SACAgent:
         self.update_steps = 0
         self.bc_update_steps = 0
         self.bc_anchor_update_steps = 0
+        # Fixed-shape policy batches are evaluated repeatedly by the
+        # autoregressive MPPI prior.  A CUDA graph removes the per-step kernel
+        # launch overhead.  The correction-policy constants below are cached
+        # on-device so its composed base+residual branch is capture-stable too.
+        self._policy_gaussian_cuda_graphs = {}
+        self._cuda_graph_capture_active = False
+        self._last_policy_gaussian_backend = "cpu"
+        self._last_policy_gaussian_cuda_graph_used = False
+        correction_scale = tuple(float(value) for value in self.config.correction_scale)
+        if len(correction_scale) == 1:
+            correction_scale = correction_scale * self.action_dim
+        base_scale = tuple(
+            float(value) for value in self.config.correction_base_action_scale
+        )
+        base_offset = tuple(
+            float(value) for value in self.config.correction_base_action_offset
+        )
+        if len(base_scale) == 1:
+            base_scale = base_scale * self.action_dim
+        if len(base_offset) == 1:
+            base_offset = base_offset * self.action_dim
+        self._correction_scale_tensor = torch.as_tensor(
+            correction_scale, dtype=torch.float32, device=self.device
+        )
+        self._base_action_scale_tensor = torch.as_tensor(
+            base_scale, dtype=torch.float32, device=self.device
+        )
+        self._base_action_offset_tensor = torch.as_tensor(
+            base_offset, dtype=torch.float32, device=self.device
+        )
+        self._base_action_affine_identity = bool(
+            all(value == 1.0 for value in base_scale)
+            and all(value == 0.0 for value in base_offset)
+        )
 
     @property
     def is_correction_policy(self):
@@ -504,34 +538,12 @@ class SACAgent:
         return lower_tail_cvar(values, fraction)
 
     def _expanded_correction_scale(self):
-        values = tuple(float(value) for value in self.config.correction_scale)
-        if len(values) == 1:
-            values = values * self.action_dim
-        return torch.as_tensor(values, dtype=torch.float32, device=self.device)
+        return self._correction_scale_tensor
 
     def _expanded_base_action_affine(self):
-        scale = tuple(
-            float(value)
-            for value in self.config.correction_base_action_scale
-        )
-        offset = tuple(
-            float(value)
-            for value in self.config.correction_base_action_offset
-        )
-        if len(scale) == 1:
-            scale = scale * self.action_dim
-        if len(offset) == 1:
-            offset = offset * self.action_dim
-        return (
-            torch.as_tensor(
-                scale, dtype=torch.float32, device=self.device
-            ),
-            torch.as_tensor(
-                offset, dtype=torch.float32, device=self.device
-            ),
-        )
+        return self._base_action_scale_tensor, self._base_action_offset_tensor
 
-    def _map_frozen_base_action(self, base_action):
+    def _map_frozen_base_action(self, base_action, *, validate=True):
         """Map the old Actor latent action into a migrated action space.
 
         The affine map is part of the checkpoint contract.  Its parameters are
@@ -542,11 +554,12 @@ class SACAgent:
         scale, offset = self._expanded_base_action_affine()
         shape = *((1,) * (base_action.ndim - 1)), self.action_dim
         mapped = offset.view(shape) + scale.view(shape) * base_action
-        if not bool(torch.isfinite(mapped).all()):
+        if validate and not bool(torch.isfinite(mapped).all()):
             raise FloatingPointError("mapped frozen base action is not finite")
         tolerance = 1.0e-6
-        if bool(torch.any(mapped < -1.0 - tolerance)) or bool(
-            torch.any(mapped > 1.0 + tolerance)
+        if validate and (
+            bool(torch.any(mapped < -1.0 - tolerance))
+            or bool(torch.any(mapped > 1.0 + tolerance))
         ):
             raise RuntimeError(
                 "frozen base action affine map left normalized bounds"
@@ -566,9 +579,11 @@ class SACAgent:
         )
         old_mean = torch.tanh(pre_tanh)
         scale, offset = self._expanded_base_action_affine()
-        if bool(torch.all(scale == 1.0)) and bool(torch.all(offset == 0.0)):
+        if self._base_action_affine_identity:
             return old_mean, pre_tanh, log_std
-        mapped_mean = self._map_frozen_base_action(old_mean)
+        mapped_mean = self._map_frozen_base_action(
+            old_mean, validate=not self._cuda_graph_capture_active
+        )
         shape = *((1,) * (old_mean.ndim - 1)), self.action_dim
         mapped_post_tanh_std = torch.clamp(
             scale.abs().view(shape)
@@ -785,24 +800,12 @@ class SACAgent:
             raise FloatingPointError("SAC batched policy produced NaN or Inf")
         return selected.cpu().numpy().astype(np.float32)
 
-    def _policy_gaussian_parameters_batch(self, observations):
-        """Evaluate the composed Actor and retain its frozen-base Gaussian."""
+    def _evaluate_policy_gaussian_parameters_torch(self, tensor):
+        """Evaluate Gaussian tensors without host-side validation/sync."""
 
-        data = np.asarray(observations, dtype=np.float32)
-        if (
-            data.ndim != 2
-            or data.shape[1:] != (self.observation_dim,)
-            or data.shape[0] <= 0
-            or not np.isfinite(data).all()
-        ):
-            raise ValueError(
-                "SAC observation batch must be finite with shape [B,%d]"
-                % self.observation_dim
-            )
         base_pre_tanh = None
         base_log_std = None
-        with torch.no_grad():
-            tensor = torch.as_tensor(data, device=self.device)
+        with torch.inference_mode():
             if self.is_correction_policy:
                 self._require_correction_base()
                 (
@@ -833,18 +836,116 @@ class SACAgent:
                 )
             else:
                 mean, log_std = self.actor.distribution(tensor)
-        finite = bool(
-            torch.isfinite(mean).all() and torch.isfinite(log_std).all()
-        )
-        if base_pre_tanh is not None:
-            finite = finite and bool(
-                torch.isfinite(base_pre_tanh).all()
-                and torch.isfinite(base_log_std).all()
+        return mean, log_std, base_pre_tanh, base_log_std
+
+    def _policy_gaussian_parameters_cuda_graph(self, tensor):
+        """Evaluate one fixed-shape composed Actor batch by CUDA graph."""
+
+        key = (tuple(int(value) for value in tensor.shape), str(tensor.dtype))
+        cached = self._policy_gaussian_cuda_graphs.get(key)
+        if cached is None:
+            static_input = torch.empty_like(tensor)
+            static_input.copy_(tensor)
+            with torch.inference_mode():
+                for _ in range(3):
+                    self._evaluate_policy_gaussian_parameters_torch(static_input)
+            torch.cuda.synchronize(self.device)
+            graph = torch.cuda.CUDAGraph()
+            self._cuda_graph_capture_active = True
+            try:
+                with torch.inference_mode(), torch.cuda.graph(graph):
+                    static_output = self._evaluate_policy_gaussian_parameters_torch(
+                        static_input
+                    )
+            finally:
+                self._cuda_graph_capture_active = False
+            cached = (static_input, graph, static_output)
+            self._policy_gaussian_cuda_graphs[key] = cached
+        static_input, graph, static_output = cached
+        static_input.copy_(tensor)
+        graph.replay()
+        return static_output
+
+    def policy_gaussian_parameters_batch_torch(self, observations):
+        """Evaluate the composed Actor and keep Gaussian tensors on-device.
+
+        The legacy public method returns NumPy arrays because the original
+        MPPI implementation is NumPy based.  The deployment Actor path uses
+        this tensor API to keep neural inference and post-processing on CUDA
+        until the single boundary copy required by the MPPI solver.
+        """
+
+        if torch.is_tensor(observations):
+            tensor = observations.to(device=self.device, dtype=torch.float32)
+            if (
+                tensor.ndim != 2
+                or tuple(tensor.shape[1:]) != (self.observation_dim,)
+                or tensor.shape[0] <= 0
+            ):
+                raise ValueError(
+                    "SAC observation batch must be finite with shape [B,%d]"
+                    % self.observation_dim
+                )
+        else:
+            data = np.asarray(observations, dtype=np.float32)
+            if (
+                data.ndim != 2
+                or data.shape[1:] != (self.observation_dim,)
+                or data.shape[0] <= 0
+                or not np.isfinite(data).all()
+            ):
+                raise ValueError(
+                    "SAC observation batch must be finite with shape [B,%d]"
+                    % self.observation_dim
+                )
+            tensor = torch.as_tensor(data, device=self.device)
+        if self.device.type == "cuda":
+            self._last_policy_gaussian_backend = "cuda"
+            self._last_policy_gaussian_cuda_graph_used = True
+            mean, log_std, base_pre_tanh, base_log_std = (
+                self._policy_gaussian_parameters_cuda_graph(tensor)
             )
-        if not finite:
+        else:
+            self._last_policy_gaussian_backend = "cpu"
+            self._last_policy_gaussian_cuda_graph_used = False
+            mean, log_std, base_pre_tanh, base_log_std = (
+                self._evaluate_policy_gaussian_parameters_torch(tensor)
+            )
+        finite_tensor = torch.isfinite(mean).all() & torch.isfinite(log_std).all()
+        if base_pre_tanh is not None:
+            finite_tensor = finite_tensor & (
+                torch.isfinite(base_pre_tanh).all()
+                & torch.isfinite(base_log_std).all()
+            )
+        if self.device.type == "cuda":
+            # Host-side bool(tensor) would synchronize every autoregressive
+            # step and erase the CUDA-graph launch savings.  PyTorch's async
+            # assertion keeps the same fail-fast check on the device; the
+            # normal packed D2H boundary still surfaces any device fault.
+            assert_async = getattr(torch, "_assert_async", None)
+            if callable(assert_async):
+                assert_async(
+                    finite_tensor,
+                    "SAC policy Gaussian parameters contain NaN or Inf",
+                )
+            elif not bool(finite_tensor):
+                # Compatibility fallback for older PyTorch releases without
+                # the device-side assertion primitive.
+                raise FloatingPointError(
+                    "SAC policy Gaussian parameters contain NaN or Inf"
+                )
+        elif not bool(finite_tensor):
             raise FloatingPointError(
                 "SAC policy Gaussian parameters contain NaN or Inf"
             )
+        return mean, log_std, base_pre_tanh, base_log_std
+
+    def _policy_gaussian_parameters_batch(self, observations):
+        """Evaluate the composed Actor and retain its frozen-base Gaussian."""
+
+        mean, log_std, base_pre_tanh, base_log_std = (
+            self.policy_gaussian_parameters_batch_torch(observations)
+        )
         return (
             mean.cpu().numpy().astype(np.float64),
             log_std.cpu().numpy().astype(np.float64),

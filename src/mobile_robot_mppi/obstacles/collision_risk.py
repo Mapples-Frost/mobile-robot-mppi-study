@@ -367,12 +367,149 @@ def evaluate_collision_risk(
     )
 
 
+def evaluate_collision_risk_cuda(
+    robot_positions,
+    forecasts: Sequence[GaussianMixtureObstacleForecast],
+    config: CollisionRiskConfig,
+    *,
+    device="cuda",
+):
+    """Evaluate the unchanged Gaussian-mixture bound on a CUDA device.
+
+    MPPI evaluates every candidate against each forecast at every horizon
+    step.  This is a dense ``[candidates, horizon, modes]`` calculation, so
+    unlike low-rate tracking state updates it has enough parallel work to pay
+    for one host-to-device and one device-to-host boundary transfer.  Inputs
+    and the public result remain NumPy/float64 so all downstream thresholding
+    and safety arbitration retain their established contract.
+    """
+
+    try:
+        import torch
+    except ImportError as exc:
+        raise RuntimeError(
+            "CUDA collision-risk evaluation requires PyTorch"
+        ) from exc
+    if not torch.cuda.is_available():
+        raise RuntimeError("CUDA collision-risk evaluation requires a GPU")
+
+    positions = np.asarray(robot_positions, dtype=np.float64)
+    forecasts = tuple(forecasts)
+    if not forecasts:
+        raise ValueError("collision risk requires at least one forecast")
+    if (
+        positions.ndim != 3
+        or positions.shape[2] != 2
+        or positions.shape[0] <= 0
+        or positions.shape[1] <= 0
+        or not np.isfinite(positions).all()
+    ):
+        raise ValueError("robot positions must be finite with shape [K,H,2]")
+    if any(
+        not isinstance(item, GaussianMixtureObstacleForecast)
+        for item in forecasts
+    ):
+        raise TypeError("collision risk forecasts use an invalid contract")
+
+    target_device = torch.device(device)
+    if target_device.type != "cuda":
+        raise ValueError("CUDA collision-risk evaluation requires a CUDA device")
+    horizon = int(positions.shape[1])
+    positions_t = torch.as_tensor(
+        positions, dtype=torch.float64, device=target_device
+    )
+    probability_mass_by_step = torch.zeros(
+        positions.shape[:2], dtype=torch.float64, device=target_device
+    )
+    sqrt_two_pi = float(np.sqrt(2.0 * np.pi))
+    minimum_variance = float(config.minimum_position_std_m) ** 2
+
+    for forecast in forecasts:
+        if horizon > forecast.horizon:
+            raise ValueError("robot horizon cannot exceed obstacle forecast horizon")
+        means_t = torch.as_tensor(
+            np.array(forecast.component_means[:horizon], copy=True),
+            dtype=torch.float64,
+            device=target_device,
+        )
+        covariances_t = torch.as_tensor(
+            np.array(forecast.component_covariances[:horizon], copy=True),
+            dtype=torch.float64,
+            device=target_device,
+        )
+        weights_t = torch.as_tensor(
+            np.array(forecast.component_weights[:horizon], copy=True),
+            dtype=torch.float64,
+            device=target_device,
+        )
+        delta = means_t.unsqueeze(0) - positions_t.unsqueeze(2)
+        distance = torch.linalg.vector_norm(delta, dim=-1)
+        safe_distance = torch.clamp(distance, min=1.0e-15)
+        direction = delta / safe_distance.unsqueeze(-1)
+        radial_variance = torch.einsum(
+            "khmi,hmij,khmj->khm", direction, covariances_t, direction
+        )
+        if bool((radial_variance < -1.0e-8).any().item()):
+            raise FloatingPointError("radial variance became negative")
+        radial_std = torch.sqrt(torch.clamp(radial_variance, min=0.0) + minimum_variance)
+        combined_radius = (
+            float(config.robot_radius_m)
+            + float(forecast.radius_m)
+            + float(config.safety_margin_m)
+        )
+        z_score = (combined_radius - distance) / radial_std
+        absolute = torch.abs(z_score)
+        t = 1.0 / (1.0 + 0.2316419 * absolute)
+        polynomial = t * (
+            0.319381530
+            + t
+            * (
+                -0.356563782
+                + t
+                * (
+                    1.781477937
+                    + t * (-1.821255978 + t * 1.330274429)
+                )
+            )
+        )
+        upper = 1.0 - torch.exp(-0.5 * absolute.square()) * polynomial / sqrt_two_pi
+        probability = torch.where(z_score >= 0.0, upper, 1.0 - upper)
+        probability = torch.where(
+            distance <= combined_radius,
+            torch.ones_like(probability),
+            probability,
+        )
+        probability = torch.clamp(probability, 0.0, 1.0)
+        probability_mass_by_step += torch.sum(
+            probability * weights_t.unsqueeze(0), dim=-1
+        )
+
+    step_upper_bound_t = torch.clamp(probability_mass_by_step, 0.0, 1.0)
+    accumulated_t = torch.sum(probability_mass_by_step, dim=1)
+    union_t = torch.clamp(accumulated_t, 0.0, 1.0)
+    maximum_t = torch.max(step_upper_bound_t, dim=1).values
+    hard_t = maximum_t >= float(config.hard_probability_threshold)
+    # One packed D2H transfer avoids per-summary stream synchronizations.
+    summaries_t = torch.stack((accumulated_t, union_t, maximum_t), dim=1)
+    step_upper_bound = step_upper_bound_t.cpu().numpy()
+    summaries = summaries_t.cpu().numpy()
+    hard = hard_t.cpu().numpy()
+    return CollisionRiskEvaluation(
+        step_probability_upper_bound=step_upper_bound,
+        accumulated_probability_mass=summaries[:, 0],
+        horizon_union_bound=summaries[:, 1],
+        maximum_step_probability=summaries[:, 2],
+        hard_violation=hard,
+    )
+
+
 __all__ = [
     "CollisionRiskConfig",
     "CollisionRiskEvaluation",
     "GaussianMixtureObstacleForecast",
     "component_collision_probability_upper_bound",
     "evaluate_collision_risk",
+    "evaluate_collision_risk_cuda",
     "mixture_collision_probability_upper_bound",
     "standard_normal_cdf",
 ]

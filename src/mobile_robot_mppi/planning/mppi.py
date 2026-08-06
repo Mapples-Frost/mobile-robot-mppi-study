@@ -25,6 +25,7 @@ from mobile_robot_mppi.obstacles.collision_risk import (
     CollisionRiskConfig,
     GaussianMixtureObstacleForecast,
     evaluate_collision_risk,
+    evaluate_collision_risk_cuda,
 )
 from mobile_robot_mppi.planning.candidate_diagnostics import (
     reverse_candidate_diagnostics,
@@ -156,6 +157,10 @@ class MppiConfig:
     static_astar_replan_bounds_padding_m: float = 0.50
     probabilistic_obstacle_risk_enabled: bool = False
     probabilistic_obstacle_risk_weight: float = 0.0
+    # Candidate-vs-forecast risk is a dense [K,H,M] operation.  Keep this
+    # opt-in so CPU-only evaluation protocols retain their exact runtime path.
+    probabilistic_obstacle_risk_cuda_enabled: bool = False
+    probabilistic_obstacle_risk_cuda_device: str = "cuda"
     probabilistic_obstacle_hard_threshold: float = 0.20
     probabilistic_obstacle_hard_penalty: float = 10000.0
     probabilistic_obstacle_safety_margin: float = 0.10
@@ -589,6 +594,12 @@ class MppiConfig:
             ),
             probabilistic_obstacle_risk_weight=float(
                 values.get("probabilistic_obstacle_risk_weight", 0.0)
+            ),
+            probabilistic_obstacle_risk_cuda_enabled=bool(
+                values.get("probabilistic_obstacle_risk_cuda_enabled", False)
+            ),
+            probabilistic_obstacle_risk_cuda_device=str(
+                values.get("probabilistic_obstacle_risk_cuda_device", "cuda")
             ),
             probabilistic_obstacle_hard_threshold=float(
                 values.get("probabilistic_obstacle_hard_threshold", 0.20)
@@ -1362,6 +1373,13 @@ class MppiConfig:
                 "probabilistic obstacle minimum std must be positive"
             )
         if (
+            self.probabilistic_obstacle_risk_cuda_enabled
+            and not self.probabilistic_obstacle_risk_cuda_device.startswith("cuda")
+        ):
+            raise ValueError(
+                "CUDA probabilistic obstacle risk requires a CUDA device"
+            )
+        if (
             self.probabilistic_obstacle_risk_enabled
             and self.probabilistic_obstacle_risk_weight <= 0.0
             and self.probabilistic_obstacle_hard_penalty <= 0.0
@@ -1739,6 +1757,10 @@ class MppiController:
         self._reliability_pending_control = None
         self._delay_preceding_action = self.previous_action.copy()
         self._previous_probabilistic_risk = 1.0
+        # Read-only audit state for the dense forecast-risk backend.  This is
+        # deliberately separate from the risk result contract so CPU and CUDA
+        # evaluations remain numerically/public-API compatible.
+        self._last_probabilistic_risk_backend = "disabled"
         self._probabilistic_reference_risk_filtered = 0.0
         self._static_astar_progress_anchor = None
         self._static_astar_stagnation_steps = 0
@@ -6122,22 +6144,28 @@ class MppiController:
         xy = np.asarray(trajectories, dtype=np.float64)[
             :, 1:, list(self.state_spec.position_indices)
         ]
-        return evaluate_collision_risk(
-            xy,
-            forecasts,
-            CollisionRiskConfig(
-                robot_radius_m=self.config.robot_radius,
-                safety_margin_m=(
-                    self.config.probabilistic_obstacle_safety_margin
-                ),
-                minimum_position_std_m=(
-                    self.config.probabilistic_obstacle_minimum_std
-                ),
-                hard_probability_threshold=(
-                    self.config.probabilistic_obstacle_hard_threshold
-                ),
+        risk_config = CollisionRiskConfig(
+            robot_radius_m=self.config.robot_radius,
+            safety_margin_m=(
+                self.config.probabilistic_obstacle_safety_margin
+            ),
+            minimum_position_std_m=(
+                self.config.probabilistic_obstacle_minimum_std
+            ),
+            hard_probability_threshold=(
+                self.config.probabilistic_obstacle_hard_threshold
             ),
         )
+        if self.config.probabilistic_obstacle_risk_cuda_enabled:
+            self._last_probabilistic_risk_backend = "cuda"
+            return evaluate_collision_risk_cuda(
+                xy,
+                forecasts,
+                risk_config,
+                device=self.config.probabilistic_obstacle_risk_cuda_device,
+            )
+        self._last_probabilistic_risk_backend = "cpu"
+        return evaluate_collision_risk(xy, forecasts, risk_config)
 
     @staticmethod
     def _emergency_first_step_boundary_handoff(
@@ -9426,6 +9454,9 @@ class MppiController:
                         "active_avoidance_motion",
                     )
                 ),
+                "probabilistic_obstacle_risk_backend": str(
+                    self._last_probabilistic_risk_backend
+                ),
             }
             if not fail_closed and speed_scale < 1.0:
                 if "v_cmd" in self.action_spec.names:
@@ -9437,6 +9468,7 @@ class MppiController:
                     sequence[0] = action
                 updated_trajectory = self.rollout(state, sequence)[0]
         else:
+            self._last_probabilistic_risk_backend = "disabled"
             probabilistic_risk_diagnostics = {
                 "probabilistic_obstacle_risk_enabled": bool(
                     self.config.probabilistic_obstacle_risk_enabled
@@ -9477,6 +9509,9 @@ class MppiController:
                 "probabilistic_obstacle_escape_direction_alignment": 1.0,
                 "probabilistic_obstacle_escape_direction_source": "unavailable",
                 "probabilistic_obstacle_active_avoidance_enabled": False,
+                "probabilistic_obstacle_risk_backend": str(
+                    self._last_probabilistic_risk_backend
+                ),
             }
         online_tracker_diagnostics = {
             "dynamic_obstacle_tracker_enabled": bool(

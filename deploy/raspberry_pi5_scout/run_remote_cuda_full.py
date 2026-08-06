@@ -1897,6 +1897,14 @@ def main():
     parser.add_argument("--traditional-mppi", action="store_true")
     parser.add_argument("--enable-actor-guidance", action="store_true")
     parser.add_argument("--enable-hss-reliability", action="store_true")
+    parser.add_argument(
+        "--cpu-policy-inference",
+        action="store_true",
+        help=(
+            "diagnostic rollback only: keep the Actor/HSS inference on CPU "
+            "while the MPPI rollout remains on CUDA"
+        ),
+    )
     parser.add_argument("--enable-residual-learning", action="store_true")
     parser.add_argument(
         "--enable-change-aware-prediction", action="store_true"
@@ -1980,6 +1988,10 @@ def main():
     )
     config["planner"].update({
         "device": "cuda",
+        "probabilistic_obstacle_risk_cuda_enabled": bool(
+            algorithm_features["probabilistic_risk"]
+        ),
+        "probabilistic_obstacle_risk_cuda_device": "cuda",
         "residual_device_rollout_enabled": bool(
             algorithm_features["residual_learning"]
         ),
@@ -1991,19 +2003,32 @@ def main():
         # sequential host/device transfers rather than changing arithmetic.
         "residual_rollout_dtype": "float64",
     })
+    # The previous physical profile intentionally pinned the learned Actor and
+    # HSS sidecar to CPU.  That left the dominant forecast-path inference
+    # outside the CUDA planner and forced a mixed-device execution graph.
+    # CUDA is a hard deployment requirement above, so make CUDA the default
+    # for every learned inference component.  Keep an explicit diagnostic
+    # rollback switch for CPU-vs-CUDA parity investigations; it is never the
+    # normal armed profile.
+    inference_device = "cpu" if args.cpu_policy_inference else "cuda"
+    config["rl"]["device"] = inference_device
+    sidecar_config = config["planner"].get("paper_rl_driven", {}).get(
+        "reliability_sidecar", {}
+    )
+    if sidecar_config:
+        sidecar_config["device"] = inference_device
+    config["real_robot_deployment"]["learned_inference_device"] = (
+        inference_device
+    )
+    config["real_robot_deployment"]["learned_inference_cuda_enabled"] = bool(
+        inference_device == "cuda"
+    )
     # The two planners contain substantial Python-side autoregressive Actor
     # work. Threads contend on the GIL and were 7-15% slower than executing the
     # exact same matched pair sequentially after the CUDA RK4 step fast path.
     config["planner"]["residual_safety_shield"][
         "parallel_planning_enabled"
     ] = False
-    # Match the successful simulation CUDA contract: MPPI/residual on GPU,
-    # Actor and HSS sidecar on CPU.
-    config["rl"]["device"] = "cpu"
-    if algorithm_features["hss_reliability"]:
-        config["planner"]["paper_rl_driven"]["reliability_sidecar"][
-            "device"
-        ] = "cpu"
     config["real_robot_deployment"].update({
         "contract": "pc_cuda_pi_gateway_mppi_ablation_v1",
         "computer": "windows_cuda_pc",

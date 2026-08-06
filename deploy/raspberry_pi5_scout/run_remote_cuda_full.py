@@ -812,6 +812,38 @@ def _wait_for_complete_chassis_status(remote, timeout_s=3.0):
     )
 
 
+def _wait_for_newer_chassis_status(remote, previous_received_monotonic,
+                                   timeout_s=2.0):
+    """Wait for a status newer than the sample that went stale.
+
+    The gateway can remain healthy while a Windows scheduling/network hiccup
+    delays delivery of a few 20 Hz frames.  Callers must stop translation
+    before entering this wait; a genuinely dead receiver still fails closed
+    after the bounded grace period.
+    """
+
+    deadline = time.monotonic() + float(timeout_s)
+    previous = float(previous_received_monotonic)
+    while time.monotonic() < deadline:
+        if remote._error is not None:
+            raise RuntimeError(
+                "remote deployment receiver failed while recovering chassis "
+                "status"
+            ) from remote._error
+        latest = remote.status()
+        if (
+            latest is not None
+            and latest.received_monotonic > previous
+        ):
+            return latest
+        time.sleep(0.01)
+    raise TimeoutError(
+        "Pi gateway status did not recover after a stale-status hold "
+        f"({float(timeout_s):.2f}s, received={remote.status_packets_received}, "
+        f"tcp_thread_alive={remote._thread.is_alive()})"
+    )
+
+
 def _path_deviation_guard(
     pose_x,
     pose_y,
@@ -2035,6 +2067,9 @@ def main():
     # must not tear down an otherwise healthy UntilGoal session; the previous
     # runs stopped after ~10 s because this exception escaped the control loop.
     maximum_livox_timeout_streak = 20
+    chassis_status_recovery_count = 0
+    chassis_status_max_age_s = 0.0
+    chassis_status_recovery_timeout_s = 2.0
     path_guard_supervisor = _DynamicPathGuardSupervisor(
         single_dynamic_authority=True
     )
@@ -2113,13 +2148,42 @@ def main():
                 )
                 status_age_s = (math.inf if status is None else
                                 time.monotonic() - status.received_monotonic)
+                chassis_status_max_age_s = max(
+                    chassis_status_max_age_s,
+                    float(status_age_s),
+                )
                 if status_age_s > status_limit_s:
-                    raise RuntimeError(
-                        "stale chassis status from Pi gateway "
-                        f"(age_s={status_age_s:.3f}, "
-                        f"received={remote.status_packets_received}, "
-                        f"tcp_thread_alive={remote._thread.is_alive()}, "
-                        f"receiver_error={remote._error!r})"
+                    stale_status_received_monotonic = (
+                        -math.inf
+                        if status is None
+                        else status.received_monotonic
+                    )
+                    # Fail closed during the hold: the Pi watchdog also
+                    # zeros the chassis if this command is not refreshed.
+                    sequence += 1
+                    remote.send_command(
+                        sequence,
+                        0.0,
+                        0.0,
+                        arm=bool(
+                            args.publish and len(rows) >= args.warmup_cycles
+                        ),
+                        immediate_translation_stop=True,
+                        immediate_all_stop=False,
+                    )
+                    status = _wait_for_newer_chassis_status(
+                        remote,
+                        stale_status_received_monotonic,
+                        timeout_s=chassis_status_recovery_timeout_s,
+                    )
+                    chassis_status_recovery_count += 1
+                    status_age_s = max(
+                        0.0,
+                        time.monotonic() - status.received_monotonic,
+                    )
+                    chassis_status_max_age_s = max(
+                        chassis_status_max_age_s,
+                        float(status_age_s),
                     )
                 if args.publish and status.fault != 0:
                     raise RuntimeError(
@@ -2502,6 +2566,10 @@ def main():
             "completed_cycles": len(rows),
             "livox_timeout_count": int(livox_timeout_count),
             "livox_timeout_streak_at_exit": int(livox_timeout_streak),
+            "chassis_status_recovery_count": int(
+                chassis_status_recovery_count
+            ),
+            "chassis_status_max_age_s": float(chassis_status_max_age_s),
             "timing": {name: _timing(values) for name, values in timings.items()},
             "config_sha256": _sha256(config_path),
             "lidar_config_sha256": _sha256(args.lidar_config),

@@ -8,6 +8,7 @@ from deploy.raspberry_pi5_scout.run_remote_cuda_full import (
     _real_robot_diagnostic_payload,
     _safety_diagnostic_trace,
     _select_runtime_controller,
+    _wait_for_newer_chassis_status,
 )
 from deploy.raspberry_pi5_scout.run_silent_full import _install_mapless_tracker
 from deploy.raspberry_pi5_scout.run_silent_full import _json_value
@@ -126,6 +127,31 @@ def test_goal_stop_is_opt_in_and_uses_point_distance():
     assert requested
     assert distance < 0.25
     assert not disabled
+
+
+def test_stale_status_recovery_accepts_newer_gateway_sample():
+    class _Thread:
+        def is_alive(self):
+            return True
+
+    class _Remote:
+        _error = None
+        _thread = _Thread()
+        status_packets_received = 121
+
+        def status(self):
+            return type(
+                "Status",
+                (),
+                {"received_monotonic": 2.0},
+            )()
+
+    status = _wait_for_newer_chassis_status(
+        _Remote(),
+        previous_received_monotonic=1.0,
+        timeout_s=0.05,
+    )
+    assert status.received_monotonic == 2.0
 
 
 def test_nominal_runtime_fallback_is_explicit_and_validated():

@@ -152,6 +152,92 @@ def test_hard_stop_is_not_overridden_by_mode_speed_or_turn_authority():
     assert result.diagnostics["encounter_control_motion_owner"] == "hard_stop"
 
 
+def test_open_corridor_temporal_alarm_does_not_cancel_encounter_passage():
+    authority = EncounterControlAuthority(
+        EncounterControlConfig(enabled=True)
+    )
+    result = authority.apply(
+        _plan(control=(0.1, -0.2)),
+        _intent(),
+        (0.0, 0.0, 0.0),
+        {
+            "emergency_stop": True,
+            "reason": "temporal_collision_risk",
+            "min_front_range": 1.0,
+            "valid_near_body_count": 0,
+        },
+    )
+
+    assert result.proposed_control.v == 0.4
+    assert result.proposed_control.omega > 0.0
+    assert result.diagnostics[
+        "encounter_control_temporal_risk_deferred"
+    ] is True
+    assert result.diagnostics["encounter_control_motion_owner"] == "encounter"
+
+
+def test_side_near_body_alarm_uses_clear_locked_side_instead_of_deadlock():
+    authority = EncounterControlAuthority(
+        EncounterControlConfig(enabled=True)
+    )
+    result = authority.apply(
+        _plan(control=(-0.3, 0.6)),
+        _intent(
+            encounter_phase="frontal_approach",
+            encounter_strategy="left_bypass",
+            encounter_locked_steering_side=1,
+            encounter_temporary_waypoint=(2.0, 0.9),
+            encounter_distance_m=0.65,
+        ),
+        (0.0, 0.0, 0.0),
+        {
+            "emergency_stop": True,
+            "reason": "near_body_hard_stop",
+            "min_front_range": 3.2,
+            "min_left_side_range": 2.0,
+            "min_right_side_range": 0.30,
+            "valid_near_body_count": 1,
+            "min_rear_range": 2.0,
+        },
+    )
+
+    assert result.proposed_control.v == 0.32
+    assert result.proposed_control.omega > 0.0
+    assert result.diagnostics[
+        "encounter_control_side_hard_stop_deferred"
+    ] is True
+    assert result.diagnostics["encounter_control_reverse_applied"] is False
+
+
+def test_front_hard_stop_allows_only_locked_side_turn_when_side_is_clear():
+    authority = EncounterControlAuthority(
+        EncounterControlConfig(enabled=True)
+    )
+    result = authority.apply(
+        _plan(control=(-0.3, -0.6)),
+        _intent(
+            encounter_locked_steering_side=-1,
+            encounter_temporary_waypoint=(2.0, -0.9),
+            encounter_distance_m=0.65,
+        ),
+        (0.0, 0.0, 0.0),
+        {
+            "emergency_stop": True,
+            "reason": "hard_stop",
+            "min_front_range": 0.40,
+            "min_left_side_range": 0.35,
+            "min_right_side_range": 2.40,
+            "valid_near_body_count": 0,
+        },
+    )
+
+    assert result.proposed_control.v == 0.0
+    assert result.proposed_control.omega < 0.0
+    assert result.diagnostics[
+        "encounter_control_side_hard_stop_turn_only"
+    ] is True
+
+
 def test_mode_rejects_unrequested_planner_reverse_even_when_risk_is_high():
     authority = EncounterControlAuthority(
         EncounterControlConfig(enabled=True)

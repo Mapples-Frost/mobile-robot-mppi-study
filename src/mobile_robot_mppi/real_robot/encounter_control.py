@@ -56,6 +56,13 @@ class EncounterControlConfig:
     frontal_reverse_trigger_m: float = 0.85
     frontal_reverse_speed_mps: float = 0.18
     frontal_reverse_minimum_rear_range_m: float = 0.90
+    # A temporal TTC alarm is not by itself a geometric collision.  During an
+    # admitted encounter, keep the mode-owned passage command when the live
+    # front corridor is still open.  Geometric stops may only release along a
+    # separately measured clear corridor, or retain zero translation.
+    temporal_risk_defer_min_front_range_m: float = 0.75
+    side_hard_stop_defer_min_clearance_m: float = 0.60
+    side_hard_stop_turn_min_clearance_m: float = 0.75
     control_prefix_steps: int = 3
     reference_lookahead_m: float = 1.0
     reference_corridor_half_width_m: float = 0.95
@@ -254,6 +261,61 @@ class EncounterControlAuthority:
         )
         pose_values = np.asarray(pose, dtype=np.float64).reshape(3)
         emergency = bool(guard_result.get("emergency_stop", False))
+        guard_reason = str(guard_result.get("reason", ""))
+        front_range = _finite(
+            guard_result.get("min_front_range"), float("nan")
+        )
+        near_body_count = int(guard_result.get("valid_near_body_count", 0) or 0)
+        try:
+            locked_side = int(
+                diagnostics.get("encounter_locked_steering_side", 0) or 0
+            )
+        except (TypeError, ValueError):
+            locked_side = 0
+        side_key = (
+            "min_left_side_range" if locked_side > 0
+            else "min_right_side_range" if locked_side < 0
+            else None
+        )
+        selected_side_clearance = _finite(
+            guard_result.get(side_key), float("nan")
+        ) if side_key is not None else float("nan")
+        side_hard_stop_deferred = bool(
+            emergency
+            and guard_reason == "near_body_hard_stop"
+            and math.isfinite(front_range)
+            and front_range >= self.config.temporal_risk_defer_min_front_range_m
+            and locked_side != 0
+            and math.isfinite(selected_side_clearance)
+            and selected_side_clearance
+            >= self.config.side_hard_stop_defer_min_clearance_m
+        )
+        side_hard_stop_turn_only = bool(
+            emergency
+            and guard_reason in {"near_body_hard_stop", "hard_stop"}
+            and locked_side != 0
+            and math.isfinite(selected_side_clearance)
+            and selected_side_clearance
+            >= self.config.side_hard_stop_turn_min_clearance_m
+            and not side_hard_stop_deferred
+        )
+        temporal_risk_deferred = bool(
+            emergency
+            and guard_reason == "temporal_collision_risk"
+            and math.isfinite(front_range)
+            and front_range >= self.config.temporal_risk_defer_min_front_range_m
+            and near_body_count <= 0
+            and not bool(guard_result.get("dynamic_obstacle_near_body_match", False))
+        )
+        if (
+            temporal_risk_deferred
+            or side_hard_stop_deferred
+            or side_hard_stop_turn_only
+        ):
+            # The alarm is retained as a diagnostic, but it cannot replace an
+            # admitted encounter's side/forward command when the live forward
+            # and selected-side corridors both certify separation.
+            emergency = False
         if waypoint is None or not np.isfinite(pose_values).all():
             output_diagnostics.update({
                 "encounter_control_enabled": True,
@@ -296,6 +358,7 @@ class EncounterControlAuthority:
             and probability <= self.config.safe_probability_ceiling
             and probability_mass <= self.config.safe_probability_mass_ceiling
             and not emergency
+            and not side_hard_stop_deferred
         )
         strategy = str(diagnostics.get("encounter_strategy", "none"))
         target_speed = self._target_speed(phase, strategy, heading_error)
@@ -310,6 +373,7 @@ class EncounterControlAuthority:
             and math.isfinite(rear_range)
             and rear_range >= self.config.frontal_reverse_minimum_rear_range_m
             and not emergency
+            and not side_hard_stop_deferred
         )
         planner_reverse_rejected = False
         if emergency:
@@ -360,6 +424,19 @@ class EncounterControlAuthority:
                 if reverse_applied
                 else "mode_owned_temporary_reference"
             )
+        if side_hard_stop_turn_only:
+            values[0] = 0.0
+            values[1] = (
+                (1.0 if locked_side > 0 else -1.0)
+                * max(abs(values[1]), self.config.minimum_turn_omega_radps)
+            )
+            values[1] = float(np.clip(
+                values[1],
+                -self.config.maximum_omega_radps,
+                self.config.maximum_omega_radps,
+            ))
+            reverse_applied = False
+            reason = "side_hard_stop_turn_only"
 
         applied = bool(not np.allclose(
             values, original, rtol=0.0, atol=1.0e-12
@@ -384,6 +461,12 @@ class EncounterControlAuthority:
             "encounter_control_selected_v_mps": float(values[0]),
             "encounter_control_selected_omega_radps": float(values[1]),
             "encounter_control_risk_safe": risk_safe,
+            "encounter_control_temporal_risk_deferred": temporal_risk_deferred,
+            "encounter_control_side_hard_stop_deferred": side_hard_stop_deferred,
+            "encounter_control_side_hard_stop_turn_only": side_hard_stop_turn_only,
+            "encounter_control_original_emergency_stop": bool(
+                guard_result.get("emergency_stop", False)
+            ),
             "encounter_control_reverse_available": reverse_available,
             "encounter_control_reverse_applied": reverse_applied,
             "encounter_control_planner_reverse_rejected": bool(

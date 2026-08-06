@@ -3109,6 +3109,103 @@ def test_encounter_front_hard_stop_is_stop_only_and_never_starts_escape(
     assert reverse.diagnostics["final_motion_owner"] == "hard_stop"
 
 
+def test_encounter_open_corridor_defers_temporal_stop_but_keeps_hard_stop(
+        tmp_path):
+    config = build_pi5_full_config(
+        _weight_root(tmp_path), max_v_mps=0.5,
+        max_reverse_v_mps=0.3, max_omega_radps=0.6,
+    )
+    arbiter = ScanGuardArbiter(
+        action_spec_from_config(config["action_space"]),
+        config["perception"]["scan_guard"],
+    )
+    context = {
+        "encounter_control_authoritative": True,
+        "encounter_control_inhibit_rear_pass": True,
+        "encounter_control_inhibit_dynamic_escape": True,
+        "encounter_control_locked_steering_side": 1,
+        "encounter_control_hard_safety_retained": True,
+        "encounter_control_stop_only_hard_safety": True,
+        "encounter_control_hard_stop_escape_motion_allowed": False,
+        "encounter_control_temporal_risk_deferred": True,
+    }
+    temporal = arbiter.arbitrate(
+        ControlCommand([0.32, 0.22]),
+        {
+            "emergency_stop": True,
+            "reason": "temporal_collision_risk",
+            "min_front_range": 1.0,
+            "valid_near_body_count": 0,
+        },
+        context,
+    )
+
+    assert temporal.executed_control.values.tolist() == pytest.approx(
+        [0.32, 0.22]
+    )
+    assert temporal.reason == "encounter_temporal_risk_deferred"
+    assert temporal.diagnostics[
+        "encounter_control_temporal_risk_deferred"
+    ] is True
+    assert temporal.diagnostics["final_motion_owner"] == "encounter"
+
+    side_context = dict(context)
+    side_context["encounter_control_temporal_risk_deferred"] = False
+    side_context["encounter_control_side_hard_stop_deferred"] = True
+    side = arbiter.arbitrate(
+        ControlCommand([0.32, 0.22]),
+        {
+            "emergency_stop": True,
+            "reason": "near_body_hard_stop",
+            "min_front_range": 3.2,
+            "min_left_side_range": 2.0,
+            "min_right_side_range": 0.30,
+            "valid_near_body_count": 1,
+        },
+        side_context,
+    )
+    assert side.executed_control.values.tolist() == pytest.approx([0.32, 0.22])
+    assert side.reason == "encounter_side_hard_stop_deferred"
+    assert side.diagnostics[
+        "encounter_control_side_hard_stop_deferred"
+    ] is True
+    assert side.diagnostics["final_motion_owner"] == "encounter"
+
+    turn_context = dict(context)
+    turn_context["encounter_control_temporal_risk_deferred"] = False
+    turn_context["encounter_control_side_hard_stop_turn_only"] = True
+    turn = arbiter.arbitrate(
+        ControlCommand([0.0, -0.35]),
+        {
+            "emergency_stop": True,
+            "reason": "hard_stop",
+            "min_front_range": 0.40,
+            "min_left_side_range": 0.35,
+            "min_right_side_range": 2.40,
+        },
+        turn_context,
+    )
+    assert turn.executed_control.values.tolist() == pytest.approx([0.0, -0.35])
+    assert turn.reason == "encounter_side_hard_stop_turn_only"
+    assert turn.diagnostics[
+        "encounter_control_side_hard_stop_turn_only"
+    ] is True
+    assert turn.diagnostics["final_motion_owner"] == "encounter"
+
+    hard = arbiter.arbitrate(
+        ControlCommand([0.32, 0.22]),
+        {
+            "emergency_stop": True,
+            "reason": "near_body_hard_stop",
+            "min_front_range": 0.30,
+            "valid_near_body_count": 1,
+        },
+        context,
+    )
+    assert hard.executed_control.values.tolist() == pytest.approx([0.0, 0.0])
+    assert hard.diagnostics["final_motion_owner"] == "hard_stop"
+
+
 def test_encounter_locked_side_is_authoritative_in_escape_side_selector(
         tmp_path):
     config = build_pi5_full_config(

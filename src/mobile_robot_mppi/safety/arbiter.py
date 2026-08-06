@@ -1305,6 +1305,56 @@ class ScanGuardArbiter:
             rear_pass_through_sources,
         ) = self._rear_pass_through_evidence(guard_result)
         rear_pass_through_raw_evidence = bool(rear_only_evidence)
+        # An admitted encounter already owns a forward/side passage command.
+        # A short-TTC temporal-flow alarm with a genuinely open front corridor
+        # is not equivalent to a geometric near-body stop: keeping the alarm's
+        # unconditional zero here created the 3--5 m deadlocks seen on the
+        # Pi5 logs.  Geometric alarms only release forward when an orthogonal
+        # side and the front corridor are both measured clear; otherwise they
+        # may retain zero translation and turn on the already locked side.
+        encounter_hard_safety_deferred = bool(
+            encounter_stop_only_hard_safety
+            and (
+                (
+                    reason == "temporal_collision_risk"
+                    and context.get(
+                        "encounter_control_temporal_risk_deferred", False
+                    )
+                )
+                or (
+                    reason == "near_body_hard_stop"
+                    and context.get(
+                        "encounter_control_side_hard_stop_deferred", False
+                    )
+                )
+                or (
+                    reason in {"near_body_hard_stop", "hard_stop"}
+                    and context.get(
+                        "encounter_control_side_hard_stop_turn_only", False
+                    )
+                )
+            )
+        )
+        if encounter_hard_safety_deferred:
+            guard_result["encounter_control_original_emergency_stop"] = bool(
+                guard_result.get("emergency_stop", False)
+            )
+            guard_result["emergency_stop"] = False
+            guard_result["should_slow_down"] = False
+            guard_result["slow_scale"] = 1.0
+            deferred_reason = (
+                "encounter_side_hard_stop_turn_only"
+                if context.get(
+                    "encounter_control_side_hard_stop_turn_only", False
+                )
+                else (
+                    "encounter_side_hard_stop_deferred"
+                    if reason == "near_body_hard_stop"
+                    else "encounter_temporal_risk_deferred"
+                )
+            )
+            guard_result["reason"] = deferred_reason
+            reason = deferred_reason
         rear_pass_through_suppressed = bool(
             encounter_rear_pass_inhibited and rear_only_evidence
         )
@@ -3753,6 +3803,23 @@ class ScanGuardArbiter:
         )
         diagnostics["encounter_control_hard_stop_escape_retained"] = bool(
             encounter_hard_stop_escape_retained
+        )
+        diagnostics["encounter_control_temporal_risk_deferred"] = bool(
+            encounter_hard_safety_deferred
+            and context.get("encounter_control_temporal_risk_deferred", False)
+        )
+        diagnostics["encounter_control_side_hard_stop_deferred"] = bool(
+            encounter_hard_safety_deferred
+            and context.get("encounter_control_side_hard_stop_deferred", False)
+        )
+        diagnostics["encounter_control_side_hard_stop_turn_only"] = bool(
+            encounter_hard_safety_deferred
+            and context.get(
+                "encounter_control_side_hard_stop_turn_only", False
+            )
+        )
+        diagnostics["encounter_control_original_emergency_stop"] = bool(
+            guard_result.get("encounter_control_original_emergency_stop", False)
         )
         diagnostics["final_motion_owner"] = (
             "hard_stop"

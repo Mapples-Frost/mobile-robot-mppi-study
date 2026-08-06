@@ -332,6 +332,21 @@ class EncounterControlAuthority:
             waypoint[1] - pose_values[1], waypoint[0] - pose_values[0]
         )
         heading_error = _wrap(desired_heading - pose_values[2])
+        if phase == "rejoin":
+            # The moving lookahead is useful for lateral convergence, but its
+            # bearing can become nearly tangent to the goal line while the
+            # chassis is still yawed away from it.  In that state the old
+            # controller believed it was aligned and kept driving parallel
+            # to the goal.  Prefer the manager's frozen goal-line heading
+            # error for yaw control; retain the waypoint for the reference
+            # geometry and fall back to it for older diagnostics.
+            rejoin_heading_error = _finite(
+                diagnostics.get("encounter_rejoin_heading_error_rad"),
+                float("nan"),
+            )
+            if math.isfinite(rejoin_heading_error):
+                heading_error = _wrap(rejoin_heading_error)
+                desired_heading = _wrap(pose_values[2] + heading_error)
         target_omega = float(np.clip(
             self.config.heading_gain * heading_error,
             -self.config.maximum_omega_radps,

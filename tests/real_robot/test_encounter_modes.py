@@ -371,6 +371,31 @@ def test_rejoin_requires_consecutive_goal_alignment_and_risk_clearance():
     assert result["encounter_rear_pass_inhibited_shadow"] is False
 
 
+def test_rejoin_is_not_restarted_by_same_confirmed_crossing_track():
+    manager = EncounterModeManager()
+    for step, y in enumerate((0.40, 0.30, 0.20, 0.08, -0.02)):
+        result = _update(
+            manager,
+            0.1 * step,
+            (2.0, y),
+            (0.0, -0.5),
+            pose=(0.0, 0.0, 0.0),
+        )
+
+    assert result["encounter_phase"] == "rejoin"
+    continued = _update(
+        manager,
+        0.5,
+        (2.0, -0.12),
+        (0.0, -0.5),
+        pose=(2.0, 0.40, 0.0),
+    )
+
+    assert continued["encounter_phase"] == "rejoin"
+    assert continued["encounter_phase_before"] == "rejoin"
+    assert continued["encounter_temporary_waypoint"][1] == pytest.approx(0.0)
+
+
 def test_stationary_robot_cannot_complete_off_center_frontal_bypass():
     manager = EncounterModeManager()
     result = None

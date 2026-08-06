@@ -2029,6 +2029,12 @@ def main():
     log_path = args.output / "cycles.jsonl"
     goal_stop_triggered = False
     last_goal_distance_m = math.hypot(args.goal_x, args.goal_y)
+    livox_timeout_count = 0
+    livox_timeout_streak = 0
+    # A single empty accumulation window is a recoverable UDP/RPi hiccup.  It
+    # must not tear down an otherwise healthy UntilGoal session; the previous
+    # runs stopped after ~10 s because this exception escaped the control loop.
+    maximum_livox_timeout_streak = 20
     path_guard_supervisor = _DynamicPathGuardSupervisor(
         single_dynamic_authority=True
     )
@@ -2058,7 +2064,32 @@ def main():
                 cycle_start = time.perf_counter()
                 stage = time.perf_counter()
                 motion_status = status
-                frame = remote.receive_livox_frame(args.accumulation_s)
+                try:
+                    frame = remote.receive_livox_frame(args.accumulation_s)
+                except TimeoutError as exc:
+                    livox_timeout_count += 1
+                    livox_timeout_streak += 1
+                    # Do not continue translating without a fresh scan.  Send
+                    # an immediate translation stop, keep the gateway armed,
+                    # and retry the sensor stream on the next cycle.
+                    sequence += 1
+                    remote.send_command(
+                        sequence,
+                        0.0,
+                        0.0,
+                        arm=bool(args.publish and len(rows) >= args.warmup_cycles),
+                        immediate_translation_stop=True,
+                        immediate_all_stop=False,
+                    )
+                    if livox_timeout_streak >= maximum_livox_timeout_streak:
+                        raise RuntimeError(
+                            "Livox stream remained unavailable for "
+                            f"{livox_timeout_streak} consecutive cycles "
+                            f"({float(livox_timeout_streak) * args.period_s:.1f}s)"
+                        ) from exc
+                    time.sleep(min(float(args.period_s), 0.10))
+                    continue
+                livox_timeout_streak = 0
                 timings["receive"].append(1000.0 * (time.perf_counter() - stage))
                 stage = time.perf_counter()
                 scan, scan_diagnostics = adapter.convert(frame)
@@ -2469,6 +2500,8 @@ def main():
             "initial_chassis_fault": initial_chassis_fault,
             "initial_chassis_fault_labels": initial_chassis_fault_labels,
             "completed_cycles": len(rows),
+            "livox_timeout_count": int(livox_timeout_count),
+            "livox_timeout_streak_at_exit": int(livox_timeout_streak),
             "timing": {name: _timing(values) for name, values in timings.items()},
             "config_sha256": _sha256(config_path),
             "lidar_config_sha256": _sha256(args.lidar_config),

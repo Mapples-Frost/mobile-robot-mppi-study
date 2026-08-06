@@ -286,6 +286,30 @@ def test_rejoin_reference_returns_to_frozen_goal_line():
     assert np.allclose(reference.points[:, 1], 0.0)
 
 
+def test_rejoin_yaw_uses_goal_line_heading_not_tangent_lookahead():
+    authority = EncounterControlAuthority(
+        EncounterControlConfig(enabled=True)
+    )
+    result = authority.apply(
+        _plan(control=(0.36, 0.0)),
+        _intent(
+            encounter_phase="rejoin",
+            encounter_strategy="right_bypass",
+            encounter_locked_steering_side=-1,
+            encounter_temporary_waypoint=(3.4, 0.12),
+            encounter_rejoin_heading_error_rad=0.50,
+        ),
+        pose=(2.6, 0.55, -0.50),
+        guard_result={"emergency_stop": False},
+    )
+
+    assert result.diagnostics["encounter_control_heading_error_rad"] == (
+        0.50
+    )
+    assert result.proposed_control.omega > 0.0
+    assert result.proposed_control.v == 0.15
+
+
 def test_planning_context_explicitly_revokes_competing_authorities():
     context = EncounterControlAuthority(
         EncounterControlConfig(enabled=True)

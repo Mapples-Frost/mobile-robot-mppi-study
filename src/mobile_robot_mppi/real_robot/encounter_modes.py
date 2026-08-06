@@ -1590,7 +1590,13 @@ class EncounterModeManager:
         rejoin_interrupted = bool(
             self._phase == EncounterMode.REJOIN
             and confirmed_this_cycle
-            and self._confirmed_behavior == candidate
+            # Seeing the same person/behaviour again after the crossing is
+            # expected.  Re-entering the active bypass on that observation
+            # resurrects the old detour waypoint and can turn a completed
+            # passage back into a fresh crossing (the final cycle of the
+            # 20260806 runs did exactly this).  Only a genuinely confirmed
+            # behaviour change may interrupt rejoin.
+            and previous_confirmed != candidate
         )
         stable_active_reclassification = bool(
             self._phase in (

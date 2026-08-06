@@ -51,14 +51,21 @@ class EncounterControlConfig:
     minimum_turn_omega_radps: float = 0.16
     turn_deadband_rad: float = 0.06
     rejoin_alignment_heading_rad: float = 0.45
+    # While rejoin is still laterally displaced, use the moving rejoin
+    # waypoint bearing to bring the chassis back to the frozen goal line.  The
+    # frozen goal-line heading is only sufficient after the lateral error is
+    # already small; using it too early makes the robot drive parallel to the
+    # goal indefinitely.
+    rejoin_lateral_convergence_tolerance_m: float = 0.25
     # A frontal bypass waypoint can lie far ahead of the chassis.  If the
     # current yaw already points at that waypoint, pure waypoint pursuit
     # produces almost zero omega and the robot drives toward the person before
     # building lateral clearance.  Hold a bounded side-facing heading until a
     # modest lateral offset is achieved; after that, return to normal waypoint
     # pursuit so the detour cannot over-rotate.
-    frontal_bypass_min_heading_rad: float = 0.40
-    frontal_bypass_lateral_hold_m: float = 0.35
+    frontal_bypass_min_heading_rad: float = 0.50
+    frontal_bypass_lateral_hold_m: float = 0.55
+    rejoin_lateral_heading_gain: float = 1.80
     safe_probability_ceiling: float = 0.12
     safe_probability_mass_ceiling: float = 2.0
     frontal_reverse_trigger_m: float = 0.85
@@ -355,9 +362,11 @@ class EncounterControlAuthority:
         desired_heading = math.atan2(
             waypoint[1] - pose_values[1], waypoint[0] - pose_values[0]
         )
-        heading_error = _wrap(desired_heading - pose_values[2])
+        waypoint_heading_error = _wrap(desired_heading - pose_values[2])
+        heading_error = waypoint_heading_error
         frontal_lateral_hold_active = False
         frontal_lateral_heading_error = float("nan")
+        rejoin_waypoint_convergence_active = False
         if (
             phase == "frontal_approach"
             and str(diagnostics.get("encounter_strategy", ""))
@@ -421,10 +430,31 @@ class EncounterControlAuthority:
                 float("nan"),
             )
             if math.isfinite(rejoin_heading_error):
-                heading_error = _wrap(rejoin_heading_error)
-                desired_heading = _wrap(pose_values[2] + heading_error)
+                rejoin_cross_track = _finite(
+                    diagnostics.get("encounter_rejoin_cross_track_m"),
+                    float("nan"),
+                )
+                if (
+                    math.isfinite(rejoin_cross_track)
+                    and
+                    abs(rejoin_cross_track)
+                    > self.config.rejoin_lateral_convergence_tolerance_m
+                ):
+                    # Keep the waypoint bearing while the chassis is outside
+                    # the goal-line corridor.  This is the lateral correction
+                    # that the frozen goal-line heading cannot provide.
+                    heading_error = waypoint_heading_error
+                    rejoin_waypoint_convergence_active = True
+                else:
+                    heading_error = _wrap(rejoin_heading_error)
+                    desired_heading = _wrap(pose_values[2] + heading_error)
+        heading_gain = (
+            self.config.rejoin_lateral_heading_gain
+            if rejoin_waypoint_convergence_active
+            else self.config.heading_gain
+        )
         target_omega = float(np.clip(
-            self.config.heading_gain * heading_error,
+            heading_gain * heading_error,
             -self.config.maximum_omega_radps,
             self.config.maximum_omega_radps,
         ))
@@ -563,6 +593,9 @@ class EncounterControlAuthority:
             ),
             "encounter_control_frontal_lateral_heading_error_rad": (
                 frontal_lateral_heading_error
+            ),
+            "encounter_control_rejoin_waypoint_convergence_active": (
+                rejoin_waypoint_convergence_active
             ),
             "encounter_control_original_v_mps": float(original[0]),
             "encounter_control_original_omega_radps": float(original[1]),

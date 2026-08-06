@@ -123,11 +123,46 @@ def test_frontal_bypass_holds_side_heading_until_lateral_clearance():
     already_offset = authority.apply(
         _plan(control=(0.32, 0.0)),
         intent,
-        pose=(0.9, 0.40, 0.0),
+        pose=(0.9, 0.60, 0.0),
         guard_result={"emergency_stop": False},
     )
     assert already_offset.diagnostics[
         "encounter_control_frontal_lateral_hold_active"
+    ] is False
+
+
+def test_rejoin_uses_waypoint_bearing_until_lateral_error_is_small():
+    authority = EncounterControlAuthority(
+        EncounterControlConfig(enabled=True)
+    )
+    intent = _intent(
+        encounter_phase="rejoin",
+        encounter_strategy="left_bypass",
+        encounter_temporary_waypoint=(2.0, 0.0),
+        encounter_rejoin_heading_error_rad=0.0,
+        encounter_rejoin_cross_track_m=0.80,
+    )
+
+    displaced = authority.apply(
+        _plan(control=(0.36, 0.0)),
+        intent,
+        pose=(0.0, 0.8, 0.0),
+        guard_result={"emergency_stop": False},
+    )
+    assert displaced.proposed_control.omega < 0.0
+    assert displaced.diagnostics[
+        "encounter_control_rejoin_waypoint_convergence_active"
+    ] is True
+
+    aligned = authority.apply(
+        _plan(control=(0.36, 0.0)),
+        dict(intent, encounter_rejoin_cross_track_m=0.10),
+        pose=(0.0, 0.1, 0.0),
+        guard_result={"emergency_stop": False},
+    )
+    assert aligned.proposed_control.omega == 0.0
+    assert aligned.diagnostics[
+        "encounter_control_rejoin_waypoint_convergence_active"
     ] is False
 
 

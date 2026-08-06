@@ -142,6 +142,10 @@ def _install_mapless_tracker(perception, human_leg_mode=False):
             # observable.  This is the early lateral-crossing path; ordinary
             # compact/background motion still requires temporal corroboration.
             "dynamic_classification_collision_course_bypass_enabled": True,
+            # Retain a strict collision-course forecast while the mapless
+            # classifier is still accumulating its dynamic label.  This is a
+            # perception continuity path, not a semantic control override.
+            "allow_collision_course_provisional": True,
         }
     bootstrap_overrides = {}
     if human_leg_mode:
@@ -156,6 +160,10 @@ def _install_mapless_tracker(perception, human_leg_mode=False):
             "temporal_flow_threat_angle_tolerance_deg": 25.0,
             "temporal_flow_threat_range_tolerance_m": 0.75,
             "temporal_flow_threat_hold_cycles": 12,
+            # Do not clear an initialized person track to make room for a
+            # fragmented flow cluster; ordinary retirement still releases
+            # genuinely stale slots.
+            "temporal_flow_threat_preemption_allow_active_reset": False,
         }
     motion_bootstrap = MotionBootstrapMultiObstacleTracker.from_existing(
         base, **bootstrap_overrides

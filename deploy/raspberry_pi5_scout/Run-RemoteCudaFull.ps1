@@ -16,6 +16,7 @@ param(
     [switch]$EnableForwardPassage,
     [switch]$ForwardPassageV3,
     [switch]$DisableResidualLearning,
+    [switch]$DisableDynamicSafetyArbitration,
     [switch]$UntilGoal,
     [switch]$Shadow
 )
@@ -206,6 +207,9 @@ if ($EnableForwardPassage -or $ForwardPassageV3) {
 }
 if ($DisableResidualLearning) {
     $runnerArgs += '--disable-residual-learning'
+}
+if ($DisableDynamicSafetyArbitration) {
+    $runnerArgs += '--disable-dynamic-safety-arbitration'
 }
 if ($UntilGoal) {
     $runnerArgs += '--until-goal'

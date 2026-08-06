@@ -217,6 +217,7 @@ def test_human_leg_tracker_profile_is_explicit_and_default_is_unchanged(
             "temporal_flow_threat_angle_tolerance_deg": 25.0,
             "temporal_flow_threat_range_tolerance_m": 0.75,
             "temporal_flow_threat_hold_cycles": 12,
+            "temporal_flow_threat_preemption_allow_active_reset": False,
         },
     )
     _, profile = captured[-1]
@@ -240,3 +241,4 @@ def test_human_leg_tracker_profile_is_explicit_and_default_is_unchanged(
     assert profile[
         "dynamic_classification_collision_course_bypass_enabled"
     ] is True
+    assert profile["allow_collision_course_provisional"] is True

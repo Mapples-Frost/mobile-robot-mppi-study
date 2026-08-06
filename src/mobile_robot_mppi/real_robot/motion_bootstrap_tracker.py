@@ -77,6 +77,7 @@ class MotionBootstrapMultiObstacleTracker(
         temporal_flow_threat_angle_tolerance_deg=25.0,
         temporal_flow_threat_range_tolerance_m=0.75,
         temporal_flow_threat_hold_cycles=6,
+        temporal_flow_threat_preemption_allow_active_reset=True,
     ):
         self.required_motion_intervals = int(
             required_motion_intervals
@@ -134,6 +135,13 @@ class MotionBootstrapMultiObstacleTracker(
         )
         self.temporal_flow_threat_hold_cycles = int(
             temporal_flow_threat_hold_cycles
+        )
+        # Resetting an initialized IMM to make room for a scan-flow threat can
+        # swap identities when a person's legs/body fragment between beams.
+        # Keep the historical behavior available for offline ablations, while
+        # allowing the physical profile to protect active tracks.
+        self.temporal_flow_threat_preemption_allow_active_reset = bool(
+            temporal_flow_threat_preemption_allow_active_reset
         )
         if self.required_motion_intervals < 2:
             raise ValueError(
@@ -630,6 +638,13 @@ class MotionBootstrapMultiObstacleTracker(
     ):
         """Release one far background IMM slot for a corroborated threat."""
 
+        if not getattr(
+            self,
+            "temporal_flow_threat_preemption_allow_active_reset",
+            True,
+        ):
+            return None, None
+
         if any(
             tracker.predictor.state is None for tracker in self.trackers
         ):
@@ -935,6 +950,13 @@ class MotionBootstrapMultiObstacleTracker(
                 ),
                 "temporal_flow_threat_preemption_enabled": bool(
                     self.temporal_flow_threat_preemption_enabled
+                ),
+                "temporal_flow_threat_preemption_allow_active_reset": bool(
+                    getattr(
+                        self,
+                        "temporal_flow_threat_preemption_allow_active_reset",
+                        True,
+                    )
                 ),
                 "temporal_flow_threat_match_count": len(
                     self._temporal_flow_threat_matches

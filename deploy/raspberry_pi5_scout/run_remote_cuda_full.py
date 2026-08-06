@@ -1910,6 +1910,14 @@ def main():
     parser.add_argument("--goal-stop-radius-m", type=float, default=0.0)
     parser.add_argument("--until-goal", action="store_true")
     parser.add_argument("--disable-residual-learning", action="store_true")
+    parser.add_argument(
+        "--disable-dynamic-safety-arbitration",
+        action="store_true",
+        help=(
+            "bypass dynamic/rear-pass/slowdown arbitration; retain only "
+            "action clipping and explicit emergency translation stops"
+        ),
+    )
     parser.add_argument("--publish", action="store_true")
     args = parser.parse_args()
     if args.until_goal and not args.publish:
@@ -1945,6 +1953,9 @@ def main():
         max_reverse_v_mps=args.max_reverse_v_mps,
         max_omega_radps=args.max_omega_radps,
     )
+    config["perception"]["scan_guard"][
+        "dynamic_safety_arbitration_enabled"
+    ] = not bool(args.disable_dynamic_safety_arbitration)
     apply_pi5_algorithm_features(config, algorithm_features)
     # Keep the physical deployment identical to the simulation controller.
     # The later Encounter/YOLO-style semantic modes (frontal approach,
@@ -1997,6 +2008,14 @@ def main():
         "human_leg_dynamic_filter": bool(
             args.human_leg_mode
             and algorithm_features["change_aware_prediction"]
+        ),
+        "dynamic_safety_arbitration_enabled": bool(
+            not args.disable_dynamic_safety_arbitration
+        ),
+        "dynamic_safety_arbitration_profile": (
+            "full"
+            if not args.disable_dynamic_safety_arbitration
+            else "hard_safety_only"
         ),
         "goal_stop_radius_m": float(args.goal_stop_radius_m),
         "residual_learning_enabled": bool(

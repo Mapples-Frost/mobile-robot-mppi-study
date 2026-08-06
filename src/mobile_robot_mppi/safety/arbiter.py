@@ -111,6 +111,12 @@ class ScanGuardArbiter:
             or self.rear_pass_through_direction_release_steps < 1
         ):
             raise ValueError("directional motion guard parameters are invalid")
+        # Deployment ablations may hand all non-critical decisions back to
+        # MPPI.  This switch does not remove the scan guard itself, the
+        # physical action bounds, or an emergency translation stop.
+        self.dynamic_safety_arbitration_enabled = bool(
+            self.config.get("dynamic_safety_arbitration_enabled", True)
+        )
         self.dynamic_escape_enabled = bool(
             self.config.get("dynamic_escape_enabled", False)
         )
@@ -1260,12 +1266,60 @@ class ScanGuardArbiter:
             return self._dynamic_escape_geometric_turn_sign, "previous_side"
         return -1.0, "deterministic_right_tie_break"
 
+    def _hard_safety_only_decision(
+        self,
+        proposed: ControlCommand,
+        guard_result: Mapping[str, object],
+    ):
+        """Return the MPPI command except for an explicit emergency stop.
+
+        This is used only by the physical ablation switch.  Dynamic escape,
+        rear-pass, temporal slowdown, recovery and speed-governor rewrites are
+        bypassed, while the final action-space clip and the scan guard's
+        emergency translation stop remain active.
+        """
+
+        values = self.action_spec.clip(proposed.values)
+        guard = dict(guard_result or {})
+        original_reason = str(guard.get("reason", "front_clear"))
+        emergency_stop = bool(guard.get("emergency_stop", False))
+        if emergency_stop and "v_cmd" in self.action_spec.names:
+            values[self.action_spec.index("v_cmd")] = 0.0
+        executed = ControlCommand(
+            values, proposed.timestamp, "hard_safety_only"
+        )
+        diagnostics = dict(guard)
+        diagnostics.update({
+            "dynamic_safety_arbitration_enabled": False,
+            "dynamic_safety_arbitration_disabled": True,
+            "dynamic_safety_arbitration_bypassed": not emergency_stop,
+            "hard_safety_only": True,
+            "hard_safety_emergency_stop_applied": emergency_stop,
+            "dynamic_escape_allowed": False,
+            "rear_pass_through_active": False,
+            "rear_pass_through_suppressed_by_dynamic_ablation": True,
+            "final_motion_owner": (
+                "hard_stop" if emergency_stop else "mppi"
+            ),
+        })
+        return SafetyDecision(
+            proposed,
+            executed,
+            not np.allclose(
+                executed.values, proposed.values, rtol=0.0, atol=1.0e-12
+            ),
+            original_reason if emergency_stop else "dynamic_safety_arbitration_disabled",
+            diagnostics,
+        )
+
     def arbitrate(
         self,
         proposed: ControlCommand,
         guard_result: Mapping[str, object],
         planning_context: Mapping[str, object] = None,
     ):
+        if not self.dynamic_safety_arbitration_enabled:
+            return self._hard_safety_only_decision(proposed, guard_result)
         self._dynamic_deadline_decision_count += 1
         values = self.action_spec.clip(proposed.values)
         guard_result = dict(guard_result)
@@ -3798,6 +3852,9 @@ class ScanGuardArbiter:
                 )
             )
         diagnostics["dynamic_escape_allowed"] = dynamic_escape_allowed
+        diagnostics["dynamic_safety_arbitration_enabled"] = True
+        diagnostics["dynamic_safety_arbitration_disabled"] = False
+        diagnostics["hard_safety_only"] = False
         diagnostics["encounter_control_stop_only_hard_safety"] = bool(
             encounter_stop_only_hard_safety
         )

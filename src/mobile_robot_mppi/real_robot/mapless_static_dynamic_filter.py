@@ -73,6 +73,7 @@ class MaplessStaticDynamicFilter:
         dynamic_classification_temporal_corroboration_hold_cycles=12,
         dynamic_classification_temporal_corroboration_minimum_support_beams=3,
         dynamic_classification_collision_course_bypass_enabled=False,
+        allow_collision_course_provisional=False,
     ):
         if not isinstance(tracker, MotionBootstrapMultiObstacleTracker):
             raise TypeError("mapless filter requires motion-bootstrap tracker")
@@ -189,6 +190,14 @@ class MaplessStaticDynamicFilter:
         )
         self.dynamic_classification_collision_course_bypass_enabled = bool(
             dynamic_classification_collision_course_bypass_enabled
+        )
+        # A strict collision-course certificate is allowed to retain an
+        # already-valid forecast before the slower semantic dynamic label is
+        # complete.  It is deliberately separate from classification: the
+        # certificate requires coherent motion, support, TTC and closest
+        # approach gates in _strong_motion_collision_course().
+        self.allow_collision_course_provisional = bool(
+            allow_collision_course_provisional
         )
         if self.dynamic_hold_cycles < 0:
             raise ValueError("dynamic hold cycles cannot be negative")
@@ -959,11 +968,30 @@ class MaplessStaticDynamicFilter:
                 ) > 0
             )
         )
-        provisional_flow_index_set = set(provisional_flow_indices)
-        for index in provisional_flow_indices:
+        collision_course_indices = tuple(
+            index
+            for index, track in enumerate(track_values)
+            if (
+                self.allow_collision_course_provisional
+                and bool(track.get("associated", False))
+                and bool(track.get("forecast_valid", False))
+                and bool(track.get(
+                    "mapless_strong_motion_collision_course", False
+                ))
+                and self.labels[index] != "static"
+            )
+        )
+        provisional_indices = tuple(dict.fromkeys(
+            (*provisional_flow_indices, *collision_course_indices)
+        ))
+        provisional_flow_index_set = set(provisional_indices)
+        for index in provisional_indices:
             track_values[index][
                 "mapless_temporal_flow_provisional"
             ] = True
+            track_values[index][
+                "mapless_collision_course_provisional"
+            ] = bool(index in collision_course_indices)
         retained_pairs = tuple(
             (track_index, forecast)
             for track_index, forecast in zip(
@@ -1021,6 +1049,9 @@ class MaplessStaticDynamicFilter:
                 ),
                 "mapless_temporal_flow_provisional_track_indices": (
                     provisional_flow_indices
+                ),
+                "mapless_collision_course_provisional_track_indices": (
+                    collision_course_indices
                 ),
                 "forecast_unavailable_reason": (
                     "available"

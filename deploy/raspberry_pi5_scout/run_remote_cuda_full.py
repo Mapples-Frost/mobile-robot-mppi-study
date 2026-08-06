@@ -7,6 +7,8 @@ import hashlib
 import json
 import math
 from pathlib import Path
+import queue
+import threading
 import time
 
 import numpy as np
@@ -45,6 +47,77 @@ from mobile_robot_mppi.runtime.factories import make_components
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
+
+
+class _AsyncJsonlWriter:
+    """Serialize and flush diagnostic rows outside the control loop."""
+
+    _STOP = object()
+
+    def __init__(self, path, max_queue_size=64):
+        self.path = Path(path)
+        self._stream = self.path.open("w", encoding="utf-8")
+        self._queue = queue.Queue(maxsize=int(max_queue_size))
+        self._error = None
+        self._written_rows = 0
+        self._max_queue_depth = 0
+        self._thread = threading.Thread(
+            target=self._run,
+            name="real-robot-diagnostic-writer",
+            daemon=True,
+        )
+        self._thread.start()
+
+    def _run(self):
+        try:
+            while True:
+                value = self._queue.get()
+                try:
+                    if value is self._STOP:
+                        return
+                    self._stream.write(
+                        json.dumps(_json_value(value), sort_keys=True) + "\n"
+                    )
+                    self._stream.flush()
+                    self._written_rows += 1
+                finally:
+                    self._queue.task_done()
+        except BaseException as exc:  # propagate through write/close
+            self._error = exc
+
+    def write(self, row):
+        while True:
+            if self._error is not None:
+                raise RuntimeError("diagnostic writer failed") from self._error
+            try:
+                self._queue.put(row, timeout=0.10)
+                self._max_queue_depth = max(
+                    self._max_queue_depth,
+                    self._queue.qsize(),
+                )
+                return
+            except queue.Full:
+                # Give the worker a chance to drain without doing JSON work in
+                # the real-time control thread.
+                continue
+
+    def close(self):
+        if self._thread.is_alive():
+            self._queue.put(self._STOP)
+            self._thread.join()
+        try:
+            self._stream.flush()
+        finally:
+            self._stream.close()
+        if self._error is not None:
+            raise RuntimeError("diagnostic writer failed") from self._error
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.close()
+        return False
 
 
 _PLANNER_DIAGNOSTIC_PREFIXES = (
@@ -2075,9 +2148,13 @@ def main():
     )
     initial_chassis_fault = None
     initial_chassis_fault_labels = ()
+    diagnostic_writer_stats = {
+        "written_rows": 0,
+        "max_queue_depth": 0,
+    }
     try:
         with RemoteDeploymentClient(args.pi_host, args.port, args.token) as remote, \
-                log_path.open("w", encoding="utf-8") as stream:
+                _AsyncJsonlWriter(log_path) as stream:
             status = _wait_for_complete_chassis_status(remote)
             initial_chassis_fault = status.fault
             initial_chassis_fault_labels = _scout_fault_labels(status.fault)
@@ -2547,8 +2624,7 @@ def main():
                     "timing_ms": {name: values[-1] for name, values in timings.items()},
                 }
                 rows.append(row)
-                stream.write(json.dumps(_json_value(row), sort_keys=True) + "\n")
-                stream.flush()
+                stream.write(row)
                 if goal_stop_triggered:
                     break
                 next_cycle += args.period_s
@@ -2557,6 +2633,10 @@ def main():
                     time.sleep(delay)
                 else:
                     next_cycle = time.monotonic()
+            diagnostic_writer_stats = {
+                "written_rows": int(stream._written_rows),
+                "max_queue_depth": int(stream._max_queue_depth),
+            }
     finally:
         summary = {
             "contract": "pc_cuda_pi_gateway_mppi_ablation_v1",
@@ -2570,6 +2650,7 @@ def main():
                 chassis_status_recovery_count
             ),
             "chassis_status_max_age_s": float(chassis_status_max_age_s),
+            "diagnostic_writer": diagnostic_writer_stats,
             "timing": {name: _timing(values) for name, values in timings.items()},
             "config_sha256": _sha256(config_path),
             "lidar_config_sha256": _sha256(args.lidar_config),

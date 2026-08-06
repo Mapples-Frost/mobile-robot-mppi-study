@@ -3,6 +3,7 @@ import json
 import numpy as np
 
 from deploy.raspberry_pi5_scout.run_remote_cuda_full import (
+    _AsyncJsonlWriter,
     _goal_stop_requested,
     _planner_diagnostic_trace,
     _real_robot_diagnostic_payload,
@@ -152,6 +153,17 @@ def test_stale_status_recovery_accepts_newer_gateway_sample():
         timeout_s=0.05,
     )
     assert status.received_monotonic == 2.0
+
+
+def test_async_jsonl_writer_flushes_rows_without_main_thread_serialization(
+    tmp_path,
+):
+    path = tmp_path / "cycles.jsonl"
+    with _AsyncJsonlWriter(path) as writer:
+        writer.write({"cycle": 1, "nested": {"value": 2}})
+
+    payload = json.loads(path.read_text(encoding="utf-8").strip())
+    assert payload == {"cycle": 1, "nested": {"value": 2}}
 
 
 def test_nominal_runtime_fallback_is_explicit_and_validated():

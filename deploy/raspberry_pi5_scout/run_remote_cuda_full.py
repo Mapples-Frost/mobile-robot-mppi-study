@@ -120,6 +120,139 @@ class _AsyncJsonlWriter:
         return False
 
 
+class _CommandHeartbeat:
+    """Refresh the last safe command while the PC computes the next one.
+
+    A full forecast/control cycle can occasionally exceed the PC period.  If
+    no command crosses the TCP link during that gap, the Pi watchdog zeros the
+    chassis and the next plan restarts it, which is the observed staircase
+    motion.  This helper repeats the latest command at a fixed rate for a
+    short lease; after the lease expires it sends an immediate translation
+    stop, so a genuinely stalled planner still fails closed.
+    """
+
+    def __init__(self, remote, *, period_s=0.05, lease_s=0.28):
+        self.remote = remote
+        self.period_s = float(period_s)
+        self.lease_s = float(lease_s)
+        if not 0.01 <= self.period_s <= 0.20:
+            raise ValueError("command heartbeat period must be in [0.01, 0.20]")
+        if not self.period_s < self.lease_s < 0.35:
+            raise ValueError(
+                "command heartbeat lease must be above its period and below "
+                "the Pi watchdog timeout"
+            )
+        self._lock = threading.Lock()
+        self._stop = threading.Event()
+        self._thread = None
+        self._sequence = 0
+        self._v = 0.0
+        self._omega = 0.0
+        self._arm = False
+        self._translation_stop = False
+        self._all_stop = False
+        self._last_publish = time.monotonic()
+        self.refresh_count = 0
+        self.lease_expiry_count = 0
+
+    def start(self):
+        if self._thread is not None:
+            raise RuntimeError("command heartbeat already started")
+        self._thread = threading.Thread(
+            target=self._run, name="remote-command-heartbeat", daemon=True
+        )
+        self._thread.start()
+
+    def publish(
+        self,
+        v_mps,
+        omega_radps,
+        *,
+        arm,
+        immediate_translation_stop=False,
+        immediate_all_stop=False,
+    ):
+        with self._lock:
+            self._v = float(v_mps)
+            self._omega = float(omega_radps)
+            self._arm = bool(arm)
+            self._translation_stop = bool(immediate_translation_stop)
+            self._all_stop = bool(immediate_all_stop)
+            self._last_publish = time.monotonic()
+            self._sequence += 1
+            sequence = self._sequence
+            values = (
+                self._v,
+                self._omega,
+                self._arm,
+                self._translation_stop,
+                self._all_stop,
+            )
+            # Keep sequence allocation and wire transmission atomic with
+            # respect to the heartbeat thread; otherwise a background tick
+            # could allocate N+1 and arrive before this N packet.
+            self.remote.send_command(
+                sequence,
+                values[0],
+                values[1],
+                arm=values[2],
+                immediate_translation_stop=values[3],
+                immediate_all_stop=values[4],
+            )
+        return sequence
+
+    def _run(self):
+        next_tick = time.monotonic() + self.period_s
+        while not self._stop.wait(max(0.0, next_tick - time.monotonic())):
+            now = time.monotonic()
+            with self._lock:
+                age = now - self._last_publish
+                self._sequence += 1
+                sequence = self._sequence
+                if age <= self.lease_s:
+                    v = self._v
+                    omega = self._omega
+                    arm = self._arm
+                    translation_stop = self._translation_stop
+                    all_stop = self._all_stop
+                    self.refresh_count += 1
+                else:
+                    # Keep the session armed but never keep stale translation
+                    # beyond the bounded lease.
+                    v = 0.0
+                    omega = self._omega
+                    arm = self._arm
+                    translation_stop = True
+                    all_stop = False
+                    self.lease_expiry_count += 1
+                try:
+                    self.remote.send_command(
+                        sequence,
+                        v,
+                        omega,
+                        arm=arm,
+                        immediate_translation_stop=translation_stop,
+                        immediate_all_stop=all_stop,
+                    )
+                except (OSError, ConnectionError):
+                    return
+            next_tick += self.period_s
+
+    def close(self):
+        self._stop.set()
+        if self._thread is not None:
+            self._thread.join(timeout=1.0)
+            self._thread = None
+
+    def __enter__(self):
+        self.start()
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.close()
+        return False
+
+
 _PLANNER_DIAGNOSTIC_PREFIXES = (
     "probabilistic_obstacle_",
     "dynamic_obstacle_tracker_",
@@ -2203,9 +2336,16 @@ def main():
         "written_rows": 0,
         "max_queue_depth": 0,
     }
+    heartbeat_stats = {
+        "period_s": 0.05,
+        "lease_s": 0.28,
+        "refresh_count": 0,
+        "lease_expiry_count": 0,
+    }
     try:
         with RemoteDeploymentClient(args.pi_host, args.port, args.token) as remote, \
-                _AsyncJsonlWriter(log_path) as stream:
+                _AsyncJsonlWriter(log_path) as stream, \
+                _CommandHeartbeat(remote) as heartbeat:
             status = _wait_for_complete_chassis_status(remote)
             initial_chassis_fault = status.fault
             initial_chassis_fault_labels = _scout_fault_labels(status.fault)
@@ -2235,9 +2375,7 @@ def main():
                     # Do not continue translating without a fresh scan.  Send
                     # an immediate translation stop, keep the gateway armed,
                     # and retry the sensor stream on the next cycle.
-                    sequence += 1
-                    remote.send_command(
-                        sequence,
+                    sequence = heartbeat.publish(
                         0.0,
                         0.0,
                         arm=bool(args.publish and len(rows) >= args.warmup_cycles),
@@ -2288,9 +2426,7 @@ def main():
                     )
                     # Fail closed during the hold: the Pi watchdog also
                     # zeros the chassis if this command is not refreshed.
-                    sequence += 1
-                    remote.send_command(
-                        sequence,
+                    sequence = heartbeat.publish(
                         0.0,
                         0.0,
                         arm=bool(
@@ -2433,7 +2569,6 @@ def main():
                 decision = safety.arbitrate(
                     plan.proposed_control, perceived.guard, planning_context
                 )
-                sequence += 1
                 armed_command = bool(args.publish and len(rows) >= args.warmup_cycles)
                 goal_stop_triggered, last_goal_distance_m = _goal_stop_requested(
                     pose_x, pose_y, args.goal_x, args.goal_y,
@@ -2574,8 +2709,10 @@ def main():
                     ControlCommand([commanded_v, commanded_omega]),
                     decision.reason,
                 )
-                remote.send_command(
-                    sequence, commanded_v, commanded_omega, arm=armed_command,
+                sequence = heartbeat.publish(
+                    commanded_v,
+                    commanded_omega,
+                    arm=armed_command,
                     immediate_translation_stop=(
                         immediate_translation_stop or goal_stop_triggered
                     ),
@@ -2693,6 +2830,12 @@ def main():
                 "written_rows": int(stream._written_rows),
                 "max_queue_depth": int(stream._max_queue_depth),
             }
+            heartbeat_stats = {
+                "period_s": float(heartbeat.period_s),
+                "lease_s": float(heartbeat.lease_s),
+                "refresh_count": int(heartbeat.refresh_count),
+                "lease_expiry_count": int(heartbeat.lease_expiry_count),
+            }
     finally:
         summary = {
             "contract": "pc_cuda_pi_gateway_mppi_ablation_v1",
@@ -2707,6 +2850,7 @@ def main():
             ),
             "chassis_status_max_age_s": float(chassis_status_max_age_s),
             "diagnostic_writer": diagnostic_writer_stats,
+            "command_heartbeat": heartbeat_stats,
             "timing": {name: _timing(values) for name, values in timings.items()},
             "config_sha256": _sha256(config_path),
             "lidar_config_sha256": _sha256(args.lidar_config),

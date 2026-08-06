@@ -63,6 +63,13 @@ class EncounterControlConfig:
     temporal_risk_defer_min_front_range_m: float = 0.75
     side_hard_stop_defer_min_clearance_m: float = 0.60
     side_hard_stop_turn_min_clearance_m: float = 0.75
+    # When the front hard-stop beam is close but the encounter-owned side is
+    # clearly open, a tiny forward creep lets the chassis complete the locked
+    # bypass instead of pivoting in place.  This is deliberately stricter than
+    # the turn-only release and is disabled by near-body evidence.
+    side_hard_stop_turn_creep_min_front_range_m: float = 0.45
+    side_hard_stop_turn_creep_min_clearance_m: float = 1.00
+    side_hard_stop_turn_creep_speed_mps: float = 0.12
     control_prefix_steps: int = 3
     reference_lookahead_m: float = 1.0
     reference_corridor_half_width_m: float = 0.95
@@ -299,6 +306,15 @@ class EncounterControlAuthority:
             >= self.config.side_hard_stop_turn_min_clearance_m
             and not side_hard_stop_deferred
         )
+        side_hard_stop_turn_creep = bool(
+            side_hard_stop_turn_only
+            and near_body_count <= 0
+            and math.isfinite(front_range)
+            and front_range >= self.config.side_hard_stop_turn_creep_min_front_range_m
+            and math.isfinite(selected_side_clearance)
+            and selected_side_clearance
+            >= self.config.side_hard_stop_turn_creep_min_clearance_m
+        )
         temporal_risk_deferred = bool(
             emergency
             and guard_reason == "temporal_collision_risk"
@@ -440,7 +456,14 @@ class EncounterControlAuthority:
                 else "mode_owned_temporary_reference"
             )
         if side_hard_stop_turn_only:
-            values[0] = 0.0
+            values[0] = (
+                min(
+                    target_speed,
+                    self.config.side_hard_stop_turn_creep_speed_mps,
+                )
+                if side_hard_stop_turn_creep
+                else 0.0
+            )
             values[1] = (
                 (1.0 if locked_side > 0 else -1.0)
                 * max(abs(values[1]), self.config.minimum_turn_omega_radps)
@@ -451,7 +474,11 @@ class EncounterControlAuthority:
                 self.config.maximum_omega_radps,
             ))
             reverse_applied = False
-            reason = "side_hard_stop_turn_only"
+            reason = (
+                "side_hard_stop_turn_creep"
+                if side_hard_stop_turn_creep
+                else "side_hard_stop_turn_only"
+            )
 
         applied = bool(not np.allclose(
             values, original, rtol=0.0, atol=1.0e-12
@@ -479,6 +506,7 @@ class EncounterControlAuthority:
             "encounter_control_temporal_risk_deferred": temporal_risk_deferred,
             "encounter_control_side_hard_stop_deferred": side_hard_stop_deferred,
             "encounter_control_side_hard_stop_turn_only": side_hard_stop_turn_only,
+            "encounter_control_side_hard_stop_turn_creep": side_hard_stop_turn_creep,
             "encounter_control_original_emergency_stop": bool(
                 guard_result.get("emergency_stop", False)
             ),

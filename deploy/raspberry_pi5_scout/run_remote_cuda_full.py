@@ -1888,7 +1888,6 @@ def main():
     parser.add_argument("--warm-start-forecast-cycles", type=int, default=14)
     parser.add_argument("--warm-start-dt-s", type=float, default=0.08)
     parser.add_argument("--allow-cold-forecast-path", action="store_true")
-    parser.add_argument("--human-leg-mode", action="store_true")
     parser.add_argument("--full-proposed", action="store_true")
     parser.add_argument("--traditional-mppi", action="store_true")
     parser.add_argument("--enable-actor-guidance", action="store_true")
@@ -1910,7 +1909,6 @@ def main():
     parser.add_argument("--goal-stop-radius-m", type=float, default=0.0)
     parser.add_argument("--until-goal", action="store_true")
     parser.add_argument("--disable-residual-learning", action="store_true")
-    parser.add_argument("--enable-encounter-control", action="store_true")
     parser.add_argument("--publish", action="store_true")
     args = parser.parse_args()
     if args.until_goal and not args.publish:
@@ -1934,14 +1932,6 @@ def main():
         )
     except ValueError as error:
         parser.error(str(error))
-    if args.enable_encounter_control and not (
-        algorithm_features["change_aware_prediction"]
-        and algorithm_features["probabilistic_risk"]
-    ):
-        parser.error(
-            "--enable-encounter-control requires change-aware prediction "
-            "and probabilistic risk"
-        )
     args.output.mkdir(parents=True, exist_ok=False)
     if not torch.cuda.is_available():
         raise RuntimeError("CUDA is required for remote MPPI deployment")
@@ -1955,12 +1945,19 @@ def main():
         max_omega_radps=args.max_omega_radps,
     )
     apply_pi5_algorithm_features(config, algorithm_features)
+    # Keep the physical deployment identical to the simulation controller.
+    # The later Encounter/YOLO-style semantic modes (frontal approach,
+    # crossing, rear-pass and rejoin) are intentionally unavailable here;
+    # their authority used to rewrite the simulation MPPI command after the
+    # optimizer had already selected it.  The implementation remains in the
+    # package for offline ablations and rollback, but this runner cannot arm
+    # it.
     encounter_mode_config = EncounterModeConfig(
-        enabled=bool(algorithm_features["change_aware_prediction"]),
-        shadow_only=not bool(args.enable_encounter_control),
+        enabled=False,
+        shadow_only=True,
     )
     encounter_control_config = EncounterControlConfig(
-        enabled=bool(args.enable_encounter_control),
+        enabled=False,
         maximum_forward_speed_mps=float(args.max_v_mps),
         maximum_reverse_speed_mps=float(args.max_reverse_v_mps),
         maximum_omega_radps=float(args.max_omega_radps),
@@ -1996,10 +1993,7 @@ def main():
         "computer": "windows_cuda_pc",
         "publish_enabled": bool(args.publish),
         "pi_gateway": args.pi_host,
-        "human_leg_dynamic_filter": bool(
-            args.human_leg_mode
-            and algorithm_features["change_aware_prediction"]
-        ),
+        "human_leg_dynamic_filter": False,
         "goal_stop_radius_m": float(args.goal_stop_radius_m),
         "residual_learning_enabled": bool(
             algorithm_features["residual_learning"]
@@ -2007,10 +2001,10 @@ def main():
         "runtime_algorithm_mode": (
             config["real_robot_deployment"]["algorithm_profile"]
         ),
-        "forward_passage_enabled": bool(
-            algorithm_features["forward_passage"]
-        ),
-        "forward_passage_policy": "continuation_transaction_v3",
+        # The physical continuation transaction is deployment-only and is
+        # intentionally excluded from the simulation-parity control path.
+        "forward_passage_enabled": False,
+        "forward_passage_policy": "disabled_simulation_parity",
         "forward_passage_risk_ceiling": float(
             args.forward_passage_risk_ceiling
         ),
@@ -2036,12 +2030,14 @@ def main():
         ),
         "goal_rejoin_release_steps": _GOAL_REJOIN_RELEASE_STEPS,
         "direction_reversal_zero_transition_steps": 1,
-        # Recognition is always logged; the independent authority switch
-        # selects shadow observation or actual competing-layer inhibition.
+        # Encounter recognition and authority are both disabled in the
+        # simulation-parity deployment.  Keep explicit fields so old log
+        # readers can verify that no semantic mode layer was armed.
         "encounter_mode_shadow_enabled": bool(encounter_mode_config.enabled),
         "encounter_mode_control_enabled": bool(
             encounter_control_config.enabled
         ),
+        "encounter_policy": "disabled_simulation_parity",
         "encounter_mode_config": asdict(encounter_mode_config),
         "encounter_control_config": asdict(encounter_control_config),
     })
@@ -2087,11 +2083,11 @@ def main():
     safety = components["safety"]
     reference = components["reference"]
     if algorithm_features["change_aware_prediction"]:
-        _install_mapless_tracker(
-            perception, human_leg_mode=args.human_leg_mode
-        )
+        # Use the same causal mapless tracker profile as simulation.  The
+        # physical human-leg specialisation is intentionally not injected.
+        _install_mapless_tracker(perception, human_leg_mode=False)
     forward_passage_config = ForwardPassageConfig(
-        enabled=bool(algorithm_features["forward_passage"]),
+        enabled=False,
         maximum_probability=float(args.forward_passage_risk_ceiling),
         maximum_probability_mass=float(args.forward_passage_mass_ceiling),
     )
@@ -2678,6 +2674,7 @@ def main():
             "encounter_mode_control_enabled": bool(
                 encounter_control_config.enabled
             ),
+            "encounter_policy": "disabled_simulation_parity",
             "encounter_mode_config": asdict(encounter_mode_config),
             "encounter_control_config": asdict(encounter_control_config),
             "encounter_control_applied_cycles": sum(
@@ -2704,14 +2701,9 @@ def main():
             "controller_dt_s": controller_dt_s,
             "forecast_dt_s": forecast_dt_s,
             "warm_start": warm_start,
-            "human_leg_mode": bool(
-                args.human_leg_mode
-                and algorithm_features["change_aware_prediction"]
-            ),
-            "real_robot_forward_passage": bool(
-                algorithm_features["forward_passage"]
-            ),
-            "forward_passage_policy": "continuation_transaction_v3",
+            "human_leg_mode": False,
+            "real_robot_forward_passage": False,
+            "forward_passage_policy": "disabled_simulation_parity",
             "forward_passage_risk_ceiling": float(
                 args.forward_passage_risk_ceiling
             ),

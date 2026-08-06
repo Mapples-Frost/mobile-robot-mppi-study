@@ -80,12 +80,6 @@ class EncounterModeConfig:
     frontal_clearance_m: float = 0.65
     rejoin_heading_tolerance_deg: float = 12.0
     rejoin_cross_track_tolerance_m: float = 0.25
-    # Do not let a nearly completed encounter drive past the goal forever
-    # because the measured line offset is a few centimetres outside the tight
-    # nominal corridor.  Release to the normal goal planner near the goal
-    # with a wider, still bounded lateral tolerance.
-    rejoin_goal_progress_release_margin_m: float = 0.15
-    rejoin_goal_cross_track_release_tolerance_m: float = 0.45
     rejoin_clear_cycles: int = 4
     completion_confirmation_cycles: int = 2
     lost_track_grace_cycles: int = 3
@@ -1470,14 +1464,6 @@ class EncounterModeManager:
         cross_track = float(np.dot(
             robot_position - self._entry_goal_origin, lateral_direction
         ))
-        progress = float(np.dot(
-            robot_position - self._entry_goal_origin,
-            self._entry_goal_direction,
-        ))
-        goal_progress = max(0.0, float(np.dot(
-            self._entry_goal_point - self._entry_goal_origin,
-            self._entry_goal_direction,
-        )))
         goal_heading = math.atan2(
             self._entry_goal_direction[1], self._entry_goal_direction[0]
         )
@@ -1490,14 +1476,6 @@ class EncounterModeManager:
             <= self.config.rejoin_heading_tolerance_deg
             and not dangerous
         )
-        goal_progress_release = bool(
-            progress >= goal_progress
-            - self.config.rejoin_goal_progress_release_margin_m
-            and abs(cross_track)
-            <= self.config.rejoin_goal_cross_track_release_tolerance_m
-            and not dangerous
-        )
-        clear = bool(clear or goal_progress_release)
         self._rejoin_clear_streak = (
             self._rejoin_clear_streak + 1 if clear else 0
         )

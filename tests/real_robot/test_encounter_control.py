@@ -95,6 +95,42 @@ def test_active_mode_corrects_wrong_turn_and_supplies_safe_speed_floor():
     assert np.all(result.control_sequence[:3, 1] > 0.0)
 
 
+def test_frontal_bypass_holds_side_heading_until_lateral_clearance():
+    authority = EncounterControlAuthority(
+        EncounterControlConfig(enabled=True)
+    )
+    intent = _intent(
+        encounter_phase="frontal_approach",
+        encounter_strategy="left_bypass",
+        encounter_locked_steering_side=1,
+        encounter_entry_goal_origin=(0.0, 0.0),
+        encounter_entry_goal_heading_rad=0.0,
+        encounter_temporary_waypoint=(3.8, 0.9),
+    )
+
+    result = authority.apply(
+        _plan(control=(0.32, 0.0)),
+        intent,
+        pose=(0.9, 0.0, 0.0),
+        guard_result={"emergency_stop": False},
+    )
+
+    assert result.proposed_control.omega >= 0.16
+    assert result.diagnostics[
+        "encounter_control_frontal_lateral_hold_active"
+    ] is True
+
+    already_offset = authority.apply(
+        _plan(control=(0.32, 0.0)),
+        intent,
+        pose=(0.9, 0.40, 0.0),
+        guard_result={"emergency_stop": False},
+    )
+    assert already_offset.diagnostics[
+        "encounter_control_frontal_lateral_hold_active"
+    ] is False
+
+
 def test_front_pass_uses_high_progress_speed_but_remains_bounded():
     authority = EncounterControlAuthority(
         EncounterControlConfig(enabled=True)

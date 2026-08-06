@@ -51,6 +51,14 @@ class EncounterControlConfig:
     minimum_turn_omega_radps: float = 0.16
     turn_deadband_rad: float = 0.06
     rejoin_alignment_heading_rad: float = 0.45
+    # A frontal bypass waypoint can lie far ahead of the chassis.  If the
+    # current yaw already points at that waypoint, pure waypoint pursuit
+    # produces almost zero omega and the robot drives toward the person before
+    # building lateral clearance.  Hold a bounded side-facing heading until a
+    # modest lateral offset is achieved; after that, return to normal waypoint
+    # pursuit so the detour cannot over-rotate.
+    frontal_bypass_min_heading_rad: float = 0.40
+    frontal_bypass_lateral_hold_m: float = 0.35
     safe_probability_ceiling: float = 0.12
     safe_probability_mass_ceiling: float = 2.0
     frontal_reverse_trigger_m: float = 0.85
@@ -348,6 +356,58 @@ class EncounterControlAuthority:
             waypoint[1] - pose_values[1], waypoint[0] - pose_values[0]
         )
         heading_error = _wrap(desired_heading - pose_values[2])
+        frontal_lateral_hold_active = False
+        frontal_lateral_heading_error = float("nan")
+        if (
+            phase == "frontal_approach"
+            and str(diagnostics.get("encounter_strategy", ""))
+            in {"left_bypass", "right_bypass"}
+        ):
+            try:
+                locked_side = int(
+                    diagnostics.get("encounter_locked_steering_side", 0) or 0
+                )
+            except (TypeError, ValueError):
+                locked_side = 0
+            try:
+                origin = np.asarray(
+                    diagnostics.get("encounter_entry_goal_origin", ()),
+                    dtype=np.float64,
+                ).reshape(-1)
+            except (TypeError, ValueError):
+                origin = np.empty(0, dtype=np.float64)
+            entry_heading = _finite(
+                diagnostics.get("encounter_entry_goal_heading_rad"),
+                float("nan"),
+            )
+            if (
+                locked_side != 0
+                and origin.size >= 2
+                and np.isfinite(origin[:2]).all()
+                and math.isfinite(entry_heading)
+            ):
+                lateral_direction = np.asarray(
+                    (-math.sin(entry_heading), math.cos(entry_heading)),
+                    dtype=np.float64,
+                )
+                lateral_offset = float(np.dot(
+                    pose_values[:2] - origin[:2], lateral_direction
+                ))
+                if abs(lateral_offset) < self.config.frontal_bypass_lateral_hold_m:
+                    lateral_target_heading = _wrap(
+                        entry_heading
+                        + float(locked_side)
+                        * self.config.frontal_bypass_min_heading_rad
+                    )
+                    frontal_lateral_heading_error = _wrap(
+                        lateral_target_heading - pose_values[2]
+                    )
+                    # Only strengthen a weak waypoint turn.  If the waypoint
+                    # already requests a larger correction, preserve it.
+                    if abs(frontal_lateral_heading_error) > abs(heading_error):
+                        heading_error = frontal_lateral_heading_error
+                        desired_heading = lateral_target_heading
+                        frontal_lateral_hold_active = True
         if phase == "rejoin":
             # The moving lookahead is useful for lateral convergence, but its
             # bearing can become nearly tangent to the goal line while the
@@ -498,6 +558,12 @@ class EncounterControlAuthority:
             "encounter_control_heading_error_rad": float(heading_error),
             "encounter_control_target_v_mps": float(target_speed),
             "encounter_control_target_omega_radps": float(target_omega),
+            "encounter_control_frontal_lateral_hold_active": (
+                frontal_lateral_hold_active
+            ),
+            "encounter_control_frontal_lateral_heading_error_rad": (
+                frontal_lateral_heading_error
+            ),
             "encounter_control_original_v_mps": float(original[0]),
             "encounter_control_original_omega_radps": float(original[1]),
             "encounter_control_selected_v_mps": float(values[0]),

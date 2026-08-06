@@ -239,7 +239,7 @@ def test_person_stopping_in_active_crossing_does_not_cancel_bypass():
     assert result["encounter_strategy"] == "behind_pass"
 
 
-def test_crossing_to_frontal_change_uses_two_cycle_fast_path():
+def test_crossing_to_frontal_change_uses_high_confidence_fast_path():
     manager = EncounterModeManager()
     for step, y in enumerate((1.0, 0.95, 0.90)):
         _update(manager, 0.1 * step, (2.0, y), (0.0, -0.5))
@@ -251,10 +251,32 @@ def test_crossing_to_frontal_change_uses_two_cycle_fast_path():
 
     assert first["encounter_change_detected"] is True
     assert first["encounter_candidate_fast_path"] is True
-    assert first["encounter_confirmed_mode"] == "straight_crossing"
-    assert second["encounter_confirmed_mode"] == "frontal_approach"
+    assert first["encounter_active_reclassification"] is True
+    assert first["encounter_confirmed_mode"] == "frontal_approach"
+    assert first["encounter_phase"] == "frontal_approach"
+    assert first["encounter_strategy"] in ("left_bypass", "right_bypass")
     assert second["encounter_phase"] == "frontal_approach"
-    assert second["encounter_strategy"] in ("left_bypass", "right_bypass")
+
+
+def test_frontal_to_crossing_change_uses_current_candidate_immediately():
+    manager = EncounterModeManager()
+    for step, x in enumerate((2.0, 1.95, 1.90)):
+        _update(manager, 0.1 * step, (x, 0.1), (-0.5, 0.0))
+
+    result = _update(
+        manager,
+        0.3,
+        (1.85, 0.05),
+        (0.0, -0.5),
+        change=True,
+        nis=8.0,
+    )
+
+    assert result["encounter_candidate_mode"] == "straight_crossing"
+    assert result["encounter_active_reclassification"] is True
+    assert result["encounter_confirmed_mode"] == "straight_crossing"
+    assert result["encounter_phase"] == "straight_crossing"
+    assert result["encounter_strategy"] == "behind_pass"
 
 
 def test_stable_frontal_reclassification_replaces_crossing_without_change_flag():
@@ -449,6 +471,26 @@ def test_active_encounter_rejects_spatially_unrelated_track_slot():
     assert unrelated["encounter_phase"] == "frontal_approach"
     assert unrelated["encounter_line_crossed"] is False
     assert unrelated["encounter_lost_track_cycles"] == 1
+
+
+def test_active_mode_holds_through_short_track_dropout():
+    manager = EncounterModeManager()
+    for step, y in enumerate((0.8, 0.75, 0.70)):
+        _update(manager, 0.1 * step, (1.2, y), (0.0, -0.5))
+
+    result = None
+    for step in range(4):
+        result = manager.update(
+            timestamp_s=0.3 + 0.1 * step,
+            pose=(0.0, 0.0, 0.0),
+            goal=(5.0, 0.0),
+            robot_speed_mps=0.4,
+            tracker_diagnostics={"tracks": ()},
+        )
+
+    assert result["encounter_phase"] == "straight_crossing"
+    assert result["encounter_track_hold_active"] is True
+    assert result["encounter_lost_track_cycles"] == 4
 
 
 def test_same_person_reversal_survives_a_leg_track_slot_change():

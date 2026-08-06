@@ -56,6 +56,13 @@ class EncounterModeConfig:
     minimum_approach_speed_mps: float = 0.08
     ordinary_confirmation_cycles: int = 3
     abrupt_confirmation_cycles: int = 2
+    # Active encounters need a shorter, explicit reclassification path than
+    # cold admission.  Otherwise a crossing candidate can remain hidden
+    # behind a stale frontal confirmation until the robot is already beside
+    # the person.
+    active_reclassification_cycles: int = 2
+    active_reclassification_confidence: float = 0.78
+    active_reclassification_fast_confidence: float = 0.65
     change_score_threshold: float = 0.55
     direction_change_reference_deg: float = 70.0
     track_jump_minimum_m: float = 0.75
@@ -82,7 +89,10 @@ class EncounterModeConfig:
     rejoin_cross_track_tolerance_m: float = 0.25
     rejoin_clear_cycles: int = 4
     completion_confirmation_cycles: int = 2
-    lost_track_grace_cycles: int = 3
+    # A Livox/tracker dropout is not evidence that the person has cleared the
+    # passage.  Keep the semantic transaction alive for roughly 0.8 s at the
+    # current control cadence before allowing a geometric rejoin fallback.
+    lost_track_grace_cycles: int = 8
     front_pass_time_margin_s: float = 0.70
     robot_intersection_clearance_m: float = 0.75
     static_clearance_probe_m: float = 1.20
@@ -103,6 +113,16 @@ class EncounterModeConfig:
             raise ValueError("ordinary confirmation cycles must be positive")
         if self.abrupt_confirmation_cycles < 1:
             raise ValueError("abrupt confirmation cycles must be positive")
+        if self.active_reclassification_cycles < 1:
+            raise ValueError("active reclassification cycles must be positive")
+        if not 0.0 < self.active_reclassification_confidence <= 1.0:
+            raise ValueError(
+                "active reclassification confidence must be in (0, 1]"
+            )
+        if not 0.0 < self.active_reclassification_fast_confidence <= 1.0:
+            raise ValueError(
+                "active fast reclassification confidence must be in (0, 1]"
+            )
         if self.active_track_reacquisition_maximum_m <= 0.0:
             raise ValueError("active track reacquisition distance must be positive")
         if min(
@@ -1582,6 +1602,38 @@ class EncounterModeManager:
         line_crossed = False
         completion_evidence = False
         phase_before = self._phase
+        phase_is_crossing = self._phase in (
+            EncounterMode.STRAIGHT_CROSSING,
+            EncounterMode.OBLIQUE_CROSSING,
+        )
+        candidate_is_crossing = candidate in (
+            EncounterMode.STRAIGHT_CROSSING,
+            EncounterMode.OBLIQUE_CROSSING,
+        )
+        active_reclassification = bool(
+            self._phase in _ACTIVE_MODES
+            and selected is not None
+            and continuous
+            and interaction_relevant
+            # Do not restart a passage merely because straight/oblique
+            # memberships moved within the crossing family.  The expensive
+            # transaction reset is reserved for the actual frontal<->crossing
+            # behaviour change.
+            and phase_is_crossing != candidate_is_crossing
+            and (
+                (
+                    self._candidate_fast_path
+                    and confidence
+                    >= self.config.active_reclassification_fast_confidence
+                )
+                or (
+                    self._candidate_streak
+                    >= self.config.active_reclassification_cycles
+                    and confidence
+                    >= self.config.active_reclassification_confidence
+                )
+            )
+        )
         verified_transition = bool(
             self._confirmed_behavior in _ACTIVE_MODES
             and selected is not None
@@ -1598,20 +1650,25 @@ class EncounterModeManager:
             # behaviour change may interrupt rejoin.
             and previous_confirmed != candidate
         )
-        stable_active_reclassification = bool(
-            self._phase in (
-                EncounterMode.STRAIGHT_CROSSING,
-                EncounterMode.OBLIQUE_CROSSING,
+        if active_reclassification:
+            # The current candidate owns an active behaviour change.  Do not
+            # wait for the cold-admission confirmation path to update the
+            # stale confirmed label; that was the source of the late crossing
+            # takeover in the 20260806 runs.
+            self._confirmed_behavior = candidate
+            timing = self._enter_active(
+                candidate,
+                selected,
+                values,
+                robot_position,
+                goal_values,
+                goal_direction,
+                float(robot_speed_mps),
+                local_obstacles,
             )
-            and confirmed_this_cycle
-            and continuous
-            and self._confirmed_behavior == EncounterMode.FRONTAL_APPROACH
-            and candidate == EncounterMode.FRONTAL_APPROACH
-        )
-        if verified_transition and (
+        elif verified_transition and (
             self._phase == EncounterMode.IDLE
             or rejoin_interrupted
-            or stable_active_reclassification
             or (
                 self._confirmed_behavior != previous_confirmed
                 and self._candidate_fast_path
@@ -1687,6 +1744,12 @@ class EncounterModeManager:
             "encounter_candidate_streak": int(self._candidate_streak),
             "encounter_candidate_fast_path": bool(self._candidate_fast_path),
             "encounter_confirmation_cycles_required": int(required),
+            "encounter_active_reclassification": bool(
+                active_reclassification
+            ),
+            "encounter_active_reclassification_cycles": int(
+                self.config.active_reclassification_cycles
+            ),
             "encounter_confidence": float(confidence),
             "encounter_mode_probabilities": probabilities,
             "encounter_track_index": selected_index,
@@ -1704,6 +1767,12 @@ class EncounterModeManager:
                 else float(selected.person_association_residual_m)
             ),
             "encounter_track_continuous": bool(continuous),
+            "encounter_track_hold_active": bool(
+                self._phase in _ACTIVE_MODES
+                and selected is None
+                and self._lost_track_cycles
+                <= self.config.lost_track_grace_cycles
+            ),
             "encounter_track_switched": track_switched,
             "encounter_track_residual_m": float(residual),
             "encounter_change_detected": bool(changed),

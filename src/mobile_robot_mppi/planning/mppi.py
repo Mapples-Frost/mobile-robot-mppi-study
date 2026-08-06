@@ -1,10 +1,23 @@
 """Dimension-agnostic MPPI controller with plugin cost and prior ports."""
 
+import hashlib
+import os
+import copy
 import time
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, Iterable, Mapping, Optional, Sequence, Tuple
 
 import numpy as np
+
+# Memoisation of `MppiController._known_static_map_clearance`.  Enabled by
+# default; it is provably result-preserving (the function is pure and the key
+# is a digest of the input bytes) and removes ~49% of calls.  Set the
+# environment variable MPPI_DISABLE_STATIC_CLEARANCE_CACHE=1 to bypass it,
+# which exists so the cache can be A/B timed and so a regression test can
+# assert both paths agree bit-for-bit.
+STATIC_CLEARANCE_CACHE_ENABLED = (
+    os.environ.get("MPPI_DISABLE_STATIC_CLEARANCE_CACHE", "") not in ("1", "true", "True")
+)
 
 from mobile_robot_mppi.core.spaces import ActionSpec, StateSpec
 from mobile_robot_mppi.core.types import ControlCommand, PlanResult, RobotObservation
@@ -12,6 +25,9 @@ from mobile_robot_mppi.obstacles.collision_risk import (
     CollisionRiskConfig,
     GaussianMixtureObstacleForecast,
     evaluate_collision_risk,
+)
+from mobile_robot_mppi.planning.candidate_diagnostics import (
+    reverse_candidate_diagnostics,
 )
 from mobile_robot_mppi.planning.static_astar import plan_static_astar_path
 from mobile_robot_mppi.policies.priors import GoalWarmStartPrior, PriorOutput
@@ -82,6 +98,15 @@ class MppiConfig:
     terminal_translation_heading_gate_rad: Optional[float] = None
     terminal_alignment_yaw_gain: Optional[float] = None
     terminal_control_radius: Optional[float] = None
+    # Lower bound on the terminal heading gate's translation scale.  The gate
+    # exists to force in-place alignment, but it is applied to the *final*
+    # action, after avoidance has chosen a command, so a scale of 0.0 also
+    # cancels evasive translation.  A differential-drive robot whose v is
+    # zeroed cannot change its position at all, so clearance can only decay
+    # while it rotates.  Raising this floor keeps the gate's alignment and
+    # speed-limit behaviour while preserving translation authority.
+    # 0.0 reproduces the historical gate exactly.
+    terminal_translation_minimum_scale: float = 0.0
     control_weight: float = 0.05
     control_rate_weight: float = 0.08
     obstacle_weight: float = 30.0
@@ -101,6 +126,27 @@ class MppiConfig:
     )
     probabilistic_reference_progress_weight: float = 0.0
     static_astar_replan_enabled: bool = False
+    static_astar_replan_static_hard_stop_enabled: bool = False
+    static_astar_replan_corner_clamped_lookahead_enabled: bool = False
+    static_astar_replan_sharp_corner_clamped_lookahead_enabled: bool = False
+    static_astar_replan_sharp_corner_minimum_turn_rad: float = (
+        np.pi / 4.0
+    )
+    # Floor on the clamped sharp-corner target's distance ahead of the robot.
+    # The unfloored clamp puts the target exactly on the corner vertex, so the
+    # pursuit distance collapses to zero on arrival and the robot can orbit the
+    # vertex without its projection passing it -- the clamp then never
+    # releases.  Measured on seed 791101302: route progress pinned at 3.48 m of
+    # a 29.76 m route (0.070 route fraction) against 15.19 m without the clamp.
+    # 0.0 reproduces the unfloored clamp exactly.
+    static_astar_replan_sharp_corner_minimum_lookahead_m: float = 0.0
+    # Optional readiness gate for the sharp-corner clamp.  ``None`` keeps the
+    # historical unconditional clamp.  A positive value defers the first
+    # sharp-corner clamp until that route-progress distance remains, then
+    # retains the same distance as the target floor.
+    static_astar_replan_sharp_corner_deferred_clamp_distance_m: Optional[
+        float
+    ] = None
     static_astar_replan_resolution_m: float = 0.10
     static_astar_replan_clearance_margin_m: float = 0.08
     static_astar_replan_deviation_m: float = 0.70
@@ -125,6 +171,7 @@ class MppiConfig:
     probabilistic_obstacle_stopping_feasibility_enabled: bool = False
     probabilistic_obstacle_emergency_candidates_enabled: bool = False
     probabilistic_obstacle_emergency_candidate_prefix_steps: int = 5
+    probabilistic_obstacle_emergency_candidate_hold_tail_enabled: bool = False
     probabilistic_obstacle_emergency_candidate_trigger_ttc_s: float = 0.0
     probabilistic_obstacle_emergency_candidate_trigger_distance_m: float = 0.0
     probabilistic_obstacle_emergency_candidate_critical_distance_m: float = 0.0
@@ -133,11 +180,79 @@ class MppiConfig:
     probabilistic_obstacle_front_obstacle_forward_turn_enabled: bool = False
     probabilistic_obstacle_counterflow_escape_enabled: bool = False
     probabilistic_obstacle_counterflow_weight: float = 1.0
+    # Differential-drive realization of a crossing prediction.  For a
+    # significant body-frame lateral obstacle velocity, choose a forward-biased
+    # robot direction whose lateral component has the opposite sign.  This
+    # avoids asking the real chassis to face a counterflow vector behind it
+    # before it can begin the lateral pass.  Default off preserves the frozen
+    # simulation treatment; the physical profile enables it explicitly.
+    probabilistic_obstacle_forward_lateral_countermotion_enabled: bool = False
+    probabilistic_obstacle_forward_lateral_countermotion_weight: float = 1.20
+    probabilistic_obstacle_forward_lateral_minimum_speed_mps: float = 0.10
+    probabilistic_obstacle_forward_lateral_minimum_fraction: float = 0.25
+    probabilistic_obstacle_forward_lateral_reversal_confirm_steps: int = 2
+    # Counterflow rotates the escape away from the obstacle's tangent, which can
+    # swing the preferred direction behind the robot.  Every collision measured
+    # for the full arm on Map3-Redesign-D happened that way: penetration of only
+    # 0.003-0.027 m, the traversal window disengaged (commit_active=0,
+    # window_safe=0), and four of six impacts at NEGATIVE velocity.  The robot
+    # reverses into a carrier rather than failing to cross one, and 66-71% of
+    # reversing steps occur under counterflow escape.
+    #
+    # The guard vetoes the counterflow term when the direction it produces would
+    # carry the robot toward a tracked obstacle that is already inside the guard
+    # radius; the escape falls back to the pure perpendicular, which moves across
+    # the obstacle's motion instead of back into it.  Tuning thresholds cannot
+    # express this: raising the safety margin or the staging hold made matters
+    # worse on every one of twelve screened variants, because both add retreat
+    # authority and retreat is the behaviour that causes these collisions.
+    probabilistic_obstacle_escape_rear_occupancy_guard_enabled: bool = False
+    probabilistic_obstacle_escape_rear_occupancy_guard_radius_m: float = 0.70
+    # Control-level rear guard.
+    #
+    # The direction-level guard above was measured and never fired: 0 vetoes over
+    # 12 episodes while counterflow applied 733 times.  Counterflow steers AWAY
+    # from the obstacle that triggered it, so that direction almost never points
+    # at anything.  The causal step is one further down: the robot is
+    # differential drive, so realising a world-frame direction behind its current
+    # heading means COMMANDING REVERSE, and it then backs into a DIFFERENT
+    # obstacle that nothing was checking.
+    #
+    # Every collision measured for the full arm on Map3-Redesign-D fits that:
+    # impacts at -0.23 to -0.37 m/s, penetration 0.003-0.027 m, traversal window
+    # disengaged, and contact with a carrier the robot was never facing.
+    #
+    # This guard acts on the commanded velocity itself.  When v_cmd is negative
+    # and a tracked obstacle lies within `radius_m` inside a rear sector of
+    # half-width `halfangle_deg` about the robot's backward axis, the reverse
+    # command is scaled by `scale` (0.0 suppresses it outright).  Forward motion
+    # is never touched, so the guard cannot cause the deadlock that tighter
+    # margins and staging holds produced.
+    probabilistic_obstacle_reverse_rear_guard_enabled: bool = False
+    probabilistic_obstacle_reverse_rear_guard_radius_m: float = 0.75
+    probabilistic_obstacle_reverse_rear_guard_halfangle_deg: float = 80.0
+    probabilistic_obstacle_reverse_rear_guard_scale: float = 0.0
+    # Checking only the obstacle's CURRENT position was measured and never
+    # fired: 0 activations while the robot commanded reverse on 46 of 595 steps.
+    # The carriers run at 0.54 m/s, faster than the robot reverses, so the
+    # collision happens because a carrier ARRIVES where the robot is backing
+    # into -- the obstacle is not behind the robot yet at the moment the reverse
+    # is commanded.  The guard therefore scans the forecast horizon, not just
+    # the present, and vetoes when any predicted position within the lookahead
+    # falls in the rear sector.
+    probabilistic_obstacle_reverse_rear_guard_lookahead_steps: int = 6
     probabilistic_obstacle_emergency_candidate_pareto_forward_commit_enabled: bool = False
+    # A directional transaction may prefer only reverse or only forward
+    # emergency templates.  If that preference selects a hard-violating
+    # candidate while the same already-evaluated emergency lattice contains a
+    # feasible member, the frozen hard threshold must remain authoritative.
+    # Default off preserves the registered method exactly.
+    probabilistic_obstacle_emergency_feasibility_over_direction_enabled: bool = False
     probabilistic_obstacle_emergency_candidate_forward_risk_ceiling: float = 0.0
     probabilistic_obstacle_emergency_candidate_forward_mass_ceiling: float = 0.0
     probabilistic_obstacle_emergency_candidate_rearm_ttc_s: float = 0.0
     probabilistic_obstacle_emergency_candidate_rearm_clear_steps: int = 1
+    probabilistic_obstacle_terminal_intent_safe_stop_enabled: bool = False
     probabilistic_obstacle_traversal_window_enabled: bool = False
     probabilistic_obstacle_traversal_window_horizon_steps: int = 60
     probabilistic_obstacle_traversal_window_activation_distance_m: float = 1.2
@@ -147,13 +262,91 @@ class MppiConfig:
     probabilistic_obstacle_traversal_window_mass_ceiling: float = 0.50
     probabilistic_obstacle_traversal_window_clear_hold_steps: int = 3
     probabilistic_obstacle_traversal_window_translation_heading_gate_rad: float = 0.0
+    probabilistic_obstacle_traversal_window_terminal_target_bearing_enabled: bool = False
+    # Terminal capture is a single, forecast-certified endpoint trajectory.
+    # It is intentionally disabled by default so the historical planner path
+    # remains unchanged.  When enabled, it uses the existing traversal slot
+    # and risk/static filters rather than overriding the safety arbiter.
+    probabilistic_obstacle_terminal_capture_candidate_enabled: bool = False
     probabilistic_obstacle_traversal_window_abort_probability: float = 0.0
     probabilistic_obstacle_traversal_window_temporal_abort_mass_floor: float = 0.0
     probabilistic_obstacle_traversal_window_temporal_abort_full_horizon_corroboration_enabled: bool = False
+    probabilistic_obstacle_traversal_window_temporal_abort_current_hazard_only_enabled: bool = False
     probabilistic_obstacle_traversal_window_commit_admission_full_horizon_enabled: bool = False
+    # Scope the traversal commit certificate to the carrier whose route crossing
+    # is actually being traversed, instead of the union over every tracked
+    # obstacle.  See _traversal_certificate_obstacles for the measurements.
+    probabilistic_obstacle_traversal_window_commit_certificate_crossing_obstacle_only: bool = False
+    probabilistic_obstacle_traversal_window_commit_clear_hold_tail_enabled: bool = False
     probabilistic_obstacle_traversal_window_commit_admission_safe_hold_steps: int = 1
     probabilistic_obstacle_traversal_window_commit_admission_prealign_enabled: bool = False
     probabilistic_obstacle_traversal_window_uncommitted_temporal_staging_hold_enabled: bool = False
+    # When enabled, an uncommitted staging hold requires the existing
+    # emergency TTC trigger to be active (or the raw emergency trigger to be
+    # corroborated).  The historical path intentionally keeps using any
+    # causal closing observation when this is false.
+    probabilistic_obstacle_traversal_window_uncommitted_temporal_staging_hold_current_hazard_only_enabled: bool = False
+    # Number of CONSECUTIVE steps of uncommitted staging hold after which the
+    # robot retreats to a standoff instead of continuing to hold in place.
+    # 0 keeps the historical behaviour of holding indefinitely.
+    #
+    # The uncommitted hold stages in place "until online geometry either exposes
+    # a certifiable crossing or the closing signal clears".  Neither is
+    # guaranteed: on chapter 3 a certified-admissible carrier drives along the
+    # robot's route for 30.6% of its loop, so the closing signal frequently
+    # never clears and no certifiable crossing ever appears.  Retreat cannot
+    # rescue it either, because retreat_requested is gated behind
+    # abort_started_commit -- an already-STARTED commit that then aborts -- and
+    # chapter 3 commits 18 times in 50 seeds against chapter 1's 7855.  Measured
+    # consequence: retreat fires on 1 step out of 36152 (chapter 1: 7.85%), the
+    # robot holds at the route entrance, and 37 of 38 collisions happen after
+    # step 400 with a median final goal distance of 4.16 m.
+    probabilistic_obstacle_traversal_window_uncommitted_hold_retreat_steps: int = 0
+    # Derive the traversal window's extent from the forecast's predicted route
+    # intrusion span instead of padding the single closest crossing point by a
+    # fixed clearance radius.
+    #
+    # Measured defect (chapter 3): the certified window is
+    # clear_progress - entry_progress = 1.400 m at EVERY percentile (p10 = p90),
+    # i.e. a constant 2 x 0.67 m radius, while carrier 2's actual intrusion spans
+    # 2.23 m of route. The plan therefore covers 63% of the hazard: the robot
+    # certifies clearing 1.4 m, clears exactly that, and is still inside the
+    # remaining 0.8 m when the carrier returns. 33 of 38 collisions (87%) occur
+    # inside that intrusion zone.
+    #
+    # The forecast localises the hazard correctly -- while approaching the zone
+    # it places the crossing inside the true span on 80% of certified steps -- so
+    # the span is available; only the extent applied to it was wrong.
+    #
+    # The window is taken as the UNION of the historical fixed-radius window and
+    # the forecast-derived span, so it can only ever grow. A forecast that grazes
+    # the route at a single point therefore still yields the old window rather
+    # than a degenerate zero-length one.
+    probabilistic_obstacle_traversal_window_forecast_extent_enabled: bool = False
+    # Zone-occupancy scheduling: hold BEFORE entering the hazard zone until the
+    # zone is geometrically clear for the whole transit, then go.
+    #
+    # Every earlier chapter-3 intervention routed through the Gaussian-mixture
+    # risk bound, which SATURATES at exactly 1.0 on 47.4% of certificates -- it is
+    # uninformative precisely when it matters, so no gate downstream of it can
+    # work. This predicate instead uses forecast MEANS and a route-span test,
+    # which cannot saturate.
+    #
+    # Premise measured on chapter 3: the hazard zone (11.86-14.09 m) is occupied
+    # in regular 4.6 s intervals separated by 10.8 s clear gaps; 8 of 9 gaps fit
+    # the 5.0 s transit, and the worst-case wait for a usable gap is 4.6 s.
+    # Verifying a 5.0 s clear transit needs 50 forecast steps against a 64-step
+    # horizon, so the check is available causally.
+    probabilistic_obstacle_zone_occupancy_hold_enabled: bool = False
+    # Nominal speed used to convert remaining zone distance into transit steps.
+    probabilistic_obstacle_zone_occupancy_transit_speed_mps: float = 0.45
+    # Extra clear steps required beyond the estimated transit, as margin.
+    probabilistic_obstacle_zone_occupancy_clear_margin_steps: int = 5
+    # How far ahead along the route to look for a hazard zone. The previous
+    # placement inherited the traversal window's 1.2 m activation distance, which
+    # left only a 0.53 m sliver in which the hold could fire -- it fired 0 times
+    # across 12 episodes. Holding before a zone requires seeing it earlier.
+    probabilistic_obstacle_zone_occupancy_lookahead_m: float = 4.0
     probabilistic_obstacle_traversal_window_uncommitted_temporal_staging_terminal_release_enabled: bool = False
     probabilistic_obstacle_traversal_window_commit_admission_exit_deadline_enabled: bool = False
     probabilistic_obstacle_traversal_window_temporal_abort_nearest_exit_enabled: bool = False
@@ -163,6 +356,7 @@ class MppiConfig:
     probabilistic_obstacle_traversal_window_temporal_exit_deadline_escape_latch_enabled: bool = False
     probabilistic_obstacle_traversal_window_rearm_no_crossing_clear_enabled: bool = False
     probabilistic_obstacle_traversal_window_rearm_no_crossing_certified_handoff_enabled: bool = False
+    probabilistic_obstacle_traversal_window_rearm_no_crossing_certified_handoff_release_enabled: bool = False
     probabilistic_obstacle_traversal_window_rearm_staging_approach_enabled: bool = False
     probabilistic_obstacle_traversal_window_rearm_staging_frontier_enabled: bool = False
     probabilistic_obstacle_traversal_window_rearm_hard_risk_temporal_lattice_override_enabled: bool = False
@@ -180,11 +374,22 @@ class MppiConfig:
     probabilistic_obstacle_traversal_window_post_center_forward_exit_commit_enabled: bool = False
     probabilistic_obstacle_traversal_window_retreat_margin_m: float = 0.0
     probabilistic_obstacle_traversal_window_retreat_hard_risk_override_enabled: bool = False
+    probabilistic_obstacle_traversal_window_retreat_completion_frozen_frame_enabled: bool = False
+    probabilistic_obstacle_traversal_window_retreat_completion_frozen_reference_enabled: bool = False
     probabilistic_obstacle_speed_governor_enabled: bool = False
     probabilistic_obstacle_speed_governor_start_ratio: float = 0.50
+    # Keep the speed governor active while active-avoidance motion is selected.
+    # False reproduces the historical bypass, under which commanded speed RISES
+    # during evasion (applied_v p90 0.694 m/s pre-collision vs 0.530 m/s in safe
+    # operation) and the feasible candidate set collapses to 0.425.
+    probabilistic_obstacle_speed_governor_applies_during_active_avoidance: bool = False
     importance_sampling_correction: bool = False
     previous_sequence_blend: float = 0.5
     safety_recovery_prefix_steps: int = 0
+    # Soft slowdowns and actuator interpolation still close the previous-
+    # action loop, but must not be mistaken for a blocked translation.  Only
+    # an actually stopped command may zero the future recovery prefix.
+    safety_recovery_translation_stop_threshold: float = 1.0e-6
     profile_components: bool = False
     optimizer_diagnostics_enabled: bool = False
     seed: int = 0
@@ -254,6 +459,9 @@ class MppiConfig:
                 if values.get("terminal_control_radius") is None
                 else float(values["terminal_control_radius"])
             ),
+            terminal_translation_minimum_scale=float(
+                values.get("terminal_translation_minimum_scale", 0.0)
+            ),
             control_weight=float(values.get("control_weight", 0.05)),
             control_rate_weight=float(values.get("control_rate_weight", 0.08)),
             obstacle_weight=float(values.get("obstacle_weight", 30.0)),
@@ -305,6 +513,49 @@ class MppiConfig:
             ),
             static_astar_replan_enabled=bool(
                 values.get("static_astar_replan_enabled", False)
+            ),
+            static_astar_replan_static_hard_stop_enabled=bool(
+                values.get(
+                    "static_astar_replan_static_hard_stop_enabled",
+                    False,
+                )
+            ),
+            static_astar_replan_corner_clamped_lookahead_enabled=bool(
+                values.get(
+                    "static_astar_replan_corner_clamped_lookahead_enabled",
+                    False,
+                )
+            ),
+            static_astar_replan_sharp_corner_clamped_lookahead_enabled=bool(
+                values.get(
+                    "static_astar_replan_sharp_corner_clamped_lookahead_enabled",
+                    False,
+                )
+            ),
+            static_astar_replan_sharp_corner_minimum_turn_rad=float(
+                values.get(
+                    "static_astar_replan_sharp_corner_minimum_turn_rad",
+                    np.pi / 4.0,
+                )
+            ),
+            static_astar_replan_sharp_corner_minimum_lookahead_m=float(
+                values.get(
+                    "static_astar_replan_sharp_corner_minimum_lookahead_m",
+                    0.0,
+                )
+            ),
+            static_astar_replan_sharp_corner_deferred_clamp_distance_m=(
+                None
+                if values.get(
+                    "static_astar_replan_sharp_corner_deferred_clamp_distance_m",
+                    None,
+                )
+                is None
+                else float(
+                    values[
+                        "static_astar_replan_sharp_corner_deferred_clamp_distance_m"
+                    ]
+                )
             ),
             static_astar_replan_resolution_m=float(
                 values.get("static_astar_replan_resolution_m", 0.10)
@@ -405,6 +656,12 @@ class MppiConfig:
                     5,
                 )
             ),
+            probabilistic_obstacle_emergency_candidate_hold_tail_enabled=bool(
+                values.get(
+                    "probabilistic_obstacle_emergency_candidate_hold_tail_enabled",
+                    False,
+                )
+            ),
             probabilistic_obstacle_emergency_candidate_trigger_ttc_s=float(
                 values.get(
                     "probabilistic_obstacle_emergency_candidate_trigger_ttc_s",
@@ -453,9 +710,57 @@ class MppiConfig:
                     1.0,
                 )
             ),
+            probabilistic_obstacle_escape_rear_occupancy_guard_enabled=bool(
+                values.get(
+                    "probabilistic_obstacle_escape_rear_occupancy_guard_enabled",
+                    False,
+                )
+            ),
+            probabilistic_obstacle_escape_rear_occupancy_guard_radius_m=float(
+                values.get(
+                    "probabilistic_obstacle_escape_rear_occupancy_guard_radius_m",
+                    0.70,
+                )
+            ),
+            probabilistic_obstacle_reverse_rear_guard_enabled=bool(
+                values.get(
+                    "probabilistic_obstacle_reverse_rear_guard_enabled",
+                    False,
+                )
+            ),
+            probabilistic_obstacle_reverse_rear_guard_radius_m=float(
+                values.get(
+                    "probabilistic_obstacle_reverse_rear_guard_radius_m",
+                    0.75,
+                )
+            ),
+            probabilistic_obstacle_reverse_rear_guard_halfangle_deg=float(
+                values.get(
+                    "probabilistic_obstacle_reverse_rear_guard_halfangle_deg",
+                    80.0,
+                )
+            ),
+            probabilistic_obstacle_reverse_rear_guard_scale=float(
+                values.get(
+                    "probabilistic_obstacle_reverse_rear_guard_scale",
+                    0.0,
+                )
+            ),
+            probabilistic_obstacle_reverse_rear_guard_lookahead_steps=int(
+                values.get(
+                    "probabilistic_obstacle_reverse_rear_guard_lookahead_steps",
+                    6,
+                )
+            ),
             probabilistic_obstacle_emergency_candidate_pareto_forward_commit_enabled=bool(
                 values.get(
                     "probabilistic_obstacle_emergency_candidate_pareto_forward_commit_enabled",
+                    False,
+                )
+            ),
+            probabilistic_obstacle_emergency_feasibility_over_direction_enabled=bool(
+                values.get(
+                    "probabilistic_obstacle_emergency_feasibility_over_direction_enabled",
                     False,
                 )
             ),
@@ -481,6 +786,12 @@ class MppiConfig:
                 values.get(
                     "probabilistic_obstacle_emergency_candidate_rearm_clear_steps",
                     1,
+                )
+            ),
+            probabilistic_obstacle_terminal_intent_safe_stop_enabled=bool(
+                values.get(
+                    "probabilistic_obstacle_terminal_intent_safe_stop_enabled",
+                    False,
                 )
             ),
             probabilistic_obstacle_traversal_window_enabled=bool(
@@ -532,6 +843,18 @@ class MppiConfig:
                     0.0,
                 )
             ),
+            probabilistic_obstacle_traversal_window_terminal_target_bearing_enabled=bool(
+                values.get(
+                    "probabilistic_obstacle_traversal_window_terminal_target_bearing_enabled",
+                    False,
+                )
+            ),
+            probabilistic_obstacle_terminal_capture_candidate_enabled=bool(
+                values.get(
+                    "probabilistic_obstacle_terminal_capture_candidate_enabled",
+                    False,
+                )
+            ),
             probabilistic_obstacle_traversal_window_abort_probability=float(
                 values.get(
                     "probabilistic_obstacle_traversal_window_abort_probability",
@@ -550,9 +873,27 @@ class MppiConfig:
                     False,
                 )
             ),
+            probabilistic_obstacle_traversal_window_temporal_abort_current_hazard_only_enabled=bool(
+                values.get(
+                    "probabilistic_obstacle_traversal_window_temporal_abort_current_hazard_only_enabled",
+                    False,
+                )
+            ),
             probabilistic_obstacle_traversal_window_commit_admission_full_horizon_enabled=bool(
                 values.get(
                     "probabilistic_obstacle_traversal_window_commit_admission_full_horizon_enabled",
+                    False,
+                )
+            ),
+            probabilistic_obstacle_traversal_window_commit_certificate_crossing_obstacle_only=bool(
+                values.get(
+                    "probabilistic_obstacle_traversal_window_commit_certificate_crossing_obstacle_only",
+                    False,
+                )
+            ),
+            probabilistic_obstacle_traversal_window_commit_clear_hold_tail_enabled=bool(
+                values.get(
+                    "probabilistic_obstacle_traversal_window_commit_clear_hold_tail_enabled",
                     False,
                 )
             ),
@@ -572,6 +913,46 @@ class MppiConfig:
                 values.get(
                     "probabilistic_obstacle_traversal_window_uncommitted_temporal_staging_hold_enabled",
                     False,
+                )
+            ),
+            probabilistic_obstacle_traversal_window_uncommitted_temporal_staging_hold_current_hazard_only_enabled=bool(
+                values.get(
+                    "probabilistic_obstacle_traversal_window_uncommitted_temporal_staging_hold_current_hazard_only_enabled",
+                    False,
+                )
+            ),
+            probabilistic_obstacle_traversal_window_uncommitted_hold_retreat_steps=int(
+                values.get(
+                    "probabilistic_obstacle_traversal_window_uncommitted_hold_retreat_steps",
+                    0,
+                )
+            ),
+            probabilistic_obstacle_traversal_window_forecast_extent_enabled=bool(
+                values.get(
+                    "probabilistic_obstacle_traversal_window_forecast_extent_enabled",
+                    False,
+                )
+            ),
+            probabilistic_obstacle_zone_occupancy_hold_enabled=bool(
+                values.get(
+                    "probabilistic_obstacle_zone_occupancy_hold_enabled", False
+                )
+            ),
+            probabilistic_obstacle_zone_occupancy_transit_speed_mps=float(
+                values.get(
+                    "probabilistic_obstacle_zone_occupancy_transit_speed_mps",
+                    0.45,
+                )
+            ),
+            probabilistic_obstacle_zone_occupancy_clear_margin_steps=int(
+                values.get(
+                    "probabilistic_obstacle_zone_occupancy_clear_margin_steps",
+                    5,
+                )
+            ),
+            probabilistic_obstacle_zone_occupancy_lookahead_m=float(
+                values.get(
+                    "probabilistic_obstacle_zone_occupancy_lookahead_m", 4.0
                 )
             ),
             probabilistic_obstacle_traversal_window_uncommitted_temporal_staging_terminal_release_enabled=bool(
@@ -625,6 +1006,12 @@ class MppiConfig:
             probabilistic_obstacle_traversal_window_rearm_no_crossing_certified_handoff_enabled=bool(
                 values.get(
                     "probabilistic_obstacle_traversal_window_rearm_no_crossing_certified_handoff_enabled",
+                    False,
+                )
+            ),
+            probabilistic_obstacle_traversal_window_rearm_no_crossing_certified_handoff_release_enabled=bool(
+                values.get(
+                    "probabilistic_obstacle_traversal_window_rearm_no_crossing_certified_handoff_release_enabled",
                     False,
                 )
             ),
@@ -730,6 +1117,18 @@ class MppiConfig:
                     False,
                 )
             ),
+            probabilistic_obstacle_traversal_window_retreat_completion_frozen_frame_enabled=bool(
+                values.get(
+                    "probabilistic_obstacle_traversal_window_retreat_completion_frozen_frame_enabled",
+                    False,
+                )
+            ),
+            probabilistic_obstacle_traversal_window_retreat_completion_frozen_reference_enabled=bool(
+                values.get(
+                    "probabilistic_obstacle_traversal_window_retreat_completion_frozen_reference_enabled",
+                    False,
+                )
+            ),
             probabilistic_obstacle_speed_governor_enabled=bool(
                 values.get(
                     "probabilistic_obstacle_speed_governor_enabled",
@@ -742,12 +1141,53 @@ class MppiConfig:
                     0.50,
                 )
             ),
+            probabilistic_obstacle_speed_governor_applies_during_active_avoidance=bool(
+                values.get(
+                    "probabilistic_obstacle_speed_governor_applies_during_active_avoidance",
+                    False,
+                )
+            ),
             importance_sampling_correction=bool(
                 values.get("importance_sampling_correction", False)
             ),
             previous_sequence_blend=float(values.get("previous_sequence_blend", 0.5)),
             safety_recovery_prefix_steps=int(
                 values.get("safety_recovery_prefix_steps", 0)
+            ),
+            safety_recovery_translation_stop_threshold=float(
+                values.get(
+                    "safety_recovery_translation_stop_threshold", 1.0e-6
+                )
+            ),
+            probabilistic_obstacle_forward_lateral_countermotion_enabled=bool(
+                values.get(
+                    "probabilistic_obstacle_forward_lateral_countermotion_enabled",
+                    False,
+                )
+            ),
+            probabilistic_obstacle_forward_lateral_countermotion_weight=float(
+                values.get(
+                    "probabilistic_obstacle_forward_lateral_countermotion_weight",
+                    1.20,
+                )
+            ),
+            probabilistic_obstacle_forward_lateral_minimum_speed_mps=float(
+                values.get(
+                    "probabilistic_obstacle_forward_lateral_minimum_speed_mps",
+                    0.10,
+                )
+            ),
+            probabilistic_obstacle_forward_lateral_minimum_fraction=float(
+                values.get(
+                    "probabilistic_obstacle_forward_lateral_minimum_fraction",
+                    0.25,
+                )
+            ),
+            probabilistic_obstacle_forward_lateral_reversal_confirm_steps=int(
+                values.get(
+                    "probabilistic_obstacle_forward_lateral_reversal_confirm_steps",
+                    2,
+                )
             ),
             profile_components=bool(
                 values.get("profile_components", False)
@@ -807,6 +1247,7 @@ class MppiConfig:
             self.static_astar_replan_deviation_m,
             self.static_astar_replan_minimum_progress_m,
             self.static_astar_replan_bounds_padding_m,
+            self.static_astar_replan_sharp_corner_minimum_turn_rad,
             self.probabilistic_obstacle_risk_weight,
             self.probabilistic_obstacle_hard_threshold,
             self.probabilistic_obstacle_hard_penalty,
@@ -864,6 +1305,14 @@ class MppiConfig:
                 "enabled static A* replanning requires positive geometry "
                 "and progress parameters"
             )
+        if not (
+            0.0
+            < self.static_astar_replan_sharp_corner_minimum_turn_rad
+            <= np.pi
+        ):
+            raise ValueError(
+                "static A* sharp-corner turn threshold must be in (0, pi]"
+            )
         if (
             self.probabilistic_reference_authority_enabled
             and not self.probabilistic_obstacle_risk_enabled
@@ -871,6 +1320,17 @@ class MppiConfig:
             raise ValueError(
                 "probabilistic reference authority requires probabilistic "
                 "obstacle risk"
+            )
+        if (
+            self.probabilistic_obstacle_traversal_window_rearm_no_crossing_certified_handoff_release_enabled
+            and (
+                not self.probabilistic_obstacle_traversal_window_rearm_no_crossing_clear_enabled
+                or not self.probabilistic_obstacle_traversal_window_rearm_no_crossing_certified_handoff_enabled
+            )
+        ):
+            raise ValueError(
+                "certified rearm-handoff release requires no-crossing "
+                "clearance and certified handoff"
             )
         if (
             not np.isfinite(self.path_preview_speed_mps)
@@ -983,8 +1443,46 @@ class MppiConfig:
             raise ValueError(
                 "terminal_control_radius must be finite and positive"
             )
+        if (
+            not np.isfinite(self.terminal_translation_minimum_scale)
+            or not 0.0 <= self.terminal_translation_minimum_scale <= 1.0
+        ):
+            raise ValueError(
+                "terminal_translation_minimum_scale must be in [0, 1]"
+            )
+        if (
+            not np.isfinite(
+                self.static_astar_replan_sharp_corner_minimum_lookahead_m
+            )
+            or self.static_astar_replan_sharp_corner_minimum_lookahead_m < 0.0
+        ):
+            raise ValueError(
+                "static_astar_replan_sharp_corner_minimum_lookahead_m must be "
+                "finite and non-negative"
+            )
+        if self.static_astar_replan_sharp_corner_deferred_clamp_distance_m is not None and (
+            not np.isfinite(
+                self.static_astar_replan_sharp_corner_deferred_clamp_distance_m
+            )
+            or self.static_astar_replan_sharp_corner_deferred_clamp_distance_m
+            <= 0.0
+        ):
+            raise ValueError(
+                "static_astar_replan_sharp_corner_deferred_clamp_distance_m "
+                "must be None or finite and positive"
+            )
         if not 0 <= self.safety_recovery_prefix_steps <= self.horizon:
             raise ValueError("safety_recovery_prefix_steps must be within the horizon")
+        if (
+            not np.isfinite(
+                self.safety_recovery_translation_stop_threshold
+            )
+            or self.safety_recovery_translation_stop_threshold < 0.0
+        ):
+            raise ValueError(
+                "safety recovery translation stop threshold must be finite "
+                "and non-negative"
+            )
         if (
             self.probabilistic_obstacle_emergency_candidates_enabled
             and not (
@@ -1039,6 +1537,28 @@ class MppiConfig:
                 "probabilistic counterflow weight must be finite and "
                 "non-negative"
             )
+        if (
+            not np.isfinite(
+                self.probabilistic_obstacle_forward_lateral_countermotion_weight
+            )
+            or self.probabilistic_obstacle_forward_lateral_countermotion_weight
+            <= 0.0
+            or not np.isfinite(
+                self.probabilistic_obstacle_forward_lateral_minimum_speed_mps
+            )
+            or self.probabilistic_obstacle_forward_lateral_minimum_speed_mps
+            < 0.0
+            or not 0.0
+            <= self.probabilistic_obstacle_forward_lateral_minimum_fraction
+            <= 1.0
+            or self
+            .probabilistic_obstacle_forward_lateral_reversal_confirm_steps
+            < 1
+        ):
+            raise ValueError(
+                "probabilistic forward-lateral countermotion parameters are "
+                "invalid"
+            )
         if self.probabilistic_obstacle_emergency_candidate_intent_hold_steps < 0:
             raise ValueError(
                 "probabilistic emergency candidate intent hold must be "
@@ -1089,6 +1609,41 @@ class MppiConfig:
             raise ValueError(
                 "probabilistic emergency candidate rearm clear steps must be "
                 "positive"
+            )
+        if (
+            self.probabilistic_obstacle_terminal_intent_safe_stop_enabled
+            and not (
+                self.probabilistic_obstacle_risk_enabled
+                and self.probabilistic_obstacle_emergency_candidates_enabled
+                and self.probabilistic_obstacle_stopping_feasibility_enabled
+                and self
+                .probabilistic_obstacle_emergency_forecast_corroboration_enabled
+            )
+        ):
+            raise ValueError(
+                "terminal intent safe stop requires probabilistic risk, "
+                "emergency candidates, stopping feasibility, and forecast "
+                "corroboration"
+            )
+        if (
+            self
+            .probabilistic_obstacle_traversal_window_terminal_target_bearing_enabled
+            and not self.probabilistic_obstacle_traversal_window_enabled
+        ):
+            raise ValueError(
+                "terminal traversal target-bearing steering requires the "
+                "traversal window"
+            )
+        if (
+            self.probabilistic_obstacle_terminal_capture_candidate_enabled
+            and not (
+                self.probabilistic_obstacle_risk_enabled
+                and self.probabilistic_obstacle_traversal_window_enabled
+            )
+        ):
+            raise ValueError(
+                "terminal capture candidate requires probabilistic risk "
+                "and the traversal window"
             )
         traversal_values = (
             self.probabilistic_obstacle_traversal_window_activation_distance_m,
@@ -1189,6 +1744,7 @@ class MppiController:
         self._static_astar_stagnation_steps = 0
         self._static_astar_cooldown_steps = 0
         self._static_astar_replan_count = 0
+        self._static_astar_static_hard_stop_latched = False
         self._static_astar_last_diagnostics = {
             "enabled": bool(config.static_astar_replan_enabled),
             "triggered": False,
@@ -1199,6 +1755,8 @@ class MppiController:
         }
         self._probabilistic_emergency_intent_remaining = 0
         self._probabilistic_emergency_direction = None
+        self._probabilistic_emergency_pending_direction = None
+        self._probabilistic_emergency_pending_direction_count = 0
         self._probabilistic_emergency_latched_pattern = None
         self._probabilistic_emergency_latched_heading = None
         self._probabilistic_emergency_rearm_ready = True
@@ -1208,6 +1766,10 @@ class MppiController:
         self._probabilistic_traversal_clear_progress = None
         self._probabilistic_traversal_commit_started = False
         self._probabilistic_traversal_retreat_progress = None
+        self._probabilistic_traversal_uncommitted_hold_steps = 0
+        self._probabilistic_traversal_retreat_target_position = None
+        self._probabilistic_traversal_retreat_target_tangent = None
+        self._probabilistic_traversal_retreat_reference = None
         self._probabilistic_traversal_rearm_pending = False
         self._probabilistic_traversal_retreat_temporal_lattice = False
         self._probabilistic_traversal_admission_safe_streak = 0
@@ -1242,6 +1804,7 @@ class MppiController:
         self._static_astar_stagnation_steps = 0
         self._static_astar_cooldown_steps = 0
         self._static_astar_replan_count = 0
+        self._static_astar_static_hard_stop_latched = False
         self._static_astar_last_diagnostics = {
             "enabled": bool(self.config.static_astar_replan_enabled),
             "triggered": False,
@@ -1252,6 +1815,8 @@ class MppiController:
         }
         self._probabilistic_emergency_intent_remaining = 0
         self._probabilistic_emergency_direction = None
+        self._probabilistic_emergency_pending_direction = None
+        self._probabilistic_emergency_pending_direction_count = 0
         self._probabilistic_emergency_latched_pattern = None
         self._probabilistic_emergency_latched_heading = None
         self._probabilistic_emergency_rearm_ready = True
@@ -1261,6 +1826,10 @@ class MppiController:
         self._probabilistic_traversal_clear_progress = None
         self._probabilistic_traversal_commit_started = False
         self._probabilistic_traversal_retreat_progress = None
+        self._probabilistic_traversal_uncommitted_hold_steps = 0
+        self._probabilistic_traversal_retreat_target_position = None
+        self._probabilistic_traversal_retreat_target_tangent = None
+        self._probabilistic_traversal_retreat_reference = None
         self._probabilistic_traversal_rearm_pending = False
         self._probabilistic_traversal_retreat_temporal_lattice = False
         self._probabilistic_traversal_admission_safe_streak = 0
@@ -1345,6 +1914,13 @@ class MppiController:
         diagnostics["stagnation_steps"] = int(
             self._static_astar_stagnation_steps
         )
+        static_hard_stop = bool(
+            observation.auxiliary.get(
+                "static_near_body_hard_stop", False
+            )
+        )
+        if not static_hard_stop:
+            self._static_astar_static_hard_stop_latched = False
         if self._static_astar_cooldown_steps > 0:
             self._static_astar_cooldown_steps -= 1
             diagnostics["reason"] = "cooldown"
@@ -1357,6 +1933,12 @@ class MppiController:
             > self.config.static_astar_replan_deviation_m
         ):
             reason = "deviation"
+        elif (
+            self.config.static_astar_replan_static_hard_stop_enabled
+            and static_hard_stop
+            and not self._static_astar_static_hard_stop_latched
+        ):
+            reason = "static_hard_stop"
         elif (
             self.config.static_astar_replan_stagnation_steps > 0
             and self._static_astar_stagnation_steps
@@ -1397,13 +1979,37 @@ class MppiController:
                 ),
             )
             reference.replace_points(route)
+            reference.corner_clamped_lookahead_enabled = bool(
+                self.config
+                .static_astar_replan_corner_clamped_lookahead_enabled
+            )
+            reference.sharp_corner_clamped_lookahead_enabled = bool(
+                self.config
+                .static_astar_replan_sharp_corner_clamped_lookahead_enabled
+            )
+            reference.sharp_corner_minimum_turn_rad = float(
+                self.config
+                .static_astar_replan_sharp_corner_minimum_turn_rad
+            )
+            reference.sharp_corner_minimum_lookahead_m = float(
+                self.config
+                .static_astar_replan_sharp_corner_minimum_lookahead_m
+            )
+            reference.sharp_corner_deferred_clamp_distance_m = (
+                self.config
+                .static_astar_replan_sharp_corner_deferred_clamp_distance_m
+            )
         except (RuntimeError, ValueError) as exc:
+            if reason == "static_hard_stop":
+                self._static_astar_static_hard_stop_latched = True
             diagnostics["reason"] = "failed:%s" % str(exc)
             self._static_astar_cooldown_steps = (
                 self.config.static_astar_replan_cooldown_steps
             )
             self._static_astar_last_diagnostics = diagnostics
             return diagnostics
+        if reason == "static_hard_stop":
+            self._static_astar_static_hard_stop_latched = True
         self._static_astar_progress_anchor = 0.0
         self._static_astar_stagnation_steps = 0
         self._static_astar_cooldown_steps = (
@@ -1524,6 +2130,8 @@ class MppiController:
             blocked = bool(
                 decision.overridden
                 and proposed[v_index] > executed[v_index] + 1e-12
+                and abs(executed[v_index])
+                <= self.config.safety_recovery_translation_stop_threshold
             )
             if blocked and self.previous_sequence is not None:
                 prefix = max(1, self.config.safety_recovery_prefix_steps)
@@ -1716,6 +2324,153 @@ class MppiController:
             raise ValueError("prior covariance must be positive definite") from exc
         return covariance
 
+    def _rear_obstacle_blocks_reverse(self, state, forecasts):
+        """True when a tracked obstacle sits behind the robot, within reach.
+
+        "Behind" is measured against the robot's own heading, not against the
+        escape direction, because the collisions happen when the controller
+        realises a rearward world-frame direction by driving backwards into
+        something it is not facing.
+
+        Returns ``False`` when disabled, when heading is unavailable, or when no
+        obstacle lies in the rear sector, so the default path is unchanged.
+        """
+
+        if not self.config.probabilistic_obstacle_reverse_rear_guard_enabled:
+            return False
+        if "theta" not in self.state_spec.names:
+            return False
+        radius = float(
+            self.config.probabilistic_obstacle_reverse_rear_guard_radius_m
+        )
+        half_angle = float(
+            self.config.probabilistic_obstacle_reverse_rear_guard_halfangle_deg
+        )
+        if not np.isfinite(radius) or radius <= 0.0:
+            return False
+        if not np.isfinite(half_angle) or half_angle <= 0.0:
+            return False
+        cos_limit = float(np.cos(np.radians(min(half_angle, 180.0))))
+        state = np.asarray(state, dtype=np.float64)
+        origin = state[list(self.state_spec.position_indices)][:2]
+        theta = float(state[self.state_spec.index("theta")])
+        # Unit vector pointing out of the robot's back.
+        backward = np.asarray(
+            (-np.cos(theta), -np.sin(theta)), dtype=np.float64
+        )
+        lookahead = int(
+            self.config
+            .probabilistic_obstacle_reverse_rear_guard_lookahead_steps
+        )
+        if lookahead < 0:
+            lookahead = 0
+        for forecast in forecasts:
+            means = np.asarray(forecast.component_means, dtype=np.float64)
+            weights = np.asarray(forecast.component_weights, dtype=np.float64)
+            if means.ndim != 3 or means.shape[0] == 0:
+                continue
+            horizon = min(lookahead, means.shape[0] - 1)
+            # Scan the present AND the forecast: the carrier that causes the
+            # impact is usually still arriving when the reverse is commanded.
+            for step in range(horizon + 1):
+                predicted = np.sum(
+                    weights[step][..., None] * means[step], axis=0
+                )
+                offset = predicted[:2] - origin
+                distance = float(np.linalg.norm(offset))
+                if not np.isfinite(distance) or distance > radius:
+                    continue
+                if distance <= 1.0e-9:
+                    return True
+                if float(np.dot(backward, offset / distance)) >= cos_limit:
+                    return True
+        return False
+
+    def _escape_direction_enters_occupancy(
+        self, robot_xy, direction, forecasts
+    ):
+        """True when moving along ``direction`` closes on an obstacle already near.
+
+        The escape lattice steers the robot along a preferred direction without
+        asking whether that direction is occupied.  Counterflow can rotate it
+        behind the robot, and the measured consequence was six grazing
+        collisions -- 0.003 to 0.027 m of penetration, four of them at negative
+        velocity, all with the traversal window disengaged.
+
+        An obstacle vetoes the direction when it is BOTH inside the guard radius
+        AND ahead of the robot along that direction, i.e. the move would close on
+        it.  An obstacle inside the radius but off to the side or behind the
+        motion is left alone, so the guard suppresses only the reversals that
+        actually run into something.
+
+        Returns ``False`` unless the guard is enabled, so the default
+        configuration is bit-identical to before.
+        """
+
+        if not (
+            self.config
+            .probabilistic_obstacle_escape_rear_occupancy_guard_enabled
+        ):
+            return False
+        radius = float(
+            self.config
+            .probabilistic_obstacle_escape_rear_occupancy_guard_radius_m
+        )
+        if not np.isfinite(radius) or radius <= 0.0:
+            return False
+        direction = np.asarray(direction, dtype=np.float64)
+        norm = float(np.linalg.norm(direction))
+        if not np.isfinite(norm) or norm <= 1.0e-9:
+            return False
+        direction = direction / norm
+        origin = np.asarray(robot_xy, dtype=np.float64)
+        for forecast in forecasts:
+            means = np.asarray(forecast.component_means, dtype=np.float64)
+            weights = np.asarray(forecast.component_weights, dtype=np.float64)
+            if means.ndim != 3 or means.shape[0] == 0:
+                continue
+            current = np.sum(weights[0][..., None] * means[0], axis=0)
+            offset = current[:2] - origin[:2]
+            distance = float(np.linalg.norm(offset))
+            if not np.isfinite(distance) or distance > radius:
+                continue
+            if distance <= 1.0e-9:
+                return True
+            if float(np.dot(direction, offset / distance)) > 0.0:
+                return True
+        return False
+
+    @staticmethod
+    def _forward_lateral_countermotion_direction(
+        obstacle_motion,
+        theta,
+        lateral_weight,
+        minimum_lateral_speed_mps,
+        minimum_lateral_fraction,
+    ):
+        """Return a forward-biased direction opposite lateral human motion."""
+
+        motion = np.asarray(obstacle_motion, dtype=np.float64)
+        speed = float(np.linalg.norm(motion))
+        forward = np.asarray((np.cos(theta), np.sin(theta)), dtype=np.float64)
+        left = np.asarray((-np.sin(theta), np.cos(theta)), dtype=np.float64)
+        longitudinal_speed = float(np.dot(motion, forward))
+        lateral_speed = float(np.dot(motion, left))
+        lateral_fraction = abs(lateral_speed) / max(speed, 1.0e-9)
+        if (
+            not np.isfinite(motion).all()
+            or speed <= 1.0e-9
+            or abs(lateral_speed) < float(minimum_lateral_speed_mps)
+            or lateral_fraction < float(minimum_lateral_fraction)
+        ):
+            return None, longitudinal_speed, lateral_speed, lateral_fraction
+        direction = (
+            forward
+            - np.sign(lateral_speed) * float(lateral_weight) * left
+        )
+        direction /= max(float(np.linalg.norm(direction)), 1.0e-9)
+        return direction, longitudinal_speed, lateral_speed, lateral_fraction
+
     def _probabilistic_emergency_context(
         self, observation, state=None, probabilistic_obstacles=()
     ):
@@ -1734,6 +2489,8 @@ class MppiController:
         ):
             self._probabilistic_emergency_intent_remaining = 0
             self._probabilistic_emergency_direction = None
+            self._probabilistic_emergency_pending_direction = None
+            self._probabilistic_emergency_pending_direction_count = 0
             self._probabilistic_emergency_latched_pattern = None
             self._probabilistic_emergency_latched_heading = None
             self._probabilistic_emergency_rearm_ready = True
@@ -1762,6 +2519,15 @@ class MppiController:
                 "safety_hard_stop_ttc_s": 0.0,
                 "rearm_ready": True,
                 "rearm_clear_count": 0,
+                "escape_direction_refreshed": False,
+                "escape_direction_alignment": 1.0,
+                "preferred_escape_heading_error_rad": None,
+                "escape_direction_source": "unavailable",
+                "forward_lateral_countermotion_applied": False,
+                "obstacle_motion_longitudinal_body_mps": 0.0,
+                "obstacle_motion_lateral_body_mps": 0.0,
+                "obstacle_motion_lateral_fraction": 0.0,
+                "escape_direction_reversal_confirmation_count": 0,
             }
         context = dict(
             observation.auxiliary.get(
@@ -1908,6 +2674,15 @@ class MppiController:
             "reserve_reverse_coverage": critical_distance_triggered,
             "ttc_s": ttc_s,
             "safety_hard_stop_ttc_s": safety_hard_stop_ttc_s,
+            "escape_direction_refreshed": False,
+            "escape_direction_alignment": 1.0,
+            "preferred_escape_heading_error_rad": None,
+            "escape_direction_source": "unavailable",
+            "forward_lateral_countermotion_applied": False,
+            "obstacle_motion_longitudinal_body_mps": 0.0,
+            "obstacle_motion_lateral_body_mps": 0.0,
+            "obstacle_motion_lateral_fraction": 0.0,
+            "escape_direction_reversal_confirmation_count": 0,
         }
         if (
             start_intent
@@ -2039,17 +2814,79 @@ class MppiController:
                 robot_xy = np.asarray(state, dtype=np.float64)[
                     list(self.state_spec.position_indices)
                 ]
-                lateral_side = float(np.dot(
-                    robot_xy - mixture_means[0], perpendicular
-                ))
-                if abs(lateral_side) <= 1.0e-9:
-                    lateral_side = 1.0
-                measured_preferred_direction = (
-                    np.sign(lateral_side) * perpendicular
+                theta = float(
+                    np.asarray(state, dtype=np.float64)[
+                        self.state_spec.index("theta")
+                    ]
                 )
+                (
+                    forward_lateral_direction,
+                    longitudinal_body_speed,
+                    lateral_body_speed,
+                    lateral_motion_fraction,
+                ) = self._forward_lateral_countermotion_direction(
+                    obstacle_motion,
+                    theta,
+                    self.config
+                    .probabilistic_obstacle_forward_lateral_countermotion_weight,
+                    self.config
+                    .probabilistic_obstacle_forward_lateral_minimum_speed_mps,
+                    self.config
+                    .probabilistic_obstacle_forward_lateral_minimum_fraction,
+                )
+                result["obstacle_motion_longitudinal_body_mps"] = (
+                    longitudinal_body_speed
+                )
+                result["obstacle_motion_lateral_body_mps"] = lateral_body_speed
+                result["obstacle_motion_lateral_fraction"] = (
+                    lateral_motion_fraction
+                )
+                forward_lateral_applied = bool(
+                    self.config
+                    .probabilistic_obstacle_forward_lateral_countermotion_enabled
+                    and forward_lateral_direction is not None
+                )
+                result["forward_lateral_countermotion_applied"] = (
+                    forward_lateral_applied
+                )
+                forward_lateral_hold = bool(
+                    self.config
+                    .probabilistic_obstacle_forward_lateral_countermotion_enabled
+                    and forward_lateral_direction is None
+                    and self._probabilistic_emergency_direction is not None
+                )
+                if forward_lateral_applied:
+                    measured_preferred_direction = forward_lateral_direction
+                    result["escape_direction_source"] = (
+                        str(result["escape_direction_source"])
+                        + "_forward_lateral_countermotion"
+                    )
+                elif forward_lateral_hold:
+                    # Once a crossing side exists, a single low-lateral or
+                    # nearly stationary measurement is not evidence for a new
+                    # side.  Retain the transaction until either a significant
+                    # opposite motion is confirmed or the encounter re-arms.
+                    measured_preferred_direction = np.asarray(
+                        self._probabilistic_emergency_direction,
+                        dtype=np.float64,
+                    ).copy()
+                    result["escape_direction_source"] = (
+                        "held_during_insignificant_lateral_motion"
+                    )
+                else:
+                    lateral_side = float(np.dot(
+                        robot_xy - mixture_means[0], perpendicular
+                    ))
+                    if abs(lateral_side) <= 1.0e-9:
+                        lateral_side = 1.0
+                    measured_preferred_direction = (
+                        np.sign(lateral_side) * perpendicular
+                    )
                 if (
                     self.config
                     .probabilistic_obstacle_counterflow_escape_enabled
+                    and not forward_lateral_applied
+                    and not forward_lateral_hold
                 ):
                     counterflow_direction = (
                         measured_preferred_direction
@@ -2060,18 +2897,129 @@ class MppiController:
                         np.linalg.norm(counterflow_direction)
                     )
                     if counterflow_norm > 1.0e-9:
-                        measured_preferred_direction = (
+                        candidate_direction = (
                             counterflow_direction / counterflow_norm
                         )
-                        result["counterflow_escape_applied"] = True
+                        vetoed = self._escape_direction_enters_occupancy(
+                            robot_xy, candidate_direction, forecasts
+                        )
+                        result[
+                            "counterflow_rear_occupancy_vetoed"
+                        ] = bool(vetoed)
+                        if vetoed:
+                            # Keep the pure perpendicular: it moves ACROSS the
+                            # obstacle's motion rather than back into whatever
+                            # the counterflow term was steering toward.
+                            result["counterflow_escape_applied"] = False
+                        else:
+                            measured_preferred_direction = candidate_direction
+                            result["counterflow_escape_applied"] = True
                     else:
                         result["counterflow_escape_applied"] = False
                 else:
                     result["counterflow_escape_applied"] = False
-                if self._probabilistic_emergency_direction is None:
+                previous_direction = self._probabilistic_emergency_direction
+                direction_alignment = 1.0
+                if previous_direction is not None:
+                    previous_direction = np.asarray(
+                        previous_direction, dtype=np.float64
+                    )
+                    direction_alignment = float(np.clip(
+                        np.dot(
+                            previous_direction
+                            / max(float(np.linalg.norm(previous_direction)), 1.0e-9),
+                            measured_preferred_direction
+                            / max(float(np.linalg.norm(measured_preferred_direction)), 1.0e-9),
+                        ),
+                        -1.0,
+                        1.0,
+                    ))
+                tracker_change_triggered = bool(
+                    context.get(
+                        "dynamic_obstacle_tracker_change_triggered", False
+                    )
+                )
+                reversal_confirmation_count = 0
+                reversal_confirmed = False
+                if (
+                    previous_direction is not None
+                    and forward_lateral_applied
+                    and direction_alignment < 0.0
+                    and not tracker_change_triggered
+                ):
+                    pending_direction = (
+                        self._probabilistic_emergency_pending_direction
+                    )
+                    pending_alignment = -1.0
+                    if pending_direction is not None:
+                        pending_direction = np.asarray(
+                            pending_direction, dtype=np.float64
+                        )
+                        pending_alignment = float(np.clip(
+                            np.dot(
+                                pending_direction
+                                / max(float(np.linalg.norm(
+                                    pending_direction
+                                )), 1.0e-9),
+                                measured_preferred_direction
+                                / max(float(np.linalg.norm(
+                                    measured_preferred_direction
+                                )), 1.0e-9),
+                            ),
+                            -1.0,
+                            1.0,
+                        ))
+                    if pending_alignment >= np.cos(np.deg2rad(20.0)):
+                        self._probabilistic_emergency_pending_direction_count += 1
+                    else:
+                        self._probabilistic_emergency_pending_direction = (
+                            measured_preferred_direction.copy()
+                        )
+                        self._probabilistic_emergency_pending_direction_count = 1
+                    reversal_confirmation_count = int(
+                        self._probabilistic_emergency_pending_direction_count
+                    )
+                    reversal_confirmed = bool(
+                        reversal_confirmation_count
+                        >= self.config
+                        .probabilistic_obstacle_forward_lateral_reversal_confirm_steps
+                    )
+                else:
+                    self._probabilistic_emergency_pending_direction = None
+                    self._probabilistic_emergency_pending_direction_count = 0
+                direction_refresh = bool(
+                    previous_direction is not None
+                    and (
+                        (
+                            direction_alignment < 0.0
+                            and not forward_lateral_applied
+                        )
+                        or (
+                            tracker_change_triggered
+                            and direction_alignment < np.cos(0.25 * np.pi)
+                        )
+                        or reversal_confirmed
+                    )
+                )
+                if previous_direction is None or direction_refresh:
                     self._probabilistic_emergency_direction = (
                         measured_preferred_direction.copy()
                     )
+                if direction_refresh:
+                    # The old intent latch represented a now-invalid human
+                    # trajectory.  Remove it on this same solve so candidate
+                    # generation and the physical arbiter both see the new
+                    # counter-motion direction immediately.
+                    self._probabilistic_emergency_latched_pattern = None
+                    self._probabilistic_emergency_latched_heading = None
+                    result.pop("latched_escape_pattern", None)
+                    self._probabilistic_emergency_pending_direction = None
+                    self._probabilistic_emergency_pending_direction_count = 0
+                result["escape_direction_refreshed"] = direction_refresh
+                result["escape_direction_alignment"] = direction_alignment
+                result[
+                    "escape_direction_reversal_confirmation_count"
+                ] = reversal_confirmation_count
                 preferred_direction = np.asarray(
                     self._probabilistic_emergency_direction,
                     dtype=np.float64,
@@ -2086,6 +3034,15 @@ class MppiController:
                     np.asarray(state, dtype=np.float64)[
                         self.state_spec.index("theta")
                     ]
+                )
+                preferred_heading = float(np.arctan2(
+                    preferred_direction[1], preferred_direction[0]
+                ))
+                result["preferred_escape_heading_error_rad"] = float(
+                    np.arctan2(
+                        np.sin(preferred_heading - theta),
+                        np.cos(preferred_heading - theta),
+                    )
                 )
                 v_index = self.action_spec.index("v_cmd")
                 omega_index = self.action_spec.index("omega_cmd")
@@ -2136,10 +3093,14 @@ class MppiController:
             self._probabilistic_emergency_intent_remaining -= 1
             if self._probabilistic_emergency_intent_remaining == 0:
                 self._probabilistic_emergency_direction = None
+                self._probabilistic_emergency_pending_direction = None
+                self._probabilistic_emergency_pending_direction_count = 0
                 self._probabilistic_emergency_latched_pattern = None
                 self._probabilistic_emergency_latched_heading = None
         else:
             self._probabilistic_emergency_direction = None
+            self._probabilistic_emergency_pending_direction = None
+            self._probabilistic_emergency_pending_direction_count = 0
             self._probabilistic_emergency_latched_pattern = None
             self._probabilistic_emergency_latched_heading = None
             rearm_ttc = float(
@@ -2337,6 +3298,12 @@ class MppiController:
             samples[index] = proposal_mean
             samples[index, :prefix, v_index] = speed
             samples[index, :prefix, omega_index] = yaw_rate
+            if (
+                self.config
+                .probabilistic_obstacle_emergency_candidate_hold_tail_enabled
+            ):
+                samples[index, prefix:, v_index] = 0.0
+                samples[index, prefix:, omega_index] = 0.0
             mask[index] = True
         return mask
 
@@ -2669,9 +3636,18 @@ class MppiController:
         )
         commands[:, v_index] = float(self.action_spec.lower[v_index])
         current_progress = float(getattr(reference, "progress", 0.0))
-        tangent = float(np.asarray(reference.poses_at_progress(
-            np.asarray([current_progress], dtype=np.float64)
-        ))[0, 2])
+        frozen_tangent = self._probabilistic_traversal_retreat_target_tangent
+        tangent = (
+            float(np.arctan2(frozen_tangent[1], frozen_tangent[0]))
+            if (
+                self.config
+                .probabilistic_obstacle_traversal_window_retreat_completion_frozen_frame_enabled
+                and frozen_tangent is not None
+            )
+            else float(np.asarray(reference.poses_at_progress(
+                np.asarray([current_progress], dtype=np.float64)
+            ))[0, 2])
+        )
         heading_error = float(np.arctan2(
             np.sin(tangent - state[theta_index]),
             np.cos(tangent - state[theta_index]),
@@ -2730,6 +3706,21 @@ class MppiController:
                 .probabilistic_obstacle_traversal_window_clearance_margin_m
             )
             distance_ahead = crossing_progress - float(current_progress)
+            # Route span over which this forecast is predicted to intrude, by the
+            # same criterion the fixed radius stands in for. None when the
+            # forecast never enters the tube.
+            span_low = None
+            span_high = None
+            intruding = (
+                np.asarray(projection.cross_track_error, dtype=np.float64)
+                <= clearance
+            )
+            if bool(intruding.any()):
+                intruding_progress = np.asarray(
+                    projection.progress, dtype=np.float64
+                )[intruding]
+                span_low = float(intruding_progress.min())
+                span_high = float(intruding_progress.max())
             if (
                 cross_track <= cross_track_limit
                 and distance_ahead >= -clearance
@@ -2741,10 +3732,150 @@ class MppiController:
                     clearance,
                     int(forecast_index),
                     cross_track,
+                    span_low,
+                    span_high,
                 ))
         if not candidates:
             return None
         return min(candidates, key=lambda item: (item[0], item[4]))
+
+    def _forecast_hazard_zones(self, reference, probabilistic_obstacles):
+        """Route spans each forecast is predicted to intrude.
+
+        Independent of any activation distance, and deliberately NOT derived from
+        the detected crossing: crossing detection only fires within the traversal
+        window's activation distance, which is why the earlier placement of the
+        occupancy hold could never act early enough to hold before a zone.
+        """
+
+        zones = []
+        for forecast in probabilistic_obstacles:
+            means = np.asarray(forecast.component_means, dtype=np.float64)
+            weights = np.asarray(forecast.component_weights, dtype=np.float64)
+            mixture_mean = np.sum(weights[..., None] * means, axis=1)
+            if mixture_mean.shape[0] <= 0:
+                continue
+            projection = reference.project_batch(mixture_mean)
+            tube = float(
+                self.config.robot_radius
+                + forecast.radius_m
+                + self.config.probabilistic_obstacle_safety_margin
+            )
+            inside = (
+                np.asarray(projection.cross_track_error, dtype=np.float64)
+                <= tube
+            )
+            if not bool(inside.any()):
+                continue
+            progress = np.asarray(projection.progress, dtype=np.float64)[inside]
+            zones.append((float(progress.min()), float(progress.max())))
+        return zones
+
+    def _zone_occupied_within(
+        self,
+        reference,
+        probabilistic_obstacles,
+        zone_low,
+        zone_high,
+        step_start,
+        step_end,
+    ):
+        """Will any forecast mean sit inside the route zone within `steps`?
+
+        Purely geometric: projects each forecast's mixture mean onto the route
+        and tests route-span membership plus cross-track proximity. No
+        probability, no mixture upper bound, so it cannot saturate the way the
+        collision-risk bound does.
+
+        Returns (occupied, first_clear_step). ``occupied`` is True when the zone
+        is blocked at any step in the window, in which case entering now risks
+        being inside it when the obstacle arrives.
+        """
+
+        # A step RANGE, not a horizon. The zone is derived from a forecast that
+        # intrudes there, so "occupied within N steps" is circular -- it is always
+        # true. The decidable question is whether the zone is occupied during the
+        # interval the robot would actually be inside it.
+        lo_step = max(0, int(step_start))
+        hi_step = int(step_end)
+        if hi_step <= lo_step:
+            return False, 0
+        occupied_at = None
+        for forecast in probabilistic_obstacles:
+            means = np.asarray(forecast.component_means, dtype=np.float64)
+            weights = np.asarray(forecast.component_weights, dtype=np.float64)
+            mixture_mean = np.sum(weights[..., None] * means, axis=1)
+            end = min(hi_step, mixture_mean.shape[0])
+            if end <= lo_step:
+                continue
+            projection = reference.project_batch(mixture_mean[lo_step:end])
+            progress = np.asarray(projection.progress, dtype=np.float64)
+            cross = np.asarray(projection.cross_track_error, dtype=np.float64)
+            tube = float(
+                self.config.robot_radius
+                + forecast.radius_m
+                + self.config.probabilistic_obstacle_safety_margin
+            )
+            inside = (
+                (progress >= float(zone_low))
+                & (progress <= float(zone_high))
+                & (cross <= tube)
+            )
+            if bool(inside.any()):
+                first = lo_step + int(np.argmax(inside))
+                occupied_at = first if occupied_at is None else min(
+                    occupied_at, first
+                )
+        if occupied_at is None:
+            return False, 0
+        return True, occupied_at
+
+    def _traversal_certificate_obstacles(
+        self, probabilistic_obstacles, crossing_forecast_index
+    ):
+        """Obstacles the traversal commit certificate integrates risk over.
+
+        Every obstacle by default, which is the historical behaviour. When
+        commit_certificate_crossing_obstacle_only is set, just the obstacle whose
+        crossing is being traversed -- but only if the index actually identifies
+        one. An absent or out-of-range index falls back to the full set, because
+        silently certifying against nothing would turn a missing index into a
+        safety hole rather than an error.
+
+        The traversal window is a per-crossing mechanism, but the certificate
+        integrates risk over the union of every tracked obstacle. All three
+        complex scenes carry three carriers, so what differs is how much of the
+        horizon they sweep. Measured over the 50-seed confirmatory sets, per
+        certificate evaluation:
+
+            map        certs   median bound   ==1.0    full-horizon safe   commits
+            chapter1   23954          0.156   25.3%                45.3%      7855
+            chapter2    6110          0.213   16.0%                38.4%      1060
+            chapter3    2869          1.000   47.4%                 7.4%        18
+
+        On chapter 3 the union bound saturates at exactly 1.0 on nearly half of
+        all evaluations, so the admission is unsatisfiable and the window commits
+        18 times against chapter 1's 7855 -- the proposed method's central
+        mechanism is suppressed by two orders of magnitude, and no ceiling value
+        recovers it (raising the ceiling from 0.08 to 0.30 admits only 20.5%).
+
+        Narrowing the certificate does not narrow global safety: the
+        risk-augmented MPPI cost, the hard probability threshold, the residual
+        safety shield and the emergency candidate layer all still consider every
+        obstacle.
+        """
+
+        if not (
+            self.config
+            .probabilistic_obstacle_traversal_window_commit_certificate_crossing_obstacle_only
+        ):
+            return probabilistic_obstacles
+        if crossing_forecast_index is None:
+            return probabilistic_obstacles
+        index = int(crossing_forecast_index)
+        if not 0 <= index < len(probabilistic_obstacles):
+            return probabilistic_obstacles
+        return [probabilistic_obstacles[index]]
 
     def _probabilistic_traversal_candidate(
         self,
@@ -2754,11 +3885,21 @@ class MppiController:
         current_progress,
         clear_progress,
         stop_at_target=False,
+        hold_after_target=False,
+        target_bearing_steering=False,
+        goal_position=None,
+        goal_tolerance=None,
+        crossing_forecast_index=None,
     ):
         """Build and certify one fixed-budget route traversal proposal.
 
         The longer certificate is evaluated only for this deterministic
         proposal.  The main MPPI horizon and rollout count remain unchanged.
+
+        ``crossing_forecast_index`` names the obstacle whose route crossing this
+        traversal is for.  It only matters when
+        commit_certificate_crossing_obstacle_only is set, in which case the risk
+        integral is taken over that obstacle alone; see the config field for why.
         """
 
         horizon = min(
@@ -2792,9 +3933,37 @@ class MppiController:
             reference.poses_at_progress(np.asarray([clear_progress]))[0],
             dtype=np.float64,
         )
+        target_heading = float(target_pose[2])
+        terminal_goal = (
+            None
+            if goal_position is None
+            else np.asarray(goal_position, dtype=np.float64).reshape(-1)[:2]
+        )
+        if terminal_goal is not None and (
+            terminal_goal.shape != (2,) or not np.isfinite(terminal_goal).all()
+        ):
+            return result
+        if target_bearing_steering:
+            position = np.asarray(state, dtype=np.float64)[
+                list(self.state_spec.position_indices)
+            ]
+            target_delta = (
+                terminal_goal - position
+                if terminal_goal is not None
+                else target_pose[:2] - position
+            )
+            if float(np.linalg.norm(target_delta)) > 1.0e-9:
+                # A route tangent describes motion on the route, but it
+                # cannot recover a robot that is laterally displaced from a
+                # terminal endpoint.  Aim the deterministic certificate at
+                # the endpoint itself so scalar projection progress cannot
+                # masquerade as two-dimensional arrival.
+                target_heading = float(np.arctan2(
+                    target_delta[1], target_delta[0]
+                ))
         heading_error = float(np.arctan2(
-            np.sin(target_pose[2] - state[theta_index]),
-            np.cos(target_pose[2] - state[theta_index]),
+            np.sin(target_heading - state[theta_index]),
+            np.cos(target_heading - state[theta_index]),
         ))
         maximum_yaw_rate = float(
             self.action_spec.upper[omega_index]
@@ -2860,9 +4029,56 @@ class MppiController:
         projected = reference.project_batch(
             positions, minimum_progress=float(current_progress)
         ).progress
-        cleared = np.flatnonzero(projected >= float(clear_progress) - 1.0e-9)
+        if terminal_goal is None:
+            cleared = np.flatnonzero(
+                projected >= float(clear_progress) - 1.0e-9
+            )
+        else:
+            tolerance = (
+                float(reference.tolerance)
+                if goal_tolerance is None
+                else float(goal_tolerance)
+            )
+            if not np.isfinite(tolerance) or tolerance <= 0.0:
+                return result
+            cleared = np.flatnonzero(
+                np.linalg.norm(positions - terminal_goal[None, :], axis=1)
+                <= tolerance
+            )
         if not cleared.size:
             return result
+        if hold_after_target:
+            # The crossing certificate ends at the frozen clear exit.  Keep
+            # the injected candidate inside that same transaction scope
+            # instead of letting an unrelated maximum-speed tail reach later
+            # static geometry and invalidate an otherwise certified crossing.
+            reach_index = int(cleared[0])
+            commands[reach_index + 1:, :] = 0.0
+            trajectory = rollout_candidate(commands)
+            positions = trajectory[
+                1:, list(self.state_spec.position_indices)
+            ]
+            projected = reference.project_batch(
+                positions, minimum_progress=float(current_progress)
+            ).progress
+            if terminal_goal is None:
+                cleared = np.flatnonzero(
+                    projected >= float(clear_progress) - 1.0e-9
+                )
+            else:
+                tolerance = (
+                    float(reference.tolerance)
+                    if goal_tolerance is None
+                    else float(goal_tolerance)
+                )
+                cleared = np.flatnonzero(
+                    np.linalg.norm(
+                        positions - terminal_goal[None, :], axis=1
+                    )
+                    <= tolerance
+                )
+            if not cleared.size:
+                return result
         if stop_at_target:
             # Rearm staging may advance to the already frozen crossing entry,
             # but its open-loop certificate must not continue through the
@@ -2872,35 +4088,36 @@ class MppiController:
             reach_index = int(cleared[0])
             commands[reach_index + 1:, :] = 0.0
 
-            # The first maximum-speed command that reaches the entry can
-            # overshoot it by one control interval.  Fit that one already
-            # budgeted command to the greatest non-crossing speed.  The
-            # existing 1e-9 geometric tolerance is used only for numerical
-            # bisection; no behavioral threshold or rollout candidate is
-            # introduced.
-            maximum_reach_speed = float(commands[reach_index, v_index])
-            lower_speed = 0.0
-            upper_speed = maximum_reach_speed
-            fitted_commands = commands.copy()
-            for _ in range(40):
-                trial_speed = 0.5 * (lower_speed + upper_speed)
-                fitted_commands[reach_index, v_index] = trial_speed
-                trial_trajectory = rollout_candidate(fitted_commands)
-                trial_positions = trial_trajectory[
-                    1:, list(self.state_spec.position_indices)
-                ]
-                trial_progress = reference.project_batch(
-                    trial_positions,
-                    minimum_progress=float(current_progress),
-                ).progress
-                if float(np.max(trial_progress)) <= (
-                    float(clear_progress) + 1.0e-9
-                ):
-                    lower_speed = trial_speed
-                else:
-                    upper_speed = trial_speed
-            fitted_commands[reach_index, v_index] = lower_speed
-            commands = fitted_commands
+            if terminal_goal is None:
+                # The first maximum-speed command that reaches the entry can
+                # overshoot it by one control interval.  Fit that one already
+                # budgeted command to the greatest non-crossing speed.  The
+                # existing 1e-9 geometric tolerance is used only for numerical
+                # bisection; no behavioral threshold or rollout candidate is
+                # introduced.
+                maximum_reach_speed = float(commands[reach_index, v_index])
+                lower_speed = 0.0
+                upper_speed = maximum_reach_speed
+                fitted_commands = commands.copy()
+                for _ in range(40):
+                    trial_speed = 0.5 * (lower_speed + upper_speed)
+                    fitted_commands[reach_index, v_index] = trial_speed
+                    trial_trajectory = rollout_candidate(fitted_commands)
+                    trial_positions = trial_trajectory[
+                        1:, list(self.state_spec.position_indices)
+                    ]
+                    trial_progress = reference.project_batch(
+                        trial_positions,
+                        minimum_progress=float(current_progress),
+                    ).progress
+                    if float(np.max(trial_progress)) <= (
+                        float(clear_progress) + 1.0e-9
+                    ):
+                        lower_speed = trial_speed
+                    else:
+                        upper_speed = trial_speed
+                fitted_commands[reach_index, v_index] = lower_speed
+                commands = fitted_commands
             trajectory = rollout_candidate(commands)
             positions = trajectory[
                 1:, list(self.state_spec.position_indices)
@@ -2908,14 +4125,28 @@ class MppiController:
             projected = reference.project_batch(
                 positions, minimum_progress=float(current_progress)
             ).progress
-            cleared = np.flatnonzero(
-                projected >= float(clear_progress) - 1.0e-9
-            )
-            if (
-                not cleared.size
-                or float(np.max(projected))
-                > float(clear_progress) + 1.0e-9
-            ):
+            if terminal_goal is None:
+                cleared = np.flatnonzero(
+                    projected >= float(clear_progress) - 1.0e-9
+                )
+                overshot = (
+                    float(np.max(projected))
+                    > float(clear_progress) + 1.0e-9
+                )
+            else:
+                tolerance = (
+                    float(reference.tolerance)
+                    if goal_tolerance is None
+                    else float(goal_tolerance)
+                )
+                cleared = np.flatnonzero(
+                    np.linalg.norm(
+                        positions - terminal_goal[None, :], axis=1
+                    )
+                    <= tolerance
+                )
+                overshot = False
+            if not cleared.size or overshot:
                 return result
         end_step = min(
             horizon,
@@ -2937,9 +4168,12 @@ class MppiController:
                 end_step,
                 min(horizon, int(self.config.horizon)),
             )
+        certificate_obstacles = self._traversal_certificate_obstacles(
+            probabilistic_obstacles, crossing_forecast_index
+        )
         risk = evaluate_collision_risk(
             positions[None, :risk_end_step, :],
-            probabilistic_obstacles,
+            certificate_obstacles,
             CollisionRiskConfig(
                 robot_radius_m=self.config.robot_radius,
                 safety_margin_m=(
@@ -3013,6 +4247,14 @@ class MppiController:
     ):
         """Certify, start, and persist a causal crossing-window commit."""
 
+        # Consecutive-step counter for the uncommitted staging hold. Cleared on
+        # entry and restored only on a step that actually holds, so the count is
+        # exactly the current unbroken run rather than a lifetime total.
+        previous_uncommitted_hold_steps = (
+            self._probabilistic_traversal_uncommitted_hold_steps
+        )
+        self._probabilistic_traversal_uncommitted_hold_steps = 0
+
         result = {
             "enabled": bool(
                 self.config.probabilistic_obstacle_traversal_window_enabled
@@ -3024,6 +4266,7 @@ class MppiController:
             "commit_completed": False,
             "commit_cancelled": False,
             "commit_cancelled_by_temporal_closing": False,
+            "temporal_abort_current_hazard_signal": False,
             "commit_cancelled_by_temporal_midpoint_guard": False,
             "commit_cancelled_by_temporal_exit_deadline_guard": False,
             "commit_admission_full_horizon_safe": False,
@@ -3033,11 +4276,17 @@ class MppiController:
             "commit_admission_exit_deadline_hold_requested": False,
             "commit_admission_prealign_requested": False,
             "uncommitted_temporal_staging_hold_requested": False,
+            "uncommitted_hold_retreat_triggered": False,
+            "zone_occupancy_hold_active": False,
             "uncommitted_temporal_staging_terminal_release_active": bool(
                 self.config
                 .probabilistic_obstacle_traversal_window_uncommitted_temporal_staging_terminal_release_enabled
                 and terminal_phase
             ),
+            "terminal_phase": bool(terminal_phase),
+            "terminal_target_bearing_steering_active": False,
+            "terminal_capture_active": False,
+            "terminal_capture_released": False,
             "commit_admission_exit_deadline_margin_s": 0.0,
             "commit_admission_safe_streak": 0,
             "commit_admission_required_streak": int(
@@ -3065,11 +4314,17 @@ class MppiController:
                 self._probabilistic_traversal_retreat_temporal_lattice
             ),
             "retreat_completed": False,
+            "retreat_completion_projection_alias_rejected": False,
+            "retreat_target_x": 0.0,
+            "retreat_target_y": 0.0,
+            "retreat_signed_distance_m": 0.0,
+            "retreat_frozen_reference_progress": 0.0,
             "rearm_pending": bool(
                 self._probabilistic_traversal_rearm_pending
             ),
             "rearm_no_crossing_safe_streak": 0,
             "rearm_released_by_no_crossing_clearance": False,
+            "rearm_released_by_certified_handoff": False,
             "rearm_no_crossing_certified_handoff_active": False,
             "rearm_no_crossing_certified_handoff_safe": False,
             "rearm_staging_approach_requested": False,
@@ -3091,6 +4346,9 @@ class MppiController:
         if not result["enabled"]:
             self._clear_probabilistic_traversal_commit()
             self._probabilistic_traversal_retreat_progress = None
+            self._probabilistic_traversal_retreat_target_position = None
+            self._probabilistic_traversal_retreat_target_tangent = None
+            self._probabilistic_traversal_retreat_reference = None
             self._probabilistic_traversal_rearm_pending = False
             self._probabilistic_traversal_retreat_temporal_lattice = False
             self._clear_probabilistic_traversal_exit_deadline_retreat_escape()
@@ -3130,6 +4388,89 @@ class MppiController:
             minimum_progress=float(getattr(reference, "progress", 0.0)),
         ).progress)
         result["current_progress"] = current_progress
+        terminal_goal = (
+            np.asarray(reference.points[-1], dtype=np.float64)[:2]
+            if hasattr(reference, "points")
+            else None
+        )
+        terminal_capture_released = bool(
+            terminal_goal is None
+            or float(np.linalg.norm(position - terminal_goal))
+            <= float(getattr(reference, "tolerance", 0.0))
+            or current_progress
+            >= float(reference.total_length) - 1.0e-9
+        )
+        result["terminal_capture_released"] = terminal_capture_released
+        if (
+            self.config
+            .probabilistic_obstacle_terminal_capture_candidate_enabled
+            and terminal_phase
+            and not terminal_capture_released
+            and terminal_goal is not None
+            and not temporal_emergency_triggered
+            and not temporal_emergency_raw_triggered
+            and not temporal_emergency_closing_observed
+            and not self._probabilistic_traversal_rearm_pending
+            and self._probabilistic_traversal_retreat_progress is None
+            and self._probabilistic_traversal_clear_progress is None
+        ):
+            terminal_capture = self._probabilistic_traversal_candidate(
+                state,
+                reference,
+                probabilistic_obstacles,
+                current_progress,
+                float(reference.total_length),
+                stop_at_target=True,
+                target_bearing_steering=True,
+                goal_position=terminal_goal,
+                goal_tolerance=float(reference.tolerance),
+            )
+            full_horizon_required = bool(
+                self.config
+                .probabilistic_obstacle_traversal_window_commit_admission_full_horizon_enabled
+            )
+            terminal_capture_safe = bool(
+                terminal_capture["safe"]
+                and (
+                    not full_horizon_required
+                    or terminal_capture["commit_admission_full_horizon_safe"]
+                )
+                and terminal_capture["sequence"] is not None
+            )
+            if terminal_capture_safe:
+                result.update({
+                    "candidate_requested": True,
+                    "window_safe": True,
+                    "commit_admission_full_horizon_safe": bool(
+                        terminal_capture[
+                            "commit_admission_full_horizon_safe"
+                        ]
+                    ),
+                    "forecast_sufficient": bool(
+                        terminal_capture["forecast_sufficient"]
+                    ),
+                    "maximum_probability": float(
+                        terminal_capture["maximum_probability"]
+                    ),
+                    "probability_mass": float(
+                        terminal_capture["probability_mass"]
+                    ),
+                    "temporal_corroboration_maximum_probability": float(
+                        terminal_capture[
+                            "temporal_corroboration_maximum_probability"
+                        ]
+                    ),
+                    "temporal_corroboration_probability_mass": float(
+                        terminal_capture[
+                            "temporal_corroboration_probability_mass"
+                        ]
+                    ),
+                    "required_steps": int(terminal_capture["required_steps"]),
+                    "clear_progress": float(reference.total_length),
+                    "terminal_capture_active": True,
+                    "sequence": terminal_capture["sequence"],
+                })
+                return result
         if self._probabilistic_traversal_retreat_progress is not None:
             # Retreat is the one traversal phase where physical motion is
             # intentionally allowed to move behind the monotonic online
@@ -3141,8 +4482,88 @@ class MppiController:
                 self._probabilistic_traversal_retreat_progress
             )
             result["retreat_progress"] = retreat_progress
-            if physical_progress <= retreat_progress + 1.0e-9:
+            projected_completion = bool(
+                physical_progress <= retreat_progress + 1.0e-9
+            )
+            frozen_position = (
+                self._probabilistic_traversal_retreat_target_position
+            )
+            frozen_tangent = (
+                self._probabilistic_traversal_retreat_target_tangent
+            )
+            frozen_frame_active = bool(
+                self.config
+                .probabilistic_obstacle_traversal_window_retreat_completion_frozen_frame_enabled
+                and frozen_position is not None
+                and frozen_tangent is not None
+            )
+            retreat_signed_distance = (
+                float(np.dot(
+                    position - frozen_position,
+                    frozen_tangent,
+                ))
+                if frozen_frame_active
+                else 0.0
+            )
+            frozen_frame_completion = bool(
+                retreat_signed_distance <= 1.0e-9
+            )
+            frozen_reference = self._probabilistic_traversal_retreat_reference
+            frozen_reference_active = bool(
+                self.config
+                .probabilistic_obstacle_traversal_window_retreat_completion_frozen_reference_enabled
+                and frozen_reference is not None
+            )
+            frozen_reference_progress = (
+                float(frozen_reference.project(position).progress)
+                if frozen_reference_active
+                else 0.0
+            )
+            frozen_reference_completion = bool(
+                frozen_reference_progress <= retreat_progress + 1.0e-9
+            )
+            retreat_completed = bool(
+                frozen_reference_completion
+                if frozen_reference_active
+                else (
+                    frozen_frame_completion
+                    if frozen_frame_active
+                    else projected_completion
+                )
+            )
+            result.update({
+                "retreat_completion_projection_alias_rejected": bool(
+                    (
+                        frozen_reference_active
+                        and (
+                            projected_completion
+                            or (frozen_frame_active and frozen_frame_completion)
+                        )
+                        and not frozen_reference_completion
+                    )
+                    or (
+                        not frozen_reference_active
+                        and frozen_frame_active
+                        and projected_completion
+                        and not frozen_frame_completion
+                    )
+                ),
+                "retreat_target_x": float(
+                    frozen_position[0] if frozen_position is not None else 0.0
+                ),
+                "retreat_target_y": float(
+                    frozen_position[1] if frozen_position is not None else 0.0
+                ),
+                "retreat_signed_distance_m": float(retreat_signed_distance),
+                "retreat_frozen_reference_progress": float(
+                    frozen_reference_progress
+                ),
+            })
+            if retreat_completed:
                 self._probabilistic_traversal_retreat_progress = None
+                self._probabilistic_traversal_retreat_target_position = None
+                self._probabilistic_traversal_retreat_target_tangent = None
+                self._probabilistic_traversal_retreat_reference = None
                 self._probabilistic_traversal_retreat_temporal_lattice = False
                 self._clear_probabilistic_traversal_exit_deadline_retreat_escape()
                 # The controller intentionally moved behind the otherwise
@@ -3171,6 +4592,64 @@ class MppiController:
             result["commit_completed"] = True
             self._clear_probabilistic_traversal_commit()
             active = False
+        # ---- zone-occupancy scheduling ---------------------------------
+        # Runs BEFORE crossing detection, so it is not bounded by the traversal
+        # window's activation distance. If a hazard zone lies ahead within the
+        # lookahead and is predicted occupied during the interval the robot would
+        # be transiting it, hold short of it. Forecast means and route geometry
+        # only -- no risk bound, which saturates at 1.0 on 47% of certificates.
+        if (
+            self.config.probabilistic_obstacle_zone_occupancy_hold_enabled
+            and not active
+        ):
+            speed = max(
+                1.0e-3,
+                float(
+                    self.config
+                    .probabilistic_obstacle_zone_occupancy_transit_speed_mps
+                ),
+            )
+            step_m = speed * float(self.config.dt)
+            lookahead = float(
+                self.config.probabilistic_obstacle_zone_occupancy_lookahead_m
+            )
+            margin = int(
+                self.config
+                .probabilistic_obstacle_zone_occupancy_clear_margin_steps
+            )
+            ahead = [
+                (lo, hi)
+                for lo, hi in self._forecast_hazard_zones(
+                    reference, probabilistic_obstacles
+                )
+                if lo > float(current_progress)
+                and (lo - float(current_progress)) <= lookahead
+            ]
+            if ahead:
+                zone_low, zone_high = min(ahead, key=lambda z: z[0])
+                arrive = int(
+                    np.floor((zone_low - float(current_progress)) / step_m)
+                )
+                clear = int(
+                    np.ceil((zone_high - float(current_progress)) / step_m)
+                ) + margin
+                blocked, _first = self._zone_occupied_within(
+                    reference,
+                    probabilistic_obstacles,
+                    zone_low,
+                    zone_high,
+                    arrive,
+                    clear,
+                )
+                if blocked:
+                    result.update({
+                        "candidate_requested": True,
+                        "zone_occupancy_hold_active": True,
+                        "sequence": (
+                            self._probabilistic_traversal_hold_candidate()
+                        ),
+                    })
+                    return result
         crossing = None
         if active:
             crossing = (
@@ -3182,6 +4661,10 @@ class MppiController:
                 ),
                 -1,
                 0.0,
+                # An already-active traversal reuses its stored entry/clear
+                # progress below, so no forecast span is needed here.
+                None,
+                None,
             )
         else:
             crossing = self._probabilistic_traversal_crossing(
@@ -3318,10 +4801,30 @@ class MppiController:
             elif not active:
                 self._probabilistic_traversal_admission_safe_streak = 0
                 self._probabilistic_traversal_admission_signature = None
+                staging_hold_current_hazard = bool(
+                    temporal_emergency_closing_observed
+                )
+                if (
+                    staging_hold_current_hazard
+                    and self.config
+                    .probabilistic_obstacle_traversal_window_uncommitted_temporal_staging_hold_current_hazard_only_enabled
+                ):
+                    trigger_ttc = float(
+                        self.config
+                        .probabilistic_obstacle_emergency_candidate_trigger_ttc_s
+                    )
+                    staging_hold_current_hazard = bool(
+                        temporal_emergency_raw_triggered
+                        or (
+                            trigger_ttc > 0.0
+                            and np.isfinite(temporal_emergency_ttc_s)
+                            and temporal_emergency_ttc_s <= trigger_ttc
+                        )
+                    )
                 if (
                     self.config
                     .probabilistic_obstacle_traversal_window_uncommitted_temporal_staging_hold_enabled
-                    and temporal_emergency_closing_observed
+                    and staging_hold_current_hazard
                     and not result[
                         "uncommitted_temporal_staging_terminal_release_active"
                     ]
@@ -3336,19 +4839,73 @@ class MppiController:
                     # signal clears.  This uses the existing traversal slot;
                     # no future plant truth, obstacle identity, or extra
                     # rollout is introduced.
-                    result.update({
-                        "candidate_requested": True,
-                        "uncommitted_temporal_staging_hold_requested": True,
-                        "sequence": (
-                            self._probabilistic_traversal_hold_candidate()
-                        ),
-                    })
+                    held_steps = previous_uncommitted_hold_steps + 1
+                    self._probabilistic_traversal_uncommitted_hold_steps = (
+                        held_steps
+                    )
+                    retreat_after = int(
+                        self.config
+                        .probabilistic_obstacle_traversal_window_uncommitted_hold_retreat_steps
+                    )
+                    retreat_margin = float(
+                        self.config
+                        .probabilistic_obstacle_traversal_window_retreat_margin_m
+                    )
+                    if (
+                        retreat_after > 0
+                        and held_steps >= retreat_after
+                        and retreat_margin > 0.0
+                    ):
+                        # Holding has stopped being a wait and become a stall:
+                        # neither a certifiable crossing nor a clear closing
+                        # signal has appeared in `retreat_after` consecutive
+                        # steps, so staging in place is just standing at the
+                        # route entrance while the carrier keeps closing.  Back
+                        # off to a standoff instead and let the existing retreat
+                        # executor drive it; that path already tolerates moving
+                        # behind the monotonic online progress floor.
+                        physical_progress = float(
+                            reference.project(position).progress
+                        )
+                        self._probabilistic_traversal_retreat_progress = max(
+                            0.0, physical_progress - retreat_margin
+                        )
+                        self._probabilistic_traversal_uncommitted_hold_steps = 0
+                        result["uncommitted_hold_retreat_triggered"] = True
+                    else:
+                        result.update({
+                            "candidate_requested": True,
+                            "uncommitted_temporal_staging_hold_requested": True,
+                            "sequence": (
+                                self._probabilistic_traversal_hold_candidate()
+                            ),
+                        })
             return result
-        _, crossing_progress, clearance, forecast_index, _ = crossing
+        (
+            _,
+            crossing_progress,
+            clearance,
+            forecast_index,
+            _,
+            crossing_span_low,
+            crossing_span_high,
+        ) = crossing
         entry_progress = max(0.0, crossing_progress - clearance)
         clear_progress = min(
             float(reference.total_length), crossing_progress + clearance
         )
+        if (
+            self.config
+            .probabilistic_obstacle_traversal_window_forecast_extent_enabled
+            and crossing_span_low is not None
+            and crossing_span_high is not None
+        ):
+            # Union with the fixed-radius window: never narrower than before.
+            entry_progress = max(0.0, min(entry_progress, crossing_span_low))
+            clear_progress = min(
+                float(reference.total_length),
+                max(clear_progress, crossing_span_high),
+            )
         if active:
             entry_progress = float(
                 self._probabilistic_traversal_entry_progress
@@ -3356,12 +4913,31 @@ class MppiController:
             clear_progress = float(
                 self._probabilistic_traversal_clear_progress
             )
+        terminal_target_bearing_steering_active = bool(
+            self.config
+            .probabilistic_obstacle_traversal_window_terminal_target_bearing_enabled
+            and terminal_phase
+            and clear_progress
+            >= float(reference.total_length) - 1.0e-9
+            and current_progress >= crossing_progress - 1.0e-9
+        )
+        result["terminal_target_bearing_steering_active"] = bool(
+            terminal_target_bearing_steering_active
+        )
         certificate = self._probabilistic_traversal_candidate(
             state,
             reference,
             probabilistic_obstacles,
             current_progress,
             clear_progress,
+            hold_after_target=bool(
+                self.config
+                .probabilistic_obstacle_traversal_window_commit_clear_hold_tail_enabled
+            ),
+            target_bearing_steering=bool(
+                terminal_target_bearing_steering_active
+            ),
+            crossing_forecast_index=forecast_index,
         )
         rearm_staging_approach_requested = bool(
             self.config
@@ -3419,8 +4995,28 @@ class MppiController:
             self.config
             .probabilistic_obstacle_traversal_window_temporal_abort_mass_floor
         )
+        temporal_abort_current_hazard_signal = bool(
+            temporal_emergency_raw_triggered
+            or (
+                temporal_emergency_closing_observed
+                and np.isfinite(temporal_emergency_ttc_s)
+                and temporal_emergency_ttc_s > 0.0
+                and self.config
+                .probabilistic_obstacle_emergency_candidate_trigger_ttc_s
+                > 0.0
+                and temporal_emergency_ttc_s
+                <= self.config
+                .probabilistic_obstacle_emergency_candidate_trigger_ttc_s
+            )
+        )
+        temporal_abort_signal = bool(
+            temporal_abort_current_hazard_signal
+            if self.config
+            .probabilistic_obstacle_traversal_window_temporal_abort_current_hazard_only_enabled
+            else temporal_emergency_triggered
+        )
         temporal_abort = bool(
-            temporal_emergency_triggered
+            temporal_abort_signal
             and certificate["forecast_sufficient"]
             and certificate["temporal_corroboration_probability_mass"]
             >= temporal_abort_mass_floor
@@ -3574,7 +5170,7 @@ class MppiController:
             active
             and started
             and current_progress < crossing_progress - 1.0e-9
-            and temporal_emergency_triggered
+            and temporal_abort_signal
             and certificate["forecast_sufficient"]
             and certificate["safe"]
             and self.config
@@ -3619,11 +5215,45 @@ class MppiController:
                 self._probabilistic_traversal_retreat_progress = max(
                     0.0, entry_progress - retreat_margin
                 )
+                if (
+                    self.config
+                    .probabilistic_obstacle_traversal_window_retreat_completion_frozen_frame_enabled
+                ):
+                    retreat_target_pose = np.asarray(
+                        reference.poses_at_progress(np.asarray([
+                            self._probabilistic_traversal_retreat_progress
+                        ], dtype=np.float64))[0],
+                        dtype=np.float64,
+                    )
+                    self._probabilistic_traversal_retreat_target_position = (
+                        retreat_target_pose[:2].copy()
+                    )
+                    self._probabilistic_traversal_retreat_target_tangent = (
+                        np.asarray([
+                            np.cos(retreat_target_pose[2]),
+                            np.sin(retreat_target_pose[2]),
+                        ], dtype=np.float64)
+                    )
+                if (
+                    self.config
+                    .probabilistic_obstacle_traversal_window_retreat_completion_frozen_reference_enabled
+                ):
+                    # Online A* replaces the live route in place.  Preserve
+                    # the complete route coordinate at the abort boundary so
+                    # completion remains ordered on curved paths and cannot
+                    # alias through either a new scalar origin or a local
+                    # tangent half-plane.
+                    self._probabilistic_traversal_retreat_reference = (
+                        copy.deepcopy(reference)
+                    )
                 self._probabilistic_traversal_retreat_temporal_lattice = bool(
                     temporal_midpoint_guard_abort
                     or temporal_exit_deadline_guard_abort
                 )
             else:
+                self._probabilistic_traversal_retreat_target_position = None
+                self._probabilistic_traversal_retreat_target_tangent = None
+                self._probabilistic_traversal_retreat_reference = None
                 self._probabilistic_traversal_retreat_temporal_lattice = False
             if (
                 temporal_exit_deadline_guard_abort
@@ -3726,6 +5356,9 @@ class MppiController:
             ),
             "temporal_closing_observed": bool(
                 temporal_emergency_closing_observed
+            ),
+            "temporal_abort_current_hazard_signal": bool(
+                temporal_abort_current_hazard_signal
             ),
             "exit_deadline_retreat_escape_transaction_active": bool(
                 self._probabilistic_traversal_exit_deadline_retreat_active
@@ -4022,6 +5655,7 @@ class MppiController:
         effective_sample_size = float(1.0 / np.sum(weights ** 2))
         if not np.isfinite(weights).all() or not np.isfinite(effective_sample_size):
             raise FloatingPointError("MPPI importance weights are not finite")
+
         return SequenceWeights(adjusted, weights, effective_sample_size)
 
     def _prediction_controls(self, controls: np.ndarray) -> np.ndarray:
@@ -4048,11 +5682,65 @@ class MppiController:
     def _known_static_map_clearance(
         self, trajectories, known_static_obstacles
     ):
-        """Exact signed footprint clearance to frozen static geometry."""
+        """Exact signed footprint clearance to frozen static geometry.
+
+        Memoised on the exact content of ``trajectories`` and obstacle
+        geometry. The function is pure -- geometry and trajectories in,
+        signed clearance out -- and is called from
+        eleven distinct sites, roughly 11.7 times per control step, of which
+        49.3% repeat an identical trajectory array (measured over 25 steps:
+        292 calls, 148 unique). Caching therefore removes about half the work
+        while returning bit-identical values.
+
+        The key is a digest of the array's bytes, never its identity: the
+        planner reuses and mutates trajectory buffers in place, so an
+        identity-keyed cache would return stale clearances.
+        """
 
         xy = np.asarray(trajectories, dtype=np.float64)[
             ..., list(self.state_spec.position_indices)
         ]
+        if not STATIC_CLEARANCE_CACHE_ENABLED:
+            return self._known_static_map_clearance_uncached(
+                xy, known_static_obstacles
+            )
+        cache = getattr(self, "_static_clearance_cache", None)
+        if cache is None:
+            cache = self._static_clearance_cache = {}
+        contiguous = np.ascontiguousarray(xy)
+        obstacle_digest = hashlib.blake2b(
+            repr(tuple(known_static_obstacles)).encode("utf-8"),
+            digest_size=16,
+        ).digest()
+        key = (
+            contiguous.shape,
+            hashlib.blake2b(contiguous.view(np.uint8), digest_size=16).digest(),
+            obstacle_digest,
+        )
+        hit = cache.get(key)
+        if hit is not None:
+            return hit
+        minimum = self._known_static_map_clearance_uncached(
+            xy, known_static_obstacles
+        )
+        # Bounded so a long episode cannot grow the cache without limit;
+        # the reuse that matters is always within one control step.
+        if len(cache) >= 64:
+            cache.clear()
+        minimum.setflags(write=False)
+        cache[key] = minimum
+        return minimum
+
+    def _known_static_map_clearance_uncached(
+        self, xy, known_static_obstacles
+    ):
+        """Signed footprint clearance geometry, with no memoisation.
+
+        Split out so the cache can be disabled for A/B timing and so a
+        regression test can assert the cached and uncached paths agree
+        bit-for-bit.
+        """
+
         minimum = np.full(xy.shape[:2], np.inf, dtype=np.float64)
         for obstacle in known_static_obstacles:
             kind = str(obstacle.get("type", "cylinder"))
@@ -4146,7 +5834,10 @@ class MppiController:
             raise FloatingPointError(
                 "known static-map clearance contains NaN or Inf"
             )
+        # Bounded so a long episode cannot grow the cache without limit; the
+        # reuse that matters is always within one control step.
         return minimum
+
 
     def _cost(
         self,
@@ -4489,6 +6180,7 @@ class MppiController:
         temporal_emergency_triggered=False,
         traversal_context=None,
         traversal_candidate_index=-1,
+        candidate_static_clearance=None,
     ):
         """Apply the deployed final probability-risk action contract.
 
@@ -4522,8 +6214,14 @@ class MppiController:
                 "probabilistic_obstacle_emergency_candidate_selected": False,
                 "probabilistic_obstacle_temporal_emergency_triggered": False,
                 "probabilistic_obstacle_temporal_emergency_vetted": False,
+                "probabilistic_obstacle_terminal_intent_safe_stop_selected": False,
                 "probabilistic_obstacle_traversal_window_enabled": False,
+                "probabilistic_obstacle_traversal_terminal_target_bearing_steering_active": False,
+                "probabilistic_obstacle_terminal_capture_candidate_active": False,
                 "probabilistic_obstacle_traversal_candidate_selected": False,
+                "probabilistic_obstacle_traversal_candidate_geometry_eligible": False,
+                "probabilistic_obstacle_traversal_candidate_static_minimum_clearance": 0.0,
+                "probabilistic_obstacle_traversal_temporal_abort_current_hazard_signal": False,
                 "probabilistic_obstacle_traversal_temporal_corroboration_enabled": False,
                 "probabilistic_obstacle_traversal_temporal_corroboration_maximum_probability": 0.0,
                 "probabilistic_obstacle_traversal_temporal_corroboration_probability_mass": 0.0,
@@ -4549,6 +6247,10 @@ class MppiController:
                 "probabilistic_obstacle_traversal_commit_cancelled_by_temporal_exit_deadline_guard": False,
                 "probabilistic_obstacle_traversal_commit_preserved_for_nearest_safe_exit": False,
                 "probabilistic_obstacle_traversal_retreat_temporal_lattice_requested": False,
+                "probabilistic_obstacle_traversal_retreat_completion_projection_alias_rejected": False,
+                "probabilistic_obstacle_traversal_retreat_target_x": 0.0,
+                "probabilistic_obstacle_traversal_retreat_target_y": 0.0,
+                "probabilistic_obstacle_traversal_retreat_signed_distance_m": 0.0,
                 "probabilistic_obstacle_traversal_forward_exit_distance_m": 0.0,
                 "probabilistic_obstacle_traversal_retreat_exit_distance_m": 0.0,
                 "probabilistic_obstacle_traversal_forward_exit_optimistic_time_s": 0.0,
@@ -4618,6 +6320,18 @@ class MppiController:
                 raise ValueError(
                     "probabilistic emergency candidate mask shape differs"
                 )
+        static_clearance_trace = None
+        if candidate_static_clearance is not None:
+            static_clearance_trace = np.asarray(
+                candidate_static_clearance, dtype=np.float64
+            )
+            if (
+                static_clearance_trace.ndim != 2
+                or static_clearance_trace.shape[0] != values.shape[0]
+            ):
+                raise ValueError(
+                    "probabilistic candidate static-clearance shape differs"
+                )
 
         selected_risk = self._probabilistic_collision_risk(
             np.asarray(trajectory, dtype=np.float64)[None, ...], forecasts
@@ -4634,8 +6348,10 @@ class MppiController:
         evaluated_candidates = candidate_risk
         risk_candidate_feasible = np.ones(values.shape[0], dtype=bool)
         temporal_emergency_vetted = False
+        terminal_intent_safe_stop_selected = False
         pareto_forward_commit_applied = False
         low_risk_forward_commit_applied = False
+        emergency_feasibility_over_direction_applied = False
         preferred_emergency_probability = 0.0
         preferred_emergency_probability_mass = 0.0
         preferred_emergency_hard_violation = False
@@ -4643,6 +6359,21 @@ class MppiController:
         minimum_risk_emergency_index = -1
         traversal_context = dict(traversal_context or {})
         traversal_index = int(traversal_candidate_index)
+        terminal_capture_active = bool(
+            traversal_context.get("terminal_capture_active", False)
+        )
+        traversal_candidate_geometry_eligible = bool(
+            0 <= traversal_index < values.shape[0]
+            and eligible_mask[traversal_index]
+        )
+        traversal_candidate_static_minimum_clearance = (
+            float(np.min(static_clearance_trace[traversal_index]))
+            if (
+                static_clearance_trace is not None
+                and 0 <= traversal_index < values.shape[0]
+            )
+            else 0.0
+        )
         traversal_selected = False
         traversal_retreat_overridden_by_hard_risk = False
         traversal_retreat_overridden_by_temporal_midpoint_guard = False
@@ -4814,6 +6545,14 @@ class MppiController:
                 uncommitted_temporal_staging_hold_requested
                 and not risk_candidate_feasible[traversal_index]
             )
+            if traversal_uncommitted_temporal_staging_hold_overridden_by_hard_risk:
+                # The staging counter represents consecutive *executed* hold
+                # actions.  A requested hold that is rejected by the hard-risk
+                # lattice never actually holds the robot, so it must not
+                # contribute toward the retreat threshold on the next cycle.
+                # Reset here, after the selected candidate is known, while
+                # leaving the default-disabled path untouched.
+                self._probabilistic_traversal_uncommitted_hold_steps = 0
             traversal_commit_overridden_by_post_center_hard_risk = bool(
                 traversal_started
                 and not retreat_requested
@@ -4981,7 +6720,9 @@ class MppiController:
             ):
                 fallback_candidate_index = traversal_index
                 fallback_kind = (
-                    "traversal_uncommitted_temporal_staging_hold"
+                    "terminal_capture_candidate"
+                    if terminal_capture_active
+                    else "traversal_uncommitted_temporal_staging_hold"
                     if uncommitted_temporal_staging_hold_requested
                     else "traversal_admission_prealign"
                     if admission_prealign_requested
@@ -5001,6 +6742,7 @@ class MppiController:
                     not retreat_requested
                     and not rearm_pending
                     and not transactional_hold_requested
+                    and not terminal_capture_active
                 ):
                     self._probabilistic_traversal_commit_started = True
                     traversal_started = True
@@ -5011,6 +6753,82 @@ class MppiController:
                 selected_risk = self._probabilistic_collision_risk(
                     trajectory[None, ...], forecasts
                 )
+                if (
+                    self.config
+                    .probabilistic_obstacle_traversal_window_rearm_no_crossing_certified_handoff_release_enabled
+                    and rearm_pending
+                    and traversal_context.get(
+                        "rearm_no_crossing_certified_handoff_active",
+                        False,
+                    )
+                    and traversal_context.get(
+                        "rearm_no_crossing_certified_handoff_safe",
+                        False,
+                    )
+                    and risk_candidate_feasible[traversal_index]
+                ):
+                    # Release only after the already-certified handoff
+                    # candidate has actually won final arbitration.  Clearing
+                    # in the context builder would drop the transaction even
+                    # when a same-cycle hard-risk override rejects it.
+                    self._probabilistic_traversal_rearm_pending = False
+                    self._probabilistic_traversal_admission_safe_streak = 0
+                    self._probabilistic_traversal_admission_signature = None
+                    traversal_context["rearm_pending"] = False
+                    traversal_context[
+                        "rearm_released_by_certified_handoff"
+                    ] = True
+
+        terminal_intent_safe_stop_requested = bool(
+            self.config
+            .probabilistic_obstacle_terminal_intent_safe_stop_enabled
+            and traversal_context.get("terminal_phase", False)
+            and temporal_emergency_triggered
+            and not traversal_context.get(
+                "temporal_emergency_raw_triggered", False
+            )
+            and not traversal_context.get("commit_active", False)
+            and not traversal_context.get("retreat_requested", False)
+            and not traversal_context.get("rearm_pending", False)
+        )
+        if (
+            terminal_intent_safe_stop_requested
+            and not traversal_selected
+            and hard_action in (
+                "active_avoidance",
+                "active_avoidance_motion",
+            )
+        ):
+            stop_sequence = np.zeros(
+                (self.config.horizon, self.action_spec.dimension),
+                dtype=np.float64,
+            )
+            stop_trajectory = self.rollout(state, stop_sequence)[0]
+            stop_risk = self._probabilistic_collision_risk(
+                stop_trajectory[None, ...], forecasts
+            )
+            stop_maximum_probability = float(
+                stop_risk.maximum_step_probability[0]
+            )
+            stop_probability_mass = float(
+                stop_risk.accumulated_probability_mass[0]
+            )
+            if not bool(stop_risk.hard_violation[0]):
+                # The raw causal warning has cleared, so only the configured
+                # intent hysteresis remains.  Near a terminal goal, continuing
+                # a previously latched radial translation can discard a safe
+                # arrival window.  Reuse the existing full-horizon stop
+                # certificate and the unchanged hard threshold; active
+                # warnings and traversal transactions retain priority.
+                terminal_intent_safe_stop_selected = True
+                fallback_used = True
+                fallback_kind = "terminal_intent_safe_stop"
+                action = np.zeros(
+                    self.action_spec.dimension, dtype=np.float64
+                )
+                sequence = stop_sequence
+                trajectory = stop_trajectory
+                selected_risk = stop_risk
 
         if (
             (
@@ -5024,6 +6842,7 @@ class MppiController:
                     or traversal_rearm_hold_overridden_by_temporal_closing
             )
             and not traversal_selected
+            and not terminal_intent_safe_stop_selected
             and hard_action in (
                 "active_avoidance",
                 "active_avoidance_motion",
@@ -5283,6 +7102,29 @@ class MppiController:
                 if nonforward_feasible_indices.size:
                     emergency_indices = nonforward_feasible_indices
             if emergency_indices.size:
+                if (
+                    self.config
+                    .probabilistic_obstacle_emergency_feasibility_over_direction_enabled
+                    and emergency_index >= 0
+                    and evaluated_candidates.hard_violation[emergency_index]
+                ):
+                    # Direction is advisory once it would execute a
+                    # hard-violating member despite a feasible member in the
+                    # same fixed six-slot lattice.  Reuse the existing risk
+                    # ordering; no rollout, threshold, or truth input changes.
+                    feasible_order = np.lexsort((
+                        candidate_costs[emergency_indices],
+                        evaluated_candidates.accumulated_probability_mass[
+                            emergency_indices
+                        ],
+                        evaluated_candidates.maximum_step_probability[
+                            emergency_indices
+                        ],
+                    ))
+                    emergency_index = int(
+                        emergency_indices[feasible_order[0]]
+                    )
+                    emergency_feasibility_over_direction_applied = True
                 best_cost_emergency_index = int(
                     emergency_indices[
                         np.argmin(candidate_costs[emergency_indices])
@@ -5539,6 +7381,7 @@ class MppiController:
         if (
             not temporal_emergency_vetted
             and not traversal_selected
+            and not terminal_intent_safe_stop_selected
             and initial_hard_violation
             and hard_action in (
                 "active_avoidance",
@@ -5706,10 +7549,17 @@ class MppiController:
             and fallback_used
             and fallback_candidate_index >= 0
         )
+        governor_ignores_active_avoidance = bool(
+            self.config
+            .probabilistic_obstacle_speed_governor_applies_during_active_avoidance
+        )
         if (
             self.config.probabilistic_obstacle_speed_governor_enabled
             and not traversal_started
-            and not active_avoidance_motion_selected
+            and (
+                governor_ignores_active_avoidance
+                or not active_avoidance_motion_selected
+            )
         ):
             hard_threshold = self.config.probabilistic_obstacle_hard_threshold
             soft_threshold = (
@@ -5733,6 +7583,73 @@ class MppiController:
         )
         if exit_deadline_retreat_escape_pattern is None:
             exit_deadline_retreat_escape_pattern = (0.0, 0.0)
+
+        emergency_candidate_trace = []
+        emergency_indices_for_trace = np.flatnonzero(emergency_mask)
+        if (
+            evaluated_candidates is not None
+            and emergency_indices_for_trace.size
+        ):
+            v_index = (
+                self.action_spec.index("v_cmd")
+                if "v_cmd" in self.action_spec.names
+                else None
+            )
+            omega_index = (
+                self.action_spec.index("omega_cmd")
+                if "omega_cmd" in self.action_spec.names
+                else None
+            )
+            preferred_trace_index = int(emergency_indices_for_trace[0])
+            for candidate_index in emergency_indices_for_trace:
+                index = int(candidate_index)
+                emergency_candidate_trace.append({
+                    "index": index,
+                    "first_v": (
+                        float(values[index, 0, v_index])
+                        if v_index is not None else 0.0
+                    ),
+                    "first_omega": (
+                        float(values[index, 0, omega_index])
+                        if omega_index is not None else 0.0
+                    ),
+                    "maximum_probability": float(
+                        evaluated_candidates
+                        .maximum_step_probability[index]
+                    ),
+                    "probability_mass": float(
+                        evaluated_candidates
+                        .accumulated_probability_mass[index]
+                    ),
+                    "hard_violation": bool(
+                        evaluated_candidates.hard_violation[index]
+                    ),
+                    "eligible": bool(eligible_mask[index]),
+                    "cost": float(candidate_costs[index]),
+                    "selected": bool(index == fallback_candidate_index),
+                    "preferred": bool(index == preferred_trace_index),
+                    "minimum_risk": bool(
+                        index == minimum_risk_emergency_index
+                    ),
+                    "best_cost": bool(index == best_cost_emergency_index),
+                    "sequence": values[index].tolist(),
+                    "risk_by_step": (
+                        np.asarray(
+                            evaluated_candidates
+                            .step_probability_upper_bound[index],
+                            dtype=np.float64,
+                        ).tolist()
+                        if hasattr(
+                            evaluated_candidates,
+                            "step_probability_upper_bound",
+                        )
+                        else []
+                    ),
+                    "static_clearance_by_step": (
+                        static_clearance_trace[index].tolist()
+                        if static_clearance_trace is not None else []
+                    ),
+                })
 
         diagnostics = {
             "probabilistic_obstacle_risk_enabled": True,
@@ -5784,14 +7701,28 @@ class MppiController:
                 fallback_candidate_index >= 0
                 and emergency_mask[fallback_candidate_index]
             ),
+            "probabilistic_obstacle_emergency_candidate_trace": (
+                emergency_candidate_trace
+            ),
             "probabilistic_obstacle_temporal_emergency_triggered": bool(
                 temporal_emergency_triggered
             ),
             "probabilistic_obstacle_temporal_emergency_vetted": bool(
                 temporal_emergency_vetted
             ),
+            "probabilistic_obstacle_terminal_intent_safe_stop_selected": bool(
+                terminal_intent_safe_stop_selected
+            ),
             "probabilistic_obstacle_traversal_window_enabled": bool(
                 traversal_context.get("enabled", False)
+            ),
+            "probabilistic_obstacle_traversal_terminal_target_bearing_steering_active": bool(
+                traversal_context.get(
+                    "terminal_target_bearing_steering_active", False
+                )
+            ),
+            "probabilistic_obstacle_terminal_capture_candidate_active": bool(
+                traversal_context.get("terminal_capture_active", False)
             ),
             "probabilistic_obstacle_traversal_window_safe": bool(
                 traversal_context.get("window_safe", False)
@@ -5814,6 +7745,11 @@ class MppiController:
             "probabilistic_obstacle_traversal_commit_cancelled_by_temporal_closing": bool(
                 traversal_context.get(
                     "commit_cancelled_by_temporal_closing", False
+                )
+            ),
+            "probabilistic_obstacle_traversal_temporal_abort_current_hazard_signal": bool(
+                traversal_context.get(
+                    "temporal_abort_current_hazard_signal", False
                 )
             ),
             "probabilistic_obstacle_traversal_commit_cancelled_by_temporal_midpoint_guard": bool(
@@ -5843,6 +7779,25 @@ class MppiController:
             "probabilistic_obstacle_traversal_retreat_completed": bool(
                 traversal_context.get("retreat_completed", False)
             ),
+            "probabilistic_obstacle_traversal_retreat_completion_projection_alias_rejected": bool(
+                traversal_context.get(
+                    "retreat_completion_projection_alias_rejected", False
+                )
+            ),
+            "probabilistic_obstacle_traversal_retreat_target_x": float(
+                traversal_context.get("retreat_target_x", 0.0)
+            ),
+            "probabilistic_obstacle_traversal_retreat_target_y": float(
+                traversal_context.get("retreat_target_y", 0.0)
+            ),
+            "probabilistic_obstacle_traversal_retreat_signed_distance_m": float(
+                traversal_context.get("retreat_signed_distance_m", 0.0)
+            ),
+            "probabilistic_obstacle_traversal_retreat_frozen_reference_progress": float(
+                traversal_context.get(
+                    "retreat_frozen_reference_progress", 0.0
+                )
+            ),
             "probabilistic_obstacle_traversal_rearm_pending": bool(
                 traversal_context.get("rearm_pending", False)
             ),
@@ -5852,6 +7807,11 @@ class MppiController:
             "probabilistic_obstacle_traversal_rearm_released_by_no_crossing_clearance": bool(
                 traversal_context.get(
                     "rearm_released_by_no_crossing_clearance", False
+                )
+            ),
+            "probabilistic_obstacle_traversal_rearm_released_by_certified_handoff": bool(
+                traversal_context.get(
+                    "rearm_released_by_certified_handoff", False
                 )
             ),
             "probabilistic_obstacle_traversal_rearm_no_crossing_certified_handoff_active": bool(
@@ -5885,6 +7845,12 @@ class MppiController:
             "probabilistic_obstacle_traversal_candidate_selected": bool(
                 traversal_selected
             ),
+            "probabilistic_obstacle_traversal_candidate_geometry_eligible": bool(
+                traversal_candidate_geometry_eligible
+            ),
+            "probabilistic_obstacle_traversal_candidate_static_minimum_clearance": float(
+                traversal_candidate_static_minimum_clearance
+            ),
             "probabilistic_obstacle_traversal_crossing_progress": float(
                 traversal_context.get("crossing_progress", 0.0)
             ),
@@ -5916,6 +7882,14 @@ class MppiController:
                 traversal_context.get(
                     "temporal_corroboration_probability_mass", 0.0
                 )
+            ),
+            "probabilistic_obstacle_traversal_uncommitted_hold_retreat_triggered": bool(
+                traversal_context.get(
+                    "uncommitted_hold_retreat_triggered", False
+                )
+            ),
+            "probabilistic_obstacle_zone_occupancy_hold_active": bool(
+                traversal_context.get("zone_occupancy_hold_active", False)
             ),
             "probabilistic_obstacle_traversal_commit_admission_full_horizon_enabled": bool(
                 self.config
@@ -6164,6 +8138,9 @@ class MppiController:
             "probabilistic_obstacle_pareto_forward_commit_applied": bool(
                 pareto_forward_commit_applied
             ),
+            "probabilistic_obstacle_emergency_feasibility_over_direction_applied": bool(
+                emergency_feasibility_over_direction_applied
+            ),
             'probabilistic_obstacle_low_risk_forward_commit_applied': bool(
                 low_risk_forward_commit_applied
             ),
@@ -6396,14 +8373,14 @@ class MppiController:
                 )
             )
         )
-        if (
+        # Frozen static geometry is optional per live LiDAR frame.  If a
+        # frame contains only dynamic/unknown returns, keep ordinary MPPI and
+        # scan-derived filtering active and let known-map terms contribute
+        # zero instead of aborting the armed run.
+        known_static_map_cost_suppressed_no_geometry = bool(
             self.config.known_static_map_cost_enabled
             and not known_static_obstacles
-        ):
-            raise ValueError(
-                "known static-map cost is enabled but the observation "
-                "contains no static geometry"
-            )
+        )
         probabilistic_obstacles = ()
         if self.config.probabilistic_obstacle_risk_enabled:
             if observation is None:
@@ -6560,8 +8537,13 @@ class MppiController:
         emergency_context = {
             "triggered": False,
             "counterflow_escape_applied": False,
+            "counterflow_rear_occupancy_vetoed": False,
             "preferred_escape_direction_x": 0.0,
             "preferred_escape_direction_y": 0.0,
+            "preferred_escape_heading_error_rad": 0.0,
+            "escape_direction_refreshed": False,
+            "escape_direction_alignment": 1.0,
+            "escape_direction_source": "unavailable",
         }
         if probabilistic_obstacles:
             # Standard MPPI uses the same causal forecast-relative emergency
@@ -6685,6 +8667,13 @@ class MppiController:
                         (float(np.cos(terminal_bearing_error)) - gate_cosine)
                         / max(1.0 - gate_cosine, 1e-12),
                     )
+                # See MppiConfig.terminal_translation_minimum_scale: the gate
+                # scales the final action, so a zero scale also cancels
+                # evasive translation.  0.0 is the historical gate exactly.
+                terminal_translation_scale = max(
+                    terminal_translation_scale,
+                    float(self.config.terminal_translation_minimum_scale),
+                )
         terminal_speed_limit_active = bool(
             self.config.terminal_translation_speed_limit is not None
             and target.phase in ("terminal_approach", "terminal")
@@ -6822,19 +8811,27 @@ class MppiController:
             risk_candidate_filter
             and np.any(jointly_feasible)
         ):
+            optimizer_feasible = jointly_feasible
             exponent = np.where(jointly_feasible, exponent, -np.inf)
         elif (
             (hard_boundary_filter or hard_static_filter)
             and np.any(candidate_eligible)
         ):
+            optimizer_feasible = candidate_eligible
             exponent = np.where(
                 candidate_eligible, exponent, -np.inf
             )
         elif risk_candidate_filter and np.any(risk_candidate_feasible):
+            optimizer_feasible = risk_candidate_feasible
             exponent = np.where(
                 risk_candidate_feasible, exponent, -np.inf
             )
+        else:
+            optimizer_feasible = np.ones(
+                self.config.num_samples, dtype=bool
+            )
         weights = np.exp(exponent)
+
         weight_sum = float(np.sum(weights))
         if np.isfinite(weight_sum) and weight_sum > 0.0:
             weights /= weight_sum
@@ -6861,6 +8858,28 @@ class MppiController:
             # Gaussian proposal to dominate merely through a lower soft cost.
             weights[:] = 0.0
             weights[0] = 1.0
+            optimizer_feasible = np.zeros(
+                self.config.num_samples, dtype=bool
+            )
+            optimizer_feasible[0] = True
+        v_index_diagnostic = (
+            self.action_spec.index("v_cmd")
+            if "v_cmd" in self.action_spec.names else 0
+        )
+        weighting_indices = np.flatnonzero(optimizer_feasible)
+        candidate_diagnostics = reverse_candidate_diagnostics(
+            samples=samples,
+            costs=costs,
+            optimizer_feasible=optimizer_feasible,
+            jointly_feasible=jointly_feasible,
+            static_feasible=static_candidate_feasible,
+            risk_feasible=risk_candidate_feasible,
+            weighting_indices=weighting_indices,
+            weighting_weights=weights[weighting_indices],
+            v_index=v_index_diagnostic,
+            prefix_steps=12,
+            weighting_population_kind="full_candidate_set",
+        )
         weighted_perturbation = np.sum(weights[:, None, None] * perturbations, axis=0)
         sequence = prior.mean + weighted_perturbation
         sequence = np.clip(sequence, self.action_spec.lower, self.action_spec.upper)
@@ -7366,6 +9385,11 @@ class MppiController:
                         "counterflow_escape_applied", False
                     )
                 ),
+                "probabilistic_obstacle_counterflow_rear_occupancy_vetoed": bool(
+                    emergency_context.get(
+                        "counterflow_rear_occupancy_vetoed", False
+                    )
+                ),
                 "probabilistic_obstacle_preferred_escape_direction_x": float(
                     emergency_context.get(
                         "preferred_escape_direction_x", 0.0
@@ -7374,6 +9398,26 @@ class MppiController:
                 "probabilistic_obstacle_preferred_escape_direction_y": float(
                     emergency_context.get(
                         "preferred_escape_direction_y", 0.0
+                    )
+                ),
+                "probabilistic_obstacle_preferred_escape_heading_error_rad": float(
+                    emergency_context.get(
+                        "preferred_escape_heading_error_rad", 0.0
+                    ) or 0.0
+                ),
+                "probabilistic_obstacle_escape_direction_refreshed": bool(
+                    emergency_context.get(
+                        "escape_direction_refreshed", False
+                    )
+                ),
+                "probabilistic_obstacle_escape_direction_alignment": float(
+                    emergency_context.get(
+                        "escape_direction_alignment", 1.0
+                    )
+                ),
+                "probabilistic_obstacle_escape_direction_source": str(
+                    emergency_context.get(
+                        "escape_direction_source", "unavailable"
                     )
                 ),
                 "probabilistic_obstacle_active_avoidance_enabled": bool(
@@ -7425,8 +9469,13 @@ class MppiController:
                 "probabilistic_obstacle_temporal_emergency_triggered": False,
                 "probabilistic_obstacle_temporal_emergency_vetted": False,
                 "probabilistic_obstacle_counterflow_escape_applied": False,
+                "probabilistic_obstacle_counterflow_rear_occupancy_vetoed": False,
                 "probabilistic_obstacle_preferred_escape_direction_x": 0.0,
                 "probabilistic_obstacle_preferred_escape_direction_y": 0.0,
+                "probabilistic_obstacle_preferred_escape_heading_error_rad": 0.0,
+                "probabilistic_obstacle_escape_direction_refreshed": False,
+                "probabilistic_obstacle_escape_direction_alignment": 1.0,
+                "probabilistic_obstacle_escape_direction_source": "unavailable",
                 "probabilistic_obstacle_active_avoidance_enabled": False,
             }
         online_tracker_diagnostics = {
@@ -7551,6 +9600,9 @@ class MppiController:
             "known_static_map_cost_enabled": bool(
                 self.config.known_static_map_cost_enabled
             ),
+            "known_static_map_cost_suppressed_no_geometry": (
+                known_static_map_cost_suppressed_no_geometry
+            ),
             "known_static_map_obstacle_count": len(
                 known_static_obstacles
             ),
@@ -7573,6 +9625,7 @@ class MppiController:
             "probabilistic_reference_progress_weight": float(
                 self.config.probabilistic_reference_progress_weight
             ),
+            **candidate_diagnostics,
             **optimizer_diagnostics,
             "importance_sampling_correction": bool(
                 self.config.importance_sampling_correction
@@ -7665,6 +9718,42 @@ class MppiController:
                 "residual_reliability_nominal_error": 0.0,
                 "residual_reliability_residual_error": 0.0,
             })
+        # Control-level rear guard, applied last so it governs whatever the
+        # planner finally chose, regardless of which mechanism produced it.
+        reverse_guard_active = False
+        reverse_guard_before = 0.0
+        reverse_guard_after = 0.0
+        if (
+            self.config.probabilistic_obstacle_reverse_rear_guard_enabled
+            and "v_cmd" in self.action_spec.names
+        ):
+            v_index = self.action_spec.names.index("v_cmd")
+            commanded = float(np.asarray(action, dtype=np.float64)[v_index])
+            if commanded < 0.0 and self._rear_obstacle_blocks_reverse(
+                state, probabilistic_obstacles
+            ):
+                scale = float(
+                    self.config
+                    .probabilistic_obstacle_reverse_rear_guard_scale
+                )
+                if not np.isfinite(scale) or scale < 0.0:
+                    scale = 0.0
+                action = np.array(action, dtype=np.float64, copy=True)
+                action[v_index] = commanded * min(scale, 1.0)
+                reverse_guard_active = True
+                reverse_guard_before = commanded
+                reverse_guard_after = float(action[v_index])
+        diagnostics.update({
+            "probabilistic_obstacle_reverse_rear_guard_active": bool(
+                reverse_guard_active
+            ),
+            "probabilistic_obstacle_reverse_rear_guard_v_before": float(
+                reverse_guard_before
+            ),
+            "probabilistic_obstacle_reverse_rear_guard_v_after": float(
+                reverse_guard_after
+            ),
+        })
         if profiling:
             profile["profile_mppi_solve_total_ms"] = 1000.0 * (
                 time.perf_counter() - solve_started

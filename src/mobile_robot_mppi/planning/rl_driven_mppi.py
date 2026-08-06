@@ -7,9 +7,13 @@ unchanged unless ``planner.optimizer`` is explicitly set to ``rl_driven``.
 
 from dataclasses import dataclass, replace
 from typing import Any, Mapping
+import time
 
 import numpy as np
 
+from mobile_robot_mppi.planning.candidate_diagnostics import (
+    reverse_candidate_diagnostics as _reverse_candidate_diagnostics,
+)
 from mobile_robot_mppi.planning.mppi import MppiController, integrate_batch
 from mobile_robot_mppi.rl.reliability import (
     ConservativeTerminalReliability,
@@ -17,8 +21,6 @@ from mobile_robot_mppi.rl.reliability import (
     ProposalAdvantageGate,
     SourceRelativeCompetence,
 )
-
-
 @dataclass(frozen=True)
 class RLDrivenMppiConfig:
     iterations: int = 2
@@ -141,6 +143,59 @@ class RLDrivenMppiController(MppiController):
             raise RuntimeError("candidate allocation failed")
         return counts
 
+    @staticmethod
+    def _escape_direction_diagnostics(emergency_context):
+        """Expose the common MPPI escape transaction to downstream safety.
+
+        Paper RL-Driven MPPI builds its own diagnostics dictionary instead of
+        using :class:`MppiController`'s output path.  Keep the complete
+        direction contract here so the physical arbiter sees the same
+        forecast-relative heading, refresh flag and provenance as standard
+        MPPI.  In particular, the heading error must remain ``None`` when no
+        direction is available; converting that state to zero would make a
+        missing prediction look like a head-on prediction.
+        """
+
+        context = dict(emergency_context or {})
+        heading_error = context.get("preferred_escape_heading_error_rad")
+        return {
+            "probabilistic_obstacle_preferred_escape_direction_x": float(
+                context.get("preferred_escape_direction_x", 0.0)
+            ),
+            "probabilistic_obstacle_preferred_escape_direction_y": float(
+                context.get("preferred_escape_direction_y", 0.0)
+            ),
+            "probabilistic_obstacle_preferred_escape_heading_error_rad": (
+                None if heading_error is None else float(heading_error)
+            ),
+            "probabilistic_obstacle_escape_direction_refreshed": bool(
+                context.get("escape_direction_refreshed", False)
+            ),
+            "probabilistic_obstacle_escape_direction_alignment": float(
+                context.get("escape_direction_alignment", 1.0)
+            ),
+            "probabilistic_obstacle_escape_direction_source": str(
+                context.get("escape_direction_source", "unavailable")
+            ),
+            "probabilistic_obstacle_forward_lateral_countermotion_applied": bool(
+                context.get("forward_lateral_countermotion_applied", False)
+            ),
+            "probabilistic_obstacle_motion_longitudinal_body_mps": float(
+                context.get("obstacle_motion_longitudinal_body_mps", 0.0)
+            ),
+            "probabilistic_obstacle_motion_lateral_body_mps": float(
+                context.get("obstacle_motion_lateral_body_mps", 0.0)
+            ),
+            "probabilistic_obstacle_motion_lateral_fraction": float(
+                context.get("obstacle_motion_lateral_fraction", 0.0)
+            ),
+            "probabilistic_obstacle_escape_direction_reversal_confirmation_count": int(
+                context.get(
+                    "escape_direction_reversal_confirmation_count", 0
+                )
+            ),
+        }
+
     def _proposal_means(self, prior):
         proposals = {item.label: item for item in prior.proposals}
         if "rl" not in proposals or "base" not in proposals:
@@ -259,6 +314,15 @@ class RLDrivenMppiController(MppiController):
                     (float(np.cos(bearing_error)) - gate_cosine)
                     / max(1.0 - gate_cosine, 1e-12),
                 )
+            # The gate multiplies the *final* action, downstream of avoidance,
+            # so a zero scale also cancels evasive translation and leaves a
+            # differential-drive robot unable to change its position at all.
+            # The floor preserves translation authority; 0.0 is the historical
+            # gate exactly.
+            translation_scale = max(
+                translation_scale,
+                float(self.config.terminal_translation_minimum_scale),
+            )
         speed_limit_active = bool(
             self.config.terminal_translation_speed_limit is not None
             and target.phase in ("terminal_approach", "terminal")
@@ -1100,6 +1164,32 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
             "completion_handover_full_rl_distance": high,
         }
 
+    def _integrate_actor_batch(self, states, controls):
+        """Advance one Actor step through the cheapest equivalent path."""
+
+        if bool(getattr(self.dynamics, "supports_step_batch", False)):
+            result = self.dynamics.step_batch(
+                states,
+                controls,
+                self.config.dt,
+                self.state_spec,
+                self.config.integrator,
+            )
+            result = np.asarray(result, dtype=np.float64)
+            if result.shape != np.asarray(states).shape:
+                raise ValueError(
+                    "Actor batch-step fast path returned invalid dimensions"
+                )
+            return result
+        return integrate_batch(
+            self.dynamics,
+            states,
+            controls,
+            self.config.dt,
+            self.state_spec,
+            self.config.integrator,
+        )
+
     def _actor_mean_rollout(self, state, observation, reference):
         states = np.asarray(state, dtype=np.float64).reshape(1, -1)
         previous = self.previous_action.reshape(1, -1).copy()
@@ -1160,14 +1250,7 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
                 )
             applied = self._delayed_control(command, previous)
             reliability_controls[step] = applied[0]
-            states = integrate_batch(
-                self.dynamics,
-                states,
-                applied,
-                self.config.dt,
-                self.state_spec,
-                self.config.integrator,
-            )
+            states = self._integrate_actor_batch(states, applied)
             previous = command
         if not np.isfinite(means).all() or not np.isfinite(variances).all():
             raise FloatingPointError("Actor mean rollout produced NaN or Inf")
@@ -1219,14 +1302,7 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
             )
             sequences[:, step, :] = command
             applied = self._delayed_control(command, previous)
-            states = integrate_batch(
-                self.dynamics,
-                states,
-                applied,
-                self.config.dt,
-                self.state_spec,
-                self.config.integrator,
-            )
+            states = self._integrate_actor_batch(states, applied)
             previous = command
         if not np.isfinite(sequences).all():
             raise FloatingPointError("guided Actor rollout produced NaN or Inf")
@@ -1294,6 +1370,13 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
         sampling semantics remain unchanged.
         """
 
+        profile_started = time.perf_counter()
+        profile_distribution_ms = 0.0
+        profile_encoding_ms = 0.0
+        profile_actor_network_ms = 0.0
+        profile_distribution_postprocess_ms = 0.0
+        profile_sampling_ms = 0.0
+        profile_dynamics_ms = 0.0
         count = int(guided_count)
         batch = count + 1
         states = np.repeat(
@@ -1328,6 +1411,7 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
         residual_authority_rows = []
         for step in range(self.config.horizon):
             rollout_states[step] = states[0]
+            phase_started = time.perf_counter()
             distribution = self.sampling_prior.action_distribution(
                 states,
                 previous,
@@ -1335,6 +1419,18 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
                 reference,
                 self.state_spec,
                 step * self.config.dt,
+            )
+            profile_distribution_ms += 1000.0 * (
+                time.perf_counter() - phase_started
+            )
+            profile_encoding_ms += float(
+                distribution.get("_profile_encoding_ms", 0.0)
+            )
+            profile_actor_network_ms += float(
+                distribution.get("_profile_actor_network_ms", 0.0)
+            )
+            profile_distribution_postprocess_ms += float(
+                distribution.get("_profile_postprocess_ms", 0.0)
             )
             if "residual_context_features" in distribution:
                 residual_context_rows.append(np.asarray(
@@ -1364,6 +1460,7 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
                     )[0]
                 )
             if count:
+                phase_started = time.perf_counter()
                 guided_distribution = {
                     key: (
                         np.asarray(value)[1:]
@@ -1378,6 +1475,9 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
                         guided_distribution, rng
                     )
                 )
+                profile_sampling_ms += 1000.0 * (
+                    time.perf_counter() - phase_started
+                )
             command = self.action_spec.clip(
                 command, previous=previous, dt=self.config.dt
             )
@@ -1386,13 +1486,10 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
                 guided[:, step, :] = command[1:]
             applied = self._delayed_control(command, previous)
             reliability_controls[step] = applied[0]
-            states = integrate_batch(
-                self.dynamics,
-                states,
-                applied,
-                self.config.dt,
-                self.state_spec,
-                self.config.integrator,
+            phase_started = time.perf_counter()
+            states = self._integrate_actor_batch(states, applied)
+            profile_dynamics_ms += 1000.0 * (
+                time.perf_counter() - phase_started
             )
             previous = command
         if not all(
@@ -1402,6 +1499,9 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
             raise FloatingPointError(
                 "joint Actor rollout produced NaN or Inf"
             )
+        profile_total_ms = 1000.0 * (
+            time.perf_counter() - profile_started
+        )
         return means, variances, guided, {
             "states": rollout_states,
             "controls": reliability_controls,
@@ -1413,6 +1513,21 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
                 residual_authority_rows, dtype=np.float64
             ),
             "terminal_state": states[0].copy(),
+            "profile_actor_distribution_ms": profile_distribution_ms,
+            "profile_actor_encoding_ms": profile_encoding_ms,
+            "profile_actor_network_ms": profile_actor_network_ms,
+            "profile_actor_distribution_postprocess_ms": (
+                profile_distribution_postprocess_ms
+            ),
+            "profile_actor_sampling_ms": profile_sampling_ms,
+            "profile_actor_dynamics_ms": profile_dynamics_ms,
+            "profile_actor_other_ms": max(
+                0.0,
+                profile_total_ms
+                - profile_distribution_ms
+                - profile_sampling_ms
+                - profile_dynamics_ms,
+            ),
         }
 
     def _counterfactual_proposal_gate(
@@ -1807,20 +1922,36 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
             raise ValueError(
                 "paper RL-Driven MPPI requires observation and reference"
             )
+        profile_solve_started = time.perf_counter()
+        profile_rollout_ms = 0.0
+        profile_risk_ms = 0.0
+        profile_cost_ms = 0.0
+        profile_iteration_ms = 0.0
+        profile_actor_ms = 0.0
+        profile_hss_ms = 0.0
+        profile_counterfactual_ms = 0.0
+        profile_dynamic_context_ms = 0.0
+        # Clear last cycle's weighting diagnostics. They are written inside the
+        # iteration loop; if that loop is ever skipped or the function returns
+        # early, a stale value would otherwise be logged as if it were fresh.
+        # Cleared means every weight_* column reads 0.0, and since the real
+        # temperature is never 0, weight_temperature == 0 is an unambiguous
+        # "the softmax did not run this cycle" marker.
+        self._last_weight_diagnostics = {}
         tracker_diagnostics = dict(
             observation.auxiliary.get("dynamic_obstacle_tracker", {})
         )
         known_static_obstacles = tuple(
             observation.auxiliary.get("known_static_obstacles", ())
         )
-        if (
+        # A live frame can legitimately have no frozen static returns.  Keep
+        # the Paper/RL solve alive; the base MPPI path and scan-derived
+        # filtering still operate, while known-map terms contribute zero for
+        # this frame.
+        known_static_map_cost_suppressed_no_geometry = bool(
             self.config.known_static_map_cost_enabled
             and not known_static_obstacles
-        ):
-            raise ValueError(
-                "known static-map cost is enabled but the observation "
-                "contains no static geometry"
-            )
+        )
         probabilistic_obstacles = ()
         if self.config.probabilistic_obstacle_risk_enabled:
             probabilistic_obstacles = tuple(
@@ -1920,6 +2051,7 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
                 None,
             )
         )
+        profile_phase_started = time.perf_counter()
         if joint_actor_batch:
             mean, actor_variance, guided, reliability_context = (
                 self._joint_actor_rollouts(
@@ -1937,6 +2069,9 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
             guided = self._guided_rollouts(
                 state, observation, reference, guided_count, rng
             )
+        profile_actor_ms = 1000.0 * (
+            time.perf_counter() - profile_phase_started
+        )
         reliability_diagnostics = {
             "reliability_hss_enabled": False,
             "reliability_guided_fraction_applied": float(
@@ -1952,6 +2087,7 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
             **terminal_floor_diagnostics,
             **handover_diagnostics,
         }
+        profile_phase_started = time.perf_counter()
         if self.hybrid_sampling_reliability.config.enabled:
             reliability_diagnostics = (
                 self.hybrid_sampling_reliability.evaluate(
@@ -1991,6 +2127,9 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
                 **terminal_floor_diagnostics,
                 **handover_diagnostics,
             })
+        profile_hss_ms = 1000.0 * (
+            time.perf_counter() - profile_phase_started
+        )
         reliability_diagnostics.update({
             "reliability_sidecar_enabled": bool(
                 self.reliability_residual is not None
@@ -2006,6 +2145,7 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
         if baseline_mean.shape != actor_mean.shape:
             raise ValueError("baseline and Actor proposal means disagree")
         actor_baseline_abs_delta = np.abs(actor_mean - baseline_mean)
+        profile_phase_started = time.perf_counter()
         counterfactual_authority, counterfactual_diagnostics = (
             self._counterfactual_proposal_gate(
                 state,
@@ -2013,6 +2153,9 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
                 baseline_mean,
                 reference,
             )
+        )
+        profile_counterfactual_ms = 1000.0 * (
+            time.perf_counter() - profile_phase_started
         )
         reliability_diagnostics.update(counterfactual_diagnostics)
         if guided.size and counterfactual_authority < 1.0:
@@ -2188,6 +2331,7 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
         static_no_feasible_iterations = 0
         static_last_feasible = None
         static_last_min_clearance = None
+        static_last_clearance = None
         static_last_samples = None
         static_last_costs = None
         risk_feasible_fractions = []
@@ -2199,6 +2343,7 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
         reference_authority = 1.0
         reference_risk_raw = 0.0
         reference_authority_updated = False
+        profile_phase_started = time.perf_counter()
         emergency_context = self._probabilistic_emergency_context(
             observation, state, probabilistic_obstacles
         )
@@ -2367,13 +2512,26 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
         same_cycle_guided_filter_iterations = 0
         same_cycle_guided_filtered_candidates = 0
         gaussian_rate_limit_audits = []
+        profile_dynamic_context_ms = 1000.0 * (
+            time.perf_counter() - profile_phase_started
+        )
+        profile_setup_ms = 1000.0 * (
+            time.perf_counter() - profile_solve_started
+        )
         for _ in range(cfg.iterations):
+            profile_iteration_started = time.perf_counter()
             gaussian = self._gaussian_samples(
                 mean, variance, gaussian_count, rng
             )
-            gaussian_rate_limit_audits.append(
-                dict(self._last_gaussian_rate_limit_audit)
-            )
+            gaussian_audit = {
+                "raw_violation_fraction": 0.0,
+                "raw_violating_candidate_fraction": 0.0,
+                "post_limit_violation_fraction": 0.0,
+            }
+            gaussian_audit.update(dict(getattr(
+                self, "_last_gaussian_rate_limit_audit", {}
+            )))
+            gaussian_rate_limit_audits.append(gaussian_audit)
             samples = np.concatenate((guided, gaussian), axis=0)
             labels = np.concatenate((
                 np.ones(guided_count, dtype=np.int8),
@@ -2454,11 +2612,16 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
                     self.previous_action,
                     self.config.dt,
                 )
+            profile_phase_started = time.perf_counter()
             trajectories = self.rollout(state, samples)
+            profile_rollout_ms += 1000.0 * (
+                time.perf_counter() - profile_phase_started
+            )
             boundary_margins = (
                 self._path_boundary_margins(trajectories, reference)
                 if hard_boundary_filter else None
             )
+            profile_phase_started = time.perf_counter()
             candidate_risk = (
                 self._probabilistic_collision_risk(
                     trajectories, probabilistic_obstacles
@@ -2470,6 +2633,9 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
                 )
                 else None
             )
+            profile_risk_ms += 1000.0 * (
+                time.perf_counter() - profile_phase_started
+            )
             if not reference_authority_updated:
                 reference_authority, reference_risk_raw = (
                     self._probabilistic_reference_authority(
@@ -2478,6 +2644,7 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
                     )
                 )
                 reference_authority_updated = True
+            profile_phase_started = time.perf_counter()
             running = self._cost(
                 trajectories,
                 samples,
@@ -2498,6 +2665,9 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
                 causal_dynamics_confidence=float(
                     reliability_diagnostics.get("dynamics_confidence", 1.0)
                 ),
+            )
+            profile_cost_ms += 1000.0 * (
+                time.perf_counter() - profile_phase_started
             )
             # A learned critic is useful beyond the finite MPPI horizon, but
             # its coarse value geometry should not override the exact goal
@@ -2563,6 +2733,7 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
                 ))
                 static_last_feasible = static_feasible
                 static_last_min_clearance = static_min_clearance
+                static_last_clearance = static_clearance
                 static_last_samples = samples.copy()
                 static_last_costs = costs.copy()
             risk_feasible = np.ones(
@@ -2743,7 +2914,56 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
                 0.0,
             )
             final_weights = np.exp(exponent)
+
+            # --- weighting diagnostics (logging only) --------------------
+            # This is the softmax the deployed controller actually uses. It
+            # runs over ELITE costs, not all candidates: elite selection has
+            # already discarded the worst rollouts, so any spread measured
+            # over the full population describes samples that never competed.
+            # Recording the elite spread in units of the temperature is the
+            # only way to tell whether this softmax averages or is argmax.
+            _temp = float(self.config.temperature)
+            _spread = np.asarray(elite_costs, dtype=np.float64) - beta
+            self._last_weight_diagnostics = {
+                "weight_temperature": _temp,
+                "weight_total_candidate_count": int(np.asarray(costs).size),
+                "weight_elite_count": int(_spread.size),
+                "weight_spread_q50": float(np.quantile(_spread, 0.50)),
+                "weight_spread_q90": float(np.quantile(_spread, 0.90)),
+                "weight_spread_max": float(np.max(_spread)),
+                "weight_spread_q50_over_temperature": float(
+                    np.quantile(_spread, 0.50) / max(_temp, 1e-12)
+                ),
+                "weight_elites_within_1_temperature": int(
+                    np.count_nonzero(_spread <= _temp)
+                ),
+                "weight_elites_within_3_temperatures": int(
+                    np.count_nonzero(_spread <= 3.0 * _temp)
+                ),
+                "weight_exponent_saturated_count": int(
+                    np.count_nonzero(exponent <= -699.9)
+                ),
+            }
             final_weights /= max(float(np.sum(final_weights)), 1e-12)
+            v_index = (
+                self.action_spec.index("v_cmd")
+                if "v_cmd" in self.action_spec.names else 0
+            )
+            self._last_weight_diagnostics.update(
+                _reverse_candidate_diagnostics(
+                    samples=samples,
+                    costs=costs,
+                    optimizer_feasible=optimizer_feasible,
+                    jointly_feasible=jointly_feasible,
+                    static_feasible=static_feasible,
+                    risk_feasible=risk_feasible,
+                    weighting_indices=elite_indices,
+                    weighting_weights=final_weights,
+                    v_index=v_index,
+                    prefix_steps=12,
+                    weighting_population_kind="elite",
+                )
+            )
             elites = samples[elite_indices]
             mean = np.sum(
                 final_weights[:, None, None] * elites, axis=0
@@ -2757,6 +2977,9 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
                 + (1.0 - cfg.covariance_smoothing) * estimate,
                 minimum_variance,
                 maximum_variance,
+            )
+            profile_iteration_ms += 1000.0 * (
+                time.perf_counter() - profile_iteration_started
             )
             total_guided_elites += int(
                 np.sum(labels[elite_indices] >= 1)
@@ -2898,7 +3121,11 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
         )
         optimizer_weighted_action = action.copy()
         optimizer_weighted_sequence = sequence.copy()
+        profile_phase_started = time.perf_counter()
         trajectory = self.rollout(state, sequence)[0]
+        profile_final_rollout_ms = 1000.0 * (
+            time.perf_counter() - profile_phase_started
+        )
         boundary_fallback_used = False
         boundary_fallback_candidate_index = -1
         boundary_final_min_margin = 0.0
@@ -3057,6 +3284,7 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
         pre_guard_action = action.copy()
         pre_guard_sequence = sequence.copy()
         static_fallback_used_before_guard = bool(static_fallback_used)
+        profile_phase_started = time.perf_counter()
         action, sequence, trajectory, probabilistic_risk_diagnostics = (
             self._apply_probabilistic_obstacle_action_guard(
                 state,
@@ -3074,7 +3302,11 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
                 ),
                 traversal_context=traversal_context,
                 traversal_candidate_index=traversal_last_index,
+                candidate_static_clearance=static_last_clearance,
             )
+        )
+        profile_action_guard_ms = 1000.0 * (
+            time.perf_counter() - profile_phase_started
         )
         if hard_static_filter:
             static_final_min_clearance = float(np.min(
@@ -3476,7 +3708,37 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
                 tracker_diagnostics.get("recovery_active", False)
             ),
         }
+        forecast_track_indices = tuple(
+            tracker_diagnostics.get("forecast_track_indices", ())
+        )
+        probabilistic_obstacle_forecast_trace = [
+            {
+                "forecast_index": int(index),
+                "track_index": (
+                    int(forecast_track_indices[index])
+                    if index < len(forecast_track_indices)
+                    else -1
+                ),
+                "timestamp": float(forecast.timestamp),
+                "dt": float(forecast.dt),
+                "radius_m": float(forecast.radius_m),
+                "source": str(forecast.source),
+                "component_means": np.asarray(
+                    forecast.component_means, dtype=np.float64
+                ).tolist(),
+                "component_covariances": np.asarray(
+                    forecast.component_covariances, dtype=np.float64
+                ).tolist(),
+                "component_weights": np.asarray(
+                    forecast.component_weights, dtype=np.float64
+                ).tolist(),
+            }
+            for index, forecast in enumerate(probabilistic_obstacles)
+        ]
         diagnostics = {
+            "known_static_map_cost_suppressed_no_geometry": (
+                known_static_map_cost_suppressed_no_geometry
+            ),
             "optimizer": "paper_rl_driven",
             "paper_faithful_gate1": True,
             "paper_iterations": int(cfg.iterations),
@@ -3485,6 +3747,68 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
             ),
             "paper_total_rollouts": int(
                 self.config.num_samples * cfg.iterations
+            ),
+            "profile_paper_setup_ms": float(profile_setup_ms),
+            "profile_paper_actor_ms": float(profile_actor_ms),
+            "profile_paper_actor_distribution_ms": float(
+                reliability_context.get(
+                    "profile_actor_distribution_ms", 0.0
+                )
+            ),
+            "profile_paper_actor_encoding_ms": float(
+                reliability_context.get("profile_actor_encoding_ms", 0.0)
+            ),
+            "profile_paper_actor_network_ms": float(
+                reliability_context.get("profile_actor_network_ms", 0.0)
+            ),
+            "profile_paper_actor_distribution_postprocess_ms": float(
+                reliability_context.get(
+                    "profile_actor_distribution_postprocess_ms", 0.0
+                )
+            ),
+            "profile_paper_actor_sampling_ms": float(
+                reliability_context.get("profile_actor_sampling_ms", 0.0)
+            ),
+            "profile_paper_actor_dynamics_ms": float(
+                reliability_context.get("profile_actor_dynamics_ms", 0.0)
+            ),
+            "profile_paper_actor_other_ms": float(
+                reliability_context.get("profile_actor_other_ms", 0.0)
+            ),
+            "profile_paper_hss_ms": float(profile_hss_ms),
+            "profile_paper_counterfactual_ms": float(
+                profile_counterfactual_ms
+            ),
+            "profile_paper_dynamic_context_ms": float(
+                profile_dynamic_context_ms
+            ),
+            "profile_paper_setup_other_ms": float(max(
+                0.0,
+                profile_setup_ms
+                - profile_actor_ms
+                - profile_hss_ms
+                - profile_counterfactual_ms
+                - profile_dynamic_context_ms,
+            )),
+            "profile_paper_iteration_ms": float(profile_iteration_ms),
+            "profile_paper_batch_rollout_ms": float(profile_rollout_ms),
+            "profile_paper_candidate_risk_ms": float(profile_risk_ms),
+            "profile_paper_cost_terminal_ms": float(profile_cost_ms),
+            "profile_paper_iteration_other_ms": float(max(
+                0.0,
+                profile_iteration_ms
+                - profile_rollout_ms
+                - profile_risk_ms
+                - profile_cost_ms,
+            )),
+            "profile_paper_final_rollout_ms": float(
+                profile_final_rollout_ms
+            ),
+            "profile_paper_action_guard_ms": float(
+                profile_action_guard_ms
+            ),
+            "profile_paper_solve_to_diagnostics_ms": float(
+                1000.0 * (time.perf_counter() - profile_solve_started)
             ),
             "paper_guided_unique_sequences": int(guided_count),
             "paper_guided_reuses": int(guided_count * cfg.iterations),
@@ -3666,12 +3990,16 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
             ),
             "paper_actor_joint_batched": bool(joint_actor_batch),
             "paper_actor_rollout_dynamics": type(self.dynamics).__name__,
+            "paper_actor_step_batch_fast_path": bool(
+                getattr(self.dynamics, "supports_step_batch", False)
+            ),
             "paper_candidate_rollout_dynamics": type(self.dynamics).__name__,
             "paper_guided_set_persistent": True,
             "paper_action_semantics": "physical_low_level_control",
             "cost_min": float(np.min(all_costs)),
             "cost_mean": float(np.mean(all_costs)),
             "cost_std": float(np.std(all_costs)),
+            **getattr(self, "_last_weight_diagnostics", {}),
             "effective_sample_size": effective_sample_size,
             "path_boundary_candidate_filter_enabled": hard_boundary_filter,
             "path_boundary_candidate_feasible_fraction": float(
@@ -3796,18 +4124,13 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
             "probabilistic_obstacle_counterflow_escape_applied": bool(
                 emergency_context.get("counterflow_escape_applied", False)
             ),
-            "probabilistic_obstacle_preferred_escape_direction_x": float(
-                emergency_context.get(
-                    "preferred_escape_direction_x", 0.0
-                )
-            ),
-            "probabilistic_obstacle_preferred_escape_direction_y": float(
-                emergency_context.get(
-                    "preferred_escape_direction_y", 0.0
-                )
-            ),
+            **self._escape_direction_diagnostics(emergency_context),
             **probabilistic_risk_diagnostics,
             **online_tracker_diagnostics,
+            "dynamic_obstacle_tracker_trace": tracker_diagnostics,
+            "probabilistic_obstacle_forecast_trace": (
+                probabilistic_obstacle_forecast_trace
+            ),
             **optimizer_diagnostics,
             "covariance_scale_mean": float(
                 np.mean(np.sqrt(variance / base_variance))

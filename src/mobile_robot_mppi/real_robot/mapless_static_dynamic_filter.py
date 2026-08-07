@@ -74,6 +74,22 @@ class MaplessStaticDynamicFilter:
         dynamic_classification_temporal_corroboration_minimum_support_beams=3,
         dynamic_classification_collision_course_bypass_enabled=False,
         allow_collision_course_provisional=False,
+        # A person-compatible low-level forecast may be published before the
+        # slower mapless semantic label becomes ``dynamic``.  This is a
+        # qualification gate, not a control override: it requires a recent
+        # human-sized support shape and a short consecutive motion streak.
+        person_provisional_enabled=False,
+        person_provisional_minimum_streak=2,
+        person_provisional_minimum_samples=4,
+        person_provisional_minimum_duration_s=0.35,
+        person_provisional_minimum_speed_mps=0.18,
+        person_provisional_maximum_speed_mps=1.40,
+        person_provisional_minimum_displacement_m=0.12,
+        person_provisional_minimum_direction_coherence=0.55,
+        person_provisional_maximum_fit_residual_m=0.08,
+        person_provisional_maximum_step_m=0.28,
+        person_provisional_minimum_support_beams=3,
+        person_provisional_maximum_extent_m=1.20,
     ):
         if not isinstance(tracker, MotionBootstrapMultiObstacleTracker):
             raise TypeError("mapless filter requires motion-bootstrap tracker")
@@ -199,6 +215,40 @@ class MaplessStaticDynamicFilter:
         self.allow_collision_course_provisional = bool(
             allow_collision_course_provisional
         )
+        self.person_provisional_enabled = bool(person_provisional_enabled)
+        self.person_provisional_minimum_streak = int(
+            person_provisional_minimum_streak
+        )
+        self.person_provisional_minimum_samples = int(
+            person_provisional_minimum_samples
+        )
+        self.person_provisional_minimum_duration_s = float(
+            person_provisional_minimum_duration_s
+        )
+        self.person_provisional_minimum_speed_mps = float(
+            person_provisional_minimum_speed_mps
+        )
+        self.person_provisional_maximum_speed_mps = float(
+            person_provisional_maximum_speed_mps
+        )
+        self.person_provisional_minimum_displacement_m = float(
+            person_provisional_minimum_displacement_m
+        )
+        self.person_provisional_minimum_direction_coherence = float(
+            person_provisional_minimum_direction_coherence
+        )
+        self.person_provisional_maximum_fit_residual_m = float(
+            person_provisional_maximum_fit_residual_m
+        )
+        self.person_provisional_maximum_step_m = float(
+            person_provisional_maximum_step_m
+        )
+        self.person_provisional_minimum_support_beams = int(
+            person_provisional_minimum_support_beams
+        )
+        self.person_provisional_maximum_extent_m = float(
+            person_provisional_maximum_extent_m
+        )
         if self.dynamic_hold_cycles < 0:
             raise ValueError("dynamic hold cycles cannot be negative")
         if not 0.0 <= self.recent_vehicle_minimum_direction_coherence <= 1.0:
@@ -242,6 +292,7 @@ class MaplessStaticDynamicFilter:
         self.dynamic_classification_temporal_corroboration_remaining = 0
         self.dynamic_classification_temporal_corroboration_current = False
         self.dynamic_classification_temporal_corroboration_primed = False
+        self.person_provisional_streak = [0] * self.maximum_tracks
 
     def reset(self):
         self.tracker.reset()
@@ -956,6 +1007,12 @@ class MaplessStaticDynamicFilter:
                 "forecast_track_indices", range(len(forecasts))
             )
         )
+        # Preserve the low-level CA-IMM evidence before mapless filtering.
+        # The previous implementation overwrote ``forecast_track_indices``
+        # with the retained subset, making it impossible for the person layer
+        # to distinguish "IMM forecast exists but semantic label is pending"
+        # from "IMM forecast does not exist".
+        low_level_forecast_indices = tuple(forecast_indices)
         provisional_flow_indices = tuple(
             index
             for index, track in enumerate(track_values)
@@ -981,8 +1038,77 @@ class MaplessStaticDynamicFilter:
                 and self.labels[index] != "static"
             )
         )
+        person_provisional_indices = []
+        person_provisional_rejection_reasons = {}
+        for index, track in enumerate(track_values):
+            evidence = dict(track.get("mapless_motion_evidence", {}) or {})
+            associated = bool(track.get("associated", False))
+            low_level_valid = bool(track.get("forecast_valid", False))
+            candidate = bool(
+                self.person_provisional_enabled
+                and associated
+                and low_level_valid
+                and self.labels[index] == "unknown"
+                and bool(track.get("mapless_vehicle_shape_recent", False))
+                and not bool(track.get("change_triggered", False))
+                and not bool(track.get("recovery_active", False))
+                and not bool(track.get("dropout_guard_triggered", False))
+                and float(track.get("association_distance_m") or 0.0)
+                <= self.maximum_association_distance_m
+                and int(evidence.get("sample_count", 0) or 0)
+                >= self.person_provisional_minimum_samples
+                and float(evidence.get("duration_s", 0.0) or 0.0)
+                >= self.person_provisional_minimum_duration_s
+                and self.person_provisional_minimum_speed_mps
+                <= float(evidence.get("fitted_speed_mps", 0.0) or 0.0)
+                <= self.person_provisional_maximum_speed_mps
+                and float(evidence.get("net_displacement_m", 0.0) or 0.0)
+                >= self.person_provisional_minimum_displacement_m
+                and float(evidence.get("direction_coherence", 0.0) or 0.0)
+                >= self.person_provisional_minimum_direction_coherence
+                and float(evidence.get("fit_residual_m", float("inf")) or float("inf"))
+                <= self.person_provisional_maximum_fit_residual_m
+                and float(evidence.get("maximum_step_m", float("inf")) or float("inf"))
+                <= self.person_provisional_maximum_step_m
+                and int(track.get("selected_support_beams", 0) or 0)
+                >= self.person_provisional_minimum_support_beams
+                and (
+                    track.get("vehicle_extent_m") is None
+                    or float(track.get("vehicle_extent_m") or 0.0)
+                    <= self.person_provisional_maximum_extent_m
+                )
+            )
+            if candidate:
+                self.person_provisional_streak[index] += 1
+            else:
+                self.person_provisional_streak[index] = 0
+            qualified = bool(
+                candidate
+                and self.person_provisional_streak[index]
+                >= self.person_provisional_minimum_streak
+            )
+            track["mapless_person_provisional_candidate"] = candidate
+            track["mapless_person_provisional_streak"] = int(
+                self.person_provisional_streak[index]
+            )
+            track["mapless_person_provisional"] = qualified
+            if candidate and not qualified:
+                person_provisional_rejection_reasons[index] = (
+                    "streak_not_yet_qualified"
+                )
+            elif not candidate and low_level_valid and self.labels[index] == "unknown":
+                person_provisional_rejection_reasons[index] = (
+                    "person_motion_gate_failed"
+                )
+            if qualified:
+                person_provisional_indices.append(index)
+        person_provisional_indices = tuple(person_provisional_indices)
         provisional_indices = tuple(dict.fromkeys(
-            (*provisional_flow_indices, *collision_course_indices)
+            (
+                *provisional_flow_indices,
+                *collision_course_indices,
+                *person_provisional_indices,
+            )
         ))
         provisional_flow_index_set = set(provisional_indices)
         for index in provisional_indices:
@@ -1014,7 +1140,13 @@ class MaplessStaticDynamicFilter:
         diagnostics.update(
             {
                 "tracks": track_values,
+                "low_level_forecast_track_indices": low_level_forecast_indices,
+                "low_level_forecast_count": len(low_level_forecast_indices),
                 "forecast_track_indices": retained_indices,
+                # This is the sole forecast set consumed by the person
+                # identity layer.  It intentionally excludes raw IMM
+                # forecasts which are still unknown/static-like.
+                "person_forecast_candidate_track_indices": retained_indices,
                 "valid_forecast_count": len(retained_forecasts),
                 "forecast_valid": bool(retained_forecasts),
                 "nearest_forecast_index": (
@@ -1053,6 +1185,16 @@ class MaplessStaticDynamicFilter:
                 "mapless_collision_course_provisional_track_indices": (
                     collision_course_indices
                 ),
+                "mapless_person_provisional_track_indices": (
+                    person_provisional_indices
+                ),
+                "mapless_person_provisional_enabled": bool(
+                    self.person_provisional_enabled
+                ),
+                "mapless_person_provisional_rejection_reasons": {
+                    str(index): reason
+                    for index, reason in person_provisional_rejection_reasons.items()
+                },
                 "forecast_unavailable_reason": (
                     "available"
                     if retained_forecasts

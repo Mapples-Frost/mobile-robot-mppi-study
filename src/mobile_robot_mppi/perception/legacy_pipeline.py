@@ -15,6 +15,7 @@ from mobile_robot_mppi.obstacles.multi_online_tracking import (
     MultiObstacleChangeAwareTracker,
 )
 from mobile_robot_mppi.perception.scan_flow import RobustScanFlowEstimator
+from mobile_robot_mppi.real_robot.person_track_manager import PersonTrackManager
 
 
 def _load_module(name, path):
@@ -127,6 +128,9 @@ class LegacyScanPipeline:
             if bool(tracker_config.get("enabled", False))
             else None
         )
+        self.person_track_manager = PersonTrackManager(
+            self.config.get("person_tracking", {})
+        )
         if (
             self.known_static_track_rejection_enabled
             and self.dynamic_obstacle_tracker is not None
@@ -185,6 +189,22 @@ class LegacyScanPipeline:
         self.temporal_scan_flow.reset()
         if self.dynamic_obstacle_tracker is not None:
             self.dynamic_obstacle_tracker.reset()
+        self.person_track_manager.reset()
+
+    def _annotate_person_tracking(
+        self,
+        tracker_diagnostics: Mapping[str, Any],
+        forecasts,
+        observation: RobotObservation,
+    ) -> Dict[str, Any]:
+        """Attach one causal person identity above low-level cluster slots."""
+
+        return self.person_track_manager.update(
+            tracker_diagnostics,
+            forecasts=self._forecast_sequence(forecasts),
+            timestamp_s=float(observation.timestamp),
+            pose=observation.pose.as_array(),
+        )
 
     @staticmethod
     def _point_segment_distance(points, start, end):
@@ -344,12 +364,18 @@ class LegacyScanPipeline:
                 )
             diagnostics = {"mode": "none"}
             if tracker_update is not None:
-                auxiliary["dynamic_obstacle_tracker"] = dict(
-                    tracker_update.diagnostics
+                tracker_values = dict(tracker_update.diagnostics)
+                tracker_forecasts = tracker_update.forecast
+                tracker_values = self._annotate_person_tracking(
+                    tracker_values, tracker_forecasts, observation
                 )
-                diagnostics["dynamic_obstacle_tracker"] = dict(
-                    tracker_update.diagnostics
-                )
+                auxiliary["dynamic_obstacle_tracker"] = tracker_values
+                auxiliary["person_tracking"] = {
+                    key: value for key, value in tracker_values.items()
+                    if str(key).startswith("person_")
+                }
+                diagnostics["dynamic_obstacle_tracker"] = tracker_values
+                diagnostics["person_tracking"] = auxiliary["person_tracking"]
                 if tracker_update.forecast is not None:
                     key = (
                         self.dynamic_obstacle_tracker.config
@@ -426,7 +452,15 @@ class LegacyScanPipeline:
             and flow.rejected_jump_fraction
             <= flow_cfg.safety_max_rejected_jump_fraction
         )
+        require_quality_for_slowdown = bool(
+            self.config.get("temporal_scan_guard", {}).get(
+                "safety_slowdown_requires_quality", False
+            )
+        )
         guard["temporal_scan_safety_quality_ok"] = flow_safety_quality_ok
+        guard["temporal_scan_slowdown_quality_required"] = (
+            require_quality_for_slowdown
+        )
         if flow_cfg.safety_enabled and flow.valid:
             if (
                 flow.ttc_s <= flow_cfg.safety_hard_stop_ttc_s
@@ -442,6 +476,10 @@ class LegacyScanPipeline:
                 and not bool(guard.get("emergency_stop", False))
                 and str(guard.get("reason", "front_clear"))
                 != "front_soft_block"
+                and (
+                    not require_quality_for_slowdown
+                    or flow_safety_quality_ok
+                )
             ):
                 legacy_scale = float(guard.get("slow_scale", 1.0))
                 temporal_scale = min(
@@ -565,8 +603,17 @@ class LegacyScanPipeline:
                 planner_observation
             )
             tracker_diagnostics = dict(tracker_update.diagnostics)
+            tracker_forecasts = tracker_update.forecast
+            tracker_diagnostics = self._annotate_person_tracking(
+                tracker_diagnostics, tracker_forecasts, observation
+            )
             auxiliary["dynamic_obstacle_tracker"] = tracker_diagnostics
             diagnostics["dynamic_obstacle_tracker"] = tracker_diagnostics
+            auxiliary["person_tracking"] = {
+                key: value for key, value in tracker_diagnostics.items()
+                if str(key).startswith("person_")
+            }
+            diagnostics["person_tracking"] = auxiliary["person_tracking"]
             guard["dynamic_obstacle_associated"] = bool(
                 tracker_diagnostics.get("associated", False)
             )
@@ -577,6 +624,26 @@ class LegacyScanPipeline:
                 and measurement_x is not None
                 and measurement_y is not None
             ):
+                # The person-level identity is the single bearing/velocity
+                # source for dynamic arbitration.  Low-level nearest-slot
+                # geometry remains in the audit trace, but cannot silently
+                # swap the tracked human to another leg/background cluster.
+                person_x = tracker_diagnostics.get(
+                    "person_selected_position_x"
+                )
+                person_y = tracker_diagnostics.get(
+                    "person_selected_position_y"
+                )
+                if person_x is not None and person_y is not None:
+                    measurement_x = person_x
+                    measurement_y = person_y
+                    guard["dynamic_obstacle_geometry_source"] = (
+                        "person_track"
+                    )
+                else:
+                    guard["dynamic_obstacle_geometry_source"] = (
+                        "low_level_tracker_slot"
+                    )
                 tracker_cfg = self.dynamic_obstacle_tracker.config
                 sensor_x = (
                     observation.pose.x
@@ -783,6 +850,38 @@ class LegacyScanPipeline:
                         "nearest_forecast_index", 0
                     )
                     or 0
+                )
+            ),
+            # Person-level identity is a forecast source/diagnostic contract;
+            # it never writes a command and never replaces static filtering.
+            "person_forecast_qualification": str(
+                tracker_diagnostics.get(
+                    "person_forecast_qualification", "INVALID"
+                )
+            ),
+            "person_forecast_source": str(
+                tracker_diagnostics.get(
+                    "person_forecast_source", "unavailable"
+                )
+            ),
+            "person_selected_id": tracker_diagnostics.get(
+                "person_selected_id"
+            ),
+            "person_identity_continuity": bool(
+                tracker_diagnostics.get(
+                    "person_identity_continuity", False
+                )
+            ),
+            "person_forecast_candidate_track_indices": tuple(
+                int(value)
+                for value in tracker_diagnostics.get(
+                    "person_forecast_candidate_track_indices", ()
+                )
+            ),
+            "low_level_forecast_track_indices": tuple(
+                int(value)
+                for value in tracker_diagnostics.get(
+                    "low_level_forecast_track_indices", ()
                 )
             ),
         }

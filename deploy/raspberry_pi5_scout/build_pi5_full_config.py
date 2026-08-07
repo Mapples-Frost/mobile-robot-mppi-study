@@ -310,12 +310,20 @@ def build_pi5_full_config(
             "directional_motion_guard_enabled": True,
             "directional_forward_protected_half_angle_deg": 100.0,
             "directional_motion_minimum_speed_mps": 0.02,
+            # Low-quality temporal flow may inform diagnostics, but it cannot
+            # own a slowdown/escape command in the physical profile.
+            "dynamic_escape_require_temporal_quality": True,
+            "rear_pass_through_require_temporal_quality": True,
+            "temporal_scan_slowdown_requires_quality": True,
             # A person approaching from the rear is the one directional case
             # where waiting makes the interaction worse.  With at least
             # 0.90 m freshly observed front clearance, leave continuously in
             # forward gear even if this MPPI sample proposed reverse.  Mixed
             # or front evidence never enters this branch.
-            "rear_pass_through_force_forward_enabled": True,
+            # Rear-pass is retained as a planner candidate, not a direct
+            # command synthesizer.  The arbiter will report the causal rear
+            # evidence without forcing v=0.35, omega=0.
+            "rear_pass_through_force_forward_enabled": False,
             "rear_pass_through_min_front_clearance_m": 0.90,
             "rear_pass_through_min_forward_speed_mps": min(
                 0.35, max_v_mps
@@ -329,7 +337,7 @@ def build_pi5_full_config(
             # Rear-only evidence authorizes forward separation, not another
             # steering objective.  Full-yaw rear steering dominated the goal
             # controller for 20--40 frames after successful physical passes.
-            "rear_pass_through_force_straight_enabled": True,
+            "rear_pass_through_force_straight_enabled": False,
             # Hold the first causal rear-side steering sign through up to
             # three missing/side-switching scans.  A person cannot physically
             # cross behind the chassis in this 0.3 s interval, whereas Livox
@@ -550,9 +558,10 @@ def build_pi5_full_config(
             # preturn authority until 2 s.
             "safety_slow_ttc_s": 3.00,
             "safety_slow_scale": 0.25,
-            # Do not convert a sparse, jump-heavy temporal estimate directly
-            # into a translation hard stop; it remains visible in diagnostics
-            # and can still contribute a soft slowdown.
+            # A sparse/jump-heavy estimate remains visible in diagnostics but
+            # cannot own a physical slowdown.  The hard-stop TTC gate below
+            # remains the only temporal fail-closed action.
+            "safety_slowdown_requires_quality": True,
             "safety_min_support_beams": 4,
             "safety_max_rejected_jump_fraction": 0.60,
             "ego_motion_compensation_enabled": True,
@@ -663,6 +672,34 @@ def build_pi5_full_config(
         # rejection layer remains the forecast publication authority.
         "motion_confirmation_enabled": False,
     })
+    # Low-level CA-IMM slots are measurements, not person identities.  The
+    # causal manager above the mapless filter fuses leg/cluster fragments and
+    # qualifies forecasts without granting any command authority.
+    config["perception"]["person_tracking"] = {
+        "enabled": True,
+        "maximum_gap_s": 0.65,
+        "association_gate_m": 0.85,
+        "fusion_position_m": 0.58,
+        "fusion_velocity_difference_mps": 0.80,
+        "minimum_support_beams": 3,
+        "maximum_forecast_age_s": 0.45,
+        "stale_hold_cycles": 4,
+        "minimum_motion_speed_mps": 0.10,
+        "forecast_gate": {
+            "enabled": True,
+            "minimum_streak": 2,
+            "minimum_samples": 4,
+            "minimum_duration_s": 0.35,
+            "minimum_speed_mps": 0.18,
+            "maximum_speed_mps": 1.40,
+            "minimum_displacement_m": 0.12,
+            "minimum_direction_coherence": 0.55,
+            "maximum_fit_residual_m": 0.08,
+            "maximum_step_m": 0.28,
+            "minimum_support_beams": 3,
+            "maximum_extent_m": 1.20,
+        },
+    }
     config["real_robot_deployment"] = {
         "contract": "pi5_scout_mapfree_full_proposed_shadow_v1",
         "algorithm": "B11_full_proposed",
@@ -682,6 +719,25 @@ def build_pi5_full_config(
             "closing_ttc_safety_fallback": True,
             "simulator_truth_used": False,
             "static_map_used": False,
+            "person_identity_layer": True,
+            "forecast_qualification": (
+                "VALID|PROVISIONAL|STALE|INVALID"
+            ),
+            "person_forecast_gate": {
+                "enabled": True,
+                "minimum_streak": 2,
+                "minimum_samples": 4,
+                "minimum_duration_s": 0.35,
+                "minimum_speed_mps": 0.18,
+                "maximum_speed_mps": 1.40,
+                "minimum_displacement_m": 0.12,
+                "minimum_direction_coherence": 0.55,
+                "maximum_fit_residual_m": 0.08,
+                "maximum_step_m": 0.28,
+                "minimum_support_beams": 3,
+                "maximum_extent_m": 1.20,
+                "authority": "forecast_qualification_only",
+            },
         },
     }
     if physical_limits is not None:
@@ -691,9 +747,35 @@ def build_pi5_full_config(
     return config
 
 
+def enable_single_final_control_authority(config):
+    """Arm the physical candidate-only control contract in a resolved config.
+
+    MPPI remains the sole positive-motion command source.  Dynamic escape,
+    rear-pass and temporal preturn are retained as diagnostic/cost candidates;
+    the scan guard may still veto translation and the physical front governor
+    may cap it.  Keeping this as an explicit composition step allows offline
+    legacy replays to retain their historical arbiter semantics.
+    """
+
+    scan_guard = config["perception"]["scan_guard"]
+    scan_guard["dynamic_candidate_only"] = True
+    config.setdefault("real_robot_deployment", {})["single_final_control_authority"] = True
+    config["real_robot_deployment"]["dynamic_candidate_policy"] = (
+        "planner_candidate_only"
+    )
+    config["real_robot_deployment"]["rear_pass_policy"] = (
+        "directional_release_only"
+    )
+    config["real_robot_deployment"]["hard_safety_policy"] = (
+        "veto_or_stop_only"
+    )
+    return config
+
+
 __all__ = [
     "build_pi5_full_config",
     "_physical_front_envelope",
     "resolve_pi5_algorithm_features",
     "apply_pi5_algorithm_features",
+    "enable_single_final_control_authority",
 ]

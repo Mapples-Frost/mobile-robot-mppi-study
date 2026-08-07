@@ -85,6 +85,25 @@ class ScanGuardArbiter:
                 "rear_pass_through_direction_release_steps", 3
             )
         )
+        # Temporal flow is a useful early warning, but it is not a command
+        # authority unless its support/jump quality contract is satisfied.
+        # Physical deployment enables this for slowdown, reactive escape and
+        # rear-pass together; offline historical profiles keep the old default
+        # for reproducible replay.
+        self.dynamic_escape_require_temporal_quality = bool(
+            self.config.get("dynamic_escape_require_temporal_quality", False)
+        )
+        self.rear_pass_through_require_temporal_quality = bool(
+            self.config.get(
+                "rear_pass_through_require_temporal_quality", False
+            )
+        )
+        # In the physical contract dynamic escape and rear-pass are candidates
+        # for MPPI, never a second final command writer.  Hard scan safety and
+        # the physical speed governor remain active below.
+        self.dynamic_candidate_only = bool(
+            self.config.get("dynamic_candidate_only", False)
+        )
         if self.physical_front_speed_governor_clearance_m < 0.0:
             raise ValueError(
                 "physical_front_speed_governor_clearance_m must be non-negative"
@@ -986,6 +1005,52 @@ class ScanGuardArbiter:
         self._static_reverse_escape_engaged_count = 0
         self._static_reverse_escape_last_v = 0.0
 
+    def _reset_dynamic_motion_state(self):
+        """Clear command-owning dynamic transactions for candidate-only mode."""
+
+        self._dynamic_escape_seen = False
+        self._dynamic_escape_hold_remaining = 0
+        self._dynamic_escape_hold_values = None
+        self._dynamic_escape_direction_commit_remaining = 0
+        self._dynamic_escape_direction_commit_values = None
+        self._dynamic_escape_geometric_commit_consumed = False
+        self._dynamic_escape_geometric_clear_streak = 0
+        self._dynamic_escape_geometric_turn_sign = 0.0
+        self._dynamic_escape_geometric_direction_prediction_backed = False
+        self._dynamic_escape_measured_reversal_candidate_sign = 0.0
+        self._dynamic_escape_measured_reversal_confirmation_count = 0
+        self._dynamic_escape_frontal_encounter_latched = False
+        self._dynamic_escape_coast_remaining = 0
+        self._dynamic_escape_vetted_reverse_steps = 0
+        self._dynamic_escape_persistent_front_retry_count = 0
+        self._dynamic_escape_hard_stop_turn_remaining = 0
+        self._dynamic_escape_hard_stop_reverse_remaining = 0
+        self._dynamic_escape_hard_stop_turn_sign = 0.0
+        self._dynamic_escape_hard_stop_consumed = False
+        self._dynamic_escape_hard_stop_clear_streak = 0
+        self._dynamic_escape_hard_stop_rear_blocked_latched = False
+        self._dynamic_escape_hard_stop_rear_clear_retry_used = False
+        self._dynamic_escape_hard_stop_rear_blocked_wait_remaining = 0
+        self._dynamic_escape_hard_stop_completed_hold_count = 0
+        self._dynamic_escape_hard_stop_side_rear_release_latched = False
+        self._dynamic_escape_hard_stop_side_rear_release_abort_count = 0
+        self._dynamic_escape_zero_translation_turn_steps = 0
+        self._dynamic_escape_corridor_remaining = 0
+        self._dynamic_escape_corridor_turn_remaining = 0
+        self._dynamic_escape_corridor_turn_sign = 0.0
+        self._dynamic_recovery_active = False
+        self._dynamic_recovery_clear_steps = 0
+        self._dynamic_recovery_release_count = 0
+        self._dynamic_recovery_advance_steps = 0
+        self._dynamic_recovery_alignment_creep_latched = False
+        self._dynamic_recovery_progress_watch_active = False
+        self._dynamic_recovery_progress_watch_remaining = 0
+        self._dynamic_recovery_progress_watch_samples = []
+        self._dynamic_deadline_conflict_seen = False
+        self._dynamic_deadline_clear_steps = 0
+        self._rear_pass_through_turn_sign = 0.0
+        self._rear_pass_through_direction_clear_streak = 0
+
     @staticmethod
     def _rear_sector_clear(guard_result, sector_deg, minimum_range):
         """True only if the rear sector is observed and demonstrably open.
@@ -1108,6 +1173,13 @@ class ScanGuardArbiter:
                 near_body_bearings.append(angle)
 
         temporal_valid = bool(guard_result.get("temporal_scan_valid", False))
+        # Historical offline replays predate the quality field.  Live
+        # LegacyScanPipeline always emits it; missing is therefore treated as
+        # legacy evidence for compatibility, while an explicit False still
+        # fail-closes the physical quality gate.
+        temporal_quality_ok = bool(
+            guard_result.get("temporal_scan_safety_quality_ok", True)
+        )
         temporal_ttc = float(
             guard_result.get("temporal_scan_ttc_s", float("inf"))
         )
@@ -1131,6 +1203,11 @@ class ScanGuardArbiter:
                 and abs(float(temporal_bearing)) <= half_angle
             )
         else:
+            if (
+                self.rear_pass_through_require_temporal_quality
+                and not temporal_quality_ok
+            ):
+                return False, None, ()
             evidence = (() if temporal_bearing is None
                         else (float(temporal_bearing),))
             sources = (() if temporal_bearing is None
@@ -1324,6 +1401,15 @@ class ScanGuardArbiter:
         values = self.action_spec.clip(proposed.values)
         guard_result = dict(guard_result)
         context = dict(planning_context or {})
+        dynamic_candidate_only = bool(
+            self.dynamic_candidate_only
+            or context.get("dynamic_candidate_only", False)
+        )
+        if dynamic_candidate_only:
+            # A candidate-only physical arbiter starts each cycle from the
+            # planner proposal.  No stale turn/reverse/coast transaction can
+            # survive a fragmented forecast or a person-slot swap.
+            self._reset_dynamic_motion_state()
         encounter_control_authoritative = bool(
             context.get("encounter_control_authoritative", False)
         )
@@ -1435,10 +1521,21 @@ class ScanGuardArbiter:
                 or rear_pass_force_forward_ready
             )
         )
+        if dynamic_candidate_only:
+            rear_pass_through_active = False
         rear_reverse_blocked = bool(
             rear_only_evidence
             and proposed_v_for_direction
             < -self.directional_motion_minimum_speed_mps
+        )
+        rear_directional_release = bool(
+            dynamic_candidate_only
+            and rear_only_evidence
+            and proposed_v_for_direction
+            > self.directional_motion_minimum_speed_mps
+            and rear_pass_front_clearance is not None
+            and rear_pass_front_clearance
+            >= self.rear_pass_through_min_front_clearance_m
         )
         rear_pass_candidate_turn_sign = 0.0
         if rear_pass_through_bearing is not None:
@@ -1470,7 +1567,21 @@ class ScanGuardArbiter:
                 >= self.rear_pass_through_direction_release_steps
             ):
                 self._rear_pass_through_turn_sign = 0.0
-        if rear_pass_through_active and reason in {
+        if rear_directional_release and reason in {
+            "front_clear",
+            "near_body_hard_stop",
+            "temporal_collision_risk",
+            "temporal_slowdown",
+        }:
+            # Directional safety release preserves the planner's positive
+            # command; it never synthesizes a speed or steering value.
+            guard_result["directional_guard_original_reason"] = reason
+            guard_result["emergency_stop"] = False
+            guard_result["should_slow_down"] = False
+            guard_result["slow_scale"] = 1.0
+            guard_result["reason"] = "rear_directional_release"
+            reason = "rear_directional_release"
+        if (not dynamic_candidate_only) and rear_pass_through_active and reason in {
             "front_clear",
             "near_body_hard_stop",
             "temporal_collision_risk",
@@ -1609,6 +1720,12 @@ class ScanGuardArbiter:
             and float(guard_result.get(
                 "temporal_scan_ttc_s", float("inf")
             )) <= self.dynamic_escape_trigger_ttc_s
+            and (
+                not self.dynamic_escape_require_temporal_quality
+                or bool(guard_result.get(
+                    "temporal_scan_safety_quality_ok", True
+                ))
+            )
         )
         tracker_innovation_nis = float(
             context.get("dynamic_obstacle_tracker_innovation_nis", 0.0)
@@ -1672,6 +1789,13 @@ class ScanGuardArbiter:
         dynamic_escape_allowed = bool(
             planned_escape_allowed or reactive_escape_allowed
         )
+        if dynamic_candidate_only:
+            planned_escape_allowed = False
+            reactive_escape_allowed = False
+            fresh_reactive_escape_allowed = False
+            held_reactive_escape_allowed = False
+            uncertainty_fusion_escape_allowed = False
+            dynamic_escape_allowed = False
         if encounter_dynamic_escape_inhibited:
             # The semantic manager owns the passage side and MPPI already
             # optimized against its temporary route.  Revoke all stale
@@ -2778,6 +2902,8 @@ class ScanGuardArbiter:
             and "v_cmd" in self.action_spec.names
             and "omega_cmd" in self.action_spec.names
         )
+        if dynamic_candidate_only:
+            temporal_preturn_active = False
         temporal_preturn_applied = False
         vetted_forward_reverse_veto = False
         reverse_escape = False
@@ -3589,8 +3715,11 @@ class ScanGuardArbiter:
         elif bool(guard_result.get("emergency_stop", False)):
             if "v_cmd" in self.action_spec.names:
                 index = self.action_spec.index("v_cmd")
-                if self._static_reverse_escape_permitted(
+                if (
+                    not dynamic_candidate_only
+                    and self._static_reverse_escape_permitted(
                     reason, guard_result, float(values[index])
+                    )
                 ):
                     # Honour the planner's own reverse, capped.  Never faster
                     # than the cap, never a sign the planner did not propose.
@@ -3607,6 +3736,8 @@ class ScanGuardArbiter:
                     self._static_reverse_escape_engaged_count += 1
                     reason = "static_reverse_escape"
                 elif (
+                    not dynamic_candidate_only
+                    and
                     self.static_reverse_escape_hold_last_proposal_enabled
                     and float(values[index]) >= 0.0
                     and self._static_reverse_escape_last_v < 0.0
@@ -3875,6 +4006,12 @@ class ScanGuardArbiter:
                 "encounter_control_side_hard_stop_turn_only", False
             )
         )
+        if dynamic_candidate_only:
+            # A dynamic near-body event remains an emergency translation stop,
+            # but its turn/reverse escape template is only a candidate and is
+            # therefore not allowed to replace the MPPI command.
+            dynamic_hard_stop_geometric_event = False
+            dynamic_hard_stop_event = False
         diagnostics["encounter_control_original_emergency_stop"] = bool(
             guard_result.get("encounter_control_original_emergency_stop", False)
         )
@@ -3890,6 +4027,29 @@ class ScanGuardArbiter:
         )
         diagnostics["directional_motion_guard_enabled"] = bool(
             self.directional_motion_guard_enabled
+        )
+        diagnostics["dynamic_escape_require_temporal_quality"] = bool(
+            self.dynamic_escape_require_temporal_quality
+        )
+        diagnostics["dynamic_candidate_only"] = bool(dynamic_candidate_only)
+        diagnostics["dynamic_candidate_rejected_as_final"] = bool(
+            dynamic_candidate_only
+            and (
+                rear_pass_through_raw_evidence
+                or context.get(
+                    "probabilistic_obstacle_active_avoidance_enabled", False
+                )
+                or context.get(
+                    "probabilistic_obstacle_emergency_candidate_selected",
+                    False,
+                )
+            )
+        )
+        diagnostics["rear_directional_release"] = bool(
+            rear_directional_release
+        )
+        diagnostics["rear_pass_through_require_temporal_quality"] = bool(
+            self.rear_pass_through_require_temporal_quality
         )
         diagnostics["rear_pass_through_active"] = bool(
             rear_pass_through_active

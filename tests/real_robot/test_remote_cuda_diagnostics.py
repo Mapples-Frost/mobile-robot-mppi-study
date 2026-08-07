@@ -83,7 +83,7 @@ def test_real_robot_diagnostic_payload_preserves_track_evidence_and_forecast():
     payload = _real_robot_diagnostic_payload(tracker, planner, safety)
     encoded = json.dumps(_json_value(payload), sort_keys=True)
 
-    assert payload["schema_version"] == "pc_pi_full_proposed_diagnostics_v2"
+    assert payload["schema_version"] == "pc_pi_full_proposed_diagnostics_v3"
     assert payload["tracker"]["tracks"][0]["mapless_classification"] == "dynamic"
     assert payload["tracker"]["tracks"][0]["mapless_motion_evidence"][
         "direction_coherence"

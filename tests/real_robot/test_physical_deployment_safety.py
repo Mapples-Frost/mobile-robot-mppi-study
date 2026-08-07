@@ -7,6 +7,7 @@ import pytest
 from deploy.raspberry_pi5_scout.build_pi5_full_config import (
     _physical_front_envelope,
     build_pi5_full_config,
+    enable_single_final_control_authority,
 )
 from deploy.raspberry_pi5_scout.run_remote_cuda_full import (
     _DynamicPathGuardSupervisor,
@@ -47,6 +48,83 @@ def _weight_root(tmp_path: Path) -> Path:
     ):
         (weights / name).write_bytes(b"test")
     return tmp_path
+
+
+def test_single_final_authority_keeps_mppi_command_and_retains_hard_stop(tmp_path):
+    config = build_pi5_full_config(
+        _weight_root(tmp_path), max_v_mps=0.5,
+        max_reverse_v_mps=0.3, max_omega_radps=0.6,
+    )
+    enable_single_final_control_authority(config)
+    arbiter = ScanGuardArbiter(
+        action_spec_from_config(config["action_space"]),
+        config["perception"]["scan_guard"],
+    )
+    candidate_guard = {
+        "emergency_stop": False,
+        "reason": "temporal_slowdown",
+        "should_slow_down": True,
+        "slow_scale": 0.25,
+        "temporal_scan_valid": True,
+        "temporal_scan_safety_quality_ok": True,
+        "temporal_scan_ttc_s": 1.4,
+        "dynamic_obstacle_scan_flow_match": True,
+        "dynamic_obstacle_bearing_rad": -0.45,
+        "min_front_range": 1.45,
+    }
+    context = {
+        "probabilistic_obstacle_active_avoidance_enabled": True,
+        "probabilistic_obstacle_preferred_escape_heading_error_rad": -0.8,
+        "probabilistic_obstacle_emergency_candidate_selected": True,
+    }
+    decision = arbiter.arbitrate(
+        ControlCommand([0.35, 0.10]), candidate_guard, context
+    )
+    assert decision.executed_control.v == pytest.approx(0.0875)
+    assert decision.executed_control.omega == pytest.approx(0.10)
+    assert decision.diagnostics["dynamic_candidate_only"] is True
+    assert decision.diagnostics["dynamic_candidate_rejected_as_final"] is True
+
+    stop = arbiter.arbitrate(
+        ControlCommand([0.35, 0.10]),
+        {
+            "emergency_stop": True,
+            "reason": "near_body_hard_stop",
+            "near_body_points": ({"base_angle": 0.0, "range": 0.25},),
+        },
+        context,
+    )
+    assert stop.executed_control.v == pytest.approx(0.0)
+    assert stop.diagnostics["dynamic_candidate_only"] is True
+
+
+def test_candidate_only_releases_rear_direction_without_synthesizing_speed(tmp_path):
+    config = build_pi5_full_config(
+        _weight_root(tmp_path), max_v_mps=0.5,
+        max_reverse_v_mps=0.3, max_omega_radps=0.6,
+    )
+    enable_single_final_control_authority(config)
+    arbiter = ScanGuardArbiter(
+        action_spec_from_config(config["action_space"]),
+        config["perception"]["scan_guard"],
+    )
+    rear_angle = math.radians(165.0)
+    result = arbiter.arbitrate(
+        ControlCommand([0.22, -0.18]),
+        {
+            "emergency_stop": True,
+            "reason": "temporal_collision_risk",
+            "temporal_scan_valid": True,
+            "temporal_scan_safety_quality_ok": True,
+            "temporal_scan_ttc_s": 0.4,
+            "temporal_scan_center_angle_rad": rear_angle,
+            "min_front_range": 1.4,
+        },
+        {},
+    )
+    assert result.reason == "rear_directional_release"
+    assert result.executed_control.values.tolist() == pytest.approx([0.22, -0.18])
+    assert result.diagnostics["rear_directional_release"] is True
 
 
 def test_physical_limits_are_shared_with_planner_and_safety(tmp_path):
@@ -199,8 +277,10 @@ def test_physical_limits_are_shared_with_planner_and_safety(tmp_path):
     assert guard[
         "directional_forward_protected_half_angle_deg"
     ] == pytest.approx(100.0)
-    assert guard["rear_pass_through_force_forward_enabled"] is True
-    assert guard["rear_pass_through_force_straight_enabled"] is True
+    # Rear-pass is a directional candidate in the physical profile; it does
+    # not synthesize a second forward/straight command.
+    assert guard["rear_pass_through_force_forward_enabled"] is False
+    assert guard["rear_pass_through_force_straight_enabled"] is False
     assert guard[
         "rear_pass_through_min_front_clearance_m"
     ] == pytest.approx(0.90)
@@ -543,6 +623,46 @@ def test_physical_single_authority_never_rewrites_dynamic_command():
     assert diagnostics["reason"] == "single_dynamic_authority_passthrough"
     assert diagnostics["commanded_omega_override_radps"] is None
     assert diagnostics["goal_rejoin_latched"] is False
+
+
+def test_physical_single_authority_records_passage_and_rejoin_without_rewrite():
+    supervisor = _DynamicPathGuardSupervisor(
+        single_dynamic_authority=True
+    )
+    first_v, first = supervisor.apply(
+        0.0, 0.0, 0.0, 5.0, 0.0, 0.40,
+        safety_reason="dynamic_active_escape",
+        proposed_omega=0.30,
+        hazard_active=True,
+        obstacle_bearing_rad=0.2,
+        obstacle_surface_range_m=1.0,
+    )
+    assert first_v == pytest.approx(0.40)
+    assert first["passage_rejoin_state"] == "PASSAGE_CANDIDATE"
+    assert first["passage_rejoin_command_authority"] == "observation_only"
+
+    _, committed = supervisor.apply(
+        0.1, 0.1, 0.1, 5.0, 0.0, 0.40,
+        safety_reason="dynamic_active_escape",
+        proposed_omega=0.30,
+        hazard_active=True,
+        obstacle_bearing_rad=0.9,
+        obstacle_surface_range_m=1.2,
+    )
+    assert committed["passage_rejoin_state"] == "PASSAGE_COMMITTED"
+
+    clear = None
+    for _ in range(4):
+        _, clear = supervisor.apply(
+            0.2, 0.0, 0.0, 5.0, 0.0, 0.40,
+            safety_reason="front_clear",
+            proposed_omega=0.0,
+            hazard_active=False,
+            obstacle_bearing_rad=1.2,
+            obstacle_surface_range_m=1.7,
+        )
+    assert clear["passage_rejoin_state"] in {"REJOIN_CONFIRMED", "IDLE"}
+    assert clear["passage_rejoin_command_authority"] == "observation_only"
 
 
 def test_dynamic_reason_does_not_imply_unbounded_steering_authority():
@@ -2799,6 +2919,34 @@ def test_physical_slew_guard_limits_all_nonemergency_command_steps():
     assert diagnostics["reason"] == "rate_limited"
 
 
+def test_physical_slew_guard_uses_separate_acceleration_and_deceleration_rates():
+    accelerating_v, _, accelerating = _physical_command_slew_guard(
+        0.50,
+        0.0,
+        0.0,
+        0.0,
+        dt_s=0.10,
+        maximum_v_acceleration_mps2=1.0,
+        maximum_v_deceleration_mps2=2.0,
+        maximum_omega_rate_radps2=4.0,
+    )
+    assert accelerating_v == pytest.approx(0.10)
+    assert accelerating["maximum_acceleration_mps2"] == pytest.approx(1.0)
+
+    braking_v, _, braking = _physical_command_slew_guard(
+        0.0,
+        0.0,
+        0.50,
+        0.0,
+        dt_s=0.10,
+        maximum_v_acceleration_mps2=1.0,
+        maximum_v_deceleration_mps2=2.0,
+        maximum_omega_rate_radps2=4.0,
+    )
+    assert braking_v == pytest.approx(0.30)
+    assert braking["maximum_deceleration_mps2"] == pytest.approx(2.0)
+
+
 def test_physical_slew_guard_brakes_before_hazard_reverse_then_ramps():
     stopped_v, stopped_omega, stopped = _physical_command_slew_guard(
         -0.30,
@@ -2982,20 +3130,17 @@ def test_directional_guard_passes_rear_person_only_for_forward_motion(tmp_path):
 
     forward = arbiter.arbitrate(ControlCommand([0.5, 0.15]), guard, context)
     assert forward.executed_control.v == pytest.approx(0.5)
-    assert forward.executed_control.omega == pytest.approx(0.0)
+    assert forward.executed_control.omega == pytest.approx(0.15)
     assert forward.reason == "rear_pass_through"
     assert forward.diagnostics["emergency_stop"] is False
     assert forward.diagnostics["rear_pass_through_active"] is True
     assert forward.diagnostics["dynamic_escape_allowed"] is False
 
     reverse = arbiter.arbitrate(ControlCommand([-0.3, 0.15]), guard, context)
-    assert reverse.executed_control.v == pytest.approx(0.35)
-    assert reverse.executed_control.omega == pytest.approx(0.0)
-    assert reverse.reason == "rear_pass_through"
-    assert reverse.diagnostics["rear_pass_through_active"] is True
-    assert reverse.diagnostics[
-        "rear_pass_through_force_forward_ready"
-    ] is True
+    assert reverse.executed_control.v == pytest.approx(0.0)
+    assert reverse.executed_control.omega == pytest.approx(0.15)
+    assert reverse.reason == "near_body_hard_stop"
+    assert reverse.diagnostics["rear_pass_through_active"] is False
     assert reverse.diagnostics["rear_reverse_blocked"] is True
 
 
@@ -3344,14 +3489,12 @@ def test_rear_pass_holds_one_turn_side_through_bearing_flips_and_scan_gaps(
         ControlCommand([-0.3, 0.6]), rear_guard(145.0), {}
     )
 
-    assert first.executed_control.values.tolist() == pytest.approx(
-        [0.35, 0.0]
-    )
+    assert first.executed_control.values.tolist() == pytest.approx([0.0, 0.6])
     assert opposite_fragment.executed_control.values.tolist() == pytest.approx(
-        [0.35, 0.0]
+        [0.0, 0.6]
     )
     assert after_gap.executed_control.values.tolist() == pytest.approx(
-        [0.35, 0.0]
+        [0.0, 0.6]
     )
     assert first.diagnostics[
         "rear_pass_through_direction_lock_started"
@@ -3388,9 +3531,9 @@ def test_rear_pass_goes_straight_when_person_is_centered_behind(tmp_path):
         {},
     )
 
-    assert decision.reason == "rear_pass_through"
+    assert decision.reason == "temporal_collision_risk"
     assert decision.executed_control.values.tolist() == pytest.approx(
-        [0.35, 0.0]
+        [0.0, 0.6]
     )
 
 
@@ -3695,7 +3838,7 @@ def test_front_clear_reactive_window_uses_rear_temporal_pass_through(tmp_path):
 
     assert decision.reason == "rear_pass_through"
     assert decision.executed_control.v == pytest.approx(0.5)
-    assert abs(decision.executed_control.omega) <= 0.30
+    assert decision.executed_control.omega == pytest.approx(-0.6)
     assert decision.diagnostics["rear_pass_through_active"] is True
     assert decision.diagnostics["dynamic_escape_allowed"] is False
 

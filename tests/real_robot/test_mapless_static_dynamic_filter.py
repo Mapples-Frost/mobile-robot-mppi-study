@@ -122,6 +122,21 @@ def _filter():
     value.dynamic_classification_temporal_corroboration_maximum_ttc_s = 6.0
     value.dynamic_classification_temporal_corroboration_hold_cycles = 12
     value.dynamic_classification_temporal_corroboration_minimum_support_beams = 3
+    value.dynamic_classification_collision_course_bypass_enabled = False
+    value.allow_collision_course_provisional = False
+    value.person_provisional_enabled = False
+    value.person_provisional_minimum_streak = 2
+    value.vehicle_shape_hold_cycles = 4
+    value.person_provisional_minimum_samples = 4
+    value.person_provisional_minimum_duration_s = 0.35
+    value.person_provisional_minimum_speed_mps = 0.18
+    value.person_provisional_maximum_speed_mps = 1.40
+    value.person_provisional_minimum_displacement_m = 0.12
+    value.person_provisional_minimum_direction_coherence = 0.55
+    value.person_provisional_maximum_fit_residual_m = 0.08
+    value.person_provisional_maximum_step_m = 0.28
+    value.person_provisional_minimum_support_beams = 3
+    value.person_provisional_maximum_extent_m = 1.20
     value.reset_filter_state()
     return value, tracker
 
@@ -626,6 +641,55 @@ def test_flow_matched_ca_imm_forecast_is_admitted_during_bootstrap_hold():
     assert result.diagnostics["tracks"][0][
         "mapless_temporal_flow_provisional"
     ] is True
+
+
+def test_person_provisional_gate_releases_shape_backed_unknown_forecast():
+    value, tracker = _filter()
+    value.allow_compact_dynamic = False
+    value.person_provisional_enabled = True
+    value.person_provisional_minimum_streak = 2
+    value.vehicle_shape_hold_cycles = 6
+    value.person_provisional_minimum_samples = 4
+    value.person_provisional_minimum_duration_s = 0.35
+    value.person_provisional_minimum_direction_coherence = 0.55
+    value.dynamic_classification_temporal_corroboration_enabled = True
+    samples = (
+        (0.00, 12, 0.00),
+        (0.15, 3, 0.08),
+        (0.30, 3, 0.16),
+        (0.45, 3, 0.24),
+        (0.60, 3, 0.32),
+    )
+    result = None
+    for timestamp, support, lateral in samples:
+        tracker.selected_support_beams = support
+        tracker.position = (1.5, lateral)
+        result = value.update(_observation(timestamp))
+    assert result.diagnostics["tracks"][0][
+        "mapless_classification"
+    ] == "unknown"
+    assert result.diagnostics[
+        "mapless_person_provisional_track_indices"
+    ] == (0,)
+    assert result.diagnostics["person_forecast_candidate_track_indices"] == (0,)
+    assert result.forecast == ("forecast",)
+
+
+def test_person_provisional_gate_rejects_one_frame_unknown_motion():
+    value, tracker = _filter()
+    value.allow_compact_dynamic = False
+    value.person_provisional_enabled = True
+    value.person_provisional_minimum_streak = 2
+    tracker.selected_support_beams = 12
+    tracker.position = (1.5, 0.0)
+    value.update(_observation(0.0))
+    tracker.selected_support_beams = 3
+    tracker.position = (1.5, 0.20)
+    result = value.update(_observation(0.20))
+    assert result.diagnostics["mapless_person_provisional_track_indices"] == ()
+    assert result.diagnostics["tracks"][0][
+        "mapless_person_provisional_streak"
+    ] == 0
     assert result.diagnostics["tracks"][0][
         "mapless_classification"
     ] == "unknown"

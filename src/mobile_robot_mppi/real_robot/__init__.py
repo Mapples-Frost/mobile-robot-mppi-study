@@ -12,6 +12,7 @@ from .livox_scan_adapter import (
     LivoxScanDiagnostics,
 )
 from .mapless_static_dynamic_filter import MaplessStaticDynamicFilter
+from .person_track_manager import PersonTrackManager
 from .motion_bootstrap_tracker import MotionBootstrapMultiObstacleTracker
 from .forward_passage import ForwardPassageConfig, ForwardPassageController
 from .encounter_modes import (
@@ -34,6 +35,7 @@ __all__ = [
     "LivoxScanAdapterConfig",
     "LivoxScanDiagnostics",
     "MaplessStaticDynamicFilter",
+    "PersonTrackManager",
     "MotionBootstrapMultiObstacleTracker",
     "ForwardPassageConfig",
     "ForwardPassageController",

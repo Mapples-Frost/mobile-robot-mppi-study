@@ -9738,6 +9738,36 @@ class MppiController:
             "dynamic_obstacle_tracker_recovery_active": bool(
                 tracker_diagnostics.get("recovery_active", False)
             ),
+            "person_forecast_qualification": str(
+                tracker_diagnostics.get(
+                    "person_forecast_qualification", "INVALID"
+                )
+            ),
+            "person_forecast_source": str(
+                tracker_diagnostics.get(
+                    "person_forecast_source", "unavailable"
+                )
+            ),
+            "person_selected_id": tracker_diagnostics.get(
+                "person_selected_id"
+            ),
+            "person_identity_continuity": bool(
+                tracker_diagnostics.get(
+                    "person_identity_continuity", False
+                )
+            ),
+            "person_forecast_candidate_track_indices": tuple(
+                int(value)
+                for value in tracker_diagnostics.get(
+                    "person_forecast_candidate_track_indices", ()
+                )
+            ),
+            "low_level_forecast_track_indices": tuple(
+                int(value)
+                for value in tracker_diagnostics.get(
+                    "low_level_forecast_track_indices", ()
+                )
+            ),
         }
         known_static_minimum_clearance = 0.0
         if (

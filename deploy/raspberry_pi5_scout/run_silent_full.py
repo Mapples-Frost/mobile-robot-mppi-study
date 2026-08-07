@@ -22,7 +22,10 @@ for value in (PROJECT_ROOT, PROJECT_ROOT / "src", HERE):
     if str(value) not in sys.path:
         sys.path.insert(0, str(value))
 
-from build_pi5_full_config import build_pi5_full_config  # noqa: E402
+from build_pi5_full_config import (  # noqa: E402
+    build_pi5_full_config,
+    enable_single_final_control_authority,
+)
 from mobile_robot_mppi.core.types import (  # noqa: E402
     Pose2D,
     RobotObservation,
@@ -99,6 +102,12 @@ def _install_mapless_tracker(perception, human_leg_mode=False):
         # admits compact, coherently translating leg clusters while retaining
         # the association, displacement, residual, and support-beam gates that
         # rejected every observed static/background track in the offline audit.
+        person_gate = dict(
+            getattr(perception, "config", {})
+            .get("person_tracking", {})
+            .get("forecast_gate", {})
+            or {}
+        )
         overrides = {
             "allow_compact_dynamic": True,
             "minimum_duration_s": 0.40,
@@ -146,6 +155,46 @@ def _install_mapless_tracker(perception, human_leg_mode=False):
             # classifier is still accumulating its dynamic label.  This is a
             # perception continuity path, not a semantic control override.
             "allow_collision_course_provisional": True,
+            # Publish a bounded person-compatible provisional forecast after
+            # two consecutive, shape-backed motion frames.  This closes the
+            # low-level-forecast -> mapless-label gap without admitting one-
+            # frame unknown/static background motion.
+            "person_provisional_enabled": bool(
+                person_gate.get("enabled", True)
+            ),
+            "person_provisional_minimum_streak": int(
+                person_gate.get("minimum_streak", 2)
+            ),
+            "person_provisional_minimum_samples": int(
+                person_gate.get("minimum_samples", 4)
+            ),
+            "person_provisional_minimum_duration_s": float(
+                person_gate.get("minimum_duration_s", 0.35)
+            ),
+            "person_provisional_minimum_speed_mps": float(
+                person_gate.get("minimum_speed_mps", 0.18)
+            ),
+            "person_provisional_maximum_speed_mps": float(
+                person_gate.get("maximum_speed_mps", 1.40)
+            ),
+            "person_provisional_minimum_displacement_m": float(
+                person_gate.get("minimum_displacement_m", 0.12)
+            ),
+            "person_provisional_minimum_direction_coherence": float(
+                person_gate.get("minimum_direction_coherence", 0.55)
+            ),
+            "person_provisional_maximum_fit_residual_m": float(
+                person_gate.get("maximum_fit_residual_m", 0.08)
+            ),
+            "person_provisional_maximum_step_m": float(
+                person_gate.get("maximum_step_m", 0.28)
+            ),
+            "person_provisional_minimum_support_beams": int(
+                person_gate.get("minimum_support_beams", 3)
+            ),
+            "person_provisional_maximum_extent_m": float(
+                person_gate.get("maximum_extent_m", 1.20)
+            ),
         }
     bootstrap_overrides = {}
     if human_leg_mode:
@@ -201,6 +250,7 @@ def main():
     config = build_pi5_full_config(
         PROJECT_ROOT, seed=args.seed, goal_x=args.goal_x, goal_y=args.goal_y
     )
+    enable_single_final_control_authority(config)
     if args.guarded_can:
         config["real_robot_deployment"].update({
             "publish_enabled": True,

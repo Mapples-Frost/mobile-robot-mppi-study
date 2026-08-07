@@ -18,6 +18,7 @@ import yaml
 from deploy.raspberry_pi5_scout.build_pi5_full_config import (
     apply_pi5_algorithm_features,
     build_pi5_full_config,
+    enable_single_final_control_authority,
     resolve_pi5_algorithm_features,
 )
 from deploy.raspberry_pi5_scout.run_silent_full import (
@@ -400,6 +401,20 @@ def _physical_tracker_motion_context(
 
     context = dict(plan_diagnostics or {})
     context["physical_tracker_motion_fallback_applied"] = False
+    tracker = dict(tracker_diagnostics or {})
+    person_quality = str(
+        tracker.get("person_forecast_qualification", "INVALID")
+    )
+    context.update({
+        "person_forecast_qualification": person_quality,
+        "person_selected_id": tracker.get("person_selected_id"),
+        "person_identity_continuity": bool(
+            tracker.get("person_identity_continuity", False)
+        ),
+        "person_forecast_source": tracker.get(
+            "person_forecast_source", "unavailable"
+        ),
+    })
     preferred = context.get(
         "probabilistic_obstacle_preferred_escape_heading_error_rad"
     )
@@ -458,11 +473,26 @@ def _physical_tracker_motion_context(
         })
         return context
 
-    tracker = dict(tracker_diagnostics or {})
+    person_velocity = None
+    if person_quality in {"VALID", "PROVISIONAL", "STALE"}:
+        try:
+            person_velocity = np.asarray((
+                float(tracker["person_selected_velocity_x_mps"]),
+                float(tracker["person_selected_velocity_y_mps"]),
+            ), dtype=np.float64)
+        except (KeyError, TypeError, ValueError):
+            person_velocity = None
     dynamic_indices = {
         int(value)
         for value in tracker.get("mapless_dynamic_track_indices", ())
     }
+    person_provisional_indices = {
+        int(value)
+        for value in tracker.get(
+            "mapless_person_provisional_track_indices", ()
+        )
+    }
+    dynamic_indices.update(person_provisional_indices)
     nearest_index = tracker.get("nearest_track_index")
     try:
         nearest_index = int(nearest_index)
@@ -479,10 +509,14 @@ def _physical_tracker_motion_context(
         return context
 
     try:
-        velocity = np.asarray((
-            float(tracker["measurement_velocity_x_mps"]),
-            float(tracker["measurement_velocity_y_mps"]),
-        ), dtype=np.float64)
+        velocity = (
+            person_velocity
+            if person_velocity is not None
+            else np.asarray((
+                float(tracker["measurement_velocity_x_mps"]),
+                float(tracker["measurement_velocity_y_mps"]),
+            ), dtype=np.float64)
+        )
         yaw = float(pose_yaw)
     except (KeyError, TypeError, ValueError):
         return context
@@ -543,6 +577,18 @@ def _physical_tracker_motion_context(
             planner_direction_available
         ),
         "physical_tracker_motion_fallback_track_index": nearest_index,
+        "dynamic_obstacle_motion_source": (
+            "person_track"
+            if person_velocity is not None
+            else "low_level_tracker_slot"
+        ),
+        "dynamic_obstacle_forecast_source": (
+            "person_provisional"
+            if nearest_index in person_provisional_indices
+            else "mapless_dynamic"
+        ),
+        "person_forecast_qualification": person_quality,
+        "person_selected_id": tracker.get("person_selected_id"),
     })
     if planner_direction_available:
         context[
@@ -625,6 +671,9 @@ def _control_cause_chain(
     goal_stop_triggered,
     status,
     heartbeat,
+    tracker=None,
+    direction_guard=None,
+    physical_slew_guard=None,
 ):
     """Persist the command ownership chain without logging large payloads.
 
@@ -636,6 +685,9 @@ def _control_cause_chain(
     planner = dict(getattr(plan, "diagnostics", {}) or {})
     safety = dict(getattr(decision, "diagnostics", {}) or {})
     guard = dict(path_guard or {})
+    tracker_values = dict(tracker or {})
+    direction_values = dict(direction_guard or {})
+    slew_values = dict(physical_slew_guard or {})
     fallback_kind = str(
         planning_context.get("probabilistic_obstacle_active_fallback_kind", "none")
     )
@@ -667,6 +719,167 @@ def _control_cause_chain(
         }
     else:
         heartbeat_status = dict(status or {})
+    dynamic_candidate = bool(
+        planning_context.get(
+            "probabilistic_obstacle_emergency_candidate_count", 0
+        )
+        or safety.get("dynamic_escape_candidate", False)
+        or safety.get("rear_pass_through_candidate", False)
+    )
+    hard_safety = bool(
+        safety.get("emergency_stop", False)
+        or str(decision.reason) in _UNCONDITIONAL_TRANSLATION_STOP_REASONS
+    )
+    role_diagnostics = {
+        "mppi_proposal": {
+            "command": [
+                float(plan.proposed_control.v),
+                float(plan.proposed_control.omega),
+            ],
+            "authority": "sole_positive_motion_source",
+            "accepted_as_final": bool(
+                not decision.overridden and not guard.get("active", False)
+            ),
+        },
+        "probabilistic_risk": {
+            "forecast_count": int(
+                planning_context.get(
+                    "probabilistic_obstacle_forecast_count", 0
+                )
+                or 0
+            ),
+            "emergency_candidate": bool(emergency_selected),
+            "candidate_selected": bool(emergency_selected),
+            "authority": "candidate_only",
+            "accepted_as_final": False,
+        },
+        "actor_guidance": {
+            "enabled": bool(
+                planning_context.get("actor_guidance_enabled", False)
+                or planner.get("actor_guidance_enabled", False)
+            ),
+            "authority": "proposal_input",
+        },
+        "hss_reliability": {
+            "enabled": bool(
+                planning_context.get("reliability_hss_enabled", False)
+                or planner.get("reliability_hss_enabled", False)
+            ),
+            "authority": "proposal_input",
+        },
+        "temporal_flow": {
+            "valid": bool(
+                tracker_values.get("mapless_temporal_flow_corroborated", False)
+                or tracker_values.get("temporal_scan_safety_quality_ok", False)
+            ),
+            "qualified": bool(
+                tracker_values.get("temporal_scan_safety_quality_ok", False)
+            ),
+            "authority": "risk_context_only",
+        },
+        "low_level_tracker": {
+            "associated": bool(tracker_values.get("associated", False)),
+            "forecast_valid": bool(
+                tracker_values.get("low_level_forecast_count", 0)
+                or tracker_values.get("forecast_valid", False)
+            ),
+            "forecast_indices": tuple(
+                tracker_values.get("low_level_forecast_track_indices", ())
+            ),
+            "authority": "measurement_only",
+        },
+        "person_track": {
+            "selected_id": tracker_values.get("person_selected_id"),
+            "qualification": str(
+                tracker_values.get(
+                    "person_forecast_qualification", "INVALID"
+                )
+            ),
+            "identity_continuity": bool(
+                tracker_values.get("person_identity_continuity", False)
+            ),
+            "authority": "forecast_source",
+        },
+        "mapless_static_dynamic_filter": {
+            "dynamic_indices": tuple(
+                tracker_values.get("mapless_dynamic_track_indices", ())
+            ),
+            "provisional_indices": tuple(
+                tracker_values.get(
+                    "mapless_person_provisional_track_indices", ()
+                )
+            ),
+            "unknown_indices": tuple(
+                tracker_values.get("mapless_unknown_track_indices", ())
+            ),
+            "authority": "forecast_qualification",
+        },
+        "rear_pass_candidate": {
+            "candidate": bool(
+                safety.get("rear_pass_through_candidate", False)
+                or str(decision.reason) == "rear_pass_through"
+            ),
+            "accepted_as_final": bool(
+                str(decision.reason) == "rear_pass_through"
+                and not bool(
+                    safety.get("dynamic_candidate_only", False)
+                )
+            ),
+            "authority": "candidate_only",
+        },
+        "dynamic_escape_candidate": {
+            "candidate": dynamic_candidate,
+            "accepted_as_final": bool(
+                not bool(safety.get("dynamic_candidate_only", False))
+                and str(decision.reason).startswith("dynamic_")
+            ),
+            "authority": "candidate_only",
+        },
+        "hard_safety": {
+            "active": hard_safety,
+            "accepted_as_final": hard_safety,
+            "reason": str(decision.reason),
+            "authority": "veto_or_stop_only",
+        },
+        "front_speed_governor": {
+            "active": bool(
+                slew_values.get("active", False)
+                or safety.get("physical_front_speed_governor_active", False)
+            ),
+            "authority": "bounded_cap",
+        },
+        "path_guard": {
+            "active": bool(guard.get("active", False)),
+            "bypassed": bool(guard.get("bypassed", False)),
+            "authority": str(
+                guard.get("single_control_owner", "observe")
+            ),
+        },
+        "physical_slew_guard": {
+            "active": bool(slew_values.get("active", False)),
+            "reason": str(slew_values.get("reason", "none")),
+            "output": [
+                float(commanded_v),
+                float(commanded_omega),
+            ],
+            "authority": "last_rate_limit",
+        },
+        "final_motion_owner": {
+            "owner": (
+                "hard_safety"
+                if hard_safety
+                else str(
+                    guard.get(
+                        "single_control_owner", "mppi"
+                    )
+                )
+            ),
+            "command": [float(commanded_v), float(commanded_omega)],
+            "dynamic_candidate_only": bool(
+                safety.get("dynamic_candidate_only", False)
+            ),
+        },
+    }
     return {
         "dominant_cause": dominant,
         "planner_proposed": [
@@ -714,6 +927,7 @@ def _control_cause_chain(
         "heartbeat_lease_expiry_count": int(
             getattr(heartbeat, "lease_expiry_count", 0)
         ),
+        "roles": role_diagnostics,
     }
 
 
@@ -1321,6 +1535,12 @@ class _DynamicPathGuardSupervisor:
         self._goal_rejoin_release_count = 0
         self._rear_pass_through_hold_remaining = 0
         self._dynamic_goal_rejoin_requested = False
+        # Physical deployment keeps this state machine observational.  It
+        # records passage/rejoin evidence for the audit stream but never
+        # writes a second positive-motion command.
+        self._passage_rejoin_state = "IDLE"
+        self._passage_rejoin_clear_cycles = 0
+        self._passage_rejoin_transition = "reset"
 
     def reset(self):
         self._goal_rejoin_latched = False
@@ -1333,6 +1553,103 @@ class _DynamicPathGuardSupervisor:
         self._goal_rejoin_release_count = 0
         self._rear_pass_through_hold_remaining = 0
         self._dynamic_goal_rejoin_requested = False
+        self._passage_rejoin_state = "IDLE"
+        self._passage_rejoin_clear_cycles = 0
+        self._passage_rejoin_transition = "reset"
+
+    def _observe_passage_rejoin(
+        self,
+        *,
+        state,
+        hazard_active,
+        rear_only_hazard,
+        dynamic_owner,
+        arbiter_rejoin_requested,
+        heading_error_rad,
+        cross_track_error_m,
+        obstacle_bearing_rad=None,
+        obstacle_surface_range_m=None,
+    ):
+        """Advance the read-only passage/rejoin certificate.
+
+        The state machine is intentionally downstream of MPPI and upstream
+        of diagnostics only.  A rejoin confirmation cannot alter ``v`` or
+        ``omega``; it merely proves that the planner may remain the sole
+        command owner after a bounded encounter.
+        """
+        previous = str(self._passage_rejoin_state)
+        transition = "hold"
+        clear_geometry = bool(
+            not hazard_active
+            and not dynamic_owner
+            and abs(float(heading_error_rad)) <= 0.90
+            and float(cross_track_error_m) <= 1.20
+            and (
+                obstacle_surface_range_m is None
+                or float(obstacle_surface_range_m) >= 1.50
+            )
+            and (
+                obstacle_bearing_rad is None
+                or abs(float(obstacle_bearing_rad)) >= 1.00
+            )
+        )
+        if state:
+            self._passage_rejoin_state = "HARD_STOP"
+            self._passage_rejoin_clear_cycles = 0
+        elif dynamic_owner or (hazard_active and not rear_only_hazard):
+            if previous in {"IDLE", "REJOIN_CONFIRMED"}:
+                self._passage_rejoin_state = "PASSAGE_CANDIDATE"
+                transition = "hazard_seen"
+            else:
+                self._passage_rejoin_state = "PASSAGE_COMMITTED"
+            self._passage_rejoin_clear_cycles = 0
+        elif previous == "PASSAGE_CANDIDATE":
+            self._passage_rejoin_state = "PASSAGE_COMMITTED"
+            self._passage_rejoin_clear_cycles = 0
+            transition = "passage_commit"
+        elif previous == "PASSAGE_COMMITTED":
+            if clear_geometry or arbiter_rejoin_requested:
+                self._passage_rejoin_clear_cycles += 1
+                self._passage_rejoin_state = "REJOIN_PENDING"
+                transition = "clear_geometry_seen"
+            else:
+                self._passage_rejoin_clear_cycles = 0
+        elif previous == "REJOIN_PENDING":
+            if clear_geometry and self._passage_rejoin_clear_cycles >= 2:
+                self._passage_rejoin_state = "REJOIN_CONFIRMED"
+                self._passage_rejoin_clear_cycles += 1
+                transition = "rejoin_confirmed"
+            elif clear_geometry:
+                self._passage_rejoin_clear_cycles += 1
+            else:
+                self._passage_rejoin_state = "PASSAGE_COMMITTED"
+                self._passage_rejoin_clear_cycles = 0
+                transition = "clear_geometry_lost"
+        elif previous == "REJOIN_CONFIRMED":
+            if clear_geometry:
+                self._passage_rejoin_state = "IDLE"
+                self._passage_rejoin_clear_cycles = 0
+                transition = "rejoin_released_to_planner"
+            else:
+                self._passage_rejoin_state = "PASSAGE_COMMITTED"
+                self._passage_rejoin_clear_cycles = 0
+                transition = "rejoin_invalidated"
+        else:
+            self._passage_rejoin_state = "IDLE"
+            self._passage_rejoin_clear_cycles = 0
+        if str(self._passage_rejoin_state) != previous and transition == "hold":
+            transition = f"{previous}_to_{self._passage_rejoin_state}"
+        self._passage_rejoin_transition = transition
+        return {
+            "passage_rejoin_state": str(self._passage_rejoin_state),
+            "passage_rejoin_previous_state": previous,
+            "passage_rejoin_transition": transition,
+            "passage_rejoin_clear_cycles": int(
+                self._passage_rejoin_clear_cycles
+            ),
+            "passage_rejoin_clear_geometry": clear_geometry,
+            "passage_rejoin_command_authority": "observation_only",
+        }
 
     def apply(
         self,
@@ -1354,6 +1671,10 @@ class _DynamicPathGuardSupervisor:
         arbiter_steering_authoritative=True,
         arbiter_rejoin_requested=False,
         dynamic_safety_arbitration_enabled=True,
+        obstacle_bearing_rad=None,
+        obstacle_surface_range_m=None,
+        person_forecast_qualification="INVALID",
+        person_selected_id=None,
     ):
         reason = str(safety_reason)
         if self._single_dynamic_authority:
@@ -1375,6 +1696,17 @@ class _DynamicPathGuardSupervisor:
                     reason in _DYNAMIC_PATH_AUTHORITY_REASONS
                     or hazard_active
                 )
+            )
+            rejoin = self._observe_passage_rejoin(
+                state=unconditional_stop,
+                hazard_active=bool(hazard_active),
+                rear_only_hazard=bool(rear_only_hazard),
+                dynamic_owner=dynamic_owner,
+                arbiter_rejoin_requested=bool(arbiter_rejoin_requested),
+                heading_error_rad=float(diagnostics.get("heading_error_rad", 0.0)),
+                cross_track_error_m=float(diagnostics.get("cross_track_error_m", 0.0)),
+                obstacle_bearing_rad=obstacle_bearing_rad,
+                obstacle_surface_range_m=obstacle_surface_range_m,
             )
             output_v = 0.0 if unconditional_stop else float(proposed_v)
             diagnostics.update({
@@ -1403,6 +1735,12 @@ class _DynamicPathGuardSupervisor:
                     "scan_guard" if dynamic_owner else "mppi"
                 ),
                 "goal_rejoin_latched": False,
+                "goal_rejoin_observation_only": True,
+                "person_forecast_qualification": str(
+                    person_forecast_qualification
+                ),
+                "person_selected_id": person_selected_id,
+                **rejoin,
                 "commanded_omega_override_radps": None,
                 "input_v_mps": float(proposed_v),
                 "output_v_mps": output_v,
@@ -2013,7 +2351,9 @@ def _physical_command_slew_guard(
     previous_commanded_omega,
     *,
     dt_s,
-    maximum_v_rate_mps2,
+    maximum_v_rate_mps2=None,
+    maximum_v_acceleration_mps2=None,
+    maximum_v_deceleration_mps2=None,
     maximum_omega_rate_radps2,
     hazard_active=False,
     immediate_translation_stop=False,
@@ -2035,7 +2375,34 @@ def _physical_command_slew_guard(
     if not np.isfinite(values).all() or not np.isfinite(previous).all():
         raise ValueError("physical slew commands must be finite")
     dt_s = float(dt_s)
-    v_delta = float(maximum_v_rate_mps2) * dt_s
+    # Keep the historical single-rate argument for offline replay callers,
+    # while allowing the armed deployment boundary to use the chassis' distinct
+    # acceleration/deceleration contracts.  This guard is deliberately applied
+    # after *every* authority source (MPPI, escape, rear-pass, path guard), so a
+    # safety takeover cannot reintroduce the full-scale command staircase that
+    # the planner's internal ActionSpec.clip cannot see.
+    if maximum_v_acceleration_mps2 is None:
+        maximum_v_acceleration_mps2 = maximum_v_rate_mps2
+    if maximum_v_deceleration_mps2 is None:
+        maximum_v_deceleration_mps2 = maximum_v_rate_mps2
+    if (
+        maximum_v_acceleration_mps2 is None
+        or maximum_v_deceleration_mps2 is None
+    ):
+        raise ValueError("translation slew rates must be provided")
+    maximum_v_acceleration_mps2 = float(maximum_v_acceleration_mps2)
+    maximum_v_deceleration_mps2 = float(maximum_v_deceleration_mps2)
+    if (
+        maximum_v_acceleration_mps2 <= 0.0
+        or maximum_v_deceleration_mps2 <= 0.0
+    ):
+        raise ValueError("translation slew rates must be positive")
+    v_rate = (
+        maximum_v_acceleration_mps2
+        if float(proposed_v) >= float(previous_commanded_v)
+        else maximum_v_deceleration_mps2
+    )
+    v_delta = v_rate * dt_s
     omega_delta = float(maximum_omega_rate_radps2) * dt_s
     if dt_s <= 0.0 or v_delta <= 0.0 or omega_delta <= 0.0:
         raise ValueError("physical slew rates and timestep must be positive")
@@ -2079,6 +2446,8 @@ def _physical_command_slew_guard(
         "output_v_mps": float(output[0]),
         "output_omega_radps": float(output[1]),
         "maximum_delta_v_mps": v_delta,
+        "maximum_acceleration_mps2": maximum_v_acceleration_mps2,
+        "maximum_deceleration_mps2": maximum_v_deceleration_mps2,
         "maximum_delta_omega_radps": omega_delta,
         "hazard_active": bool(hazard_active),
         "immediate_translation_stop": bool(immediate_translation_stop),
@@ -2117,6 +2486,12 @@ def main():
     parser.add_argument("--max-v-mps", type=float, required=True)
     parser.add_argument("--max-reverse-v-mps", type=float, required=True)
     parser.add_argument("--max-omega-radps", type=float, required=True)
+    # These are enforced again at the PC-side final command boundary.  The Pi
+    # still interpolates at 20 Hz, but the armed command contract must not
+    # depend on a downstream implementation to smooth authority handovers.
+    parser.add_argument("--max-linear-acceleration-mps2", type=float, default=1.0)
+    parser.add_argument("--max-linear-deceleration-mps2", type=float, default=2.0)
+    parser.add_argument("--max-angular-acceleration-radps2", type=float, default=4.0)
     parser.add_argument("--period-s", type=float, default=0.10)
     parser.add_argument("--accumulation-s", type=float, default=0.06)
     # In-loop warm-up cycles only withhold arming and relax the status
@@ -2168,6 +2543,13 @@ def main():
     )
     parser.add_argument("--publish", action="store_true")
     args = parser.parse_args()
+    for name in (
+        "max_linear_acceleration_mps2",
+        "max_linear_deceleration_mps2",
+        "max_angular_acceleration_radps2",
+    ):
+        if float(getattr(args, name)) <= 0.0:
+            parser.error(f"--{name.replace('_', '-')} must be positive")
     if args.until_goal and not args.publish:
         parser.error("--until-goal requires --publish")
     if args.until_goal and args.goal_stop_radius_m <= 0.0:
@@ -2205,6 +2587,7 @@ def main():
         "dynamic_safety_arbitration_enabled"
     ] = not bool(args.disable_dynamic_safety_arbitration)
     apply_pi5_algorithm_features(config, algorithm_features)
+    enable_single_final_control_authority(config)
     # Keep the physical deployment identical to the simulation controller.
     # The later Encounter/YOLO-style semantic modes (frontal approach,
     # crossing, rear-pass and rejoin) are intentionally unavailable here;
@@ -2450,6 +2833,12 @@ def main():
     path_guard_supervisor = _DynamicPathGuardSupervisor(
         single_dynamic_authority=True
     )
+    # Last command sent through the single physical boundary.  This state is
+    # intentionally owned by the deployment loop rather than by MPPI or the
+    # safety arbiter: every downstream authority must obey the same rate and
+    # direction contract.
+    previous_commanded_v = 0.0
+    previous_commanded_omega = 0.0
     initial_chassis_fault = None
     initial_chassis_fault_labels = ()
     diagnostic_writer_stats = {
@@ -2784,6 +3173,16 @@ def main():
                             "dynamic_safety_arbitration_enabled", True
                         )
                     ),
+                    obstacle_bearing_rad=decision.diagnostics.get(
+                        "dynamic_obstacle_bearing_rad"
+                    ),
+                    obstacle_surface_range_m=decision.diagnostics.get(
+                        "dynamic_obstacle_surface_range_m"
+                    ),
+                    person_forecast_qualification=tracker.get(
+                        "person_forecast_qualification", "INVALID"
+                    ),
+                    person_selected_id=tracker.get("person_selected_id"),
                 )
                 omega_override = path_guard.get(
                     "commanded_omega_override_radps"
@@ -2797,31 +3196,48 @@ def main():
                         commanded_v,
                     )
                 )
-                # The PC loop is forecast-dependent and measured only
-                # 8--10 Hz.  A fixed per-cycle slew limit here both created
-                # visible command stairs and delayed safety braking.  Send the
-                # final target unchanged; the Pi interpolates normal motion at
-                # its independent 20 Hz CAN rate and bypasses interpolation
-                # for the explicit stop flags below.
-                physical_slew_guard = {
-                    "active": False,
-                    "reason": "delegated_to_pi_20hz",
-                    "input_v_mps": float(commanded_v),
-                    "input_omega_radps": float(commanded_omega),
-                    "output_v_mps": float(commanded_v),
-                    "output_omega_radps": float(commanded_omega),
-                    "immediate_translation_stop": bool(
-                        immediate_translation_stop or goal_stop_triggered
-                    ),
-                    "immediate_all_stop": bool(goal_stop_triggered),
-                }
-                direction_guard = {
-                    "active": False,
-                    "reason": "delegated_to_pi_20hz",
-                    "input_v_mps": float(commanded_v),
-                    "output_v_mps": float(commanded_v),
-                    "omega_preserved_radps": float(commanded_omega),
-                }
+                # Apply the physical contract after path/safety authority has
+                # been resolved.  Previously this was delegated entirely to
+                # the Pi, so a rear-pass or reactive escape could jump from a
+                # valid MPPI command straight to +/-0.35 m/s and +/-0.6 rad/s.
+                direction_input_v = float(commanded_v)
+                direction_input_omega = float(commanded_omega)
+                direction_output_v, direction_output_omega, direction_guard = (
+                    _direction_reversal_guard(
+                        direction_input_v,
+                        direction_input_omega,
+                        previous_commanded_v,
+                    )
+                )
+                commanded_v, commanded_omega, physical_slew_guard = (
+                    _physical_command_slew_guard(
+                        direction_output_v,
+                        direction_output_omega,
+                        previous_commanded_v,
+                        previous_commanded_omega,
+                        dt_s=max(float(args.period_s), 1.0e-3),
+                        maximum_v_acceleration_mps2=(
+                            float(args.max_linear_acceleration_mps2)
+                        ),
+                        maximum_v_deceleration_mps2=(
+                            float(args.max_linear_deceleration_mps2)
+                        ),
+                        maximum_omega_rate_radps2=(
+                            float(args.max_angular_acceleration_radps2)
+                        ),
+                        hazard_active=hazard_active,
+                        immediate_translation_stop=bool(
+                            immediate_translation_stop or goal_stop_triggered
+                        ),
+                        immediate_all_stop=bool(goal_stop_triggered),
+                    )
+                )
+                direction_guard.update({
+                    "post_slew_v_mps": float(commanded_v),
+                    "post_slew_omega_radps": float(commanded_omega),
+                })
+                previous_commanded_v = float(commanded_v)
+                previous_commanded_omega = float(commanded_omega)
                 # Feed back the final post-arbitration command, not the planner
                 # proposal.  A zero/reverse command or a safety takeover owns
                 # the direction and immediately releases any passage prefix.
@@ -2896,6 +3312,9 @@ def main():
                         goal_stop_triggered=goal_stop_triggered,
                         status=status,
                         heartbeat=heartbeat,
+                        tracker=tracker,
+                        direction_guard=direction_guard,
+                        physical_slew_guard=physical_slew_guard,
                     ),
                     # The stable field name preserves shadow-run tooling.  Its
                     # own control_enabled bit states whether this run merely
@@ -3002,7 +3421,7 @@ def main():
             "hss_device": config["planner"]["paper_rl_driven"][
                 "reliability_sidecar"
             ].get("device"),
-            "diagnostic_schema_version": "pc_pi_full_proposed_diagnostics_v3",
+            "diagnostic_schema_version": "pc_pi_full_proposed_diagnostics_v4",
             "encounter_mode_shadow_enabled": bool(
                 encounter_mode_config.enabled
             ),
@@ -3072,6 +3491,15 @@ def main():
                 "max_v_mps": float(args.max_v_mps),
                 "max_reverse_v_mps": float(args.max_reverse_v_mps),
                 "max_omega_radps": float(args.max_omega_radps),
+                "max_linear_acceleration_mps2": float(
+                    args.max_linear_acceleration_mps2
+                ),
+                "max_linear_deceleration_mps2": float(
+                    args.max_linear_deceleration_mps2
+                ),
+                "max_angular_acceleration_radps2": float(
+                    args.max_angular_acceleration_radps2
+                ),
             },
             "path_guard_applied_cycles": sum(
                 bool(row.get("path_guard", {}).get("active", False))

@@ -128,20 +128,28 @@ class _CommandHeartbeat:
     no command crosses the TCP link during that gap, the Pi watchdog zeros the
     chassis and the next plan restarts it, which is the observed staircase
     motion.  This helper repeats the latest command at a fixed rate for a
-    short lease; after the lease expires it sends an immediate translation
-    stop, so a genuinely stalled planner still fails closed.
+    short lease.  A brief planner overrun then decays the last command instead
+    of injecting a one-frame zero-speed pulse.  Explicit safety stops remain
+    immediate, and a genuinely stalled planner still reaches an immediate
+    translation stop after the bounded decay window.
     """
 
-    def __init__(self, remote, *, period_s=0.05, lease_s=0.28):
+    def __init__(self, remote, *, period_s=0.05, lease_s=0.28,
+                 decay_s=0.20):
         self.remote = remote
         self.period_s = float(period_s)
         self.lease_s = float(lease_s)
+        self.decay_s = float(decay_s)
         if not 0.01 <= self.period_s <= 0.20:
             raise ValueError("command heartbeat period must be in [0.01, 0.20]")
         if not self.period_s < self.lease_s < 0.35:
             raise ValueError(
                 "command heartbeat lease must be above its period and below "
                 "the Pi watchdog timeout"
+            )
+        if not self.period_s <= self.decay_s <= 0.50:
+            raise ValueError(
+                "command heartbeat decay must be in [period, 0.50] seconds"
             )
         self._lock = threading.Lock()
         self._stop = threading.Event()
@@ -155,6 +163,8 @@ class _CommandHeartbeat:
         self._last_publish = time.monotonic()
         self.refresh_count = 0
         self.lease_expiry_count = 0
+        self.lease_decay_refresh_count = 0
+        self.lease_hard_stop_refresh_count = 0
 
     def start(self):
         if self._thread is not None:
@@ -210,6 +220,9 @@ class _CommandHeartbeat:
                 age = now - self._last_publish
                 self._sequence += 1
                 sequence = self._sequence
+                explicit_stop = bool(
+                    self._translation_stop or self._all_stop or not self._arm
+                )
                 if age <= self.lease_s:
                     v = self._v
                     omega = self._omega
@@ -217,15 +230,35 @@ class _CommandHeartbeat:
                     translation_stop = self._translation_stop
                     all_stop = self._all_stop
                     self.refresh_count += 1
+                elif (
+                    not explicit_stop
+                    and age <= self.lease_s + self.decay_s
+                ):
+                    # A 10 Hz solve can occasionally cross the 280 ms lease.
+                    # Keep the Pi watchdog refreshed, but monotonically remove
+                    # stale motion authority rather than alternating between a
+                    # hard zero and the next fresh full-speed command.
+                    scale = max(
+                        0.0,
+                        1.0 - (age - self.lease_s) / self.decay_s,
+                    )
+                    v = self._v * scale
+                    omega = self._omega * scale
+                    arm = self._arm
+                    translation_stop = False
+                    all_stop = False
+                    self.lease_expiry_count += 1
+                    self.lease_decay_refresh_count += 1
                 else:
-                    # Keep the session armed but never keep stale translation
-                    # beyond the bounded lease.
+                    # Keep the session armed, but never retain stale motion
+                    # beyond the lease plus the bounded decay transaction.
                     v = 0.0
-                    omega = self._omega
+                    omega = 0.0
                     arm = self._arm
                     translation_stop = True
                     all_stop = False
                     self.lease_expiry_count += 1
+                    self.lease_hard_stop_refresh_count += 1
                 try:
                     self.remote.send_command(
                         sequence,
@@ -671,6 +704,7 @@ def _control_cause_chain(
     goal_stop_triggered,
     status,
     heartbeat,
+    software_goal_stop_requested=False,
     tracker=None,
     direction_guard=None,
     physical_slew_guard=None,
@@ -688,6 +722,48 @@ def _control_cause_chain(
     tracker_values = dict(tracker or {})
     direction_values = dict(direction_guard or {})
     slew_values = dict(physical_slew_guard or {})
+    command_tolerance = 1.0e-12
+    path_guard_output = np.asarray((
+        guard.get("output_v_mps", decision.executed_control.v),
+        guard.get("output_omega_radps", decision.executed_control.omega),
+    ), dtype=np.float64)
+    safety_output = np.asarray((
+        decision.executed_control.v, decision.executed_control.omega
+    ), dtype=np.float64)
+    final_output = np.asarray((commanded_v, commanded_omega), dtype=np.float64)
+    path_guard_actual = bool(
+        guard.get("active", False)
+        and not np.allclose(
+            path_guard_output, safety_output, rtol=0.0, atol=command_tolerance
+        )
+    )
+    direction_actual = bool(
+        direction_values.get("active", False)
+        and not np.allclose(
+            np.asarray((
+                direction_values.get("input_v_mps", 0.0),
+                direction_values.get("omega_preserved_radps", 0.0),
+            ), dtype=np.float64),
+            np.asarray((
+                direction_values.get("output_v_mps", 0.0),
+                direction_values.get("omega_preserved_radps", 0.0),
+            ), dtype=np.float64),
+            rtol=0.0,
+            atol=command_tolerance,
+        )
+    )
+    slew_actual = bool(
+        slew_values.get("active", False)
+        and not np.allclose(
+            final_output,
+            np.asarray((
+                slew_values.get("input_v_mps", 0.0),
+                slew_values.get("input_omega_radps", 0.0),
+            ), dtype=np.float64),
+            rtol=0.0,
+            atol=command_tolerance,
+        )
+    )
     fallback_kind = str(
         planning_context.get("probabilistic_obstacle_active_fallback_kind", "none")
     )
@@ -698,14 +774,20 @@ def _control_cause_chain(
     )
     if goal_stop_triggered:
         dominant = "goal_stop"
+    elif software_goal_stop_requested:
+        dominant = "goal_stop_request"
     elif str(decision.reason) in _UNCONDITIONAL_TRANSLATION_STOP_REASONS:
         dominant = str(decision.reason)
-    elif guard.get("active", False):
+    elif path_guard_actual:
         dominant = str(guard.get("reason", "path_guard"))
     elif emergency_selected:
         dominant = "probabilistic_emergency_candidate"
     elif bool(decision.overridden):
         dominant = str(decision.reason)
+    elif direction_actual:
+        dominant = "direction_reversal_guard"
+    elif slew_actual:
+        dominant = str(slew_values.get("reason", "physical_slew_guard"))
     else:
         dominant = "nominal_mppi"
     if hasattr(status, "target_v_mps"):
@@ -738,7 +820,11 @@ def _control_cause_chain(
             ],
             "authority": "sole_positive_motion_source",
             "accepted_as_final": bool(
-                not decision.overridden and not guard.get("active", False)
+                not decision.overridden
+                and not path_guard_actual
+                and not direction_actual
+                and not slew_actual
+                and not software_goal_stop_requested
             ),
         },
         "probabilistic_risk": {
@@ -850,9 +936,10 @@ def _control_cause_chain(
         },
         "path_guard": {
             "active": bool(guard.get("active", False)),
+            "actual_override": path_guard_actual,
             "bypassed": bool(guard.get("bypassed", False)),
-            "authority": str(
-                guard.get("single_control_owner", "observe")
+            "authority": (
+                "command_override" if path_guard_actual else "observation_only"
             ),
         },
         "physical_slew_guard": {
@@ -866,13 +953,21 @@ def _control_cause_chain(
         },
         "final_motion_owner": {
             "owner": (
-                "hard_safety"
+                "goal_stop"
+                if goal_stop_triggered
+                else "goal_stop_request"
+                if software_goal_stop_requested
+                else "hard_safety"
                 if hard_safety
-                else str(
-                    guard.get(
-                        "single_control_owner", "mppi"
-                    )
-                )
+                else "path_guard"
+                if path_guard_actual
+                else "safety_arbiter"
+                if bool(decision.overridden)
+                else "direction_reversal_guard"
+                if direction_actual
+                else "physical_slew_guard"
+                if slew_actual
+                else "mppi"
             ),
             "command": [float(commanded_v), float(commanded_omega)],
             "dynamic_candidate_only": bool(
@@ -912,9 +1007,13 @@ def _control_cause_chain(
             float(decision.executed_control.omega),
         ],
         "path_guard_active": bool(guard.get("active", False)),
+        "path_guard_actual_override": path_guard_actual,
         "path_guard_reason": str(guard.get("reason", "none")),
         "path_guard_output": [float(commanded_v), float(commanded_omega)],
         "goal_stop_triggered": bool(goal_stop_triggered),
+        "software_goal_stop_requested": bool(software_goal_stop_requested),
+        "direction_guard_actual_override": direction_actual,
+        "physical_slew_actual_override": slew_actual,
         "heartbeat_target": [
             float(heartbeat_status.get("gateway_target", [0.0, 0.0])[0]),
             float(heartbeat_status.get("gateway_target", [0.0, 0.0])[1]),
@@ -1291,6 +1390,100 @@ def _goal_stop_requested(pose_x, pose_y, goal_x, goal_y, radius_m, enabled):
     distance_m = math.hypot(float(pose_x) - float(goal_x),
                             float(pose_y) - float(goal_y))
     return bool(enabled and distance_m <= float(radius_m)), distance_m
+
+
+class _GoalStopSupervisor:
+    """Separate stop request from physically verified goal arrival.
+
+    A single PC-side integrated pose sample used to both command zero and
+    declare success.  That conflated a software estimate with a hardware fact:
+    delayed feedback could make the estimate enter the radius while the robot
+    was still elsewhere.  This supervisor first requests a terminal stop only
+    after a short spatial confirmation, then requires fresh, near-zero chassis
+    feedback for several consecutive frames before reporting physical arrival.
+    """
+
+    def __init__(self, *, radius_m=0.25, inside_confirm_cycles=2,
+                 stopped_confirm_cycles=4,
+                 speed_threshold_mps=0.08, maximum_feedback_age_s=0.25):
+        self.radius_m = float(radius_m)
+        if self.radius_m <= 0.0:
+            raise ValueError("goal stop radius must be positive")
+        self.inside_confirm_cycles = max(1, int(inside_confirm_cycles))
+        self.stopped_confirm_cycles = max(1, int(stopped_confirm_cycles))
+        self.speed_threshold_mps = float(speed_threshold_mps)
+        self.maximum_feedback_age_s = float(maximum_feedback_age_s)
+        if self.speed_threshold_mps <= 0.0:
+            raise ValueError("goal stop speed threshold must be positive")
+        self.reset()
+
+    def reset(self):
+        self.inside_cycles = 0
+        self.stopped_cycles = 0
+        self.software_stop_requested = False
+        self.physical_goal_verified = False
+        self.last_distance_m = float("inf")
+        self.last_feedback_fresh = False
+
+    def update(self, pose_x, pose_y, goal_x, goal_y, *, feedback_v_mps,
+               feedback_omega_radps=0.0, feedback_age_s=None, enabled):
+        distance_m = math.hypot(
+            float(pose_x) - float(goal_x),
+            float(pose_y) - float(goal_y),
+        )
+        self.last_distance_m = float(distance_m)
+        if not enabled or not math.isfinite(distance_m):
+            self.reset()
+            self.last_distance_m = float(distance_m)
+            return self.state()
+        if distance_m <= self.radius_m:
+            self.inside_cycles += 1
+        else:
+            self.inside_cycles = 0
+            # Do not call a transient odometry glitch a terminal stop.  A
+            # previously requested stop remains latched until feedback proves
+            # the chassis is stationary, which keeps the command fail-closed.
+            self.stopped_cycles = 0
+            self.physical_goal_verified = False
+        if self.inside_cycles >= self.inside_confirm_cycles:
+            self.software_stop_requested = True
+        feedback_fresh = (
+            feedback_age_s is not None
+            and math.isfinite(float(feedback_age_s))
+            and float(feedback_age_s) <= self.maximum_feedback_age_s
+        )
+        self.last_feedback_fresh = bool(feedback_fresh)
+        speed = math.hypot(float(feedback_v_mps), float(feedback_omega_radps))
+        if (
+            self.software_stop_requested
+            and distance_m <= self.radius_m
+            and feedback_fresh
+            and math.isfinite(speed)
+            and abs(float(feedback_v_mps)) <= self.speed_threshold_mps
+            and abs(float(feedback_omega_radps)) <= 0.12
+        ):
+            self.stopped_cycles += 1
+        elif not self.physical_goal_verified:
+            self.stopped_cycles = 0
+        if self.stopped_cycles >= self.stopped_confirm_cycles:
+            self.physical_goal_verified = True
+        return self.state()
+
+    def state(self):
+        return {
+            "distance_m": float(self.last_distance_m),
+            "radius_m": float(self.radius_m),
+            "inside_cycles": int(self.inside_cycles),
+            "stopped_cycles": int(self.stopped_cycles),
+            "software_goal_stop_requested": bool(
+                self.software_stop_requested
+            ),
+            "physical_goal_verified": bool(self.physical_goal_verified),
+            "feedback_fresh": bool(self.last_feedback_fresh),
+            "speed_threshold_mps": float(self.speed_threshold_mps),
+            "inside_confirm_cycles": int(self.inside_confirm_cycles),
+            "stopped_confirm_cycles": int(self.stopped_confirm_cycles),
+        }
 
 
 def _immediate_translation_stop_requested(
@@ -1734,6 +1927,10 @@ class _DynamicPathGuardSupervisor:
                 "single_control_owner": (
                     "scan_guard" if dynamic_owner else "mppi"
                 ),
+                "actual_control_owner": (
+                    "scan_guard" if unconditional_stop else "mppi"
+                ),
+                "dynamic_observation_owner": bool(dynamic_owner),
                 "goal_rejoin_latched": False,
                 "goal_rejoin_observation_only": True,
                 "person_forecast_qualification": str(
@@ -2816,10 +3013,14 @@ def main():
     rows = []
     sequence = 0
     pose_x = pose_y = pose_yaw = 0.0
-    last_pose_update = time.monotonic()
     started = time.monotonic()
     log_path = args.output / "cycles.jsonl"
     goal_stop_triggered = False
+    software_goal_stop_requested = False
+    goal_stop_supervision = {
+        "software_goal_stop_requested": False,
+        "physical_goal_verified": False,
+    }
     last_goal_distance_m = math.hypot(args.goal_x, args.goal_y)
     livox_timeout_count = 0
     livox_timeout_streak = 0
@@ -2832,6 +3033,13 @@ def main():
     chassis_status_recovery_timeout_s = 2.0
     path_guard_supervisor = _DynamicPathGuardSupervisor(
         single_dynamic_authority=True
+    )
+    goal_stop_supervisor = _GoalStopSupervisor(
+        radius_m=(
+            float(args.goal_stop_radius_m)
+            if float(args.goal_stop_radius_m) > 0.0
+            else 0.25
+        )
     )
     # Last command sent through the single physical boundary.  This state is
     # intentionally owned by the deployment loop rather than by MPPI or the
@@ -2848,8 +3056,11 @@ def main():
     heartbeat_stats = {
         "period_s": 0.05,
         "lease_s": 0.28,
+        "decay_s": 0.20,
         "refresh_count": 0,
         "lease_expiry_count": 0,
+        "lease_decay_refresh_count": 0,
+        "lease_hard_stop_refresh_count": 0,
     }
     try:
         with RemoteDeploymentClient(args.pi_host, args.port, args.token) as remote, \
@@ -2974,13 +3185,11 @@ def main():
                         )
                     if status.control_mode == 1:
                         can_mode_confirmed = True
-                pose_now = time.monotonic()
-                pose_dt = max(0.0, min(0.5, pose_now - last_pose_update))
-                pose_x += status.v_mps * math.cos(pose_yaw) * pose_dt
-                pose_y += status.v_mps * math.sin(pose_yaw) * pose_dt
-                pose_yaw += status.omega_radps * pose_dt
-                pose_yaw = math.atan2(math.sin(pose_yaw), math.cos(pose_yaw))
-                last_pose_update = pose_now
+                # Integrate exactly once per Pi status frame on the transport
+                # receive thread.  A delayed feedback sample must not be
+                # multiplied by time spent waiting for the next CUDA solve.
+                odometry = remote.odometry()
+                pose_x, pose_y, pose_yaw = odometry["pose"]
                 observation = RobotObservation(
                     timestamp=scan.timestamp,
                     pose=Pose2D(pose_x, pose_y, pose_yaw),
@@ -3078,20 +3287,46 @@ def main():
                 decision = safety.arbitrate(
                     plan.proposed_control, perceived.guard, planning_context
                 )
-                armed_command = bool(args.publish and len(rows) >= args.warmup_cycles)
-                goal_stop_triggered, last_goal_distance_m = _goal_stop_requested(
-                    pose_x, pose_y, args.goal_x, args.goal_y,
-                    args.goal_stop_radius_m,
+                armed_command = bool(
+                    args.publish and len(rows) >= args.warmup_cycles
+                )
+                goal_stop_supervision = goal_stop_supervisor.update(
+                    pose_x,
+                    pose_y,
+                    args.goal_x,
+                    args.goal_y,
+                    feedback_v_mps=status.v_mps,
+                    feedback_omega_radps=status.omega_radps,
+                    feedback_age_s=(
+                        status.feedback_age_s
+                        if status.feedback_age_s is not None
+                        else status_age_s
+                    ),
                     enabled=(
                         args.goal_stop_radius_m > 0.0
                         and len(rows) >= args.warmup_cycles
                     ),
                 )
+                software_goal_stop_requested = bool(
+                    goal_stop_supervision[
+                        "software_goal_stop_requested"
+                    ]
+                )
+                goal_stop_triggered = bool(
+                    goal_stop_supervision["physical_goal_verified"]
+                )
+                last_goal_distance_m = float(
+                    goal_stop_supervision["distance_m"]
+                )
                 commanded_v = (
-                    0.0 if goal_stop_triggered else decision.executed_control.v
+                    0.0
+                    if software_goal_stop_requested
+                    else decision.executed_control.v
                 )
                 commanded_omega = (
-                    0.0 if goal_stop_triggered else decision.executed_control.omega
+                    0.0
+                    if software_goal_stop_requested
+                    else decision.executed_control.omega
                 )
                 if goal_stop_triggered:
                     armed_command = False
@@ -3227,7 +3462,8 @@ def main():
                         ),
                         hazard_active=hazard_active,
                         immediate_translation_stop=bool(
-                            immediate_translation_stop or goal_stop_triggered
+                            immediate_translation_stop
+                            or software_goal_stop_requested
                         ),
                         immediate_all_stop=bool(goal_stop_triggered),
                     )
@@ -3250,7 +3486,8 @@ def main():
                     commanded_omega,
                     arm=armed_command,
                     immediate_translation_stop=(
-                        immediate_translation_stop or goal_stop_triggered
+                        immediate_translation_stop
+                        or software_goal_stop_requested
                     ),
                     immediate_all_stop=goal_stop_triggered,
                 )
@@ -3298,6 +3535,11 @@ def main():
                     "arm_requested": armed_command,
                     "safety_reason": decision.reason,
                     "goal_distance_m": last_goal_distance_m,
+                    "software_goal_stop_requested": (
+                        software_goal_stop_requested
+                    ),
+                    "physical_goal_verified": goal_stop_triggered,
+                    "goal_stop_supervision": goal_stop_supervision,
                     "goal_stop_triggered": goal_stop_triggered,
                     "path_guard": path_guard,
                     "physical_command_slew_guard": physical_slew_guard,
@@ -3310,6 +3552,9 @@ def main():
                         commanded_v=commanded_v,
                         commanded_omega=commanded_omega,
                         goal_stop_triggered=goal_stop_triggered,
+                        software_goal_stop_requested=(
+                            software_goal_stop_requested
+                        ),
                         status=status,
                         heartbeat=heartbeat,
                         tracker=tracker,
@@ -3326,6 +3571,10 @@ def main():
                     "forecast_count": tracker.get("valid_forecast_count", 0),
                     "remote_status": {
                         "age_s_before_cycle_plan": status_age_s,
+                        "gateway_monotonic_s": status.gateway_monotonic_s,
+                        "feedback_timestamp_s": status.feedback_timestamp_s,
+                        "feedback_age_s": status.feedback_age_s,
+                        "command_timestamp_s": status.command_timestamp_s,
                         "battery_v": status.battery_v,
                         "control_mode": status.control_mode,
                         "fault": status.fault,
@@ -3352,6 +3601,7 @@ def main():
                         "scan_stale_points_dropped": (
                             remote.stale_points_dropped
                         ),
+                        "odometry": odometry,
                     },
                     "local_obstacles": _local_obstacle_diagnostics(
                         perceived.observation.local_obstacles,
@@ -3383,8 +3633,15 @@ def main():
             heartbeat_stats = {
                 "period_s": float(heartbeat.period_s),
                 "lease_s": float(heartbeat.lease_s),
+                "decay_s": float(heartbeat.decay_s),
                 "refresh_count": int(heartbeat.refresh_count),
                 "lease_expiry_count": int(heartbeat.lease_expiry_count),
+                "lease_decay_refresh_count": int(
+                    heartbeat.lease_decay_refresh_count
+                ),
+                "lease_hard_stop_refresh_count": int(
+                    heartbeat.lease_hard_stop_refresh_count
+                ),
             }
     finally:
         summary = {
@@ -3543,11 +3800,21 @@ def main():
             ),
             "goal_stop_radius_m": float(args.goal_stop_radius_m),
             "termination_mode": (
-                "goal_with_watchdog" if args.until_goal else "duration_or_goal"
+                "physically_verified_goal_with_watchdog"
+                if args.until_goal
+                else "duration_or_physically_verified_goal"
             ),
             "watchdog_timeout_s": float(args.duration_s),
+            "software_goal_stop_requested": bool(
+                software_goal_stop_requested
+            ),
+            "physical_goal_verified": bool(goal_stop_triggered),
+            "goal_stop_supervision": goal_stop_supervision,
             "goal_stop_triggered": bool(goal_stop_triggered),
             "final_goal_distance_m": float(last_goal_distance_m),
+            "final_odometry": (
+                rows[-1]["remote_status"]["odometry"] if rows else None
+            ),
         }
         (args.output / "summary.json").write_text(
             json.dumps(summary, indent=2, sort_keys=True), encoding="utf-8"

@@ -131,6 +131,11 @@ class LegacyScanPipeline:
         self.person_track_manager = PersonTrackManager(
             self.config.get("person_tracking", {})
         )
+        self.strict_person_forecast_admission = bool(
+            self.config.get("person_tracking", {}).get(
+                "strict_forecast_admission", False
+            )
+        )
         if (
             self.known_static_track_rejection_enabled
             and self.dynamic_obstacle_tracker is not None
@@ -205,6 +210,77 @@ class LegacyScanPipeline:
             timestamp_s=float(observation.timestamp),
             pose=observation.pose.as_array(),
         )
+
+    def _filter_person_forecasts(self, tracker_diagnostics, forecasts):
+        """Enforce the person-identity forecast publication contract.
+
+        Low-level tracker slots are useful for geometric hard safety, but an
+        ``INVALID`` slot must never reach the probabilistic planner as a
+        directional forecast.  The real-robot profile enables this strict
+        boundary; the default remains compatibility-preserving for simulation
+        and legacy replay callers.
+        """
+
+        values = dict(tracker_diagnostics or {})
+        sequence = self._forecast_sequence(forecasts)
+        if not self.strict_person_forecast_admission:
+            values.setdefault("person_forecast_admission_enabled", False)
+            values.setdefault("person_forecast_rejected_track_indices", ())
+            return values, sequence
+        forecast_indices = tuple(
+            int(value)
+            for value in values.get("forecast_track_indices", ())
+        )
+        allowed_indices = set()
+        for person in values.get("person_tracks", ()) or ():
+            person = dict(person or {})
+            if str(person.get("forecast_qualification", "INVALID")) in {
+                "VALID", "PROVISIONAL"
+            }:
+                allowed_indices.update(
+                    int(value)
+                    for value in person.get("forecast_track_indices", ())
+                )
+        retained = []
+        retained_indices = []
+        rejected_indices = []
+        for track_index, forecast in zip(forecast_indices, sequence):
+            if track_index in allowed_indices:
+                retained_indices.append(track_index)
+                retained.append(forecast)
+            else:
+                rejected_indices.append(track_index)
+        # A malformed index/forecast length is rejected rather than silently
+        # re-indexed to a different person.
+        if len(sequence) != len(forecast_indices):
+            rejected_indices.extend(
+                forecast_indices[len(sequence):]
+            )
+        retained_indices = tuple(retained_indices)
+        rejected_indices = tuple(sorted(set(rejected_indices)))
+        values.update({
+            "person_forecast_admission_enabled": True,
+            "person_forecast_admitted_track_indices": retained_indices,
+            "person_forecast_rejected_track_indices": rejected_indices,
+            "person_forecast_admission_reason": (
+                "admitted"
+                if retained_indices
+                else (
+                    "no_valid_person_identity"
+                    if sequence
+                    else "no_low_level_forecast"
+                )
+            ),
+            "forecast_track_indices": retained_indices,
+            "person_forecast_candidate_track_indices": retained_indices,
+            "valid_forecast_count": len(retained),
+            "forecast_valid": bool(retained),
+            "motion_confirmed": bool(retained),
+            "forecast_unavailable_reason": (
+                "available" if retained else "person_identity_not_qualified"
+            ),
+        })
+        return values, tuple(retained)
 
     @staticmethod
     def _point_segment_distance(points, start, end):
@@ -369,6 +445,11 @@ class LegacyScanPipeline:
                 tracker_values = self._annotate_person_tracking(
                     tracker_values, tracker_forecasts, observation
                 )
+                tracker_values, tracker_forecasts = (
+                    self._filter_person_forecasts(
+                        tracker_values, tracker_forecasts
+                    )
+                )
                 auxiliary["dynamic_obstacle_tracker"] = tracker_values
                 auxiliary["person_tracking"] = {
                     key: value for key, value in tracker_values.items()
@@ -376,14 +457,12 @@ class LegacyScanPipeline:
                 }
                 diagnostics["dynamic_obstacle_tracker"] = tracker_values
                 diagnostics["person_tracking"] = auxiliary["person_tracking"]
-                if tracker_update.forecast is not None:
+                if tracker_forecasts:
                     key = (
                         self.dynamic_obstacle_tracker.config
                         .forecast_auxiliary_key
                     )
-                    auxiliary[key] = self._forecast_sequence(
-                        tracker_update.forecast
-                    )
+                    auxiliary[key] = tracker_forecasts
             return PerceptionResult(
                 replace(observation, auxiliary=auxiliary),
                 {"emergency_stop": False, "reason": "no_scan"},
@@ -607,6 +686,11 @@ class LegacyScanPipeline:
             tracker_diagnostics = self._annotate_person_tracking(
                 tracker_diagnostics, tracker_forecasts, observation
             )
+            tracker_diagnostics, tracker_forecasts = (
+                self._filter_person_forecasts(
+                    tracker_diagnostics, tracker_forecasts
+                )
+            )
             auxiliary["dynamic_obstacle_tracker"] = tracker_diagnostics
             diagnostics["dynamic_obstacle_tracker"] = tracker_diagnostics
             auxiliary["person_tracking"] = {
@@ -720,14 +804,12 @@ class LegacyScanPipeline:
                     flow.valid
                     and abs(flow_angle_error) <= angle_tolerance
                 )
-            if tracker_update.forecast is not None:
+            if tracker_forecasts:
                 key = (
                     self.dynamic_obstacle_tracker.config
                     .forecast_auxiliary_key
                 )
-                auxiliary[key] = self._forecast_sequence(
-                    tracker_update.forecast
-                )
+                auxiliary[key] = tracker_forecasts
         near_body_points = tuple(guard.get("near_body_points", ()))
         known_static_near_body_match = False
         if self.known_static_obstacles and near_body_points:

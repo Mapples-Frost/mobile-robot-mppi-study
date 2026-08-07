@@ -36,6 +36,10 @@ class ScoutCanSnapshot:
     battery_v: Optional[float]
     control_mode: Optional[int]
     fault: Optional[int]
+    # Motion feedback and chassis-status frames have independent freshness.
+    # ``timestamp`` remains the latest CAN frame for backward compatibility;
+    # this field is updated only by MOTION_FEEDBACK_ID.
+    feedback_timestamp: float = 0.0
 
 
 @dataclass(frozen=True)
@@ -75,6 +79,7 @@ class ScoutZeroOnlyCanGuard:
             battery_v=None,
             control_mode=None,
             fault=None,
+            feedback_timestamp=0.0,
         )
         self._running = False
         self._thread = None
@@ -92,15 +97,18 @@ class ScoutZeroOnlyCanGuard:
             current = self._snapshot
             if message.arbitration_id == MOTION_FEEDBACK_ID:
                 v_mps, omega = unpack_scout_motion_feedback(message.data)
+                now = time.monotonic()
                 self._snapshot = ScoutCanSnapshot(
-                    time.monotonic(), v_mps, omega, current.battery_v,
+                    now, v_mps, omega, current.battery_v,
                     current.control_mode, current.fault,
+                    feedback_timestamp=now,
                 )
             elif message.arbitration_id == CHASSIS_STATUS_ID and len(message.data) >= 6:
                 battery = ((message.data[2] << 8) | message.data[3]) / 10.0
                 self._snapshot = ScoutCanSnapshot(
                     time.monotonic(), current.v_mps, current.omega_radps,
                     battery, int(message.data[1]), int(message.data[5]),
+                    feedback_timestamp=current.feedback_timestamp,
                 )
 
     def _run(self):

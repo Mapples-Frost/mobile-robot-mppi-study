@@ -7,6 +7,7 @@ same full-duplex socket that carries bounded control commands back to the Pi.
 
 from dataclasses import dataclass
 import json
+import math
 import queue
 import socket
 import struct
@@ -92,6 +93,14 @@ class RemoteStatus:
     target_omega_radps: float = 0.0
     applied_v_mps: float = 0.0
     applied_omega_radps: float = 0.0
+    # Monotonic timestamps originate on the Pi.  They are optional so older
+    # gateways remain readable, but when present they let the PC integrate
+    # execution odometry without multiplying a delayed feedback sample by a
+    # wall-clock gap.
+    gateway_monotonic_s: Optional[float] = None
+    feedback_timestamp_s: Optional[float] = None
+    feedback_age_s: Optional[float] = None
+    command_timestamp_s: Optional[float] = None
 
 
 def _drain_latest(queue_value):
@@ -155,6 +164,16 @@ class RemoteDeploymentClient:
         self.backlog_packets_preserved = 0
         self.stale_points_dropped = 0
         self.status_packets_received = 0
+        self._odometry_lock = threading.Lock()
+        self._odometry_pose = np.zeros(3, dtype=np.float64)
+        self._odometry_last_gateway_s = None
+        self._odometry_last_feedback_s = None
+        self._odometry_last_dt_s = 0.0
+        self._odometry_updates = 0
+        self._odometry_gap_count = 0
+        self._odometry_rejected_nonmonotonic = 0
+        self._odometry_feedback_stale_count = 0
+        self._odometry_max_gap_s = 0.0
         self._last_frame_timestamp_ns = None
         self._scan_history = None
         send_frame(self.socket, FRAME_HELLO, encode_json({
@@ -225,9 +244,30 @@ class RemoteDeploymentClient:
                         applied_omega_radps=float(
                             data.get("applied_omega_radps", 0.0)
                         ),
+                        gateway_monotonic_s=(
+                            None
+                            if data.get("gateway_monotonic_s") is None
+                            else float(data["gateway_monotonic_s"])
+                        ),
+                        feedback_timestamp_s=(
+                            None
+                            if data.get("feedback_timestamp_s") is None
+                            else float(data["feedback_timestamp_s"])
+                        ),
+                        feedback_age_s=(
+                            None
+                            if data.get("feedback_age_s") is None
+                            else float(data["feedback_age_s"])
+                        ),
+                        command_timestamp_s=(
+                            None
+                            if data.get("command_timestamp_s") is None
+                            else float(data["command_timestamp_s"])
+                        ),
                     )
                     with self._status_lock:
                         self._status = status
+                    self._integrate_status_odometry(status)
                     self.status_packets_received += 1
         except Exception as exc:
             if self._running:
@@ -238,6 +278,89 @@ class RemoteDeploymentClient:
     def status(self) -> Optional[RemoteStatus]:
         with self._status_lock:
             return self._status
+
+    def _integrate_status_odometry(self, status: RemoteStatus) -> None:
+        """Integrate measured chassis feedback on the receive thread.
+
+        The old deployment integrated ``status.v_mps`` in the planning thread
+        using the time spent waiting for the next scan/solve.  A delayed status
+        therefore became a fictitious burst of motion, including during a
+        watchdog stop.  Pi monotonic timestamps and a bounded gap make the
+        odometry conservative and execution-side: stale samples never receive
+        extra distance merely because the PC was busy.
+        """
+
+        source_time = status.gateway_monotonic_s
+        if source_time is None or not np.isfinite(float(source_time)):
+            source_time = status.received_monotonic
+        source_time = float(source_time)
+        feedback_age = status.feedback_age_s
+        with self._odometry_lock:
+            previous = self._odometry_last_gateway_s
+            self._odometry_last_gateway_s = source_time
+            if previous is None:
+                self._odometry_last_feedback_s = status.feedback_timestamp_s
+                return
+            dt_s = source_time - float(previous)
+            self._odometry_max_gap_s = max(
+                self._odometry_max_gap_s, max(0.0, dt_s)
+            )
+            if dt_s <= 0.0:
+                self._odometry_rejected_nonmonotonic += 1
+                return
+            # Status is nominally 20 Hz.  A larger gap is a transport/sensor
+            # freshness fault, not permission to extrapolate a parked chassis.
+            if dt_s > 0.25:
+                self._odometry_gap_count += 1
+                self._odometry_last_feedback_s = status.feedback_timestamp_s
+                return
+            if feedback_age is not None and (
+                not np.isfinite(float(feedback_age))
+                or float(feedback_age) > 0.25
+            ):
+                velocity = 0.0
+                omega = 0.0
+                self._odometry_feedback_stale_count += 1
+            else:
+                velocity = float(status.v_mps)
+                omega = float(status.omega_radps)
+                if not np.isfinite(velocity) or not np.isfinite(omega):
+                    velocity = 0.0
+                    omega = 0.0
+                    self._odometry_feedback_stale_count += 1
+            theta = float(self._odometry_pose[2])
+            self._odometry_pose[0] += velocity * math.cos(theta) * dt_s
+            self._odometry_pose[1] += velocity * math.sin(theta) * dt_s
+            self._odometry_pose[2] += omega * dt_s
+            self._odometry_pose[2] = math.atan2(
+                math.sin(float(self._odometry_pose[2])),
+                math.cos(float(self._odometry_pose[2])),
+            )
+            self._odometry_last_dt_s = float(dt_s)
+            self._odometry_last_feedback_s = status.feedback_timestamp_s
+            self._odometry_updates += 1
+
+    def odometry(self):
+        """Return a snapshot of receive-thread execution odometry."""
+
+        with self._odometry_lock:
+            return {
+                "pose": tuple(float(value) for value in self._odometry_pose),
+                "updates": int(self._odometry_updates),
+                "gap_count": int(self._odometry_gap_count),
+                "rejected_nonmonotonic": int(
+                    self._odometry_rejected_nonmonotonic
+                ),
+                "feedback_stale_count": int(
+                    self._odometry_feedback_stale_count
+                ),
+                "last_dt_s": float(self._odometry_last_dt_s),
+                "max_gap_s": float(self._odometry_max_gap_s),
+                "trusted": bool(
+                    self._odometry_updates > 0
+                    and self._odometry_gap_count == 0
+                ),
+            }
 
     def wait_for_status(self, timeout_s: float = 3.0) -> RemoteStatus:
         deadline = time.monotonic() + float(timeout_s)

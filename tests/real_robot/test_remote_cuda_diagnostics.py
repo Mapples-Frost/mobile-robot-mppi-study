@@ -1,15 +1,23 @@
 import json
+import threading
 
 import numpy as np
+import pytest
 
 from deploy.raspberry_pi5_scout.run_remote_cuda_full import (
     _AsyncJsonlWriter,
+    _GoalStopSupervisor,
     _goal_stop_requested,
     _planner_diagnostic_trace,
     _real_robot_diagnostic_payload,
     _safety_diagnostic_trace,
     _select_runtime_controller,
     _wait_for_newer_chassis_status,
+)
+from mobile_robot_mppi.perception.legacy_pipeline import LegacyScanPipeline
+from mobile_robot_mppi.real_robot.remote_transport import (
+    RemoteDeploymentClient,
+    RemoteStatus,
 )
 from deploy.raspberry_pi5_scout.run_silent_full import _install_mapless_tracker
 from deploy.raspberry_pi5_scout.run_silent_full import _json_value
@@ -128,6 +136,124 @@ def test_goal_stop_is_opt_in_and_uses_point_distance():
     assert requested
     assert distance < 0.25
     assert not disabled
+
+
+def test_goal_stop_requires_spatial_and_feedback_confirmation():
+    supervisor = _GoalStopSupervisor(
+        radius_m=0.25,
+        inside_confirm_cycles=2,
+        stopped_confirm_cycles=3,
+    )
+    first = supervisor.update(
+        0.0, 0.0, 0.2, 0.0,
+        feedback_v_mps=0.0,
+        feedback_omega_radps=0.0,
+        feedback_age_s=0.05,
+        enabled=True,
+    )
+    assert not first["software_goal_stop_requested"]
+    second = supervisor.update(
+        0.0, 0.0, 0.2, 0.0,
+        feedback_v_mps=0.45,
+        feedback_omega_radps=0.0,
+        feedback_age_s=0.05,
+        enabled=True,
+    )
+    assert second["software_goal_stop_requested"]
+    assert not second["physical_goal_verified"]
+    for _ in range(3):
+        state = supervisor.update(
+            0.0, 0.0, 0.2, 0.0,
+            feedback_v_mps=0.0,
+            feedback_omega_radps=0.0,
+            feedback_age_s=0.05,
+            enabled=True,
+        )
+    assert state["physical_goal_verified"]
+
+
+def test_strict_person_forecast_admission_rejects_invalid_identity():
+    pipeline = object.__new__(LegacyScanPipeline)
+    pipeline.strict_person_forecast_admission = True
+    valid_forecast = object()
+    invalid_forecast = object()
+    diagnostics, retained = pipeline._filter_person_forecasts(
+        {
+            "forecast_track_indices": (4, 9),
+            "person_tracks": (
+                {
+                    "person_id": 1,
+                    "forecast_qualification": "VALID",
+                    "forecast_track_indices": (4,),
+                },
+                {
+                    "person_id": 2,
+                    "forecast_qualification": "INVALID",
+                    "forecast_track_indices": (9,),
+                },
+            ),
+        },
+        (valid_forecast, invalid_forecast),
+    )
+    assert retained == (valid_forecast,)
+    assert diagnostics["valid_forecast_count"] == 1
+    assert diagnostics["forecast_track_indices"] == (4,)
+    assert diagnostics["person_forecast_rejected_track_indices"] == (9,)
+
+
+def test_receive_odometry_rejects_delayed_status_gap():
+    remote = object.__new__(RemoteDeploymentClient)
+    remote._odometry_lock = threading.Lock()
+    remote._odometry_pose = np.zeros(3, dtype=np.float64)
+    remote._odometry_last_gateway_s = None
+    remote._odometry_last_feedback_s = None
+    remote._odometry_last_dt_s = 0.0
+    remote._odometry_updates = 0
+    remote._odometry_gap_count = 0
+    remote._odometry_rejected_nonmonotonic = 0
+    remote._odometry_feedback_stale_count = 0
+    remote._odometry_max_gap_s = 0.0
+    remote._integrate_status_odometry(RemoteStatus(
+        received_monotonic=10.0,
+        v_mps=0.5,
+        omega_radps=0.0,
+        battery_v=24.0,
+        control_mode=1,
+        fault=0,
+        armed=True,
+        last_sequence=1,
+        gateway_monotonic_s=100.0,
+        feedback_age_s=0.02,
+    ))
+    remote._integrate_status_odometry(RemoteStatus(
+        received_monotonic=10.05,
+        v_mps=0.5,
+        omega_radps=0.0,
+        battery_v=24.0,
+        control_mode=1,
+        fault=0,
+        armed=True,
+        last_sequence=2,
+        gateway_monotonic_s=100.05,
+        feedback_age_s=0.02,
+    ))
+    before_gap = remote.odometry()["pose"][0]
+    assert before_gap == pytest.approx(0.025)
+    remote._integrate_status_odometry(RemoteStatus(
+        received_monotonic=10.70,
+        v_mps=0.5,
+        omega_radps=0.0,
+        battery_v=24.0,
+        control_mode=1,
+        fault=0,
+        armed=True,
+        last_sequence=3,
+        gateway_monotonic_s=100.70,
+        feedback_age_s=0.02,
+    ))
+    after_gap = remote.odometry()
+    assert after_gap["pose"][0] == pytest.approx(before_gap)
+    assert after_gap["gap_count"] == 1
 
 
 def test_stale_status_recovery_accepts_newer_gateway_sample():

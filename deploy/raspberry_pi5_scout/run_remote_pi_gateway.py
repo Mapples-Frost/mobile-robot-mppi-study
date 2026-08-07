@@ -239,8 +239,19 @@ def main():
                         )
                         running.clear()
                 send_frame(client, FRAME_STATUS, encode_json({
+                    "gateway_monotonic_s": now,
                     "v_mps": snapshot.v_mps,
                     "omega_radps": snapshot.omega_radps,
+                    "feedback_timestamp_s": (
+                        None
+                        if snapshot.feedback_timestamp <= 0.0
+                        else snapshot.feedback_timestamp
+                    ),
+                    "feedback_age_s": (
+                        None
+                        if snapshot.feedback_timestamp <= 0.0
+                        else max(0.0, now - snapshot.feedback_timestamp)
+                    ),
                     "battery_v": snapshot.battery_v,
                     "control_mode": snapshot.control_mode,
                     "fault": snapshot.fault,
@@ -250,6 +261,7 @@ def main():
                     "target_omega_radps": command_snapshot.target_omega_radps,
                     "applied_v_mps": command_snapshot.applied_v_mps,
                     "applied_omega_radps": command_snapshot.applied_omega_radps,
+                    "command_timestamp_s": command_snapshot.timestamp,
                 }), send_lock)
                 status_packets_sent += 1
                 next_status = now + 0.05

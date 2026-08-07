@@ -677,6 +677,10 @@ def build_pi5_full_config(
     # qualifies forecasts without granting any command authority.
     config["perception"]["person_tracking"] = {
         "enabled": True,
+        # A low-level slot may still feed geometric hard safety, but only a
+        # VALID/PROVISIONAL person identity may publish a directional forecast
+        # to the probabilistic planner on the physical robot.
+        "strict_forecast_admission": True,
         "maximum_gap_s": 0.65,
         "association_gate_m": 0.85,
         "fusion_position_m": 0.58,

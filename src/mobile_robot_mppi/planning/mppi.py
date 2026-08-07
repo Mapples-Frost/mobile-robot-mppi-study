@@ -188,6 +188,14 @@ class MppiConfig:
     probabilistic_obstacle_emergency_max_rejected_jump_fraction: float = 1.0
     probabilistic_obstacle_emergency_require_scan_quality: bool = False
     probabilistic_obstacle_emergency_candidate_slew_enabled: bool = False
+    # Emergency lattice members are normally scored with the same MPPI batch.
+    # Historical replay profiles may retain the old direct fallback, while the
+    # physical profile explicitly disables that second final-control writer.
+    probabilistic_obstacle_emergency_candidate_direct_fallback_enabled: bool = True
+    # A reverse first command must remain prediction-feasible even when the
+    # generic risk fallback has no jointly feasible sample.  The physical
+    # profile combines this with a raw-scan rear-sector veto downstream.
+    probabilistic_obstacle_reverse_candidate_filter_enabled: bool = False
     probabilistic_obstacle_emergency_forecast_corroboration_enabled: bool = False
     probabilistic_obstacle_front_obstacle_forward_turn_enabled: bool = False
     probabilistic_obstacle_counterflow_escape_enabled: bool = False
@@ -1195,6 +1203,18 @@ class MppiConfig:
             probabilistic_obstacle_emergency_candidate_slew_enabled=bool(
                 values.get(
                     "probabilistic_obstacle_emergency_candidate_slew_enabled",
+                    False,
+                )
+            ),
+            probabilistic_obstacle_emergency_candidate_direct_fallback_enabled=bool(
+                values.get(
+                    "probabilistic_obstacle_emergency_candidate_direct_fallback_enabled",
+                    True,
+                )
+            ),
+            probabilistic_obstacle_reverse_candidate_filter_enabled=bool(
+                values.get(
+                    "probabilistic_obstacle_reverse_candidate_filter_enabled",
                     False,
                 )
             ),
@@ -6330,6 +6350,11 @@ class MppiController:
                 "probabilistic_obstacle_stopping_feasibility_enabled": False,
                 "probabilistic_obstacle_emergency_candidate_count": 0,
                 "probabilistic_obstacle_emergency_candidate_selected": False,
+                "probabilistic_obstacle_emergency_candidate_direct_fallback_enabled": bool(
+                    self.config
+                    .probabilistic_obstacle_emergency_candidate_direct_fallback_enabled
+                ),
+                "probabilistic_obstacle_emergency_candidate_direct_fallback_suppressed": False,
                 "probabilistic_obstacle_temporal_emergency_triggered": False,
                 "probabilistic_obstacle_temporal_emergency_vetted": False,
                 "probabilistic_obstacle_terminal_intent_safe_stop_selected": False,
@@ -6961,6 +6986,11 @@ class MppiController:
             )
             and not traversal_selected
             and not terminal_intent_safe_stop_selected
+            and (
+                not temporal_emergency_triggered
+                or self.config
+                .probabilistic_obstacle_emergency_candidate_direct_fallback_enabled
+            )
             and hard_action in (
                 "active_avoidance",
                 "active_avoidance_motion",
@@ -7818,6 +7848,15 @@ class MppiController:
             "probabilistic_obstacle_emergency_candidate_selected": bool(
                 fallback_candidate_index >= 0
                 and emergency_mask[fallback_candidate_index]
+            ),
+            "probabilistic_obstacle_emergency_candidate_direct_fallback_enabled": bool(
+                self.config
+                .probabilistic_obstacle_emergency_candidate_direct_fallback_enabled
+            ),
+            "probabilistic_obstacle_emergency_candidate_direct_fallback_suppressed": bool(
+                temporal_emergency_triggered
+                and not self.config
+                .probabilistic_obstacle_emergency_candidate_direct_fallback_enabled
             ),
             "probabilistic_obstacle_emergency_candidate_trace": (
                 emergency_candidate_trace
@@ -8916,9 +8955,32 @@ class MppiController:
                     trajectories, probabilistic_obstacles
                 )
             risk_candidate_feasible = ~candidate_risk.hard_violation
+        reverse_candidate_mask = np.zeros(
+            self.config.num_samples, dtype=bool
+        )
+        reverse_candidate_prediction_feasible = np.ones(
+            self.config.num_samples, dtype=bool
+        )
+        if (
+            self.config
+            .probabilistic_obstacle_reverse_candidate_filter_enabled
+            and "v_cmd" in self.action_spec.names
+        ):
+            reverse_v_index = self.action_spec.index("v_cmd")
+            reverse_candidate_mask = (
+                samples[:, 0, reverse_v_index] < -1.0e-9
+            )
+            # When forecasts are available, a reverse command never regains
+            # eligibility through the generic "no jointly feasible" fallback
+            # if its predicted trajectory is a hard violation.  Static scan
+            # geometry is already represented by static_candidate_feasible.
+            reverse_candidate_prediction_feasible = (
+                ~reverse_candidate_mask | risk_candidate_feasible
+            )
         candidate_eligible = (
             boundary_candidate_feasible
             & static_candidate_feasible
+            & reverse_candidate_prediction_feasible
         )
         jointly_feasible = (
             candidate_eligible & risk_candidate_feasible
@@ -9147,6 +9209,19 @@ class MppiController:
             "optimizer_emergency_candidate_count": int(
                 np.sum(emergency_candidate_mask)
             ),
+            "optimizer_reverse_candidate_filter_enabled": bool(
+                self.config
+                .probabilistic_obstacle_reverse_candidate_filter_enabled
+            ),
+            "optimizer_reverse_candidate_count": int(
+                np.sum(reverse_candidate_mask)
+            ),
+            "optimizer_reverse_candidate_prediction_rejected_count": int(
+                np.sum(
+                    reverse_candidate_mask
+                    & ~reverse_candidate_prediction_feasible
+                )
+            ),
             "optimizer_emergency_candidate_selected_index": -1,
             "optimizer_fallback_used": False,
             "optimizer_fallback_kind": "none",
@@ -9215,6 +9290,19 @@ class MppiController:
                 ),
                 "optimizer_emergency_candidate_count": int(
                     np.sum(emergency_candidate_mask)
+                ),
+                "optimizer_reverse_candidate_filter_enabled": bool(
+                    self.config
+                    .probabilistic_obstacle_reverse_candidate_filter_enabled
+                ),
+                "optimizer_reverse_candidate_count": int(
+                    np.sum(reverse_candidate_mask)
+                ),
+                "optimizer_reverse_candidate_prediction_rejected_count": int(
+                    np.sum(
+                        reverse_candidate_mask
+                        & ~reverse_candidate_prediction_feasible
+                    )
                 ),
                 "optimizer_emergency_candidate_selected_index": -1,
                 "optimizer_fallback_used": False,
@@ -9536,6 +9624,20 @@ class MppiController:
                 ),
                 "probabilistic_obstacle_emergency_candidate_count": int(
                     np.sum(emergency_candidate_mask)
+                ),
+                "probabilistic_obstacle_emergency_candidate_direct_fallback_enabled": bool(
+                    self.config
+                    .probabilistic_obstacle_emergency_candidate_direct_fallback_enabled
+                ),
+                "probabilistic_obstacle_emergency_candidate_direct_fallback_suppressed": bool(
+                    emergency_context.get("triggered", False)
+                    and not self.config
+                    .probabilistic_obstacle_emergency_candidate_direct_fallback_enabled
+                ),
+                "probabilistic_obstacle_emergency_candidate_mppi_weight_mass": float(
+                    np.sum(weights[emergency_candidate_mask])
+                    if emergency_candidate_mask.any()
+                    else 0.0
                 ),
                 "probabilistic_obstacle_emergency_candidate_slew_enabled": bool(
                     self.config

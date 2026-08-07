@@ -14,7 +14,10 @@ from mobile_robot_mppi.obstacles.online_tracking import (
 from mobile_robot_mppi.obstacles.multi_online_tracking import (
     MultiObstacleChangeAwareTracker,
 )
-from mobile_robot_mppi.perception.scan_flow import RobustScanFlowEstimator
+from mobile_robot_mppi.perception.scan_flow import (
+    RobustScanFlowEstimator,
+    TemporalSafetyHysteresis,
+)
 from mobile_robot_mppi.real_robot.person_track_manager import PersonTrackManager
 
 
@@ -56,8 +59,20 @@ class LegacyScanPipeline:
             raise ValueError(
                 "local_obstacle_hard_filter_max_obstacles must be positive"
             )
+        temporal_scan_config = self.config.get("temporal_scan_guard", {})
         self.temporal_scan_flow = RobustScanFlowEstimator(
-            self.config.get("temporal_scan_guard", {})
+            temporal_scan_config
+        )
+        self.temporal_safety_hysteresis = TemporalSafetyHysteresis(
+            enabled=temporal_scan_config.get(
+                "safety_state_hysteresis_enabled", False
+            ),
+            release_clear_frames=temporal_scan_config.get(
+                "safety_release_clear_frames", 2
+            ),
+        )
+        self._temporal_safety_last_slow_scale = float(
+            temporal_scan_config.get("safety_slow_scale", 0.25)
         )
         tracker_config = self.config.get(
             "dynamic_obstacle_tracker", {}
@@ -131,6 +146,11 @@ class LegacyScanPipeline:
         self.person_track_manager = PersonTrackManager(
             self.config.get("person_tracking", {})
         )
+        self.human_point_cloud_auxiliary_key = str(
+            self.config.get("person_tracking", {})
+            .get("point_cloud", {})
+            .get("auxiliary_key", "human_point_cloud_base")
+        )
         self.strict_person_forecast_admission = bool(
             self.config.get("person_tracking", {}).get(
                 "strict_forecast_admission", False
@@ -192,6 +212,10 @@ class LegacyScanPipeline:
         """Reset episode-local temporal state without touching legacy assets."""
 
         self.temporal_scan_flow.reset()
+        self.temporal_safety_hysteresis.reset()
+        self._temporal_safety_last_slow_scale = float(
+            self.temporal_scan_flow.config.safety_slow_scale
+        )
         if self.dynamic_obstacle_tracker is not None:
             self.dynamic_obstacle_tracker.reset()
         self.person_track_manager.reset()
@@ -463,6 +487,7 @@ class LegacyScanPipeline:
                         .forecast_auxiliary_key
                     )
                     auxiliary[key] = tracker_forecasts
+            auxiliary.pop(self.human_point_cloud_auxiliary_key, None)
             return PerceptionResult(
                 replace(observation, auxiliary=auxiliary),
                 {"emergency_stop": False, "reason": "no_scan"},
@@ -540,35 +565,59 @@ class LegacyScanPipeline:
         guard["temporal_scan_slowdown_quality_required"] = (
             require_quality_for_slowdown
         )
+        raw_temporal_safety_state = "clear"
+        raw_temporal_slow_scale = 1.0
         if flow_cfg.safety_enabled and flow.valid:
             if (
                 flow.ttc_s <= flow_cfg.safety_hard_stop_ttc_s
                 and flow_safety_quality_ok
-                and not bool(guard.get("emergency_stop", False))
             ):
-                guard["emergency_stop"] = True
-                guard["should_slow_down"] = False
-                guard["slow_scale"] = 0.0
-                guard["reason"] = "temporal_collision_risk"
+                raw_temporal_safety_state = "stop"
             elif (
                 flow.ttc_s <= flow_cfg.safety_slow_ttc_s
-                and not bool(guard.get("emergency_stop", False))
-                and str(guard.get("reason", "front_clear"))
-                != "front_soft_block"
                 and (
                     not require_quality_for_slowdown
                     or flow_safety_quality_ok
                 )
             ):
-                legacy_scale = float(guard.get("slow_scale", 1.0))
-                temporal_scale = min(
-                    legacy_scale,
-                    flow_cfg.safety_slowdown_scale(flow.ttc_s),
+                raw_temporal_safety_state = "slow"
+                raw_temporal_slow_scale = flow_cfg.safety_slowdown_scale(
+                    flow.ttc_s
                 )
-                if temporal_scale < legacy_scale - 1e-12:
-                    guard["reason"] = "temporal_slowdown"
-                guard["should_slow_down"] = True
-                guard["slow_scale"] = temporal_scale
+                self._temporal_safety_last_slow_scale = float(
+                    raw_temporal_slow_scale
+                )
+        temporal_safety_state, temporal_safety_diagnostics = (
+            self.temporal_safety_hysteresis.update(
+                raw_temporal_safety_state
+            )
+        )
+        guard.update(temporal_safety_diagnostics)
+        if (
+            temporal_safety_state == "stop"
+            and not bool(guard.get("emergency_stop", False))
+        ):
+            guard["emergency_stop"] = True
+            guard["should_slow_down"] = False
+            guard["slow_scale"] = 0.0
+            guard["reason"] = "temporal_collision_risk"
+        elif (
+            temporal_safety_state == "slow"
+            and not bool(guard.get("emergency_stop", False))
+            and str(guard.get("reason", "front_clear"))
+            != "front_soft_block"
+        ):
+            legacy_scale = float(guard.get("slow_scale", 1.0))
+            temporal_scale = min(
+                legacy_scale,
+                raw_temporal_slow_scale
+                if raw_temporal_safety_state == "slow"
+                else self._temporal_safety_last_slow_scale,
+            )
+            if temporal_scale < legacy_scale - 1e-12:
+                guard["reason"] = "temporal_slowdown"
+            guard["should_slow_down"] = True
+            guard["slow_scale"] = temporal_scale
         # Safety continues to inspect the raw scan above.  The planner already
         # receives exact injected static geometry, so its scan-derived local
         # obstacle set must contain only residual (potentially dynamic)
@@ -810,6 +859,10 @@ class LegacyScanPipeline:
                     .forecast_auxiliary_key
                 )
                 auxiliary[key] = tracker_forecasts
+        # The full cloud has served its perception-only purpose.  Do not carry
+        # hundreds of thousands of points through the CUDA planner or async
+        # diagnostic writer.
+        auxiliary.pop(self.human_point_cloud_auxiliary_key, None)
         near_body_points = tuple(guard.get("near_body_points", ()))
         known_static_near_body_match = False
         if self.known_static_obstacles and near_body_points:
@@ -880,6 +933,18 @@ class LegacyScanPipeline:
                 <= flow_cfg.safety_max_rejected_jump_fraction
             ),
             "temporal_scan_held": bool(flow.held),
+            "temporal_scan_safety_raw_state": str(
+                guard.get("temporal_scan_safety_raw_state", "clear")
+            ),
+            "temporal_scan_safety_state": str(
+                guard.get("temporal_scan_safety_state", "clear")
+            ),
+            "temporal_scan_safety_release_pending": bool(
+                guard.get("temporal_scan_safety_release_pending", False)
+            ),
+            "temporal_scan_safety_clear_streak": int(
+                guard.get("temporal_scan_safety_clear_streak", 0)
+            ),
             "temporal_scan_safety_hard_stop_ttc_s": float(
                 flow_cfg.safety_hard_stop_ttc_s
             ),

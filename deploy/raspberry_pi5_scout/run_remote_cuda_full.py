@@ -3120,7 +3120,9 @@ def main():
                     motion_status.v_mps,
                     motion_status.omega_radps,
                 )
-                tracker_scan, _ = adapter.convert(tracker_frame)
+                tracker_scan, _, human_points_base = (
+                    adapter.convert_with_points(tracker_frame)
+                )
                 timings["scan"].append(1000.0 * (time.perf_counter() - stage))
                 status = remote.status()
                 # CUDA Graph capture makes the first Full Proposed solve an
@@ -3199,6 +3201,10 @@ def main():
                         "real_robot": True,
                         "simulator_truth_used": False,
                         "motion_compensated_tracker_scan": tracker_scan,
+                        # Full-height, deskewed geometry is consumed only by
+                        # person qualification.  The independent raw 2-D scan
+                        # remains the hard-safety source.
+                        "human_point_cloud_base": human_points_base,
                     },
                 )
                 stage = time.perf_counter()

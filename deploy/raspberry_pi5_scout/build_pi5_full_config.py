@@ -232,9 +232,11 @@ def build_pi5_full_config(
     """
 
     root = Path(project_root).resolve()
-    config = deepcopy(build_complex_full_config(
-        "chapter2_admissible", int(seed), arm="B11_full_proposed"
-    ))
+    # The selected map contributes only the frozen B11 algorithm block; its
+    # scene and task are discarded below.  Use the repository's tracked B11
+    # entry point so physical deployment does not depend on paper-only map or
+    # multi-arm extensions living in an uncommitted research worktree.
+    config = deepcopy(build_complex_full_config("chapter2", int(seed)))
     config["experiment"].update({
         "name": "pi5_scout_mapfree_full_proposed_shadow",
         "seed": int(seed),
@@ -566,6 +568,11 @@ def build_pi5_full_config(
             "safety_max_rejected_jump_fraction": 0.60,
             "ego_motion_compensation_enabled": True,
             "safety_continuous_slowdown_enabled": True,
+            # Risk escalation is immediate.  STOP->SLOW and SLOW->CLEAR need
+            # two consecutive lower-risk frames so one noisy TTC sample cannot
+            # alternate the chassis between moving and stopping.
+            "safety_state_hysteresis_enabled": True,
+            "safety_release_clear_frames": 2,
         })
         physical_limits = {
             "max_v_mps": max_v_mps,
@@ -689,6 +696,24 @@ def build_pi5_full_config(
         "maximum_forecast_age_s": 0.45,
         "stale_hold_cycles": 4,
         "minimum_motion_speed_mps": 0.10,
+        # Preserve full-height Mid-360 geometry as a qualification side
+        # channel.  It cannot create a forecast or chassis command without
+        # the existing causal motion and CA-IMM gates.
+        "point_cloud": {
+            "enabled": True,
+            "auxiliary_key": "human_point_cloud_base",
+            "maximum_range_m": 5.0,
+            "association_radius_m": 0.62,
+            "minimum_points": 18,
+            "minimum_points_per_height_band": 4,
+            "minimum_occupied_height_bands": 2,
+            "minimum_vertical_span_m": 0.45,
+            "maximum_horizontal_extent_m": 0.95,
+            "minimum_height_m": 0.08,
+            "lower_band_maximum_m": 0.55,
+            "middle_band_maximum_m": 1.20,
+            "maximum_height_m": 1.90,
+        },
         "forecast_gate": {
             "enabled": True,
             "minimum_streak": 2,
@@ -724,6 +749,8 @@ def build_pi5_full_config(
             "simulator_truth_used": False,
             "static_map_used": False,
             "person_identity_layer": True,
+            "deskewed_3d_human_shape_evidence": True,
+            "point_cloud_command_authority": False,
             "forecast_qualification": (
                 "VALID|PROVISIONAL|STALE|INVALID"
             ),
@@ -763,6 +790,23 @@ def enable_single_final_control_authority(config):
 
     scan_guard = config["perception"]["scan_guard"]
     scan_guard["dynamic_candidate_only"] = True
+    # Emergency maneuvers remain deterministic members of the MPPI lattice,
+    # but may no longer bypass the weighted optimizer as a second final
+    # command writer.  The default remains compatibility-preserving for old
+    # simulation and replay profiles.
+    planner = config["planner"]
+    planner[
+        "probabilistic_obstacle_emergency_candidate_direct_fallback_enabled"
+    ] = False
+    # If the normal risk fallback has no jointly feasible candidate, a
+    # forecast-hard-violating reverse proposal must still stay ineligible.
+    # Current rear geometry is independently checked at the final scan guard.
+    planner[
+        "probabilistic_obstacle_reverse_candidate_filter_enabled"
+    ] = True
+    scan_guard["reverse_motion_guard_enabled"] = True
+    scan_guard["reverse_motion_guard_rear_sector_deg"] = 120.0
+    scan_guard["reverse_motion_guard_min_rear_range_m"] = 0.80
     config.setdefault("real_robot_deployment", {})["single_final_control_authority"] = True
     config["real_robot_deployment"]["dynamic_candidate_policy"] = (
         "planner_candidate_only"
@@ -772,6 +816,9 @@ def enable_single_final_control_authority(config):
     )
     config["real_robot_deployment"]["hard_safety_policy"] = (
         "veto_or_stop_only"
+    )
+    config["real_robot_deployment"]["reverse_motion_policy"] = (
+        "mppi_forecast_filter_plus_raw_rear_veto"
     )
     return config
 

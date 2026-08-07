@@ -48,6 +48,18 @@ class ScanGuardArbiter:
         self.directional_motion_minimum_speed_mps = float(
             self.config.get("directional_motion_minimum_speed_mps", 0.02)
         )
+        # Reverse is a planner decision, never a safety-generated maneuver.
+        # The final physical boundary nevertheless requires positive raw-scan
+        # evidence that the swept rear sector is open before executing it.
+        self.reverse_motion_guard_enabled = bool(
+            self.config.get("reverse_motion_guard_enabled", False)
+        )
+        self.reverse_motion_guard_rear_sector_deg = float(
+            self.config.get("reverse_motion_guard_rear_sector_deg", 120.0)
+        )
+        self.reverse_motion_guard_min_rear_range_m = float(
+            self.config.get("reverse_motion_guard_min_rear_range_m", 0.80)
+        )
         # A rear-only close approach should make the robot leave the person,
         # even when the stochastic planner happens to propose reverse on that
         # cycle.  This synthesis is opt-in and requires a freshly observed
@@ -128,6 +140,8 @@ class ScanGuardArbiter:
             or self.rear_pass_through_min_turn_omega_radps
             > self.rear_pass_through_max_omega_radps
             or self.rear_pass_through_direction_release_steps < 1
+            or not 0.0 < self.reverse_motion_guard_rear_sector_deg <= 180.0
+            or self.reverse_motion_guard_min_rear_range_m <= 0.0
         ):
             raise ValueError("directional motion guard parameters are invalid")
         # Deployment ablations may hand all non-critical decisions back to
@@ -3965,6 +3979,24 @@ class ScanGuardArbiter:
             else:
                 self._dynamic_escape_zero_translation_turn_steps = 0
 
+        reverse_motion_guard_rear_clear = False
+        reverse_motion_guard_blocked = False
+        if (
+            self.reverse_motion_guard_enabled
+            and "v_cmd" in self.action_spec.names
+        ):
+            v_index = self.action_spec.index("v_cmd")
+            if float(values[v_index]) < -1.0e-9:
+                reverse_motion_guard_rear_clear = self._rear_sector_clear(
+                    guard_result,
+                    self.reverse_motion_guard_rear_sector_deg,
+                    self.reverse_motion_guard_min_rear_range_m,
+                )
+                if not reverse_motion_guard_rear_clear:
+                    values[v_index] = 0.0
+                    reverse_motion_guard_blocked = True
+                    reason = "reverse_motion_guard"
+
         executed = ControlCommand(values, proposed.timestamp, "safety_arbitration")
         overridden = not np.allclose(executed.values, proposed.values, rtol=0.0, atol=1e-12)
         diagnostics = dict(guard_result)
@@ -4032,6 +4064,21 @@ class ScanGuardArbiter:
             self.dynamic_escape_require_temporal_quality
         )
         diagnostics["dynamic_candidate_only"] = bool(dynamic_candidate_only)
+        diagnostics["reverse_motion_guard_enabled"] = bool(
+            self.reverse_motion_guard_enabled
+        )
+        diagnostics["reverse_motion_guard_rear_clear"] = bool(
+            reverse_motion_guard_rear_clear
+        )
+        diagnostics["reverse_motion_guard_blocked"] = bool(
+            reverse_motion_guard_blocked
+        )
+        diagnostics["reverse_motion_guard_rear_sector_deg"] = float(
+            self.reverse_motion_guard_rear_sector_deg
+        )
+        diagnostics["reverse_motion_guard_min_rear_range_m"] = float(
+            self.reverse_motion_guard_min_rear_range_m
+        )
         diagnostics["dynamic_candidate_rejected_as_final"] = bool(
             dynamic_candidate_only
             and (

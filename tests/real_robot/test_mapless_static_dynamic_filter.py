@@ -1,9 +1,14 @@
 from types import SimpleNamespace
 
+import numpy as np
+
 from mobile_robot_mppi.obstacles.online_tracking import OnlineTrackingUpdate
 
 from mobile_robot_mppi.real_robot.mapless_static_dynamic_filter import (
     MaplessStaticDynamicFilter,
+)
+from mobile_robot_mppi.real_robot.human_point_cloud import (
+    HumanPointCloudEvidenceExtractor,
 )
 
 
@@ -141,16 +146,19 @@ def _filter():
     return value, tracker
 
 
-def _observation(timestamp, robot_x=0.0, temporal_flow=None):
+def _observation(timestamp, robot_x=0.0, temporal_flow=None, point_cloud=None):
+    auxiliary = (
+        {}
+        if temporal_flow is None
+        else {"temporal_scan_flow": dict(temporal_flow)}
+    )
+    if point_cloud is not None:
+        auxiliary["human_point_cloud_base"] = point_cloud
     return SimpleNamespace(
         timestamp=float(timestamp),
         pose=SimpleNamespace(x=float(robot_x), y=0.0, theta=0.0),
         twist=SimpleNamespace(v=0.0, omega=0.0),
-        auxiliary=(
-            {}
-            if temporal_flow is None
-            else {"temporal_scan_flow": dict(temporal_flow)}
-        ),
+        auxiliary=auxiliary,
     )
 
 
@@ -693,3 +701,43 @@ def test_person_provisional_gate_rejects_one_frame_unknown_motion():
     assert result.diagnostics["tracks"][0][
         "mapless_classification"
     ] == "unknown"
+
+
+def test_3d_body_evidence_replaces_sparse_2d_shape_proxy_not_motion_gate():
+    value, tracker = _filter()
+    value.allow_compact_dynamic = False
+    value.person_provisional_enabled = True
+    value.person_provisional_minimum_streak = 2
+    value.human_point_cloud = HumanPointCloudEvidenceExtractor({
+        "enabled": True,
+    })
+    tracker.selected_support_beams = 1
+    points = np.asarray([
+        (1.5 + dx, lateral, height)
+        for height in (0.20, 0.35, 0.75, 0.95, 1.35, 1.55)
+        for dx in (-0.10, 0.0, 0.10)
+        for lateral in (-0.12, 0.0, 0.12)
+    ])
+    result = None
+    for timestamp, lateral in (
+        (0.00, 0.00),
+        (0.15, 0.08),
+        (0.30, 0.16),
+        (0.45, 0.24),
+        (0.60, 0.32),
+    ):
+        tracker.position = (1.5, lateral)
+        shifted = points.copy()
+        shifted[:, 1] += lateral
+        result = value.update(_observation(
+            timestamp, point_cloud=shifted
+        ))
+    track = result.diagnostics["tracks"][0]
+    assert track["point_cloud_human_candidate"] is True
+    assert result.diagnostics[
+        "human_point_cloud_candidate_track_indices"
+    ] == (0,)
+    assert result.diagnostics[
+        "mapless_person_provisional_track_indices"
+    ] == (0,)
+    assert result.forecast == ("forecast",)

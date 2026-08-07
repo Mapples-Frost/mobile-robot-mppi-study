@@ -82,3 +82,19 @@ def test_extrinsic_translation_is_applied_before_self_filtering():
     scan, diagnostics = adapter.convert(_frame([(1.0, 0.0, 0.2)]))
     assert diagnostics.populated_beams == 1
     assert np.min(scan.ranges) == pytest.approx(2.0)
+
+
+def test_convert_with_points_preserves_filtered_vertical_geometry():
+    adapter = LivoxScanAdapter(LivoxScanAdapterConfig(beam_count=360))
+    scan, diagnostics, base_points = adapter.convert_with_points(_frame([
+        (1.5, -0.1, 0.20),
+        (1.5, 0.0, 0.80),
+        (1.5, 0.1, 1.40),
+        (0.2, 0.0, 0.20),  # self return
+    ]))
+    assert diagnostics.nonself_points == 3
+    assert base_points.shape == (3, 3)
+    assert np.ptp(base_points[:, 2]) == pytest.approx(1.20)
+    assert base_points.flags.writeable is False
+    assert diagnostics.populated_beams > 0
+    assert scan.timestamp == pytest.approx(2.5)

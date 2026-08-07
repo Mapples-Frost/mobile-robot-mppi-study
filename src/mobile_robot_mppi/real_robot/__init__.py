@@ -11,6 +11,10 @@ from .livox_scan_adapter import (
     LivoxScanAdapterConfig,
     LivoxScanDiagnostics,
 )
+from .human_point_cloud import (
+    HumanPointCloudConfig,
+    HumanPointCloudEvidenceExtractor,
+)
 from .mapless_static_dynamic_filter import MaplessStaticDynamicFilter
 from .person_track_manager import PersonTrackManager
 from .motion_bootstrap_tracker import MotionBootstrapMultiObstacleTracker
@@ -34,6 +38,8 @@ __all__ = [
     "LivoxScanAdapter",
     "LivoxScanAdapterConfig",
     "LivoxScanDiagnostics",
+    "HumanPointCloudConfig",
+    "HumanPointCloudEvidenceExtractor",
     "MaplessStaticDynamicFilter",
     "PersonTrackManager",
     "MotionBootstrapMultiObstacleTracker",

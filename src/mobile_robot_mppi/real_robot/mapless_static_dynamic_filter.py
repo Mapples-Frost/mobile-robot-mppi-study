@@ -10,6 +10,9 @@ import numpy as np
 from mobile_robot_mppi.real_robot.motion_bootstrap_tracker import (
     MotionBootstrapMultiObstacleTracker,
 )
+from mobile_robot_mppi.real_robot.human_point_cloud import (
+    HumanPointCloudEvidenceExtractor,
+)
 
 
 class MaplessStaticDynamicFilter:
@@ -90,6 +93,7 @@ class MaplessStaticDynamicFilter:
         person_provisional_maximum_step_m=0.28,
         person_provisional_minimum_support_beams=3,
         person_provisional_maximum_extent_m=1.20,
+        human_point_cloud=None,
     ):
         if not isinstance(tracker, MotionBootstrapMultiObstacleTracker):
             raise TypeError("mapless filter requires motion-bootstrap tracker")
@@ -216,6 +220,9 @@ class MaplessStaticDynamicFilter:
             allow_collision_course_provisional
         )
         self.person_provisional_enabled = bool(person_provisional_enabled)
+        self.human_point_cloud = HumanPointCloudEvidenceExtractor(
+            human_point_cloud
+        )
         self.person_provisional_minimum_streak = int(
             person_provisional_minimum_streak
         )
@@ -685,6 +692,17 @@ class MaplessStaticDynamicFilter:
         track_values = [
             dict(item) for item in diagnostics.get("tracks", ())
         ]
+        point_cloud_extractor = getattr(self, "human_point_cloud", None)
+        if point_cloud_extractor is None:
+            point_cloud_diagnostics = {
+                "enabled": False,
+                "reason": "not_configured",
+                "candidate_track_indices": (),
+            }
+        else:
+            track_values, point_cloud_diagnostics = (
+                point_cloud_extractor.annotate(track_values, observation)
+            )
         timestamp = float(observation.timestamp)
         self.dynamic_memories = [
             item
@@ -757,11 +775,14 @@ class MaplessStaticDynamicFilter:
                 track.get("selected_support_beams") or 0
             )
             geometry_confirmed = track.get("vehicle_geometry_confirmed")
+            point_cloud_human_observed = bool(
+                track.get("point_cloud_human_candidate", False)
+            )
             vehicle_shape_observed = bool(
                 geometry_confirmed
                 if geometry_confirmed is not None
                 else support_beams >= self.vehicle_minimum_support_beams
-            )
+            ) or point_cloud_human_observed
             if bool(track.get("associated", False)) and vehicle_shape_observed:
                 self.vehicle_shape_hold[index] = (
                     self.vehicle_shape_hold_cycles
@@ -1049,7 +1070,10 @@ class MaplessStaticDynamicFilter:
                 and associated
                 and low_level_valid
                 and self.labels[index] == "unknown"
-                and bool(track.get("mapless_vehicle_shape_recent", False))
+                and (
+                    bool(track.get("mapless_vehicle_shape_recent", False))
+                    or bool(track.get("point_cloud_human_candidate", False))
+                )
                 and not bool(track.get("change_triggered", False))
                 and not bool(track.get("recovery_active", False))
                 and not bool(track.get("dropout_guard_triggered", False))
@@ -1070,8 +1094,11 @@ class MaplessStaticDynamicFilter:
                 <= self.person_provisional_maximum_fit_residual_m
                 and float(evidence.get("maximum_step_m", float("inf")) or float("inf"))
                 <= self.person_provisional_maximum_step_m
-                and int(track.get("selected_support_beams", 0) or 0)
-                >= self.person_provisional_minimum_support_beams
+                and (
+                    int(track.get("selected_support_beams", 0) or 0)
+                    >= self.person_provisional_minimum_support_beams
+                    or bool(track.get("point_cloud_human_candidate", False))
+                )
                 and (
                     track.get("vehicle_extent_m") is None
                     or float(track.get("vehicle_extent_m") or 0.0)
@@ -1195,6 +1222,12 @@ class MaplessStaticDynamicFilter:
                     str(index): reason
                     for index, reason in person_provisional_rejection_reasons.items()
                 },
+                "human_point_cloud": dict(point_cloud_diagnostics),
+                "human_point_cloud_candidate_track_indices": tuple(
+                    point_cloud_diagnostics.get(
+                        "candidate_track_indices", ()
+                    )
+                ),
                 "forecast_unavailable_reason": (
                     "available"
                     if retained_forecasts

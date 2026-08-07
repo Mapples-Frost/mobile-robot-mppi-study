@@ -333,6 +333,96 @@ def test_paper_rl_preserves_risk_filter_and_active_avoidance_contract():
     assert plan.diagnostics["dynamic_obstacle_tracker_forecast_valid"] is True
 
 
+def test_paper_rl_reverse_candidate_filter_matches_standard_mppi(monkeypatch):
+    horizon = 4
+    controller = PaperRLDrivenMppiController(
+        dynamics=LegacyUnicyclePrediction(),
+        state_spec=unicycle_state(),
+        action_spec=body_velocity_action((-0.30, 0.50), 0.60),
+        config=MppiConfig(
+            horizon=horizon,
+            num_samples=8,
+            dt=0.1,
+            noise_sigma=(0.08, 0.20),
+            seed=23,
+            probabilistic_obstacle_risk_enabled=True,
+            probabilistic_obstacle_candidate_filter_enabled=True,
+            probabilistic_obstacle_hard_violation_action="active_avoidance",
+            probabilistic_obstacle_missing_forecast_action="stop",
+            probabilistic_obstacle_reverse_candidate_filter_enabled=True,
+            optimizer_diagnostics_enabled=True,
+        ),
+        sampling_prior=_PlanningPolicy(),
+        paper_rl_driven_config={
+            "iterations": 2,
+            "guided_fraction": 0.0,
+            "elite_fraction": 0.25,
+            "terminal_value_weight": 0.0,
+        },
+    )
+
+    def fixed_gaussian(mean, variance, count, rng):
+        del mean, variance, rng
+        samples = np.zeros((count, horizon, 2), dtype=np.float64)
+        samples[2, :, 0] = -0.30
+        samples[3, :, 0] = 0.30
+        return samples
+
+    def prefer_reverse(_trajectories, controls, *_args, **_kwargs):
+        first_v = np.asarray(controls, dtype=np.float64)[:, 0, 0]
+        return np.where(first_v < 0.0, 0.0, np.where(
+            first_v > 0.0, 20.0, 10.0
+        ))
+
+    def reverse_is_hard(trajectories, _forecasts):
+        values = np.asarray(trajectories, dtype=np.float64)
+        reverse = values[:, 1, 0] < -1.0e-9
+        count = values.shape[0]
+        return SimpleNamespace(
+            hard_violation=reverse,
+            maximum_step_probability=np.where(reverse, 0.90, 0.05),
+            accumulated_probability_mass=np.where(reverse, 1.20, 0.10),
+            horizon_union_bound=np.where(reverse, 1.0, 0.10),
+            step_probability_upper_bound=np.repeat(
+                np.where(reverse, 0.90, 0.05)[:, None],
+                horizon,
+                axis=1,
+            ).reshape(count, horizon),
+        )
+
+    monkeypatch.setattr(controller, "_gaussian_samples", fixed_gaussian)
+    monkeypatch.setattr(controller, "_cost", prefer_reverse)
+    monkeypatch.setattr(
+        controller, "_probabilistic_collision_risk", reverse_is_hard
+    )
+    observation = RobotObservation(
+        0.0,
+        Pose2D(0.0, 0.0, 0.0),
+        Twist2D(0.0, 0.0),
+        auxiliary={
+            "probabilistic_obstacle_forecasts": (
+                _paper_risk_forecast(horizon),
+            ),
+            "dynamic_obstacle_tracker": {
+                "enabled": True,
+                "forecast_valid": True,
+                "forecast_availability": 1.0,
+            },
+        },
+    )
+
+    plan = controller.plan(observation, PointGoal(2.0, 0.0))
+
+    assert plan.proposed_control.v >= 0.0
+    assert plan.diagnostics[
+        "optimizer_reverse_candidate_filter_enabled"
+    ]
+    assert plan.diagnostics["optimizer_reverse_candidate_count"] == 1
+    assert plan.diagnostics[
+        "optimizer_reverse_candidate_prediction_rejected_count"
+    ] == 1
+
+
 def test_nominal_controller_updates_explicit_hss_sidecar_causally():
     sidecar = _SidecarResidual()
     nominal = DynamicUnicyclePrediction()

@@ -102,12 +102,12 @@ def _install_mapless_tracker(perception, human_leg_mode=False):
         # admits compact, coherently translating leg clusters while retaining
         # the association, displacement, residual, and support-beam gates that
         # rejected every observed static/background track in the offline audit.
-        person_gate = dict(
-            getattr(perception, "config", {})
-            .get("person_tracking", {})
-            .get("forecast_gate", {})
+        person_tracking = dict(
+            getattr(perception, "config", {}).get("person_tracking", {})
             or {}
         )
+        person_gate = dict(person_tracking.get("forecast_gate", {}) or {})
+        point_cloud_gate = dict(person_tracking.get("point_cloud", {}) or {})
         overrides = {
             "allow_compact_dynamic": True,
             "minimum_duration_s": 0.40,
@@ -195,6 +195,7 @@ def _install_mapless_tracker(perception, human_leg_mode=False):
             "person_provisional_maximum_extent_m": float(
                 person_gate.get("maximum_extent_m", 1.20)
             ),
+            "human_point_cloud": point_cloud_gate,
         }
     bootstrap_overrides = {}
     if human_leg_mode:
@@ -342,7 +343,9 @@ def main():
                 frame = receiver.receive_frame(args.accumulation_s)
                 timings["receive"].append(1000.0 * (time.perf_counter() - stage))
                 stage = time.perf_counter()
-                scan, scan_diagnostics = adapter.convert(frame)
+                scan, scan_diagnostics, human_points_base = (
+                    adapter.convert_with_points(frame)
+                )
                 timings["scan"].append(1000.0 * (time.perf_counter() - stage))
                 can_snapshot = None if can_guard is None else can_guard.snapshot()
                 v_mps = 0.0 if can_snapshot is None else can_snapshot.v_mps
@@ -364,6 +367,7 @@ def main():
                         "real_robot": True,
                         "shadow_mode": not args.guarded_can,
                         "simulator_truth_used": False,
+                        "human_point_cloud_base": human_points_base,
                     },
                 )
                 stage = time.perf_counter()

@@ -129,3 +129,59 @@ def test_unqualified_unknown_track_is_not_geometry_source():
     assert diagnostics["person_forecast_qualification"] == "INVALID"
     assert diagnostics["person_selected_id"] is None
     assert diagnostics["person_selected_position_x"] is None
+
+
+def test_point_cloud_body_centroid_fuses_fragmented_body_slots():
+    manager = PersonTrackManager()
+    left = _track(0, 1.5, -0.35, 0.0, 0.35)
+    right = _track(1, 1.5, 0.35, 0.02, 0.33)
+    for track in (left, right):
+        track.update({
+            "point_cloud_human_candidate": True,
+            "point_cloud_human_centroid_x": 1.5,
+            "point_cloud_human_centroid_y": 0.0,
+        })
+    diagnostics = manager.update(
+        {
+            "tracks": (left, right),
+            "forecast_track_indices": (0, 1),
+        },
+        forecasts=(object(), object()),
+        timestamp_s=1.0,
+    )
+    assert diagnostics["person_active_count"] == 1
+    assert diagnostics["person_selected_member_track_indices"] == (0, 1)
+    assert diagnostics["person_selected_position_y"] == 0.0
+
+
+def test_short_measurement_dropout_retains_identity_without_forecast():
+    manager = PersonTrackManager({"maximum_forecast_age_s": 0.35})
+    first = manager.update(
+        {
+            "tracks": (_track(0, 1.4, 0.1, 0.0, 0.3),),
+            "forecast_track_indices": (0,),
+        },
+        forecasts=(object(),),
+        timestamp_s=1.0,
+    )
+    person_id = first["person_selected_id"]
+    dropout = manager.update(
+        {"tracks": (), "forecast_track_indices": ()},
+        forecasts=(),
+        timestamp_s=1.1,
+    )
+    assert dropout["person_selected_id"] is None
+    assert dropout["person_forecast_valid"] is False
+    assert dropout["person_coasting_track_ids"] == (person_id,)
+    assert dropout["person_tracks"][0]["forecast_qualification"] == "STALE"
+
+    recovered = manager.update(
+        {
+            "tracks": (_track(2, 1.4, 0.16, 0.0, 0.3),),
+            "forecast_track_indices": (2,),
+        },
+        forecasts=(object(),),
+        timestamp_s=1.2,
+    )
+    assert recovered["person_selected_id"] == person_id
+    assert recovered["person_identity_continuity"] is True

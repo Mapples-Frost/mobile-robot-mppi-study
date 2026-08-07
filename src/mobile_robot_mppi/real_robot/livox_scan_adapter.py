@@ -166,9 +166,7 @@ class LivoxScanAdapter:
         # A full 360-degree scan must not duplicate the -pi/+pi endpoint.
         self._angle_increment = self._angle_span / int(self.config.beam_count)
 
-    def convert(self, frame: LivoxPointCloudFrame):
-        """Return ``(LaserScan, diagnostics)`` without modifying raw input."""
-
+    def _filtered_base_points(self, frame: LivoxPointCloudFrame):
         points = np.asarray(frame.points, dtype=np.float32)
         input_count = int(points.shape[0])
         finite_nonzero = np.isfinite(points).all(axis=1) & np.any(
@@ -207,8 +205,29 @@ class LivoxScanAdapter:
             & (angles >= float(self.config.angle_min_rad))
             & (angles < float(self.config.angle_max_rad))
         )
-        planar_ranges = planar_ranges[valid].astype(np.float64, copy=False)
-        angles = angles[valid]
+        return (
+            np.ascontiguousarray(base[valid]),
+            planar_ranges[valid].astype(np.float64, copy=False),
+            angles[valid],
+            input_count,
+            finite_count,
+            height_count,
+            nonself_count,
+        )
+
+    def _convert(self, frame: LivoxPointCloudFrame, return_base_points=False):
+        """Project one frame, optionally retaining its filtered 3-D points."""
+
+        (
+            base,
+            planar_ranges,
+            angles,
+            input_count,
+            finite_count,
+            height_count,
+            nonself_count,
+        ) = self._filtered_base_points(frame)
+
         range_count = int(planar_ranges.size)
 
         beam_count = int(self.config.beam_count)
@@ -245,7 +264,20 @@ class LivoxScanAdapter:
             range_points=range_count,
             populated_beams=populated,
         )
+        if return_base_points:
+            base.setflags(write=False)
+            return scan, diagnostics, base
         return scan, diagnostics
+
+    def convert(self, frame: LivoxPointCloudFrame):
+        """Return ``(LaserScan, diagnostics)`` without modifying raw input."""
+
+        return self._convert(frame, return_base_points=False)
+
+    def convert_with_points(self, frame: LivoxPointCloudFrame):
+        """Return the 2-D scan and the same filtered base-frame 3-D points."""
+
+        return self._convert(frame, return_base_points=True)
 
 
 __all__ = [

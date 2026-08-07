@@ -90,8 +90,19 @@ class PersonTrackManager:
 
     @staticmethod
     def _track_position(track: Mapping[str, Any]) -> Optional[np.ndarray]:
-        x = _finite(track.get("measurement_x"))
-        y = _finite(track.get("measurement_y"))
+        use_body_centroid = bool(
+            track.get("point_cloud_human_candidate", False)
+        )
+        x = _finite(
+            track.get("point_cloud_human_centroid_x")
+            if use_body_centroid
+            else track.get("measurement_x")
+        )
+        y = _finite(
+            track.get("point_cloud_human_centroid_y")
+            if use_body_centroid
+            else track.get("measurement_y")
+        )
         if not (math.isfinite(x) and math.isfinite(y)):
             return None
         return np.asarray((x, y), dtype=np.float64)
@@ -225,11 +236,19 @@ class PersonTrackManager:
             bool(track.get("mapless_temporal_flow_corroborated", False))
             or bool(track.get("mapless_strong_motion_collision_course", False))
             or bool(track.get("mapless_person_provisional", False))
+            or bool(track.get("point_cloud_human_candidate", False))
+            for track in tracks
+        )
+        point_cloud_human = any(
+            bool(track.get("point_cloud_human_candidate", False))
             for track in tracks
         )
         if (
             has_forecast
-            and support >= self.minimum_support_beams
+            and (
+                support >= self.minimum_support_beams
+                or point_cloud_human
+            )
             and (dynamic_label or corroborated)
             and motion >= self.minimum_motion_speed_mps
         ):
@@ -238,7 +257,7 @@ class PersonTrackManager:
             return "PROVISIONAL"
         age = timestamp_s - state.last_forecast_timestamp_s
         if (
-            state.last_qualification in {"VALID", "PROVISIONAL"}
+            state.last_qualification in {"VALID", "PROVISIONAL", "STALE"}
             and math.isfinite(age)
             and age <= self.maximum_forecast_age_s
             and state.missed_cycles <= self.stale_hold_cycles
@@ -338,9 +357,12 @@ class PersonTrackManager:
                     None if residual is None else float(residual)
                 ),
             })
-        # Advance missing identities but retain them only for a short causal
-        # gap.  No stale identity is treated as a fresh forecast.
+        # Advance missing identities through a short, audited coasting state.
+        # This preserves the same person ID when legs/body fragments disappear
+        # for one or two scans, but does not publish a forecast or command from
+        # the extrapolated state.
         active_ids = {item["person_id"] for item in active_people}
+        coasting_people = []
         for person_id, state in list(self._states.items()):
             if person_id in active_ids:
                 continue
@@ -351,6 +373,29 @@ class PersonTrackManager:
                 or state.missed_cycles > self.stale_hold_cycles
             ):
                 del self._states[person_id]
+                continue
+            forecast_age_s = timestamp_s - state.last_forecast_timestamp_s
+            if (
+                state.last_qualification
+                in {"VALID", "PROVISIONAL", "STALE"}
+                and math.isfinite(forecast_age_s)
+                and forecast_age_s <= self.maximum_forecast_age_s
+            ):
+                predicted = state.position + state.velocity * state.age_s
+                state.last_qualification = "STALE"
+                coasting_people.append({
+                    "person_id": int(person_id),
+                    "position_x": float(predicted[0]),
+                    "position_y": float(predicted[1]),
+                    "velocity_x_mps": float(state.velocity[0]),
+                    "velocity_y_mps": float(state.velocity[1]),
+                    "member_track_indices": (),
+                    "forecast_qualification": "STALE",
+                    "forecast_track_indices": (),
+                    "association_residual_m": None,
+                    "coasting": True,
+                    "coasting_age_s": float(state.age_s),
+                })
         pose_values = np.asarray(pose, dtype=np.float64).reshape(3)
         selected = None
         # An identity with an unqualified forecast remains in the audit list,
@@ -381,13 +426,20 @@ class PersonTrackManager:
                 }.get(item["forecast_qualification"], 4)
                 return (quality_rank, 0 if longitudinal >= -0.45 else 1, distance)
             selected = min(selectable_people, key=rank)
+        person_records = tuple(active_people + coasting_people)
         diagnostics.update({
             "tracks": tuple(tracks),
             "person_tracking_enabled": True,
             "person_track_count": len(self._states),
             "person_active_count": len(active_people),
-            "person_tracks": tuple(active_people),
-            "person_track_ids": tuple(item["person_id"] for item in active_people),
+            "person_coasting_count": len(coasting_people),
+            "person_coasting_track_ids": tuple(
+                item["person_id"] for item in coasting_people
+            ),
+            "person_tracks": person_records,
+            "person_track_ids": tuple(
+                item["person_id"] for item in person_records
+            ),
             "person_selected_id": None if selected is None else selected["person_id"],
             "person_selected_member_track_indices": (
                 () if selected is None else selected["member_track_indices"]
@@ -421,7 +473,7 @@ class PersonTrackManager:
             ),
             "person_forecast_qualification_states": tuple(
                 (item["person_id"], item["forecast_qualification"])
-                for item in active_people
+                for item in person_records
             ),
             "person_forecast_valid": bool(
                 selected is not None
@@ -440,7 +492,11 @@ class PersonTrackManager:
                 and selected["association_residual_m"] is not None
             ),
             "person_identity_rejection_reason": (
-                "no_eligible_track" if selected is None else "none"
+                "coasting_only"
+                if selected is None and coasting_people
+                else "no_eligible_track"
+                if selected is None
+                else "none"
             ),
         })
         return diagnostics

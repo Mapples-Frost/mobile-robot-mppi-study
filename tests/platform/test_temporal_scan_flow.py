@@ -5,6 +5,7 @@ from mobile_robot_mppi.core.types import LaserScan
 from mobile_robot_mppi.perception.scan_flow import (
     RobustScanFlowEstimator,
     ScanFlowConfig,
+    TemporalSafetyHysteresis,
 )
 
 
@@ -90,6 +91,118 @@ def test_hold_prevents_one_frame_risk_chatter_and_reset_clears_history():
     assert held.risk_alpha == active.risk_alpha
     assert reset.valid is False
     assert reset.reason == "warmup"
+
+
+def test_temporal_safety_hysteresis_enters_immediately_and_releases_confirmed():
+    gate = TemporalSafetyHysteresis(
+        enabled=True, release_clear_frames=2
+    )
+
+    slow, slow_diagnostics = gate.update("slow")
+    stop, stop_diagnostics = gate.update("stop")
+    held_stop, first_release = gate.update("slow")
+    released_slow, second_release = gate.update("slow")
+    held_slow, first_clear = gate.update("clear")
+    released_clear, second_clear = gate.update("clear")
+
+    assert slow == "slow"
+    assert slow_diagnostics["temporal_scan_safety_entered_immediately"]
+    assert stop == "stop"
+    assert stop_diagnostics["temporal_scan_safety_entered_immediately"]
+    assert held_stop == "stop"
+    assert first_release["temporal_scan_safety_release_pending"]
+    assert released_slow == "slow"
+    assert second_release["temporal_scan_safety_release_confirmed"]
+    assert held_slow == "slow"
+    assert first_clear["temporal_scan_safety_release_pending"]
+    assert released_clear == "clear"
+    assert second_clear["temporal_scan_safety_release_confirmed"]
+
+
+def test_temporal_safety_hysteresis_resets_pending_release_on_new_risk():
+    gate = TemporalSafetyHysteresis(
+        enabled=True, release_clear_frames=2
+    )
+    gate.update("stop")
+    gate.update("clear")
+
+    stop, diagnostics = gate.update("stop")
+
+    assert stop == "stop"
+    assert diagnostics["temporal_scan_safety_clear_streak"] == 0
+    assert not diagnostics["temporal_scan_safety_release_pending"]
+
+
+def _front_wall_scan(robot_x, timestamp, beams=721):
+    angles = np.linspace(-np.pi, np.pi, beams)
+    ranges = np.full(beams, np.inf)
+    visible = np.abs(angles) <= 0.35
+    ranges[visible] = (1.0 - float(robot_x)) / np.cos(angles[visible])
+    return LaserScan(
+        ranges=ranges,
+        angle_min=-np.pi,
+        angle_increment=2.0 * np.pi / float(beams - 1),
+        range_min=0.05,
+        range_max=4.0,
+        timestamp=float(timestamp),
+    )
+
+
+def test_ego_motion_compensation_rejects_static_wall_closing_rate():
+    uncompensated = RobustScanFlowEstimator(_config())
+    compensated = RobustScanFlowEstimator(_config(
+        ego_motion_compensation_enabled=True
+    ))
+    previous = _front_wall_scan(0.0, 0.0)
+    current = _front_wall_scan(0.05, 0.1)
+
+    uncompensated.update(previous, pose=(0.0, 0.0, 0.0))
+    false_closing = uncompensated.update(
+        current, pose=(0.05, 0.0, 0.0)
+    )
+    compensated.update(previous, pose=(0.0, 0.0, 0.0))
+    static_result = compensated.update(
+        current, pose=(0.05, 0.0, 0.0)
+    )
+
+    assert false_closing.valid is True
+    assert false_closing.closing_rate_mps > 0.45
+    assert static_result.valid is False
+    assert static_result.reason == "insufficient_consensus"
+
+
+def test_ego_motion_compensation_retains_independent_object_closing_rate():
+    estimator = RobustScanFlowEstimator(_config(
+        ego_motion_compensation_enabled=True
+    ))
+    previous = _front_wall_scan(0.0, 0.0)
+    # The robot advances 0.05 m and the observed surface independently moves
+    # 0.05 m toward it, so compensation should retain only the latter 0.5 m/s.
+    current = _front_wall_scan(0.10, 0.1)
+
+    estimator.update(previous, pose=(0.0, 0.0, 0.0))
+    moving_result = estimator.update(
+        current, pose=(0.05, 0.0, 0.0)
+    )
+
+    assert moving_result.valid is True
+    assert moving_result.closing_rate_mps > 0.45
+
+
+def test_continuous_temporal_slowdown_has_no_threshold_step():
+    config = ScanFlowConfig.from_mapping({
+        "safety_continuous_slowdown_enabled": True,
+        "safety_hard_stop_ttc_s": 0.8,
+        "safety_slow_ttc_s": 2.0,
+        "safety_slow_scale": 0.25,
+    })
+
+    assert config.safety_slowdown_scale(2.0) == pytest.approx(1.0)
+    assert config.safety_slowdown_scale(1.99) == pytest.approx(
+        (1.99 - 0.8) / 1.2
+    )
+    assert config.safety_slowdown_scale(1.4) == pytest.approx(0.5)
+    assert config.safety_slowdown_scale(0.81) == pytest.approx(0.25)
 
 
 @pytest.mark.parametrize(

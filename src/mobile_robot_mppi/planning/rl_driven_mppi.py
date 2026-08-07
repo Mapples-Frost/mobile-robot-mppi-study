@@ -2338,6 +2338,12 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
         risk_no_feasible_iterations = 0
         risk_last_candidate = None
         risk_last_feasible = None
+        reverse_last_mask = np.zeros(
+            self.config.num_samples, dtype=bool
+        )
+        reverse_last_prediction_feasible = np.ones(
+            self.config.num_samples, dtype=bool
+        )
         risk_last_samples = None
         risk_last_costs = None
         reference_authority = 1.0
@@ -2744,8 +2750,28 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
                 risk_feasible_fractions.append(float(
                     np.mean(risk_feasible)
                 ))
+            reverse_candidate_mask = np.zeros(
+                self.config.num_samples, dtype=bool
+            )
+            reverse_prediction_feasible = np.ones(
+                self.config.num_samples, dtype=bool
+            )
+            if (
+                self.config
+                .probabilistic_obstacle_reverse_candidate_filter_enabled
+                and "v_cmd" in self.action_spec.names
+            ):
+                reverse_v_index = self.action_spec.index("v_cmd")
+                reverse_candidate_mask = (
+                    samples[:, 0, reverse_v_index] < -1.0e-9
+                )
+                reverse_prediction_feasible = (
+                    ~reverse_candidate_mask | risk_feasible
+                )
             geometry_feasible = (
-                boundary_feasible & static_feasible
+                boundary_feasible
+                & static_feasible
+                & reverse_prediction_feasible
             )
             jointly_feasible = geometry_feasible & risk_feasible
             if (
@@ -2765,8 +2791,12 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
                 and np.any(geometry_feasible)
             ):
                 optimizer_feasible = geometry_feasible
-            elif risk_candidate_filter and np.any(risk_feasible):
-                optimizer_feasible = risk_feasible
+            elif risk_candidate_filter and np.any(
+                risk_feasible & reverse_prediction_feasible
+            ):
+                optimizer_feasible = (
+                    risk_feasible & reverse_prediction_feasible
+                )
             else:
                 # Candidate zero is the deterministic braking sequence.  It
                 # remains the fail-closed update if neither hard filter has a
@@ -2783,6 +2813,10 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
                     risk_no_feasible_iterations += 1
             risk_last_candidate = candidate_risk
             risk_last_feasible = risk_feasible
+            reverse_last_mask = reverse_candidate_mask
+            reverse_last_prediction_feasible = (
+                reverse_prediction_feasible
+            )
             risk_last_samples = samples.copy()
             risk_last_costs = costs.copy()
             emergency_last_mask = emergency_mask.copy()
@@ -3144,7 +3178,26 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
                 and boundary_last_feasible is not None
                 and np.any(boundary_last_feasible)
             ):
-                feasible_indices = np.flatnonzero(boundary_last_feasible)
+                boundary_fallback_feasible = boundary_last_feasible.copy()
+                if hard_static_filter:
+                    boundary_fallback_feasible &= static_last_feasible
+                if self.config.probabilistic_obstacle_reverse_candidate_filter_enabled:
+                    boundary_fallback_feasible &= (
+                        reverse_last_prediction_feasible
+                    )
+                if (
+                    risk_candidate_filter
+                    and risk_last_feasible is not None
+                    and np.any(
+                        boundary_fallback_feasible & risk_last_feasible
+                    )
+                ):
+                    boundary_fallback_feasible &= risk_last_feasible
+                feasible_indices = np.flatnonzero(
+                    boundary_fallback_feasible
+                )
+                if feasible_indices.size == 0:
+                    feasible_indices = np.asarray((0,), dtype=np.int64)
                 boundary_fallback_candidate_index = int(
                     feasible_indices[np.argmin(
                         boundary_last_costs[feasible_indices]
@@ -3187,6 +3240,8 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
             geometry_last_feasible = static_last_feasible.copy()
             if hard_boundary_filter:
                 geometry_last_feasible &= boundary_last_feasible
+            if self.config.probabilistic_obstacle_reverse_candidate_filter_enabled:
+                geometry_last_feasible &= reverse_last_prediction_feasible
             if (
                 not static_weighted_update_feasible
                 and np.any(geometry_last_feasible)
@@ -3232,6 +3287,11 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
             guard_candidate_eligible &= boundary_last_feasible
         if hard_static_filter:
             guard_candidate_eligible &= static_last_feasible
+        if self.config.probabilistic_obstacle_reverse_candidate_filter_enabled:
+            # Boundary handoff may relax only the path corridor.  It may not
+            # re-admit a reverse member whose forecasted trajectory is a hard
+            # collision risk.
+            guard_candidate_eligible &= reverse_last_prediction_feasible
         boundary_handoff_scope = bool(
             hard_boundary_filter
             and traversal_context.get(
@@ -3325,6 +3385,10 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
                 geometry_last_feasible = static_last_feasible.copy()
                 if hard_boundary_filter:
                     geometry_last_feasible &= boundary_last_feasible
+                if self.config.probabilistic_obstacle_reverse_candidate_filter_enabled:
+                    geometry_last_feasible &= (
+                        reverse_last_prediction_feasible
+                    )
                 if np.any(geometry_last_feasible):
                     feasible_mask = geometry_last_feasible.copy()
                     if (
@@ -3519,6 +3583,19 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
             "optimizer_first_action_cancellation_ratio": 1.0,
             "optimizer_initial_proposal_first_v": 0.0,
             "optimizer_initial_proposal_first_omega": 0.0,
+            "optimizer_reverse_candidate_filter_enabled": bool(
+                self.config
+                .probabilistic_obstacle_reverse_candidate_filter_enabled
+            ),
+            "optimizer_reverse_candidate_count": int(
+                np.sum(reverse_last_mask)
+            ),
+            "optimizer_reverse_candidate_prediction_rejected_count": int(
+                np.sum(
+                    reverse_last_mask
+                    & ~reverse_last_prediction_feasible
+                )
+            ),
         }
         if self.config.optimizer_diagnostics_enabled:
             diagnostic_eligible = np.ones(
@@ -3528,10 +3605,17 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
                 diagnostic_eligible &= boundary_last_feasible
             if hard_static_filter:
                 diagnostic_eligible &= static_last_feasible
+            if self.config.probabilistic_obstacle_reverse_candidate_filter_enabled:
+                diagnostic_eligible &= reverse_last_prediction_feasible
             diagnostic_indices = (
                 np.flatnonzero(diagnostic_eligible)
                 if (
-                    (hard_boundary_filter or hard_static_filter)
+                    (
+                        hard_boundary_filter
+                        or hard_static_filter
+                        or self.config
+                        .probabilistic_obstacle_reverse_candidate_filter_enabled
+                    )
                     and np.any(diagnostic_eligible)
                 )
                 else np.arange(self.config.num_samples, dtype=np.int64)
@@ -3629,6 +3713,19 @@ class PaperRLDrivenMppiController(RLDrivenMppiController):
                 "optimizer_initial_proposal_first_omega": (
                     float(initial_proposal_mean[0, omega_index_diag])
                     if omega_index_diag is not None else 0.0
+                ),
+                "optimizer_reverse_candidate_filter_enabled": bool(
+                    self.config
+                    .probabilistic_obstacle_reverse_candidate_filter_enabled
+                ),
+                "optimizer_reverse_candidate_count": int(
+                    np.sum(reverse_last_mask)
+                ),
+                "optimizer_reverse_candidate_prediction_rejected_count": int(
+                    np.sum(
+                        reverse_last_mask
+                        & ~reverse_last_prediction_feasible
+                    )
                 ),
             }
         effective_sample_size = float(

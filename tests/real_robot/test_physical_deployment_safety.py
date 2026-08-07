@@ -56,6 +56,12 @@ def test_single_final_authority_keeps_mppi_command_and_retains_hard_stop(tmp_pat
         max_reverse_v_mps=0.3, max_omega_radps=0.6,
     )
     enable_single_final_control_authority(config)
+    assert config["planner"][
+        "probabilistic_obstacle_emergency_candidate_direct_fallback_enabled"
+    ] is False
+    assert config["planner"][
+        "probabilistic_obstacle_reverse_candidate_filter_enabled"
+    ] is True
     arbiter = ScanGuardArbiter(
         action_spec_from_config(config["action_space"]),
         config["perception"]["scan_guard"],
@@ -96,6 +102,68 @@ def test_single_final_authority_keeps_mppi_command_and_retains_hard_stop(tmp_pat
     )
     assert stop.executed_control.v == pytest.approx(0.0)
     assert stop.diagnostics["dynamic_candidate_only"] is True
+
+
+def test_single_final_authority_blocks_reverse_without_observed_rear_clearance(
+    tmp_path,
+):
+    config = build_pi5_full_config(
+        _weight_root(tmp_path), max_v_mps=0.5,
+        max_reverse_v_mps=0.3, max_omega_radps=0.6,
+    )
+    enable_single_final_control_authority(config)
+    arbiter = ScanGuardArbiter(
+        action_spec_from_config(config["action_space"]),
+        config["perception"]["scan_guard"],
+    )
+
+    unknown = arbiter.arbitrate(
+        ControlCommand([-0.20, 0.15]),
+        {"emergency_stop": False, "reason": "front_clear"},
+        {},
+    )
+    assert unknown.executed_control.v == pytest.approx(0.0)
+    assert unknown.executed_control.omega == pytest.approx(0.15)
+    assert unknown.reason == "reverse_motion_guard"
+    assert unknown.diagnostics["reverse_motion_guard_blocked"] is True
+
+    rear_points = tuple(
+        {
+            "base_angle": math.radians(angle_deg),
+            "range": 1.10,
+        }
+        for angle_deg in (-175.0, -150.0, 150.0, 175.0)
+    )
+    clear = arbiter.arbitrate(
+        ControlCommand([-0.20, -0.10]),
+        {
+            "emergency_stop": False,
+            "reason": "front_clear",
+            "raw_points_base": rear_points,
+        },
+        {},
+    )
+    assert clear.executed_control.values.tolist() == pytest.approx(
+        [-0.20, -0.10]
+    )
+    assert clear.diagnostics["reverse_motion_guard_rear_clear"] is True
+    assert clear.diagnostics["reverse_motion_guard_blocked"] is False
+
+    blocked_points = rear_points + ({
+        "base_angle": math.radians(170.0),
+        "range": 0.55,
+    },)
+    blocked = arbiter.arbitrate(
+        ControlCommand([-0.20, 0.0]),
+        {
+            "emergency_stop": False,
+            "reason": "front_clear",
+            "raw_points_base": blocked_points,
+        },
+        {},
+    )
+    assert blocked.executed_control.v == pytest.approx(0.0)
+    assert blocked.diagnostics["reverse_motion_guard_blocked"] is True
 
 
 def test_candidate_only_releases_rear_direction_without_synthesizing_speed(tmp_path):
@@ -167,6 +235,8 @@ def test_physical_limits_are_shared_with_planner_and_safety(tmp_path):
     assert temporal["safety_slow_ttc_s"] == pytest.approx(3.00)
     assert temporal["ego_motion_compensation_enabled"] is True
     assert temporal["safety_continuous_slowdown_enabled"] is True
+    assert temporal["safety_state_hysteresis_enabled"] is True
+    assert temporal["safety_release_clear_frames"] == 2
     assert guard["dynamic_escape_trigger_ttc_s"] == pytest.approx(3.00)
     assert guard["dynamic_escape_uncertainty_fusion_enabled"] is True
     assert guard["dynamic_escape_direction_commit_steps"] == 4

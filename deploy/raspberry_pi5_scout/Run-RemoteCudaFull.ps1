@@ -17,6 +17,7 @@ param(
     [switch]$ForwardPassageV3,
     [switch]$DisableResidualLearning,
     [switch]$DisableDynamicSafetyArbitration,
+    [switch]$CpuPolicyInference,
     [switch]$UntilGoal,
     [switch]$Shadow
 )
@@ -210,6 +211,9 @@ if ($DisableResidualLearning) {
 }
 if ($DisableDynamicSafetyArbitration) {
     $runnerArgs += '--disable-dynamic-safety-arbitration'
+}
+if ($CpuPolicyInference) {
+    $runnerArgs += '--cpu-policy-inference'
 }
 if ($UntilGoal) {
     $runnerArgs += '--until-goal'

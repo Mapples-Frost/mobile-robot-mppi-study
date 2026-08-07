@@ -165,6 +165,71 @@ class ScanFlowEstimate:
         return asdict(self)
 
 
+class TemporalSafetyHysteresis:
+    """Immediate risk entry with confirmed, monotone safety release."""
+
+    _SEVERITY = {"clear": 0, "slow": 1, "stop": 2}
+
+    def __init__(self, enabled=False, release_clear_frames=2):
+        self.enabled = bool(enabled)
+        self.release_clear_frames = int(release_clear_frames)
+        if self.release_clear_frames < 1:
+            raise ValueError(
+                "temporal safety release_clear_frames must be positive"
+            )
+        self.reset()
+
+    def reset(self):
+        self.state = "clear"
+        self.clear_streak = 0
+
+    def update(self, raw_state):
+        raw_state = str(raw_state)
+        if raw_state not in self._SEVERITY:
+            raise ValueError("unknown temporal safety state: %s" % raw_state)
+        previous = self.state
+        entered_immediately = False
+        release_confirmed = False
+        if not self.enabled:
+            self.state = raw_state
+            self.clear_streak = 0
+        else:
+            raw_severity = self._SEVERITY[raw_state]
+            active_severity = self._SEVERITY[self.state]
+            if raw_severity > active_severity:
+                self.state = raw_state
+                self.clear_streak = 0
+                entered_immediately = True
+            elif raw_severity == active_severity:
+                self.clear_streak = 0
+            else:
+                self.clear_streak += 1
+                if self.clear_streak >= self.release_clear_frames:
+                    self.state = raw_state
+                    self.clear_streak = 0
+                    release_confirmed = True
+        return self.state, {
+            "temporal_scan_safety_raw_state": raw_state,
+            "temporal_scan_safety_state": self.state,
+            "temporal_scan_safety_previous_state": previous,
+            "temporal_scan_safety_entered_immediately": bool(
+                entered_immediately
+            ),
+            "temporal_scan_safety_release_confirmed": bool(
+                release_confirmed
+            ),
+            "temporal_scan_safety_release_pending": bool(
+                self.enabled
+                and self._SEVERITY[raw_state]
+                < self._SEVERITY[self.state]
+            ),
+            "temporal_scan_safety_clear_streak": int(self.clear_streak),
+            "temporal_scan_safety_release_clear_frames": int(
+                self.release_clear_frames
+            ),
+        }
+
+
 class RobustScanFlowEstimator:
     """Estimate contiguous relative range contraction between scan frames."""
 

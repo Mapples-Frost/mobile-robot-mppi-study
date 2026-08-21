@@ -1,0 +1,14 @@
+{
+  "schema": "redesignE_independent_test_protocol_v1",
+  "test_id": "redesignE_independent_test_v1",
+  "map": "chapter3_redesignE",
+  "design": "four_arm_matched_case",
+  "arms": ["B00", "B01", "B10", "B11"],
+  "display_seed_alias_start": 795100001,
+  "display_seed_alias_end": 795100050,
+  "cases_per_arm": 50,
+  "episode_count": 200,
+  "primary_endpoint": "metrics.success AND NOT metrics.collision",
+  "case_identity_file": "case_identity.json",
+  "external_analysis_dependency": false
+}

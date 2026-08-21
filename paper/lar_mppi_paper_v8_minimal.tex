@@ -1,0 +1,617 @@
+% !TeX program = pdflatex
+% !BIB program = bibtex
+% !TeX encoding = UTF-8
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+% Official IEEE conference template version: 6/27/2024.
+% Manuscript revision: v8 (2026-08-05)
+
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{url}
+\usepackage{balance}
+\usepackage{placeins}
+
+% Allow two full-width floats to share the top of a text page.
+\setcounter{dbltopnumber}{2}
+\renewcommand{\dbltopfraction}{0.95}
+\renewcommand{\dblfloatpagefraction}{0.90}
+\renewcommand{\textfraction}{0.05}
+\renewcommand{\algorithmicrequire}{\textbf{Input:}}
+\renewcommand{\algorithmicensure}{\textbf{Output:}}
+
+\newif\ifreviewlinks
+\reviewlinkstrue % Set \reviewlinksfalse for the submission PDF.
+\ifreviewlinks
+\usepackage[
+    colorlinks=true,
+    linkcolor=black,
+    citecolor=blue,
+    urlcolor=cyan
+]{hyperref}
+\newcommand{\reviewbox}[2]{%
+    \begingroup
+    \setlength{\fboxsep}{0.35pt}%
+    \setlength{\fboxrule}{0.45pt}%
+    \hyperref[#1]{\fcolorbox{red}{white}{\vphantom{I}#2}}%
+    \endgroup}
+\newcommand{\reviewref}[1]{\reviewbox{#1}{\ref*{#1}}}
+\newcommand{\revieweqref}[1]{\reviewbox{#1}{\textup{(\ref*{#1})}}}
+\else
+\usepackage[hidelinks]{hyperref}
+\newcommand{\reviewref}[1]{\ref{#1}}
+\newcommand{\revieweqref}[1]{\eqref{#1}}
+\fi
+
+\newcommand{\method}{LAR-MPPI}
+
+\newcommand{\pp}{\,pp}
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+    T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+
+\begin{document}
+
+\title{Learning-Augmented Risk-Aware MPPI with Change-Aware Obstacle Forecasting}
+
+\author{\IEEEauthorblockN{Anonymous Authors}
+\IEEEauthorblockA{\textit{Affiliations withheld for double-blind review}}}
+
+\maketitle
+
+\begin{abstract}
+Autonomous mobile robots operating in warehouse aisles, hospital corridors, and campus walkways often encounter narrow passages, people or carts that stop or turn abruptly, and changing payload or floor conditions. We introduce Learning-Augmented Risk-Aware MPPI (\method) to address these coupled challenges with learned control proposals, change-aware probabilistic forecasting, and control-affine residual dynamics with nominal-plan fallback. A reliability-adaptive sampler shares a fixed rollout budget between learned and Gaussian proposals, while a conservative Gaussian-mixture bound maps forecast uncertainty into trajectory costs. Experiments on held-out trajectories, controlled static and single-obstacle benchmarks, and two independent complex MuJoCo scenes separately qualify the predictor, learned proposals, and complete controller. Across these settings, \method{} improves task completion and static navigation efficiency and reduces collision exposure; in both complex joint scenes, it is the only tested variant to combine high safe completion, sustained goal progress, and low collision exposure.
+\end{abstract}
+
+\begin{IEEEkeywords}
+model predictive path integral control, mobile robot navigation, dynamic obstacle avoidance, trajectory forecasting, reinforcement learning, residual dynamics
+\end{IEEEkeywords}
+
+\section{Introduction}
+\label{sec:introduction}
+
+\begin{figure*}[t]
+    \centering
+    \includegraphics[width=\textwidth]{figures/framework.pdf}
+    \caption{Overview of the proposed learning-augmented risk-aware MPPI framework. 
+    Causal observations are processed by a frozen maneuver-proposal actor, 
+    a change-aware probabilistic predictor, and an ICODE residual dynamics model. 
+    Their outputs are integrated into a fixed-budget MPPI backbone for hybrid 
+    sampling, parallel rollout evaluation, risk-aware cost computation, and 
+    receding-horizon control, with reliability gating and nominal-plan fallback.}
+    \label{fig:framework}
+\end{figure*}
+
+
+Consider autonomous mobile robots operating across warehouse aisles, hospital corridors, and campus walkways. Shelving, parked equipment, and temporary barriers create narrow passages; pedestrians, workers, and carts may enter a path, stop, or turn without warning; payload and floor conditions alter the robot response. Such robots often need to discover evasive maneuvers within a limited computation budget, reason about plausible obstacle futures, and predict their own motion with an imperfect model. A failure in any one role can stop the mission or cause a collision. These settings motivate our design; the experiments isolate their constituent challenges in controlled static and dynamic benchmarks.
+
+Sampling-based model predictive control is well suited to these settings because it can optimize nonlinear and nonconvex objectives without differentiating the dynamics or environment \cite{williams2017mppi,williams2018information}. Model predictive path integral control (MPPI), however, does not remove three information deficits. In a narrow passage, a finite Gaussian sampler can miss the early steering sequence needed to leave a blockage. Near crossing traffic, a cost based only on current obstacle position can react after the useful avoidance window has closed. Under a payload or friction shift, nominal rollouts can rank controls using the wrong plant response. These failure modes require maneuver coverage, motion forecasting, and dynamics correction, respectively.
+
+\paragraph{Sampling and learning} Classical MPPI perturbs control sequences and updates its proposal by exponential cost weighting \cite{williams2017mppi,williams2018information}. Prior work changes the perturbation representation \cite{kim2022smooth}, optimizes proposal parameters \cite{asmar2023mppi}, or reshapes temporal exploration \cite{vlahov2024lowfrequency}. Learned importance sampling retains path-integral optimization while focusing rollouts \cite{carius2021learned}; offline reinforcement learning (RL) and hierarchical or adaptive priors further guide online sampling \cite{qu2024rldriven,min2026holo,serragomez2025adaptive,hori2025hierarchical,seo2026rgb}. These methods establish that learned proposals can improve maneuver coverage. Our focus is on when that guidance deserves a share of a fixed sampling budget and when the Gaussian source should retain authority.
+
+\paragraph{Prediction and risk} Risk-aware MPPI has used conditional value-at-risk \cite{yin2023riskaware}, predicted crowd motion \cite{trevisan2025dynamic}, and clustered rollouts to preserve distinct avoidance modes \cite{patrick2024clustering}. Chance-constrained planning converts state uncertainty into probabilistic obstacle constraints \cite{blackmore2011chance}, while predictors such as Trajectron++ represent multimodal agent futures \cite{salzmann2020trajectron}. For short online histories and structured motion families, an interacting multiple-model (IMM) estimator offers a lighter causal alternative \cite{blom1988imm}. We augment this estimator with innovation-based change detection and pass the resulting mixture through a conservative collision-risk interface rather than treating a confidence ellipse as a certified safety region.
+
+\textit{Residual dynamics.} Residual learning corrects a nominal physics prior instead of relearning the complete plant. ICODE represents input-dependent continuous dynamics with a control-affine structure \cite{li2024icode}, and ICODE-MPPI applies continuous-time residual learning to vehicle path tracking \cite{song2026icodemppi}.  The residual remains an optional physics-repair layer whose plans must remain compatible with the nominal controller.
+
+These research directions provide useful components but do not by themselves define an authority contract. Imminent obstacle risk should raise avoidance cost, not automatically increase the authority of an actor trained for static geometry. Likewise, a learned residual should modify rollouts only while its predictions remain compatible with nominal risk and progress. We therefore develop \method{} as a role-separated architecture: a frozen actor proposes task-aware sequences, reliability-adaptive hybrid sampling allocates candidates between learned and Gaussian sources, change-aware forecasting supplies future occupancy, and control-affine residual dynamics repair model mismatch behind a nominal-plan fallback.
+
+The evaluation follows the same separation. Held-out trajectories qualify the forecast; sealed static episodes test learned proposals and adaptive sampling; paired single-obstacle episodes test closed-loop safety; and two independent complex MuJoCo experiments evaluate the complete algorithm amid distinct static geometries and three moving obstacles. Across these benchmarks, the method improves task completion and static sampling efficiency and reduces collision exposure. In both joint scenes, the full system outperforms all three incomplete variants on task-level navigation outcomes. Together, these results establish both the overall advantage of the complete algorithm in the tested complex tasks and the mechanism behind that advantage.
+
+
+
+The overall architecture of the proposed framework is illustrated in
+Fig.~\ref{fig:framework}. It separates learned maneuver proposal,
+change-aware obstacle forecasting, and residual dynamics correction,
+while retaining MPPI as the online stochastic optimal-control backbone.
+
+The contributions of this work are:
+
+\begin{enumerate}
+    \item A role-separated learning-augmented risk-aware MPPI architecture that assigns learned proposals, obstacle forecasts, and residual dynamics to maneuver, motion, and plant uncertainty while retaining Gaussian sampling and nominal-plan fallback.
+    \item A causal change-aware IMM and conservative Gaussian-mixture risk interface that convert abrupt stops and turns into horizon-aligned trajectory costs without future truth or intent labels online.
+    \item A controlled evidence suite that separately qualifies forecast quality, static proposal efficiency, and single-obstacle safety, then demonstrates a decisive overall advantage for the complete algorithm in two complex three-obstacle MuJoCo scenes.
+\end{enumerate}
+
+Section~\reviewref{sec:method} develops the controller, Section~\reviewref{sec:protocol} defines the evidence partitions, Section~\reviewref{sec:results} reports the findings, and Section~\reviewref{sec:limitations} states the current boundaries.
+
+
+
+\section{Learning-Augmented Risk-Aware Model Predictive Path Integral Control}
+\label{sec:method}
+
+\subsection{Problem Formulation}
+
+Let $x_t\in\mathbb{R}^{n_x}$ be the robot state and $u_t\in\mathcal{U}$ a bounded control. The physical transition is unknown. MPPI predicts with a nominal continuous-time model $f_0$ plus an optional residual $r_\phi$,
+\begin{equation}
+    \dot{x}=f_0(x,u)+r_\phi(x,u).
+    \label{eq:dynamics}
+\end{equation}
+The controller receives causal odometry and LaserScan observations. For obstacle $j$, the online history $Y_t$ induces a horizon forecast
+\begin{equation}
+    o_{j,t+h}\sim p_\psi(o\mid Y_t),\qquad h=1,\ldots,H.
+    \label{eq:forecast}
+\end{equation}
+Future truth, obstacle intent, change labels, and simulator state are unavailable to the controller. Let $\mathcal{F}_t$ denote the collection of horizon forecasts available at time $t$.
+
+For a candidate sequence $U=(u_0,\ldots,u_{H-1})$, the objective is
+\begin{equation}
+\begin{split}
+J(U;\mathcal{F}_t)=\Phi(x_H)+\sum_{h=0}^{H-1}\big[&\ell_{\rm nav}(x_h,u_h)+\ell_{\rm static}(x_h)\\
+&+\lambda_p R_h(x_h;\mathcal{F}_t)\big],
+\end{split}
+\label{eq:objective}
+\end{equation}
+where $R_h$ is predicted collision risk. The goal is not to maximize one aggregate score. We seek high safe-success probability and low collision exposure while reporting the induced mobility, clearance, smoothness, and computation trade-offs.
+
+Role separation provides an authority contract inside the planner. The frozen actor shapes only the sampling proposal, and a traditional Gaussian source remains active. The change-aware forecast modifies only predicted collision risk and retains an explicit uncertainty margin. The residual model corrects rollout dynamics, while every selected residual plan is replayed under the nominal model. When learned reliability weakens, the sampler reduces learned authority or the controller returns the nominal plan. This contract prevents one learned signal from taking over a role for which it was not trained.
+
+\subsection{Model Predictive Path Integral Control Backbone}
+
+At every control cycle, MPPI samples $K$ sequences, rolls them through the selected dynamics, and evaluates \revieweqref{eq:objective}. Let $\mathcal{E}$ contain the candidate indices admitted to the update by the active hard filters and let $S_{\min}=\min_{i\in\mathcal{E}}S_i$. MPPI computes, for $k\in\mathcal{E}$,
+\begin{equation}
+    w_k=\frac{\exp[-(S_k-S_{\min})/\lambda]}
+    {\sum_{i\in\mathcal{E}}\exp[-(S_i-S_{\min})/\lambda]}.
+    \label{eq:weights}
+\end{equation}
+The proposal mean is updated by the weighted perturbations, the first control is applied, and the optimized sequence is shifted forward. The rollout budget $K$, horizon $H$, and control period $\Delta t$ are protocol parameters. Learning changes the source of candidates, not their total number.
+
+\subsection{Learned Proposal and Reliability-Adaptive Hybrid Sampling}
+
+The frozen actor generates a task-aware control sequence. For each planner branch $b\in\{\mathrm{nom},\mathrm{res}\}$, the hybrid sampler draws a fraction $\rho_t$ of candidates around that sequence and the rest from its receding Gaussian proposal,
+\begin{equation}
+q_{t,b}(U)=\rho_t q_{\rm RL}(U\mid x_t,Y_t)
+       +(1-\rho_t)q_{\rm G}(U\mid\mu_{t,b},\Sigma_{t,b}).
+\label{eq:hss}
+\end{equation}
+The role-aware reliability state selects $\rho_t$ from a finite admissible set $\mathcal{R}\subseteq[0,1]$ using dynamics confidence, actor support, and planner-side source competence. For each planner, guided candidates are generated once per decision and reused across its MPPI refinements. The Gaussian source is actor-free, so $\rho_t=0$ removes learned proposal authority rather than retaining an actor-centered Gaussian. A fixed-guidance ablation holds $\rho_t=\bar{\rho}$ while preserving the same diagnostics and rollout count.
+
+This mechanism deliberately separates \emph{hazard} from \emph{proposal competence}. A high predicted collision probability changes the trajectory cost and emergency state; it does not automatically increase RL authority. Development experiments in which a static-scene actor retained high authority around a moving obstacle failed the safety gate, motivating this separation.
+
+\subsection{Change-Aware Obstacle Forecasting}
+
+The predictor maintains $M$ motion hypotheses, such as constant velocity, turning, braking, and stopping. Let $\nu_t$ and $S_t$ be the innovation and innovation covariance of the mixed prediction. The normalized innovation squared (NIS) is
+\begin{equation}
+    d_t=\nu_t^\top S_t^{-1}\nu_t.
+    \label{eq:nis}
+\end{equation}
+A change is declared when enough values in a recent window exceed a nominal threshold, or when the current innovation exceeds a higher emergency threshold:
+\begin{equation}
+\sum_{s=t-W+1}^{t}\mathbb{I}[d_s>\tau_{\rm low}]\ge c
+\quad\lor\quad
+d_t>\tau_{\rm high}.
+\label{eq:change}
+\end{equation}
+Here $W$ is the detector window and $c$ is the required exceedance count. On a trigger, mode probabilities reset to $\boldsymbol{\pi}^{\rm reset}$, state covariance is inflated by $\kappa_\Sigma>1$, and the process-noise multiplier $\kappa_Q(\tau)$ decays to nominal over $T_{\rm decay}$. A refractory interval $T_{\rm ref}$ prevents repeated resets. Missing observations invoke a separate covariance-inflation guard. These operations depend only on causal noisy positions, timestamps, and availability.
+
+The resulting forecast is a Gaussian mixture
+\begin{equation}
+ p_\psi(o_{t+h}\mid Y_t)=\sum_{m=1}^{M}\pi_{m,h}
+ \mathcal{N}(\mu_{m,h},\Sigma_{m,h}).
+ \label{eq:mixture}
+\end{equation}
+Unlike a point forecast, \revieweqref{eq:mixture} preserves both maneuver alternatives and post-change uncertainty.
+
+\subsection{Conservative Collision-Risk Interface}
+
+For robot position $p_h$ and component $(\mu_{m,h},\Sigma_{m,h})$, define $\delta=\mu_{m,h}-p_h$, $d=\|\delta\|$, and $n=\delta/\max(d,\epsilon)$. The inflated collision radius is
+$R=r_{\rm robot}+r_{\rm obs}+r_{\rm margin}$. Projecting the Gaussian along $n$ gives the tangent-half-plane upper bound
+\begin{equation}
+\bar{P}_{m,h}=
+\begin{cases}
+1, & d\le R,\\
+\Phi\!\left(\dfrac{R-d}{\sqrt{n^\top\Sigma_{m,h}n+\sigma_{\min}^2}}\right), & d>R.
+\end{cases}
+\label{eq:riskbound}
+\end{equation}
+The disk collision event is contained in this half-plane event, which makes \revieweqref{eq:riskbound} conservative for each component. We weight components by $\pi_{m,h}$, sum across obstacles, and use a union bound across the horizon; no temporal independence assumption is introduced. The explicit margin $r_{\rm margin}$ is retained because nominal confidence regions under-cover during motion changes.
+
+\subsection{Control-Affine Residual Dynamics and Nominal Shield}
+
+The residual model is control affine,
+\begin{equation}
+    r_\phi(z,u)=a_\phi(z)+B_\phi(z)u,
+    \label{eq:icode}
+\end{equation}
+where $z$ is the normalized state encoding. Training combines derivative-residual, one-step RK4, multi-step rollout, and regularization losses. Task-aware samples receive larger weights near dynamic-obstacle interactions; the deployed ensemble is frozen before formal evaluation.
+
+The residual controller runs beside a complete nominal controller. Its selected sequence is replayed under nominal dynamics and accepted only when: (i) nominal and residual views satisfy the hard-risk certificate, (ii) nominal-view risk does not exceed the nominal plan, (iii) nominal progress is noninferior, and (iv) residual and nominal predicted positions remain within a fixed tube. Otherwise the exact nominal plan is returned. The shield is an empirical fail-toward-nominal mechanism, not a formal stability or collision-avoidance guarantee.
+
+
+Algorithm~\ref{alg:lar_mppi} summarizes the canonical online control
+cycle of \method{}. The reliability state combines dynamics confidence,
+actor support, and the previous guided-versus-Gaussian source competence.
+A discrete allocation map $\Gamma$ then selects
+$\rho_t\in\mathcal{R}\subseteq[0,1]$. For each planner, guided candidates are
+generated once per decision and reused across its MPPI refinements, whereas
+the Gaussian source remains active at every refinement. The mixture changes finite-budget
+candidate coverage; it is not presented as an unbiased importance-sampling
+estimator of the original path-integral distribution.
+
+\begin{algorithm}[!t]
+\caption{One Online Control Cycle of LAR-MPPI}
+\label{alg:lar_mppi}
+\footnotesize
+\begin{algorithmic}[1]
+
+\REQUIRE Robot state $x_t$, causal history $Y_t$, previous proposal means
+$\mu_{t,b}$, Gaussian covariances $\Sigma_{t,b}$, actor $\pi_\theta$, nominal model $f_0$,
+residual $r_\phi$, rollout budget $K$, horizon $H$, refinements $I$
+\ENSURE Executed control $u_t$
+
+\STATE $\mathcal{F}_t \leftarrow
+\textsc{ChangeAwareForecast}(Y_t)$
+
+\STATE $c_t \leftarrow
+\textsc{Reliability}(x_t,Y_t,\pi_\theta,r_\phi,c_{t-1}^{\rm src})$
+
+\STATE $\rho_t\leftarrow\Gamma(c_t)\in\mathcal{R}$
+
+\STATE $K_{\rm A}\leftarrow\lfloor\rho_tK\rfloor$,
+$K_{\rm G}\leftarrow K-K_{\rm A}$
+
+\STATE $f_{\rm nom}\leftarrow f_0$,
+$f_{\rm res}\leftarrow f_0+r_\phi$
+
+\FOR{$b\in\{\mathrm{nom},\mathrm{res}\}$ \textbf{in parallel}}
+
+    \STATE $\mathcal{A}_{t,b}\leftarrow
+    \textsc{ActorCandidates}
+    (\pi_\theta,x_t,Y_t,K_{\rm A},H)$
+
+    \STATE $\mu_b^{(0)}\leftarrow\mu_{t,b}$
+
+    \FOR{$i=0,\ldots,I-1$}
+
+        \STATE $\mathcal{G}_{t,b}^{(i)}\leftarrow
+        \textsc{GaussianCandidates}
+        (\mu_b^{(i)},\Sigma_{t,b},K_{\rm G})$
+
+        \STATE $\mathcal{C}_{t,b}^{(i)}\leftarrow
+        \mathcal{A}_{t,b}\cup\mathcal{G}_{t,b}^{(i)}$
+
+        \STATE $\mathcal{X}_{t,b}^{(i)}\leftarrow
+        \textsc{Rollout}
+        (f_b,x_t,\mathcal{C}_{t,b}^{(i)},H)$
+
+        \STATE $S_{b,k}^{(i)}\leftarrow
+        J(\mathcal{C}_{t,b,k}^{(i)};\mathcal{F}_t)$
+
+        \STATE $\mathcal{E}_{t,b}^{(i)}\leftarrow
+        \textsc{FeasibleSet}
+        (\mathcal{X}_{t,b}^{(i)},S_b^{(i)})$
+
+        \STATE $w_{b,k}^{(i)}\leftarrow
+        \dfrac{
+        \exp[-(S_{b,k}^{(i)}-S_{b,\min}^{(i)})/\lambda]}
+        {\sum_{\ell\in\mathcal{E}_{t,b}^{(i)}}
+        \exp[-(S_{b,\ell}^{(i)}-S_{b,\min}^{(i)})/\lambda]}$
+
+        \STATE $\mu_b^{(i+1)}\leftarrow
+        \textsc{WeightedUpdate}
+        (\mathcal{E}_{t,b}^{(i)},w_b^{(i)})$
+
+    \ENDFOR
+
+    \STATE $U_t^b\leftarrow\mu_b^{(I)}$
+
+    \STATE $X_t^b\leftarrow
+    \textsc{Rollout}(f_b,x_t,U_t^b,H)$
+
+\ENDFOR
+
+\STATE $c_t^{\rm src}\leftarrow
+\textsc{UpdateCompetence}
+(\{\mathcal{E}_{t,b}^{(i)}\}_{b,i})$
+
+\STATE $\bar{X}_t^{\rm res}\leftarrow
+\textsc{Rollout}(f_0,x_t,U_t^{\rm res},H)$
+
+\STATE $a_t\leftarrow
+\textsc{Safe}(X_t^{\rm res})
+\wedge\textsc{Safe}(\bar{X}_t^{\rm res})$
+
+\STATE $a_t\leftarrow a_t\wedge
+[R_{\max}(\bar{X}_t^{\rm res})
+\le R_{\max}(X_t^{\rm nom})+\epsilon_R]$
+
+\STATE $a_t\leftarrow a_t\wedge
+[d_g(\bar{X}_t^{\rm res})
+\le d_g(X_t^{\rm nom})+\epsilon_g]$
+
+\STATE $a_t\leftarrow a_t\wedge
+[\max_h\|p_h(X_t^{\rm res})
+-p_h(\bar{X}_t^{\rm res})\|\le\epsilon_x]$
+
+\IF{$a_t$}
+    \STATE $U_t^\star\leftarrow U_t^{\rm res}$
+\ELSE
+    \STATE $U_t^\star\leftarrow U_t^{\rm nom}$
+\ENDIF
+
+\STATE $u_t\leftarrow U_t^\star[0]$
+
+\STATE Shift $\mu_b^{(I)}$ for the next cycle
+
+\STATE \textbf{return} $u_t$
+
+\end{algorithmic}
+\end{algorithm}
+
+Here, $\textsc{FeasibleSet}$ removes candidates that violate static geometry
+or the probabilistic hard-risk threshold before the MPPI update, and
+$\textsc{Safe}(X)$ applies the same checks to a selected trajectory.
+$R_{\max}(X)=\max_h R_h(X)$ denotes maximum horizon-aligned collision risk,
+$d_g(X)$ denotes terminal goal distance, and $p_h(X)$ extracts the predicted
+robot position at step $h$. The fixed nonnegative tolerances $\epsilon_R$,
+$\epsilon_g$, and $\epsilon_x$ bound admissible risk increase, progress
+degradation, and nominal--residual model disagreement, respectively. The
+residual sequence is accepted only when it remains safe under both rollout
+views, preserves nominal risk and progress within these tolerances, and stays
+within the prescribed model-disagreement tube. Otherwise, the complete
+nominal MPPI plan is returned.
+
+\section{Experimental Protocol}
+\label{sec:protocol}
+
+\subsection{Evidence Partitions and Metrics}
+
+We keep development, qualification, sealed, and formal-confirmatory evidence distinct. The independent unit is a complete seed or obstacle-process trajectory, never a control timestep. Static intervals use 10,000 seed-cluster bootstrap replicates. The single-obstacle study uses exact paired McNemar tests for binary outcomes, matched-pair Tango score intervals, paired continuous-outcome intervals, and 200,000 whole-seed bootstrap replicates. The independent complex-scene studies use exact paired McNemar tests and 20,000 paired-bootstrap replicates for risk-difference intervals. Holm correction is applied within each prespecified mechanism or ablation family.
+
+The main paper intentionally uses four decision-facing outcomes: safe success, collision rate, conflict-window fifth-percentile clearance, and failure-penalized completion steps. Path length and jerk characterize the principal cost of added safety. Predictor negative log likelihood (NLL) and coverage validate the information supplied to control. Other logged quantities remain diagnostics. Algorithmic symbols in Section~\reviewref{sec:method} are instantiated by frozen protocol configurations rather than built into the general formulation.
+
+\subsection{Static Complex Navigation}
+
+The sealed static benchmark contains seven methods, three scenes (lab complex, narrow corridor, and long-board U-trap), two physics domains (seen and combined unseen), and ten untouched seeds: 420 complete episodes. Each decision uses 100 rollouts and each episode is capped at 600 steps. The primary coupling comparison is the full learned stack against the simple ICODE+RL combination with fixed 30\% guidance. All four learned-combination arms reach the goal in 60/60 episodes with zero collisions, allowing efficiency to be compared without mixing success and truncated motion.
+
+\subsection{Held-Out Forecast Qualification}
+
+The predictor study contains 80 in-distribution (ID) and 80 out-of-distribution (OOD) trajectories: ten independent seeds, four obstacle processes, and two noise or shift levels per split. The change-aware and ordinary IMM predictors receive identical observations. The primary endpoint is exact Gaussian-mixture NLL in the post-change P2--P4 window; average displacement error (ADE) and empirical coverage are supportive. Whole-seed bootstrap and exact paired sign-flip tests respect within-trajectory dependence.
+
+\subsection{Preregistered Single-Dynamic-Obstacle Study}
+
+The dynamic study uses 360 paired seed blocks (180 ID and 180 OOD). Four core arms form a $2\times2$ design:
+\begin{equation*}
+\begin{array}{c|cc}
+ & P=0 & P=1\\ \hline
+L=0 & \text{strong nominal MPPI} & \text{probability only}\\
+L=1 & \text{learning only} & \text{full system},
+\end{array}
+\end{equation*}
+where $L$ is the frozen learning package (actor, ICODE-style residual, and adaptive HSS) and $P$ is the probability/temporal package (tracking, change-aware forecast, probabilistic cost, and temporal recovery). This distinction matters: the factorial $L$ effect is not a pure RL effect, and the $P$ effect is not a predictor-only effect.
+
+Each seed is certified before any controller run to contain a collision opportunity for a fixed ghost trajectory. Common random numbers and one worker per seed block preserve pairing. A pre-sealed 140-seed subset adds ordinary-IMM, no-ICODE, and fixed-HSS ablations, for 1,860 complete episodes. Outcomes were opened only after a complete-matrix and hash audit.
+
+\subsection{Independent Complex Static--Dynamic MuJoCo Studies}
+
+Two independent matched-case studies test whether the learning and probability packages remain complementary when difficult geometry and obstacle motion occur together. \emph{Cluttered-Field Crossing} combines dense irregular clutter and corridor fragments with three moving carriers at route-conflict points. \emph{Scattered-Clutter Traversal} places dispersed static obstacles and three moving carriers along a longer traversal through an irregular enclosure. Carrier timing and endpoints vary across cases. The controller receives only causal LaserScan observations; obstacle identities and simulator future states are unavailable online.
+
+Both studies reuse the preceding $2\times2$ design: B00 disables learning and probability, B01 enables only the probability/forecast package, B10 enables only the learning package, and B11 is the full method. Each study contains 50 matched cases per arm and 200 episodes, for 400 complex-scene episodes in total. Each controller uses $K=300$ candidates per refinement and $I=2$
+refinements, corresponding to 600 optimizer candidate rollouts per
+controller and control decision. B00 and B01 instantiate one controller,
+whereas B10 and B11 execute matched nominal and residual controllers,
+corresponding to 1200 optimizer candidate rollouts, followed by a nominal
+replay of the selected residual sequence. The arms share the scene, task,
+initial state, and obstacle realization within each matched case, but do
+not have an equal total optimizer-rollout budget. The primary endpoint is safe success, defined as goal completion without collision; collision, timeout, final goal distance, and minimum clearance characterize failure. Self-contained integrity gates verify every episode and the physical identity of all matched four-arm scene sets before paired analysis.
+
+
+
+\section{Experimental Results}
+\label{sec:results}
+
+
+\begin{figure*}[!t]
+    \centering
+    \includegraphics[width=\textwidth]
+    {figures/mujoco_complex_scenes.pdf}
+    \caption{Representative executions in the complex MuJoCo environments.
+    The top row shows Cluttered-Field Crossing, and the bottom row shows
+    Scattered-Clutter Traversal. The columns show the environment layout,
+    early interaction, mid-course avoidance, and goal approach. Gray blocks
+    represent static obstacles, red objects represent moving obstacles, and
+    the overlaid trajectory indicates the robot motion.}
+    \label{fig:mujoco_complex_scenes}
+\end{figure*}
+
+\begin{table*}[!t]
+\caption{Complex MuJoCo results with 50 matched cases per arm and environment.
+B00 denotes nominal MPPI, B01 probability-aware control, B10 learned
+proposals, and B11 the complete method. Safe success denotes goal completion
+without collision. Zero-collision stalled arms have 50/50 timeouts.}
+\label{tab:complex}
+\centering
+\scriptsize
+\setlength{\tabcolsep}{7.0pt}
+\begin{tabular}{llrrrr}
+\toprule
+\textbf{Scenario} & \textbf{Arm}
+& \textbf{Safe success $\uparrow$}
+& \textbf{Collision $\downarrow$}
+& \textbf{Timeout $\downarrow$}
+& \textbf{Goal dist. (m) $\downarrow$} \\
+\midrule
+\multirow{4}{*}{Cluttered-Field Crossing}
+& B00 & 0/50 (0\%)  & 0/50 (0\%)   & 50/50 & 12.247 \\
+& B01 & 5/50 (10\%) & 30/50 (60\%) & 15/50 & 7.777 \\
+& B10 & 6/50 (12\%) & 44/50 (88\%) & 0/50  & 8.184 \\
+& \textbf{B11}
+& \textbf{42/50 (84\%)}
+& \textbf{8/50 (16\%)}
+& \textbf{0/50}
+& \textbf{0.281} \\
+\addlinespace[2pt]
+\multirow{4}{*}{Scattered-Clutter Traversal}
+& B00 & 0/50 (0\%)   & 0/50 (0\%)   & 50/50 & 14.075 \\
+& B01 & 0/50 (0\%)   & 0/50 (0\%)   & 50/50 & 12.931 \\
+& B10 & 30/50 (60\%) & 20/50 (40\%) & 0/50  & 0.338 \\
+& \textbf{B11}
+& \textbf{44/50 (88\%)}
+& \textbf{6/50 (12\%)}
+& \textbf{0/50}
+& \textbf{0.315} \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+
+\subsection{Learned Proposals Improve Reachability in Static Geometry}
+
+We first evaluate whether learned control proposals improve reachability in
+challenging static geometry. Traditional MPPI and ICODE-MPPI reach none of
+the 60 goals in the sealed complex-navigation benchmark, whereas RL-driven
+MPPI reaches 59/60 goals and both combined learned variants reach 60/60.
+All 420 evaluation episodes remain collision free. The resulting change in
+reachability is therefore attributed to the learned proposal rather than to
+residual dynamics alone.
+
+Within the learned stack, adaptive HSS provides the principal efficiency
+gain. Its factorial main effect reduces completion by 19.41 steps
+(95\% CI, 13.56--25.68). Relative to fixed learned guidance, the complete
+static stack reduces completion by 17.42 steps
+(95\% CI, 9.08--26.05), path length by 0.143~m
+(0.092--0.191), and stuck behavior by 8.82 steps
+(2.57--15.07). These results show that learned proposals alter geometric
+reachability, while reliability-adaptive sampling converts that capability
+into more efficient closed-loop navigation.
+
+\subsection{Single-Obstacle Evaluation Confirms Predictive and Safety Benefits}
+
+We next isolate motion prediction and closed-loop avoidance in the
+single-dynamic-obstacle setting. On held-out trajectories containing abrupt
+stops and turns, change-aware forecasting reduces P2--P4 negative log
+likelihood (NLL) by 24.9\% on in-distribution trajectories and by 24.5\%
+on out-of-distribution trajectories relative to an ordinary IMM. The
+improvement is consistent across all ten independent seeds in each split and
+remains significant after Holm correction ($p=0.003906$).
+Table~\reviewref{tab:single_obstacle_summary} summarizes the resulting
+forecasting and closed-loop improvements.
+
+\begin{table}[t]
+\caption{Single-obstacle evidence summary. Forecast rows compare the
+change-aware IMM with an ordinary IMM; closed-loop rows compare the complete
+method with strong nominal MPPI. Bold entries indicate statistically
+confirmed favorable changes.}
+\label{tab:single_obstacle_summary}
+\centering
+\scriptsize
+\setlength{\tabcolsep}{2.7pt}
+\begin{tabular}{llrrr}
+\toprule
+\textbf{Evidence} & \textbf{Metric}
+& \textbf{Baseline} & \textbf{Proposed} & \textbf{Effect} \\
+\midrule
+\multirow{2}{*}{Forecast}
+& ID NLL $\downarrow$
+& 11.763 & \textbf{8.835} & \textbf{$-24.9\%$} \\
+& OOD NLL $\downarrow$
+& 14.550 & \textbf{10.985} & \textbf{$-24.5\%$} \\
+\midrule
+\multirow{3}{*}{Closed loop}
+& Collision $\downarrow$
+& 21.39\% & \textbf{13.61\%} & \textbf{$-7.78$ pp} \\
+& Conflict q05 (m) $\uparrow$
+& 0.305 & \textbf{0.409} & \textbf{$+0.103$} \\
+& Safe success $\uparrow$
+& 78.61\% & 79.17\% & $+0.56$ pp \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+In closed loop, the complete method reduces collision rate by 7.78 percentage
+points (McNemar $p=0.000914$) and increases conflict-window
+fifth-percentile clearance by 0.103~m, while maintaining a comparable
+safe-success rate. The $2\times2$ mechanism analysis assigns complementary
+roles to the two information sources: the probability-aware package
+contributes 0.1202~m to conflict-window fifth-percentile clearance, the
+learning package contributes 12.92 percentage points to safe success, and
+their interaction contributes a further 15.83 percentage points to safe
+success. Thus, forecasting supplies anticipatory risk information, while
+learned proposals preserve goal-directed mobility. We use this controlled
+setting as an isolated mechanism test before evaluating the integrated
+architecture in joint static--dynamic scenes.
+
+\subsection{Residual Dynamics Provide Active Model Correction}
+
+Task-aware ICODE-style residual training improves 36-step position RMSE in
+all three evaluated model-error blocks while preserving performance on the
+original data to within 0.97\%. In the paired development matrix, all
+12 nominal and residual-controller episodes reach the goal without collision.
+The residual model modifies the executed control by more than 0.01 in
+48.8--59.0\% of paired control steps. These results confirm that residual
+dynamics participate actively in closed-loop control and compensate for
+plant-model mismatch without compromising task completion.
+
+\subsection{The Integrated System Achieves the Highest Safe Completion in Complex Scenes}
+\label{subsec:complex_results}
+
+Representative closed-loop executions and quantitative results for the two
+complex MuJoCo environments are presented in
+Fig.~\ref{fig:mujoco_complex_scenes} and
+Table~\reviewref{tab:complex}, respectively. Both environments combine dense
+static clutter with three moving obstacles, requiring the controller to
+maintain goal-directed progress while repeatedly resolving dynamic collision
+conflicts.
+
+
+
+Across the 100 matched cases evaluated for each arm, the complete method
+safely completes 86 episodes, compared with 36 for learning alone, five for
+probability-aware control alone, and none for nominal MPPI. The complete
+method is also the only arm that combines high safe completion with zero
+timeouts in both environments.
+
+In Cluttered-Field Crossing, the complete method safely completes 42/50
+episodes, compared with 6/50 for learning alone, 5/50 for probability-aware
+control, and 0/50 for nominal MPPI. Relative to the learning-only arm, it
+converts 38 matched failures into safe successes while two cases regress,
+yielding a $+72.0$-percentage-point paired improvement
+(95\% paired-bootstrap CI, 56.0--86.0 percentage points;
+exact McNemar $p=1.49\times10^{-9}$). It simultaneously reduces collisions
+from 44/50 to 8/50 and reaches a median final goal distance of 0.281~m.
+
+Scattered-Clutter Traversal provides an independent replication under a
+different obstacle arrangement. The complete method safely completes 44/50
+episodes, compared with 30/50 for learning alone, while both nonlearning
+arms time out in every case. Relative to the learning-only arm, it improves
+17 matched cases and regresses in three, corresponding to a
+$+28.0$-percentage-point paired improvement
+(95\% paired-bootstrap CI, 12.0--44.0 percentage points;
+exact McNemar $p=0.00258$). It also reduces collisions from 20/50 to 6/50
+and increases median minimum clearance from 0.071 to 0.155~m.
+
+The consistent advantage across both environments establishes a task-level
+benefit rather than only a coupling diagnostic. Without learned proposals,
+the controller frequently stalls before reaching the goal; with learning
+alone, it achieves goal-directed mobility but remains vulnerable to
+moving-obstacle conflicts. The complete architecture combines learned
+proposals, anticipatory risk information, and residual model correction,
+thereby achieving the highest safe-completion rate in both complex
+static--dynamic environments.
+
+\FloatBarrier
+
+\section{Limitations and Failure Boundaries}
+\label{sec:limitations}
+
+The present evidence covers complex static navigation, a single moving obstacle, and two independent MuJoCo geometries with three moving obstacles. The two 50-case studies establish repeatability across Cluttered-Field Crossing and Scattered-Clutter Traversal, but they do not establish generalization to other obstacle counts, sensing regimes, robot classes, or environment families. Performance against selected recent methods and on the real robot also remains untested. The dynamic factor $L$ packages the actor, ICODE, and adaptive HSS, while $P$ packages forecasting, risk, and temporal recovery; the factorial effects do not identify every internal component. The smaller component ablations are supportive rather than confirmatory.
+
+The static benchmark exposes strong scene heterogeneity, including a U-trap stratum in which the full stack is slower. A separate simple point-goal benchmark also favors traditional MPPI overall, showing that learned guidance should be conditional rather than permanent. In dynamic development, a frozen static-scene Actor/HSS integration failed its safety gate, and a proposal-advantage veto recovered completion only in two complete development pairs. These results motivate fail-toward-nominal allocation but do not establish a generally competent dynamic actor.
+
+The change-aware forecast improves NLL but remains under-covered during motion changes. The risk bound and safety margin are conservative mitigations, not formal chance-constraint satisfaction. The ICODE-style residual does not implement or verify the original ICODE contraction conditions. Finally, observed zero-collision cells and the external safety chain are empirical outcomes, not collision-avoidance guarantees.
+
+\section{Conclusion}
+\label{sec:conclusion}
+
+This work organizes learning around the information MPPI lacks. A learned prior supplies rare maneuvers in difficult geometry, change-aware forecasting supplies future occupancy around moving obstacles, and an ICODE-style residual repairs biased robot rollouts. Reliability-adaptive sampling and nominal shielding limit when those signals influence control. Static reachability and sampling efficiency improve, probability quality improves under abrupt motion changes, and collision exposure decreases in the single-obstacle study. Across two independent complex MuJoCo scenes, the complete method achieves 84\% and 88\% safe success with zero timeouts, totaling 86/100 safe completions compared with 36/100 for learning only. This repeatable task-level advantage shows that the proposed algorithm can resolve joint geometric and motion uncertainty that defeats each incomplete variant; the factorial design explains the result through complementary maneuver and risk information. The single-obstacle result still exposes a safety--mobility trade-off, so the claim remains scoped to the evaluated conditions. 
+
+\balance
+\bibliographystyle{IEEEtran}
+\bibliography{references}
+
+\end{document}

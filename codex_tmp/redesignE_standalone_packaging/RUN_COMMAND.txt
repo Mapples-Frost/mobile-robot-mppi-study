@@ -1,0 +1,5 @@
+D:\Projects\mobile-robot-mppi-study-single-v6\.venv-cuda\Scripts\python.exe ^
+  D:\Projects\mobile-robot-mppi-study-single-v6\research_artifacts\redesignE_four_arm_exact_standalone_v1\analysis\analyze_redesignE_standalone.py ^
+  --raw-parent D:\Projects\mobile-robot-mppi-study-single-v6\research_artifacts\redesignE_four_arm_exact_standalone_v1\raw ^
+  --output D:\Projects\mobile-robot-mppi-study-single-v6\research_artifacts\redesignE_four_arm_exact_standalone_v1\analysis ^
+  --copy-verification D:\Projects\mobile-robot-mppi-study-single-v6\research_artifacts\redesignE_four_arm_exact_standalone_v1\audit\COPY_VERIFICATION.json

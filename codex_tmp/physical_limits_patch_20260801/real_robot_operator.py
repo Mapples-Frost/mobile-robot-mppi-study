@@ -62,6 +62,7 @@ from reverse_safety_contract import (  # noqa: E402
     apply_provisional_collision_intervention,
     bound_signed_speed,
     couple_differential_drive_command,
+    angular_slew_step_budget,
     limit_angular_command_step,
     protected_reverse_escape,
     stabilize_goal_heading,
@@ -473,6 +474,8 @@ def _validate(args):
             "max-reverse-mps %.3f exceeds hard cap %.3f"
             % (args.max_reverse_mps, HARD_MAX_REVERSE_MPS)
         )
+    if args.angular_slew_radps2 <= 0.0:
+        raise ValueError("angular-slew-radps2 must be positive")
     if args.max_angular_radps <= 0.0:
         raise ValueError("max-angular-radps must be positive")
     if args.max_angular_radps > HARD_MAX_ANGULAR_RADPS:
@@ -937,6 +940,7 @@ def main():
     parser.add_argument("--boundary-max-y", type=float, default=1.50)
     parser.add_argument("--max-linear-mps", type=float, default=0.06)
     parser.add_argument("--max-reverse-mps", type=float, default=0.10)
+    parser.add_argument("--angular-slew-radps2", type=float, default=1.0)
     parser.add_argument(
         "--max-angular-radps", type=float, default=0.25
     )
@@ -1019,6 +1023,7 @@ def main():
                 "max_linear_mps": args.max_linear_mps,
                 "max_reverse_mps": args.max_reverse_mps,
                 "max_angular_radps": args.max_angular_radps,
+                "angular_slew_radps2": args.angular_slew_radps2,
             },
             "static_background": {
                 "enabled": args.static_background_map is not None,
@@ -1214,6 +1219,7 @@ def main():
     reactive_turn_sign = None
     reactive_last_cycle = -1000
     previous_command_w = 0.0
+    previous_command_time = None
     failure = None
     log_path = args.output / "operator_cycles.jsonl"
     try:
@@ -1429,6 +1435,7 @@ def main():
                     reactive_turn_sign = None
                     reactive_last_cycle = -1000
                     previous_command_w = 0.0
+                    previous_command_time = None
                     _publish_zero(command_topic)
                     print(
                         "mission_transition=return_home "
@@ -1490,6 +1497,7 @@ def main():
                     consecutive_planner_numeric_failures += 1
                     _publish_zero(command_topic)
                     previous_command_w = 0.0
+                    previous_command_time = None
                     controller.reset(args.seed)
                     safety.reset()
                     torch.cuda.synchronize()
@@ -1803,12 +1811,25 @@ def main():
                     )
                 )
                 if not immediate_zero_required:
+                    command_time = time.monotonic()
+                    elapsed_s = (
+                        float(args.period_s)
+                        if previous_command_time is None
+                        else command_time - previous_command_time
+                    )
                     bounded_w, angular_slew_limited = (
                         limit_angular_command_step(
-                            bounded_w, previous_command_w
+                            bounded_w,
+                            previous_command_w,
+                            angular_slew_step_budget(
+                                elapsed_s,
+                                args.angular_slew_radps2,
+                                args.period_s,
+                            ),
                         )
                     )
                 previous_command_w = bounded_w
+                previous_command_time = time.monotonic()
 
                 published = False
                 if command_topic is not None:
@@ -1832,6 +1853,7 @@ def main():
                         bounded_v = 0.0
                         bounded_w = 0.0
                         previous_command_w = 0.0
+                        previous_command_time = None
                         gateway_status_recovered = True
                     if not bool(gateway_status.get("armed")):
                         stop_reason = "gateway_disarmed"

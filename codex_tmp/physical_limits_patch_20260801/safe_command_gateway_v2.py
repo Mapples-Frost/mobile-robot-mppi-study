@@ -24,6 +24,8 @@ from reverse_safety_contract import (
     apply_front_arc_creep,
     apply_directional_clearance,
     bound_signed_speed,
+    angular_slew_step_budget,
+    limit_angular_command_step,
     motion_session_expired,
     paired_rear_clearance,
     paired_rear_is_fresh,
@@ -97,6 +99,8 @@ def _validate_args(args):
         )
     if args.command_watchdog_s <= 0.0:
         raise ValueError("command watchdog must be positive")
+    if args.angular_slew_radps2 <= 0.0:
+        raise ValueError("angular-slew-radps2 must be positive")
     if args.sensor_watchdog_s <= 0.0:
         raise ValueError("sensor watchdog must be positive")
     if args.session_timeout_s <= 0.0:
@@ -118,6 +122,8 @@ class SafeCommandGatewayV2(object):
         self.motion_session_started_at = None
         self.last_command = None
         self.last_command_time = 0.0
+        self.last_applied_angular = 0.0
+        self.last_applied_angular_time = None
         self.last_scan_time = 0.0
         self.last_rear_right_time = 0.0
         self.last_rear_left_time = 0.0
@@ -278,6 +284,12 @@ class SafeCommandGatewayV2(object):
 
     def publish_zero(self):
         self.publisher.publish(self.zero_message())
+        self._record_applied_angular(0.0)
+
+    def _record_applied_angular(self, angular_radps):
+        """Bind the slew limiter to the command actually sent to the robot."""
+        self.last_applied_angular = float(angular_radps)
+        self.last_applied_angular_time = time.monotonic()
 
     def _inside_boundary(self, x, y):
         margin = float(self.args.boundary_margin_m)
@@ -354,6 +366,21 @@ class SafeCommandGatewayV2(object):
             requested_w,
             -float(self.args.max_angular_radps),
             float(self.args.max_angular_radps),
+        )
+        angular_time = time.monotonic()
+        angular_elapsed_s = (
+            1.0 / float(self.args.rate_hz)
+            if self.last_applied_angular_time is None
+            else angular_time - self.last_applied_angular_time
+        )
+        w, _ = limit_angular_command_step(
+            w,
+            self.last_applied_angular,
+            angular_slew_step_budget(
+                angular_elapsed_s,
+                self.args.angular_slew_radps2,
+                1.0 / float(self.args.rate_hz),
+            ),
         )
         # The front-only lidar near-body stop must not suppress the planner's
         # escape direction.  Forward/rotation-only commands retain the old
@@ -460,6 +487,7 @@ class SafeCommandGatewayV2(object):
                 "max_linear_mps": self.args.max_linear_mps,
                 "max_reverse_mps": self.args.max_reverse_mps,
                 "max_angular_radps": self.args.max_angular_radps,
+                "angular_slew_radps2": self.args.angular_slew_radps2,
                 "allow_reverse": bool(self.args.allow_reverse),
             },
             "clearance_thresholds": {
@@ -485,6 +513,7 @@ class SafeCommandGatewayV2(object):
             message, reason = self._decision()
             if message is not None:
                 self.publisher.publish(message)
+                self._record_applied_angular(message.angular.z)
                 if (
                     abs(float(message.linear.x)) > 1.0e-12
                     or abs(float(message.angular.z)) > 1.0e-12
@@ -519,6 +548,7 @@ def parse_args():
     parser.add_argument("--max-linear-mps", type=float, default=0.06)
     parser.add_argument("--max-reverse-mps", type=float, default=0.10)
     parser.add_argument("--max-angular-radps", type=float, default=0.25)
+    parser.add_argument("--angular-slew-radps2", type=float, default=1.0)
     parser.add_argument("--command-watchdog-s", type=float, default=0.55)
     parser.add_argument("--sensor-watchdog-s", type=float, default=0.40)
     parser.add_argument("--session-timeout-s", type=float, default=180.0)

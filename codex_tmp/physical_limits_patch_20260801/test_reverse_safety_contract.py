@@ -8,6 +8,7 @@ from reverse_safety_contract import (
     apply_turn_direction_lock,
     apply_provisional_collision_intervention,
     apply_directional_clearance,
+    angular_slew_step_budget,
     bound_signed_speed,
     couple_differential_drive_command,
     limit_angular_command_step,
@@ -299,6 +300,21 @@ def test_angular_command_step_prevents_instant_sign_reversal():
     assert limit_angular_command_step(
         0.20, 0.10
     ) == (0.20, False)
+
+
+def test_angular_slew_budget_uses_actual_interval_and_caps_delays():
+    assert angular_slew_step_budget(0.10, 1.0, 0.35) == pytest.approx(0.10)
+    assert angular_slew_step_budget(1.20, 1.0, 0.35) == pytest.approx(0.35)
+    assert angular_slew_step_budget(-0.10, 1.0, 0.35) == pytest.approx(0.0)
+    with pytest.raises(ValueError):
+        angular_slew_step_budget(0.10, 0.0, 0.35)
+
+
+def test_elapsed_slew_budget_prevents_a_full_sign_flip_after_a_short_cycle():
+    step = angular_slew_step_budget(0.10, 1.0, 0.35)
+    value, applied = limit_angular_command_step(-0.50, 0.50, step)
+    assert applied
+    assert value == pytest.approx(0.40)
 
 
 def test_front_clearance_governor_tightens_existing_static_avoidance_arc():

@@ -300,6 +300,29 @@ def limit_angular_command_step(
     return limited, abs(limited - requested) > 1.0e-12
 
 
+def angular_slew_step_budget(
+    elapsed_s,
+    maximum_slew_radps2,
+    maximum_elapsed_s,
+):
+    """Return a bounded angular-command step from a real control interval.
+
+    A fixed per-cycle step silently becomes a larger physical angular
+    acceleration whenever the control period is shorter than expected.  The
+    elapsed interval is therefore used to form the step budget.  Conversely,
+    a delayed cycle must not earn an arbitrarily large one-shot turn reversal,
+    so the interval is capped at the nominal control period.
+    """
+    elapsed = float(elapsed_s)
+    slew = float(maximum_slew_radps2)
+    maximum_elapsed = float(maximum_elapsed_s)
+    if slew <= 0.0:
+        raise ValueError("maximum angular slew must be positive")
+    if maximum_elapsed <= 0.0:
+        raise ValueError("maximum elapsed interval must be positive")
+    return slew * min(max(elapsed, 0.0), maximum_elapsed)
+
+
 def apply_front_clearance_arc_governor(
     linear_mps,
     angular_radps,

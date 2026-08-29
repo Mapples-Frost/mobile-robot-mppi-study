@@ -1,0 +1,20 @@
+{
+  "source_root": "D:/Projects/mobile-robot-mppi-study-main/mobile-robot-mppi-study-main",
+  "synchronized_at": "2026-08-29",
+  "files": [
+    {"path": "dynamic_mppi_sim_v9.py", "sha256": "e890f14d87f11400694f48678ed9414d2878397cee783ab60aa7a7d93fa91012", "bytes": 25207, "disposition": "copied_then_portability_fixed_in_contrib"},
+    {"path": "pc_driver.py", "sha256": "dfa23c9c8d28c0716306d121180e1f0af55ac0cfcae1444b51a4bdab6152941f", "bytes": 11140, "disposition": "not_copied_unsafe_and_superseded"},
+    {"path": "simple_pc_controller.py", "sha256": "71e0c711e462bae145c8c77740fd4cfc61ef970c02f29646ea567e82636610da", "bytes": 5139, "disposition": "not_copied_unsafe_auto_arm_dead_reckoning"},
+    {"path": "_gw4.py", "sha256": "bfabcc6c2c33288181a94e19d176b369752d253e69459a1f58ef860a06d5734e", "bytes": 3508, "disposition": "not_copied_status_only_prototype"},
+    {"path": "_simple_gateway.py", "sha256": "9591036a3c79dd3d57986a185e0ed0c67908f6ee6a524676c4ba379fa3a3f551", "bytes": 3105, "disposition": "not_copied_status_only_prototype"},
+    {"path": "pi_can_test.py", "sha256": "78305aa2265731a196d6efc59cdf7269d3f1a7d61d77d224bb0d4c523bd2d1fe", "bytes": 463, "disposition": "not_copied_existing_zero_can_contract_supersedes"},
+    {"path": "pc_pi_protocol.md", "sha256": "b87ebbab94a6f3ccaa2cbd350314eeb85a4133decc480c280adec10971c70bf9", "bytes": 5934, "disposition": "copied_as_student_record"},
+    {"path": "deployment/inference/bc_policy.py", "sha256": "64db43dfd3d00a60f7a94b0d09ffefd25028b2cab6ad17dc16808fb8c8c7290f", "bytes": 3419, "disposition": "copied_non_production"},
+    {"path": "deployment/inference/car_controller.py", "sha256": "7456a998350efddfcddb998657348591cfc9b5e6d1d62bd7b2976da0f3aa41cc", "bytes": 7127, "disposition": "copied_non_production"},
+    {"path": "deployment/inference/real_car_test.py", "sha256": "1e7349bdae5450a24527ae99d15f216be9f1053dfda24efafc5bfe4548440304", "bytes": 3871, "disposition": "copied_non_production_name_retained_from_source"},
+    {"path": "deployment/model/model_metadata.json", "sha256": "1ad7605cb8461ef4c9a504519cfb2de2f71c8a27abf66fd04f2e94c9e9e8b4e2", "bytes": 349, "disposition": "copied_metadata_only"},
+    {"path": "deployment/model/sparse_multiscale_bc_policy.pth", "sha256": "78ac4f6b6e1cdceb1eb836f373705cd7fd52dace187569431bbbe672466cc286", "bytes": 108937, "disposition": "not_copied_unqualified_binary"},
+    {"path": "results/dynamic_mppi/final_v2_results.json", "sha256": "cb42ba719e9a57e6f804d5e8fc800d315f72e8f2e9411f68b242dc29e16387d9", "bytes": 2609, "disposition": "copied_reported_result"},
+    {"path": "results/dynamic_mppi/final_v3_improved.json", "sha256": "7ea7387b3d872d6bccb78abfe90340c3da0a303a3ad2f445c65e4e3b50b12eba", "bytes": 1291, "disposition": "copied_reported_result"}
+  ]
+}

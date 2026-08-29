@@ -1,0 +1,16 @@
+{
+  "model_name": "sparse_multiscale_bc_policy",
+  "scene": "sparse",
+  "input_dim": 9,
+  "output_dim": 2,
+  "success_rate": 0.88,
+  "method": "multi_scale_BC",
+  "robot_params": {
+    "TRACK_WIDTH": 0.32,
+    "COLLISION_RADIUS": 0.25,
+    "V_MAX": 0.5,
+    "OMEGA_MAX": 0.8,
+    "DT": 0.2
+  },
+  "normalization": "same_as_training"
+}

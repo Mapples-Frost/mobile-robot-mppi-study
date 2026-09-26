@@ -484,3 +484,117 @@ UTC: 2026-09-26T20:27:57.550241+00:00. Formal vehicle validation shard completed
 
 ## 2026-09-26T20:31:26.581895+00:00
 
+<!-- vehicle-validation64-shard04-audit-20260926 -->
+## 2026-09-26 vehicle validation64 shard04 audit
+
+UTC: 2026-09-26T20:32:40+00:00. Post-run audit of formal shard04 completed with validation_accessed=true (reading shard outputs), sealed test accessed=false, simulations=0, training steps=0. Shard04 has 224 episodes and 20101 control steps, within the declared 224/33600 budget. Completed hash audit passed=True; episode trace/hash audit passed=True; aggregate replay checks passed=True. Learned candidates in shard04: s0 fixed H25 (440 steps), s1 fixed H25 (321 steps), s2 used horizons {'25': 220, '35': 32} with 14 switches. Vehicle validation64 progress is now 5/12 completed shards with 1120 completed episodes and 99398 control steps, plus one counted failed validation-access attempt with 0 episodes/control steps. This is not final model selection or a reproduction claim. New formal evidence requires external backup before shard05; request written at `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_VALIDATION64_SHARD04_AUDIT_20260926T203240.json` and final addendum at `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_VALIDATION64_SHARD04_AUDIT_FINAL_ADDENDUM_20260926T203240.json`. Sealed test remains closed.
+
+
+## 2026-09-26T20:34:22.718955+00:00
+Continued authorized research with one concrete experiment and preserved state.
+
+## Action completed
+
+Ran the prepared shard04 post-run audit:
+
+- Experiment ID: `20260926T203240_92122dd6`
+- Script: `experiments/bohn2021_aws/vehicle_validation64_shard04_audit.py`
+- Script SHA256: `dfc37ca495eab9668ce61d254356b8228f995ac371959cdf52b926106f80147c`
+- Interpreter: `modern`
+- Exit status: `0`
+- Runtime: `14.0116 s`
+- Validation access: yes, only existing shard04 output artifacts
+- Validation bank reopened: no
+- Sealed final test opened/hashed: no
+- New simulations/control steps/gradient steps: `0 / 0 / 0`
+
+## Shard04 audit result
+
+Audit passed.
+
+Key artifacts:
+
+- Audit raw:  
+  `research_artifacts/aws_diagnostics/vehicle_validation64_shard04_audit_20260926/raw.json`  
+  SHA256 `bd80da559cc5dd1358401a4480b9a92926d55efeaea9c9b9eb951c9002553d58`
+
+- Audit summary:  
+  `research_artifacts/aws_diagnostics/vehicle_validation64_shard04_audit_20260926/summary.md`  
+  SHA256 `179c6d78edbe0b4eeeb66a56a0c572a9e0c3b692f3934fe3f180759e61e3242c`
+
+- Audit completed marker:  
+  `research_artifacts/aws_diagnostics/vehicle_validation64_shard04_audit_20260926/completed.json`  
+  SHA256 `07a735d4fc470550c3b2202f2330e1191ac908748d230905c320076f9e9f2ca1`
+
+Audit checks:
+
+- Completed hash audit: passed, `1574` records
+- Episode dirs: `224`
+- Episode trace/hash audit: passed
+- Aggregate replay: passed
+- Shard04 budget: `224` episodes, `20101` control steps, upper bound `33600`
+
+Learned candidates in shard04:
+
+- `learned_s0`: fixed H25, `5` episodes, `440` steps, `5/5` success
+- `learned_s1`: fixed H25, `4` episodes, `321` steps, `4/4` success
+- `learned_s2`: adaptive in shard, H25/H35, `3` episodes, `252` steps, `3/3` success, `14` switches
+
+## Updated cumulative status
+
+Vehicle validation64 is now:
+
+- `5/12` shards completed and audited
+- `1120` formal validation episodes
+- `99398` formal validation control steps
+- plus one preserved failed shard02 modern-interpreter attempt with `0` episodes/control steps/gradient steps
+
+This remains partial vehicle validation evidence only for the IMPROVED latency-tree method. It is not ORIGINAL SAC, not final-test evidence, and not a reproduction-success claim.
+
+## Backup gate
+
+Created backup request artifacts:
+
+- `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_VALIDATION64_SHARD04_AUDIT_20260926T203240.json`  
+  SHA256 `df3551e971b2c70df752547607d190f84d57bb04bda6f9f69c1d44f72aa1cab7`
+
+- `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_VALIDATION64_SHARD04_AUDIT_FINAL_ADDENDUM_20260926T203240.json`  
+  SHA256 `f51b7cc2b6d020920d3382de6e0b3bde1f5f94aaeb9a475b3b417fa72f913060`
+
+- Blocker note:  
+  `research_artifacts/aws_diagnostics/post_shard04_audit_backup_blocker_check_20260926.md`  
+  SHA256 `5a263e209b394ffe81c8316f3cabc8ccfccb27997746c1239f85696d4f517fbb`
+
+Checked for local post-shard04 backup proofs: none found matching `backup_proof_20260926T20*.json`.
+
+Important: the supervisor backup in context at `2026-09-26T20:32:14.890193+00:00` predates the shard04 audit at `20:32:40Z`, so it is not sufficient for shard05.
+
+## Documents/state preserved
+
+The audit updated and hashed:
+
+- `STATUS.md`
+- `RESEARCH_LOG.md`
+- `RESULTS_AUDIT.md`
+- `DECISIONS.md`
+- `REPRODUCTION_PROTOCOL.md`
+- `EXPERIMENT_REGISTRY.csv` includes audit run `20260926T203240_92122dd6`
+
+I also persisted the handoff via `update_state`.
+
+## Next iteration
+
+Do not rerun shard04 or its audit.
+
+First check for a verified external backup proof after the shard04 audit/final-addendum/blocker state, covering shard04 formal outputs, shard04 audit artifacts, audit run registry/stdout/stderr, docs/registry updates, backup request, final addendum, and blocker note.
+
+If adequate proof is present, run exactly one formal experiment:
+
+```text
+experiments/bohn2021_aws/vehicle_validation64_shard_runner.py
+--shard 5
+--backup-proof <post-shard04-audit-proof.json>
+--i-accept-validation-access
+```
+
+Use `legacy` interpreter only. Sealed final test remains closed and unauthorized.

@@ -443,3 +443,12 @@ experiments/bohn2021_aws/vehicle_validation64_shard_runner.py
 ```
 
 解释器必须为 `legacy`；sealed final test 继续关闭。随后先审计 shard03，再决定 shard04。
+
+<!-- vehicle-validation64-shard-complete-20260926-shard03 -->
+## 2026-09-26 vehicle validation64 shard 03
+
+UTC: 2026-09-26T18:59:14.269869+00:00. Formal vehicle validation shard completed with validation_accessed=true, test_accessed=false, episodes=224, control_steps=19887. Artifacts: `research_artifacts/aws_formal_validation/vehicle_validation64_20260926/shard03/raw.json`, `research_artifacts/aws_formal_validation/vehicle_validation64_20260926/shard03/summary.md`. This is shard-level validation evidence only; final sealed test remains unauthorized.
+
+
+## 2026-09-26T19:03:26.934183+00:00
+

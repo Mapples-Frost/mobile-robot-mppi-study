@@ -106,3 +106,71 @@ UTC: 2026-09-26T13:05:41.673579+00:00. Metadata-only no-validation gate frozen a
 
 ## 2026-09-26T13:14:06.893422+00:00
 
+<!-- vehicle-validation64-shard-runner-dryrun-20260926 -->
+## 2026-09-26 vehicle validation64 shard runner dry-run
+
+UTC: 2026-09-26T13:16:00.900755+00:00. New runner `experiments/bohn2021_aws/vehicle_validation64_shard_runner.py` dry-run completed with validation_accessed=false, test_accessed=false, simulations=0. It verified the frozen gate, source/model/policy hashes, bank stat metadata without opening validation/test content, and formal-run backup-proof requirements. Artifacts: `research_artifacts/aws_diagnostics/vehicle_validation64_shard_runner_dryrun_20260926/dry_run.json`, `research_artifacts/aws_diagnostics/vehicle_validation64_shard_runner_dryrun_20260926/summary.md`. Runner and dry-run outputs now require external backup before any validation64 content access.
+
+
+## 2026-09-26T13:18:32.806978+00:00
+
+<!-- post-dryrun-backup-blocker-audit-20260926 -->
+## 2026-09-26 post-dry-run backup blocker audit
+
+UTC: 2026-09-26T13:21:03+00:00. Metadata-only blocker audit completed with no validation/test bank content opened and no simulations. The dry-run/gate/runner hashes remain consistent, but no adequate post-dry-run external backup proof is present in the repository. A new backup request was written at `research_artifacts/aws_backup_proofs/REQUEST_POST_DRYRUN_BACKUP_20260926T132103.json`. Formal vehicle validation64 shard0 remains blocked until the supervisor provides a verified external backup proof with `backup_verified=true`, `remaining_changed_files=0`, commit, GitHub release asset/download SHA256, runner/gate hashes, and dry-run artifact hashes. Sealed test remains closed.
+
+
+## 2026-09-26T13:22:18.001852+00:00
+Continued with concrete, bounded actions while respecting the validation/test access gates.
+
+Actions completed:
+- Created `experiments/bohn2021_aws/post_dryrun_backup_blocker_audit.py`
+  - SHA256: `2a2604e6e6a04fc80525c8e70a48d3273180c4cb7b03d4d12fe70245d989651c`
+- Ran metadata-only backup gate audit:
+  - Experiment ID: `20260926T132103_214d3cd1`
+  - Exit status: `0`
+  - Runtime: `2.0048s`
+  - Validation accessed: `false`
+  - Sealed test accessed: `false`
+  - New simulations: `0`
+  - New gradient steps: `0`
+- Verified:
+  - Runner SHA intact: `cb3c775808de3213fd1ef6cef5727aec9f7b473ac5d0b1270dca4cb37b44dd0e`
+  - Gate SHA intact: `5797821873cc689129a16818ef80b2260ee5cb1998b270ac5588e77b61bc382b`
+  - Dry-run artifacts still match expected hashes.
+  - No formal validation files currently exist.
+  - Adequate post-dryrun external backup proofs found: `0`
+
+Artifacts written:
+- `research_artifacts/aws_diagnostics/post_dryrun_backup_blocker_audit_20260926/raw.json`
+  - SHA256: `3d9cb90010f6b7e2d96c38c980a4d2290ea0006ded65f42f964cdb68e1a30e39`
+- `research_artifacts/aws_diagnostics/post_dryrun_backup_blocker_audit_20260926/summary.md`
+  - SHA256: `057e3fcb10206d4eaacbe16883b6525a269b951f5312fc3bbdfeafb26c0da62d`
+- `research_artifacts/aws_diagnostics/post_dryrun_backup_blocker_audit_20260926/completed.json`
+  - SHA256: `2e270f5eb8d2b3741991d65cb8481fc19df13f6588f037b9a628c916659ced48`
+- `research_artifacts/aws_backup_proofs/REQUEST_POST_DRYRUN_BACKUP_20260926T132103.json`
+  - SHA256: `446599d571b48c8dcfdba5d624464424ab7eefcdea1682663c8cf7394936a7ed`
+
+State/documents updated:
+- `STATUS.md`
+- `RESEARCH_LOG.md`
+- `RESULTS_AUDIT.md`
+- `DECISIONS.md`
+- `REPRODUCTION_PROTOCOL.md`
+- `EXPERIMENT_REGISTRY.csv`
+- Durable supervisor state via `update_state`
+
+Current blocker:
+- Formal vehicle validation64 shard0 remains blocked because there is still no verified external backup after the dry-run and after the new backup request/audit.
+- I did **not** open `vehicle_validation_bank.json`.
+- I did **not** open sealed test.
+- I did **not** run formal validation.
+
+Next exact action:
+1. Wait for or detect supervisor-provided verified external backup after `2026-09-26T13:21:03Z` covering the dry-run artifacts/docs/registry/proofs and the new request/audit.
+2. Once available, create repository-local post-dryrun proof JSON.
+3. Then run only:
+   - `experiments/bohn2021_aws/vehicle_validation64_shard_runner.py --shard 0 --backup-proof <proof> --i-accept-validation-access`
+   - legacy interpreter
+   - validation budget: exactly 224 episodes, ≤33600 control steps
+   - `validation_accessed=true`, `test_accessed=false`

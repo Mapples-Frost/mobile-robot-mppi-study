@@ -161,6 +161,9 @@ def api(items):
         usage=answer.get('usage',{});status=answer.get('status','unknown')
         if not str(answer.get('model','')).startswith('gpt-5.5'):raise RuntimeError('Unexpected returned model; no fallback permitted')
         return answer
+    except urllib.error.HTTPError as error:
+        detail=redact(error.read().decode(errors='replace'))[:2000]
+        raise RuntimeError('API_HTTP_'+str(error.code)+': '+detail) from None
     finally:
         with db() as c:c.execute('insert into calls values(?,?,?,?,?,?,?)',(cid,now(),'gpt-5.5',effort,status,json.dumps(usage),time.monotonic()-started))
         event('api',call_id=cid,status=status,usage=usage)

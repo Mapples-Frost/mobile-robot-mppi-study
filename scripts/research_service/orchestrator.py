@@ -2,6 +2,7 @@
 import csv, datetime as dt, fcntl, hashlib, json, os, pathlib, signal, socket, sqlite3, subprocess, threading, time, urllib.request, urllib.error, uuid, shutil, resource
 BASE=pathlib.Path('/data/openai-agent'); ROOT=BASE/'mobile-robot-mppi-study'; STATE=BASE/'state'
 STATE.mkdir(exist_ok=True); SERVICE=ROOT/'scripts/research_service'
+from resource_monitor import ResourceSampler, link_run
 STOP=False
 
 def now(): return dt.datetime.now(dt.timezone.utc).isoformat()
@@ -79,8 +80,10 @@ def execute(args):
     dump(STATE/'active_experiment.json',meta);started=time.monotonic();peak=0;cpu_before=resource.getrusage(resource.RUSAGE_CHILDREN)
     with (dest/'stdout.log').open('w') as out,(dest/'stderr.log').open('w') as err:
         proc=subprocess.Popen([py,'-u',str(pathlib.Path('/home/mapples/projects/mobile-robot-mppi-study')/path.relative_to(ROOT)),*argv],cwd='/home/mapples/projects/mobile-robot-mppi-study',env=clean_env(),stdout=out,stderr=err,start_new_session=True)
-        meta['pid']=proc.pid;dump(STATE/'active_experiment.json',meta)
+        meta['pid']=proc.pid;meta['process_started_utc']=now();dump(STATE/'active_experiment.json',meta)
+        sampler=ResourceSampler(proc.pid,dest/'cpu_samples.jsonl')
         while proc.poll() is None:
+            sampler.sample()
             if time.monotonic()-started>timeout or sum((dest/n).stat().st_size for n in ('stdout.log','stderr.log'))>128*1024**2:
                 os.killpg(proc.pid,signal.SIGTERM)
                 try:proc.wait(15)
@@ -91,9 +94,14 @@ def execute(args):
                 peak=max(peak,int(next(x.split()[1] for x in status.splitlines() if x.startswith('VmRSS:'))))
             except (OSError,StopIteration):pass
             time.sleep(2)
+    process_ended=now();command_wall=time.monotonic()-started
     cpu_after=resource.getrusage(resource.RUSAGE_CHILDREN)
     retry_state[fingerprint]=0 if proc.returncode==0 else retry_state.get(fingerprint,0)+1;dump(STATE/'experiment_retries.json',retry_state)
     meta.update(retry_fingerprint=fingerprint,cpu_seconds=cpu_after.ru_utime+cpu_after.ru_stime-cpu_before.ru_utime-cpu_before.ru_stime,exit_status=proc.returncode,runtime_seconds=time.monotonic()-started,peak_process_rss_kb=peak,status='complete' if proc.returncode==0 else 'failed',ended=now())
+    meta['full_command_wall_seconds']=command_wall
+    meta['process_ended_utc']=process_ended
+    meta['resource_monitoring']=sampler.summary()
+    meta['cloudwatch']=link_run(dest,meta['process_started_utc'],process_ended)
     if proc.returncode and not meta['failure_reason']:meta['failure_reason']='nonzero_exit'
     for log in ('stdout.log','stderr.log'):
         p=dest/log

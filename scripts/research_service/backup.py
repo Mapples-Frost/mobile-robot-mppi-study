@@ -23,7 +23,7 @@ def code_backup():
  files=[]
  for path in patterns:
   for p in (ROOT/path).rglob('*'):
-   if p.is_file() and p.suffix in ('.py','.md','.json','.yaml','.yml','.toml','.txt','.csv','.service','.mount','.ps1','.sh','.patch') and p.stat().st_size<10_000_000 and '__pycache__' not in p.parts:files.append(str(p.relative_to(ROOT)))
+   if p.is_file() and p.suffix in ('.py','.md','.json','.yaml','.yml','.toml','.txt','.csv','.service','.timer','.mount','.ps1','.sh','.patch') and p.stat().st_size<10_000_000 and '__pycache__' not in p.parts:files.append(str(p.relative_to(ROOT)))
  files += [p.name for p in ROOT.glob('*') if p.is_file() and (p.suffix in ('.md','.csv','.json') or p.name=='.gitignore')]
  for start in range(0,len(files),100):
   r=git('add','--',*files[start:start+100])

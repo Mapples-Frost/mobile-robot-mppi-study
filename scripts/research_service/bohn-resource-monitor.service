@@ -1,0 +1,15 @@
+[Unit]
+Description=Read-only research CPU and CloudWatch credit collection
+After=network-online.target
+RequiresMountsFor=/data/openai-agent
+
+[Service]
+Type=oneshot
+User=ubuntu
+ExecStart=/usr/bin/python3 /data/openai-agent/mobile-robot-mppi-study/scripts/research_service/resource_monitor.py
+UMask=0077
+NoNewPrivileges=true
+TimeoutStartSec=90
+MemoryMax=256M
+CPUQuota=20%
+Nice=10

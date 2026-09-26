@@ -1,0 +1,11 @@
+[Unit]
+Description=Collect research resource telemetry every minute
+
+[Timer]
+OnBootSec=45
+OnUnitActiveSec=60
+AccuracySec=5
+Unit=bohn-resource-monitor.service
+
+[Install]
+WantedBy=timers.target

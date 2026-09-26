@@ -25,3 +25,6 @@ Backups: supervisor commits only explicit research code/docs, excludes secrets/r
 Pause only for user-only missing credentials/files, new material cost, irreversible important data loss, change of research problem, two major genuinely different scientific directions requiring user interpretation, completed final acceptance, or a fully evidenced inability to reproduce after sufficient diagnostics. Write NEEDS_USER.md with exact blocker when applicable, otherwise continue autonomously. User absence is not a blocker.
 
 Final delivery: runnable code, pinned environment, exact commands/configs, all checkpoints/raw results/registry/audit/budgets, all seeds including failures, actual timing tables/figures and Chinese report explicitly answering what original conclusions are supported/not reproduced for each task, strongest fixed H, adaptive result, control/safety/solver/latency/stability, ORIGINAL vs IMPROVED and limitations.
+
+The user explicitly requires staying on t3a.medium. Follow scripts/research_service/RESOURCE_POLICY.md for mandatory full-training resource telemetry and evidence-based upgrade recommendations. Missing CloudWatch values are unknown, never zero; do not change IAM or instance configuration to obtain them. Continue the preregistered research queue on the existing machine.
+

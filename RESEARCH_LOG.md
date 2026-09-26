@@ -313,3 +313,62 @@ UTC: 2026-09-26T16:04:04+00:00. Post-run audit of formal shard01 completed with 
 
 ## 2026-09-26T16:12:14.507427+00:00
 
+
+
+## 2026-09-26T16:17:04.041826+00:00
+
+<!-- vehicle-validation64-shard02-modern-runtime-failure-recovery-20260926 -->
+## 2026-09-26 vehicle validation64 shard02 modern-runtime failure recovery
+
+UTC: 2026-09-26T16:17:32+00:00. The planned shard02 run `20260926T161356_fb71c8d7` failed before any episode/control step because it was accidentally launched with the modern interpreter, where TensorFlow is unavailable (`ModuleNotFoundError: No module named 'tensorflow'`). The failed run had already opened the validation64 bank and wrote only `run_started.json` plus `schedule.json`; no `episodes/`, `progress.json`, `raw.json`, `summary.md`, or `completed.json` existed. Recovery archived the empty partial directory to `research_artifacts/aws_formal_validation/vehicle_validation64_20260926/failed_shard02_20260926T161356_modern_tf_missing` so the frozen runner can later create `shard02` cleanly. Recovery itself reopened no validation bank content, opened no sealed test content, and ran 0 simulations / 0 control steps / 0 gradient steps. Legacy runtime import under `/home/mapples/.local/share/bohn2021-python37/bin/python` passed with TensorFlow `None`. A verified external backup covering the failure archive, recovery artifacts, docs, registry and backup request is required before retrying shard02 with the legacy interpreter.
+
+
+## 2026-09-26T16:20:14.257420+00:00
+Concrete action completed and state preserved.
+
+- Ran metadata-only recovery diagnostic:
+  - Experiment: `20260926T161732_f10358dc`
+  - Script: `experiments/bohn2021_aws/vehicle_validation64_shard02_modern_failure_recovery.py`
+  - Interpreter: `legacy`
+  - Exit: `0`
+  - Runtime: `6.01s`
+  - No simulations / control steps / gradient steps.
+  - No sealed test access.
+  - Recovery passed.
+
+Key verified facts:
+- Failed shard02 attempt `20260926T161356_fb71c8d7` was due to wrong interpreter: modern Python lacks TensorFlow.
+- Failed attempt opened validation64 bank metadata and wrote only:
+  - `run_started.json`
+  - `schedule.json`
+- No episode outputs, no `raw.json`, no `summary.md`, no `completed.json`, no control steps.
+- Recovery archived partial shard02 to:
+  - `research_artifacts/aws_formal_validation/vehicle_validation64_20260926/failed_shard02_20260926T161356_modern_tf_missing`
+- Original `shard02` path is now free for a clean retry.
+- Legacy TF1 runtime import check passed under:
+  - `/home/mapples/.local/share/bohn2021-python37/bin/python`
+
+Artifacts created/verified:
+- `research_artifacts/aws_diagnostics/vehicle_validation64_shard02_modern_failure_recovery_20260926/raw.json`
+- `research_artifacts/aws_diagnostics/vehicle_validation64_shard02_modern_failure_recovery_20260926/summary.md`
+- `research_artifacts/aws_diagnostics/vehicle_validation64_shard02_modern_failure_recovery_20260926/completed.json`
+- Backup request:
+  - `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_SHARD02_MODERN_FAILURE_RECOVERY_20260926T161736.json`
+- Final backup addendum:
+  - `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_SHARD02_MODERN_FAILURE_RECOVERY_FINAL_ADDENDUM_20260926T161800.json`
+- Backup blocker note:
+  - `research_artifacts/aws_diagnostics/post_shard02_recovery_backup_blocker_check_20260926.md`
+
+Current gate:
+- Formal validation remains blocked until an external verified backup proof is available after the recovery/addendum.
+- Latest existing proof is still only valid for the pre-failure/pre-recovery state.
+- Do not run more formal validation until backup covers recovery artifacts and docs.
+
+Next action after verified backup:
+- Run shard02 with the frozen runner using `interpreter=legacy`, not modern:
+  - `experiments/bohn2021_aws/vehicle_validation64_shard_runner.py`
+  - shard `2`
+  - post-recovery backup proof
+  - no sealed test access.
+
+State was persisted via `update_state`. Current conclusion unchanged: not reproduced; vehicle validation is partial only, ORIGINAL SAC not established, pendulum still partial, sealed final test closed.

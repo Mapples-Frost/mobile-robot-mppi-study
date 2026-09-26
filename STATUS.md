@@ -16,3 +16,10 @@ API smoke 已通过 gpt-5.5/xhigh，未切换模型。密钥在仓库外受限�
 ## 2026-09-26 recovery amendment status
 
 Frozen recovery/migration amendment now governs further latency-tree work. Backup status from supervisor context is verified (`remaining_changed_files=0`, release `bohn-aws-evidence-20260926`, commit `1e93d44d9c0b10c1a1452eb12a88459c382b9e55`). Current scientific status remains: no reproduction success claim; final test unauthorized/sealed. Next action: exact metadata-only pendulum inventory, then decide an AWS-only paired remeasurement/validation or AWS-only pendulum recovery experiment under the amendment.
+
+<!-- pendulum-inventory-interpretation-20260926 -->
+## 2026-09-26 pendulum inventory finalized
+
+UTC: 2026-09-26T12:23:05.106778+00:00. Metadata-only inventory `experiments/bohn2021_aws/pendulum_inventory_metadata.py` completed with no simulations, no validation reads, and no sealed-test reads. pendulum_s0 is a completed training artifact (selected `g1_c10`, 66 completed markers). pendulum_s1 is a stale/interrupted threshold-reference run (progress {'episodes': 1, 'expected': 12, 'pid': 1694525, 'steps': 13}, dead PIDs [1694525], tmp files 1). pendulum_s2 is absent/unstarted at train root. This is not control-performance evidence. The partial WSL pendulum_s1 timing-sensitive work must be counted as interrupted budget and must not be spliced into AWS timing objectives. Final test remains sealed/unauthorized; validation64 remains unopened for post-amendment model selection.
+
+Current next action: use the post-inventory preflight output to freeze the next bounded experiment. Do not rerun completed vehicle diagnostics or the pendulum inventory unless artifact hashes are missing.

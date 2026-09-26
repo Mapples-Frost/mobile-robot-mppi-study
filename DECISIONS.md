@@ -18,3 +18,10 @@
 ## 2026-09-26 latency-tree recovery/migration amendment
 
 Decision: freeze a recovery/migration amendment before any resumed timing-sensitive latency-tree work. The historical preregistration is preserved unchanged. WSL and AWS wall-time measurements must not be mixed for ranking; any timing-influenced selection requires a whole same-host paired AWS block. Behaviorally fixed trees are fixed-H comparators, not adaptive policies. Adaptive claims now require actually used multiple horizons plus inherited safety/non-inferiority gates and paired cost or same-host timing benefit. The current vehicle training-selection evidence is development-only: seed0 is timing-noise-susceptible fixed-H25 behavior, seed1 is fixed, and only seed2 is a switching candidate requiring independent validation.
+
+<!-- pendulum-inventory-interpretation-20260926 -->
+## 2026-09-26 pendulum inventory finalized
+
+UTC: 2026-09-26T12:23:05.106778+00:00. Metadata-only inventory `experiments/bohn2021_aws/pendulum_inventory_metadata.py` completed with no simulations, no validation reads, and no sealed-test reads. pendulum_s0 is a completed training artifact (selected `g1_c10`, 66 completed markers). pendulum_s1 is a stale/interrupted threshold-reference run (progress {'episodes': 1, 'expected': 12, 'pid': 1694525, 'steps': 13}, dead PIDs [1694525], tmp files 1). pendulum_s2 is absent/unstarted at train root. This is not control-performance evidence. The partial WSL pendulum_s1 timing-sensitive work must be counted as interrupted budget and must not be spliced into AWS timing objectives. Final test remains sealed/unauthorized; validation64 remains unopened for post-amendment model selection.
+
+Decision: treat pendulum_s1 as failed/interrupted historical work and pendulum_s2 as unstarted unless future metadata contradicts this. Formal all-seed pendulum latency-tree evidence requires an AWS-only fresh recovery block or an explicitly vehicle-only development scope; behaviorally fixed trees remain fixed-H comparators.

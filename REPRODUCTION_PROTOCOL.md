@@ -14,3 +14,8 @@
 ## 2026-09-26 amendment index
 
 Additional governing document for migrated latency-tree work: `docs/bohn2021_takeover/LATENCY_TREE_RECOVERY_MIGRATION_AMENDMENT_20260926.md`. It preserves the inherited preregistration unchanged but adds recovery rules for host-specific timing, incomplete pendulum runs, behaviorally fixed trees, validation access, and final-test gating. The amendment is stricter than the historical protocol where necessary and does not weaken any original success gate.
+
+<!-- vehicle-validation-gate-freeze-20260926 -->
+## 2026-09-26 vehicle validation gate freeze
+
+UTC: 2026-09-26T13:05:41.673579+00:00. Metadata-only no-validation gate frozen at `research_artifacts/aws_diagnostics/vehicle_validation_gate_20260926/vehicle_validation_gate_20260926.json`. Validation bank content opened=false; sealed test content opened=false; simulations=0. Gate froze 42 unique rollout arms, 2688 planned validation episodes over case indices only, and 12 bounded shards. Vehicle learned s0 and s1 are preclassified as fixed/nonadaptive by structure; only s2 is structurally switching. External backup of this new gate is required before formal validation64 rollout; final test remains unauthorized.

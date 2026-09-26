@@ -183,3 +183,112 @@ UTC: 2026-09-26T14:35:01.431574+00:00. Formal vehicle validation shard completed
 
 ## 2026-09-26T14:39:09.767574+00:00
 
+<!-- vehicle-validation64-shard00-audit-20260926 -->
+## 2026-09-26 vehicle validation64 shard00 audit
+
+UTC: 2026-09-26T14:40:37+00:00. Post-run audit of formal shard00 completed with validation_accessed=true (reading shard outputs), sealed test accessed=false, simulations=0, training steps=0. Shard00 has 224 episodes and 19832 control steps, within the declared 224/33600 budget. Completed hash audit passed=True; episode trace/hash audit passed=True; aggregate replay checks passed=True. Learned candidates in shard00: s0 fixed H25 (408 steps), s1 fixed H25 (390 steps), s2 used H25/H35 ({'25': 287, '35': 60}) with 18 switches. This is only 1/12 validation evidence and not final model selection. New formal evidence requires external backup before shard01; request written at `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_VALIDATION64_SHARD00_20260926T144050.json`. Sealed test remains closed.
+
+
+## 2026-09-26T14:44:47.963963+00:00
+
+<!-- vehicle-validation64-shard00-audit-v2-schema-repair-20260926 -->
+## 2026-09-26 vehicle validation64 shard00 audit-v2 schema repair
+
+UTC: 2026-09-26T14:45:06+00:00. Corrective audit-v2 classified audit-v1's nonzero exit as a registry schema false negative: the shard run registry records `commit_sha=523ec69d0986ebde3f10f24fd6dd8ad7df30e1f9` while audit-v1 required a `git_commit` field. Substantive v1 checks were complete and passed: completed-hash audit=True, episode trace/hash audit=True, aggregate replay=True, schedule mismatches=[]. validation_accessed=true because already-created shard00 results were read; sealed test accessed=false; simulations=0; training steps=0. Shard00 remains only 1/12 validation evidence, not model selection. External backup covering shard00, audit-v1, audit-v2, docs, registries and backup requests is required before shard01.
+
+
+## 2026-09-26T14:46:08.254667+00:00
+Concrete research action completed and state preserved.
+
+## This iteration
+
+Executed the planned single experiment:
+
+- Script: `experiments/bohn2021_aws/vehicle_validation64_shard00_audit_v2_schema_repair.py`
+- Experiment ID: `20260926T144506_2c69a9d3`
+- Exit status: `0`
+- Runtime: `2.0048 s`
+- Validation accessed: `true` — existing shard00 validation outputs read
+- Validation bank reopened: `false`
+- Test accessed: `false`
+- Sealed test content opened/hashed: `false`
+- New simulations/control steps/training: `0 / 0 / 0`
+
+## Audit-v2 result
+
+Audit-v2 passed and repaired the audit-v1 false negative:
+
+- `passed: true`
+- `v1_false_negative_repaired: true`
+- `episodes_audited: 224`
+- `control_steps_audited: 19832`
+- Root cause confirmed: audit-v1 expected `git_commit`, while shard00 run registry records:
+  - `commit_sha = 523ec69d0986ebde3f10f24fd6dd8ad7df30e1f9`
+  - `git_commit = null`
+
+Substantive v1 checks were confirmed as passing:
+
+- completed hash audit: passed
+- episode trace/hash audit: passed
+- aggregate replay audit: passed
+- schedule mismatches: none
+- sealed final test remained closed
+
+Key artifact hashes from `completed.json`:
+
+- v2 raw: `7accb91d8b46e6556b2ca3bb039323256919fc797636e4a62fc7d853437989ee`
+- v2 summary: `3ca54b54f61871fb67b12d4da6d1ff90694be76f72010050a1995ea616a86c8a`
+- v2 backup request: `71cbfc3b5d646c53ff9536888f0e33353e745880ec325f253bd934a067a5cb53`
+
+## Files inspected after run
+
+Inspected:
+
+- `research_artifacts/aws_diagnostics/vehicle_validation64_shard00_audit_v2_schema_repair_20260926/completed.json`
+- `raw.json`
+- `summary.md`
+- `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_VALIDATION64_SHARD00_AUDIT_V2_20260926T144507.json`
+- `research_artifacts/aws_runs/20260926T144506_2c69a9d3/registry.json`
+- stdout/stderr logs
+- `STATUS.md`
+- `EXPERIMENT_REGISTRY.csv`
+- backup proof listing
+
+Docs were updated by the script:
+
+- `STATUS.md`
+- `RESEARCH_LOG.md`
+- `RESULTS_AUDIT.md`
+- `DECISIONS.md`
+- `REPRODUCTION_PROTOCOL.md`
+- `EXPERIMENT_REGISTRY.csv`
+
+## Current gate/blocker
+
+No post-v2 verified external backup proof is present yet. Existing backup proof listing contains only older proofs and backup requests, including the new request:
+
+`research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_VALIDATION64_SHARD00_AUDIT_V2_20260926T144507.json`
+
+Therefore shard1 must not be run yet.
+
+## Scientific status
+
+- Vehicle validation64: `1/12` shards complete; shard00 audit-v2 passed.
+- No model selection or reproduction claim is allowed.
+- Learned candidates in shard00 remain:
+  - s0: fixed H25 only
+  - s1: fixed H25 only
+  - s2: H25/H35 switching observed
+- Method remains `IMPROVED latency-tree`, not ORIGINAL SAC.
+- Sealed final test remains closed and unauthorized.
+- Pendulum remains partial: s0 complete, s1 interrupted, s2 unstarted.
+
+## Persisted next action
+
+State was updated via `update_state`.
+
+Next iteration should:
+
+1. Check for a verified post-v2 external backup proof covering shard00, audit-v1, audit-v2, registries, docs, and backup requests.
+2. If present and adequate, run exactly one formal experiment: vehicle validation64 shard1 with legacy interpreter and sealed test closed.
+3. If absent, do not run new formal simulations; preserve backup gate and continue checking/requesting supervisor backup.

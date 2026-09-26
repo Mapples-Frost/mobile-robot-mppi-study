@@ -66,3 +66,19 @@ Next research step: run an AWS-only recovery/candidate preflight and then choose
 
 ## 2026-09-26T12:33:39.360386+00:00
 
+<!-- post-amendment-vehicle-freeze-diagnostic-20260926 -->
+## 2026-09-26 post-amendment vehicle freeze diagnostic
+
+UTC: 2026-09-26T12:34:18.073579+00:00. Metadata-only diagnostic completed with no simulations, no validation64 content/outcome read, and no sealed-test read. Vehicle learned candidates s0/s1/s2 and fixed-H comparator inventory were hashed. Next actual experiment is frozen as a non-formal AWS-only vehicle smoke paired timing/control block versus fixed H25; formal validation remains unopened and whole two-task validation remains blocked by pendulum_s1/s2 recovery. Artifacts: `research_artifacts/aws_diagnostics/post_amendment_vehicle_freeze_diagnostic/raw.json`, `research_artifacts/aws_diagnostics/post_amendment_vehicle_freeze_diagnostic/summary.md`, `research_artifacts/aws_diagnostics/post_amendment_vehicle_freeze_diagnostic/vehicle_development_timing_freeze.json`. New artifacts require backup before unique formal evidence accumulates.
+
+
+## 2026-09-26T12:37:36.097092+00:00
+
+<!-- vehicle-development-smoke-pairing-20260926 -->
+## 2026-09-26 vehicle development smoke pairing
+
+UTC: 2026-09-26T12:51:06.985559+00:00. Non-formal AWS-only vehicle smoke completed on `vehicle_smoke_bank` with 24 episodes and 1764 control steps. Replay passed=True; validation_accessed=false; test_accessed=false. Use only for engineering readiness/timing-boundary checks, not validation/model selection. Artifacts: `research_artifacts/aws_diagnostics/vehicle_development_smoke_pairing/raw.json`, `research_artifacts/aws_diagnostics/vehicle_development_smoke_pairing/summary.md`. New artifacts require backup before formal evidence.
+
+
+## 2026-09-26T12:52:06.762954+00:00
+

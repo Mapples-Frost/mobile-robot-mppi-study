@@ -301,3 +301,15 @@ UTC: 2026-09-26T16:00:03.047684+00:00. Formal vehicle validation shard completed
 
 ## 2026-09-26T16:02:48.292386+00:00
 
+<!-- vehicle-validation64-shard01-audit-20260926 -->
+## 2026-09-26 vehicle validation64 shard01 audit
+
+UTC: 2026-09-26T16:04:04+00:00. Post-run audit of formal shard01 completed with validation_accessed=true (reading shard outputs), sealed test accessed=false, simulations=0, training steps=0. Shard01 has 224 episodes and 20036 control steps, within the declared 224/33600 budget. Completed hash audit passed=True; episode trace/hash audit passed=True; aggregate replay checks passed=True. Learned candidates in shard01: s0 fixed H25 (457 steps), s1 fixed H25 (420 steps), s2 used horizons {'25': 526, '35': 18} with 16 switches. This is only 2/12 validation evidence and not final model selection. New formal evidence requires external backup before shard02; request written at `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_VALIDATION64_SHARD01_AUDIT_20260926T160417.json`. Sealed test remains closed.
+
+
+## 2026-09-26T16:08:00.273425+00:00
+
+
+
+## 2026-09-26T16:12:14.507427+00:00
+

@@ -39,3 +39,12 @@ pendulum：21.7766秒，101次梯度更新，200步均有限，参数实际变�
 
 ## 2026-09-26T11:50:07.741850+00:00
 
+
+<!-- latency-tree-recovery-migration-amendment-20260926 -->
+## 2026-09-26 latency-tree recovery/migration amendment
+
+Wrote `docs/bohn2021_takeover/LATENCY_TREE_RECOVERY_MIGRATION_AMENDMENT_20260926.md`. No simulations were run. No validation or sealed-test outcomes were read. The amendment records the vehicle selection-noise diagnosis, separates WSL and AWS timing evidence, classifies behaviorally fixed trees as fixed-H comparators, keeps final test sealed, and sets the next queue to a metadata-only pendulum inventory followed by AWS-only paired timing/validation or AWS-only pendulum recovery as appropriate. Supervisor context reports the GitHub release backup as verified with zero remaining changed files before new formal evidence is accumulated.
+
+
+## 2026-09-26T12:15:53.643215+00:00
+

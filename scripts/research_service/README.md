@@ -12,7 +12,7 @@ Commands:
     sudo systemctl stop bohn-research
     sudo systemctl start bohn-research
 
-The service restarts after failure and reboot; it runs independently of SSH/Windows/Codex. Its job is ongoing scientific work, not a claim that success is guaranteed. Check heartbeat and evidence, not stale active flags. One Python experiment at a time; 4h experiment timeout; systemd 3100M cap, 180% CPU cap; single-thread numeric libraries; 6 GPT-5.5/xhigh calls per iteration, 48 calls and 1.5M reported tokens per UTC day. Failure backoff is capped. State/SQLite and JSONL survive restarts. Model daily-budget waits do not terminate the service.
+The service restarts after failure and reboot; it runs independently of SSH/Windows/Codex. Its job is ongoing scientific work, not a claim that success is guaranteed. Check heartbeat and evidence, not stale active flags. One Python experiment at a time; 4h experiment timeout; systemd 3100M cap, 180% CPU cap; single-thread numeric libraries; 12 GPT-5.5/xhigh calls per bounded iteration, with no daily call/token/API-cost limits and no local per-request output-token cap. Failure backoff is capped. State/SQLite and JSONL survive restarts. Iterations checkpoint and continue after5 seconds; only provider errors/rate limits trigger retry backoff.
 
 Credentials are outside the repository under /data/openai-agent/.secrets, mode600. Never include that directory in an archive. Child experiments receive a cleaned environment, not API keys. The remote API smoke metadata is state/api_smoke.json. Only the verified model/effort is accepted.
 

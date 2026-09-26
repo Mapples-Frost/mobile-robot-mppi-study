@@ -9,3 +9,8 @@
 任何恢复涉及计时排名改变必须先登记迁移amendment，记录硬件、保留模型、重测区块与新增预算。不打开封存test结果，不将已经暴露test当作新独立证据。独立test前冻结代码、配置、模型与选择规则；必须先通过validation和独立审计。
 
 在正式开始新的学习路线前，由长期worker另存版本化完整协议，列明train/validation/test生成、种子、所有训练/调参/仿真预算、固定/自适应选择规则、checkpoint、指标和失败标准。不得把本索引当作已经完成新协议冻结。
+
+<!-- latency-tree-recovery-migration-amendment-20260926 -->
+## 2026-09-26 amendment index
+
+Additional governing document for migrated latency-tree work: `docs/bohn2021_takeover/LATENCY_TREE_RECOVERY_MIGRATION_AMENDMENT_20260926.md`. It preserves the inherited preregistration unchanged but adds recovery rules for host-specific timing, incomplete pendulum runs, behaviorally fixed trees, validation access, and final-test gating. The amendment is stricter than the historical protocol where necessary and does not weaken any original success gate.

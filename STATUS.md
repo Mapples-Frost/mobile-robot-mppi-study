@@ -11,3 +11,8 @@ WSL 工作区 HEAD cad9f76，独立脏工作树。具有作者固定来源、原
 下一步：完整迁移及哈希审计；原 Python3.7/TF1 环境移植；两任务一步工程 smoke；登记跨主机恢复规则；恢复有信息价值的下一项工作。由于浅树选择使用实测时间，禁止将 WSL/AWS 计时当同质样本直接混用。
 
 API smoke 已通过 gpt-5.5/xhigh，未切换模型。密钥在仓库外受限文件，本文不含凭据。GitHub 现有远程可写，分块外部恢复备份由独立程序校验 SHA256。
+
+<!-- latency-tree-recovery-migration-amendment-20260926 -->
+## 2026-09-26 recovery amendment status
+
+Frozen recovery/migration amendment now governs further latency-tree work. Backup status from supervisor context is verified (`remaining_changed_files=0`, release `bohn-aws-evidence-20260926`, commit `1e93d44d9c0b10c1a1452eb12a88459c382b9e55`). Current scientific status remains: no reproduction success claim; final test unauthorized/sealed. Next action: exact metadata-only pendulum inventory, then decide an AWS-only paired remeasurement/validation or AWS-only pendulum recovery experiment under the amendment.

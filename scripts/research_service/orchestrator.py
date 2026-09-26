@@ -158,11 +158,10 @@ tool('run_experiment','Run exactly one bounded Python script. All execution is r
 tool('update_state','Persist phase, hypothesis, next_experiment, queue, blockers, failures and scientific decisions.',{'state':{'type':'object'}},['state'])
 
 def api(items, force_state=False):
-    n,t=usage_today()
-    if n>=48 or t>=1500000:raise RuntimeError('DAILY_API_BUDGET')
+    # User explicitly removed all daily API/token budgets. Usage remains audited.
     effort=load(STATE/'api_smoke.json')['selected_effort']
     assert SECRET['OPENAI_MODEL']=='gpt-5.5' and effort=='xhigh'
-    body=dict(model='gpt-5.5',reasoning={'effort':effort},input=items,tools=TOOLS,max_output_tokens=12000,store=False)
+    body=dict(model='gpt-5.5',reasoning={'effort':effort},input=items,tools=TOOLS,store=False)
     if force_state:body['tool_choice']={'type':'function','name':'update_state'}
     req=urllib.request.Request(SECRET['OPENAI_BASE_URL'].rstrip('/')+'/responses',data=json.dumps(body).encode(),headers={'Authorization':'Bearer '+SECRET['OPENAI_API_KEY'],'Content-Type':'application/json'})
     cid=uuid.uuid4().hex;started=time.monotonic();usage={};status='error'
@@ -197,10 +196,10 @@ def iteration():
     context=dict(state=state,last_iteration=recent,repository=str(ROOT),available_disk_gb=shutil.disk_usage(BASE).free/1e9,backup=load(STATE/'backup_status.json'))
     items=[dict(role='system',content=(SERVICE/'MISSION.md').read_text()),dict(role='user',content='Continue authorized research with concrete actions. Inspect evidence; preserve state for next iteration. Current supervisor context:\n'+json.dumps(context,default=str)[-28000:])]
     outputs=[];executions=0
-    for turn in range(6):
-        if turn==4:items.append(dict(role='user',content='Two calls remain in this bounded cycle. Prefer a concrete bounded diagnostic now if inputs suffice. Avoid re-reading evidence already inspected.'))
-        if turn==5:items.append(dict(role='user',content='Final call of this cycle: use update_state to persist a concise cumulative research memory: findings with paths, files already inspected, precise next action, hypothesis, queue and unresolved issues. Do not mark research complete merely because this cycle ends. Next cycle must continue instead of repeating this audit.'))
-        answer=api(items,force_state=(turn==5));calls=[]
+    for turn in range(12):
+        if turn==10:items.append(dict(role='user',content='Two calls remain in this bounded cycle. Prefer a concrete bounded diagnostic now if inputs suffice. Avoid re-reading evidence already inspected.'))
+        if turn==11:items.append(dict(role='user',content='Final call of this cycle: use update_state to persist a concise cumulative research memory: findings with paths, files already inspected, precise next action, hypothesis, queue and unresolved issues. Do not mark research complete merely because this cycle ends. Next cycle must continue instead of repeating this audit.'))
+        answer=api(items,force_state=(turn==11));calls=[]
         for output in answer.get('output',[]):
             if output['type']=='function_call':items.append({k:output[k] for k in ('type','call_id','name','arguments')})
             elif output['type']=='message':items.append(dict(role='assistant',content=''.join(c.get('text','') for c in output.get('content',[]))))
@@ -261,16 +260,14 @@ def main():
                 state=load(STATE/'research_state.json');state.update(phase='infrastructure_diagnosis',backup_error=str(backup_error),next_experiment='Diagnose and repair backup; no new formal experiments until verified');dump(STATE/'research_state.json',state)
             iteration();failures=0
             dump(STATE/'supervisor_status.json',dict(time=now(),phase='between_iterations',api_calls_today=usage_today()[0]))
-            time.sleep(180)
+            time.sleep(5)
         except Exception as e:
             message=redact(str(e))[:1500]
-            if 'DAILY_API_BUDGET' in message:
-                dump(STATE/'supervisor_status.json',dict(time=now(),phase='waiting_for_next_UTC_API_budget'));time.sleep(3600);continue
             failures+=1
             event('iteration_error',error_type=type(e).__name__,message=message,consecutive_failures=failures)
             state=load(STATE/'research_state.json');state.update(supervisor_error=message,api_error_count=failures)
             if failures>=5:state['phase']='diagnosis'
             dump(STATE/'research_state.json',state)
-            time.sleep(3600 if 'DAILY_API_BUDGET' in message else min(900,30*2**min(failures,5)))
+            time.sleep(min(900,30*2**min(failures,5)))
 
 if __name__=='__main__':main()

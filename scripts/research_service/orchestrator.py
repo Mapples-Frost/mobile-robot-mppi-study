@@ -52,19 +52,28 @@ def clean_env():
 
 def identity():
     def git(args):return subprocess.run(['git',*args],cwd=ROOT,capture_output=True,text=True,timeout=20).stdout.strip()
-    diff=git(['diff','--binary']);return dict(commit_sha=git(['rev-parse','HEAD']),dirty_state=git(['status','--porcelain']),dirty_diff_sha256=hashlib.sha256(diff.encode()).hexdigest())
+    diff=git(['diff','--binary']);tree={}
+    for folder in (ROOT/'experiments/bohn2021_reproduction',ROOT/'scripts/research_service'):
+        for p in sorted(folder.glob('*.py')):tree[str(p.relative_to(ROOT))]=hashlib.sha256(p.read_bytes()).hexdigest()
+    return dict(source_tree_sha256=hashlib.sha256(json.dumps(tree,sort_keys=True).encode()).hexdigest(),source_files=tree,commit_sha=git(['rev-parse','HEAD']),dirty_state=git(['status','--porcelain']),dirty_diff_sha256=hashlib.sha256(diff.encode()).hexdigest())
 
 def execute(args):
+    execution_lock=(STATE/'experiment.lock').open('a');fcntl.flock(execution_lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
     path=safe_path(args['script']);argv=args.get('args',[])
+    if load(STATE/'backup_status.json').get('status')=='failed' and args.get('split') not in ('smoke','diagnostic','audit','train_select'):
+        raise ValueError('Backup unavailable: only reversible diagnosis/smoke/audit allowed')
     if path.suffix!='.py' or not path.is_file():raise ValueError('Existing Python script required')
     if not all(isinstance(x,str) for x in argv):raise ValueError('String arguments required')
+    fingerprint=hashlib.sha256((hashlib.sha256(path.read_bytes()).hexdigest()+json.dumps([argv,args.get('config',{})],sort_keys=True)).encode()).hexdigest()
+    retry_state=load(STATE/'experiment_retries.json')
+    if retry_state.get(fingerprint,0)>=3:raise ValueError('Three identical failures: change or diagnose implementation before retrying this experiment')
     if any('test'==x.lower() for x in argv) and not load(STATE/'research_state.json').get('final_test_authorized'):
         raise ValueError('Final test gate is closed')
     timeout=min(max(int(args.get('timeout_seconds',900)),10),14400)
     py='/home/mapples/.local/share/bohn2021-python37/bin/python' if args.get('interpreter')=='legacy' else str(ROOT/'.venv/bin/python')
     eid=dt.datetime.now(dt.timezone.utc).strftime('%Y%m%dT%H%M%S')+'_'+uuid.uuid4().hex[:8]
     dest=ROOT/'research_artifacts/aws_runs'/eid;dest.mkdir(parents=True)
-    meta=dict(experiment_id=eid,timestamp=now(),**identity(),**args,environment=dict(host=socket.gethostname(),python=py),stdout=str(dest/'stdout.log'),stderr=str(dest/'stderr.log'),status='running',failure_reason=None)
+    meta=dict(script_sha256=hashlib.sha256(path.read_bytes()).hexdigest(),experiment_id=eid,timestamp=now(),**identity(),**args,environment=dict(host=socket.gethostname(),python=py),stdout=str(dest/'stdout.log'),stderr=str(dest/'stderr.log'),status='running',failure_reason=None)
     dump(dest/'registry.json',meta)
     with db() as c:c.execute('insert into experiments values(?,?,?,?)',(eid,meta['timestamp'],'running',json.dumps(meta)))
     dump(STATE/'active_experiment.json',meta);started=time.monotonic();peak=0;cpu_before=resource.getrusage(resource.RUSAGE_CHILDREN)
@@ -72,23 +81,27 @@ def execute(args):
         proc=subprocess.Popen([py,'-u',str(pathlib.Path('/home/mapples/projects/mobile-robot-mppi-study')/path.relative_to(ROOT)),*argv],cwd='/home/mapples/projects/mobile-robot-mppi-study',env=clean_env(),stdout=out,stderr=err,start_new_session=True)
         meta['pid']=proc.pid;dump(STATE/'active_experiment.json',meta)
         while proc.poll() is None:
-            if time.monotonic()-started>timeout:
+            if time.monotonic()-started>timeout or sum((dest/n).stat().st_size for n in ('stdout.log','stderr.log'))>128*1024**2:
                 os.killpg(proc.pid,signal.SIGTERM)
                 try:proc.wait(15)
                 except subprocess.TimeoutExpired:os.killpg(proc.pid,signal.SIGKILL);proc.wait()
-                meta['failure_reason']='wall_timeout';break
+                meta['failure_reason']='wall_or_log_volume_limit';break
             try:
                 status=pathlib.Path('/proc/%d/status'%proc.pid).read_text()
                 peak=max(peak,int(next(x.split()[1] for x in status.splitlines() if x.startswith('VmRSS:'))))
             except (OSError,StopIteration):pass
             time.sleep(2)
     cpu_after=resource.getrusage(resource.RUSAGE_CHILDREN)
-    meta.update(cpu_seconds=cpu_after.ru_utime+cpu_after.ru_stime-cpu_before.ru_utime-cpu_before.ru_stime,exit_status=proc.returncode,runtime_seconds=time.monotonic()-started,peak_process_rss_kb=peak,status='complete' if proc.returncode==0 else 'failed',ended=now())
+    retry_state[fingerprint]=0 if proc.returncode==0 else retry_state.get(fingerprint,0)+1;dump(STATE/'experiment_retries.json',retry_state)
+    meta.update(retry_fingerprint=fingerprint,cpu_seconds=cpu_after.ru_utime+cpu_after.ru_stime-cpu_before.ru_utime-cpu_before.ru_stime,exit_status=proc.returncode,runtime_seconds=time.monotonic()-started,peak_process_rss_kb=peak,status='complete' if proc.returncode==0 else 'failed',ended=now())
     if proc.returncode and not meta['failure_reason']:meta['failure_reason']='nonzero_exit'
     for log in ('stdout.log','stderr.log'):
         p=dest/log
         # Children get no credentials. Still scrub exact known secrets before exposure.
         if p.stat().st_size<64*1024*1024:p.write_text(redact(p.read_text(errors='replace')))
+    meta['artifact_inventory']=[]
+    for artifact in args.get('artifacts',[]):
+        p=safe_path(artifact);meta['artifact_inventory'].append(dict(path=artifact,exists=p.exists(),bytes=p.stat().st_size if p.is_file() else None,sha256=hashlib.sha256(p.read_bytes()).hexdigest() if p.is_file() and p.stat().st_size<128*1024**2 else None))
     dump(dest/'registry.json',meta);dump(STATE/'active_experiment.json',dict(status='idle',last_experiment=eid))
     with db() as c:c.execute('update experiments set status=?,metadata=? where id=?',(meta['status'],json.dumps(meta),eid))
     registry=ROOT/'EXPERIMENT_REGISTRY.csv';fresh=not registry.exists()
@@ -164,11 +177,18 @@ def heartbeat():
 
 def iteration():
     state=load(STATE/'research_state.json');recent=load(STATE/'last_iteration.json')
+    if 'last_completed_experiment' in state:
+        old=state['last_completed_experiment'];state['last_completed_experiment']={k:old.get(k) for k in ('experiment_id','status','purpose','exit_status','stdout','stderr','runtime_seconds')}
+    if recent:
+        recent['tool_tail']=[dict(call_id=x.get('call_id'),output=x.get('output','')[-2000:]) for x in recent.get('tool_tail',[])]
     context=dict(state=state,last_iteration=recent,repository=str(ROOT),available_disk_gb=shutil.disk_usage(BASE).free/1e9,backup=load(STATE/'backup_status.json'))
     items=[dict(role='system',content=(SERVICE/'MISSION.md').read_text()),dict(role='user',content='Continue authorized research with concrete actions. Inspect evidence; preserve state for next iteration. Current supervisor context:\n'+json.dumps(context,default=str)[-28000:])]
-    outputs=[]
+    outputs=[];executions=0
     for turn in range(6):
-        answer=api(items);items.extend(answer.get('output',[]));calls=[]
+        answer=api(items);calls=[]
+        for output in answer.get('output',[]):
+            if output['type']=='function_call':items.append({k:output[k] for k in ('type','call_id','name','arguments')})
+            elif output['type']=='message':items.append(dict(role='assistant',content=''.join(c.get('text','') for c in output.get('content',[]))))
         for item in answer.get('output',[]):
             if item['type']=='function_call':calls.append(item)
             elif item['type']=='message':
@@ -176,7 +196,11 @@ def iteration():
         if not calls:break
         # Multiple proposed tools execute sequentially, never concurrent experiments.
         for item in calls:
-            try:result=call_tool(item['name'],json.loads(item['arguments']))
+            try:
+                if item['name']=='run_experiment':
+                    if executions>=1:raise ValueError('One experiment per iteration: persist next action for the next bounded cycle')
+                    executions+=1
+                result=call_tool(item['name'],json.loads(item['arguments']))
             except Exception as e:result={'error':type(e).__name__,'message':redact(str(e))[:2000]};event('tool_error',name=item['name'],error=result)
             text=redact(json.dumps(result,default=str))[:30000]
             items.append(dict(type='function_call_output',call_id=item['call_id'],output=text))
@@ -202,7 +226,13 @@ def main():
             if shutil.disk_usage(BASE).free<15*1024**3:event('disk_guard');time.sleep(300);continue
             if dt.datetime.now(dt.timezone.utc)>=dt.datetime(2026,10,25,8,tzinfo=dt.timezone.utc):
                 housekeeping();dump(STATE/'deadline_status.json',dict(time=now(),status='expiry_archive_only'));time.sleep(3600);continue
-            housekeeping()
+            if not (STATE/'last_iteration.json').exists():
+                # First bounded reasoning cycle starts after verified migration and local audit.
+                # Existing historical raw data also remain in the external WSL source.
+                iteration()
+            try:housekeeping()
+            except Exception as backup_error:
+                state=load(STATE/'research_state.json');state.update(phase='infrastructure_diagnosis',backup_error=str(backup_error),next_experiment='Diagnose and repair backup; no new formal experiments until verified');dump(STATE/'research_state.json',state)
             iteration();failures=0
             dump(STATE/'supervisor_status.json',dict(time=now(),phase='between_iterations',api_calls_today=usage_today()[0]))
             time.sleep(180)

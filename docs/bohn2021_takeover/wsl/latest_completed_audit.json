@@ -1,0 +1,44 @@
+[
+  {
+    "job": "pendulum_s0",
+    "completed": true,
+    "started": true,
+    "raw_condition_completions": 66,
+    "hash_entries": 78,
+    "mismatches": [],
+    "selected": "g1_c10"
+  },
+  {
+    "job": "pendulum_s1",
+    "completed": false,
+    "started": true,
+    "raw_condition_completions": 0
+  },
+  {
+    "job": "vehicle_s0",
+    "completed": true,
+    "started": true,
+    "raw_condition_completions": 64,
+    "hash_entries": 76,
+    "mismatches": [],
+    "selected": "g3_c09"
+  },
+  {
+    "job": "vehicle_s1",
+    "completed": true,
+    "started": true,
+    "raw_condition_completions": 64,
+    "hash_entries": 76,
+    "mismatches": [],
+    "selected": "fixed"
+  },
+  {
+    "job": "vehicle_s2",
+    "completed": true,
+    "started": true,
+    "raw_condition_completions": 64,
+    "hash_entries": 76,
+    "mismatches": [],
+    "selected": "g3_c08"
+  }
+]

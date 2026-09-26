@@ -1,0 +1,902 @@
+[
+  {
+    "job": "vehicle_s0",
+    "selected": "g3_c09",
+    "learned_tree_selected": true,
+    "candidates": 48,
+    "eligible_fit": 32,
+    "selection": [
+      {
+        "id": "fixed",
+        "policy": {
+          "kind": "constant",
+          "task": "vehicle",
+          "h": 25
+        },
+        "eligible": true,
+        "objective": 0.0,
+        "ranks": [
+          {
+            "eligible": true,
+            "violations": 0,
+            "objective": 0.0,
+            "cost_change": 0.0,
+            "physical_change": 0.0,
+            "time_ratio": 1.0
+          },
+          {
+            "eligible": true,
+            "violations": 0,
+            "objective": 0.0,
+            "cost_change": 0.0,
+            "physical_change": 0.0,
+            "time_ratio": 1.0
+          }
+        ]
+      },
+      {
+        "id": "g1_c00",
+        "policy": {
+          "kind": "tree",
+          "task": "vehicle",
+          "nodes": [
+            {
+              "feature": 6,
+              "threshold": 5.122863749698603
+            },
+            {
+              "feature": 0,
+              "threshold": 4.6246842362054923e-05
+            },
+            {
+              "feature": 10,
+              "threshold": 0.9466666666666665
+            }
+          ],
+          "leaves": [
+            45,
+            25,
+            25,
+            15
+          ]
+        },
+        "eligible": true,
+        "objective": 0.011615959002106813,
+        "ranks": [
+          {
+            "eligible": true,
+            "violations": 0,
+            "objective": 0.005082915331325366,
+            "cost_change": 0.000945613554211788,
+            "physical_change": 3.3931371805572256e-05,
+            "time_ratio": 1.0082746035542272
+          },
+          {
+            "eligible": true,
+            "violations": 0,
+            "objective": 0.01814900267288826,
+            "cost_change": 0.000945613554211788,
+            "physical_change": 3.3931371805572256e-05,
+            "time_ratio": 1.034406778237353
+          }
+        ]
+      },
+      {
+        "id": "g3_c09",
+        "policy": {
+          "kind": "tree",
+          "task": "vehicle",
+          "nodes": [
+            {
+              "feature": 4,
+              "threshold": 2.220446049250313e-16
+            },
+            {
+              "feature": 0,
+              "threshold": 0.003292984463958667
+            },
+            {
+              "feature": 10,
+              "threshold": 0.9466666666666665
+            }
+          ],
+          "leaves": [
+            25,
+            25,
+            25,
+            25
+          ]
+        },
+        "eligible": true,
+        "objective": -0.001566226355778716,
+        "ranks": [
+          {
+            "eligible": true,
+            "violations": 0,
+            "objective": -0.008084275414647457,
+            "cost_change": 0.0,
+            "physical_change": 0.0,
+            "time_ratio": 0.9838314491707051
+          },
+          {
+            "eligible": true,
+            "violations": 0,
+            "objective": 0.004951822703090025,
+            "cost_change": 0.0,
+            "physical_change": 0.0,
+            "time_ratio": 1.00990364540618
+          }
+        ]
+      },
+      {
+        "id": "g0_c11",
+        "policy": {
+          "kind": "tree",
+          "task": "vehicle",
+          "nodes": [
+            {
+              "feature": 11,
+              "threshold": 0.5
+            },
+            {
+              "feature": 5,
+              "threshold": 0.14406958899278932
+            },
+            {
+              "feature": 7,
+              "threshold": 0.759026173817078
+            }
+          ],
+          "leaves": [
+            25,
+            25,
+            25,
+            25
+          ]
+        },
+        "eligible": true,
+        "objective": 0.005467082789331057,
+        "ranks": [
+          {
+            "eligible": true,
+            "violations": 0,
+            "objective": 0.003060119453046184,
+            "cost_change": 0.0,
+            "physical_change": 0.0,
+            "time_ratio": 1.0061202389060924
+          },
+          {
+            "eligible": true,
+            "violations": 0,
+            "objective": 0.00787404612561593,
+            "cost_change": 0.0,
+            "physical_change": 0.0,
+            "time_ratio": 1.0157480922512319
+          }
+        ]
+      },
+      {
+        "id": "g2_c04",
+        "policy": {
+          "kind": "tree",
+          "task": "vehicle",
+          "nodes": [
+            {
+              "feature": 11,
+              "threshold": 0.5
+            },
+            {
+              "feature": 0,
+              "threshold": 0.2373277170270184
+            },
+            {
+              "feature": 7,
+              "threshold": 0.759026173817078
+            }
+          ],
+          "leaves": [
+            25,
+            25,
+            25,
+            5
+          ]
+        },
+        "eligible": true,
+        "objective": 0.006886989432665261,
+        "ranks": [
+          {
+            "eligible": true,
+            "violations": 0,
+            "objective": -0.003612131282197104,
+            "cost_change": 0.00017797721729879938,
+            "physical_change": 0.00023636244746542523,
+            "time_ratio": 0.9924197830010082
+          },
+          {
+            "eligible": true,
+            "violations": 0,
+            "objective": 0.017386110147527625,
+            "cost_change": 0.00017797721729879938,
+            "physical_change": 0.00023636244746542523,
+            "time_ratio": 1.0344162658604577
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "job": "vehicle_s1",
+    "selected": "fixed",
+    "learned_tree_selected": false,
+    "candidates": 48,
+    "eligible_fit": 31,
+    "selection": [
+      {
+        "id": "fixed",
+        "policy": {
+          "kind": "constant",
+          "task": "vehicle",
+          "h": 25
+        },
+        "eligible": true,
+        "objective": 0.0,
+        "ranks": [
+          {
+            "eligible": true,
+            "violations": 0,
+            "objective": 0.0,
+            "cost_change": 0.0,
+            "physical_change": 0.0,
+            "time_ratio": 1.0
+          },
+          {
+            "eligible": true,
+            "violations": 0,
+            "objective": 0.0,
+            "cost_change": 0.0,
+            "physical_change": 0.0,
+            "time_ratio": 1.0
+          }
+        ]
+      },
+      {
+        "id": "g2_c05",
+        "policy": {
+          "kind": "tree",
+          "task": "vehicle",
+          "nodes": [
+            {
+              "feature": 2,
+              "threshold": 0.01048928614237803
+            },
+            {
+              "feature": 12,
+              "threshold": 0.5
+            },
+            {
+              "feature": 8,
+              "threshold": 3.3233128924556428
+            }
+          ],
+          "leaves": [
+            25,
+            15,
+            25,
+            25
+          ]
+        },
+        "eligible": true,
+        "objective": 0.004151923470757102,
+        "ranks": [
+          {
+            "eligible": true,
+            "violations": 0,
+            "objective": 0.008105874374377264,
+            "cost_change": 0.0,
+            "physical_change": 0.0,
+            "time_ratio": 1.0162117487487545
+          },
+          {
+            "eligible": true,
+            "violations": 0,
+            "objective": 0.00019797256713693923,
+            "cost_change": 0.0,
+            "physical_change": 0.0,
+            "time_ratio": 1.0003959451342739
+          }
+        ]
+      },
+      {
+        "id": "g2_c00",
+        "policy": {
+          "kind": "tree",
+          "task": "vehicle",
+          "nodes": [
+            {
+              "feature": 4,
+              "threshold": 1.1102230246251565e-16
+            },
+            {
+              "feature": 9,
+              "threshold": 0.20964326355153196
+            },
+            {
+              "feature": 12,
+              "threshold": 0.5
+            }
+          ],
+          "leaves": [
+            25,
+            25,
+            25,
+            25
+          ]
+        },
+        "eligible": true,
+        "objective": 0.02137971286392898,
+        "ranks": [
+          {
+            "eligible": true,
+            "violations": 0,
+            "objective": 0.008497349561719103,
+            "cost_change": 0.0,
+            "physical_change": 0.0,
+            "time_ratio": 1.0169946991234382
+          },
+          {
+            "eligible": true,
+            "violations": 0,
+            "objective": 0.034262076166138855,
+            "cost_change": 0.0,
+            "physical_change": 0.0,
+            "time_ratio": 1.0685241523322777
+          }
+        ]
+      },
+      {
+        "id": "g2_c11",
+        "policy": {
+          "kind": "tree",
+          "task": "vehicle",
+          "nodes": [
+            {
+              "feature": 2,
+              "threshold": 0.03749260164069124
+            },
+            {
+              "feature": 9,
+              "threshold": 0.20964326355153196
+            },
+            {
+              "feature": 9,
+              "threshold": 3.9999994113582287
+            }
+          ],
+          "leaves": [
+            45,
+            25,
+            25,
+            25
+          ]
+        },
+        "eligible": true,
+        "objective": 0.017755090073877846,
+        "ranks": [
+          {
+            "eligible": true,
+            "violations": 0,
+            "objective": 0.015764158067994995,
+            "cost_change": 0.003684749544812652,
+            "physical_change": -6.9043386575701e-06,
+            "time_ratio": 1.0241588170463647
+          },
+          {
+            "eligible": true,
+            "violations": 0,
+            "objective": 0.019746022079760697,
+            "cost_change": 0.003684749544812652,
+            "physical_change": -6.9043386575701e-06,
+            "time_ratio": 1.032122545069896
+          }
+        ]
+      },
+      {
+        "id": "g2_c08",
+        "policy": {
+          "kind": "tree",
+          "task": "vehicle",
+          "nodes": [
+            {
+              "feature": 5,
+              "threshold": 0.0006688771429247182
+            },
+            {
+              "feature": 3,
+              "threshold": 0.010489286142378075
+            },
+            {
+              "feature": 10,
+              "threshold": 0.5066666666666667
+            }
+          ],
+          "leaves": [
+            25,
+            25,
+            25,
+            25
+          ]
+        },
+        "eligible": true,
+        "objective": 0.006598549541256382,
+        "ranks": [
+          {
+            "eligible": true,
+            "violations": 0,
+            "objective": 0.0006597145536004767,
+            "cost_change": 0.0,
+            "physical_change": 0.0,
+            "time_ratio": 1.001319429107201
+          },
+          {
+            "eligible": true,
+            "violations": 0,
+            "objective": 0.012537384528912288,
+            "cost_change": 0.0,
+            "physical_change": 0.0,
+            "time_ratio": 1.0250747690578246
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "job": "vehicle_s2",
+    "selected": "g3_c08",
+    "learned_tree_selected": true,
+    "candidates": 48,
+    "eligible_fit": 30,
+    "selection": [
+      {
+        "id": "fixed",
+        "policy": {
+          "kind": "constant",
+          "task": "vehicle",
+          "h": 25
+        },
+        "eligible": true,
+        "objective": 0.0,
+        "ranks": [
+          {
+            "eligible": true,
+            "violations": 0,
+            "objective": 0.0,
+            "cost_change": 0.0,
+            "physical_change": 0.0,
+            "time_ratio": 1.0
+          },
+          {
+            "eligible": true,
+            "violations": 0,
+            "objective": 0.0,
+            "cost_change": 0.0,
+            "physical_change": 0.0,
+            "time_ratio": 1.0
+          }
+        ]
+      },
+      {
+        "id": "g3_c08",
+        "policy": {
+          "kind": "tree",
+          "task": "vehicle",
+          "nodes": [
+            {
+              "feature": 1,
+              "threshold": 0.09575971753255551
+            },
+            {
+              "feature": 9,
+              "threshold": 0.2503824598631074
+            },
+            {
+              "feature": 11,
+              "threshold": 0.5
+            }
+          ],
+          "leaves": [
+            35,
+            25,
+            25,
+            25
+          ]
+        },
+        "eligible": true,
+        "objective": -0.015926211537492425,
+        "ranks": [
+          {
+            "eligible": true,
+            "violations": 0,
+            "objective": -0.021861105844080315,
+            "cost_change": -0.030421032328375803,
+            "physical_change": -0.036645150938410226,
+            "time_ratio": 1.017119852968591
+          },
+          {
+            "eligible": true,
+            "violations": 0,
+            "objective": -0.009991317230904535,
+            "cost_change": -0.030421032328375803,
+            "physical_change": -0.036645150938410226,
+            "time_ratio": 1.0408594301949425
+          }
+        ]
+      },
+      {
+        "id": "g1_c11",
+        "policy": {
+          "kind": "tree",
+          "task": "vehicle",
+          "nodes": [
+            {
+              "feature": 1,
+              "threshold": 0.09575971753255551
+            },
+            {
+              "feature": 12,
+              "threshold": 0.5
+            },
+            {
+              "feature": 2,
+              "threshold": 0.6896007574862841
+            }
+          ],
+          "leaves": [
+            30,
+            25,
+            25,
+            25
+          ]
+        },
+        "eligible": true,
+        "objective": -0.005109737757055911,
+        "ranks": [
+          {
+            "eligible": true,
+            "violations": 0,
+            "objective": -0.003240772323704167,
+            "cost_change": -0.022599935284966444,
+            "physical_change": -0.036754393331624696,
+            "time_ratio": 1.0387183259225246
+          },
+          {
+            "eligible": true,
+            "violations": 0,
+            "objective": -0.006978703190407654,
+            "cost_change": -0.022599935284966444,
+            "physical_change": -0.036754393331624696,
+            "time_ratio": 1.0312424641891176
+          }
+        ]
+      },
+      {
+        "id": "g3_c09",
+        "policy": {
+          "kind": "tree",
+          "task": "vehicle",
+          "nodes": [
+            {
+              "feature": 8,
+              "threshold": 3.0371682313504795
+            },
+            {
+              "feature": 8,
+              "threshold": 2.9396481763126148
+            },
+            {
+              "feature": 3,
+              "threshold": 0.012465462691921371
+            }
+          ],
+          "leaves": [
+            25,
+            20,
+            25,
+            25
+          ]
+        },
+        "eligible": false,
+        "objective": 0.035759120574135154,
+        "ranks": [
+          {
+            "eligible": false,
+            "violations": 3,
+            "objective": 0.032852664724674956,
+            "cost_change": 0.024212808311053872,
+            "physical_change": 0.03279257487285968,
+            "time_ratio": 1.0172797128272422
+          },
+          {
+            "eligible": false,
+            "violations": 3,
+            "objective": 0.03866557642359535,
+            "cost_change": 0.024212808311053872,
+            "physical_change": 0.03279257487285968,
+            "time_ratio": 1.028905536225083
+          }
+        ]
+      },
+      {
+        "id": "g3_c01",
+        "policy": {
+          "kind": "tree",
+          "task": "vehicle",
+          "nodes": [
+            {
+              "feature": 9,
+              "threshold": 3.9050914576937803
+            },
+            {
+              "feature": 3,
+              "threshold": 0.012465462691921371
+            },
+            {
+              "feature": 6,
+              "threshold": -0.6820630533915606
+            }
+          ],
+          "leaves": [
+            25,
+            25,
+            25,
+            20
+          ]
+        },
+        "eligible": true,
+        "objective": 0.011173598804853371,
+        "ranks": [
+          {
+            "eligible": true,
+            "violations": 0,
+            "objective": 0.008755276317511843,
+            "cost_change": -0.004100103466409751,
+            "physical_change": 0.00016659281909715522,
+            "time_ratio": 1.0257107595678432
+          },
+          {
+            "eligible": true,
+            "violations": 0,
+            "objective": 0.0135919212921949,
+            "cost_change": -0.004100103466409751,
+            "physical_change": 0.00016659281909715522,
+            "time_ratio": 1.0353840495172093
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "job": "pendulum_s0",
+    "selected": "g1_c10",
+    "learned_tree_selected": true,
+    "candidates": 48,
+    "eligible_fit": 28,
+    "selection": [
+      {
+        "id": "fixed",
+        "policy": {
+          "kind": "constant",
+          "task": "pendulum",
+          "h": 30
+        },
+        "eligible": true,
+        "objective": 0.0,
+        "ranks": [
+          {
+            "eligible": true,
+            "violations": 0,
+            "objective": 0.0,
+            "cost_change": 0.0,
+            "physical_change": 0.0,
+            "time_ratio": 1.0
+          },
+          {
+            "eligible": true,
+            "violations": 0,
+            "objective": 0.0,
+            "cost_change": 0.0,
+            "physical_change": 0.0,
+            "time_ratio": 1.0
+          }
+        ]
+      },
+      {
+        "id": "g1_c10",
+        "policy": {
+          "kind": "tree",
+          "task": "pendulum",
+          "nodes": [
+            {
+              "feature": 5,
+              "threshold": 0.9762786187134811
+            },
+            {
+              "feature": 8,
+              "threshold": 0.5
+            },
+            {
+              "feature": 6,
+              "threshold": 0.4153967785587551
+            }
+          ],
+          "leaves": [
+            30,
+            5,
+            20,
+            25
+          ]
+        },
+        "eligible": true,
+        "objective": -0.15339453959352703,
+        "ranks": [
+          {
+            "eligible": true,
+            "violations": 0,
+            "objective": -0.14429031474759044,
+            "cost_change": -0.0012459401271954031,
+            "physical_change": -0.0006021959083601272,
+            "time_ratio": 0.7139112507592099
+          },
+          {
+            "eligible": true,
+            "violations": 0,
+            "objective": -0.16249876443946362,
+            "cost_change": -0.0012459401271954031,
+            "physical_change": -0.0006021959083601272,
+            "time_ratio": 0.6774943513754635
+          }
+        ]
+      },
+      {
+        "id": "g0_c09",
+        "policy": {
+          "kind": "tree",
+          "task": "pendulum",
+          "nodes": [
+            {
+              "feature": 6,
+              "threshold": 0.4153967785587551
+            },
+            {
+              "feature": 8,
+              "threshold": 0.5
+            },
+            {
+              "feature": 6,
+              "threshold": 0.4153967785587551
+            }
+          ],
+          "leaves": [
+            30,
+            5,
+            30,
+            50
+          ]
+        },
+        "eligible": true,
+        "objective": -0.08073461669776262,
+        "ranks": [
+          {
+            "eligible": true,
+            "violations": 0,
+            "objective": -0.07869092698546444,
+            "cost_change": 0.006907743987997752,
+            "physical_change": 0.0029021563523875652,
+            "time_ratio": 0.8288026580530756
+          },
+          {
+            "eligible": true,
+            "violations": 0,
+            "objective": -0.0827783064100608,
+            "cost_change": 0.006907743987997752,
+            "physical_change": 0.0029021563523875652,
+            "time_ratio": 0.8206278992038829
+          }
+        ]
+      },
+      {
+        "id": "g0_c01",
+        "policy": {
+          "kind": "tree",
+          "task": "pendulum",
+          "nodes": [
+            {
+              "feature": 8,
+              "threshold": 0.5
+            },
+            {
+              "feature": 7,
+              "threshold": 0.55
+            },
+            {
+              "feature": 5,
+              "threshold": 0.9762786187134811
+            }
+          ],
+          "leaves": [
+            30,
+            30,
+            20,
+            30
+          ]
+        },
+        "eligible": true,
+        "objective": -0.06331598388656011,
+        "ranks": [
+          {
+            "eligible": true,
+            "violations": 0,
+            "objective": -0.049747381683399525,
+            "cost_change": 9.772923178704066e-05,
+            "physical_change": 0.0004049988015772406,
+            "time_ratio": 0.9003097781696269
+          },
+          {
+            "eligible": true,
+            "violations": 0,
+            "objective": -0.0768845860897207,
+            "cost_change": 9.772923178704066e-05,
+            "physical_change": 0.0004049988015772406,
+            "time_ratio": 0.8460353693569845
+          }
+        ]
+      },
+      {
+        "id": "g3_c08",
+        "policy": {
+          "kind": "tree",
+          "task": "pendulum",
+          "nodes": [
+            {
+              "feature": 3,
+              "threshold": 0.033498388266796124
+            },
+            {
+              "feature": 8,
+              "threshold": 0.5
+            },
+            {
+              "feature": 6,
+              "threshold": 0.4153967785587551
+            }
+          ],
+          "leaves": [
+            45,
+            30,
+            20,
+            45
+          ]
+        },
+        "eligible": false,
+        "objective": -0.02620488885581161,
+        "ranks": [
+          {
+            "eligible": false,
+            "violations": 4,
+            "objective": -0.01376374707010762,
+            "cost_change": 0.008455977837609778,
+            "physical_change": 0.005985526264828397,
+            "time_ratio": 0.9555605501845652
+          },
+          {
+            "eligible": false,
+            "violations": 4,
+            "objective": -0.0386460306415156,
+            "cost_change": 0.008455977837609778,
+            "physical_change": 0.005985526264828397,
+            "time_ratio": 0.9057959830417492
+          }
+        ]
+      }
+    ]
+  }
+]

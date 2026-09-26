@@ -1,0 +1,209 @@
+{
+  "scope": "Existing training-only selection, WSL timings; no new simulation, validation or test reads",
+  "selected": "fixed",
+  "learned_tree_selected": false,
+  "fit_candidates": 48,
+  "eligible_fit_candidates": 31,
+  "conditions": [
+    {
+      "condition": "r0_fixed",
+      "raw_hashes_verified": true,
+      "cases": 16,
+      "steps": 1264,
+      "horizon_counts": {
+        "25": 1264
+      },
+      "leaf_counts": {},
+      "within_episode_switches": 0,
+      "mean_episode_total_cost": 24.044409056410007,
+      "mean_decision_seconds": 0.03992666909566709,
+      "success": 16,
+      "constraints": 0,
+      "solver_failures": 0
+    },
+    {
+      "condition": "r0_g2_c00",
+      "raw_hashes_verified": true,
+      "cases": 16,
+      "steps": 1264,
+      "horizon_counts": {
+        "25": 1264
+      },
+      "leaf_counts": {
+        "1": 691,
+        "2": 524,
+        "0": 49
+      },
+      "within_episode_switches": 0,
+      "mean_episode_total_cost": 24.044409056410007,
+      "mean_decision_seconds": 0.04060521082394903,
+      "success": 16,
+      "constraints": 0,
+      "solver_failures": 0
+    },
+    {
+      "condition": "r0_g2_c05",
+      "raw_hashes_verified": true,
+      "cases": 16,
+      "steps": 1264,
+      "horizon_counts": {
+        "25": 1264
+      },
+      "leaf_counts": {
+        "2": 823,
+        "3": 354,
+        "0": 87
+      },
+      "within_episode_switches": 0,
+      "mean_episode_total_cost": 24.044409056410007,
+      "mean_decision_seconds": 0.0405739502234207,
+      "success": 16,
+      "constraints": 0,
+      "solver_failures": 0
+    },
+    {
+      "condition": "r0_g2_c08",
+      "raw_hashes_verified": true,
+      "cases": 16,
+      "steps": 1264,
+      "horizon_counts": {
+        "25": 1264
+      },
+      "leaf_counts": {
+        "3": 1025,
+        "1": 147,
+        "2": 91,
+        "0": 1
+      },
+      "within_episode_switches": 0,
+      "mean_episode_total_cost": 24.044409056410007,
+      "mean_decision_seconds": 0.0399793495050255,
+      "success": 16,
+      "constraints": 0,
+      "solver_failures": 0
+    },
+    {
+      "condition": "r0_g2_c11",
+      "raw_hashes_verified": true,
+      "cases": 16,
+      "steps": 1264,
+      "horizon_counts": {
+        "25": 1193,
+        "45": 71
+      },
+      "leaf_counts": {
+        "2": 811,
+        "1": 250,
+        "3": 132,
+        "0": 71
+      },
+      "within_episode_switches": 38,
+      "mean_episode_total_cost": 24.133006681735903,
+      "mean_decision_seconds": 0.04089125018962005,
+      "success": 16,
+      "constraints": 0,
+      "solver_failures": 0
+    },
+    {
+      "condition": "r1_fixed",
+      "raw_hashes_verified": true,
+      "cases": 16,
+      "steps": 1264,
+      "horizon_counts": {
+        "25": 1264
+      },
+      "leaf_counts": {},
+      "within_episode_switches": 0,
+      "mean_episode_total_cost": 24.044409056410007,
+      "mean_decision_seconds": 0.0403310524013791,
+      "success": 16,
+      "constraints": 0,
+      "solver_failures": 0
+    },
+    {
+      "condition": "r1_g2_c00",
+      "raw_hashes_verified": true,
+      "cases": 16,
+      "steps": 1264,
+      "horizon_counts": {
+        "25": 1264
+      },
+      "leaf_counts": {
+        "1": 691,
+        "2": 524,
+        "0": 49
+      },
+      "within_episode_switches": 0,
+      "mean_episode_total_cost": 24.044409056410007,
+      "mean_decision_seconds": 0.04309470357985228,
+      "success": 16,
+      "constraints": 0,
+      "solver_failures": 0
+    },
+    {
+      "condition": "r1_g2_c05",
+      "raw_hashes_verified": true,
+      "cases": 16,
+      "steps": 1264,
+      "horizon_counts": {
+        "25": 1264
+      },
+      "leaf_counts": {
+        "2": 823,
+        "3": 354,
+        "0": 87
+      },
+      "within_episode_switches": 0,
+      "mean_episode_total_cost": 24.044409056410007,
+      "mean_decision_seconds": 0.04034702128533757,
+      "success": 16,
+      "constraints": 0,
+      "solver_failures": 0
+    },
+    {
+      "condition": "r1_g2_c08",
+      "raw_hashes_verified": true,
+      "cases": 16,
+      "steps": 1264,
+      "horizon_counts": {
+        "25": 1264
+      },
+      "leaf_counts": {
+        "3": 1025,
+        "1": 147,
+        "2": 91,
+        "0": 1
+      },
+      "within_episode_switches": 0,
+      "mean_episode_total_cost": 24.044409056410007,
+      "mean_decision_seconds": 0.041342344226202705,
+      "success": 16,
+      "constraints": 0,
+      "solver_failures": 0
+    },
+    {
+      "condition": "r1_g2_c11",
+      "raw_hashes_verified": true,
+      "cases": 16,
+      "steps": 1264,
+      "horizon_counts": {
+        "25": 1193,
+        "45": 71
+      },
+      "leaf_counts": {
+        "2": 811,
+        "1": 250,
+        "3": 132,
+        "0": 71
+      },
+      "within_episode_switches": 38,
+      "mean_episode_total_cost": 24.133006681735903,
+      "mean_decision_seconds": 0.04162658844985874,
+      "success": 16,
+      "constraints": 0,
+      "solver_failures": 0
+    }
+  ],
+  "conclusion": "Vehicle seed1 selected constant H25. This saved policy cannot satisfy the preregistered per-seed within-episode adaptation gate. That is a gate incompatibility, not a full final-test result. Most selected candidates may be behaviorally constant; raw occupancy below resolves this.",
+  "next_hypothesis": "Inspect whether safe fit candidates actually vary H, and whether fit-to-selection loss reflects distribution shift, inactive leaves, or time noise. Preserve old negative selection; no test opening."
+}

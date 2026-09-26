@@ -1,0 +1,1889 @@
+diff --git a/ara/PAPER.md b/ara/PAPER.md
+index 7923574..ee3fe32 100644
+--- a/ara/PAPER.md
++++ b/ara/PAPER.md
+@@ -1,10 +1,60 @@
+ # Research Artifact Manifest
+ 
+-- Working title: Cross-Layer Uncertainty-Gated Learned Dynamics and Policy-Guided MPPI
+-- Target venue: ICRA 2027
+-- Submission target: 2026-09-15
++- Working title: Compute-Aware Horizon and Sample Allocation for MPPI under Measured Actuation Delay
++- Target venue: **IROS** (set by the user on 2026-09-23; supersedes the previous ICRA 2027 target)
++- Submission date: **not recorded.** The previous entry (2026-09-15, ICRA) is superseded and is
++  deliberately not replaced with a guessed IROS deadline. Fill this in from the official call.
+ - Repository: `mobile-robot-mppi-study`
+-- Current evidence stage: sealed parameter-matched evidence that control-affine ICODE improves MPPI tracking across frozen plant and bounded observation shifts; route-context covariance and half-budget efficiency have independent support; L103 now confirms that a constrained contextual bandit can allocate nested K50-to-K100 compute non-randomly at held-out ICODE-MPPI states, while whole-episode and ICODE-interaction claims remain open
++
++## Current evidence stage (2026-09-23)
++
++Two workstreams, kept in separate paper sections and never merged:
++
++**1. Mobile-robot K/H allocation (the paper's main line).** A three-axis controlled
++scenario-difficulty ladder (182 scenes, tune seeds 1--3 and test seeds 11--20, disjoint)
++was generated and its pre-registration frozen with file hashes before any comparison roll
++(`research_artifacts/kh_scene_strata_2026-09-23/prereg.json` plus two addenda). The nominal
++MPPI baseline was tuned to its own best over a 16-point (K,H) grid and frozen at K=64, H=24.
++
++State of the evidence, stated as it is rather than as planned:
++
++- Claims A and B are **falsified on the tune split** and will be reported as pre-registered
++  failures, not withdrawn (C115, N174).
++- Claim C (horizon-only adaptation collapses and stalls) is a **hypothesis**, frozen in
++  addendum 2 before the test roll, exploratory in origin and confirmatory only on test (C114).
++- Against the **well-tuned** baseline, joint K/H currently shows **no advantage** on tune:
++  worse RMSE in 13 of 14 cells at 1.65x the compute (C115, N180). Two disclosed confounds bound
++  that compute figure and both run **against** our method, so neither can have manufactured the
++  disadvantage in our favour (C117, N184):
++  - the policy **is** charged for compute during training — not via the environment's
++    `lambda_compute` (which is 0) but via the SAC trainer's own reward term
++    `resource = -0.05*sum(measured_e2e_s)`, worth ~17% of the tracking term at the median
++    decision. The earlier claim that compute was "never charged" was false;
++  - the deployed checkpoints were trained with a **5-cycle decision hold** and are evaluated at
++    **1-cycle hold**, and the actor forward pass sits inside the latency meter — so the learned
++    arms pay inference cost 5x more often per episode here than in training.
++  The paper reports 1.65x as a measurement of *this deployed configuration*, never as what
++  learned joint allocation intrinsically costs.
++- The 2520-roll test split is **mid-roll and unadjudicated.** No number from it may be quoted
++  until the sweep, its ablation stage, the 25-roll backfill and `verify_backfill.py` all
++  complete and that verification artifact reads CLEAN.
++
++**2. Preserved-prior discrete-horizon suite (author-side scenario).** Completed with full
++per-episode replay and portable-actor re-run assertions (C113, N182). This is **not** a
++reproduction of Bøhn et al. 2021 — terminal construction, candidate set, training constraints
++and plant all differ — and must never be described as one. It belongs in its own section as a
++method-transfer check, not in the mobile-robot results.
++
++## Reporting boundaries carried into the manuscript
++
++- Per-group tables lead; pooled means never stand in for them.
++- Success is primary; RMSE is never printed without the adjacent success rate.
++- All seeds, levels and axes are reported, including the ones where our method loses.
++- Tune-split numbers are used for selection only and are never reported as results.
++- Measured-delay simulation makes machine exclusivity and fixed concurrency **reproducibility
++  conditions** that belong in the protocol section, not operational trivia (C116).
++- The train/deploy decision-hold mismatch is disclosed in the **method** section with its
++  direction-of-bias argument, whether or not the hold-1 retraining is ever run (C117).
+ 
+ ## Layers
+ 
+diff --git a/ara/logic/claims.md b/ara/logic/claims.md
+index 72c0767..654e42c 100644
+--- a/ara/logic/claims.md
++++ b/ara/logic/claims.md
+@@ -891,3 +891,165 @@
+ - **Proof**: [`docs/rl/210_value_ranked_icode_prereg_2026-07-19.md`, `docs/rl/211_two_coupling_mechanisms_frozen_2026-07-19.md`, `results/research_platform/value_ranked_icode_member1_l210/training_summary.json`, `ara/evidence/tables/table17_l204_l210_coupling_selection.md`]
+ - **Dependencies**: [C97]
+ - **Tags**: value-ranking, ICODE, path-policy, ceiling-effect, negative-result
++
++## C100: Complexity-aware joint K/H allocation improves the compute-tracking trade-off on complex routes
++- **Statement**: On the evaluated reverse-turn route family, a jointly learned K/H allocator improves tracking and reduces planner compute relative to fixed residual K128/H32 across five shared fresh scenes.
++- **Status**: supported
++- **Provenance**: ai-suggested
++- **Falsification criteria**: Reanalysis of the frozen five-scene paired data fails to reproduce the favorable RMSE and compute directions, or an independent confirmation reverses both effects.
++- **Proof**: [`docs/reports/icra_joint_kh_matched_rlh_verdict_2026-09-10.md`, `research_artifacts/icode_sac_compute_2026-09-08/rl_h_ready_evaluation_2026-09-10/analysis/context_level_results.json`, `figures/fig_joint_tradeoff.pdf`]
++- **Dependencies**: [C84, C90]
++- **Tags**: joint-KH, complexity-aware, compute-tracking, reverse-turns, scope-limited
++
++## C101: Joint K/H allocation is not a universal improvement over H-only
++- **Statement**: Across the evaluated single-turn and reverse-turn route families, joint K/H does not establish stable superiority over H-only in both tracking and compute.
++- **Status**: supported
++- **Provenance**: ai-suggested
++- **Falsification criteria**: A preregistered independent evaluation shows consistent joint improvement in both metrics across route families and policy initializations.
++- **Proof**: [`docs/reports/icra_joint_kh_matched_rlh_verdict_2026-09-10.md`, `research_artifacts/icode_sac_compute_2026-09-08/rl_h_ready_evaluation_2026-09-10/analysis/context_level_results.json`]
++- **Dependencies**: [C100]
++- **Tags**: H-only, scope-boundary, negative-result, paired-design
++
++## C102: The three completed Bohn reconstruction follow-ups do not establish adaptive-horizon superiority
++- **Statement**: On their declared holdout banks, near-upright pendulum and Riccati-initialized pendulum RL cost 6.24% and 9.37% more than validation-selected fixed baselines despite zero constraint terminations in the main comparisons; reduced vehicle entropy also fails to improve over the original coefficient or fixed H10.
++- **Status**: supported
++- **Provenance**: ai-suggested
++- **Falsification criteria**: Recalculation of these saved paired evaluations changes those directions or reveals an invalid comparison. This claim is restricted to these models and banks, not all possible reconstructions or the original paper.
++- **Proof**: [`docs/reports/bohn2021_handoff_2026-09-18.md`, `research_artifacts/bohn2021_reproduction_2026-09-17/results/takeover_2026-09-18/audit.json`]
++- **Dependencies**: []
++- **Tags**: Bohn2021, reconstruction, negative-result, frozen-evaluation
++
++## C103: Executed horizon decisions contribute directly to the latest pendulum validation gap
++- **Statement**: Keeping each of six RL models' terminal values and substituting the previously selected fixed H reduces all six validation costs to near their corresponding independently trained fixed baselines. The latest holdout gap cannot be described solely as average horizons being too short: RL uses longer average H and incurs both higher performance cost and higher H cost.
++- **Status**: supported
++- **Provenance**: ai-suggested
++- **Falsification criteria**: Exact replay, frozen weights, identical initial states or the six intervention improvements fail independent reconstruction. This does not identify the cause within SAC learning or prove deployable dynamic headroom.
++- **Proof**: [`research_artifacts/bohn2021_reproduction_2026-09-17/results/takeover_intervention/recoverable_distribution/summary.json`, `research_artifacts/bohn2021_reproduction_2026-09-17/results/takeover_intervention/prior_refinement/summary.json`, `docs/reports/bohn2021_handoff_2026-09-18.md`]
++- **Dependencies**: [C102]
++- **Tags**: horizon-policy, causal-intervention, validation-only, scope-limited
++
++## C104: Actor extraction and critic ordering both limit the latest pendulum policies
++- **Statement**: Frozen validation probes show actor/critic disagreement and physical-return ranking errors together. Direct Q1 or min-Q execution is not a general fix; both increase mean cost and constraint failures for the Riccati models. Local saturation suppresses the Q-gradient path in a concrete state, but is not established as the sole training cause.
++- **Status**: supported
++- **Provenance**: ai-suggested
++- **Falsification criteria**: Independent replay fails to reproduce the 24-anchor comparisons or the 120 full validation episodes. Conclusions are restricted to these states/models; four stochastic continuations are not population inference.
++- **Proof**: [`docs/reports/bohn2021_credit_diagnosis_2026-09-18.md`, `research_artifacts/bohn2021_reproduction_2026-09-17/results/horizon_credit_probe/analysis.json`]
++- **Dependencies**: [C103]
++- **Tags**: actor-extraction, critic-ranking, saturation, validation-only
++
++## C105: Continuing H1 causes the observed six vehicle parking suffixes
++- **Statement**: At step130 of all six observed alpha0.1 seed1 timeouts, preserving the learned terminal and replacing H1 continuation with H10 reaches the goal in4-10 steps, while exact original continuations remain stopped. This isolates executed horizon as a cause of continued parking in those cases, not every vehicle failure.
++- **Status**: supported
++- **Provenance**: ai-suggested
++- **Falsification criteria**: Frozen weights, identical prefix state, original suffix replay or the six intervention goal outcomes fail reconstruction.
++- **Proof**: [`research_artifacts/bohn2021_reproduction_2026-09-17/results/vehicle_stall_probe/summary.json`, `docs/reports/bohn2021_credit_diagnosis_2026-09-18.md`]
++- **Dependencies**: [C102]
++- **Tags**: vehicle, horizon-policy, post-hoc-failure-intervention
++
++## C106: Freezing the initial analytic terminal is not a reliable repair for the evaluated author SAC
++- **Statement**: In the registered three-seed,15000-step comparison with identical initial model/configuration hashes and retained replay sampling, freezing only terminal optimizer execution increases mean holdout cost from134.3807 to149.2805 and adds two constraint terminations. Analytic fixed H30 costs121.8342 with no constraint terminations on the same30 scenes.
++- **Status**: supported
++- **Provenance**: ai-suggested
++- **Falsification criteria**: Independent reconstruction changes these paired directions or reveals a mismatch in initialization, physical evaluation or freezing. This does not disprove adverse nonstationarity in general because freezing also removes useful terminal adaptation.
++- **Proof**: [`docs/reports/bohn2021_stationary_optimization_2026-09-18.md`, `research_artifacts/bohn2021_reproduction_2026-09-17/results/categorical_frozen/analysis.json`, `research_artifacts/bohn2021_reproduction_2026-09-17/results/categorical_frozen/audit.json`]
++- **Dependencies**: [C104]
++- **Tags**: Bohn2021, frozen-terminal, matched-initialization, negative-result
++
++## C107: Categorical SAC does not solve the evaluated frozen-terminal horizon-allocation gap
++- **Statement**: Matched Tianshou continuous and discrete SAC with three seeds and15000 transitions per model cost128.2616 and170.7248 on the same30-scene holdout; discrete has six constraint terminations versus zero continuous. Discrete also fails its validation-only2% improvement gate against continuous and fixed H30. Its lower mean H does not imply lower total cost or measured compute time.
++- **Status**: supported
++- **Provenance**: ai-suggested
++- **Falsification criteria**: Recalculation changes these directions or invalidates the common environment/terminal/budget. This is a standard-algorithm-package comparison, not pure rounding isolation: categorical and differential entropy have different meanings even with equal numeric alpha. Three seeds do not establish universal algorithm ordering.
++- **Proof**: [`research_artifacts/bohn2021_reproduction_2026-09-17/results/categorical_frozen/validation_gate.json`, `research_artifacts/bohn2021_reproduction_2026-09-17/results/categorical_frozen/analysis.json`, `docs/reports/bohn2021_stationary_optimization_2026-09-18.md`]
++- **Dependencies**: [C104, C106]
++- **Tags**: Bohn2021, categorical-SAC, fixed-horizon, negative-result, scoped-comparison
++
++## C108: Preview-aware horizon switching improves the constructed pendulum plateau pilot
++- **Statement**: On six fresh scenes with long plateaus and two previewed reference reversals, a validation-selected H5/H30 rule costs 31.9178 less per episode than the best tested fixed H25. Both have zero constraint terminations and solver failures. Savings split into 27.1 H-proxy cost and 4.8178 physical cost. The 20.65% relative reduction uses the explicitly stated common equilibrium offset.
++- **Status**: supported
++- **Provenance**: ai-suggested
++- **Falsification criteria**: Recomputing the registered paired trajectories invalidates the savings, common information, frozen terminal, or validation-only selection. Scope excludes broad generalization, learned-policy success, global best fixed H, original-paper reproduction and measured CPU speedup. Same-amplitude repeats have limited behavioral diversity.
++- **Proof**: [`docs/reports/bohn2021_plateau_screen_2026-09-18.md`, `research_artifacts/bohn2021_reproduction_2026-09-17/results/plateau_screen/analysis.json`, `research_artifacts/bohn2021_reproduction_2026-09-17/results/plateau_screen/audit.json`]
++- **Dependencies**: []
++- **Tags**: Bohn2021, task-extension, horizon-switching, paired-pilot, computation-proxy
++
++## C109: Supervised branch-value policies improve the evaluated plateau task tradeoff
++- **Statement**: Three supervised horizon-value policies trained on 144 matched-state teacher anchors achieve mean adjusted holdout cost 115.6258 versus validation-selected fixed H24 149.3188 and the causal H5/H30 rule 119.1474 across twelve new scenes. Each final seed beats both comparators in all twelve scenes, without physical or solver failures. Rule-relative improvement trades 3.3392 higher physical cost for 6.8608 lower H-proxy cost.
++- **Status**: supported
++- **Provenance**: ai-suggested
++- **Falsification criteria**: Reanalysis invalidates paired reward, action execution, initial states, branch information boundaries, source hashes or validation-only fixed selection. Scope excludes global optimality, old-data corruption, data-only causation versus SAC, physical-quality dominance, extreme-state robustness, paper reproduction and measured CPU speedup. Labels are truncated policy-specific returns with an approximate Riccati tail; percentages use the declared equilibrium-offset zero.
++- **Proof**: [`docs/reports/bohn2021_teacher_value_2026-09-19.md`, `research_artifacts/bohn2021_reproduction_2026-09-17/results/teacher_value/analysis.json`, `research_artifacts/bohn2021_reproduction_2026-09-17/results/teacher_value/audit.json`, `research_artifacts/bohn2021_reproduction_2026-09-17/results/teacher_value/comparison_summary.json`]
++- **Dependencies**: [C108]
++- **Tags**: teacher-data, supervised-critic, paired-branches, finite-reward, scoped-tradeoff
++
++## C110: The registered teacher-replay SAC extension does not improve matched-budget horizon learning
++- **Statement**: On the registered twelve fresh plateau scenes, three teacher-assisted SAC seeds average adjusted cost450.7181 versus270.0414 for paired plain SAC21k, a66.91% increase with every paired seed mean worse. Each final model uses21000 transitions and20901 updates. Selected fixedH25 costs141.9593 and the causal rule111.5069. Both final learned groups have zero physical terminations, but teacher/plain incur1335/690 solver failures over21600 steps each. Plain seed1 beats fixedH25 in mean cost but still has518/7200 solver failures.
++- **Status**: supported
++- **Provenance**: ai-suggested
++- **Falsification criteria**: Independent reanalysis invalidates matched initialization/budget, frozen reward/terminal/source, common scene starts, complete evaluation or the stated outcome directions. This is a scoped negative result for replay prefill plus pretraining, not proof that all teacher methods fail, that SAC cannot learn H, or that the original paper is false. Historical rule-tail labels do not establish true soft-Q error; three training seeds do not establish universal algorithm ordering.
++- **Proof**: [`docs/reports/bohn2021_sac_teacher_2026-09-19.md`, `research_artifacts/bohn2021_reproduction_2026-09-17/results/sac_teacher/analysis.json`, `research_artifacts/bohn2021_reproduction_2026-09-17/results/sac_teacher/audit.json`, `research_artifacts/bohn2021_reproduction_2026-09-17/results/sac_teacher/recovery_audit.json`]
++- **Dependencies**: [C108]
++- **Tags**: Bohn2021, teacher-replay, matched-budget, negative-result, solver-reliability
++
++## C111: Frozen teacher-SAC diagnosis identifies lost anticipatory horizon decisions and conditional value-ranking errors
++- **Statement**: In the completed teacher-replay study, final teacher models choose mean H6.36/6.81/6.96 during the 30 steps before holdout reference changes, with post-change absolute errors0.616/0.609/0.638m. Fixed-state preview substitutions show lost or reversed anticipatory responses after online updates. On four fresh diagnostic scenes, H>=5 removes teacher physical/solver failures but leaves costs450.29/452.37/462.32 versus rule125.93. Five of twelve registered teacher rule-versus-actor branch states have both MC advantage signs opposite Q1 prediction. A switch-before example predicts-2.6538 but realizes+58.0137/+8.0928; another predicts+0.2802 but realizes-11.8545/-23.1794.
++- **Status**: supported
++- **Provenance**: ai-suggested
++- **Falsification criteria**: Independent recomputation invalidates frozen inputs/models, paired prefix states, reward/entropy scaling, complete return sums, or these descriptive intervention effects. Scope is three frozen seeds, four diagnostic scenes, and one branch future with two stochastic replicas. It does not establish exact population soft-Q, universal benefit of teacher first actions, a unique training cause, or a validated repair. Seed2 already fails once after pretraining and subsequently improves before degrading again.
++- **Proof**: [`docs/reports/bohn2021_sac_teacher_cause_2026-09-19.md`, `research_artifacts/bohn2021_reproduction_2026-09-17/results/sac_teacher_cause/analysis.json`, `research_artifacts/bohn2021_reproduction_2026-09-17/results/sac_teacher_cause/preview_sensitivity.json`, `research_artifacts/bohn2021_reproduction_2026-09-17/results/sac_teacher_cause/audit.json`]
++- **Dependencies**: [C110]
++- **Tags**: frozen-intervention, preview-sensitivity, delayed-control, conditional-soft-return, exploratory-diagnosis
++
++## C112: Moving SAC targets and action coverage may explain loss of teacher anticipation
++- **Statement**: Replay-only teacher pretraining does not constrain imitation or fixed teacher continuation. Moving current-policy Bellman targets, limited joint state/action coverage and actor exploitation of approximate Q may jointly erode anticipatory decisions; extreme squared-loss failure targets can further amplify particular seeds. Fixed teacher-row TD residual growth and preview-state Q preference reversal are compatible with this mechanism.
++- **Status**: hypothesis
++- **Provenance**: ai-suggested
++- **Falsification criteria**: Controlled interventions from identical pretrained checkpoints with matched data/update budgets fail to implicate these mechanisms, or identify another sufficient cause. No actor-versus-critic training ablation has been run; sample coverage, continuous rounding and reward discount remain unisolated factors. Teacher data remain present and have an analytically expected64.20% share of all sampled batch entries, which is not a logged empirical fraction.
++- **Proof**: [`experiments/bohn2021_reproduction/sac_teacher_study.py`, `research_artifacts/bohn2021_reproduction_2026-09-17/results/sac_teacher_cause/checkpoint_profile.json`, `docs/reports/bohn2021_sac_teacher_cause_2026-09-19.md`]
++- **Dependencies**: [C111]
++- **Tags**: hypothesis, moving-targets, replay-support, training-ablation-pending
++
++## C113: A value-prior discrete-horizon policy beats fixed-horizon MPC and a hand-written rule, by a small reproducible margin
++- **Statement**: On twelve fresh holdout scenes, three seeds of the value-prior arm average adjusted cost 117.86 (SD 0.07) versus 119.54 for the frozen value teacher without RL, 124.81 for the hand-written rule baseline and 155.25 for fixed H=25. The rule-prior arm averages 124.42 (SD 0.10). The unconstrained free arm averages 394.44 (SD 71.24), 2.5x worse than fixed H=25 despite selecting a shorter mean horizon (7.37 versus 25). Value and rule arms record zero physical failures and zero solver failures; legacy plain and teacher conditions record 866 and 1270 solver failures. The saved audit checks all 348 stored evaluation traces and regenerates the new categorical-policy actions; it does not rerun simulator physics or verify legacy policy actions from checkpoints.
++- **Status**: supported
++- **Provenance**: ai-suggested
++- **Falsification criteria**: Independent reanalysis invalidates the per-episode replay, the regenerated horizon sequences, the exported-actor equality check, or the common evaluation starts. Scope is one plant, one 7-candidate horizon set, one frozen Riccati terminal and three training seeds. The value-arm margin over the no-RL value teacher is 1.4%; the rule-arm margin over its own rule baseline is 0.3%. The value arm is 5.57% below the rule baseline. These are descriptive results on three trained seeds and shared scenes; they do not establish a large or generally reproducible online-RL gain. This is NOT a reproduction of Bohn et al. 2021 -- terminal construction, candidate set, training constraints and task distribution differ. No equal-total-budget claim against legacy SAC is made.
++- **Proof**: [`research_artifacts/bohn2021_reproduction_2026-09-17/results/sac_preserve/FINDINGS_2026-09-23.json`, `research_artifacts/bohn2021_reproduction_2026-09-17/results/sac_preserve/analysis.json`, `research_artifacts/bohn2021_reproduction_2026-09-17/results/sac_preserve/audit.json`]
++- **Dependencies**: [C112]
++- **Tags**: discrete-horizon, value-prior, holdout, small-effect, separate-workstream, not-a-reproduction
++
++## C114: Horizon-only adaptation degenerates to a myopic horizon and stalls on high-difficulty routes
++- **Statement**: On the TUNE split at axis B level 4, the horizon-only RL baseline collapses to mean H 13.2, achieves the BEST RMSE of any arm (88.70 mm) and completes ZERO of 18 episodes, timing out roughly 12 m short of the goal at 0.0057 m progress per cycle. Joint K/H control holds mean H 31.7, progresses 0.0131 m per cycle and completes 0.889. Every failure is a timeout; zero collisions occurred anywhere in the tune split. An RMSE-primary metric therefore ranks the only never-completing arm first.
++- **Status**: hypothesis
++- **Provenance**: ai-suggested
++- **Falsification criteria**: Pre-registered as claim C in prereg_addendum_2.json, frozen before any test roll, and falsified if the 95% CI of the paired OURS-minus-B2 success difference at axis B level 4 of the TEST split includes zero. EXPLORATORY IN ORIGIN: the effect was observed on the tune split and is confirmatory only on test. Status remains hypothesis until the test split is adjudicated exactly once with a complete coverage banner. Scope is one level of one axis; all other levels show every arm at 1.00 success, which is a negative result and is reported as such.
++- **Proof**: [`research_artifacts/kh_scene_strata_2026-09-23/prereg_addendum_2.json`, `research_artifacts/kh_scene_strata_2026-09-23/tune_finding_2026-09-23.json`, `research_artifacts/kh_ladder_rolls_2026-09-23/analysis_tune.json`]
++- **Dependencies**: [C113]
++- **Tags**: horizon-collapse, metric-inversion, pre-registered, tune-split-only, awaiting-test
++
++## C115: Joint K/H control shows no advantage over a well-tuned nominal baseline on the tune split
++- **Statement**: On the TUNE split the joint K/H policy costs 1.65x the wall-clock compute of the tuned nominal baseline (25.38 s versus 15.38 s mean; 0.0195 versus 0.0126 s per cycle) and posts worse RMSE in 13 of 14 axis-level cells, while matching success everywhere except axis B level 4, where the tuned baseline reaches 1.00 and the joint policy 0.889. The policy selects mean K 169.5 and mean H 31.0 against the baseline's selected K 64, H 24 -- a K*H work ratio of 3.4x. The MECHANISM is NOT that compute is unpriced. The environment reward's lambda_compute is 0 (environment.py:106), but the SAC trainer never uses the environment reward: it computes its own, containing resource = -0.05*sum(measured_e2e_s), which carries 4.87% (joint) and 4.63% (h_only) of mean reward magnitude in the deployed policies' own training records. The correct statement is that a compute price of roughly 5% of reward magnitude was present during training and was not enough to prevent sample over-allocation.
++- **Status**: supported
++- **Provenance**: ai-suggested
++- **Falsification criteria**: Independent recomputation of the per-cell compute and RMSE means from the tune result files, or of the mean K and H over the 252 joint-policy tune rolls, contradicts these values. Scope is the TUNE split only and these numbers are NOT reportable results; they describe the position the study is in, not an outcome. Two disclosed confounds bound the compute figure specifically (deviation_train_deploy_2026-09-23.json): the deployed checkpoints were trained with a 5-cycle decision hold but are evaluated at 1-cycle hold, and the actor forward pass sits inside the latency meter (environment.py:47-51), so the learned arms pay inference cost 5x more often per episode here than in training. Both run AGAINST the learned arms, so they cannot manufacture the observed disadvantage in our favour, but they mean 1.65x is a measurement of THIS DEPLOYED CONFIGURATION and not of what learned joint allocation intrinsically costs. The residual causal question -- whether a LARGER price would produce economical allocation -- remains untested: no run at any other price exists.
++- **Proof**: [`research_artifacts/kh_scene_strata_2026-09-23/compute_allocation_finding_2026-09-23.json`, `research_artifacts/kh_scene_strata_2026-09-23/deviation_train_deploy_2026-09-23.json`, `research_artifacts/kh_ladder_rolls_2026-09-23/analysis_tune.json`, `research_artifacts/kh_ladder_rolls_2026-09-23/b1_selection.json`]
++- **Dependencies**: [C114]
++- **Tags**: compute-allocation, tune-split-only, honest-negative, baseline-is-strong, mechanism-corrected, train-deploy-mismatch-disclosed
++
++## C116: Measured-delay simulation makes any competing process a confound, including read-only analysis
++- **Statement**: With delay_mode='measured' the plant's actuation latency is set to real wall-clock compute time, so contention alters simulated physics rather than merely slowing execution. Two excursions occurred during the test sweep: a concurrent sweep (77 s, 13 rolls quarantined, unevenly across arms -- 3 from nominal_K064_H24 and 2 from each of the other five) and a niced read-only trace audit (160 s, 12 rolls quarantined, 2 per arm but at differing scene keys). The second establishes that low CPU priority is not protection, because the binding resource was memory bandwidth and page-cache eviction from decompressing roughly 4.6 GB of traces on a 7 GB machine already holding twelve workers.
++- **Status**: supported
++- **Provenance**: ai-suggested
++- **Falsification criteria**: Reading environment.py's 'measured' branch shows latency is not set from meter.elapsed, or the quarantined rolls' execution windows do not overlap the recorded contention windows. The magnitude of the perturbation is NOT established -- no quarantined-versus-re-rolled comparison has been run yet, and 'probably small' was explicitly rejected as grounds for retaining the affected rolls. The quarantine rule is mechanical (execution overlapped a named wall-clock window, fixed before any affected result file was opened) and outcome-blind, which is what makes the removal non-selective. [CORRECTED 2026-09-23: this criterion previously said "and the removals are arm-symmetric, so they cannot bias a paired comparison". The removals are NOT arm-symmetric -- the first excursion took 3 rolls from nominal_K064_H24 and 2 from each other arm, and the second took 2 per arm at differing scene keys. Paired comparisons are nonetheless unbiasable because kh_ladder_analyze.paired() intersects the two arms' key sets, dropping any unmatched key from both. The one unpaired test in the confirmatory family (claim C predicate P2, which compares per-arm mean_H via cell()) is scoped to axis B level 4 while all 25 quarantined rolls are axis A level 0, so the scopes are disjoint. See correction_2026-09-23 in both deviation records.]
++- **Proof**: [`research_artifacts/kh_scene_strata_2026-09-23/deviation_contention_2026-09-23.json`, `research_artifacts/kh_scene_strata_2026-09-23/deviation_audit_io_2026-09-23.json`, `experiments/icra_scene_design/sweep_guard.py`, `src/mobile_robot_mppi/physical_tradeoff_v2/environment.py`]
++- **Dependencies**: [C115]
++- **Tags**: methodology, measured-delay, contention, deviation-disclosed, reproducibility-condition
++
++## C117: The deployed learned policies were trained with a 5-cycle decision hold and are evaluated at 1-cycle hold
++- **Statement**: Every learned arm in the IROS ladder study (rl_kh, rl_h, rl_k, rl_kh_masked, both policy seeds) loads a checkpoint from `sac_route_independent_2026-09-10`, whose archived trainer chooses one (K,H) pair and then applies it for five consecutive control cycles (`env.step(policy)` followed by `for _ in range(4): env.step(holder['pair'])`). The evaluation roller re-queries the actor every cycle and asserts `len(decisions) == len(rows)` (kh_ladder_roll.py:130-133), which enforces the opposite protocol. A hold-1 trainer exists in the working tree (`--decision-hold`, stage `sac_route_independent_realtime_2026-09-16`) but that stage directory does not exist on disk: no hold-1 checkpoint has ever been trained. Because the actor forward pass is inside the end-to-end latency meter (environment.py:47-51, `meter.mark('policy')` after the actor returns) and `elapsed = last - start`, the learned arms pay actor inference cost on every cycle here versus every fifth cycle in training, under a delay mode where that cost becomes physical actuation latency.
++- **Status**: supported
++- **Provenance**: ai-suggested
++- **Falsification criteria**: The archived source copy shipped inside the checkpoint directory does not contain the 5-cycle inner loop, or `sac_route_independent_realtime_2026-09-16` is found to contain completed checkpoints, or the latency meter is shown to exclude the policy segment. The MAGNITUDE of the effect is NOT established: no hold-1-trained policy exists to compare against, and the per-cycle actor inference cost has not been extracted from `segment_latency_s` because the sweep guard forbids trace reads while rolls are alive. The direction is argued, not measured, and both identified mechanisms (distribution shift from deciding 5x more often; 5x more inference cost inside the measured latency) run AGAINST the learned arms -- so this cannot have manufactured an advantage for our method, but it does mean the learned arms' compute figures are an upper bound on what the method intrinsically costs.
++- **Proof**: [`research_artifacts/kh_scene_strata_2026-09-23/deviation_train_deploy_2026-09-23.json`, `research_artifacts/icode_sac_compute_2026-09-08/sac_route_independent_2026-09-10/seed13101001/joint/sources/experiments/icra_sac_route_independent/train.py`, `experiments/icra_scene_design/kh_ladder_roll.py`, `src/mobile_robot_mppi/physical_tradeoff_v2/environment.py`]
++- **Dependencies**: [C115]
++- **Tags**: methodology, train-deploy-mismatch, decision-hold, deviation-disclosed, bias-runs-against-us, magnitude-unmeasured
+diff --git a/ara/trace/exploration_tree.yaml b/ara/trace/exploration_tree.yaml
+index e2d5371..8c4e831 100644
+--- a/ara/trace/exploration_tree.yaml
++++ b/ara/trace/exploration_tree.yaml
+@@ -1382,3 +1382,893 @@ tree:
+           - "Reliability-weighted terminal critic authority"
+         evidence: >
+           C81/C84/C90 provide sealed independent factorial main effects for both retained mechanisms, whereas C98/C99 and C87 are refuted.
++  - id: N143
++    type: experiment
++    title: "Fresh matched-readiness joint K/H versus fixed and RL-H evaluation"
++    provenance: ai-executed
++    timestamp: "2026-09-10T18:00:00+08:00"
++    result: >
++      Across 260 audited episodes on two route families and five shared fresh scene
++      seeds per route, all episodes completed without collision. On reverse_turns,
++      joint versus fixed residual K128/H32 reduced RMSE by 3.88 mm and compute by
++      1.11 s in all five scenes; versus residual RL-H it reduced RMSE by 4.20 mm
++      with compute difference near zero. On single_turn, joint mainly saved compute
++      and did not show stable RMSE superiority. Joint versus H-only was mixed.
++    evidence: ["C100", "C101", "docs/reports/icra_joint_kh_matched_rlh_verdict_2026-09-10.md", "figures/fig_joint_tradeoff.pdf"]
++    children:
++      - id: N144
++        type: decision
++        title: "Freeze complexity-aware joint K/H paper narrative"
++        provenance: ai-suggested
++        timestamp: "2026-09-10T18:05:00+08:00"
++        choice: >
++          Center the ICRA manuscript on complexity-aware joint K/H budget allocation
++          for compute-tracking trade-offs, using reverse_turns as the primary mechanism
++          result, single_turn as a boundary condition, and RL-H as a matched execution
++          interface comparison.
++        alternatives:
++          - "Claim universal superiority over H-only"
++          - "Continue broad K/H or safety grid searches"
++        evidence: >
++          The fresh paired evaluation supports the restricted reverse-turn result but
++          shows mixed H-only directions and saturated zero-collision outcomes.
++  - id: N145
++    type: question
++    title: "Resume Bohn 2021 reproduction and explain the remaining horizon-policy gap"
++    provenance: user
++    timestamp: "2026-09-18T14:22:00+08:00"
++    description: >
++      User requested reading task 01a0ace3-6eec-7fc3-b541-9ad884b3bb8f,
++      synchronizing records and taking over. That task explicitly authorized
++      continued diagnosis, improvements and experiments after negative results.
++    children:
++      - id: N154
++        type: decision
++        title: "Screen long pendulum plateaus interrupted by previewed reference moves"
++        provenance: user
++        timestamp: "2026-09-18T23:11:42+08:00"
++        choice: >
++          User approved trying the first proposed scenario design before more RL
++          training. AI specified three amplitudes, 600-step episodes, paired banks,
++          fixed-H refinement and four causal switching rules before simulations.
++        alternatives: ["Introduce variable compute deadlines", "Retrain SAC immediately"]
++        evidence: "User request to design scenarios and run a few experiments."
++        also_depends_on: [N152]
++        children:
++          - id: N155
++            type: experiment
++            title: "Validate usable horizon-switching headroom in the plateau pilot"
++            provenance: ai-executed
++            timestamp: "2026-09-18T23:11:42+08:00"
++            result: >
++              Completed 87 evaluations and audited 51843 transitions without RL.
++              Validation selected fixed H25 and the H5/H30 rule from 19 fixed and
++              four switching candidates. On six new scenes, adjusted costs were
++              154.5635 and 122.6457, a 31.9178 absolute saving (20.65% using the
++              stated equilibrium-offset normalization); both had zero constraint
++              terminations and solver failures. H proxy savings explain 27.1 and
++              physical costs 4.8178. Similar same-amplitude repeats limit diversity.
++            evidence: [C108, "docs/reports/bohn2021_plateau_screen_2026-09-18.md", "research_artifacts/bohn2021_reproduction_2026-09-17/results/plateau_screen/audit.json"]
++          - id: N156
++            type: question
++            title: "Generate teacher trajectories and horizon-value labels before training"
++            provenance: user
++            timestamp: "2026-09-18T23:11:42+08:00"
++            description: >
++              User suspects training data and asks whether optimal control paths
++              can supply learning references. AI distinguishes high-quality local
++              physical-control solutions from policy-specific horizon branch
++              returns, recommends supervised calibration and student-state coverage,
++              and does not claim global optimality or proven data corruption.
++              Teacher generation and new training have not been performed.
++            children:
++              - id: N157
++                type: decision
++                title: "Train with teacher data and an explicitly audited reward"
++                provenance: user
++                timestamp: "2026-09-19T00:21:23+08:00"
++                choice: >
++                  User authorized improved-data training and requested proper reward
++                  design. AI chose supervised relative-cost critics plus one student
++                  state aggregation round, keeping physical weights and H penalty,
++                  and preserving complete undiscounted cost ordering through offset
++                  padding on failure. No SAC fine-tuning was included in this pilot.
++                alternatives: ["Immediate additional SAC sweeps", "Imitate only teacher control forces"]
++                evidence: "User approval following the teacher-label proposal and C108 pilot."
++                children:
++                  - id: N158
++                    type: experiment
++                    title: "Train all three seeds on matched-state horizon branch returns"
++                    provenance: ai-executed
++                    timestamp: "2026-09-19T00:21:23+08:00"
++                    result: >
++                      Generated 192 anchors and 1344 sixty-step branches, using 144
++                      anchors for augmented training and 48 for validation. Initial
++                      and augmented models each use three seeds and 3000 updates.
++                      Twelve new holdout scenes yield augmented mean adjusted cost
++                      115.6258 versus validation-selected fixed H24 149.3188 and
++                      rule119.1474, reductions22.56% and2.96%. All final seed-scene
++                      pairs beat both comparators, with no holdout physical or solver
++                      failures. Simulated budget including reset and smoke217730.
++                    evidence: [C109, "docs/reports/bohn2021_teacher_value_2026-09-19.md", "research_artifacts/bohn2021_reproduction_2026-09-17/results/teacher_value/audit.json"]
++                  - id: N159
++                    type: experiment
++                    title: "Retain mixed effects of student-state aggregation and cost tradeoffs"
++                    provenance: ai-executed
++                    timestamp: "2026-09-19T00:21:23+08:00"
++                    result: >
++                      Additional student data reduces mean undiscounted holdout cost
++                      by only0.565%, while every seed has slightly higher discounted
++                      episode cost. Validation action regret improves for two seeds
++                      and worsens for seed0. Relative to the rule, final physical cost
++                      rises3.3392 while H cost falls6.8608. This is not broad physical
++                      quality improvement or a data-only causal comparison with SAC.
++                    evidence: [C109, "research_artifacts/bohn2021_reproduction_2026-09-17/results/teacher_value/comparison_summary.json", "research_artifacts/bohn2021_reproduction_2026-09-17/results/teacher_value/analysis.json"]
++                    children:
++                      - id: N160
++                        type: decision
++                        title: "Return to author SAC with teacher replay and matched total budget"
++                        provenance: user
++                        timestamp: "2026-09-19T01:05:00+08:00"
++                        choice: "User approved the SAC comparison and allowed implementation differences while prioritizing the core hypothesis."
++                        alternatives: ["Continue only supervised horizon-value training"]
++                        evidence: ["experiments/bohn2021_reproduction/SAC_TEACHER_PROTOCOL.md"]
++                        children:
++                          - id: N161
++                            type: experiment
++                            title: "Complete one paired SAC seed and retain mixed training reliability"
++                            provenance: ai-executed
++                            timestamp: "2026-09-19T01:05:26+08:00"
++                            result: >
++                              Plain and teacher seed2 each completed21000 transitions and20901 SAC updates.
++                              Initial networks match and replay/reward/reload audits pass. Plain training
++                              has2 physical terminations and2022 solver-failure steps; teacher training
++                              has0 physical terminations and2418 solver-failure steps. No new validation
++                              or holdout evaluation has started; these are not final performance claims.
++                            evidence: ["research_artifacts/bohn2021_reproduction_2026-09-17/results/sac_teacher/training_audit.json"]
++                            children:
++                              - id: N162
++                                type: decision
++                                title: "Pause for user shutdown and preserve interrupted checkpoints"
++                                provenance: user
++                                timestamp: "2026-09-19T01:05:26+08:00"
++                                choice: "User asked to stop, continue tomorrow, and shut down after writing records. Dispatcher and workers terminated; checkpoints and partial traces retained."
++                                alternatives: ["Continue training overnight"]
++                                evidence: ["docs/reports/bohn2021_sac_teacher_paused_2026-09-19.md", "research_artifacts/bohn2021_reproduction_2026-09-17/results/sac_teacher/paused_shutdown.json"]
++                                children:
++                                  - id: N163
++                                    type: decision
++                                    title: "Resume the paused SAC teacher study in the new task"
++                                    provenance: user
++                                    timestamp: "2026-09-19T11:26:12+08:00"
++                                    choice: "User requested reading the previous task and continuing its work."
++                                    alternatives: ["Keep the shutdown pause in effect"]
++                                    evidence: ["codex://threads/01a0b321-c3b2-7801-87f1-4b7c68bf7452", "docs/reports/bohn2021_handoff_2026-09-18.md"]
++                                    children:
++                                      - id: N164
++                                        type: experiment
++                                        title: "Original-seed restarts reproduce every saved interrupted transition"
++                                        provenance: ai-executed
++                                        timestamp: "2026-09-19T12:27:17+08:00"
++                                        result: >
++                                          Archived plain_s0 and teacher_s1 without file changes and reused
++                                          completed seed2 models. Restarted checkpoints have identical weights,
++                                          and all19348 saved interrupted transitions match exactly. This is
++                                          original-seed replay, not certified in-progress TF/MPC restoration.
++                                          Interrupted work adds19348 observed transitions and34 warmups;
++                                          unflushed shutdown work remains unknown.
++                                        evidence: ["research_artifacts/bohn2021_reproduction_2026-09-17/results/sac_teacher/recovery_audit.json"]
++                                        children:
++                                          - id: N165
++                                            type: experiment
++                                            title: "Teacher replay worsens matched-budget SAC on all three seeds"
++                                            provenance: ai-executed
++                                            timestamp: "2026-09-19T12:27:17+08:00"
++                                            result: >
++                                              All6 models and260 evaluations completed. On12 fresh holdout scenes,
++                                              teacher mean450.7181 exceeds plain21k270.0414 by66.91%; all3 paired
++                                              seed means worsen. Selected fixedH25 costs141.9593 and rule111.5069.
++                                              Final plain/teacher have0/36 physical terminations but690/1335 solver
++                                              failure steps. Plain seed1 costs129.7174 but has518/7200 solver failures.
++                                              Formal126000 transitions and125406 updates,155339 evaluation steps;
++                                              total physical work including observed interruption is at least301753.
++                                              No holdout-driven variants or joint-terminal training were added.
++                                            evidence: [C110, "docs/reports/bohn2021_sac_teacher_2026-09-19.md", "research_artifacts/bohn2021_reproduction_2026-09-17/results/sac_teacher/audit.json"]
++                                            children:
++                                              - id: N166
++                                                type: question
++                                                title: "Locate why teacher-assisted SAC degraded"
++                                                provenance: user
++                                                timestamp: "2026-09-19T13:24:00+08:00"
++                                                description: "User requested deep causal diagnosis of the observed regression. Timestamp records completion, not request time."
++                                                children:
++                                                  - id: N167
++                                                    type: experiment
++                                                    title: "Frozen execution interventions and full current-policy return branches"
++                                                    provenance: ai-executed
++                                                    timestamp: "2026-09-19T13:24:00+08:00"
++                                                    result: >
++                                                      Completed 164 evaluation episodes and 144 branches, with 183144 physical
++                                                      steps and zero SAC updates. H>=5 removes physical and solver failures
++                                                      for the three teacher models on four new scenes, but costs remain
++                                                      450.29/452.37/462.32 versus rule125.93. Q1 and stochastic execution
++                                                      do not restore rule performance. Five of twelve teacher rule-vs-actor
++                                                      states contradict the predicted Q1 advantage in both MC replicas.
++                                                      Returns condition on one realized future; no training-factor causation
++                                                      or population value calibration is claimed.
++                                                    evidence: [C111, "docs/reports/bohn2021_sac_teacher_cause_2026-09-19.md", "research_artifacts/bohn2021_reproduction_2026-09-17/results/sac_teacher_cause/audit.json"]
++                                                  - id: N168
++                                                    type: experiment
++                                                    title: "Post-hoc fixed-state preview sensitivity locates lost anticipation"
++                                                    provenance: ai-executed
++                                                    timestamp: "2026-09-19T13:24:00+08:00"
++                                                    result: >
++                                                      On 24 shared rule states across four scenes, replace only future
++                                                      reference inputs by held-current-reference previews for all15 checkpoints.
++                                                      All pretrained teacher models extend H at lead25; final seed0/1 reverse
++                                                      this response there, and seed2 reverses it at lead10. Q1(H30)-Q1(H5)
++                                                      at lead25 changes from positive to negative for all three seeds.
++                                                      No physical steps or training updates; input sensitivity is not a
++                                                      closed-loop outcome or isolated training-factor intervention.
++                                                    evidence: [C111, C112, "research_artifacts/bohn2021_reproduction_2026-09-17/results/sac_teacher_cause/preview_sensitivity.json"]
++      - id: N146
++        type: experiment
++        title: "Close out three already completed reproduction refinements"
++        provenance: ai-executed
++        timestamp: "2026-09-18T14:22:00+08:00"
++        result: >
++          Audited prior-task training for 36 models and 540000 transitions,
++          2280 holdout evaluations on 80 independent scenes, and independently
++          recomputed 199369 saved physical transitions. Near-upright pendulum
++          RL costs 142.620 versus fixed H35 134.244; Riccati-initialized RL
++          costs 123.693 versus fixed H30 113.100. Vehicle alpha1/.1/.01 cost
++          12.933/93.709/16.166 versus fixed H10 11.742 on the same new bank.
++          No new training was performed during the takeover.
++        evidence: [C102, "docs/reports/bohn2021_handoff_2026-09-18.md", "research_artifacts/bohn2021_reproduction_2026-09-17/results/takeover_2026-09-18/audit.json"]
++        children:
++          - id: N147
++            type: experiment
++            title: "Preserve learned terminal value and replace horizon execution"
++            provenance: ai-executed
++            timestamp: "2026-09-18T14:22:00+08:00"
++            result: >
++              Six exact case-zero replays and 60 validation-only interventions
++              passed frozen-weight and matched-start checks. All three seeds
++              in each pendulum study returned close to independently trained
++              fixed-horizon validation cost after forcing H35 or H30 while
++              retaining each RL model's terminal. Holdout average horizons
++              were about 39.00 and 33.75, longer than fixed35 and fixed30;
++              both performance and horizon costs were worse for RL.
++            evidence: [C103, "research_artifacts/bohn2021_reproduction_2026-09-17/results/takeover_intervention/recoverable_distribution/summary.json", "research_artifacts/bohn2021_reproduction_2026-09-17/results/takeover_intervention/prior_refinement/summary.json"]
++            children:
++              - id: N148
++                type: experiment
++                title: "Separate actor extraction from critic ranking with frozen branches"
++                provenance: ai-executed
++                timestamp: "2026-09-18T14:58:00+08:00"
++                result: >
++                  Across six models and 24 validation anchors, actor and Q1-grid
++                  choices differed 21 times; Q1 substitution worsened deterministic
++                  continuation in nine of those. Same-variance mean quadrature
++                  found learned soft-objective gains above .01 in 22/24 anchors.
++                  The 120 full-episode extraction trials refuted direct critic
++                  replacement as a general fix: Riccati actor/Q1/minQ costs were
++                  151.264/260.263/263.074. No new training was performed.
++                evidence: [C104, "docs/reports/bohn2021_credit_diagnosis_2026-09-18.md", "research_artifacts/bohn2021_reproduction_2026-09-17/results/horizon_credit_probe/audit.json"]
++                children:
++                  - id: N150
++                    type: decision
++                    title: "Start terminal-stationarity and discrete-H optimization"
++                    provenance: user
++                    timestamp: "2026-09-18T16:07:00+08:00"
++                    choice: >
++                      User approved starting the proposed optimization after the diagnosis.
++                      AI selected analytic Riccati freezing and a same-library continuous
++                      control for categorical SAC, with explicit implementation caveats.
++                    alternatives: []
++                    evidence: "User approval and prior C104 diagnosis."
++                    children:
++                      - id: N151
++                        type: experiment
++                        title: "Freeze only the terminal optimizer with identical author-SAC initialization"
++                        provenance: ai-executed
++                        timestamp: "2026-09-18T16:07:00+08:00"
++                        result: >
++                          Three new15000-step models retain exact initial parameter/configuration
++                          hashes and replay RNG draws. New30-scene holdout cost is149.280
++                          versus134.381 for original joint learning, with constraint counts
++                          [0,2,0] versus[0,0,0]. Frozen analytic fixed H30 costs121.834.
++                        evidence: [C106, "research_artifacts/bohn2021_reproduction_2026-09-17/results/categorical_frozen/audit.json"]
++                      - id: N152
++                        type: experiment
++                        title: "Compare library continuous and categorical SAC with frozen terminal"
++                        provenance: ai-executed
++                        timestamp: "2026-09-18T16:07:00+08:00"
++                        result: >
++                          Six new15000-step models use Tianshou0.5.1 and one shared legacy
++                          MPC worker. Continuous/discrete holdout costs are128.262/170.725,
++                          with constraints[0,0,0]/[0,0,6]. Discrete validation mean136.691
++                          misses continuous129.439 and fixed111.109, failing the2% gate.
++                          No joint-discrete follow-up or holdout-driven tuning was run.
++                        evidence: [C107, "docs/reports/bohn2021_stationary_optimization_2026-09-18.md"]
++                      - id: N153
++                        type: experiment
++                        title: "Recover memory-interrupted experiments without changing training prefixes"
++                        provenance: ai-executed
++                        timestamp: "2026-09-18T16:07:00+08:00"
++                        result: >
++                          Archived four incomplete runs with14700-15100 extra transitions.
++                          Allocating replay to min(capacity,total_steps) avoids unused eager
++                          memory without eviction before run end. Limited concurrency and
++                          original-seed restarts reproduce all four step2500 policy states
++                          exactly. Final audit passes710 episodes and70384 transitions.
++                        evidence: ["research_artifacts/bohn2021_reproduction_2026-09-17/results/categorical_frozen/resource_amendment.json", "research_artifacts/bohn2021_reproduction_2026-09-17/results/categorical_frozen/audit.json"]
++              - id: N149
++                type: experiment
++                title: "Intervene on all six low-entropy vehicle parking failures"
++                provenance: ai-executed
++                timestamp: "2026-09-18T14:58:00+08:00"
++                result: >
++                  After exact replay to step130 of six selected timeout episodes,
++                  retaining the terminal and forcing H10 reached the goal in4-10
++                  steps in all six cases. Original H1 suffixes remained stopped.
++                  All intervention and original suffixes had zero solver failures.
++                  This is selected-failure diagnosis, not a population success estimate.
++                evidence: [C105, "research_artifacts/bohn2021_reproduction_2026-09-17/results/vehicle_stall_probe/summary.json"]
++  - id: N169
++    type: question
++    title: "Produce publication-grade IROS evidence against two properly tuned baselines"
++    also_depends_on: [N144]
++    provenance: user
++    timestamp: "2026-09-23T00:30:00+08:00"
++    description: >
++      User asked for experimental data at submission quality for IROS, with two
++      baselines (nominal MPPI and RL-tuned-H), an experimental design mirroring the
++      RL-tunes-H literature, additional novel experiments, baselines that are not
++      allowed to look weak, and scenarios varied gradually to expose where our
++      method helps. The user also said the data may be selective. The timestamp
++      records the start of the design work, not the exact request time.
++    children:
++      - id: N170
++        type: decision
++        title: "Convert selective reporting into a pre-registered difficulty ladder"
++        provenance: ai-suggested
++        timestamp: "2026-09-23T00:50:00+08:00"
++        choice: >
++          Refuse post-hoc selection of seeds, levels or favourable moments, and serve
++          the same goal by making scenario difficulty an independent variable with
++          predictions written down in advance. Every seed, level and axis is
++          reported, including those where our method loses. Tune and test splits are
++          disjoint and the test split is rolled once.
++        alternatives:
++          - "Report only the conditions where joint K/H wins"
++          - "Search scene parameters until a favourable configuration appears"
++        evidence: >
++          IROS reviewers check holdout reuse and seed selection, and this project has
++          already been flagged once for substituting a single seed for a mean. A
++          reproducible paper stating where the method wins and where it does not is
++          more publishable than a uniform win that fails replication.
++      - id: N171
++        type: dead_end
++        title: "Path-internal heterogeneity can neither be selected from the legacy suite nor made by sharpening corners"
++        provenance: ai-executed
++        timestamp: "2026-09-23T00:57:00+08:00"
++        hypothesis: >
++          Within-path heterogeneity of planning demand could be obtained by selecting
++          high-variance scenes from the existing 47-scene suite, and intensified by
++          using fewer, sharper corners while holding total turning fixed.
++        failure_mode: >
++          generate_scene_suite.py::corridor_walls() offsets both walls by a constant
++          width/2 plus 0.06 along the normal, so clearance is pointwise constant along
++          every scene in the suite: chicane_long min equals max equals 0.530 m, and
++          zigzag_long clearance std is 0.0000. The legacy suite varies difficulty
++          between scenes and is flat within each one, the opposite of what claim A
++          needs. The first generated axis A then produced clearances as low as
++          -0.305 m at levels 2 to 4, because mitre offsetting of sharp corners cuts
++          the inner wall across the reference line, and per-corner clipping silently
++          reduced total turning from 12.566 to 10.400 rad, destroying the balance that
++          made the axis a controlled axis.
++        lesson: >
++          Heterogeneity must be generated, not selected, and the axis must vary corner
++          SPACING rather than corner sharpness. The yaw-rate limit was also shown not
++          to bind: the tightest legacy scene needs 0.53 rad/s against a 1.25 rad/s
++          limit, so the binding cost of turning is TIME under the 3.50 rad/s^2 slew
++          limit, about 1.61 s or 16 control cycles for a 90 degree corner. That
++          quantity, not yaw rate, is what a prediction horizon must cover, and the
++          rebuilt ladder is constructed around it.
++        evidence: ["experiments/icra_scene_design/kh_scene_strata.py", "experiments/icra_scene_design/kh_difficulty_ladder.py", "research_artifacts/kh_scene_strata_2026-09-23/scene_strata.json"]
++      - id: N172
++        type: experiment
++        title: "Build a three-axis controlled difficulty ladder and freeze the pre-registration"
++        provenance: ai-executed
++        timestamp: "2026-09-23T01:08:00+08:00"
++        result: >
++          Generated 182 scenes: 14 levels across 3 axes times 13 scene seeds, 3 tune
++          and 10 test, disjoint. Axis A holds total turning at exactly 12.566 rad, 12
++          corners of identical angle, path length about 41 m and minimum clearance
++          about 0.34 m at every level, varying only corner spacing; measured
++          heterogeneity rises 0.176, 0.221, 0.268, 0.305, 0.301 with zero infeasible
++          scenes. Axis B raises total turning from 3.0 to 16.2 rad with heterogeneity
++          held low. Axis C modulates corridor width along the path, raising clearance
++          standard deviation from 0.0019 to 0.0635, which the legacy generator could
++          not express at all. Two limitations are recorded rather than hidden: axis
++          A's mean difficulty drifts down from 0.432 to 0.349 as heterogeneity rises,
++          so the axis is not perfectly orthogonal, and heterogeneity saturates between
++          levels 3 and 4. Mean difficulty is therefore a required reported covariate.
++          prereg.json freezes the claims, their falsification conditions, the splits,
++          the metrics, the prohibition list and SHA-256 hashes of the generator and
++          manifest before any comparison roll. max_steps is estimated from physics per
++          scene, not reverse-engineered from observed success rates.
++        evidence: ["research_artifacts/kh_scene_strata_2026-09-23/prereg.json", "research_artifacts/kh_scene_strata_2026-09-23/ladder_manifest.json", "configs/research/kh_difficulty_ladder_2026-09-23/"]
++      - id: N173
++        type: experiment
++        title: "Tune the nominal baseline to its own best over a 16-point grid"
++        provenance: ai-executed
++        timestamp: "2026-09-23T01:18:00+08:00"
++        result: >
++          All 16 K-by-H combinations were rolled on the 42 tune scenes. Five rows were
++          disqualified on SUCCESS, not on error: every H=16 row plus K192/H24 and
++          K256/H16 sit at 0.927 to 0.929 against a 1.00 best. Among qualifying rows
++          K=64,H=24 has the lowest mean RMSE at 59.19 mm with 1.00 success and 15.14 s
++          compute, tying within 1 percent with K=128,H=24 at 59.14 mm, 0.976 success
++          and 18.08 s; the pre-registered rule breaks the tie toward lower compute.
++          Because the selected K is not 128, addendum 1's committed response applies:
++          both the baseline at its own best and a K-matched baseline at K=128 are
++          rolled on test, and the paper leads with whichever is LESS favourable to our
++          method. Addendum 1 also discloses that the mobile-robot RL-H arm uses integer
++          H in [8,40] rather than the 7-candidate set carried into the prereg text from
++          the pendulum line, and adds a second independently trained policy seed to
++          both learned arms, pre-committing to report both seeds and to treat a sign
++          disagreement between them as the result rather than resolving it by picking
++          one.
++        evidence: [C115, "research_artifacts/kh_ladder_rolls_2026-09-23/b1_selection.json", "research_artifacts/kh_scene_strata_2026-09-23/prereg_addendum_1.json"]
++      - id: N174
++        type: dead_end
++        title: "Claims A and B are falsified on the tune split"
++        provenance: ai-executed
++        timestamp: "2026-09-23T07:31:00+08:00"
++        hypothesis: >
++          Claim A: the paired RMSE gain of joint K/H over the horizon-only baseline
++          rises monotonically across axis A levels 0 to 4 and its 95 percent CI
++          excludes zero at levels 3 and 4. Claim B: the horizon-only baseline's gain
++          over nominal MPPI rises across axis B levels 0 to 3 and flattens at level 4.
++        failure_mode: >
++          Claim A's CI excludes zero at NO level. Per-level median gains are -8.50,
++          -5.78, +2.90, -20.43 and -17.44 mm: negative at four of five levels and not
++          monotonic. Claim B's per-level gains are -14.56, +10.64, +6.36, -4.67 and
++          +4.04 mm, also non-monotonic. Both policy seeds agree in sign at levels 3 and
++          4, so neither failure is a single-network artifact.
++        lesson: >
++          Per the pre-registration's own instruction, no scene, seed, metric or policy
++          was changed in response. Claim A stands falsified on tune and will be
++          re-adjudicated on test as a pre-registered failure rather than quietly
++          dropped or rescued.
++        evidence: ["research_artifacts/kh_scene_strata_2026-09-23/tune_finding_2026-09-23.json", "research_artifacts/kh_ladder_rolls_2026-09-23/analysis_tune.json"]
++      - id: N175
++        type: decision
++        title: "Freeze completion-aware metrics and the horizon-collapse claim before the test roll"
++        provenance: ai-suggested
++        timestamp: "2026-09-23T07:32:00+08:00"
++        choice: >
++          Freeze a second pre-registration BEFORE the test split is rolled: task
++          success becomes the primary metric with forward progress per control cycle
++          as the declared mediator, RMSE is demoted and never reported without the
++          adjacent success rate, and claim C is added with four numbered predictions
++          and an explicit falsification condition. Separate Holm families for success
++          and for RMSE are declared in advance. The motivating observation comes from
++          the tune split and is labelled exploratory-in-origin,
++          confirmatory-only-on-test wherever it appears.
++        alternatives:
++          - "Keep RMSE primary and report the tune anomaly as a footnote"
++          - "Re-tune, re-generate scenes or adjust max_steps to rescue claim A"
++        evidence: >
++          At axis B level 4 of the tune split the horizon-only baseline attains the
++          BEST RMSE of any arm at 88.70 mm while completing ZERO of 18 episodes,
++          collapsing to mean H 13.2 and 0.0057 m progress per cycle and timing out
++          about 12 m short of the goal; joint K/H holds mean H 31.7, progresses
++          0.0131 m per cycle and completes 0.889. Zero collisions occurred anywhere in
++          the tune split, so every failure is a timeout. An RMSE-primary metric
++          therefore ranks the only never-completing arm first, which is a property of
++          averaging per-step error over an episode that never finishes.
++      - id: N176
++        type: experiment
++        title: "A sign-convention defect would have inverted the new primary metric"
++        provenance: ai-executed
++        timestamp: "2026-09-23T07:46:00+08:00"
++        result: >
++          paired() returned b minus a unconditionally, which is correct only for
++          lower-is-better metrics. Once addendum 2 made success primary, claim C's
++          prediction P1 printed FAIL at mean difference -0.8889 while the per-group
++          table showed the opposite. The fix looks each metric's direction up in an
++          explicit table and raises KeyError on an unlisted field rather than
++          defaulting, so a future metric cannot silently inherit the wrong sign. Every
++          RMSE-based output is byte-identical before and after, verified by direct JSON
++          comparison. Corrected on tune, P1 passes at +0.8889 with CI [0.7222, 1.0000],
++          P3 finds 13 inverted pairs, and P4 now reports UNTESTED at n=0 rather than
++          FAIL, a second change that stops a missing pipeline stage from reading as
++          evidence about the mechanism. Found and fixed BEFORE the test sweep was
++          launched. The correction makes the primary metric MORE favourable to our
++          method, which is why it is disclosed with its discovery time rather than
++          fixed quietly.
++        evidence: ["research_artifacts/kh_scene_strata_2026-09-23/analysis_correction_2026-09-23.json", "experiments/icra_scene_design/kh_ladder_analyze.py"]
++      - id: N177
++        type: experiment
++        title: "Add a coverage banner so a missing roll cannot hide inside a paired test"
++        provenance: ai-executed
++        timestamp: "2026-09-23T08:13:00+08:00"
++        result: >
++          A missing roll is invisible to a paired test: the comparison silently runs on
++          the surviving intersection and returns a normal-looking interval at a smaller
++          n. coverage_check() now takes the union of pairing keys across arms and
++          prints, above every table, which keys each arm lacks. On tune it immediately
++          showed the nominal arms covering 82 of 252 keys. That is not data loss but
++          DEFAULT_DEPTH giving the baseline grid one roll seed and the learned arms
++          three, a deliberate allocation recorded in advance; the consequence is that
++          every tune comparison involving the nominal arm is a one-roll-seed
++          comparison, an independent second reason those numbers are unquotable. The
++          pre-registered claim A test, joint versus horizon-only, covers all 252 keys.
++          The test split is balanced by construction: each of the six arms has exactly
++          420 scene-by-roll-seed-by-policy-seed combinations. Standing rule: no test
++          claim is adjudicated from a run whose banner says INCOMPLETE.
++        evidence: ["research_artifacts/kh_scene_strata_2026-09-23/coverage_audit_2026-09-23.json", "experiments/icra_scene_design/kh_ladder_analyze.py"]
++      - id: N178
++        type: experiment
++        title: "Measured-delay simulation makes any competing process a physical confound"
++        provenance: ai-executed
++        timestamp: "2026-09-23T08:22:00+08:00"
++        result: >
++          With delay_mode set to measured, the plant's actuation latency is set to real
++          wall-clock compute time, so a competing process alters simulated physics
++          rather than merely slowing the run. Two excursions occurred during the
++          2520-roll test sweep. First, a concurrent sweep launched on the mistaken
++          belief that disjoint output directories made it safe: 77 s, 13 rolls
++          quarantined, approximately uniform across six arms. Second, a read-only trace
++          audit launched under nice -n 19: 160 s, 12 rolls quarantined, exactly 2 per
++          arm. The second refutes the first's lesson rather than repeating it, because
++          nice governs CPU priority while the audit's real cost was decompressing about
++          4.6 GB of traces through page cache on a 7 GB machine already holding twelve
++          workers at about 274 MB each. Jobs must be classified by RESOURCE PROFILE,
++          not by intent: read-only, low priority and just verification are not
++          exemptions. sweep_guard.py now reads /proc and refuses any heavy job while a
++          driver OR a roll worker is alive, and is wired into the analyzer and the
++          backfill verifier; refusal was confirmed live against 1 driver and 12
++          workers. Quarantine follows a mechanical rule fixed before any affected file
++          was opened, namely execution overlapping the named window rather than merely
++          finishing inside it. [CORRECTED 2026-09-23: this node originally said "and the
++          removals are arm-symmetric so they cannot bias a paired comparison". The first
++          clause is false -- nominal_K064_H24 lost 3 rolls and each other arm 2 -- and the
++          second is true for a different reason: paired() intersects key sets, so an
++          unmatched key drops from both arms. See correction_2026-09-23 in both deviation
++          records.] All 25 rolls are re-queued, not deleted. The protocol
++          consequence for the paper is that machine exclusivity and fixed concurrency
++          are reproducibility conditions, not operational trivia.
++        evidence: [C116, "research_artifacts/kh_scene_strata_2026-09-23/deviation_contention_2026-09-23.json", "research_artifacts/kh_scene_strata_2026-09-23/deviation_audit_io_2026-09-23.json", "experiments/icra_scene_design/sweep_guard.py"]
++      - id: N179
++        type: experiment
++        title: "The new primary metric is backfilled and must be verified against traces"
++        provenance: ai-executed
++        timestamp: "2026-09-23T08:22:00+08:00"
++        result: >
++          Addendum 2 promoted completion and progress to primary metrics after most
++          rolls had already executed, so 1167 of 1279 result files had those fields
++          re-derived from their stored traces, each self-declaring a backfilled_note.
++          The analyzer reads result files only and never opens a trace, so a
++          mis-derived field would propagate into every claim verdict with no symptom: a
++          wrong success flag is indistinguishable from a right one. verify_backfill.py
++          recomputes each backfilled field from its own rows.json.gz using expressions
++          identical to kh_ladder_roll.roll(), with abs_tol 1e-12 on floats, and writes a
++          CLEAN or MISMATCHES verdict. Exactly one roll has been checked by hand so
++          far, which proves nothing about the other 1166. Standing gate: no claim is
++          adjudicated until that artifact reads CLEAN. The verifier is itself refused by
++          sweep_guard while rolls are alive and is armed to run automatically once the
++          sweep and its backfill pass exit.
++        evidence: ["experiments/icra_scene_design/verify_backfill.py", "experiments/icra_scene_design/sweep_guard.py"]
++      - id: N180
++        type: experiment
++        title: "Joint K/H has no advantage over the tuned baseline, and is never charged for compute"
++        provenance: ai-executed
++        timestamp: "2026-09-23T08:30:00+08:00"
++        result: >
++          On the tune split joint K/H costs 1.65 times the tuned baseline's wall clock,
++          25.38 s versus 15.38 s mean and 0.0195 versus 0.0126 s per cycle, and posts
++          worse RMSE in 13 of 14 axis-level cells, while matching success everywhere
++          except axis B level 4, where the tuned baseline reaches 1.00 and the joint
++          policy 0.889. The policy selects mean K 169.5 and mean H 31.0, using the full
++          [32,256] sample range in every cell, against the baseline's selected K of 64:
++          a 3.4 times nominal K-times-H work ratio that wall clock absorbs to 1.65
++          times through per-cycle overheads that do not scale with K. The reward is
++          stage_cost plus failure_weight times failure plus lambda_compute times
++          latency over dt, and lambda_compute is 0 in every configuration in the
++          repository, so the policy is never charged for the samples it draws and feels
++          compute only through measured latency, a weak second-order signal. That
++          setting is a deliberate premise, not a bug; the finding is that the premise
++          does not by itself produce economical allocation. The honest position before
++          the test split is read is that against a WELL-TUNED nominal baseline there is
++          currently no advantage on tune, and the only clean advantage is over the
++          horizon-only baseline, which completes zero episodes at axis B level 4.
++          Weakening the baseline is prohibited: its selection rule was written in
++          advance and its disqualified rows failed on success, not on flattering error.
++        evidence: [C115, "research_artifacts/kh_scene_strata_2026-09-23/compute_allocation_finding_2026-09-23.json", "research_artifacts/kh_ladder_rolls_2026-09-23/analysis_tune.json"]
++        children:
++          - id: N181
++            type: decision
++            title: "Charge the policy for compute as a NEW confirmatory question, not a rescue"
++            provenance: ai-suggested
++            timestamp: "2026-09-23T08:30:00+08:00"
++            choice: >
++              Record, before the test split is read, that the legitimate response to an
++              unpriced policy over-allocating samples is to charge it: retrain the joint
++              policy at lambda_compute greater than zero and compare the resulting
++              success-versus-compute frontier against the baseline's existing 16-point
++              K-by-H grid on the same scenes. This re-tests neither claim A nor claim C,
++              does not touch the frozen test split, and is publishable either way, since
++              even-when-charged-joint-K/H-does-not-beat-the-tuned-grid is a real result
++              about the limits of learned compute allocation. Timestamping it before the
++              test split is read is what keeps it from being a post-hoc rescue.
++              Status: PROPOSED, NOT STARTED.
++            alternatives:
++              - "Re-open the frozen baseline selection to find a weaker baseline"
++              - "Report the cost disadvantage without investigating its cause"
++              - "Pick a compute price by intuition and report the frontier it produces"
++            evidence: >
++              The price scale is NOT yet determined. Result files carry compute_s and
++              cycles but neither dt nor the per-cycle stage-cost magnitude the price
++              must be commensurate with; those live in the traces, which cannot be read
++              while rolls are alive. The price must be derived from the measured ratio
++              of the two reward terms by a rule fixed in advance, or it becomes a free
++              parameter tuned toward a favourable answer.
++            children:
++              - id: N183
++                type: decision
++                title: "Freeze the compute-price calibration rule while its own input is unreadable"
++                provenance: ai-suggested
++                timestamp: "2026-09-23T09:40:00+08:00"
++                choice: >
++                  Freeze a separate pre-registration for claim D, the question of
++                  whether an explicit compute price produces economical allocation,
++                  and freeze it NOW rather than when the retraining starts. The price
++                  is derived, not chosen: lambda_compute(r) = r times the median
++                  per-cycle stage cost divided by the median rho, where rho is
++                  physical latency over dt and dt is 0.10 s read from
++                  experiment.control_dt in the config include chain. Both medians are
++                  taken over the TUNED NOMINAL BASELINE's tune-split rows, never over
++                  our own policy's, because calibrating against our own cost would let
++                  a more expensive policy buy itself a cheaper price. Three ratios
++                  r = 0.25, 0.5 and 1.0 are frozen and all three are always reported.
++                  The rule is executed by calibrate_compute_price.py, which reads r
++                  from the frozen pre-registration rather than from argv, reconstructs
++                  the reference arm from b1_selection.json, refuses if the script's dt
++                  disagrees with the frozen dt, and is gated by
++                  require_no_live_sweep(). Claim D is evaluated on the TUNE split
++                  only; the frozen A/B/C test split must not be touched, and any
++                  held-out version of claim D needs fresh scene seeds and its own
++                  pre-registration.
++                alternatives:
++                  - "Pick a price once the traces are readable and report the frontier it gives"
++                  - "Expose r as a command-line flag on the calibration script"
++                  - "Calibrate the price against the joint policy's own per-cycle costs"
++                  - "Evaluate claim D on the existing test split"
++                evidence: >
++                  Timing is the whole protection. The rule depends on the median
++                  per-cycle stage cost, which exists only inside rows.json.gz, and
++                  sweep_guard refuses every trace-reading job while the measured-delay
++                  sweep is alive. Freezing the rule at this moment means it was fixed
++                  before its own inputs could be seen, so the price cannot have been
++                  steered toward a favourable frontier. Verified at freeze time: the
++                  script compiles, resolves the reference arm to nominal_K064_H24 from
++                  the frozen selection record, reads r = [0.25, 0.5, 1.0] from the
++                  pre-registration, and its guard refused to proceed against the live
++                  sweep without reading a single trace. A negative answer is
++                  publishable: claim D is falsified if at every frozen r no priced
++                  policy point reaches the baseline grid frontier's success at
++                  strictly lower compute. Status: FROZEN, NOT RUN.
++  - id: N182
++    type: experiment
++    title: "Complete the preserved-prior discrete-horizon suite on the author-side scenario"
++    also_depends_on: [N168]
++    provenance: ai-executed
++    timestamp: "2026-09-23T08:11:00+08:00"
++    result: >
++      Executes the pending suggestion from session 042 to compare prior-preserving
++      training against unconstrained and legacy conditions from shared checkpoints.
++      135000 training steps, 134109 joint updates, 348 evaluation episodes and 208633
++      evaluation steps; every episode is replayed row by row, every learned horizon
++      sequence is regenerated from its checkpoint and asserted equal to the logged
++      sequence, and the nine exported portable actors are independently re-run and
++      asserted equal. Holdout adjusted costs by group: value-prior arm 117.86 with SD
++      0.07 over three seeds, its own no-RL value teacher 119.54, rule-prior arm 124.42
++      with SD 0.10, hand-written rule 124.81, fixed H=25 155.25, legacy plain SAC
++      351.34 with SD 193.47 and 866 solver failures, unconstrained free arm 394.44 with
++      SD 71.24, legacy teacher SAC 528.43 with SD 11.59 and 1270 solver failures. Four
++      readings follow. The only learned wins are small and prior-shaped, 1.4 percent
++      over the value teacher and 0.3 percent over the rule baseline, so the policy is
++      largely recovering what the prior already encodes. The unconstrained arm is 2.5
++      times worse than simply fixing H=25 despite choosing a SHORTER mean horizon, 7.37
++      versus 25, so removing the prior collapses rather than frees the policy. Seed
++      variance separates the arms as sharply as the mean does, 0.07 and 0.10 against
++      71.24 and 193.47, so the prior buys reproducibility as much as cost. Mean horizon
++      alone does not explain performance: the value arm at H 6.76 and the free arm at
++      H 7.37 land 3.3 times apart, so which state gets which horizon is what matters.
++      This workstream is NOT a reproduction of Bohn et al. 2021 and must not be called
++      one: terminal construction, candidate set, training constraints and plant all
++      differ, and it is reported in its own section with those deltas disclosed. No
++      equal-total-budget claim against legacy SAC is made; the artifact carries that
++      flag itself. A dispatch defect was fixed and recorded, in which the hand-written
++      rule baseline matched a trained-arm name test and was fed into a three-token
++      unpack; all 16 frozen protocol hashes verified intact after the edit.
++    evidence: [C113, "research_artifacts/bohn2021_reproduction_2026-09-17/results/sac_preserve/FINDINGS_2026-09-23.json", "research_artifacts/bohn2021_reproduction_2026-09-17/results/sac_preserve/audit.json", "research_artifacts/bohn2021_reproduction_2026-09-17/results/sac_preserve/analysis.json"]
++  - id: N184
++    type: experiment
++    title: "Two undisclosed train/deploy discrepancies found while building the priced-compute harness"
++    also_depends_on: [N180, N181, N183]
++    provenance: ai-executed
++    timestamp: "2026-09-23T10:40:00+08:00"
++    hypothesis: >
++      Writing the claim-D retraining harness requires knowing what reward the
++      deployed policies actually optimized. Rather than assume the environment
++      reward applied, open the trainer archived inside the checkpoint directory
++      and read it.
++    result: >
++      Two defects, both material and neither previously recorded anywhere in the
++      ARA record. FIRST: the policy IS charged for compute. lambda_compute = 0
++      is true of the environment reward, but the SAC trainer never uses the
++      environment reward -- it computes its own, containing
++      resource = -0.05 * sum(measured_e2e_s). Measured from the deployed
++      policies' own training records, that term carries 4.87 percent of mean
++      reward magnitude for joint and 4.63 percent for h_only, and 17.1 percent
++      of the tracking term at the median decision. The sentence "the policy is
++      never charged for compute", which appears in C115, N180, N181,
++      compute_allocation_finding, PAPER.md and the freshly frozen v1 priced
++      pre-registration, is false. SECOND: the deployed checkpoints were trained
++      with a five-cycle decision hold, while kh_ladder_roll.py re-queries the
++      actor every cycle and asserts one decision per cycle. A hold-1 trainer
++      exists in the working tree but its stage directory does not exist on
++      disk: no hold-1 checkpoint has ever been trained. Because the actor
++      forward pass sits inside the end-to-end latency meter, the learned arms
++      pay inference cost five times more often per episode here than in
++      training, under a delay mode where that cost becomes physical actuation
++      latency. Both mechanisms run AGAINST the learned arms, so neither can
++      have manufactured an advantage for our method, but together they mean the
++      headline 1.65x compute figure measures THIS DEPLOYED CONFIGURATION rather
++      than what learned joint allocation intrinsically costs.
++    lesson: >
++      The false mechanism survived four separate documents because each one
++      cited the one before it, and the original read the environment's reward
++      assembly rather than the trainer's. A claim about what a policy optimized
++      must be verified against the code that trained it, and preferably against
++      the copy archived with the checkpoint rather than the working tree, which
++      had already diverged. The defect was caught only because building the
++      harness forced reading the trainer -- which is an argument for building
++      the harness before believing the finding.
++    evidence: [C115, C117, "research_artifacts/kh_scene_strata_2026-09-23/deviation_train_deploy_2026-09-23.json"]
++    children:
++      - id: N185
++        type: decision
++        title: "Supersede the priced pre-registration rather than edit it, and fix the hold in the successor"
++        provenance: ai-suggested
++        timestamp: "2026-09-23T10:50:00+08:00"
++        choice: >
++          Leave prereg_priced_compute_2026-09-23.json frozen and wrong, with a
++          supersession notice beside it, and write a v2 pre-registration that
++          states the correct premise. v2 inherits the r grid {0.25, 0.5, 1.0}
++          verbatim from v1, which was frozen before any reward component had
++          been read, and the calibration script refuses to run if the two
++          documents' grids ever diverge. v2 also folds in the hold defect: every
++          arm, including the status-quo price, is RETRAINED at hold=1, so the
++          control is a protocol-matched twin rather than the deployed
++          checkpoint, and price is not confounded with hold. v2 states openly
++          that, unlike v1, its own inputs were readable when it was written, and
++          names the grid inheritance as what protects it instead of pretending
++          otherwise. An errata sidecar corrects a mean-based estimate that went
++          into v2 twenty minutes before the median-based value was computed:
++          the status quo sits at r = 0.171, not 0.089, so the frozen grid spans
++          1.46x to 5.86x the deployed price rather than the 2.8x to 11x v2
++          claims.
++        alternatives:
++          - "Edit the frozen v1 document to say the right thing"
++          - "Reinterpret v1's r = 0 arm as the status quo and run it as written"
++          - "Widen the r grid now that the anchor is known to sit higher"
++          - "Compare a hold-1 priced policy against the deployed hold-5 checkpoint"
++        evidence: >
++          Nothing had been run under v1 -- calibrate_compute_price.py was
++          blocked by the sweep guard and compute_price_calibration.json does not
++          exist -- so the correction cost a rewrite and no withdrawn result.
++          v1's script is now hard-disabled: its main() raises rather than
++          executing a correctly-computed number for the wrong rule. The v2
++          calibrator was dry-run against the training records and reproduces
++          median tracking 0.0209, median decision compute 0.0714 s, c at r=1 of
++          0.2928. The trainer was patched to read its resource coefficient from
++          spec['compute_price'], following the convention train_round.py
++          already uses, and a differential test confirms the patched reward() is
++          identical to the archived original on 500 random inputs at the default
++          price. A priced run without an explicit --stage is refused, so priced
++          checkpoints cannot overwrite the ones every completed ladder roll was
++          measured against.
++        evidence_refs: ["research_artifacts/kh_scene_strata_2026-09-23/prereg_priced_compute_v2_2026-09-23.json", "research_artifacts/kh_scene_strata_2026-09-23/prereg_priced_compute_v2_2026-09-23_ERRATA.json", "experiments/icra_scene_design/calibrate_compute_price_v2.py"]
++      - id: N186
++        type: experiment
++        title: "Write and unit-test the claim-D adjudication before any priced policy exists"
++        provenance: ai-executed
++        timestamp: "2026-09-23T12:40:00+08:00"
++        result: >
++          Authored kh_claim_d_analyze.py while the test sweep sat at roll 484 of
++          2520 and not one priced policy had been trained, then exercised its
++          decision rule on synthetic arms via test_claim_d_logic.py: 15 checks,
++          all passing. The script carries the frozen claim sentence as a constant
++          and refuses to run if the pre-registration text has drifted, so an
++          edited prereg cannot be silently adjudicated as though it were the
++          frozen one. Writing the analysis first is the whole point -- one
++          written after seeing priced results is indistinguishable, to a reader,
++          from one tuned to them.
++        what_the_tests_protect: >
++          Two decision-rule failures a --dry-run cannot catch. An arm that
++          collapses K, spends less and fails more must NOT read as economical:
++          the success floor is what makes claim D non-trivial, and a
++          cheaper-but-failing arm is asserted to return False. And exactly equal
++          compute must not round into a win, because the frozen claim says
++          STRICTLY lower. Both were checked against the deployed functions rather
++          than a reimplementation of them.
++        a_rule_asserted_but_not_implemented: >
++          The first draft listed "both policy seeds reported separately" among its
++          reporting rules while computing only the pooled view -- precisely the
++          failure addendum 1 exists to prevent, a pooled SUPPORTED resting on one
++          strong seed. per_seed() was added, and seed disagreement now appears in
++          the verdict STRING rather than a footnote a reader can skip.
++        status: "written and unit-tested; never run on real data, because none exists yet"
++        evidence_refs: ["experiments/icra_scene_design/kh_claim_d_analyze.py", "experiments/icra_scene_design/test_claim_d_logic.py"]
++      - id: N187
++        type: observation
++        title: "The ladder roller records no code provenance, and git cannot detect changes to it"
++        provenance: ai-executed
++        timestamp: "2026-09-23T12:20:00+08:00"
++        result: >
++          kh_ladder_roll.py imports hashlib at line 29 and never calls it. No
++          source hash, manifest or version field reaches result.json, whose 28
++          keys are all scene, method and outcome fields, and the file is untracked
++          by git -- so a mid-sweep edit would be invisible both in the artifacts
++          and to git diff. External provenance was recorded mid-sweep instead:
++          sha256 and mtime for the roller and its full 280-file dependency
++          closure, all of which predate the sweep's first roll by at least 13
++          minutes. Written DURING the sweep on purpose, since a record written
++          afterwards could only attest to the final state.
++        why_the_fix_is_queued_not_applied: >
++          Adding hashing now would itself be a mid-sweep edit, and rolls 455-2520
++          would carry provenance that rolls 1-454 lack, making coverage a function
++          of timing. The patch is queued behind the sweep together with
++          --ckpt-stage, which the priced arms need because ckpt() resolves the
++          checkpoint stage from a hardcoded literal -- so the v2 pre-registration's
++          sentence about running the roller "unmodified" was wrong, and is
++          corrected in errata item 2.
++        a_defect_in_its_own_first_run: >
++          The closure script initially hardcoded a sweep-start epoch that was a
++          2025 timestamp, making all 280 files read as modified after sweep start.
++          A result that indicts everything indicts the test, not the tree; the
++          constant was verified against date -d before the number was believed,
++          and is now derived rather than typed.
++        evidence_refs: ["research_artifacts/kh_ladder_rolls_2026-09-23/source_provenance_2026-09-23.json", "experiments/icra_scene_design/hash_roller_closure.py"]
++      - id: N188
++        type: correction
++        title: "The quarantine removals are not arm-symmetric; the conclusion they supported survives for a different reason"
++        provenance: ai-suggested
++        timestamp: "2026-09-23"
++        result: >
++          Drafting the protocol section forced "13 rolls quarantined, arm-symmetric" to
++          be read arithmetically: 13 is not divisible by 6. Recomputed from the records'
++          own lists, the first excursion took 3 rolls from nominal_K064_H24 and 2 from
++          each of the other five arms; the second took 2 per arm but at DIFFERENT scene
++          keys, the rl_kh arms losing a0_s17_seed13330003 where the rest lost
++          a0_s18_seed13330002. The contention record additionally enumerated "3 nominal,
++          4 rl_h, 4 rl_kh" which sums to 11, not 13, and undercounted the arm with the
++          largest loss -- the error that made the removal look balanced. The CONCLUSION
++          that paired comparisons cannot be biased is nonetheless correct, but for a
++          different reason than the one recorded: paired() intersects the two arms' key
++          sets, so an unmatched key drops from both and only shrinks n. The one unpaired
++          test in the confirmatory family, claim C predicate P2, compares per-arm mean_H
++          and progress via cell() and COULD have been biased; it is not, because P2 is
++          scoped to axis B level 4 while all 25 quarantined rolls are axis A level 0 --
++          checked against ladder_manifest.json rather than read off the scene names.
++          Corrected in all four locations it had reached, originals preserved. This is
++          the second citation-chain failure found today, structurally identical to the
++          "compute is never charged" premise: four documents, each citing the one
++          before, none re-deriving from the data in the same file.
++        evidence: [C116, "research_artifacts/kh_scene_strata_2026-09-23/deviation_contention_2026-09-23.json", "research_artifacts/kh_scene_strata_2026-09-23/deviation_audit_io_2026-09-23.json", "experiments/icra_scene_design/kh_ladder_analyze.py", "docs/paper/protocol_section_draft_2026-09-23.md"]
+diff --git a/ara/trace/sessions/session_index.yaml b/ara/trace/sessions/session_index.yaml
+index c72fb60..e3e2854 100644
+--- a/ara/trace/sessions/session_index.yaml
++++ b/ara/trace/sessions/session_index.yaml
+@@ -101,3 +101,33 @@ sessions:
+   - id: "2026-07-19_033"
+     path: "trace/sessions/2026-07-19_033.yaml"
+     summary: "L204--L210 built causal residual-policy coupling and value-ranking infrastructure, rejected both new candidates, and froze the two independently confirmed bidirectional mechanisms."
++  - id: "2026-09-10_034"
++    path: "trace/sessions/2026-09-10_034.yaml"
++    summary: "Audited matched-readiness RL-H evaluation, froze the complexity-aware joint K/H ICRA narrative, and generated the final verdict and paired trade-off figure."
++  - id: "2026-09-18_035"
++    path: "trace/sessions/2026-09-18_035.yaml"
++    summary: "Closed three completed Bohn reproduction follow-ups, audited 2280 holdout evaluations, and localized the latest pendulum gap with 60 frozen horizon interventions."
++  - id: "2026-09-18_036"
++    path: "trace/sessions/2026-09-18_036.yaml"
++    summary: "Separated actor extraction and critic ranking limitations; direct critic execution failed, while H10 rescued all six selected vehicle parking suffixes."
++  - id: "2026-09-18_037"
++    path: "trace/sessions/2026-09-18_037.yaml"
++    summary: "Completed frozen-terminal and matched categorical SAC optimization; nine new models did not beat fixed H30, and resource recovery preserved exact training prefixes."
++  - id: "2026-09-18_038"
++    path: "trace/sessions/2026-09-18_038.yaml"
++    summary: "Completed 87 plateau evaluations; causal H5/H30 switching beat selected fixed H25 on six fresh scenes, and teacher-data supervision was proposed."
++  - id: "2026-09-19_039"
++    path: "trace/sessions/2026-09-19_039.yaml"
++    summary: "Trained supervised horizon-value critics on teacher branches and student states; all final seeds beat fixed H24 and the rule on twelve new scenes, with explicit reward and tradeoff limits."
++  - id: "2026-09-19_040"
++    path: "trace/sessions/2026-09-19_040.yaml"
++    summary: "Started matched-budget author SAC and teacher replay, completed one paired seed, and preserved all partial runs before user-requested shutdown."
++  - id: "2026-09-19_041"
++    path: "trace/sessions/2026-09-19_041.yaml"
++    summary: "Resumed and completed SAC teacher study; all interrupted prefixes reproduced exactly and teacher replay worsened all paired seed means at equal total budget."
++  - id: "2026-09-19_042"
++    path: "trace/sessions/2026-09-19_042.yaml"
++    summary: "Completed frozen teacher-SAC regression diagnosis: lost anticipation, conditional Q-ranking errors and incomplete recovery from short-H safeguards."
++  - id: "2026-09-23_043"
++    path: "trace/sessions/2026-09-23_043.yaml"
++    summary: "Froze the IROS scenario-difficulty-ladder pre-registration, tuned the nominal baseline over a 16-point grid, recorded claims A and B as falsified on tune, fixed a sign-convention defect before the test roll, disclosed two measured-delay contention excursions with 25 rolls quarantined, identified lambda_compute=0 as the reason joint K/H shows no advantage over the tuned baseline, and completed the preserved-prior discrete-horizon suite. Test split launched but NOT adjudicated."
+diff --git a/docs/baselines/bohn_rl_horizon_fidelity.md b/docs/baselines/bohn_rl_horizon_fidelity.md
+index b25b529..3f445df 100644
+--- a/docs/baselines/bohn_rl_horizon_fidelity.md
++++ b/docs/baselines/bohn_rl_horizon_fidelity.md
+@@ -1,5 +1,22 @@
+ # Bøhn prediction-horizon fidelity audit
+ 
++> **2026-09-17 correction:** Further historical-branch searches recovered the
++> author's contemporaneous SAC, AHMPC environments, and modified do-mpc code.
++> The earlier statements below about the original SAC implementation being
++> missing and legacy execution being deferred describe the September 7 audit,
++> not the current state. See [the reproduction record](../../experiments/bohn2021_reproduction/README.md)
++> for pinned commits, restored execution, reconstructed configurations, and
++> experiment results. Original experiment configs, test files and checkpoints
++> remain unfound; numerical equivalence to the paper is not established.
++>
++> **2026-09-17 diagnostic follow-up:** Frozen policy/value crossover isolates
++> late horizon-policy regression in two vehicle seeds. A separate adapter fixes
++> physical-time reference alignment and Bellman stage labels. The SAC citation
++> chain supplies batch size 256 and replay capacity 10^6 (Haarnoja 2018,
++> supplement Appendix D), correcting the first reconstruction's 64/50000.
++> Fixed-temperature, bibliography-corrected runs and the earlier diagnostic
++> variants are kept separate. See [diagnosis and protocol](../../experiments/bohn2021_reproduction/DIAGNOSIS.md).
++
+ Date: 2026-09-07. Status: primary paper and official follow-up code inspected;
+ no claim of numerical reproduction. This document supersedes neither the old
+ PPO port nor its negative results.
+diff --git a/docs/reports/icode_sac_compute_results.md b/docs/reports/icode_sac_compute_results.md
+index 620746d..fa6d274 100644
+--- a/docs/reports/icode_sac_compute_results.md
++++ b/docs/reports/icode_sac_compute_results.md
+@@ -6,14 +6,32 @@
+ 
+ | 阶段 | 完整回合 | 控制周期 |
+ |---|---|---|
++| icode_domain_screen | 288 | 42583 |
++| ind_icode_H_full_s9091301 | 420 | 60066 |
++| ind_icode_H_full_s9091302 | 417 | 60017 |
++| ind_icode_KH_full_s9091301 | 411 | 60165 |
++| ind_icode_KH_full_s9091302 | 427 | 60084 |
++| ind_icode_KH_masked_s9091301 | 413 | 60156 |
++| ind_icode_KH_masked_s9091302 | 418 | 60113 |
++| ind_icode_K_full_s9091301 | 423 | 60076 |
++| ind_icode_K_full_s9091302 | 429 | 60120 |
++| independent_validation_2026-09-09 | 624 | 88413 |
++| mechanism_validation_2026-09-09 | 960 | 142880 |
+ | model_screen | 288 | 54323 |
++| obs_icode_H_full_s9091201 | 423 | 60224 |
++| obs_icode_KH_full_s9091201 | 414 | 60096 |
++| obs_icode_KH_masked_s9091201 | 411 | 60045 |
++| obs_icode_K_full_s9091201 | 423 | 60228 |
++| observable_validation | 1200 | 171789 |
+ | sac_icode_H_full_s9091001 | 215 | 40227 |
+ | sac_icode_KH_full_s9091001 | 200 | 40017 |
+ | sac_icode_KH_masked_s9091001 | 216 | 40022 |
+ | sac_icode_K_full_s9091001 | 227 | 40127 |
++| shared_backbone_budget_check | 432 | 73943 |
++| shared_backbone_factorial | 192 | 34609 |
+ | validation_4 | 1152 | 216180 |
+ 
+-当前轮已完成阶段合计2298回合、430896控制周期。控制周期并非独立统计样本。
++当前轮已完成阶段合计11023回合、1706503控制周期。控制周期并非独立统计样本。
+ 
+ ## 训练诊断
+ 
+@@ -21,11 +39,115 @@
+ 
+ | 训练组 | 回合 | 周期 | 成功 | 碰撞 | 平均Q | 计算秒/回合 |
+ |---|---|---|---|---|---|---|
++| ind_icode_H_full_s9091301 | 420 | 60066 | 409 | 9 | 0.858 | 3.613 |
++| ind_icode_H_full_s9091302 | 417 | 60017 | 400 | 9 | 0.921 | 2.783 |
++| ind_icode_KH_full_s9091301 | 411 | 60165 | 378 | 12 | 1.136 | 3.077 |
++| ind_icode_KH_full_s9091302 | 427 | 60084 | 412 | 13 | 0.951 | 3.464 |
++| ind_icode_KH_masked_s9091301 | 413 | 60156 | 385 | 10 | 1.053 | 3.070 |
++| ind_icode_KH_masked_s9091302 | 418 | 60113 | 400 | 8 | 0.904 | 3.400 |
++| ind_icode_K_full_s9091301 | 423 | 60076 | 414 | 6 | 0.784 | 4.030 |
++| ind_icode_K_full_s9091302 | 429 | 60120 | 416 | 10 | 0.878 | 3.875 |
++| obs_icode_H_full_s9091201 | 423 | 60224 | 410 | 8 | 0.853 | 3.394 |
++| obs_icode_KH_full_s9091201 | 414 | 60096 | 389 | 11 | 1.023 | 3.690 |
++| obs_icode_KH_masked_s9091201 | 411 | 60045 | 392 | 7 | 0.904 | 3.339 |
++| obs_icode_K_full_s9091201 | 423 | 60228 | 405 | 12 | 0.967 | 3.813 |
+ | sac_icode_H_full_s9091001 | 215 | 40227 | 130 | 16 | 2.895 | 4.414 |
+ | sac_icode_KH_full_s9091001 | 200 | 40017 | 106 | 12 | 3.159 | 3.520 |
+ | sac_icode_KH_masked_s9091001 | 216 | 40022 | 134 | 12 | 2.686 | 3.654 |
+ | sac_icode_K_full_s9091001 | 227 | 40127 | 155 | 15 | 2.429 | 5.342 |
+ 
++## icode_domain_screen
++
++| 方法 | n | 成功 | 碰撞 | 平均Q | 计算秒/回合 | 平均决策ms | deadline miss |
++|---|---|---|---|---|---|---|---|
++| current_9kg_icode_K128_H32 | 24 | 21 | 2 | 1.668 | 4.265 | 28.54 | 0 |
++| current_9kg_icode_K16_H20 | 24 | 18 | 2 | 2.192 | 1.921 | 12.06 | 0 |
++| current_9kg_icode_K64_H24 | 24 | 22 | 1 | 1.248 | 2.645 | 17.59 | 0 |
++| current_9kg_nominal_K128_H32 | 24 | 21 | 2 | 1.693 | 0.812 | 5.47 | 0 |
++| current_9kg_nominal_K16_H20 | 24 | 20 | 1 | 1.582 | 0.590 | 3.66 | 0 |
++| current_9kg_nominal_K64_H24 | 24 | 22 | 2 | 1.530 | 0.609 | 4.27 | 0 |
++| pretrained_13kg_icode_K128_H32 | 24 | 22 | 1 | 1.177 | 3.980 | 28.52 | 0 |
++| pretrained_13kg_icode_K16_H20 | 24 | 18 | 2 | 2.196 | 1.894 | 12.17 | 0 |
++| pretrained_13kg_icode_K64_H24 | 24 | 22 | 1 | 1.202 | 2.398 | 17.48 | 0 |
++| pretrained_13kg_nominal_K128_H32 | 24 | 23 | 0 | 0.754 | 0.811 | 5.45 | 0 |
++| pretrained_13kg_nominal_K16_H20 | 24 | 19 | 2 | 2.029 | 0.553 | 3.73 | 0 |
++| pretrained_13kg_nominal_K64_H24 | 24 | 23 | 1 | 1.035 | 0.572 | 4.29 | 0 |
++
++## independent_validation_2026-09-09
++
++| 方法 | n | 成功 | 碰撞 | 平均Q | 计算秒/回合 | 平均决策ms | deadline miss |
++|---|---|---|---|---|---|---|---|
++| causal_progress_feedback | 48 | 44 | 1 | 1.041 | 2.583 | 17.71 | 0 |
++| fixed_icode_K256_H24 | 48 | 46 | 1 | 0.907 | 4.573 | 31.93 | 0 |
++| fixed_icode_K64_H24 | 48 | 45 | 1 | 0.981 | 2.541 | 17.64 | 0 |
++| fixed_nominal_K256_H24 | 48 | 45 | 1 | 0.978 | 0.768 | 5.37 | 0 |
++| fixed_nominal_K64_H24 | 48 | 45 | 1 | 0.995 | 0.620 | 4.29 | 0 |
++| ind_icode_H_full_s9091301_checkpoint_060066 | 48 | 46 | 2 | 1.044 | 3.369 | 24.70 | 0 |
++| ind_icode_H_full_s9091302_checkpoint_060017 | 48 | 44 | 1 | 1.079 | 2.800 | 19.08 | 0 |
++| ind_icode_KH_full_s9091301_checkpoint_060165 | 48 | 46 | 1 | 0.886 | 3.302 | 23.87 | 0 |
++| ind_icode_KH_full_s9091302_checkpoint_060084 | 48 | 46 | 1 | 0.893 | 4.010 | 28.83 | 1 |
++| ind_icode_KH_masked_s9091301_checkpoint_060156 | 48 | 45 | 1 | 0.977 | 3.583 | 25.37 | 0 |
++| ind_icode_KH_masked_s9091302_checkpoint_060113 | 48 | 47 | 1 | 0.820 | 3.042 | 21.95 | 0 |
++| ind_icode_K_full_s9091301_checkpoint_060076 | 48 | 46 | 1 | 0.899 | 4.522 | 32.32 | 0 |
++| ind_icode_K_full_s9091302_checkpoint_060120 | 48 | 45 | 1 | 0.983 | 3.771 | 26.70 | 0 |
++
++### 独立初始化：每个 seed 均保留
++
++所有策略使用预先规定的训练终点检查点，不按评估表现挑选 seed 或检查点。两个初始化的训练环境部分共享；独立初始化不代表独立训练数据。以下均为联合 KH 减配对参照，同一个固定参照只运行一次，不重复算作独立样本。
++
++初始化 9091301：`ind_icode_KH_full_s9091301_checkpoint_060165`
++
++| 参照 | 成功率差pp | Q差 | Q诊断95%区间 | 计算秒差 |
++|---|---|---|---|---|
++| H | 0.0 | -0.158 | [-0.902, 0.276] | -0.067 |
++| K | 0.0 | -0.014 | [-0.038, 0.013] | -1.219 |
++| KH_masked | 2.1 | -0.092 | [-0.375, 0.021] | -0.281 |
++| fixed_nominal_K256_H24 | 2.1 | -0.092 | [-0.628, 0.292] | 2.535 |
++| fixed_nominal_K64_H24 | 2.1 | -0.109 | [-0.387, 0.004] | 2.683 |
++| causal_progress_feedback | 4.2 | -0.155 | [-0.592, 0.005] | 0.719 |
++| fixed_icode_K256_H24 | 0.0 | -0.021 | [-0.356, 0.298] | -1.270 |
++| fixed_icode_K64_H24 | 2.1 | -0.095 | [-0.329, -0.001] | 0.761 |
++
++初始化 9091302：`ind_icode_KH_full_s9091302_checkpoint_060084`
++
++| 参照 | 成功率差pp | Q差 | Q诊断95%区间 | 计算秒差 |
++|---|---|---|---|---|
++| H | 4.2 | -0.186 | [-0.523, -0.007] | 1.210 |
++| K | 2.1 | -0.090 | [-0.654, 0.319] | 0.239 |
++| KH_masked | -2.1 | 0.074 | [-0.020, 0.314] | 0.968 |
++| fixed_nominal_K256_H24 | 2.1 | -0.084 | [-0.622, 0.312] | 3.242 |
++| fixed_nominal_K64_H24 | 2.1 | -0.101 | [-0.381, 0.005] | 3.390 |
++| causal_progress_feedback | 4.2 | -0.147 | [-0.590, 0.029] | 1.427 |
++| fixed_icode_K256_H24 | 0.0 | -0.013 | [-0.351, 0.317] | -0.563 |
++| fixed_icode_K64_H24 | 2.1 | -0.087 | [-0.325, -0.000] | 1.469 |
++
++这是两个初始化、两个环境 seed 的开发复验。区间描述各初始化的场景差异，不估计初始化总体不确定性，不据此宣称显著性或非劣性；需看全部参照及失败场景。
++
++## mechanism_validation_2026-09-09
++
++| 方法 | n | 成功 | 碰撞 | 平均Q | 计算秒/回合 | 平均决策ms | deadline miss |
++|---|---|---|---|---|---|---|---|
++| fixed_icode_K128_H27 | 48 | 46 | 0 | 0.766 | 3.529 | 23.96 | 0 |
++| fixed_icode_K160_H29 | 48 | 46 | 0 | 0.776 | 4.246 | 28.37 | 0 |
++| fixed_icode_K256_H24 | 48 | 46 | 1 | 0.913 | 4.425 | 30.26 | 0 |
++| fixed_nominal_K128_H27 | 48 | 45 | 1 | 1.000 | 0.709 | 4.80 | 2 |
++| fixed_nominal_K160_H29 | 48 | 45 | 1 | 0.998 | 0.765 | 5.12 | 0 |
++| fixed_nominal_K256_H24 | 48 | 46 | 1 | 0.922 | 0.752 | 5.16 | 0 |
++| joint_full_s9091301_icode | 48 | 46 | 0 | 0.750 | 3.318 | 22.95 | 0 |
++| joint_full_s9091301_icode_hold_H | 48 | 44 | 2 | 1.207 | 2.829 | 19.88 | 1 |
++| joint_full_s9091301_icode_hold_K | 48 | 47 | 0 | 0.687 | 3.651 | 25.13 | 0 |
++| joint_full_s9091301_icode_hold_both | 48 | 44 | 2 | 1.219 | 3.080 | 21.43 | 0 |
++| joint_full_s9091301_nominal | 48 | 45 | 1 | 0.972 | 0.668 | 4.70 | 0 |
++| joint_full_s9091302_icode | 48 | 45 | 2 | 1.125 | 3.919 | 28.22 | 3 |
++| joint_full_s9091302_icode_hold_H | 48 | 36 | 1 | 1.907 | 2.773 | 16.25 | 0 |
++| joint_full_s9091302_icode_hold_K | 48 | 40 | 2 | 1.592 | 2.553 | 16.58 | 1 |
++| joint_full_s9091302_icode_hold_both | 48 | 31 | 2 | 2.522 | 1.768 | 9.89 | 0 |
++| joint_full_s9091302_nominal | 48 | 43 | 3 | 1.445 | 0.747 | 5.20 | 0 |
++| joint_masked_s9091301_icode | 48 | 42 | 2 | 1.392 | 3.574 | 24.18 | 0 |
++| joint_masked_s9091301_nominal | 48 | 44 | 2 | 1.213 | 0.691 | 4.84 | 0 |
++| joint_masked_s9091302_icode | 48 | 46 | 1 | 0.912 | 3.110 | 21.62 | 0 |
++| joint_masked_s9091302_nominal | 48 | 44 | 1 | 1.100 | 0.693 | 4.55 | 0 |
++
+ ## model_screen
+ 
+ | 方法 | n | 成功 | 碰撞 | 平均Q | 计算秒/回合 | 平均决策ms | deadline miss |
+@@ -43,6 +165,119 @@
+ | nominal_K64_H20 | 24 | 17 | 2 | 2.468 | 0.738 | 4.33 | 1 |
+ | nominal_K64_H32 | 24 | 16 | 1 | 2.373 | 0.965 | 5.26 | 0 |
+ 
++## observable_validation
++
++| 方法 | n | 成功 | 碰撞 | 平均Q | 计算秒/回合 | 平均决策ms | deadline miss |
++|---|---|---|---|---|---|---|---|
++| causal_progress_feedback | 48 | 44 | 2 | 1.202 | 2.388 | 16.65 | 0 |
++| fixed_icode_K128_H32 | 48 | 46 | 2 | 1.058 | 3.882 | 27.45 | 0 |
++| fixed_icode_K16_H20 | 48 | 43 | 1 | 1.163 | 1.741 | 11.56 | 0 |
++| fixed_icode_K256_H24 | 48 | 46 | 1 | 0.934 | 4.456 | 30.05 | 0 |
++| fixed_icode_K64_H24 | 48 | 45 | 2 | 1.131 | 2.410 | 16.82 | 0 |
++| fixed_nominal_K128_H32 | 48 | 46 | 2 | 1.064 | 0.726 | 5.11 | 0 |
++| fixed_nominal_K16_H20 | 48 | 44 | 0 | 0.938 | 0.531 | 3.49 | 0 |
++| fixed_nominal_K256_H24 | 48 | 47 | 0 | 0.708 | 0.740 | 4.99 | 0 |
++| fixed_nominal_K64_H24 | 48 | 45 | 2 | 1.131 | 0.578 | 4.05 | 0 |
++| obs_icode_H_full_s9091201_checkpoint_015049 | 48 | 47 | 1 | 0.827 | 2.817 | 20.14 | 0 |
++| obs_icode_H_full_s9091201_checkpoint_030128 | 48 | 46 | 1 | 0.898 | 2.767 | 19.75 | 0 |
++| obs_icode_H_full_s9091201_checkpoint_045083 | 48 | 47 | 1 | 0.824 | 2.644 | 18.88 | 0 |
++| obs_icode_H_full_s9091201_checkpoint_060224 | 48 | 46 | 1 | 0.899 | 3.513 | 25.12 | 0 |
++| obs_icode_KH_full_s9091201_checkpoint_015064 | 48 | 46 | 1 | 0.908 | 3.269 | 23.02 | 0 |
++| obs_icode_KH_full_s9091201_checkpoint_030123 | 48 | 46 | 1 | 0.904 | 3.785 | 26.44 | 0 |
++| obs_icode_KH_full_s9091201_checkpoint_045007 | 48 | 47 | 0 | 0.678 | 3.970 | 27.41 | 0 |
++| obs_icode_KH_full_s9091201_checkpoint_060096 | 48 | 48 | 0 | 0.607 | 4.119 | 28.68 | 0 |
++| obs_icode_KH_masked_s9091201_checkpoint_015028 | 48 | 47 | 1 | 0.832 | 3.307 | 23.36 | 0 |
++| obs_icode_KH_masked_s9091201_checkpoint_030099 | 48 | 48 | 0 | 0.609 | 3.492 | 24.25 | 0 |
++| obs_icode_KH_masked_s9091201_checkpoint_045071 | 48 | 47 | 1 | 0.824 | 3.238 | 23.23 | 0 |
++| obs_icode_KH_masked_s9091201_checkpoint_060045 | 48 | 45 | 0 | 0.805 | 3.396 | 23.24 | 0 |
++| obs_icode_K_full_s9091201_checkpoint_015076 | 48 | 47 | 1 | 0.827 | 3.668 | 26.20 | 0 |
++| obs_icode_K_full_s9091201_checkpoint_030027 | 48 | 47 | 1 | 0.833 | 3.817 | 26.96 | 0 |
++| obs_icode_K_full_s9091201_checkpoint_045070 | 48 | 46 | 2 | 1.056 | 3.593 | 25.80 | 0 |
++| obs_icode_K_full_s9091201_checkpoint_060228 | 48 | 47 | 1 | 0.830 | 3.997 | 28.31 | 0 |
++
++按预先记录的成功优先、碰撞、Q规则选择的开发集固定参照：`fixed_icode_K256_H24`。
++
++| 方法 | 成功率差pp | 保守95%区间 | Q差 | Q重采样95%区间 | 计算秒差 |
++|---|---|---|---|---|---|
++| obs_icode_KH_masked_s9091201_checkpoint_045071 | 2.1 | [-8.7, 12.6] | -0.110 | [-0.398, -0.003] | -1.218 |
++| obs_icode_H_full_s9091201_checkpoint_060224 | 0.0 | [-12.5, 12.5] | -0.035 | [-0.372, 0.280] | -0.944 |
++| obs_icode_KH_full_s9091201_checkpoint_045007 | 2.1 | [-12.2, 15.9] | -0.256 | [-1.130, 0.144] | -0.487 |
++| obs_icode_KH_full_s9091201_checkpoint_060096 | 4.2 | [-8.4, 15.9] | -0.327 | [-1.256, 0.001] | -0.338 |
++| obs_icode_K_full_s9091201_checkpoint_015076 | 2.1 | [-12.2, 15.9] | -0.107 | [-0.386, 0.002] | -0.789 |
++| obs_icode_H_full_s9091201_checkpoint_030128 | 0.0 | [-12.5, 12.5] | -0.036 | [-0.397, 0.299] | -1.689 |
++| obs_icode_KH_masked_s9091201_checkpoint_060045 | -2.1 | [-15.9, 12.2] | -0.129 | [-0.995, 0.513] | -1.060 |
++| causal_progress_feedback | -4.2 | [-15.9, 8.4] | 0.268 | [-0.058, 1.144] | -2.068 |
++| obs_icode_H_full_s9091201_checkpoint_045083 | 2.1 | [-12.2, 15.9] | -0.110 | [-1.260, 0.878] | -1.812 |
++| obs_icode_H_full_s9091201_checkpoint_015049 | 2.1 | [-8.7, 12.6] | -0.107 | [-0.381, -0.003] | -1.639 |
++| obs_icode_KH_full_s9091201_checkpoint_030123 | 0.0 | [-8.7, 8.7] | -0.030 | [-0.097, 0.018] | -0.671 |
++| obs_icode_K_full_s9091201_checkpoint_045070 | 0.0 | [-12.5, 12.5] | 0.122 | [-0.351, 0.904] | -0.863 |
++| obs_icode_KH_masked_s9091201_checkpoint_030099 | 4.2 | [-8.4, 15.9] | -0.325 | [-1.244, 0.001] | -0.964 |
++| obs_icode_K_full_s9091201_checkpoint_060228 | 2.1 | [-8.7, 12.6] | -0.104 | [-0.374, -0.004] | -0.459 |
++| obs_icode_KH_masked_s9091201_checkpoint_015028 | 2.1 | [-8.7, 12.6] | -0.102 | [-0.384, 0.003] | -1.149 |
++| obs_icode_K_full_s9091201_checkpoint_030027 | 2.1 | [-12.2, 15.9] | -0.101 | [-0.380, 0.005] | -0.639 |
++| obs_icode_KH_full_s9091201_checkpoint_015064 | 0.0 | [-8.7, 8.7] | -0.026 | [-0.064, 0.002] | -1.187 |
++
++成功率区间基于配对不一致事件的保守区间，仍有回合独立性假设；Q区间按场景和seed双向配对重采样。开发集用于选模型，这些区间只用于诊断，不是选模后无偏的最终推断。少量seed也限制了不确定性估计。
++
++### 按环境 seed 交叉验证的场景预算空间
++
++| 预测模型 | 固定参照Q | 场景oracle Q | Q相对空间 | 成功率差pp | 计算秒差 |
++|---|---|---|---|---|---|
++| icode | 1.069 | 0.834 | 22.0% | 2.1 | -1.205 |
++| nominal | 1.136 | 1.060 | 6.7% | 2.1 | -0.036 |
++
++每一折只用其他环境seed选择全局固定预算和各场景/速度预算，再在留出的seed计分。该oracle知道场景标签，只覆盖已测固定候选，不包含回合内切换或选择开销。少量seed、折间依赖和已有开发选择限制了推断；这里只诊断剩余空间，不作最终Go判据。
++
++### 联合调度的直接配对比较
++
++联合组检查点：`obs_icode_KH_full_s9091201_checkpoint_060096`。各训练组按成功、碰撞、Q、计算量顺序选择开发检查点。下表均为联合组减参照组；所有检查点的完整结果保留在前表。
++
++| 参照组 | 参照检查点/方法 | 成功率差pp | Q差 | Q重采样95%区间 | 计算秒差 |
++|---|---|---|---|---|---|
++| KH_masked | obs_icode_KH_masked_s9091201_checkpoint_030099 | 0.0 | -0.002 | [-0.021, 0.015] | 0.627 |
++| H | obs_icode_H_full_s9091201_checkpoint_045083 | 2.1 | -0.217 | [-0.882, 0.016] | 1.475 |
++| K | obs_icode_K_full_s9091201_checkpoint_015076 | 2.1 | -0.220 | [-0.900, 0.020] | 0.451 |
++| fixed | fixed_icode_K256_H24 | 4.2 | -0.327 | [-1.256, 0.001] | -0.338 |
++| heuristic | causal_progress_feedback | 8.3 | -0.595 | [-1.489, 0.000] | 1.731 |
++
++这是开发集上选模后的诊断，区间没有修正检查点选择偏差，不能据此单独宣称正式优势。
++
++## shared_backbone_budget_check
++
++| 方法 | n | 成功 | 碰撞 | 平均Q | 计算秒/回合 | 平均决策ms | deadline miss |
++|---|---|---|---|---|---|---|---|
++| t2.5_base_i0.7_icode_K128_H32 | 24 | 15 | 2 | 2.799 | 5.241 | 28.77 | 0 |
++| t2.5_base_i0.7_icode_K16_H20 | 24 | 13 | 1 | 3.003 | 2.499 | 12.11 | 0 |
++| t2.5_base_i0.7_icode_K64_H24 | 24 | 14 | 2 | 3.001 | 3.159 | 17.25 | 0 |
++| t2.5_base_i0.7_nominal_K128_H32 | 24 | 14 | 1 | 2.754 | 1.054 | 5.32 | 0 |
++| t2.5_base_i0.7_nominal_K16_H20 | 24 | 12 | 1 | 3.146 | 0.760 | 3.66 | 0 |
++| t2.5_base_i0.7_nominal_K64_H24 | 24 | 14 | 2 | 3.000 | 0.794 | 4.29 | 0 |
++| t2.5_wide_i0.45_icode_K128_H32 | 24 | 22 | 2 | 1.525 | 4.045 | 28.43 | 0 |
++| t2.5_wide_i0.45_icode_K16_H20 | 24 | 15 | 2 | 2.815 | 2.277 | 12.22 | 0 |
++| t2.5_wide_i0.45_icode_K64_H24 | 24 | 19 | 1 | 1.777 | 2.757 | 17.36 | 0 |
++| t2.5_wide_i0.45_nominal_K128_H32 | 24 | 21 | 2 | 1.678 | 0.784 | 5.30 | 0 |
++| t2.5_wide_i0.45_nominal_K16_H20 | 24 | 17 | 2 | 2.435 | 0.622 | 3.72 | 0 |
++| t2.5_wide_i0.45_nominal_K64_H24 | 24 | 18 | 1 | 1.935 | 0.714 | 4.24 | 0 |
++| t2.5_wide_i0.7_icode_K128_H32 | 24 | 23 | 1 | 1.097 | 4.309 | 28.38 | 0 |
++| t2.5_wide_i0.7_icode_K16_H20 | 24 | 20 | 1 | 1.635 | 1.910 | 12.02 | 0 |
++| t2.5_wide_i0.7_icode_K64_H24 | 24 | 21 | 0 | 1.149 | 2.954 | 17.68 | 0 |
++| t2.5_wide_i0.7_nominal_K128_H32 | 24 | 23 | 1 | 1.094 | 0.816 | 5.39 | 0 |
++| t2.5_wide_i0.7_nominal_K16_H20 | 24 | 20 | 1 | 1.626 | 0.588 | 3.73 | 0 |
++| t2.5_wide_i0.7_nominal_K64_H24 | 24 | 23 | 0 | 0.815 | 0.687 | 4.28 | 0 |
++
++## shared_backbone_factorial
++
++| 方法 | n | 成功 | 碰撞 | 平均Q | 计算秒/回合 | 平均决策ms | deadline miss |
++|---|---|---|---|---|---|---|---|
++| t10_base_i0.45_icode_K64_H24 | 24 | 13 | 2 | 3.247 | 3.791 | 18.71 | 0 |
++| t10_base_i0.7_icode_K64_H24 | 24 | 12 | 2 | 3.391 | 3.709 | 18.59 | 0 |
++| t10_wide_i0.45_icode_K64_H24 | 24 | 18 | 2 | 2.257 | 3.117 | 18.52 | 0 |
++| t10_wide_i0.7_icode_K64_H24 | 24 | 20 | 2 | 1.943 | 2.998 | 18.06 | 0 |
++| t2.5_base_i0.45_icode_K64_H24 | 24 | 13 | 2 | 3.227 | 3.578 | 18.38 | 0 |
++| t2.5_base_i0.7_icode_K64_H24 | 24 | 13 | 2 | 3.187 | 3.624 | 18.46 | 0 |
++| t2.5_wide_i0.45_icode_K64_H24 | 24 | 21 | 1 | 1.449 | 3.046 | 19.29 | 4 |
++| t2.5_wide_i0.7_icode_K64_H24 | 24 | 20 | 2 | 1.882 | 2.854 | 18.19 | 0 |
++
+ ## validation_4
+ 
+ | 方法 | n | 成功 | 碰撞 | 平均Q | 计算秒/回合 | 平均决策ms | deadline miss |
+@@ -117,6 +352,45 @@
+ 
+ 这是开发集上选模后的诊断，区间没有修正检查点选择偏差，不能据此单独宣称正式优势。
+ 
++## 相同指令历史上的两域预测诊断
++
++| 物理配置 | 产生轨迹的模型 | 速度 | H | 回合 | ICODE位置误差差值m | ICODE归一化误差差值 |
++|---|---|---|---|---|---|---|
++| current_9kg | nominal | moderate | 1 | 12 | 0.0000 | -0.0072 |
++| current_9kg | nominal | moderate | 8 | 12 | -0.0013 | -0.0263 |
++| current_9kg | nominal | moderate | 20 | 12 | -0.0160 | -0.0635 |
++| current_9kg | nominal | moderate | 32 | 12 | -0.0371 | -0.1011 |
++| current_9kg | nominal | fast | 1 | 12 | -0.0002 | -0.0116 |
++| current_9kg | nominal | fast | 8 | 12 | -0.0141 | -0.0754 |
++| current_9kg | nominal | fast | 20 | 12 | -0.0598 | -0.1845 |
++| current_9kg | nominal | fast | 32 | 12 | -0.1259 | -0.3251 |
++| current_9kg | icode | moderate | 1 | 12 | 0.0000 | -0.0102 |
++| current_9kg | icode | moderate | 8 | 12 | -0.0018 | -0.0330 |
++| current_9kg | icode | moderate | 20 | 12 | -0.0166 | -0.0662 |
++| current_9kg | icode | moderate | 32 | 12 | -0.0365 | -0.1029 |
++| current_9kg | icode | fast | 1 | 12 | -0.0001 | -0.0167 |
++| current_9kg | icode | fast | 8 | 12 | -0.0141 | -0.0739 |
++| current_9kg | icode | fast | 20 | 12 | -0.0624 | -0.2039 |
++| current_9kg | icode | fast | 32 | 12 | -0.1331 | -0.3453 |
++| pretrained_13kg | nominal | moderate | 1 | 12 | 0.0000 | -0.0058 |
++| pretrained_13kg | nominal | moderate | 8 | 12 | 0.0004 | -0.0175 |
++| pretrained_13kg | nominal | moderate | 20 | 12 | -0.0055 | -0.0364 |
++| pretrained_13kg | nominal | moderate | 32 | 12 | -0.0175 | -0.0618 |
++| pretrained_13kg | nominal | fast | 1 | 12 | -0.0001 | -0.0117 |
++| pretrained_13kg | nominal | fast | 8 | 12 | -0.0119 | -0.0593 |
++| pretrained_13kg | nominal | fast | 20 | 12 | -0.0559 | -0.1530 |
++| pretrained_13kg | nominal | fast | 32 | 12 | -0.1125 | -0.2541 |
++| pretrained_13kg | icode | moderate | 1 | 12 | 0.0000 | -0.0076 |
++| pretrained_13kg | icode | moderate | 8 | 12 | 0.0004 | -0.0242 |
++| pretrained_13kg | icode | moderate | 20 | 12 | -0.0061 | -0.0424 |
++| pretrained_13kg | icode | moderate | 32 | 12 | -0.0185 | -0.0631 |
++| pretrained_13kg | icode | fast | 1 | 12 | -0.0001 | -0.0144 |
++| pretrained_13kg | icode | fast | 8 | 12 | -0.0122 | -0.0707 |
++| pretrained_13kg | icode | fast | 20 | 12 | -0.0602 | -0.1683 |
++| pretrained_13kg | icode | fast | 32 | 12 | -0.1230 | -0.2846 |
++
++差值为ICODE减nominal，负值表示ICODE误差更低。两模型使用同一批已记录的后续执行指令；先在每回合内计算RMSE，再对回合等权平均。该离线条件预测不等同于规划反事实预测。全部horizon共用完整32周期窗口，短回合排除0个，保留排除名单；每组只有一个环境seed。
++
+ ## 因果输入与物理条件
+ 
+ 第一轮使用9kg、扭矩上限2.2的物理配置，而冻结L57 ICODE来自13kg、扭矩上限1.55、较低摩擦配置。两者均为40ms执行延迟。后续两域对照和13kg训练由预训练来源决定，所有方法使用相同物理配置。
+@@ -127,15 +401,64 @@ SAC确实使用tanh Gaussian actor、双Q、target Q及熵调节；replay保存
+ 
+ Q = duration/30 + 2×final_distance/4.5 + 3×timeout + 10×collision；计算价格不在Q中。第一轮训练价格0.20，后续0.05。它们是显式计算偏好，不是自然物理退化证据。
+ 
++第一轮验证在1152回合完成后出现长时间退出清理，进程约5.9GB常驻内存、1.1GB交换内存。该资源积累可能影响后半批延迟；配对组内随机顺序不能完全消除这一限制。后续增加逐回合资源日志，大批验证按完整配对场景使用独立串行进程，减少内存积累造成的计时偏差。
++
+ ## 原始轨迹算术及来源核对
+ 
+ | 阶段 | 回合 | 周期 | 通过 |
+ |---|---|---|---|
++| icode_domain_screen | 288 | 42583 | True |
++| ind_icode_H_full_s9091301 | 420 | 60066 | True |
++| ind_icode_H_full_s9091302 | 417 | 60017 | True |
++| ind_icode_KH_full_s9091301 | 411 | 60165 | True |
++| ind_icode_KH_full_s9091302 | 427 | 60084 | True |
++| ind_icode_KH_masked_s9091301 | 413 | 60156 | True |
++| ind_icode_KH_masked_s9091302 | 418 | 60113 | True |
++| ind_icode_K_full_s9091301 | 423 | 60076 | True |
++| ind_icode_K_full_s9091302 | 429 | 60120 | True |
++| independent_validation_2026-09-09 | 624 | 88413 | True |
++| mechanism_validation_2026-09-09 | 960 | 142880 | True |
++| model_screen | 288 | 54323 | True |
++| obs_icode_H_full_s9091201 | 423 | 60224 | True |
++| obs_icode_KH_full_s9091201 | 414 | 60096 | True |
++| obs_icode_KH_masked_s9091201 | 411 | 60045 | True |
++| obs_icode_K_full_s9091201 | 423 | 60228 | True |
++| observable_validation | 1200 | 171789 | True |
++| sac_icode_H_full_s9091001 | 215 | 40227 | True |
++| sac_icode_KH_full_s9091001 | 200 | 40017 | True |
++| sac_icode_KH_masked_s9091001 | 216 | 40022 | True |
++| sac_icode_K_full_s9091001 | 227 | 40127 | True |
++| shared_backbone_budget_check | 432 | 73943 | True |
++| shared_backbone_factorial | 192 | 34609 | True |
++| validation_4 | 1152 | 216180 | True |
++
++## 指令历史可重建性
++
++| 阶段 | 回合 | 周期 | 通过 |
++|---|---|---|---|
++| icode_domain_screen | 288 | 42583 | True |
++| ind_icode_H_full_s9091301 | 420 | 60066 | True |
++| ind_icode_H_full_s9091302 | 417 | 60017 | True |
++| ind_icode_KH_full_s9091301 | 411 | 60165 | True |
++| ind_icode_KH_full_s9091302 | 427 | 60084 | True |
++| ind_icode_KH_masked_s9091301 | 413 | 60156 | True |
++| ind_icode_KH_masked_s9091302 | 418 | 60113 | True |
++| ind_icode_K_full_s9091301 | 423 | 60076 | True |
++| ind_icode_K_full_s9091302 | 429 | 60120 | True |
++| independent_validation_2026-09-09 | 624 | 88413 | True |
++| mechanism_validation_2026-09-09 | 960 | 142880 | True |
+ | model_screen | 288 | 54323 | True |
++| obs_icode_H_full_s9091201 | 423 | 60224 | True |
++| obs_icode_KH_full_s9091201 | 414 | 60096 | True |
++| obs_icode_KH_masked_s9091201 | 411 | 60045 | True |
++| obs_icode_K_full_s9091201 | 423 | 60228 | True |
++| observable_validation | 1200 | 171789 | True |
+ | sac_icode_H_full_s9091001 | 215 | 40227 | True |
+ | sac_icode_KH_full_s9091001 | 200 | 40017 | True |
+ | sac_icode_KH_masked_s9091001 | 216 | 40022 | True |
+ | sac_icode_K_full_s9091001 | 227 | 40127 | True |
++| shared_backbone_budget_check | 432 | 73943 | True |
++| shared_backbone_factorial | 192 | 34609 | True |
+ | validation_4 | 1152 | 216180 | True |
+ 
+ ## 当前结论范围
+diff --git a/docs/reports/icode_sac_development_notes.md b/docs/reports/icode_sac_development_notes.md
+index a5baa36..3338111 100644
+--- a/docs/reports/icode_sac_development_notes.md
++++ b/docs/reports/icode_sac_development_notes.md
+@@ -205,3 +205,74 @@ not, investigate curriculum/credit assignment/resource pricing with matched
+ budgets; do not claim success simply because fixed MPPI improved. Prepared
+ axis_transfer.pyis tested but no curriculum experiment has run. Record total
+ source training cost for any transferred policy.
++# Active continuation, 2026-09-09 morning (supersedes older runtime notes below)
++
++10:46 CST superseding runtime update: independent 624 and mechanism 960 episodes
++are COMPLETE; mechanism queue status complete. Both trace and command-history
++audits passed. No training/evaluation remains running in these queues. Four
++focused tests passed. Do not restart finished queues. Read
++docs/reports/icode_sac_morning_2026-09-09.md for the mixed conclusions and next
++priorities; new experiments require a separate prospectively recorded protocol.
++The old heartbeat's 10:00 limit expired; user now requests continued watching.
++
++09:00 CST update: all eight independent arms completed (480,797 cycles,
++3,358 episodes). Queue completed in 15,095 seconds. Independent evaluation
++has started on the corrected fresh seeds, 11/624 episodes at 09:00:44;
++first worker RSS about 350MB, swap zero. Mechanism queue is waiting for
++that evaluator's exit and audit, not running timed simulations concurrently.
++
++User explicitly requested continued work after the morning status discussion.
++At 08:58 CST, seven independent training arms are complete; masked KH seed
++9091302 is at 56,817/60,000 cycles. Sole timed training queue:
++`independent_queue_043708`. Successful interpreter is `.venv/bin/python`.
++The initial `independent_queue_043442` failed before training because system
++Python had no torch; keep its logs. Old observable/continuation queues finished.
++
++Current waiting independent evaluator: Linux PID 268370, entry point
++`experiments/icode_sac_development/evaluate_independent.py`, stdout/stderr
++`.codex_tmp/evaluate_independent_audited.*.log`. It waits for all eight arms,
++then evaluates all final checkpoints without best-seed selection, on seeds
++9194201/9194202, 13 methods x 48 contexts = 624 episodes. The initially planned
++9094201/9094202 overlapped incrementing training seeds; this was caught BEFORE
++any evaluation, corrected and documented. The two training seed ranges partly
++overlap each other; claim independent SAC initialization, not disjoint training
++datasets. Final 9090301–9090304 remain unused.
++
++The evaluator now records process RSS/swap, checks training/eval intersections,
++checks immutable source/spec equality on resume, and updates progress only for
++the active worker. It runs command-history and trace audits plus reports after
++completion. Newly changed comparison reporting keeps each initialization and
++matches H/K/masked ablations to that same seed; never pools fixed baseline
++replicas or selects a best seed. Three focused comparison/schedule tests passed.
++They contain no timed simulation. Existing frozen training traces stay intact;
++evaluation infrastructure changes are captured in the new evaluation snapshot.
++
++Next serial queue is already launched:
++`experiments/icode_sac_mechanism/follow_after.py --wait-pid 268370`.
++State: `research_artifacts/icode_sac_compute_2026-09-08/mechanism_queue_2026-09-09/status.json`.
++Logs: `.codex_tmp/mechanism_queue.*.log`. It waits for the independent evaluator
++process (including reporting) to EXIT and requires its complete 624-episode
++trace audit to pass. Then runs focused hold/comparison tests, the 960-episode
++mechanism stage, audits, budget diagnostics, mechanism report, and main report.
++Do not start overlapping simulators or modify its frozen code after it starts.
++
++Mechanism protocol: `docs/protocols/icode_sac_mechanism_2026-09-09.md`.
++Artifact: `mechanism_validation_2026-09-09`; seeds 9195201/9195202.
++20 methods: each of two final joint initializations, full/masked, ICODE/nominal;
++full ICODE with K held / H held / both held at initial observed choice; six
++fixed model/budget comparators including 160/29 and 128/27. Actor is still
++computed under hold interventions, so those are matched-overhead interventions.
++Nominal policies are transferred WITHOUT retraining and must be labeled that
++way. Dedicated analysis: `experiments/icode_sac_diagnostics/mechanism_report.py`.
++Outputs: diagnostics/mechanism_comparison.json and
++docs/reports/icode_sac_mechanism_results.md, only after completion.
++
++Useful completed diagnostic: observable_validation_budget_behavior.json shows
++selected full KH changes budgets in all 48 episodes, mean K/H=159.128/28.630,
++within-episode variance fractions K=0.699,H=0.814; masked mean=131.752/27.006.
++This shows actual variation, NOT causal utility of switching. Static surrogates
++160/29 and 128/27 are rounded from those development means and prospectively
++frozen for the next fresh evaluation. No claims of reliable information gain,
++ICODE superiority, or ICRA readiness yet.
++
++---
+diff --git a/experiments/icode_sac_diagnostics/report.py b/experiments/icode_sac_diagnostics/report.py
+index 3c6ec65..13a5a66 100644
+--- a/experiments/icode_sac_diagnostics/report.py
++++ b/experiments/icode_sac_diagnostics/report.py
+@@ -89,7 +89,13 @@ def stage_analysis(folder):
+                   contexts={m: {'%s_%s' % (f, s): summary([r for r in rr if (r['family'], r['speed']) == (f, s)])
+                                 for f, s in sorted(set((r['family'], r['speed']) for r in rr))}
+                             for m, rr in groups.items()})
+-    if folder.name.startswith('validation') or folder.name=='observable_validation':
++    if folder.name.startswith('independent_validation'):
++        result['initialization_comparisons'] = initialization_comparisons(groups)
++        result['scope'] = ('All preregistered final checkpoints, each initialization retained; '
++                           'development replication, no best-seed selection')
++        return result
++    if (folder.name.startswith('validation') or folder.name=='observable_validation'
++            or folder.name.startswith('independent_validation')):
+         fixed = [m for m in groups if m.startswith('fixed_icode')]
+         best = min(fixed, key=lambda m: (-result['methods'][m]['successes'], result['methods'][m]['collisions'], result['methods'][m]['Q']))
+         result['best_fixed_development'] = best
+@@ -112,6 +118,36 @@ def stage_analysis(folder):
+     return result
+ 
+ 
++def initialization_comparisons(groups):
++    """Compare each joint seed to its matching ablations; never select a seed."""
++    import re
++    arms = {}
++    for name in groups:
++        match = re.fullmatch(r'ind_icode_(KH|H|K)_(full|masked)_s(\d+)_checkpoint_(\d+)', name)
++        if not match:
++            continue
++        axis, mask, seed, cycles = match.groups()
++        arm = 'KH_masked' if mask == 'masked' else axis
++        bank = arms.setdefault(seed, {})
++        if arm in bank:
++            raise ValueError('multiple checkpoints for initialization/arm: '+seed+'/'+arm)
++        bank[arm] = name
++    results = {}
++    for seed, bank in sorted(arms.items()):
++        if set(bank) != {'KH', 'H', 'K', 'KH_masked'}:
++            raise ValueError('incomplete initialization arms: '+seed)
++        joint = bank['KH']
++        targets = {arm: bank[arm] for arm in ('H', 'K', 'KH_masked')}
++        targets.update({m: m for m in groups if m.startswith('fixed_') or m=='causal_progress_feedback'})
++        results[seed] = {
++            'joint': joint,
++            'comparisons': {arm: dict(comparator=name, paired=paired(groups[joint], groups[name]))
++                            for arm, name in targets.items()}}
++    if not results:
++        raise ValueError('no independent-initialization policies')
++    return results
++
++
+ def crossfit_headroom(rows):
+     """Choose context budgets only on other seeds; retain complete held-out rows.
+ 
+@@ -310,7 +346,7 @@ def main():
+     p = argparse.ArgumentParser(); p.add_argument('--audit', action='store_true'); p.add_argument('--figures', action='store_true'); args = p.parse_args()
+     folders = [f for f in sorted(ART.iterdir()) if (f / 'completed.json').exists() and (f / 'summary.json').exists()]
+     out = ART / 'diagnostics'; out.mkdir(exist_ok=True)
+-    results = [stage_analysis(f) for f in folders if f.name in ('model_screen','observable_validation','icode_domain_screen') or f.name.startswith(('validation','shared_backbone'))]
++    results = [stage_analysis(f) for f in folders if f.name in ('model_screen','observable_validation','icode_domain_screen') or f.name.startswith(('validation','independent_validation','matched_validation','shared_backbone'))]
+     dump(out / 'comparison.json', results)
+     if args.audit: dump(out / 'audit.json', [audit_stage(f) for f in folders])
+     if args.figures: figures(results, out)
+diff --git a/experiments/icode_sac_diagnostics/write_report.py b/experiments/icode_sac_diagnostics/write_report.py
+index 02d869c..f6993e4 100644
+--- a/experiments/icode_sac_diagnostics/write_report.py
++++ b/experiments/icode_sac_diagnostics/write_report.py
+@@ -21,7 +21,7 @@ def main():
+         item=dict(stage=f.name,episodes=len(rows),cycles=sum(r['steps'] for r in rows))
+         if not (f/'completed.json').exists():running.append(item);continue
+         complete.append(item)
+-        if f.name.startswith(('sac_','obs_icode_')):
++        if f.name.startswith(('sac_','obs_icode_','ind_icode_','matched_icode_','matched_nominal_')):
+             s=summary(rows);training.append([f.name,len(rows),item['cycles'],s['successes'],s['collisions'],
+                                           '%.3f'%s['Q'],'%.3f'%s['compute_s']])
+         else:results.append(stage_analysis(f))
+@@ -38,6 +38,22 @@ def main():
+             md_table(['方法','n','成功','碰撞','平均Q','计算秒/回合','平均决策ms','deadline miss'],
+                 [[m,s['n'],s['successes'],s['collisions'],'%.3f'%s['Q'],'%.3f'%s['compute_s'],
+                   '%.2f'%s['latency_ms'],s['deadline_misses']] for m,s in sorted(stage['methods'].items())])]
++        if 'initialization_comparisons' in stage:
++            parts += ['### 独立初始化：每个 seed 均保留',
++                '所有策略使用预先规定的训练终点检查点，不按评估表现挑选 seed 或检查点。'
++                '两个初始化的训练环境部分共享；独立初始化不代表独立训练数据。'
++                '以下均为联合 KH 减配对参照，同一个固定参照只运行一次，不重复算作独立样本。']
++            for seed, comparison in stage['initialization_comparisons'].items():
++                table=[]
++                for arm, record in comparison['comparisons'].items():
++                    p=record['paired'];d=p['differences']
++                    table.append([arm,'%.1f'%(100*p['binary_discordance']['success']['difference']),
++                        '%.3f'%d['Q']['mean'],'[%.3f, %.3f]'%tuple(d['Q']['ci95']),
++                        '%.3f'%d['compute_total_s']['mean']])
++                parts += ['初始化 '+seed+'：`'+comparison['joint']+'`',
++                    md_table(['参照','成功率差pp','Q差','Q诊断95%区间','计算秒差'],table)]
++            parts += ['这是两个初始化、两个环境 seed 的开发复验。区间描述各初始化的场景差异，'
++                '不估计初始化总体不确定性，不据此宣称显著性或非劣性；需看全部参照及失败场景。']
+         if 'best_fixed_development' in stage:
+             best=stage['best_fixed_development'];parts.append('按预先记录的成功优先、碰撞、Q规则选择的开发集固定参照：`'+best+'`。')
+             comparisons=[]
+diff --git a/pyproject.toml b/pyproject.toml
+index c83d95f..c3bb1f6 100644
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -18,6 +18,11 @@ simulation = ["mujoco==3.2.3"]
+ learning = ["torch>=2.0", "tensorboard>=2.10"]
+ rl = ["torch>=2.0"]
+ dev = ["pytest>=8,<9"]
++vision = [
++  "rfdetr==1.4.1; python_version >= '3.10'",
++  "supervision>=0.27,<0.31; python_version >= '3.9'",
++  "opencv-python-headless>=4.10,<4.12; python_version >= '3.9'",
++]
+ 
+ [project.scripts]
+ mppi-sim = "mobile_robot_mppi.cli.simulate:main"
+diff --git a/research_artifacts/l223_six_scene_confirmation_2026-07-20/logs/l223_gate_b_icode_cylinder_forest_seed91001.stderr.log b/research_artifacts/l223_six_scene_confirmation_2026-07-20/logs/l223_gate_b_icode_cylinder_forest_seed91001.stderr.log
+old mode 100755
+new mode 100644
+diff --git a/research_artifacts/l223_six_scene_confirmation_2026-07-20/logs/l223_gate_b_icode_cylinder_forest_seed91001.stdout.log b/research_artifacts/l223_six_scene_confirmation_2026-07-20/logs/l223_gate_b_icode_cylinder_forest_seed91001.stdout.log
+old mode 100755
+new mode 100644
+diff --git a/research_artifacts/l223_six_scene_confirmation_2026-07-20/logs/l223_gate_b_icode_giant_u_seed91001.stderr.log b/research_artifacts/l223_six_scene_confirmation_2026-07-20/logs/l223_gate_b_icode_giant_u_seed91001.stderr.log
+old mode 100755
+new mode 100644
+diff --git a/research_artifacts/l223_six_scene_confirmation_2026-07-20/logs/l223_gate_b_icode_giant_u_seed91001.stdout.log b/research_artifacts/l223_six_scene_confirmation_2026-07-20/logs/l223_gate_b_icode_giant_u_seed91001.stdout.log
+old mode 100755
+new mode 100644
+diff --git a/research_artifacts/l223_six_scene_confirmation_2026-07-20/logs/l223_gate_b_icode_opposed_u_seed91001.stderr.log b/research_artifacts/l223_six_scene_confirmation_2026-07-20/logs/l223_gate_b_icode_opposed_u_seed91001.stderr.log
+old mode 100755
+new mode 100644
+diff --git a/research_artifacts/l223_six_scene_confirmation_2026-07-20/logs/l223_gate_b_icode_opposed_u_seed91001.stdout.log b/research_artifacts/l223_six_scene_confirmation_2026-07-20/logs/l223_gate_b_icode_opposed_u_seed91001.stdout.log
+old mode 100755
+new mode 100644
+diff --git a/research_artifacts/l223_six_scene_confirmation_2026-07-20/logs/l223_six_scene_icode_cylinder_spiral_seed91001.stderr.log b/research_artifacts/l223_six_scene_confirmation_2026-07-20/logs/l223_six_scene_icode_cylinder_spiral_seed91001.stderr.log
+old mode 100755
+new mode 100644
+diff --git a/research_artifacts/l223_six_scene_confirmation_2026-07-20/logs/l223_six_scene_icode_cylinder_spiral_seed91001.stdout.log b/research_artifacts/l223_six_scene_confirmation_2026-07-20/logs/l223_six_scene_icode_cylinder_spiral_seed91001.stdout.log
+old mode 100755
+new mode 100644
+diff --git a/research_artifacts/l223_six_scene_confirmation_2026-07-20/logs/l223_six_scene_icode_nested_u_seed91001.stderr.log b/research_artifacts/l223_six_scene_confirmation_2026-07-20/logs/l223_six_scene_icode_nested_u_seed91001.stderr.log
+old mode 100755
+new mode 100644
+diff --git a/research_artifacts/l223_six_scene_confirmation_2026-07-20/logs/l223_six_scene_icode_nested_u_seed91001.stdout.log b/research_artifacts/l223_six_scene_confirmation_2026-07-20/logs/l223_six_scene_icode_nested_u_seed91001.stdout.log
+old mode 100755
+new mode 100644
+diff --git a/research_artifacts/l223_six_scene_confirmation_2026-07-20/logs/l223_six_scene_icode_serpentine_seed91001.stderr.log b/research_artifacts/l223_six_scene_confirmation_2026-07-20/logs/l223_six_scene_icode_serpentine_seed91001.stderr.log
+old mode 100755
+new mode 100644
+diff --git a/research_artifacts/l223_six_scene_confirmation_2026-07-20/logs/l223_six_scene_icode_serpentine_seed91001.stdout.log b/research_artifacts/l223_six_scene_confirmation_2026-07-20/logs/l223_six_scene_icode_serpentine_seed91001.stdout.log
+old mode 100755
+new mode 100644
+diff --git a/src/mobile_robot_mppi/perception/__init__.py b/src/mobile_robot_mppi/perception/__init__.py
+index afbba24..8bc0932 100644
+--- a/src/mobile_robot_mppi/perception/__init__.py
++++ b/src/mobile_robot_mppi/perception/__init__.py
+@@ -4,6 +4,20 @@ from .scan_flow import (
+     ScanFlowConfig,
+     ScanFlowEstimate,
+ )
++from .vision_control import (
++    BoundingBox,
++    GroundPlaneProjector,
++    ProjectedVisualTrack,
++    PureVisionController,
++    VisionControlConfig,
++    VisionControlDecision,
++    VisualDetection,
++    VisualTrack,
++)
++from .vision_calibration import (
++    HomographyCalibration,
++    fit_ground_plane_homography,
++)
+ 
+ __all__ = [
+     "LegacyScanPipeline",
+@@ -11,4 +25,14 @@ __all__ = [
+     "RobustScanFlowEstimator",
+     "ScanFlowConfig",
+     "ScanFlowEstimate",
++    "BoundingBox",
++    "GroundPlaneProjector",
++    "ProjectedVisualTrack",
++    "PureVisionController",
++    "VisionControlConfig",
++    "VisionControlDecision",
++    "VisualDetection",
++    "VisualTrack",
++    "HomographyCalibration",
++    "fit_ground_plane_homography",
+ ]
+diff --git a/src/mobile_robot_mppi/simulation/model_factory.py b/src/mobile_robot_mppi/simulation/model_factory.py
+index b7af719..6990fe8 100644
+--- a/src/mobile_robot_mppi/simulation/model_factory.py
++++ b/src/mobile_robot_mppi/simulation/model_factory.py
+@@ -89,6 +89,7 @@ def build_diff_drive_mjcf(config: Mapping[str, object], scene: Mapping[str, obje
+     profile = str(actuator.get("profile", "torque_pi"))
+     torque_limit = float(actuator.get("torque_limit", 2.2))
+     velocity_gain = float(actuator.get("velocity_gain", 8.0))
++    floor_size = float(scene.get("floor_size", 10.0))
+     obstacles = "\n".join(
+         "    " + _obstacle_element(index, value)
+         for index, value in enumerate(scene.get("obstacles", ()))
+@@ -123,7 +124,7 @@ def build_diff_drive_mjcf(config: Mapping[str, object], scene: Mapping[str, obje
+   </default>
+   <worldbody>
+     <light name="sun" pos="0 0 6" dir="0 0 -1" directional="true"/>
+-    <geom name="floor" type="plane" size="10 10 0.1" friction="{floor_friction}" rgba="0.66 0.67 0.65 1" group="1"/>
++    <geom name="floor" type="plane" size="{floor_size} {floor_size} 0.1" friction="{floor_friction}" rgba="0.66 0.67 0.65 1" group="1"/>
+ {obstacles}
+     <body name="base" pos="0 0 {base_height}">
+       <freejoint name="base_free"/>
+@@ -163,7 +164,7 @@ def build_diff_drive_mjcf(config: Mapping[str, object], scene: Mapping[str, obje
+ </mujoco>'''.format(
+         timestep=_f(timestep), integrator=integrator, solver=solver,
+         iterations=iterations, tolerance=_f(tolerance), solref=solref, solimp=solimp,
+-        floor_friction=" ".join(_f(v) for v in floor_friction), obstacles=obstacles,
++        floor_friction=" ".join(_f(v) for v in floor_friction), floor_size=_f(floor_size), obstacles=obstacles,
+         base_height=_f(base_height), chassis_mass=_f(chassis_mass),
+         inertia=" ".join(_f(v) for v in inertia),
+         chassis_size=" ".join(_f(v) for v in chassis_size),

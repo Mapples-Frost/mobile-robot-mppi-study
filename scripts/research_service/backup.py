@@ -23,7 +23,7 @@ def code_backup():
  files=[]
  for path in patterns:
   for p in (ROOT/path).rglob('*'):
-   if p.is_file() and p.suffix in ('.py','.md','.json','.yaml','.yml','.toml','.txt','.csv','.service','.mount','.ps1','.sh') and p.stat().st_size<10_000_000 and '__pycache__' not in p.parts:files.append(str(p.relative_to(ROOT)))
+   if p.is_file() and p.suffix in ('.py','.md','.json','.yaml','.yml','.toml','.txt','.csv','.service','.mount','.ps1','.sh','.patch') and p.stat().st_size<10_000_000 and '__pycache__' not in p.parts:files.append(str(p.relative_to(ROOT)))
  files += [p.name for p in ROOT.glob('*') if p.is_file() and (p.suffix in ('.md','.csv','.json') or p.name=='.gitignore')]
  for start in range(0,len(files),100):
   r=git('add','--',*files[start:start+100])
@@ -70,10 +70,10 @@ def upload(rel,p):
  return dict(name=p.name,url=asset['browser_download_url'],id=asset['id'],sha256=expected[7:],bytes=p.stat().st_size,verification=verification)
 
 def files():
- for root in [ROOT/'research_artifacts',ROOT/'source_snapshots',BASE/'runtime/bohn2021-python37',STATE]:
+ for root in [ROOT/'research_artifacts',ROOT/'source_snapshots',STATE]:
   for p in sorted(root.rglob('*')):
    if not p.is_file() or p.is_symlink():continue
-   if any(x in ('__pycache__','.git','edit_history') for x in p.parts):continue
+   if any(x in ('__pycache__','edit_history') for x in p.parts):continue
    if p.suffix in ('.pyc','.lock') or p.name.endswith(('-wal','-shm')) or p.name in ('heartbeat.json','orchestrator.lock','backup_status.json','backup_index.sqlite','backup_receipts.jsonl','research.sqlite'):continue
    yield p
 

@@ -476,3 +476,11 @@ Next action if and only if a verified external backup proof satisfying the gate 
 
 ## 2026-09-26T19:14:25.964112+00:00
 
+<!-- vehicle-validation64-shard-complete-20260926-shard04 -->
+## 2026-09-26 vehicle validation64 shard 04
+
+UTC: 2026-09-26T20:27:57.550241+00:00. Formal vehicle validation shard completed with validation_accessed=true, test_accessed=false, episodes=224, control_steps=20101. Artifacts: `research_artifacts/aws_formal_validation/vehicle_validation64_20260926/shard04/raw.json`, `research_artifacts/aws_formal_validation/vehicle_validation64_20260926/shard04/summary.md`. This is shard-level validation evidence only; final sealed test remains unauthorized.
+
+
+## 2026-09-26T20:31:26.581895+00:00
+

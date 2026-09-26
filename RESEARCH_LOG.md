@@ -174,3 +174,12 @@ Next exact action:
    - legacy interpreter
    - validation budget: exactly 224 episodes, ≤33600 control steps
    - `validation_accessed=true`, `test_accessed=false`
+
+<!-- vehicle-validation64-shard-complete-20260926-shard00 -->
+## 2026-09-26 vehicle validation64 shard 00
+
+UTC: 2026-09-26T14:35:01.431574+00:00. Formal vehicle validation shard completed with validation_accessed=true, test_accessed=false, episodes=224, control_steps=19832. Artifacts: `research_artifacts/aws_formal_validation/vehicle_validation64_20260926/shard00/raw.json`, `research_artifacts/aws_formal_validation/vehicle_validation64_20260926/shard00/summary.md`. This is shard-level validation evidence only; final sealed test remains unauthorized.
+
+
+## 2026-09-26T14:39:09.767574+00:00
+

@@ -598,3 +598,12 @@ experiments/bohn2021_aws/vehicle_validation64_shard_runner.py
 ```
 
 Use `legacy` interpreter only. Sealed final test remains closed and unauthorized.
+
+<!-- vehicle-validation64-shard-complete-20260926-shard05 -->
+## 2026-09-26 vehicle validation64 shard 05
+
+UTC: 2026-09-26T21:55:13.414681+00:00. Formal vehicle validation shard completed with validation_accessed=true, test_accessed=false, episodes=224, control_steps=19660. Artifacts: `research_artifacts/aws_formal_validation/vehicle_validation64_20260926/shard05/raw.json`, `research_artifacts/aws_formal_validation/vehicle_validation64_20260926/shard05/summary.md`. This is shard-level validation evidence only; final sealed test remains unauthorized.
+
+
+## 2026-09-26T21:57:55.402991+00:00
+

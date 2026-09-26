@@ -22,6 +22,7 @@ def snapshot(pid=None):
  return result
 def delta(previous,current):
  d=dict(current);before=previous.get('cpu_ticks')
+ if 'monotonic_s' in previous:d['interval_seconds']=current['monotonic_s']-previous['monotonic_s']
  if before:
   ticks=[a-b for a,b in zip(current['cpu_ticks'],before)];total=sum(ticks)
   if total>0 and min(ticks)>=0:
@@ -39,8 +40,9 @@ class ResourceSampler:
   current=snapshot(self.pid);row=delta(self.previous,current);self.previous=current;self.samples.append(row)
   with self.path.open('a') as f:f.write(json.dumps(row)+'\n')
  def summary(self):
-  values=[r['process_cpu_percent_instance'] for r in self.samples if 'process_cpu_percent_instance' in r]
-  return {'sample_file':str(self.path),'sample_count':len(self.samples),'mean_process_cpu_percent_instance':sum(values)/len(values) if values else None,'max_process_cpu_percent_instance':max(values) if values else None,'denominator':'all logical vCPUs; per-sample process CPU excludes subprocess descendants','cloudwatch_credit_metrics_file':str(TELEMETRY/'cloudwatch.json'),'credit_unit':'vCPU-minutes, not dollars'}
+  rows=[r for r in self.samples if 'process_cpu_percent_instance' in r];values=[r['process_cpu_percent_instance'] for r in rows]
+  duration=sum(r['interval_seconds'] for r in rows)
+  return {'sample_file':str(self.path),'sample_count':len(self.samples),'mean_process_cpu_percent_instance':sum(r['process_cpu_percent_instance']*r['interval_seconds'] for r in rows)/duration if duration>0 else None,'max_process_cpu_percent_instance':max(values) if values else None,'denominator':'all logical vCPUs; per-sample process CPU excludes subprocess descendants','cloudwatch_credit_metrics_file':str(TELEMETRY/'cloudwatch.json'),'credit_unit':'vCPU-minutes, not dollars'}
 def cloudwatch(force=False):
  previous=read(TELEMETRY/'cloudwatch_status.json')
  if not force and time.time()-previous.get('attempt_epoch',0)<300:return previous

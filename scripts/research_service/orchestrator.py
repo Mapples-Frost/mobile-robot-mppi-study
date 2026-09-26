@@ -99,6 +99,7 @@ def execute(args):
     retry_state[fingerprint]=0 if proc.returncode==0 else retry_state.get(fingerprint,0)+1;dump(STATE/'experiment_retries.json',retry_state)
     meta.update(retry_fingerprint=fingerprint,cpu_seconds=cpu_after.ru_utime+cpu_after.ru_stime-cpu_before.ru_utime-cpu_before.ru_stime,exit_status=proc.returncode,runtime_seconds=time.monotonic()-started,peak_process_rss_kb=peak,status='complete' if proc.returncode==0 else 'failed',ended=now())
     meta['full_command_wall_seconds']=command_wall
+    meta['mean_process_tree_cpu_percent_instance']=100*meta['cpu_seconds']/command_wall/os.cpu_count()
     meta['process_ended_utc']=process_ended
     meta['resource_monitoring']=sampler.summary()
     meta['cloudwatch']=link_run(dest,meta['process_started_utc'],process_ended)

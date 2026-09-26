@@ -1,0 +1,217 @@
+"""Bounded, durable GPT-5.5 research worker. Python 3.12, stdlib only."""
+import csv, datetime as dt, fcntl, hashlib, json, os, pathlib, signal, socket, sqlite3, subprocess, threading, time, urllib.request, urllib.error, uuid, shutil, resource
+BASE=pathlib.Path('/data/openai-agent'); ROOT=BASE/'mobile-robot-mppi-study'; STATE=BASE/'state'
+STATE.mkdir(exist_ok=True); SERVICE=ROOT/'scripts/research_service'
+STOP=False
+
+def now(): return dt.datetime.now(dt.timezone.utc).isoformat()
+def dump(path,value):
+    path.parent.mkdir(parents=True,exist_ok=True)
+    temp=path.with_name(path.name+'.new'); temp.write_text(json.dumps(value,indent=2,ensure_ascii=False,default=str)); temp.replace(path)
+def load(path,default=None):
+    try:return json.loads(path.read_text())
+    except FileNotFoundError:return {} if default is None else default
+
+def secrets():
+    out={}
+    for line in (BASE/'.secrets/agent.env').read_text().splitlines():
+        if '=' in line:
+            k,v=line.split('=',1);out[k]=v
+    return out
+SECRET=secrets(); REDACT=[SECRET['OPENAI_API_KEY']]
+if (BASE/'.secrets/github.token').exists():REDACT.append((BASE/'.secrets/github.token').read_text().strip())
+def redact(text):
+    for value in REDACT:
+        if value: text=text.replace(value,'[REDACTED]')
+    return text
+
+def event(kind,**data):
+    with (STATE/'events.jsonl').open('a') as f:f.write(redact(json.dumps(dict(time=now(),kind=kind,**data),default=str))+'\n')
+
+def db():
+    con=sqlite3.connect(STATE/'research.sqlite',timeout=30)
+    con.execute('pragma journal_mode=WAL')
+    con.execute('create table if not exists calls(id text primary key, timestamp text, model text, effort text, status text, usage text, duration real)')
+    con.execute('create table if not exists experiments(id text primary key, timestamp text, status text, metadata text)')
+    return con
+
+def safe_path(value):
+    p=(ROOT/value).resolve()
+    if not p.is_relative_to(ROOT.resolve()):raise ValueError('Path outside repository')
+    if any(x in ('.secrets','.git') for x in p.parts) or p.name in ('agent.env','github.token'):raise ValueError('Protected path')
+    return p
+
+def usage_today():
+    with db() as c: rows=c.execute('select usage from calls where timestamp like ?', (now()[:10]+'%',)).fetchall()
+    return len(rows),sum(json.loads(r[0]).get('total_tokens',0) for r in rows)
+
+def clean_env():
+    e={k:v for k,v in os.environ.items() if k in ('PATH','LANG','LC_ALL','HOME','TMPDIR')}
+    e.update(OMP_NUM_THREADS='1',OPENBLAS_NUM_THREADS='1',MKL_NUM_THREADS='1',TF_NUM_INTRAOP_THREADS='1',TF_NUM_INTEROP_THREADS='1',TF_CPP_MIN_LOG_LEVEL='3',MPLBACKEND='Agg',PYTHONUNBUFFERED='1')
+    return e
+
+def identity():
+    def git(args):return subprocess.run(['git',*args],cwd=ROOT,capture_output=True,text=True,timeout=20).stdout.strip()
+    diff=git(['diff','--binary']);return dict(commit_sha=git(['rev-parse','HEAD']),dirty_state=git(['status','--porcelain']),dirty_diff_sha256=hashlib.sha256(diff.encode()).hexdigest())
+
+def execute(args):
+    path=safe_path(args['script']);argv=args.get('args',[])
+    if path.suffix!='.py' or not path.is_file():raise ValueError('Existing Python script required')
+    if not all(isinstance(x,str) for x in argv):raise ValueError('String arguments required')
+    if any('test'==x.lower() for x in argv) and not load(STATE/'research_state.json').get('final_test_authorized'):
+        raise ValueError('Final test gate is closed')
+    timeout=min(max(int(args.get('timeout_seconds',900)),10),14400)
+    py='/home/mapples/.local/share/bohn2021-python37/bin/python' if args.get('interpreter')=='legacy' else str(ROOT/'.venv/bin/python')
+    eid=dt.datetime.now(dt.timezone.utc).strftime('%Y%m%dT%H%M%S')+'_'+uuid.uuid4().hex[:8]
+    dest=ROOT/'research_artifacts/aws_runs'/eid;dest.mkdir(parents=True)
+    meta=dict(experiment_id=eid,timestamp=now(),**identity(),**args,environment=dict(host=socket.gethostname(),python=py),stdout=str(dest/'stdout.log'),stderr=str(dest/'stderr.log'),status='running',failure_reason=None)
+    dump(dest/'registry.json',meta)
+    with db() as c:c.execute('insert into experiments values(?,?,?,?)',(eid,meta['timestamp'],'running',json.dumps(meta)))
+    dump(STATE/'active_experiment.json',meta);started=time.monotonic();peak=0;cpu_before=resource.getrusage(resource.RUSAGE_CHILDREN)
+    with (dest/'stdout.log').open('w') as out,(dest/'stderr.log').open('w') as err:
+        proc=subprocess.Popen([py,'-u',str(pathlib.Path('/home/mapples/projects/mobile-robot-mppi-study')/path.relative_to(ROOT)),*argv],cwd='/home/mapples/projects/mobile-robot-mppi-study',env=clean_env(),stdout=out,stderr=err,start_new_session=True)
+        meta['pid']=proc.pid;dump(STATE/'active_experiment.json',meta)
+        while proc.poll() is None:
+            if time.monotonic()-started>timeout:
+                os.killpg(proc.pid,signal.SIGTERM)
+                try:proc.wait(15)
+                except subprocess.TimeoutExpired:os.killpg(proc.pid,signal.SIGKILL);proc.wait()
+                meta['failure_reason']='wall_timeout';break
+            try:
+                status=pathlib.Path('/proc/%d/status'%proc.pid).read_text()
+                peak=max(peak,int(next(x.split()[1] for x in status.splitlines() if x.startswith('VmRSS:'))))
+            except (OSError,StopIteration):pass
+            time.sleep(2)
+    cpu_after=resource.getrusage(resource.RUSAGE_CHILDREN)
+    meta.update(cpu_seconds=cpu_after.ru_utime+cpu_after.ru_stime-cpu_before.ru_utime-cpu_before.ru_stime,exit_status=proc.returncode,runtime_seconds=time.monotonic()-started,peak_process_rss_kb=peak,status='complete' if proc.returncode==0 else 'failed',ended=now())
+    if proc.returncode and not meta['failure_reason']:meta['failure_reason']='nonzero_exit'
+    for log in ('stdout.log','stderr.log'):
+        p=dest/log
+        # Children get no credentials. Still scrub exact known secrets before exposure.
+        if p.stat().st_size<64*1024*1024:p.write_text(redact(p.read_text(errors='replace')))
+    dump(dest/'registry.json',meta);dump(STATE/'active_experiment.json',dict(status='idle',last_experiment=eid))
+    with db() as c:c.execute('update experiments set status=?,metadata=? where id=?',(meta['status'],json.dumps(meta),eid))
+    registry=ROOT/'EXPERIMENT_REGISTRY.csv';fresh=not registry.exists()
+    with registry.open('a',newline='') as f:
+        writer=csv.DictWriter(f,fieldnames=['experiment_id','timestamp','method','seed','split','commit_sha','status','exit_status','runtime_seconds','peak_process_rss_kb','record'])
+        if fresh:writer.writeheader()
+        writer.writerow({**{k:meta.get(k,'') for k in writer.fieldnames if k!='record'},'record':str(dest/'registry.json')})
+    state=load(STATE/'research_state.json');state['last_completed_experiment']=meta
+    state['consecutive_failures']=0 if proc.returncode==0 else state.get('consecutive_failures',0)+1
+    if state['consecutive_failures']>=5:state['phase']='diagnosis'
+    dump(STATE/'research_state.json',state)
+    event('experiment',experiment_id=eid,status=meta['status'],runtime_seconds=meta['runtime_seconds'])
+    return dict(record=str(dest.relative_to(ROOT)/'registry.json'),exit_status=proc.returncode,runtime_seconds=meta['runtime_seconds'],stdout_tail=(dest/'stdout.log').read_text(errors='replace')[-12000:],stderr_tail=(dest/'stderr.log').read_text(errors='replace')[-8000:])
+
+def call_tool(name,args):
+    if name=='list_files':
+        p=safe_path(args.get('path','.'));pattern=args.get('pattern','*')
+        paths=sorted(p.glob(pattern));return [dict(path=str(x.relative_to(ROOT)),bytes=x.stat().st_size if x.is_file() else None) for x in paths[:500] if '.secrets' not in x.parts and '.git' not in x.parts]
+    if name=='read_file':
+        p=safe_path(args['path']);text=p.read_text(errors='replace');start=max(0,int(args.get('offset',0)));return dict(content=redact(text[start:start+24000]),total_characters=len(text),offset=start)
+    if name=='write_file':
+        p=safe_path(args['path'])
+        if str(p).startswith(str(SERVICE)):raise ValueError('Supervisor code is protected; write research extension scripts elsewhere')
+        content=args['content']
+        if any(s and s in content for s in REDACT):raise ValueError('Secret content forbidden')
+        if p.exists():
+            hist=STATE/'edit_history'/uuid.uuid4().hex;hist.parent.mkdir(exist_ok=True);shutil.copy2(p,hist)
+        p.parent.mkdir(parents=True,exist_ok=True);p.write_text(content);return dict(written=str(p.relative_to(ROOT)),sha256=hashlib.sha256(content.encode()).hexdigest())
+    if name=='run_experiment':return execute(args)
+    if name=='update_state':
+        state=load(STATE/'research_state.json');patch=args['state']
+        if patch.get('final_test_authorized'):
+            gate=load(ROOT/'final_test_gate.json')
+            if not gate.get('validation_passed') or not gate.get('frozen_commit') or not gate.get('model_hashes') or not gate.get('independent_audit_passed'):raise ValueError('Incomplete final test gate')
+        state.update(patch);state['updated']=now();dump(STATE/'research_state.json',state);return state
+    raise ValueError('Unknown tool')
+
+TOOLS=[]
+def tool(name,description,properties,required):TOOLS.append(dict(type='function',name=name,description=description,parameters=dict(type='object',properties=properties,required=required,additionalProperties=False)))
+S={'type':'string'};I={'type':'integer'}
+tool('list_files','List repository files. Use bounded patterns.',{'path':S,'pattern':S},['path'])
+tool('read_file','Read at most 24000 characters of a repository text file. Test outcomes remain sealed.',{'path':S,'offset':I},['path'])
+tool('write_file','Write research code, protocol, or report. Old file is archived; never silently change frozen sources.',{'path':S,'content':S},['path','content'])
+tool('run_experiment','Run exactly one bounded Python script. All execution is registered, including smoke and diagnostics. No shell.',{'script':S,'args':{'type':'array','items':S},'interpreter':{'type':'string','enum':['modern','legacy']},'timeout_seconds':I,'method':S,'seed':S,'split':S,'purpose':S,'config':{'type':'object'},'training_budget':{'type':'object'},'validation_budget':{'type':'object'},'test_budget':{'type':'object'},'artifacts':{'type':'array','items':S}},['script','interpreter','method','seed','split','purpose','config','training_budget','validation_budget','test_budget','artifacts'])
+tool('update_state','Persist phase, hypothesis, next_experiment, queue, blockers, failures and scientific decisions.',{'state':{'type':'object'}},['state'])
+
+def api(items):
+    n,t=usage_today()
+    if n>=48 or t>=1500000:raise RuntimeError('DAILY_API_BUDGET')
+    effort=load(STATE/'api_smoke.json')['selected_effort']
+    assert SECRET['OPENAI_MODEL']=='gpt-5.5' and effort=='xhigh'
+    body=dict(model='gpt-5.5',reasoning={'effort':effort},input=items,tools=TOOLS,max_output_tokens=12000,store=False)
+    req=urllib.request.Request(SECRET['OPENAI_BASE_URL'].rstrip('/')+'/responses',data=json.dumps(body).encode(),headers={'Authorization':'Bearer '+SECRET['OPENAI_API_KEY'],'Content-Type':'application/json'})
+    cid=uuid.uuid4().hex;started=time.monotonic();usage={};status='error'
+    try:
+        with urllib.request.urlopen(req,timeout=240) as r:answer=json.load(r)
+        usage=answer.get('usage',{});status=answer.get('status','unknown')
+        if not str(answer.get('model','')).startswith('gpt-5.5'):raise RuntimeError('Unexpected returned model; no fallback permitted')
+        return answer
+    finally:
+        with db() as c:c.execute('insert into calls values(?,?,?,?,?,?,?)',(cid,now(),'gpt-5.5',effort,status,json.dumps(usage),time.monotonic()-started))
+        event('api',call_id=cid,status=status,usage=usage)
+
+def heartbeat():
+    while True:
+        dump(STATE/'heartbeat.json',dict(pid=os.getpid(),time=now(),state='running'))
+        address=os.environ.get('NOTIFY_SOCKET')
+        if address:
+            try:
+                with socket.socket(socket.AF_UNIX,socket.SOCK_DGRAM) as s:s.connect(address.replace('@','\0',1));s.sendall(b'WATCHDOG=1')
+            except OSError:pass
+        time.sleep(30)
+
+def iteration():
+    state=load(STATE/'research_state.json');recent=load(STATE/'last_iteration.json')
+    context=dict(state=state,last_iteration=recent,repository=str(ROOT),available_disk_gb=shutil.disk_usage(BASE).free/1e9,backup=load(STATE/'backup_status.json'))
+    items=[dict(role='system',content=(SERVICE/'MISSION.md').read_text()),dict(role='user',content='Continue authorized research with concrete actions. Inspect evidence; preserve state for next iteration. Current supervisor context:\n'+json.dumps(context,default=str)[-28000:])]
+    outputs=[]
+    for turn in range(6):
+        answer=api(items);items.extend(answer.get('output',[]));calls=[]
+        for item in answer.get('output',[]):
+            if item['type']=='function_call':calls.append(item)
+            elif item['type']=='message':
+                outputs.append(''.join(c.get('text','') for c in item.get('content',[])))
+        if not calls:break
+        # Multiple proposed tools execute sequentially, never concurrent experiments.
+        for item in calls:
+            try:result=call_tool(item['name'],json.loads(item['arguments']))
+            except Exception as e:result={'error':type(e).__name__,'message':redact(str(e))[:2000]};event('tool_error',name=item['name'],error=result)
+            text=redact(json.dumps(result,default=str))[:30000]
+            items.append(dict(type='function_call_output',call_id=item['call_id'],output=text))
+            event('tool',name=item['name'],arguments={k:v for k,v in json.loads(item['arguments']).items() if k!='content'},result_summary=text[:2000])
+    record=dict(time=now(),outputs=outputs,tool_tail=[x for x in items if x.get('type')=='function_call_output'][-4:])
+    dump(STATE/'last_iteration.json',record)
+    with (ROOT/'RESEARCH_LOG.md').open('a') as f:f.write('\n\n## '+now()+'\n'+redact('\n'.join(outputs))+'\n')
+
+def housekeeping():
+    # Stable commit and upload handled separately; no API calls or training overlap.
+    p=subprocess.run(['/usr/bin/python3',str(SERVICE/'backup.py')],cwd=ROOT,env=clean_env(),capture_output=True,text=True,timeout=14400)
+    event('backup_process',exit=p.returncode,tail=redact(p.stdout[-1000:]+p.stderr[-1000:]))
+    if p.returncode:raise RuntimeError('Backup not verified; diagnose infrastructure before unique formal work')
+
+def main():
+    lock=(STATE/'orchestrator.lock').open('a');fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
+    threading.Thread(target=heartbeat,daemon=True).start();failures=0
+    # Reconcile supervisor interruption; never infer a stale running row completed.
+    with db() as c:c.execute("update experiments set status='interrupted' where status='running'")
+    while True:
+        try:
+            if not (STATE/'migration_complete.json').exists():event('waiting_for_migration');time.sleep(60);continue
+            if shutil.disk_usage(BASE).free<15*1024**3:event('disk_guard');time.sleep(300);continue
+            if dt.datetime.now(dt.timezone.utc)>=dt.datetime(2026,10,25,8,tzinfo=dt.timezone.utc):
+                housekeeping();dump(STATE/'deadline_status.json',dict(time=now(),status='expiry_archive_only'));time.sleep(3600);continue
+            housekeeping()
+            iteration();failures=0
+            dump(STATE/'supervisor_status.json',dict(time=now(),phase='between_iterations',api_calls_today=usage_today()[0]))
+            time.sleep(180)
+        except Exception as e:
+            failures+=1;message=redact(str(e))[:1500]
+            event('iteration_error',error_type=type(e).__name__,message=message,consecutive_failures=failures)
+            state=load(STATE/'research_state.json');state.update(supervisor_error=message,api_error_count=failures)
+            if failures>=5:state['phase']='diagnosis'
+            dump(STATE/'research_state.json',state)
+            time.sleep(3600 if 'DAILY_API_BUDGET' in message else min(900,30*2**min(failures,5)))
+
+if __name__=='__main__':main()

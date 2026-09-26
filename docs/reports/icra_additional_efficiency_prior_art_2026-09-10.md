@@ -1,0 +1,9 @@
+# Additional primary-source efficiency prior art
+
+Accessed 2026-09-10 during serial experiment execution. These are literature leads/positioning constraints, not reproduced baselines.
+
+- [Cancelliere et al., Balancing Accuracy and Efficiency: Adaptive Dynamics Orchestration for Model Predictive Control](https://arxiv.org/html/2606.00085v1). Primary HTML abstract/introduction/method outline inspected. ADO selects among dynamics models and evaluates them by replaying executed controls against observed trajectories, incorporating terrain semantics. It explicitly targets accuracy versus inference cost in navigation and reports real-world evaluation. This overlaps with our earlier history-based model selector concept; do not present retrospective model-error selection as a new idea. Current frozen surrogate instead approximates one learned residual within candidate evaluation, but that distinction alone does not establish a publishable contribution. Full method-level reproduction and comparison have not been performed.
+
+- [Accelerating Sampling-Based Control via Learned Linear Koopman Dynamics](https://arxiv.org/abs/2603.05385). Primary abstract inspected and HTML obtained. It accelerates MPPI rollouts using learned linear deep Koopman dynamics. Consequently the broad claim of making MPPI faster by replacing expensive dynamics with an approximation is already occupied. We have not evaluated its method or verified equivalence to our residual approximation; follow-up full-method reading is required before deciding a meaningful additional baseline.
+
+Together with the previously reviewed Real-time Neural MPC paper, these sources mean the manuscript must identify a narrower, evidenced contribution. Numerical savings alone must not be described as proof of novelty. Keep the planned nominal/RL-H/full/low-K controls, and assess whether a closer efficiency-method baseline is also needed after the candidate is settled.

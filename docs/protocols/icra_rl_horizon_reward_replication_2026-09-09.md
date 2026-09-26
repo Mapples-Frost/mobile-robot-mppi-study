@@ -1,0 +1,6 @@
+# Zero-H-penalty baseline replication extension
+
+2026-09-09, after the complete first-seed development qualification and audit.
+The first zero-penalty run succeeds 5/5 at all three widths, whereas its original-penalty counterpart succeeds 3/5 at width1.0. This motivates replication of baseline training, not a claim that our method wins.
+Run exactly two additional training seeds11101002 and11101003 from scratch with the frozen zero-penalty source,30k steps each. Retain original safety, plant, widths, value and gamma. Evaluate each on the same15 development contexts and eight controls (120 episodes per training seed), with original scripts copied only to point to each seed. Same development seeds are intentional paired contexts, not fresh confirmation. No original-penalty counterparts are trained in this extension, so it cannot establish a multi-seed causal effect of the penalty removal.
+Train, evaluate and audit each seed sequentially. Maximum extension budget: two hours. Report all seeds; no seed selection. After completion compare stability, success, accuracy and compute against the fixed-H controls before an ours comparison. Do not expand geometry. No publication-readiness claim.

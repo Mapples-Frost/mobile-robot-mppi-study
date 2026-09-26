@@ -1,0 +1,26 @@
+  codex/backup-icode-pre-refactor-20260711                     ebdc152 [origin/codex/backup-icode-pre-refactor-20260711] feat: checkpoint ICODE residual research framework
+* codex/icode-sac-compute                                      cad9f76 Record replicated MPPI tuning and overnight experiment handoff
+  codex/icode-step1-model-mismatch                             ebdc152 [origin/codex/icode-step1-model-mismatch] feat: checkpoint ICODE residual research framework
+  codex/icra2027-compute-exploration                           b166aac Complete 3216-episode ICRA compute exploration with causal holdouts and audited evidence
+  codex/l218-expanded-mujoco-scenes                            a9be4e9 [origin/codex/l218-expanded-mujoco-scenes] research:L223-six-scene-MuJoCo-confirmation
+  codex/mujoco-research-platform-refactor                      f5efde0 [origin/codex/mujoco-research-platform-refactor] feat: add unified physical MuJoCo MPPI research platform
+  codex/physical-tradeoff-sac-mppi                             0c6dfda Archive complete physical-tradeoff evidence and Phase-4 stop decision
+  codex/physical-tradeoff-v2                                   ec56db8 Finalize v2 oracle NO-GO with complete evidence figures and validated physical replays
+  codex/post-l233-five-direction-experiments                   9bcaa77 [origin/codex/post-l233-five-direction-experiments: ahead 20, behind 60] Archive final allocation headroom diagnostic and stop decision
+  codex/value-aligned-icode-rl-mppi                            8f06717 [origin/codex/value-aligned-icode-rl-mppi] feat: validate ICODE-guided RL sampling
+  codex/value-consistent-residual-aware-rl-mppi                43034be [origin/codex/value-consistent-residual-aware-rl-mppi] deliver
++ codex/vision-mppi-fusion                                     a1f7982 (/home/mapples/projects/mobile-robot-mppi-vision-fusion) feat(vision): integrate calibrated perception with RL-MPPI
+  hardware-e1e2-ros-bridge                                     1d22984 [origin/hardware-e1e2-ros-bridge] Add memory-augmented MPPI bridge
+  main                                                         885703b [origin/main] Ignore local IDE files results and backup files
+  mujoco-memory-bridge-ablation                                8fbd406 [origin/mujoco-memory-bridge-ablation] feat: confirm adaptive MPPI budget bandit
+  remotes/origin/HEAD                                          -> origin/main
+  remotes/origin/codex/backup-icode-pre-refactor-20260711      ebdc152 feat: checkpoint ICODE residual research framework
+  remotes/origin/codex/icode-step1-model-mismatch              ebdc152 feat: checkpoint ICODE residual research framework
+  remotes/origin/codex/l218-expanded-mujoco-scenes             a9be4e9 research:L223-six-scene-MuJoCo-confirmation
+  remotes/origin/codex/mujoco-research-platform-refactor       f5efde0 feat: add unified physical MuJoCo MPPI research platform
+  remotes/origin/codex/post-l233-five-direction-experiments    825593a amend L285 to resource-limited direction screen
+  remotes/origin/codex/value-aligned-icode-rl-mppi             8f06717 feat: validate ICODE-guided RL sampling
+  remotes/origin/codex/value-consistent-residual-aware-rl-mppi 43034be deliver
+  remotes/origin/hardware-e1e2-ros-bridge                      1d22984 Add memory-augmented MPPI bridge
+  remotes/origin/main                                          885703b Ignore local IDE files results and backup files
+  remotes/origin/mujoco-memory-bridge-ablation                 8fbd406 feat: confirm adaptive MPPI budget bandit

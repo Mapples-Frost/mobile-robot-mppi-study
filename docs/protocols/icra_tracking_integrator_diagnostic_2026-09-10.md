@@ -1,0 +1,5 @@
+# Tracking integrator diagnostic, 2026-09-10
+
+Motivation: obstacle diagnostic showed always-on ICODE+Euler can outperform preview+RK4. Before retaining a computation-savings claim in tracking, test sensitivity symmetrically on the already-defined late-turn and alternating paths, each at low/high speed. No geometry search.
+72 serial episodes:4scenes x3residualmodels x1fresh development seed11320001 x6methods(fullICODE,preview,nominal eachRK4/Euler). K100,H36,sameplantdelay,sensors,safety. Planner integrator is the sole intervention within each method. Fixed physics does not inject computation delay. Fresh seed is still development, not final confirmation. One seed cannot establish robustness; all model blocks and negative cells retained. Do not invent a new algorithm from an integrator swap.
+Audit raw trajectories, selectors, source/checkpoint hashes, configs and timing after completion; budget2hours. Keep prior frozen stages. This batch resolves a specific confound in the existing claim; no further geometry or integrator grid automatically follows.

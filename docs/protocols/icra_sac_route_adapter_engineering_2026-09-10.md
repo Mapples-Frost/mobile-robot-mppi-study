@@ -1,0 +1,7 @@
+# Original SAC route adapter: engineering checks only
+
+No learned performance claim or training in this stage. Preserve old50D actor construction(48causalfeatures+speed+remainingtime), original continuous action toK16..256step16/H8..40 mapping, full ICODE and command-readiness delay execution. Use calibrated sent-command history, never actual hidden actuator targets for policy context. No source changes to old physical environments.
+
+Isolated private module namespace binds an instance reference through the planner to a path-stage-cost function. Explicit task adaptation: squared lateral distance to supplied reference +0.2speederror squared +0.002accepted-command-change squared +0.02time; desiredspeed=min(speedcap,remaining geometric path length). This is not identical to oldpointgoalMPPIstagecost. Collision penalty uses2 perremainingstep; resourcepricezero forengineering so no newrewardhyperparametersearch. Any training reward/timeout treatment must be specified separately.
+
+Construct old compute-allocation environment settings and replace common task/scene/physical/planner/sensing settings with the qualified corridor configuration. Smoke fixedK100H36, check50D finite actorfeatures, physicalelapsed dt, zero versus injected-zero trajectories, independent pathcost arithmetic, unmodified legacy costguard, and mapping endpoints. Record allerrors. Initial shortsmoke is not navigation or SAC training success. No large training until route execution and timing/context semantics are validated.

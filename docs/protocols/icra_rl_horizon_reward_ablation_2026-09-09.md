@@ -1,0 +1,7 @@
+# RL-H horizon-penalty intervention, 2026-09-09
+
+Development diagnostic, not final testing or original-paper reproduction.
+Observed original reward decomposition: discounted horizon penalty exceeds differences in discounted task cost across H. Hypothesis: the 0.001 H term is a major cause of short-horizon concentration.
+Intervention: change only horizon penalty coefficient from 0.001 to 0.0. Keep gamma 0.97, SAC, terminal value, three training widths, 1200-cycle cap, seeds, 30k-step budget, safety and plant unchanged. Train from scratch with seed11101001 for a controlled random-seed comparison; trajectories and sample counts by width can diverge because episode lengths differ. This is one diagnostic training seed, not statistical confirmation.
+Evaluate with the same development seeds11120001–5, widths1.8/1.4/1.0 and eight learned/fixed-H/value variants. Retain all results. Compare learned H distribution, success, task cost, tracking error and measured compute. Evaluation occurs serially after training. The changed value network reflects changed training visitation; do not attribute any final behavior solely to the actor.
+Interpretation: higher H after intervention supports reward sensitivity; unchanged H suggests other learning limitations. Neither result proves the published algorithm deficient. Do not select a final method based on test data. Original stage remains immutable.

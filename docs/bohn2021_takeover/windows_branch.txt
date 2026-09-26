@@ -1,0 +1,13 @@
++ audit/stage4-requalification-v2                           cc92a1a (D:/Projects/mobile-robot-mppi-study-single-v6/codex_tmp/pro_qualification_v2_dd24b1b) chore(audit): create Stage-4 requalification v2 source identity
++ audit/stage4-requalification-v2-1                         e4926a6 (D:/Projects/mobile-robot-mppi-study-single-v6/codex_tmp/pro_qualification_v2_1_audit_root) chore(audit): create Stage-4 requalification v2.1 source identity
++ audit/stage4-requalification-v2-1-source-repair           d2b7664 (D:/Projects/mobile-robot-mppi-study-single-v6/codex_tmp/pro_qualification_v2_1_source_repair) fix(learning): import Path for residual checkpoint provenance
++ audit/stage4-requalification-v2-2                         c49f98c (D:/Projects/mobile-robot-mppi-study-single-v6/codex_tmp/pro_qualification_v2_2_audit_root) chore(audit): bind Stage-2 residual LFS artifact for v2.2
++ audit/stage4-requalification-v2-3                         c49f98c (D:/Projects/mobile-robot-mppi-study-single-v6/codex_tmp/pro_qualification_v2_3_audit_root) chore(audit): bind Stage-2 residual LFS artifact for v2.2
+* codex/change-aware-probabilistic-mppi                     a9aea0c research: archive positive but drifted single-obstacle v6 A1
+  codex/complex-static-three-dynamic-v1                     a605089 fix(real-robot): gate emergency takeover and add cause chain audit
+  codex/post-l233-five-direction-experiments                73f4872 [origin/codex/post-l233-five-direction-experiments: ahead 1, behind 2] add reproducible Tracking advisor figures
++ codex/real-robot-control-refactor-v1                      3c8ad38 (D:/Projects/mobile-robot-mppi-study-single-v6) refactor(real-robot): harden lidar prediction control contract
++ codex/real-robot-provenance-baseline                      284197a (D:/Projects/mobile-robot-mppi-study-single-v6/codex_tmp/pro_review_clean_3c8ad38) fix(audit): bind v2 materialization evidence
++ codex/replay-semantics-phase2-1                           a6efe03 (D:/Projects/mobile-robot-mppi-study-single-v6/codex_tmp/phase2_1_replay_semantics) test(audit): freeze unsupported CUDA replay signature
+  codex/single-obstacle-v6-baseline                         5049efc research: archive v13 microfeedback m3 repeated safety regression
+  remotes/origin/codex/post-l233-five-direction-experiments 26aafb9 fix(control): bound angular reversals by elapsed slew budget

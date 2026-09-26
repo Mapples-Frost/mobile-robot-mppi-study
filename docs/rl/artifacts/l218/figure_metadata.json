@@ -1,0 +1,13 @@
+{
+  "gate_interpretation": "Extreme-OOD safe fallback qualification; this does not show that the RL Actor improves over ICODE-MPPI.",
+  "mppi_horizon": 36,
+  "physics_domain": "nominal_seen",
+  "rollouts_per_decision": 30,
+  "seeds": [
+    91001,
+    91002,
+    91003
+  ],
+  "simulator": "MuJoCo 3.2.3 headless",
+  "status": "development_qualification_not_formal_claim"
+}

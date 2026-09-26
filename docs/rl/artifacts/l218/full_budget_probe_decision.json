@@ -1,0 +1,14 @@
+{
+  "all_collision_free": true,
+  "all_mujoco": true,
+  "episode_count": 3,
+  "formal_claim_allowed": false,
+  "interpretation": "Increasing K, MPPI iterations, and max steps did not rescue the three hard maps. The residual-conditioned Actor remained fully rejected as OOD, so Actor cross-map adaptation is required before a sealed benchmark.",
+  "reasons": [
+    "qualification seed 91001",
+    "three-map development probe",
+    "Actor proposal authority remained zero"
+  ],
+  "status": "development_gate_not_yet_passed",
+  "successes": 0
+}

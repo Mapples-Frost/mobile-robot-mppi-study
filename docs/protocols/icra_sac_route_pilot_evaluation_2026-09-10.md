@@ -1,0 +1,11 @@
+# Route SAC pilot: matched physical evaluation
+
+Wait until allfour10000cycle learning arms complete. Use final checkpoints only.78serialepisodes:2qualifiedroutes,originaldirection,standardmass,block0,3freshseeds13020001-3,13methods. No concurrenttraining orheavyanalysis. This is oneinitializationdevelopment evaluation,notfinalconfirmation.
+
+Methods:learnedjoint/Honly/Konly/masked; fullICODEfixedK64H16,K64H32,K128H16,K128H32,K256H32; nominalfixedK64H32/K128H32; previouscausaljointpathrule; Bohn-inspiredRL-Htransferdiagnostic. Alluseidenticalplant,safety,path,sensingandmeasuredcommand-readinessdelay. Learnedarmsretainoriginalhold5 and50Dcausalfeatures; rulesandRL-Hretainper-cycledecisions. Recordexplicitsemanticsratherthancallingthemidenticalalgorithms.
+
+FullICODEfixedcontrolsrunwiththecommonreliabilitycontextcost, so compareallocatedcomputeundercommoncontext. Fixednominalcontrolsdisableunusedcontextconstruction(counterfactual48zero placeholder never fedtoanactor) tokeepstrongordinarynominaltiming; physicalplanning/safetyremainidentical. Thus do notinflatefixednominalcomputeusingunneededneuraldescriptors. All learned full/ablated arms retain context cost; maskedonlyzerosactorinput17:33.
+
+RL-Htransfer usestrainedgeometrybaselineblock0, original19Dfeatures,H8-50,K100,learnedterminalvalueaugmentation. Its trainingusedfixedphysicalstepwithoutplanningdelay; thisevaluationchangesphysicaldelaysemantics. It is explicitly an OODtransferdiagnostic, NOTyetthefairfinalpaperRL-Hbaseline. No learnedSACsuperiorityclaim overRL-Huntilmatched-delaytraining/qualification. ExistingruleK32/100H16/36 remains a differentbudgetset andnonlearnedbaseline.
+
+Saveallrows,causalobservationsandrawactionsatdecisions,actualK/H,latency,allbudgets/cycles/success/collision,geometrictrackingRMSE. Freeze source/model/config provenance beforetiming. Reporteachrouteandallmethods; comparejointtoH-only,K-only,maskedandstrongfixed. No numericalwinrequired for reporting, no cherry-pickedseed/checkpoint. Auditactualhold5 andactionmapping,rawRMSE/timers/rewardcomponents/configchecks. Do notusepriorfixedsurrogate756aslearnedSACevidence.

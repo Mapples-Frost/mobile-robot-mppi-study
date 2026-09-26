@@ -1,0 +1,20 @@
+a9aea0c2deedfef111b6d26c4e295204e4599899 2026-07-26T09:03:04+08:00 research: archive positive but drifted single-obstacle v6 A1
+212b4f9e5a045367152a44cb0499ff902bc7e8cd 2026-07-26T09:01:33+08:00 research: add verified v6 raw-run reconciliation
+20214c24753193cf31866b9c499a755206440c03 2026-07-26T08:51:04+08:00 research: fix v6 A1 direct runner import path
+b9af861c9e1c19442a90c81ee47bbf7598895498 2026-07-26T08:50:12+08:00 research: freeze single-obstacle v6 emergency candidate A1
+a30b1aa87dfb80917b689a99d6bdb1171f8d60f5 2026-07-26T08:31:28+08:00 research: close D family after failed opened-seed replication
+711c26f4850b77bf77787f87ef2d49a6c39377d0 2026-07-26T08:18:02+08:00 research: freeze D2 opened-seed replication
+ab307eb8eb7084bdf3aa8a3f2f5b7fc83427b8f0 2026-07-26T08:17:00+08:00 research: record three-obstacle D2 mechanism pass
+6e9f9c5ee03989e4bfd72aa39696669dd56b958c 2026-07-26T08:11:21+08:00 research: freeze three-obstacle D2 bidirectional exit completion
+5d4de575b7fa6fab874f525b1c6173c511528c74 2026-07-26T08:01:28+08:00 research: record failed three-obstacle D1 probe
+e62957c78940e9f7b73fd3fb0430f2781a728b89 2026-07-26T07:46:51+08:00 research: freeze three-obstacle D1 joint branch selection
+5dcb7f87824bd86f1219cd2b0a95ab31bb2be34c 2026-07-26T07:43:00+08:00 research: identify three-obstacle joint ranking deficit
+b083866d5a5ee4b2955194bb79b22d65f3a8cad6 2026-07-26T07:33:50+08:00 research: freeze three-obstacle D0 joint feasibility audit
+7412bf3d815afb4cea50a1dc53630c73e01ec93c 2026-07-26T07:28:43+08:00 research: close failed three-obstacle C3 family
+c72161c863d403ce2b165e24001daef23e2393a2 2026-07-26T07:20:43+08:00 research: freeze three-obstacle C3 boundary certificate
+949df6e79fb9ff9f021a676e1662f0a1e2a37a02 2026-07-26T07:09:17+08:00 research: record positive three-obstacle C2 mechanism probe
+a1e7fd310ba5432fa5abcb4280e457e25d780233 2026-07-26T07:04:19+08:00 research: freeze three-obstacle C2 recertified transaction
+8570d79d89da415ed9819553d6c4e77e37985bb4 2026-07-26T06:57:40+08:00 research: retain failed three-obstacle C1 mechanism probe
+15d06443a017c5ac5a109cc28b097cae0c25af19 2026-07-26T06:52:27+08:00 research: freeze three-obstacle C1 recursive prefix transaction
+b265e62563f36f3efb632914fa663a750f2f140d 2026-07-26T06:45:40+08:00 research: record three-obstacle C0.2 all-prefix audit
+82348b79dd42caff800daeea34ccf93779fa564f 2026-07-26T06:38:39+08:00 research: freeze three-obstacle C0.2 all-prefix audit

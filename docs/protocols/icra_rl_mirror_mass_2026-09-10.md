@@ -1,0 +1,4 @@
+# Mirror and payload matched RL-H training
+
+2026-09-10. Freeze the selected zeroth-order residual method and test generalization to reflected turning direction. To avoid weakening RL-H through untrained geometry, train3new policies12101001–3 first,30ksteps each; sameSAC/value/reward,uniformmass.5/1/1.5 and left/right reflections, Euler,.35speed,1.8mwidth,120s. Reflection changesy,heading,yawrate andwallposition/yaw together; physical/safetyparameters remainidentical. No hiddenmass/mirrorlabel enterspolicy. Alltrainingseeds retained,finalcheckpoint prescribed. Seeds12110000+episode aretrainingonly.
+Evaluation usesfreshseeds12220001–5 onbothdirections with3pairedmodelblocks andallstrongcontrols. No mass-dependentbestmethodselection. Reuseunchangedresidualcheckpoints; resultiscontroller/modelgeneralization notnewresidualtraining. Existingfailureevidence preserved. No overlaptraining/timedcomparison. Trainingbudget6hours; stagedcode/protocolsources frozen.

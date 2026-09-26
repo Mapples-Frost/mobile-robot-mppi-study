@@ -1,0 +1,140 @@
+[
+  {
+    "config": "/home/mapples/projects/mobile-robot-mppi-study/configs/research/mujoco_l218_serpentine_polyline.yaml",
+    "goal_clearance": 0.42000000000000004,
+    "goal_free": true,
+    "grid_shortest_path_length": 10.511269837220816,
+    "margin": 0.03,
+    "minimum_clearance": 0.09999999999999964,
+    "minimum_clearance_location": [
+      5.35,
+      1.12
+    ],
+    "obstacle_count": 4,
+    "path_clear": true,
+    "path_exists": true,
+    "plant_backend": "mujoco_diff_drive",
+    "reference_length": 25.69346402545321,
+    "resolution": 0.05,
+    "sample_count": 2596,
+    "sample_spacing": 0.01,
+    "scene": "l218_serpentine",
+    "start_clearance": 0.21999999999999992,
+    "start_free": true
+  },
+  {
+    "config": "/home/mapples/projects/mobile-robot-mppi-study/configs/research/mujoco_l218_giant_u_polyline.yaml",
+    "goal_clearance": 0.7290812019439444,
+    "goal_free": true,
+    "grid_shortest_path_length": 9.28198051533945,
+    "margin": 0.03,
+    "minimum_clearance": 0.13619743949814866,
+    "minimum_clearance_location": [
+      5.424897540983607,
+      1.2683401639344263
+    ],
+    "obstacle_count": 3,
+    "path_clear": true,
+    "path_exists": true,
+    "plant_backend": "mujoco_diff_drive",
+    "reference_length": 9.186967331604652,
+    "resolution": 0.05,
+    "sample_count": 927,
+    "sample_spacing": 0.01,
+    "scene": "l218_giant_u",
+    "start_clearance": 0.9099999999999999,
+    "start_free": true
+  },
+  {
+    "config": "/home/mapples/projects/mobile-robot-mppi-study/configs/research/mujoco_l218_opposed_u_polyline.yaml",
+    "goal_clearance": 0.3600000000000002,
+    "goal_free": true,
+    "grid_shortest_path_length": 8.923401871576754,
+    "margin": 0.03,
+    "minimum_clearance": 0.11000000000000021,
+    "minimum_clearance_location": [
+      1.4000000000000001,
+      1.15
+    ],
+    "obstacle_count": 6,
+    "path_clear": true,
+    "path_exists": true,
+    "plant_backend": "mujoco_diff_drive",
+    "reference_length": 9.334076195710068,
+    "resolution": 0.05,
+    "sample_count": 944,
+    "sample_spacing": 0.01,
+    "scene": "l218_opposed_u",
+    "start_clearance": 0.3600000000000002,
+    "start_free": true
+  },
+  {
+    "config": "/home/mapples/projects/mobile-robot-mppi-study/configs/research/mujoco_l218_nested_u_polyline.yaml",
+    "goal_clearance": 0.8099999999999998,
+    "goal_free": true,
+    "grid_shortest_path_length": 7.673401871576757,
+    "margin": 0.03,
+    "minimum_clearance": 0.09999999999999964,
+    "minimum_clearance_location": [
+      2.01,
+      4.85
+    ],
+    "obstacle_count": 6,
+    "path_clear": true,
+    "path_exists": true,
+    "plant_backend": "mujoco_diff_drive",
+    "reference_length": 8.051219330881974,
+    "resolution": 0.05,
+    "sample_count": 816,
+    "sample_spacing": 0.01,
+    "scene": "l218_nested_u",
+    "start_clearance": 0.9099999999999999,
+    "start_free": true
+  },
+  {
+    "config": "/home/mapples/projects/mobile-robot-mppi-study/configs/research/mujoco_l218_cylinder_forest_polyline.yaml",
+    "goal_clearance": 0.9712670403551902,
+    "goal_free": true,
+    "grid_shortest_path_length": 8.222539674441606,
+    "margin": 0.03,
+    "minimum_clearance": 0.10908823923057431,
+    "minimum_clearance_location": [
+      1.646311475409836,
+      1.0647540983606556
+    ],
+    "obstacle_count": 16,
+    "path_clear": true,
+    "path_exists": true,
+    "plant_backend": "mujoco_diff_drive",
+    "reference_length": 7.908611876828449,
+    "resolution": 0.05,
+    "sample_count": 798,
+    "sample_spacing": 0.01,
+    "scene": "l218_cylinder_forest",
+    "start_clearance": 0.6911357772772618,
+    "start_free": true
+  },
+  {
+    "config": "/home/mapples/projects/mobile-robot-mppi-study/configs/research/mujoco_l218_cylinder_spiral_polyline.yaml",
+    "goal_clearance": 0.599994919987097,
+    "goal_free": true,
+    "grid_shortest_path_length": 6.135533905932727,
+    "margin": 0.03,
+    "minimum_clearance": 0.10452651046631234,
+    "minimum_clearance_location": [
+      2.8461538461538463,
+      4.138461538461539
+    ],
+    "obstacle_count": 21,
+    "path_clear": true,
+    "path_exists": true,
+    "plant_backend": "mujoco_diff_drive",
+    "reference_length": 6.055511309495189,
+    "resolution": 0.05,
+    "sample_count": 618,
+    "sample_spacing": 0.01,
+    "scene": "l218_cylinder_spiral",
+    "start_clearance": 1.3759876716914452,
+    "start_free": true
+  }
+]

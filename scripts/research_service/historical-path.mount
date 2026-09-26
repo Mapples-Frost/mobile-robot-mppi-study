@@ -1,0 +1,13 @@
+[Unit]
+Description=Bohn immutable historical path compatibility bind
+RequiresMountsFor=/data/openai-agent/mobile-robot-mppi-study
+Before=bohn-research.service
+
+[Mount]
+What=/data/openai-agent/mobile-robot-mppi-study
+Where=/home/mapples/projects/mobile-robot-mppi-study
+Type=none
+Options=bind
+
+[Install]
+WantedBy=multi-user.target

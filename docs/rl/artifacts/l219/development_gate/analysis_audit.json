@@ -1,0 +1,37 @@
+{
+  "actor_checkpoint_sha256": "bf26a67ebac313930d63760db931e5d50704cdd9181923afd7f66d16159356b4",
+  "analysis_git_head": "28378a60548a35768b4222723914921ab941c2a2",
+  "bootstrap_samples": 10000,
+  "bootstrap_seed": 20260720,
+  "formal_claim_allowed": false,
+  "gate_status": "development_gate_failed",
+  "independent_seeds": [
+    91001,
+    91002,
+    91003
+  ],
+  "independent_unit": "seed",
+  "mujoco_version": "3.2.3",
+  "new_arms": [
+    "icode_mppi",
+    "simple_combination",
+    "full_proposed"
+  ],
+  "new_episodes": 54,
+  "old_full_auxiliary_episodes": 18,
+  "plant_backend": "mujoco_diff_drive",
+  "qualification": true,
+  "repeated_strata": [
+    "scene"
+  ],
+  "run_git_sha": "28378a60548a35768b4222723914921ab941c2a2",
+  "scenes": [
+    "l218_serpentine",
+    "l218_giant_u",
+    "l218_opposed_u",
+    "l218_nested_u",
+    "l218_cylinder_forest",
+    "l218_cylinder_spiral"
+  ],
+  "status": "complete_development_qualification"
+}

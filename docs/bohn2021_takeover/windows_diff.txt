@@ -1,0 +1,348 @@
+diff --git a/experiments/dynamic_uncertainty/run_single_dynamic_obstacle_paper_v4.py b/experiments/dynamic_uncertainty/run_single_dynamic_obstacle_paper_v4.py
+index fec11c0..4676524 100644
+--- a/experiments/dynamic_uncertainty/run_single_dynamic_obstacle_paper_v4.py
++++ b/experiments/dynamic_uncertainty/run_single_dynamic_obstacle_paper_v4.py
+@@ -344,6 +344,13 @@ def _set_probability_enabled(config, enabled, predictor):
+         if str(key).startswith("dynamic_") and str(key).endswith("_enabled"):
+             scan[key] = bool(enabled)
+ 
++    # FIX: Explicitly disable features per amendment8/15 design decisions
++    # These must remain disabled regardless of wildcard pattern above
++    if "probabilistic_obstacle_speed_governor_enabled" in config["planner"]:
++        config["planner"]["probabilistic_obstacle_speed_governor_enabled"] = False
++    if "dynamic_recovery_translation_enabled" in scan:
++        scan["dynamic_recovery_translation_enabled"] = False
++
+ 
+ def configure_arm(protocol, block, arm_name, base, stage3, stage4):
+     contract = protocol["arm_contracts"][arm_name]
+diff --git a/src/mobile_robot_mppi/planning/mppi.py b/src/mobile_robot_mppi/planning/mppi.py
+index 569e774..9051365 100644
+--- a/src/mobile_robot_mppi/planning/mppi.py
++++ b/src/mobile_robot_mppi/planning/mppi.py
+@@ -1816,6 +1816,263 @@ class MppiController:
+             mask[index] = True
+         return mask
+ 
++    def _validate_emergency_candidate_directions(
++        self,
++        samples,
++        emergency_mask,
++        state,
++        probabilistic_obstacles,
++        min_cosine_threshold=-0.05,
++    ):
++        """
++        Validate that emergency candidates point away from obstacles.
++
++        Reject candidates whose velocity direction points toward (rather than
++        away from) nearby obstacles. This prevents counterflow patterns that
++        exacerbate collision risk.
++
++        Args:
++            samples: Candidate control sequences [K, H, action_dim]
++            emergency_mask: Boolean mask of emergency candidates [K]
++            state: Current robot state
++            probabilistic_obstacles: List of tracked obstacles
++            min_cosine_threshold: Minimum cosine(candidate_dir, away_dir).
++                Negative values allow some inward component. Default -0.05
++                permits slight tangential motion but rejects direct approach.
++
++        Returns:
++            validated_mask: Updated boolean mask with unsafe candidates removed
++        """
++        if not emergency_mask.any():
++            return emergency_mask
++
++        if probabilistic_obstacles is None or len(probabilistic_obstacles) == 0:
++            return emergency_mask
++
++        # Extract action indices
++        if ("v_cmd" not in self.action_spec.names
++            or "omega_cmd" not in self.action_spec.names):
++            return emergency_mask
++
++        v_index = self.action_spec.index("v_cmd")
++        omega_index = self.action_spec.index("omega_cmd")
++
++        # Get robot position and heading
++        px_idx = self.state_spec.position_indices[0]
++        py_idx = self.state_spec.position_indices[1]
++        robot_pos = np.array([state[px_idx], state[py_idx]], dtype=np.float64)
++
++        if "theta" in self.state_spec.names:
++            theta = float(state[self.state_spec.index("theta")])
++        else:
++            theta = 0.0
++
++        validated_mask = emergency_mask.copy()
++        rejected_count = 0
++
++        # Check each emergency candidate
++        for k in np.where(emergency_mask)[0]:
++            # Get first-step control (emergency patterns are prefix-only)
++            v_cmd = float(samples[k, 0, v_index])
++            omega_cmd = float(samples[k, 0, omega_index])
++
++            # Skip stationary candidates (always safe)
++            if abs(v_cmd) < 1e-6:
++                continue
++
++            # Compute velocity direction in world frame
++            # For differential drive: heading_rate = omega, forward_speed = v
++            motion_heading = theta  # First-step heading (omega effect is small)
++            vel_world = np.array([
++                v_cmd * np.cos(motion_heading),
++                v_cmd * np.sin(motion_heading)
++            ], dtype=np.float64)
++
++            vel_norm = np.linalg.norm(vel_world)
++            if vel_norm < 1e-6:
++                continue
++
++            candidate_direction = vel_world / vel_norm
++
++            # Check against all obstacles
++            unsafe = False
++            for obs in probabilistic_obstacles:
++                # Get obstacle position (assume 2D position in first two dims)
++                try:
++                    if hasattr(obs, 'position'):
++                        obs_pos = np.array(obs.position[:2], dtype=np.float64)
++                    elif hasattr(obs, 'state'):
++                        obs_pos = np.array(obs.state[:2], dtype=np.float64)
++                    else:
++                        continue
++                except (AttributeError, IndexError, TypeError):
++                    continue
++
++                # Away vector: from obstacle to robot
++                away_vector = robot_pos - obs_pos
++                away_dist = np.linalg.norm(away_vector)
++
++                # Only check nearby obstacles (within 3m)
++                if away_dist > 3.0:
++                    continue
++
++                if away_dist < 1e-6:
++                    # Already at obstacle position - reject any motion
++                    unsafe = True
++                    break
++
++                away_direction = away_vector / away_dist
++
++                # Compute cosine: positive = away, negative = toward
++                cosine = np.dot(candidate_direction, away_direction)
++
++                # Reject if pointing significantly toward obstacle
++                if cosine < min_cosine_threshold:
++                    unsafe = True
++                    rejected_count += 1
++                    break
++
++            if unsafe:
++                validated_mask[k] = False
++
++        # If too many candidates rejected, ensure backward motion is preserved
++        if rejected_count >= 4 and validated_mask.sum() < 2:
++            # Re-enable any backward candidates (v < 0)
++            for k in np.where(emergency_mask)[0]:
++                v_cmd = float(samples[k, 0, v_index])
++                if v_cmd < -1e-6:  # Backward motion
++                    validated_mask[k] = True
++
++        return validated_mask
++
++    def _compute_barrier_action(
++        self,
++        state,
++        probabilistic_obstacles,
++        stop_max_probability,
++        stop_probability_mass,
++    ):
++        """
++        Compute barrier action when all candidates violate hard threshold.
++
++        Priority:
++        1. Emergency stop (if safe)
++        2. Gentle deceleration (preserve maneuverability)
++        3. None (fall back to stop)
++
++        Args:
++            state: Current robot state
++            probabilistic_obstacles: List of tracked obstacles
++            stop_max_probability: Risk of stopping
++            stop_probability_mass: Accumulated mass of stopping
++
++        Returns:
++            (action, reason): Barrier action and reason string, or (None, None)
++        """
++        # Check if we have velocity control
++        if "v_cmd" not in self.action_spec.names:
++            return None, None
++
++        v_index = self.action_spec.index("v_cmd")
++        omega_index = (
++            self.action_spec.index("omega_cmd")
++            if "omega_cmd" in self.action_spec.names
++            else None
++        )
++
++        # Get current velocity
++        if "v" in self.state_spec.names:
++            current_v = float(state[self.state_spec.index("v")])
++        else:
++            current_v = 0.0
++
++        # Priority 1: Emergency stop if collision risk is acceptable
++        emergency_stop_feasible = (
++            stop_max_probability
++            < self.config.probabilistic_obstacle_hard_probability_threshold
++        )
++
++        if emergency_stop_feasible:
++            action = np.zeros(self.action_spec.dimension, dtype=np.float64)
++            return action, "emergency_stop"
++
++        # Priority 2: Gentle deceleration
++        # Decelerate but preserve turning capability
++        decel_rate = 0.3  # m/s per step
++        target_v = max(0.0, current_v - decel_rate * self.config.dt)
++
++        # Steer toward maximum clearance direction if obstacles present
++        target_omega = 0.0
++        if (
++            probabilistic_obstacles
++            and omega_index is not None
++            and "theta" in self.state_spec.names
++        ):
++            # Find direction with maximum clearance
++            robot_pos = np.array([
++                state[self.state_spec.position_indices[0]],
++                state[self.state_spec.position_indices[1]]
++            ], dtype=np.float64)
++            theta = float(state[self.state_spec.index("theta")])
++
++            # Sample 8 directions
++            best_clearance = -1.0
++            best_heading = theta
++            for angle_offset in np.linspace(-np.pi, np.pi, 9)[:-1]:
++                test_heading = theta + angle_offset
++                min_clearance_in_direction = float('inf')
++
++                for obs in probabilistic_obstacles:
++                    try:
++                        if hasattr(obs, 'position'):
++                            obs_pos = np.array(obs.position[:2], dtype=np.float64)
++                        elif hasattr(obs, 'state'):
++                            obs_pos = np.array(obs.state[:2], dtype=np.float64)
++                        else:
++                            continue
++                    except (AttributeError, IndexError, TypeError):
++                        continue
++
++                    # Project obstacle onto test direction
++                    to_obs = obs_pos - robot_pos
++                    dist_along = np.dot(
++                        to_obs,
++                        np.array([np.cos(test_heading), np.sin(test_heading)])
++                    )
++                    # Only consider obstacles ahead
++                    if dist_along > 0:
++                        lateral_dist = np.linalg.norm(
++                            to_obs - dist_along * np.array([
++                                np.cos(test_heading),
++                                np.sin(test_heading)
++                            ])
++                        )
++                        min_clearance_in_direction = min(
++                            min_clearance_in_direction, lateral_dist
++                        )
++
++                if min_clearance_in_direction > best_clearance:
++                    best_clearance = min_clearance_in_direction
++                    best_heading = test_heading
++
++            # P-controller toward best heading
++            heading_error = np.arctan2(
++                np.sin(best_heading - theta),
++                np.cos(best_heading - theta)
++            )
++            target_omega = 2.0 * heading_error  # P gain = 2.0
++
++        # Construct barrier action
++        action = np.zeros(self.action_spec.dimension, dtype=np.float64)
++        action[v_index] = target_v
++        if omega_index is not None:
++            action[omega_index] = target_omega
++
++        # Clip to action bounds
++        action = self.action_spec.clip(action)
++
++        return action, "gentle_deceleration"
++
+     def _clear_probabilistic_traversal_commit(self):
+         self._probabilistic_traversal_crossing_progress = None
+         self._probabilistic_traversal_entry_progress = None
+@@ -5922,7 +6179,41 @@ class MppiController:
+                         else "minimum_risk_active_candidate"
+                     )
+                 else:
+-                    fallback_kind = "stop_is_safest_candidate"
++                    # PRESCRIPTION 5: Barrier-aware fallback
++                    # When all candidates violate hard threshold and stopping
++                    # is not strictly better, compute barrier action instead
++                    # of selecting the "least bad" violating candidate
++                    barrier_action, barrier_reason = (
++                        self._compute_barrier_action(
++                            state,
++                            probabilistic_obstacles,
++                            stop_maximum_probability,
++                            stop_probability_mass,
++                        )
++                    )
++                    if barrier_action is not None:
++                        # Use barrier action (emergency stop or gentle decel)
++                        action = barrier_action
++                        sequence = np.tile(
++                            barrier_action,
++                            (self.config.horizon, 1)
++                        )
++                        trajectory = self.rollout(state, sequence)[0]
++                        fallback_kind = f"barrier_action_{barrier_reason}"
++                        fallback_candidate_index = -1
++                        fail_closed = True
++                        selected_risk = self._probabilistic_collision_risk(
++                            trajectory[None, ...], forecasts
++                        )
++                        fallback_used = True
++                        # Skip the normal fallback path below
++                        return (
++                            action, sequence, trajectory, selected_risk,
++                            None, fallback_kind, True, True
++                        )
++                    else:
++                        # Barrier not available, fall back to stop
++                        fallback_kind = "stop_is_safest_candidate"
+             fallback_used = True
+             if fallback_candidate_index >= 0:
+                 sequence = values[fallback_candidate_index].copy()
+@@ -7107,6 +7398,18 @@ class MppiController:
+                     samples, prior
+                 )
+             )
++            # PRESCRIPTION 4: Validate emergency directions
++            # Reject candidates pointing toward obstacles
++            if emergency_candidate_mask.any() and probabilistic_obstacles:
++                emergency_candidate_mask = (
++                    self._validate_emergency_candidate_directions(
++                        samples,
++                        emergency_candidate_mask,
++                        state,
++                        probabilistic_obstacles,
++                        min_cosine_threshold=-0.05,
++                    )
++                )
+         terminal_dx = float(
+             target.pose.x - state[self.state_spec.position_indices[0]]
+         )

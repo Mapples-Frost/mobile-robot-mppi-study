@@ -1,0 +1,30 @@
+{
+  "criteria": {
+    "completion_gain_gt_0_10": true,
+    "mechanism_activation": {
+      "full_hss_enabled_min": 1.0,
+      "full_proposal_authority_max": 0.0,
+      "full_residual_context_enabled_min": 1.0,
+      "simple_proposal_authority_min": 1.0
+    },
+    "no_collision_worsening": true,
+    "no_seed_success_regression": true,
+    "positive_success_effect": true
+  },
+  "interpretation": "Extreme-OOD safe fallback qualification; this does not show that the RL Actor improves over ICODE-MPPI.",
+  "per_seed_successes_out_of_six": {
+    "91001": {
+      "full_proposed": 3,
+      "simple_combination": 0
+    },
+    "91002": {
+      "full_proposed": 3,
+      "simple_combination": 0
+    },
+    "91003": {
+      "full_proposed": 3,
+      "simple_combination": 0
+    }
+  },
+  "status": "development_gate_passed"
+}

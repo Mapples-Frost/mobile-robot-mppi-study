@@ -1,0 +1,228 @@
+ M ara/PAPER.md
+ M ara/logic/claims.md
+ M ara/trace/exploration_tree.yaml
+ M ara/trace/sessions/session_index.yaml
+ M docs/baselines/bohn_rl_horizon_fidelity.md
+ M docs/reports/icode_sac_compute_results.md
+ M docs/reports/icode_sac_development_notes.md
+ M experiments/icode_sac_diagnostics/report.py
+ M experiments/icode_sac_diagnostics/write_report.py
+ M pyproject.toml
+ M research_artifacts/l223_six_scene_confirmation_2026-07-20/logs/l223_gate_b_icode_cylinder_forest_seed91001.stderr.log
+ M research_artifacts/l223_six_scene_confirmation_2026-07-20/logs/l223_gate_b_icode_cylinder_forest_seed91001.stdout.log
+ M research_artifacts/l223_six_scene_confirmation_2026-07-20/logs/l223_gate_b_icode_giant_u_seed91001.stderr.log
+ M research_artifacts/l223_six_scene_confirmation_2026-07-20/logs/l223_gate_b_icode_giant_u_seed91001.stdout.log
+ M research_artifacts/l223_six_scene_confirmation_2026-07-20/logs/l223_gate_b_icode_opposed_u_seed91001.stderr.log
+ M research_artifacts/l223_six_scene_confirmation_2026-07-20/logs/l223_gate_b_icode_opposed_u_seed91001.stdout.log
+ M research_artifacts/l223_six_scene_confirmation_2026-07-20/logs/l223_six_scene_icode_cylinder_spiral_seed91001.stderr.log
+ M research_artifacts/l223_six_scene_confirmation_2026-07-20/logs/l223_six_scene_icode_cylinder_spiral_seed91001.stdout.log
+ M research_artifacts/l223_six_scene_confirmation_2026-07-20/logs/l223_six_scene_icode_nested_u_seed91001.stderr.log
+ M research_artifacts/l223_six_scene_confirmation_2026-07-20/logs/l223_six_scene_icode_nested_u_seed91001.stdout.log
+ M research_artifacts/l223_six_scene_confirmation_2026-07-20/logs/l223_six_scene_icode_serpentine_seed91001.stderr.log
+ M research_artifacts/l223_six_scene_confirmation_2026-07-20/logs/l223_six_scene_icode_serpentine_seed91001.stdout.log
+ M src/mobile_robot_mppi/perception/__init__.py
+ M src/mobile_robot_mppi/simulation/model_factory.py
+?? .codex_tmp/
+?? ara/_fix_symmetry.py
+?? ara/_log_n188.py
+?? ara/trace/sessions/2026-09-10_034.yaml
+?? ara/trace/sessions/2026-09-18_035.yaml
+?? ara/trace/sessions/2026-09-18_036.yaml
+?? ara/trace/sessions/2026-09-18_037.yaml
+?? ara/trace/sessions/2026-09-18_038.yaml
+?? ara/trace/sessions/2026-09-19_039.yaml
+?? ara/trace/sessions/2026-09-19_040.yaml
+?? ara/trace/sessions/2026-09-19_041.yaml
+?? ara/trace/sessions/2026-09-19_042.yaml
+?? ara/trace/sessions/2026-09-23_043.yaml
+?? configs/real_robot/hikrobot_ground_correspondences.template.csv
+?? configs/real_robot/hikrobot_ground_plane_calibration.template.yaml
+?? configs/real_robot/pure_vision_shadow.yaml
+?? configs/research/broad_realtime_2026-09-16/
+?? configs/research/kh_difficulty_ladder_2026-09-23/
+?? configs/research/kh_scene_suite_2026-09-15/
+?? configs/research/mujoco_high_dynamic_chicane_stretch_confirmation.yaml
+?? configs/research/mujoco_high_dynamic_mechanism_alternating_high.yaml
+?? configs/research/mujoco_high_dynamic_mechanism_alternating_low.yaml
+?? configs/research/mujoco_high_dynamic_mechanism_arc_high.yaml
+?? configs/research/mujoco_high_dynamic_mechanism_arc_low.yaml
+?? configs/research/mujoco_high_dynamic_mechanism_late_turn_high.yaml
+?? configs/research/mujoco_high_dynamic_mechanism_late_turn_low.yaml
+?? configs/research/mujoco_high_dynamic_mechanism_straight_high.yaml
+?? configs/research/mujoco_high_dynamic_mechanism_straight_low.yaml
+?? configs/research/mujoco_high_dynamic_obstacle_anchor.yaml
+?? configs/research/mujoco_high_dynamic_sweep_mirror_confirmation.yaml
+?? docs/paper/
+?? docs/protocols/bohn2021_failure_state_probe_2026-09-26.md
+?? docs/protocols/bohn2021_latency_tree_2026-09-26.md
+?? docs/protocols/icode_sac_geometry_screen_2026-09-09.md
+?? docs/protocols/icode_sac_independent_initialization_2026-09-09.md
+?? docs/protocols/icode_sac_matched_models_2026-09-09.md
+?? docs/protocols/icode_sac_mechanism_2026-09-09.md
+?? docs/protocols/icra_causal_kh_pilot_2026-09-10.md
+?? docs/protocols/icra_common_and_mass_2026-09-09.md
+?? docs/protocols/icra_controller_bottleneck_2026-09-09.md
+?? docs/protocols/icra_deadline_pivot_2026-09-09.md
+?? docs/protocols/icra_door_budget_2026-09-09.md
+?? docs/protocols/icra_feasible_backbone_2026-09-09.md
+?? docs/protocols/icra_frozen_mirror_confirmation_2026-09-10.md
+?? docs/protocols/icra_geometry_confirmation_2026-09-10.md
+?? docs/protocols/icra_history_selector_pilot_2026-09-10.md
+?? docs/protocols/icra_integrator_diagnostic_2026-09-10.md
+?? docs/protocols/icra_kh_factorial_2026-09-10.md
+?? docs/protocols/icra_local_residual_confirmation_2026-09-10.md
+?? docs/protocols/icra_local_residual_pilot_2026-09-10.md
+?? docs/protocols/icra_mismatch_question_2026-09-09.md
+?? docs/protocols/icra_model_regime_probe_2026-09-10.md
+?? docs/protocols/icra_model_selection_2026-09-09.md
+?? docs/protocols/icra_multifidelity_pilot_2026-09-10.md
+?? docs/protocols/icra_obstacle_anchor_2026-09-09.md
+?? docs/protocols/icra_overnight_comparison_2026-09-09.md
+?? docs/protocols/icra_paper_baselines_progressive_2026-09-09.md
+?? docs/protocols/icra_preview_confirmation_2026-09-09.md
+?? docs/protocols/icra_preview_mechanism_2026-09-09.md
+?? docs/protocols/icra_recenter_pilot_2026-09-10.md
+?? docs/protocols/icra_rl_geometry_mass_2026-09-10.md
+?? docs/protocols/icra_rl_h_nominal_ready_qualification_2026-09-10.md
+?? docs/protocols/icra_rl_h_ready_evaluation_2026-09-10.md
+?? docs/protocols/icra_rl_h_ready_qualification_2026-09-10.md
+?? docs/protocols/icra_rl_h_ready_training_2026-09-10.md
+?? docs/protocols/icra_rl_horizon_anchor_2026-09-09.md
+?? docs/protocols/icra_rl_horizon_diverse_2026-09-09.md
+?? docs/protocols/icra_rl_horizon_reward_ablation_2026-09-09.md
+?? docs/protocols/icra_rl_horizon_reward_replication_2026-09-09.md
+?? docs/protocols/icra_rl_mass_euler_2026-09-10.md
+?? docs/protocols/icra_rl_mirror_mass_2026-09-10.md
+?? docs/protocols/icra_route_feasibility_2026-09-09.md
+?? docs/protocols/icra_sac_route_adapter_engineering_2026-09-10.md
+?? docs/protocols/icra_sac_route_independent_2026-09-10.md
+?? docs/protocols/icra_sac_route_independent_evaluation_2026-09-10.md
+?? docs/protocols/icra_sac_route_pilot_2026-09-10.md
+?? docs/protocols/icra_sac_route_pilot_evaluation_2026-09-10.md
+?? docs/protocols/icra_speed_demand_pilot_2026-09-10.md
+?? docs/protocols/icra_temporal_sampling_2026-09-09.md
+?? docs/protocols/icra_tracking_integrator_diagnostic_2026-09-10.md
+?? docs/protocols/icra_tracking_preview_2026-09-09.md
+?? docs/protocols/icra_tracking_preview_v2_2026-09-09.md
+?? docs/protocols/icra_tracking_selector_2026-09-09.md
+?? docs/protocols/icra_transition_pilot_2026-09-09.md
+?? docs/protocols/icra_width_ladder_2026-09-09.md
+?? docs/protocols/icra_width_timeout_diagnostic_2026-09-09.md
+?? docs/reports/bohn2021_branch_calibration_2026-09-24.md
+?? docs/reports/bohn2021_branch_training_diagnosis_2026-09-24.md
+?? docs/reports/bohn2021_conservative_iteration_2026-09-24.md
+?? docs/reports/bohn2021_credit_diagnosis_2026-09-18.md
+?? docs/reports/bohn2021_evidence_map_2026-09-24.md
+?? docs/reports/bohn2021_failure_assessment_2026-09-24.md
+?? docs/reports/bohn2021_failure_state_probe_2026-09-26.md
+?? docs/reports/bohn2021_gated_horizon_search_2026-09-25.md
+?? docs/reports/bohn2021_gated_validation_failure_2026-09-26.md
+?? docs/reports/bohn2021_goal_requirements_audit_2026-09-24.md
+?? docs/reports/bohn2021_grid_interpretation_2026-09-24.md
+?? docs/reports/bohn2021_handoff_2026-09-18.md
+?? docs/reports/bohn2021_horizon_mask_semantics_2026-09-25.md
+?? docs/reports/bohn2021_latency_tree_2026-09-26.md
+?? docs/reports/bohn2021_latency_tree_requirements_2026-09-26.md
+?? docs/reports/bohn2021_min_q_extension_2026-09-24.md
+?? docs/reports/bohn2021_paper_grid_validation_diagnosis_2026-09-24.md
+?? docs/reports/bohn2021_paper_h_credit_2026-09-24.md
+?? docs/reports/bohn2021_paper_h_soft_2026-09-24.md
+?? docs/reports/bohn2021_plateau_screen_2026-09-18.md
+?? docs/reports/bohn2021_recovery_2026-09-25.md
+?? docs/reports/bohn2021_reset_isolation_2026-09-25.md
+?? docs/reports/bohn2021_sac_preserve_2026-09-19.md
+?? docs/reports/bohn2021_sac_teacher_2026-09-19.md
+?? docs/reports/bohn2021_sac_teacher_cause_2026-09-19.md
+?? docs/reports/bohn2021_sac_teacher_paused_2026-09-19.md
+?? docs/reports/bohn2021_solver_recovery_diagnosis_2026-09-25.md
+?? docs/reports/bohn2021_stationary_optimization_2026-09-18.md
+?? docs/reports/bohn2021_takeover_2026-09-23.md
+?? docs/reports/bohn2021_teacher_value_2026-09-19.md
+?? docs/reports/bohn2021_terminal_transplant_2026-09-24.md
+?? docs/reports/bohn2021_transfer_diagnosis_2026-09-24.md
+?? docs/reports/bohn2021_transfer_feasibility_2026-09-24.md
+?? docs/reports/icode_sac_mechanism_results.md
+?? docs/reports/icode_sac_morning_2026-09-09.md
+?? docs/reports/icra_additional_efficiency_prior_art_2026-09-10.md
+?? docs/reports/icra_baseline_reproduction_scope_2026-09-09.md
+?? docs/reports/icra_execution_handoff_2026-09-09.md
+?? docs/reports/icra_geometry_preliminary_2026-09-09.md
+?? docs/reports/icra_joint_kh_frontier_verdict_2026-09-11.md
+?? docs/reports/icra_joint_kh_matched_rlh_verdict_2026-09-10.md
+?? docs/reports/icra_local_approximation_prior_art_2026-09-10.md
+?? docs/reports/icra_original_method_alignment_2026-09-10.md
+?? docs/reports/icra_preview_literature_position_2026-09-09.md
+?? docs/reports/icra_rl_h_predictor_transfer_correction_2026-09-10.md
+?? docs/reports/icra_route_sac_independent_verdict_2026-09-10.md
+?? docs/reports/icra_route_sac_pilot_verdict_2026-09-10.md
+?? docs/reports/icra_sac_corridor_compatibility_2026-09-10.md
+?? docs/reports/icra_weight_sensitivity_mechanism_2026-09-10.md
+?? docs/reports/kh_scarcity_prereg_review_2026-09-24.md
+?? docs/reports/research_priority_2026-09-23.md
+?? experiments/bohn2021_reproduction/
+?? experiments/icode_sac_development/evaluate_independent.py
+?? experiments/icode_sac_development/independent_round.py
+?? experiments/icode_sac_diagnostics/budget_behavior.py
+?? experiments/icode_sac_diagnostics/mechanism_report.py
+?? experiments/icode_sac_geometry/
+?? experiments/icode_sac_matched/
+?? experiments/icode_sac_mechanism/
+?? experiments/icra_broad_realtime/
+?? experiments/icra_budget_environment/
+?? experiments/icra_compute_scarcity/
+?? experiments/icra_controller_bottleneck/
+?? experiments/icra_deadline_analysis/
+?? experiments/icra_door_budget/
+?? experiments/icra_feasible_backbone/
+?? experiments/icra_model_selection/
+?? experiments/icra_obstacle_anchor/
+?? experiments/icra_preview_confirmation/
+?? experiments/icra_preview_mechanism/
+?? experiments/icra_rl_geometry_mass/
+?? experiments/icra_rl_horizon/
+?? experiments/icra_rl_horizon_diverse/
+?? experiments/icra_rl_horizon_reward_ablation/
+?? experiments/icra_rl_mass_euler/
+?? experiments/icra_rl_mirror_mass/
+?? experiments/icra_rl_ready_adapter/
+?? experiments/icra_rl_ready_training/
+?? experiments/icra_route_feasibility/
+?? experiments/icra_sac_route_adapter/
+?? experiments/icra_sac_route_independent/
+?? experiments/icra_sac_route_nominal/
+?? experiments/icra_scene_design/
+?? experiments/icra_temporal_sampling/
+?? experiments/icra_tracking_preview/
+?? experiments/icra_tracking_preview_v2/
+?? experiments/icra_tracking_selector/
+?? experiments/icra_transition_pilot/
+?? experiments/pilot/
+?? experiments/real_robot/calibrate_ground_plane_homography.py
+?? experiments/real_robot/run_pure_vision_shadow.py
+?? figures/
+?? logs/
+?? make_det_tables.py
+?? paper/icra_kh_allocation.pdf
+?? paper/icra_kh_allocation.tex
+?? requirements-vision.txt
+?? research_artifacts/bohn2021_reproduction_2026-09-17/
+?? research_artifacts/icode_sac_compute_2026-09-08/
+?? research_artifacts/icra_mismatch_mechanism_2026-09-09/
+?? research_artifacts/icra_obstacle_anchor_geometry_2026-09-09/
+?? research_artifacts/icra_scene_view_2026-09-09/
+?? research_artifacts/kh_compute_scarcity_2026-09-24/
+?? research_artifacts/kh_ladder_rolls_2026-09-23/
+?? research_artifacts/kh_pilot_2026-09-05/
+?? research_artifacts/kh_scene_strata_2026-09-23/
+?? research_artifacts/scene_narrow_composite_2026-09-16/
+?? src/mobile_robot_mppi/perception/open_source_vision.py
+?? src/mobile_robot_mppi/perception/vision_calibration.py
+?? src/mobile_robot_mppi/perception/vision_control.py
+?? tests/icode_sac_development/test_geometry_screen.py
+?? tests/icode_sac_development/test_initialization_comparison.py
+?? tests/icode_sac_development/test_matched_models.py
+?? tests/icode_sac_development/test_mechanism_hold.py
+?? tests/tracking/test_open_source_vision_adapters.py
+?? tests/tracking/test_pure_vision_control.py
+?? tests/tracking/test_pure_vision_shadow_serialization.py
+?? tests/tracking/test_vision_calibration.py

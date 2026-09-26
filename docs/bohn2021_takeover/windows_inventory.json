@@ -1,0 +1,102 @@
+[
+  {
+    "path": "docs\\bohn2021_replication\\00_project_overview.md",
+    "bytes": 2794
+  },
+  {
+    "path": "docs\\bohn2021_replication\\01_paper_summary.md",
+    "bytes": 6530
+  },
+  {
+    "path": "docs\\bohn2021_replication\\02_implementation_plan.md",
+    "bytes": 5062
+  },
+  {
+    "path": "docs\\bohn2021_replication\\03_progress_log.md",
+    "bytes": 3183
+  },
+  {
+    "path": "docs\\bohn2021_replication\\04_current_status.md",
+    "bytes": 5066
+  },
+  {
+    "path": "docs\\bohn2021_replication\\bohn2021_paper.pdf",
+    "bytes": 3534858
+  },
+  {
+    "path": "docs\\bohn2021_replication\\NEXT_STEPS.md",
+    "bytes": 2519
+  },
+  {
+    "path": "docs\\bohn2021_replication\\SESSION_SUMMARY.md",
+    "bytes": 6947
+  },
+  {
+    "path": "docs\\bohn2021_takeover\\windows_branch.txt",
+    "bytes": 2395
+  },
+  {
+    "path": "docs\\bohn2021_takeover\\windows_diff.txt",
+    "bytes": 14572
+  },
+  {
+    "path": "docs\\bohn2021_takeover\\windows_log.txt",
+    "bytes": 2450
+  },
+  {
+    "path": "docs\\bohn2021_takeover\\windows_remote.txt",
+    "bytes": 151
+  },
+  {
+    "path": "docs\\bohn2021_takeover\\windows_status.txt",
+    "bytes": 67085
+  },
+  {
+    "path": "experiments\\bohn2021\\smoke_test_envs.py",
+    "bytes": 7305
+  },
+  {
+    "path": "experiments\\bohn2021\\smoke_test_mpc.py",
+    "bytes": 4119
+  },
+  {
+    "path": "src\\bohn2021\\__init__.py",
+    "bytes": 285
+  },
+  {
+    "path": "src\\bohn2021\\envs\\cartpole.py",
+    "bytes": 9686
+  },
+  {
+    "path": "src\\bohn2021\\envs\\vehicle.py",
+    "bytes": 10540
+  },
+  {
+    "path": "src\\bohn2021\\envs\\__init__.py",
+    "bytes": 140
+  },
+  {
+    "path": "src\\bohn2021\\mpc\\cartpole_mpc.py",
+    "bytes": 5102
+  },
+  {
+    "path": "src\\bohn2021\\mpc\\mpc_base.py",
+    "bytes": 6712
+  },
+  {
+    "path": "src\\bohn2021\\mpc\\__init__.py",
+    "bytes": 159
+  },
+  {
+    "path": "tests\\bohn2021\\test_cartpole.py",
+    "bytes": 8717
+  },
+  {
+    "path": "tests\\bohn2021\\test_vehicle.py",
+    "bytes": 8757
+  },
+  {
+    "path": "tests\\bohn2021\\__init__.py",
+    "bytes": 32
+  }
+]

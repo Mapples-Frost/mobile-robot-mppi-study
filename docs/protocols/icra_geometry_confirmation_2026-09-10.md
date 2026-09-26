@@ -1,0 +1,11 @@
+# Fixed frozen-surrogate geometry confirmation
+
+Candidate is the original zeroth-order frozen residual surrogate, selected before this stage. The weighted/uniform two-pass revision was rejected in the separate162development experiment and is excluded; do not choose a different algorithm by condition.
+
+756 serial MuJoCo episodes: two geometries(single_turn,reverse_turns), two mirror directions, three mass/inertia ratios0.5/1/1.5, three residual-model/RL-H paired blocks, three fresh evaluation seeds12520001-3, seven methods(nominal28,nominal36,RL-H adaptation,full ICODE K100/K32/K64,frozen surrogate K100). The block pairing is not a full cross and does not make repeated scene seeds independent. Inherit all non-geometric settings from the720experiment; replace centerline/walls using geometry.py and set fresh seeds. Use matched RL geometry/mass training seeds12401001-3; wait until all training completes. Euler,0.35m/s speed cap,120s common cap, shared safety/sensing. No concurrent training or heavy analysis while timing.
+
+Start with all seven methods in the single-turn/original/mass1/block0/seed12520001 common condition. If any fails, save those results and stop expansion for diagnosis; do not omit them. If all succeed, run the remaining randomized schedule. Success in this anchor is not assumed elsewhere. No interim accuracy-based stopping.
+
+Primary comparisons per each of12geometry/direction/mass cells: success/collision, mean tracking RMSE, total and per-cycle measured compute, seed-paired differences from full100, and all strong-control tradeoffs. Apply the existing <=1mm RMSE increase and >=25% compute reduction relative to full100 separately to each cell. A failed numerical gate remains in the table and does not erase a useful accuracy/compute tradeoff. No claim of equivalence from a nonsignificant test. No pooling geometries to conceal failures; their route lengths differ.
+
+Freeze source/checkpoints/protocol before timed execution. Audit exact inherited config plus declared geometry, all raw trajectories, RMSE, cycle counts, time sums, RL actor and H, mass/inertia, samples, and residual batches. Preserve all traces/results/seed pairs. Generalization claims need all cells; novelty and real-world applicability remain separate requirements.

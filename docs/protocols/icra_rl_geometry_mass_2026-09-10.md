@@ -1,0 +1,7 @@
+# Matched geometry and mass RL-H training
+
+Train the existing Bohn-inspired SAC-H and learned terminal augmentation adaptation, not an exact reproduction of the original paper. Keep architecture, reward, H8-50, K100, Euler, speed0.35,120s cap, safety, sensor settings and plant unchanged from rl_mirror_mass. Three fresh policy seeds12401001-3,30000environment steps each; retain checkpoint and full training traces. No timed evaluation concurrently.
+
+Each episode uniformly randomizes centerline single_turn/reverse_turns, original/mirrored direction, mass+inertia ratio0.5/1/1.5. Fixed corridor width1.8m with explicit physical box walls. Single turn:2m entry, radius1.2m90degree arc,1m exit. Reversed turns:2m entry, left90degree arc R1.2,1m straight, right90degree arc R1.2,1.5m exit. Mirroring flips y. Wall offsets are computed from centerline segments with miter joins; endpoints are open, common to all methods. No terrain label, mass, or shape label is included in the policy observation. Existing residual models remain frozen and do not retrain on evaluation data.
+
+The new single-turn walls use the same general offset construction as the reverse-turn scene; do not claim exact geometric identity to old720scene. This is new geometry qualification. Before long training, smoke physical rollouts and inspect generated MuJoCo wall scenes. Then compare nominal/full/frozen on both scenes to check reachability and safety. No claim of advantage before matched RL training and complete comparative evaluation.

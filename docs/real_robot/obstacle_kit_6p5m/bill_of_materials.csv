@@ -1,0 +1,8 @@
+﻿module_id,kind,dimensions_mm,quantity,description
+W600,wall,600x160x350,10,6 mm 不透明哑光亚克力低墙标准模块（宽底座+三角加强肋）
+W300,wall,300x160x350,6,6 mm 不透明哑光亚克力低墙延长模块（宽底座+三角加强肋）
+C240,octagonal_prism,D240xH350,4,4 mm 不透明哑光亚克力八边形柱（外接直径 240 mm）
+C320,octagonal_prism,D320xH350,4,4 mm 不透明哑光亚克力八边形柱（外接直径 320 mm）
+C560,octagonal_prism,D560xH350,1,4 mm 不透明哑光亚克力八边形基准障碍（外接直径 560 mm）
+D320,dynamic_octagonal_shell,D320xH300,1,轻量亚克力八边形动态外壳（仅限低速、软边条与独立急停）
+F1800,floor_patch,1800x1200x2,2,动力学变化实验用可拆卸地面材料

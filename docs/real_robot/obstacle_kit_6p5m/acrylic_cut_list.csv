@@ -1,0 +1,22 @@
+﻿part_id,module_id,material,thickness_mm,blank_or_profile_mm,quantity,fabrication_notes
+W600-A,W600,opaque matte cast PMMA,6.0,600x344 main panel,10,top corners R20; lower corners R5; deburr; silicone U-edge
+W600-B,W600,opaque matte cast PMMA,6.0,600x160 base,10,NO THROUGH SLOT; etch centerline and gusset stations X=60/300/540; nonslip pads below
+W600-C,W600,opaque matte cast PMMA,6.0,70x100 right-triangle gusset,60,install as front/back pairs; R5 exposed corner; solvent bond
+W300-A,W300,opaque matte cast PMMA,6.0,300x344 main panel,6,top corners R20; lower corners R5; deburr; silicone U-edge
+W300-B,W300,opaque matte cast PMMA,6.0,300x160 base,6,NO THROUGH SLOT; etch centerline and gusset stations X=60/240; nonslip pads below
+W300-C,W300,opaque matte cast PMMA,6.0,70x100 right-triangle gusset,24,install as front/back pairs; R5 exposed corner; solvent bond
+C240-A,C240,opaque matte cast PMMA,4.0,91.8x344 side panel,32,eight equal panels; 22.5-deg vertical miter or supplier-equivalent inner seam; silicone edge at top
+C240-B,C240,opaque matte cast PMMA,6.0,regular octagon D240,4,full base; D is circumscribed diameter; nonslip pads below
+C240-C,C240,opaque matte cast PMMA,6,"30-wide octagonal ring, outer D approx 231.3",4,fit inside side panels; top flush; freeze after C320 first-article fit
+C320-A,C320,opaque matte cast PMMA,4.0,122.5x344 side panel,32,eight equal panels; 22.5-deg vertical miter or supplier-equivalent inner seam; silicone edge at top
+C320-B,C320,opaque matte cast PMMA,6.0,regular octagon D320,4,full base; D is circumscribed diameter; nonslip pads below
+C320-C,C320,opaque matte cast PMMA,6,"30-wide octagonal ring, outer D approx 311.3",4,fit inside side panels; top flush; freeze after C320 first-article fit
+C560-A,C560,opaque matte cast PMMA,4.0,214.3x344 side panel,8,eight equal panels; 22.5-deg vertical miter or supplier-equivalent inner seam; silicone edge at top
+C560-B,C560,opaque matte cast PMMA,6.0,regular octagon D560,1,full base; D is circumscribed diameter; nonslip pads below
+C560-C,C560,opaque matte cast PMMA,6,"30-wide octagonal ring, outer D approx 551.3",1,fit inside side panels; top flush; freeze after C320 first-article fit
+D320-A,D320,opaque matte cast PMMA,4.0,122.5x294 side panel,8,eight equal panels; 22.5-deg vertical miter or supplier-equivalent inner seam; silicone edge at top
+D320-B,D320,opaque matte cast PMMA,6.0,regular octagon D320,1,full base; D is circumscribed diameter; nonslip pads below
+D320-C,D320,opaque matte cast PMMA,6,"30-wide octagonal ring, outer D approx 311.3",1,fit inside side panels; top flush; freeze after C320 first-article fit
+J-S,CONNECTOR,opaque matte cast PMMA,6,160x60 splice plate,12,final slot/hole pattern frozen after W600 first-article fit
+J-L,CONNECTOR,opaque matte cast PMMA,6,160x160 L plate,6,final slot/hole pattern frozen after W600 first-article fit
+J-T,CONNECTOR,opaque matte cast PMMA,6,240x160 T plate,2,final slot/hole pattern frozen after W600 first-article fit

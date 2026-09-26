@@ -1,0 +1,6 @@
+{
+  "gate_passed": true,
+  "structural_problems": [],
+  "old_700_step_limit_failures": [],
+  "interpretation": "success denominator repaired; this is not a performance pass"
+}

@@ -1,0 +1,20 @@
+cad9f760a168ad923d57d403644bc3898b8e6365 2026-09-09T00:47:42+08:00 Record replicated MPPI tuning and overnight experiment handoff
+a93f3d3b5dccf86c949f155ec573e5fa297f9b69 2026-09-08T23:55:53+08:00 Record initial ICODE SAC validation and harden next development round
+d318010f6b9e160eb5d9369416f89c50f4858aea 2026-09-08T22:43:05+08:00 Generate research reports directly from completed experiment evidence
+932ecb8c3e666019bc179af27048b62efba08694 2026-09-08T22:32:49+08:00 Add prospective ICODE pretraining-plant domain comparison
+f57cd217f5ffabafa9ea90628c1d2360efdbda7d 2026-09-08T22:26:57+08:00 Use conservative paired binary intervals for zero-discordance cases
+edb3f11b50d1da04e966e238e8341adbb40e8586 2026-09-08T22:19:48+08:00 Prepare prospectively frozen observable-context SAC continuation
+b58767c982ae6de301f26636dbd31502acfbfbb1 2026-09-08T22:13:49+08:00 Complete first four-arm SAC training and prepare observable context interface
+e82517b2b4d2d3b640a0c9e89978e83a2bb9ed18 2026-09-08T21:56:49+08:00 Record completed K-only training and prepare common-state policy probes
+e1cb175e286a68386cbbae79ef4bf4cab76dec80 2026-09-08T21:37:24+08:00 Add command-history reconstruction to audit reliability input provenance
+277074d7c49cacb09e9d3839f228a0f679b3337d 2026-09-08T21:35:06+08:00 Record first SAC training outcomes and test joint-axis initialization
+526d9790048600f0e409e2d405ec5c06816b1c0b 2026-09-08T21:06:13+08:00 Queue serial backbone exploration after frozen SAC validation
+e014d79e7fa8112bd8f0933064a41aa4b3a7ad21 2026-09-08T21:00:29+08:00 Prepare shared-backbone factorial and model prediction diagnostics
+530243b44f6ca42e699267c626179898e02ffd99 2026-09-08T20:54:28+08:00 Fix standard-library queue shadowing and add trace diagnostics
+fb8cdd2e946fc0176bc52d59f0d3999ec0a88e15 2026-09-08T18:55:37+08:00 Implement causal joint SAC training, ablations, and serial validation
+3b106f0457d0b7de8b57e1c943433e269afd30ed 2026-09-08T18:46:57+08:00 Start ICODE reliability and actual SAC joint compute study
+b166aaceebf7483769f06df618e5dcc9b2162e4f 2026-09-08T17:08:18+08:00 Complete 3216-episode ICRA compute exploration with causal holdouts and audited evidence
+51f24def5dcf52c20dc996aa2e9988132bbb04e6 2026-09-08T16:07:30+08:00 Archive fresh-seed geometry evidence and causal selector freeze
+5a3426b9217efc4f58ef488f7ea569ffdd6db89d 2026-09-08T15:51:28+08:00 Archive 192-episode discovery and freeze causal and matched-axis experiments
+cfac8688cac2c481f8387eb322c0bce9da348e6c 2026-09-08T15:40:25+08:00 Resolve manifest source paths before the first exploratory episode
+4fe0e77f3bddda00191e358b713eaef0fa7b889d 2026-09-08T15:39:54+08:00 Launch broad ICRA 2027 adaptive compute exploration with geometry and efficiency questions

@@ -1,0 +1,36 @@
+[Unit]
+Description=Bounded GPT-5.5 Bohn research orchestrator
+After=network-online.target
+Wants=network-online.target
+RequiresMountsFor=/data/openai-agent /home/mapples/projects/mobile-robot-mppi-study
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/data/openai-agent/mobile-robot-mppi-study
+ExecStart=/usr/bin/python3 -u /data/openai-agent/mobile-robot-mppi-study/scripts/research_service/orchestrator.py
+Restart=on-failure
+RestartSec=45
+WatchdogSec=300
+NotifyAccess=all
+KillMode=control-group
+TimeoutStopSec=45
+MemoryHigh=2600M
+MemoryMax=3100M
+CPUQuota=180%
+TasksMax=100
+Nice=5
+UMask=0077
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=read-only
+PrivateTmp=true
+ReadWritePaths=/data/openai-agent /home/mapples/projects/mobile-robot-mppi-study
+Environment=OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=bohn-research
+
+[Install]
+WantedBy=multi-user.target

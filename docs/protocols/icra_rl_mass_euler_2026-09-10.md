@@ -1,0 +1,5 @@
+# Matched-domain RL-H training before local-surrogate confirmation
+
+2026-09-10. The local affine pilot shows a potential accuracy/compute tradeoff; stronger confirmation must not depend on an RL-H baseline trained for different integration/payload conditions.
+Train three new seeds12001001–3 from scratch,30000 steps each (whole-finalepisode may exceed budget). SameSAC/value/reward as previouszero-penaltyadaptation, K100,H8–50, speedcap.35,width1.8. Train episodes uniformly sample mass/inertia ratio.5/1/1.5, plannerEuler, samephysical/safety/120s. Trainingreset seeds12010000+episode; not evaluation seeds. No hiddenmass input. Alltrainingseeds/checkpoints/failures retained, finalcheckpoint prescribed, no bestseedselection.
+This is domain matching, not a newRLalgorithm or exactBohnreplication. Nextconfirmation testsallthreepolicies againstfixedHcontrols with/withoutterminalvalue, andlocalapproximation/fullmodelstrongbudgetcontrols. Train sequentially, no timedexperimentconcurrency.6hour totalqueue budget. No claims fromtrainingreward alone. Frozenpreviousdata untouched.

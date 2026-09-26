@@ -1,0 +1,10 @@
+source,scene,method,success,collision,termination_reason,path_completion_ratio,boundary_violation_steps,minimum_footprint_boundary_margin,reliability_proposal_authority_mean,paper_guided_elite_count_total,planner_compute_ms_mean,safety_interventions
+L242,hairpin,full_proposed,false,false,max_steps,0.1076986461,0,0.0215070029,0.0921595113,259,508.5449179,111
+L242,hairpin,icode_mppi,false,false,max_steps,0.1117543565,0,0.5630036369,1.0000000000,0,186.5160525,442
+L239,hairpin,old_full,false,false,max_steps,0.1061302427,0,0.0684604285,0.1281201167,0,452.2670616,64
+L242,s_chicane,full_proposed,false,false,boundary_violation,0.1758038215,1,-0.0057359282,0.0836623133,239,437.3728276,27
+L242,s_chicane,icode_mppi,false,false,max_steps,0.1826835195,0,0.5618269520,1.0000000000,0,195.2949035,437
+L239,s_chicane,old_full,false,false,boundary_violation,0.1804805498,1,-0.0083659598,0.0679791730,0,448.0480510,71
+L242,infinity,full_proposed,false,false,max_steps,0.1024923523,0,0.0998001179,0.0610466872,110,494.8123162,166
+L242,infinity,icode_mppi,false,false,max_steps,0.1083963628,0,0.5683342477,1.0000000000,0,188.1705864,416
+L239,infinity,old_full,false,false,boundary_violation,0.1056550904,1,-0.0026859143,0.1149348023,0,451.7458189,61

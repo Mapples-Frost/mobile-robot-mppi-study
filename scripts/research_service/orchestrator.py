@@ -148,12 +148,13 @@ tool('write_file','Write research code, protocol, or report. Old file is archive
 tool('run_experiment','Run exactly one bounded Python script. All execution is registered, including smoke and diagnostics. No shell.',{'script':S,'args':{'type':'array','items':S},'interpreter':{'type':'string','enum':['modern','legacy']},'timeout_seconds':I,'method':S,'seed':S,'split':S,'purpose':S,'config':{'type':'object'},'training_budget':{'type':'object'},'validation_budget':{'type':'object'},'test_budget':{'type':'object'},'artifacts':{'type':'array','items':S}},['script','interpreter','method','seed','split','purpose','config','training_budget','validation_budget','test_budget','artifacts'])
 tool('update_state','Persist phase, hypothesis, next_experiment, queue, blockers, failures and scientific decisions.',{'state':{'type':'object'}},['state'])
 
-def api(items):
+def api(items, force_state=False):
     n,t=usage_today()
     if n>=48 or t>=1500000:raise RuntimeError('DAILY_API_BUDGET')
     effort=load(STATE/'api_smoke.json')['selected_effort']
     assert SECRET['OPENAI_MODEL']=='gpt-5.5' and effort=='xhigh'
     body=dict(model='gpt-5.5',reasoning={'effort':effort},input=items,tools=TOOLS,max_output_tokens=12000,store=False)
+    if force_state:body['tool_choice']={'type':'function','name':'update_state'}
     req=urllib.request.Request(SECRET['OPENAI_BASE_URL'].rstrip('/')+'/responses',data=json.dumps(body).encode(),headers={'Authorization':'Bearer '+SECRET['OPENAI_API_KEY'],'Content-Type':'application/json'})
     cid=uuid.uuid4().hex;started=time.monotonic();usage={};status='error'
     try:
@@ -188,7 +189,9 @@ def iteration():
     items=[dict(role='system',content=(SERVICE/'MISSION.md').read_text()),dict(role='user',content='Continue authorized research with concrete actions. Inspect evidence; preserve state for next iteration. Current supervisor context:\n'+json.dumps(context,default=str)[-28000:])]
     outputs=[];executions=0
     for turn in range(6):
-        answer=api(items);calls=[]
+        if turn==4:items.append(dict(role='user',content='Two calls remain in this bounded cycle. Prefer a concrete bounded diagnostic now if inputs suffice. Avoid re-reading evidence already inspected.'))
+        if turn==5:items.append(dict(role='user',content='Final call of this cycle: use update_state to persist a concise cumulative research memory: findings with paths, files already inspected, precise next action, hypothesis, queue and unresolved issues. Do not mark research complete merely because this cycle ends. Next cycle must continue instead of repeating this audit.'))
+        answer=api(items,force_state=(turn==5));calls=[]
         for output in answer.get('output',[]):
             if output['type']=='function_call':items.append({k:output[k] for k in ('type','call_id','name','arguments')})
             elif output['type']=='message':items.append(dict(role='assistant',content=''.join(c.get('text','') for c in output.get('content',[]))))
@@ -209,6 +212,8 @@ def iteration():
             items.append(dict(type='function_call_output',call_id=item['call_id'],output=text))
             event('tool',name=item['name'],arguments={k:v for k,v in json.loads(item['arguments']).items() if k!='content'},result_summary=text[:2000])
     record=dict(time=now(),outputs=outputs,tool_tail=[x for x in items if x.get('type')=='function_call_output'][-4:])
+    record['inspected_files']=[json.loads(x['arguments']).get('path') for x in items if x.get('type')=='function_call' and x.get('name')=='read_file']
+    archive=STATE/'iterations'/(dt.datetime.now(dt.timezone.utc).strftime('%Y%m%dT%H%M%S')+'.json');dump(archive,items)
     dump(STATE/'last_iteration.json',record)
     with (ROOT/'RESEARCH_LOG.md').open('a') as f:f.write('\n\n## '+now()+'\n'+redact('\n'.join(outputs))+'\n')
 

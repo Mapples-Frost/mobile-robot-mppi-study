@@ -85,6 +85,7 @@ def main():
  for p in files():
   s=p.stat();key=str(p.relative_to(BASE));old=con.execute('select size,mtime from files where path=?',(key,)).fetchone()
   if old!=(s.st_size,s.st_mtime_ns):changed.append((p,key,s.st_size,s.st_mtime_ns))
+ changed.sort(key=lambda entry:entry[3],reverse=True)
  packages=[];batch=[];size=0
  def flush(batch):
   if not batch:return
@@ -103,11 +104,14 @@ def main():
   archive.unlink();manifest.unlink() # only verified disposable upload staging files
   save(STATE/'backup_status.json',dict(time=dt.datetime.now(dt.timezone.utc).isoformat(),status='in_progress',commit=commit,packages_this_run=packages,release=rel['html_url']))
  for entry in changed:
-  if batch and size+entry[2]>384*1024**2:flush(batch);batch=[];size=0
+  if batch and size+entry[2]>384*1024**2:
+   flush(batch);batch=[];size=0
+   if len(packages)>=16:break
   batch.append(entry);size+=entry[2]
  flush(batch)
- save(STATE/'backup_status.json',dict(time=dt.datetime.now(dt.timezone.utc).isoformat(),status='verified',commit=commit,changed_files=len(changed),packages_this_run=packages,release=rel['html_url'],tracked_files=con.execute('select count(*) from files').fetchone()[0]))
- print(json.dumps({'backup':'verified','changed_files':len(changed),'packages':len(packages),'release':rel['html_url']}))
+ remaining=sum(con.execute('select size,mtime from files where path=?',(key,)).fetchone()!=(n,mtime) for p,key,n,mtime in changed)
+ save(STATE/'backup_status.json',dict(time=dt.datetime.now(dt.timezone.utc).isoformat(),status='partial' if remaining else 'verified',remaining_changed_files=remaining,commit=commit,changed_files=len(changed),packages_this_run=packages,release=rel['html_url'],tracked_files=con.execute('select count(*) from files').fetchone()[0]))
+ print(json.dumps({'backup':'partial' if remaining else 'verified','remaining_changed_files':remaining,'changed_files':len(changed),'packages':len(packages),'release':rel['html_url']}))
 
 if __name__=='__main__':
  try:main()

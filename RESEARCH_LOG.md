@@ -292,3 +292,12 @@ Next iteration should:
 1. Check for a verified post-v2 external backup proof covering shard00, audit-v1, audit-v2, registries, docs, and backup requests.
 2. If present and adequate, run exactly one formal experiment: vehicle validation64 shard1 with legacy interpreter and sealed test closed.
 3. If absent, do not run new formal simulations; preserve backup gate and continue checking/requesting supervisor backup.
+
+<!-- vehicle-validation64-shard-complete-20260926-shard01 -->
+## 2026-09-26 vehicle validation64 shard 01
+
+UTC: 2026-09-26T16:00:03.047684+00:00. Formal vehicle validation shard completed with validation_accessed=true, test_accessed=false, episodes=224, control_steps=20036. Artifacts: `research_artifacts/aws_formal_validation/vehicle_validation64_20260926/shard01/raw.json`, `research_artifacts/aws_formal_validation/vehicle_validation64_20260926/shard01/summary.md`. This is shard-level validation evidence only; final sealed test remains unauthorized.
+
+
+## 2026-09-26T16:02:48.292386+00:00
+

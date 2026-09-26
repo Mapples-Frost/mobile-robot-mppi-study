@@ -637,3 +637,78 @@ UTC: 2026-09-26T23:24:17.125157+00:00. Formal vehicle validation shard completed
 
 ## 2026-09-26T23:28:03.565474+00:00
 
+<!-- vehicle-validation64-shard06-audit-20260926 -->
+## 2026-09-26 vehicle validation64 shard06 audit
+
+UTC: 2026-09-26T23:29:08+00:00. Post-run audit of formal shard06 completed with validation_accessed=true (reading shard outputs), sealed test accessed=false, simulations=0, training steps=0. Shard06 has 224 episodes and 19137 control steps, within the declared 224/33600 budget. Completed hash audit passed=True; episode trace/hash audit passed=True; aggregate replay checks passed=True. Learned candidates in shard06: s0 359 steps, s1 634 steps, s2 horizons {'25': 270, '35': 33} with 7 switches. Vehicle validation64 progress is now 7/12 completed formal shards with 1568 completed episodes and 138195 control steps, plus one counted failed validation-access attempt with 0 episodes/control steps and preserved audit-schema false positives. This is not final model selection or a reproduction claim. New formal evidence requires external backup before shard07; request written at `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_VALIDATION64_SHARD06_AUDIT_20260926T232908.json` and final addendum at `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_VALIDATION64_SHARD06_AUDIT_FINAL_ADDENDUM_20260926T232908.json`. Sealed test remains closed.
+
+
+## 2026-09-26T23:31:38.432755+00:00
+Concrete action completed.
+
+- Ran `experiments/bohn2021_aws/vehicle_validation64_shard06_audit.py` with the modern interpreter.
+- Experiment ID: `20260926T232908_163b4f98`
+- Exit status: `0`
+- Runtime: `14.01 s`
+- Scope: metadata/hash/trace/budget audit only.
+- No simulations, no training, no new validation episodes, no control steps, no gradient steps.
+- Validation bank was not reopened by the audit.
+- Sealed final test remained closed and was not hashed/opened.
+
+Audit passed.
+
+Key artifacts:
+- `research_artifacts/aws_diagnostics/vehicle_validation64_shard06_audit_20260926/raw.json`
+  - SHA256: `8322dc5a4f2ebf1eacfa772f8038ac0bbcc5284f0da9dbff416ef096d96ebcc0`
+- `research_artifacts/aws_diagnostics/vehicle_validation64_shard06_audit_20260926/summary.md`
+  - SHA256: `7037c85a7594047953e6877bdc5592da01f80a4c3a138ba6e07f389da0d87275`
+- `research_artifacts/aws_diagnostics/vehicle_validation64_shard06_audit_20260926/completed.json`
+  - SHA256: `8ecd91ef4c79a8ef252fe9f1ae98403c21a8d515b5373417e39044040b54c830`
+- Backup request:
+  - `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_VALIDATION64_SHARD06_AUDIT_20260926T232908.json`
+  - SHA256: `f5eb58c8a8046913667daf2db54c81833e8ccd4bfc3acf355363c15c77361df4`
+- Final addendum:
+  - `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_VALIDATION64_SHARD06_AUDIT_FINAL_ADDENDUM_20260926T232908.json`
+  - SHA256: `eab9e63350ec78146350a7681b2e1709c6c7fe2e5fecd6fdbc243a27123f4d56`
+- Backup blocker note:
+  - `research_artifacts/aws_diagnostics/post_shard06_audit_backup_blocker_check_20260926.md`
+  - SHA256: `ff23003a1b2b5d71047b33abfc2813f916f99f0b61078ea16a7c10c43dbcac3e`
+
+Shard06 audit evidence:
+- Episodes audited: `224`
+- Control steps audited: `19137`
+- Declared upper bound: `33600`
+- Completed hash audit: passed over `1574` records
+- Episode trace/hash audit: passed
+- Aggregate replay: passed
+- Learned candidate snapshot:
+  - `learned_s0`: 5/5 successes, 359 steps, H25 only
+  - `learned_s1`: 8/8 successes, 634 steps, H25 only
+  - `learned_s2`: 4/4 successes, 303 steps, H25/H35, 7 switches
+
+Cumulative vehicle validation64 status:
+- Formal shards completed: `0–6` / `12`
+- Audited shards passed: `0–6`
+- Formal episodes completed: `1568`
+- Formal control steps completed: `138195`
+- Failed formal attempts preserved: one shard02 modern-interpreter TensorFlow-missing attempt, 0 episodes/control steps.
+- Failed audit attempts preserved: shard00 v1 schema false negative, shard05 v1 schema false positive.
+
+Current gate:
+- Shard07 is blocked until a verified external backup proof after the shard06 audit run finalization exists.
+- The latest known verified backup from supervisor context was at `2026-09-26T23:28:51Z`, which predates the shard06 audit at `23:29:08Z`; therefore it is insufficient for shard07.
+- State was persisted via `update_state` with the exact next action and backup-gate requirements.
+
+Next action once backup proof is available:
+- Reconstruct/verify local post-shard06 backup proof if needed.
+- Run `experiments/bohn2021_aws/vehicle_validation64_shard_runner.py` for shard07 with legacy interpreter, sealed test closed.
+- Then audit shard07 before any further shard.
+
+<!-- post-shard06-audit-backup-gate-recheck-20260926T233430+0000 -->
+## 2026-09-26 post-shard06 audit backup gate recheck
+
+UTC: 2026-09-26T23:34:30+00:00. Metadata-only backup inventory recheck before shard07: validation_accessed=true only for existing shard06 output hashing/counting, validation_bank_reopened=false, sealed test accessed/opened/hashed=false, simulations/control_steps/gradient_steps=0/0/0. No adequate repository-local verified external backup proof after shard06 audit finalization and persisted state was found (`backup_proof_20260926T23*.json` count 0; adequate proofs 0). Latest supervisor backup in context `2026-09-26T23:28:51.819071+00:00` predates the shard06 audit and is insufficient. Key shard06 formal/audit/runner/gate hashes matched expected values: True. Shard07 remains backup-gated. New recheck artifacts: `research_artifacts/aws_diagnostics/post_shard06_audit_backup_gate_recheck_20260926T233430+0000/raw.json`, `research_artifacts/aws_diagnostics/post_shard06_audit_backup_gate_recheck_20260926T233430+0000/summary.md`, `completed.json` in the same directory. New backup request: `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_SHARD06_AUDIT_GATE_RECHECK_20260926T233430+0000.json`. Next proof must be after this recheck and after the metadata run registry/stdout/stderr finalize, and must cover shard06 formal outputs, shard06 audit outputs, formal/audit/recheck run logs, docs/registry, shard06 backup request/final addendum/blocker note, this recheck/request, runner SHA `cb3c775808de3213fd1ef6cef5727aec9f7b473ac5d0b1270dca4cb37b44dd0e`, and gate SHA `5797821873cc689129a16818ef80b2260ee5cb1998b270ac5588e77b61bc382b`. Current status remains partial validation evidence only for an IMPROVED latency-tree method, not ORIGINAL SAC, not final-test evidence, and not a reproduction-success claim.
+
+
+## 2026-09-26T23:36:27.009070+00:00
+

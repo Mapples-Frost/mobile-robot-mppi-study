@@ -381,3 +381,65 @@ UTC: 2026-09-26T17:32:27.856583+00:00. Formal vehicle validation shard completed
 
 ## 2026-09-26T17:36:25.011351+00:00
 
+<!-- vehicle-validation64-shard02-audit-20260926 -->
+## 2026-09-26 vehicle validation64 shard02 audit
+
+UTC: 2026-09-26T17:37:53+00:00. Post-run audit of formal shard02 completed with validation_accessed=true (reading shard outputs), sealed test accessed=false, simulations=0, training steps=0. Shard02 has 224 episodes and 19542 control steps, within the declared 224/33600 budget. Completed hash audit passed=True; episode trace/hash audit passed=True; aggregate replay checks passed=True. Learned candidates in shard02: s0 fixed H25 (497 steps), s1 fixed H25 (403 steps), s2 used horizons {'25': 346, '35': 46} with 15 switches. Vehicle validation64 progress is now 3/12 completed shards with 672 completed episodes and 59410 control steps, plus one counted failed validation-access attempt with 0 episodes/control steps. This is not final model selection or a reproduction claim. New formal evidence requires external backup before shard03; request written at `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_VALIDATION64_SHARD02_AUDIT_20260926T173807.json`. Sealed test remains closed.
+
+
+## 2026-09-26T17:42:06.313122+00:00
+
+
+
+## 2026-09-26T17:45:31.317440+00:00
+已继续执行本轮允许的具体动作；未启动新的正式实验。
+
+已核查证据：
+
+- `research_artifacts/aws_backup_proofs/*.json`：目前没有 `2026-09-26T17:38:45Z` 之后的 verified external backup proof。
+- 最新仓库内 proof 仍是：
+  - `backup_proof_20260926T162038_after_shard02_recovery_and_addendum.json`
+  - 仅覆盖 shard02 失败恢复后的、正式 shard02 retry 之前状态；不能覆盖 shard02 正式输出、17:37:53 audit、17:38:30 final addendum。
+- 已检查 shard02 audit 完成证据：
+  - `research_artifacts/aws_diagnostics/vehicle_validation64_shard02_audit_20260926/completed.json`
+  - audit passed=true
+  - validation_accessed=true（读取既有 shard02 输出）
+  - validation bank 未重开
+  - sealed test 未打开/未 hash
+  - 新仿真 / 控制步 / 梯度步：`0 / 0 / 0`
+- 已检查 final backup addendum：
+  - `REQUEST_BACKUP_AFTER_VALIDATION64_SHARD02_AUDIT_FINAL_ADDENDUM_20260926T173830.json`
+  - 明确要求下一 proof 覆盖 shard02 正式输出、audit 输出、audit run registry/stdout/stderr、docs/registry 更新、backup requests/final addendum。
+- 已检查 `STATUS.md`、`EXPERIMENT_REGISTRY.csv`、`post_shard02_audit_backup_blocker_check_20260926.md`，三者一致：shard03 之前必须先有新的 verified external backup proof。
+- 已通过 `update_state` 持久化当前阶段、blocker、下一步和禁止事项。
+
+当前状态：
+
+- Vehicle validation64：`3/12` shards 已完成并审计。
+- 累计正式 validation：`672` episodes，`59410` control steps。
+- 另有一次 shard02 modern-interpreter 失败尝试：validation bank 曾打开，但 `0` episodes / `0` control steps / `0` gradient steps，已归档。
+- sealed final test 仍关闭且未授权。
+- 不能声明复现成功；当前只是 IMPROVED latency-tree 的部分 validation evidence，不是 ORIGINAL SAC。
+
+当前硬阻塞：
+
+- **不得运行 shard03**，因为缺少 shard02 audit/final addendum 之后的 verified external backup proof。
+- 需要下一 proof 满足：
+  - `backup_verified=true`
+  - `remaining_changed_files=0`
+  - commit/verified state 晚于 `2026-09-26T17:38:45Z`
+  - GitHub release asset/download SHA256 verified
+  - runner SHA `cb3c775808de3213fd1ef6cef5727aec9f7b473ac5d0b1270dca4cb37b44dd0e`
+  - gate SHA `5797821873cc689129a16818ef80b2260ee5cb1998b270ac5588e77b61bc382b`
+  - 覆盖 shard02 formal outputs、audit artifacts、run logs、docs/registry、backup requests/addendum、blocker note。
+
+下一步一旦 proof 出现：
+
+```text
+experiments/bohn2021_aws/vehicle_validation64_shard_runner.py
+--shard 3
+--backup-proof <post-shard02-audit-proof.json>
+--i-accept-validation-access
+```
+
+解释器必须为 `legacy`；sealed final test 继续关闭。随后先审计 shard03，再决定 shard04。

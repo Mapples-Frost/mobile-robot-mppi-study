@@ -53,8 +53,8 @@ def clean_env():
 def identity():
     def git(args):return subprocess.run(['git',*args],cwd=ROOT,capture_output=True,text=True,timeout=20).stdout.strip()
     diff=git(['diff','--binary']);tree={}
-    for folder in (ROOT/'experiments/bohn2021_reproduction',ROOT/'scripts/research_service'):
-        for p in sorted(folder.glob('*.py')):tree[str(p.relative_to(ROOT))]=hashlib.sha256(p.read_bytes()).hexdigest()
+    for folder in (ROOT/'experiments',ROOT/'scripts'):
+        for p in sorted(folder.rglob('*.py')):tree[str(p.relative_to(ROOT))]=hashlib.sha256(p.read_bytes()).hexdigest()
     return dict(source_tree_sha256=hashlib.sha256(json.dumps(tree,sort_keys=True).encode()).hexdigest(),source_files=tree,commit_sha=git(['rev-parse','HEAD']),dirty_state=git(['status','--porcelain']),dirty_diff_sha256=hashlib.sha256(diff.encode()).hexdigest())
 
 def execute(args):
@@ -145,7 +145,7 @@ S={'type':'string'};I={'type':'integer'}
 tool('list_files','List repository files. Use bounded patterns.',{'path':S,'pattern':S},['path'])
 tool('read_file','Read at most 24000 characters of a repository text file. Test outcomes remain sealed.',{'path':S,'offset':I},['path'])
 tool('write_file','Write research code, protocol, or report. Old file is archived; never silently change frozen sources.',{'path':S,'content':S},['path','content'])
-tool('run_experiment','Run exactly one bounded Python script. All execution is registered, including smoke and diagnostics. No shell.',{'script':S,'args':{'type':'array','items':S},'interpreter':{'type':'string','enum':['modern','legacy']},'timeout_seconds':I,'method':S,'seed':S,'split':S,'purpose':S,'config':{'type':'object'},'training_budget':{'type':'object'},'validation_budget':{'type':'object'},'test_budget':{'type':'object'},'artifacts':{'type':'array','items':S}},['script','interpreter','method','seed','split','purpose','config','training_budget','validation_budget','test_budget','artifacts'])
+tool('run_experiment','Run exactly one bounded Python script. All execution is registered, including smoke and diagnostics. No shell.',{'script':{'type':'string','description':'Repository-relative path to an existing .py file, for example experiments/bohn2021_aws/fit_population_diagnosis.py. Never inline source code.'},'args':{'type':'array','items':S},'interpreter':{'type':'string','enum':['modern','legacy']},'timeout_seconds':I,'method':S,'seed':S,'split':S,'purpose':S,'config':{'type':'object'},'training_budget':{'type':'object'},'validation_budget':{'type':'object'},'test_budget':{'type':'object'},'artifacts':{'type':'array','items':S}},['script','interpreter','method','seed','split','purpose','config','training_budget','validation_budget','test_budget','artifacts'])
 tool('update_state','Persist phase, hypothesis, next_experiment, queue, blockers, failures and scientific decisions.',{'state':{'type':'object'}},['state'])
 
 def api(items, force_state=False):
@@ -205,8 +205,8 @@ def iteration():
             try:
                 if item['name']=='run_experiment':
                     if executions>=1:raise ValueError('One experiment per iteration: persist next action for the next bounded cycle')
-                    executions+=1
                 result=call_tool(item['name'],json.loads(item['arguments']))
+                if item['name']=='run_experiment':executions+=1
             except Exception as e:result={'error':type(e).__name__,'message':redact(str(e))[:2000]};event('tool_error',name=item['name'],error=result)
             text=redact(json.dumps(result,default=str))[:30000]
             items.append(dict(type='function_call_output',call_id=item['call_id'],output=text))
@@ -219,6 +219,8 @@ def iteration():
 
 def housekeeping():
     # Stable commit and upload handled separately; no API calls or training overlap.
+    previous=load(STATE/'backup_status.json')
+    if previous.get('status') in ('verified','partial') and (dt.datetime.now(dt.timezone.utc)-dt.datetime.fromisoformat(previous['time'])).total_seconds()<300:return
     p=subprocess.run(['/usr/bin/python3',str(SERVICE/'backup.py')],cwd=ROOT,env=clean_env(),capture_output=True,text=True,timeout=14400)
     event('backup_process',exit=p.returncode,tail=redact(p.stdout[-1000:]+p.stderr[-1000:]))
     if p.returncode:raise RuntimeError('Backup not verified; diagnose infrastructure before unique formal work')
@@ -231,6 +233,13 @@ def main():
     while True:
         try:
             if not (STATE/'migration_complete.json').exists():event('waiting_for_migration');time.sleep(60);continue
+            current=load(STATE/'research_state.json')
+            reasons={'research_goal_change','new_paid_resource','irreversible_data_loss','missing_user_only_information','major_scientific_fork'}
+            if current.get('awaiting_user_reason') in reasons:
+                housekeeping();dump(STATE/'supervisor_status.json',dict(time=now(),phase='awaiting_user',reason=current['awaiting_user_reason']));time.sleep(3600);continue
+            acceptance=load(ROOT/'final_acceptance.json')
+            if current.get('project_complete') and acceptance.get('independent_audit_passed') and acceptance.get('all_seeds_reported') and acceptance.get('raw_results_archived'):
+                housekeeping();dump(STATE/'supervisor_status.json',dict(time=now(),phase='final_delivery_complete'));time.sleep(3600);continue
             if shutil.disk_usage(BASE).free<15*1024**3:event('disk_guard');time.sleep(300);continue
             if dt.datetime.now(dt.timezone.utc)>=dt.datetime(2026,10,25,8,tzinfo=dt.timezone.utc):
                 housekeeping();dump(STATE/'deadline_status.json',dict(time=now(),status='expiry_archive_only'));time.sleep(3600);continue
@@ -245,7 +254,10 @@ def main():
             dump(STATE/'supervisor_status.json',dict(time=now(),phase='between_iterations',api_calls_today=usage_today()[0]))
             time.sleep(180)
         except Exception as e:
-            failures+=1;message=redact(str(e))[:1500]
+            message=redact(str(e))[:1500]
+            if 'DAILY_API_BUDGET' in message:
+                dump(STATE/'supervisor_status.json',dict(time=now(),phase='waiting_for_next_UTC_API_budget'));time.sleep(3600);continue
+            failures+=1
             event('iteration_error',error_type=type(e).__name__,message=message,consecutive_failures=failures)
             state=load(STATE/'research_state.json');state.update(supervisor_error=message,api_error_count=failures)
             if failures>=5:state['phase']='diagnosis'

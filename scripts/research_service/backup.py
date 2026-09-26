@@ -19,7 +19,7 @@ def code_backup():
   for args in [('init','-b',BRANCH),('config','user.name','Bohn Research Agent'),('config','user.email','bohn-agent@localhost'),('remote','add','origin','https://github.com/'+REPO+'.git')]:
    r=git(*args)
    if r.returncode:raise RuntimeError('Git initialization failed')
- patterns=['experiments/bohn2021_reproduction','scripts/research_service','docs']
+ patterns=['experiments','scripts','docs','configs','src']
  files=[]
  for path in patterns:
   for p in (ROOT/path).rglob('*'):

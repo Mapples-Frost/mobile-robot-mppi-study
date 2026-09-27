@@ -798,3 +798,12 @@ Concrete actions completed.
   - Final-test gate remains closed and unauthorized.
 
 Next action if backup proof appears: run exactly one formal experiment, shard08, with legacy interpreter and sealed test closed.
+
+<!-- vehicle-validation64-shard-complete-20260926-shard08 -->
+## 2026-09-26 vehicle validation64 shard 08
+
+UTC: 2026-09-27T02:11:46.710508+00:00. Formal vehicle validation shard completed with validation_accessed=true, test_accessed=false, episodes=224, control_steps=19703. Artifacts: `research_artifacts/aws_formal_validation/vehicle_validation64_20260926/shard08/raw.json`, `research_artifacts/aws_formal_validation/vehicle_validation64_20260926/shard08/summary.md`. This is shard-level validation evidence only; final sealed test remains unauthorized.
+
+
+## 2026-09-27T02:13:58.359309+00:00
+

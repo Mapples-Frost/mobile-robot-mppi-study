@@ -1196,3 +1196,15 @@ Run exactly this next cycle:
   - sealed test accessed: `false`
 
 If v3 passes, inspect its `summary.md` and `completed.json`, then freeze the next versioned IMPROVED safe-shortening/risk-sensitive vehicle revision protocol and source before any smoke or retraining.
+
+
+## 2026-09-27T07:29:42.254663+00:00
+
+<!-- vehicle-h35-leaf-validation-diagnostic-v4-20260927 -->
+## 2026-09-27 vehicle H35 leaf validation diagnostic v4
+
+UTC: 2026-09-27T07:30:08.460730+00:00. Existing validation64 rollout outputs only; no new simulation/control steps/gradient steps, no validation bank reopen, sealed test closed. v4 preserves failed v1/v2/v3 and fixes compact-tree parsing plus first-H35 step-index handling.
+
+Finding: learned_s2's H35 branch follows rule `heading_error_5 <= 0.0957597175326 and abs_yaw_input <= 0.250382459863`. It appeared in 52/64 validation cases (409 total H35 steps). First-H35 rollout-step stats: `{'count': 52, 'sum': 1497.0, 'mean': 28.78846153846154, 'median': 31.0, 'p95': 63.80000000000001, 'min': 0.0, 'max': 67.0}`. Logged-vs-replayed policy horizon mismatches: 0. Case43 remains the only learned_s2 validation failure, with H35 steps `[3]`; prior deterministic replay showed that forcing H25 at the singleton H35 rescues it while forcing H35 into the constant-H25 path reproduces the failure. Excluding case43, learned_s2 vs same-seed fixed H25 physical deltas are summarized by `{'count': 63, 'sum': -17.59428504099685, 'mean': -0.2792743657301088, 'median': 0.0, 'p95': 0.0005317749462619757, 'min': -12.132815113962833, 'max': 0.0031670370110390422}`.
+
+Decision: next IMPROVED vehicle revision should test safe-shortening/risk-sensitive extraction rather than allowing H>25 cost-seeking branches to compete as adaptive-horizon acceleration. Artifacts: `research_artifacts/aws_diagnostics/vehicle_h35_leaf_validation_diagnostic_20260927_v4/summary.md`, `research_artifacts/aws_diagnostics/vehicle_h35_leaf_validation_diagnostic_20260927_v4/raw.json`, `research_artifacts/aws_diagnostics/vehicle_h35_leaf_validation_diagnostic_20260927_v4/per_case_h35.csv`.

@@ -1097,3 +1097,19 @@ Artifacts: `research_artifacts/aws_diagnostics/vehicle_learned_policy_collapse_d
 
 ## 2026-09-27T07:07:01.247846+00:00
 
+
+
+## 2026-09-27T07:11:37.909842+00:00
+
+<!-- vehicle-case43-instrumented-replay-v1-20260927 -->
+## 2026-09-27 vehicle case43 instrumented replay/ablation v1
+
+UTC: 2026-09-27T07:14:24.502108+00:00. Development diagnostic intentionally reopened the already-used vehicle validation bank case43 and ran 5 deterministic replay/ablation episodes (588 new control steps, 0 gradient steps, sealed test closed). This is not fresh independent validation/model-selection evidence.
+
+Outcome: forcing H25 at the singleton H35 rescues the learned replay, and a single H35 perturbation on the constant-H25 path fails; evidence supports the step3 horizon intervention as a direct cause of this case43 failure under this terminal/source setup.
+
+Artifacts: `research_artifacts/aws_diagnostics/vehicle_case43_instrumented_replay_20260927_v1/raw.json`, `research_artifacts/aws_diagnostics/vehicle_case43_instrumented_replay_20260927_v1/summary.md`, `research_artifacts/aws_diagnostics/vehicle_case43_instrumented_replay_20260927_v1/episode_summary.csv`, completed marker `research_artifacts/aws_diagnostics/vehicle_case43_instrumented_replay_20260927_v1/completed.json`. Backup requested at `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_VEHICLE_CASE43_INSTRUMENTED_REPLAY_V1_20260927T071424+0000.json`.
+
+
+## 2026-09-27T07:18:44.431640+00:00
+

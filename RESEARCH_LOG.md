@@ -1240,3 +1240,78 @@ UTC: 2026-09-27T08:02:25.089325+00:00. Engineering smoke for IMPROVED safe-short
 
 ## 2026-09-27T08:21:07.474866+00:00
 
+<!-- vehicle-safe-shortening-v1-case43-replay-v3-collate-20260927 -->
+## 2026-09-27 vehicle safe-shortening v1 case43 replay v3 collation
+
+UTC: 2026-09-27T08:22:03.413286+00:00. Collated preserved v2 episode outputs after v2 post-processing failure. New v3 simulations/control steps/gradient steps: 0/0/0; preserved v2 diagnostic budget collated: 6 episodes, 576 control steps. All six same-seed case43 episodes succeeded; no adaptive H>25 dispatch; adaptive horizons by seed: {0: {'fixed_success': 1, 'adaptive_success': 1, 'adaptive_horizons': {'20': 31, '25': 65}, 'phys_delta': 1.116521520572178e-06, 'decision_ratio': 1.0423525549844879, 'used_above_25': False}, 1: {'fixed_success': 1, 'adaptive_success': 1, 'adaptive_horizons': {'15': 35, '25': 61}, 'phys_delta': 0.8297200493651786, 'decision_ratio': 0.9936114746938678, 'used_above_25': False}, 2: {'fixed_success': 1, 'adaptive_success': 1, 'adaptive_horizons': {'10': 1, '25': 95}, 'phys_delta': 0.0392611901705493, 'decision_ratio': 0.9923426646971993, 'used_above_25': False}}. This reuses already-opened validation case43 and is contaminated development evidence only, not formal validation or final test. Fresh validation bank remains unopened/uncreated; sealed test remains closed. Artifacts: `research_artifacts/aws_diagnostics/vehicle_safe_shortening_v1_case43_replay_20260927_v3_collate/summary.md`, `research_artifacts/aws_diagnostics/vehicle_safe_shortening_v1_case43_replay_20260927_v3_collate/raw.json`, `research_artifacts/aws_diagnostics/vehicle_safe_shortening_v1_case43_replay_20260927_v3_collate/completed.json`; backup request `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_VEHICLE_SAFE_SHORTENING_V1_CASE43_REPLAY_V2_FAILURE_AND_V3_COLLATION_20260927T000000Z.json`.
+
+
+## 2026-09-27T08:23:21.396947+00:00
+Elapsed service lifetime since 2026-09-26T10:55:29.419331Z: at least 21h 26m 34s / 21.44 hours as of the v3 artifact timestamp 2026-09-27T08:22:03Z.  
+Cumulative server API total_tokens from research.sqlite: unknown; `**/research.sqlite` is still not present in the repository context, so this excludes desktop conversation usage.
+
+Concrete actions completed:
+
+1. Inspected the prepared v3 collation source and v2 failure evidence:
+   - `experiments/bohn2021_aws/vehicle_safe_shortening_v1_case43_replay_v3_collate.py`
+   - v2 failure: `KeyError('decision_timing_s')` after all six case43 episodes had already completed.
+   - v2 progress confirmed: 6 episodes, 576 control steps, no fresh validation bank, no sealed test access.
+
+2. Ran the queued v3 collation-only recovery:
+   - Run ID: `20260927T082203_909c622d`
+   - Script: `vehicle_safe_shortening_v1_case43_replay_v3_collate.py`
+   - Interpreter: legacy
+   - Exit status: 0
+   - Runtime: ~2.0s
+   - New simulations/control steps/gradient steps: `0 / 0 / 0`
+   - Collated preserved v2 diagnostic budget: 6 episodes, 576 control steps.
+   - Sealed test: not accessed.
+   - Fresh validation bank: not generated/opened.
+
+3. Key v3 result:
+   - All six same-seed contaminated case43 development replay episodes succeeded.
+   - Adaptive safe-shortening arms used no `H>25`.
+   - Adaptive horizons:
+     - seed0: `H20` for 31 steps, `H25` for 65 steps.
+     - seed1: `H15` for 35 steps, `H25` for 61 steps.
+     - seed2: `H10` for 1 step, `H25` for 95 steps.
+   - Fixed and adaptive success/failure counts matched for all seeds.
+   - This supports only the narrow engineering hypothesis that safe-shortening avoids the known unsafe H35 mode on already-opened case43. It is not fresh validation, not model selection, and not final-test evidence.
+
+4. Artifacts inspected/preserved:
+   - `research_artifacts/aws_diagnostics/vehicle_safe_shortening_v1_case43_replay_20260927_v3_collate/summary.md`
+   - `.../completed.json`
+   - `.../raw.json`
+   - Backup request:
+     - `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_VEHICLE_SAFE_SHORTENING_V1_CASE43_REPLAY_V2_FAILURE_AND_V3_COLLATION_20260927T000000Z.json`
+   - Documentation tails and registry now include the v3 collation entry.
+
+5. State preserved via `update_state`.
+
+Current scientific status:
+
+- Vehicle latency-tree validation64 remains negative/inadequate for adaptive-horizon success:
+  - learned_s0/s1 collapsed to H25-only.
+  - learned_s2 adapts H25/H35 but failed validation case43 and lacks robust timing advantage.
+- Safe-shortening v1 has passed engineering smoke plus contaminated case43 recovery, but has no independent development-validation result yet.
+- No ORIGINAL SAC reproduction claim.
+- No IMPROVED adaptive-horizon success claim.
+- Sealed final test remains closed and unauthorized.
+
+Current blocker / next gate:
+
+- Need verified external backup after the v3 collation artifacts. Latest known verified backup in the provided supervisor context was before the v3 run.
+- Do not generate/open the fresh safe-shortening development-validation bank until backup covers v2 failure outputs, v3 source/artifacts/docs/registry, and backup request.
+
+Next queued action once backup is verified:
+
+- Run the frozen vehicle safe-shortening v1 fresh development-validation paired comparison:
+  - adaptive seeds 0/1/2,
+  - strong fixed-H grid comparators,
+  - equal declared budgets,
+  - full cost/success/solver/timing metrics,
+  - no sealed test access.
+
+
+## 2026-09-27T08:31:13.539498+00:00
+

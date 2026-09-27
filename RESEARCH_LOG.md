@@ -1047,3 +1047,21 @@ Artifacts: `research_artifacts/aws_diagnostics/vehicle_learned_policy_collapse_d
 
 ## 2026-09-27T06:37:42.045380+00:00
 
+<!-- vehicle-learned-policy-collapse-diagnostic-v3-full-validation64-20260927-research-log -->
+### Vehicle learned-policy collapse diagnostic v3 full validation64 (2026-09-27T06:40:45+00:00)
+
+- Ran metadata/trace diagnostic only: no simulations, no control steps, no gradient steps, no validation-bank reopen, no sealed-test access/hash.
+- Repaired failed v2 policy lookup by hashing exact frozen latency-tree vehicle policy files recorded in the 20260926 validation gate summary.
+- Result: `passed`; artifacts: `research_artifacts/aws_diagnostics/vehicle_learned_policy_collapse_diagnostic_20260927_v3_full_validation64/raw.json`, `research_artifacts/aws_diagnostics/vehicle_learned_policy_collapse_diagnostic_20260927_v3_full_validation64/summary.md`, `research_artifacts/aws_diagnostics/vehicle_learned_policy_collapse_diagnostic_20260927_v3_full_validation64/completed.json`.
+- learned_s0: `{'classification': 'extracted_policy_structurally_constant_H25', 'structurally_constant_policy': True, 'unique_leaf_horizons': [25], 'actual_non25_steps': 0, 'predicted_non25_steps': 0, 'policy_trace_mismatch_count': 0, 'falsifiable_next_step': 'Inspect training/selection objective and candidate extraction logs; rollout timing noise is not needed to explain H25-only behavior.'}`.
+- learned_s1: `{'classification': 'extracted_policy_structurally_constant_H25', 'structurally_constant_policy': True, 'unique_leaf_horizons': [25], 'actual_non25_steps': 0, 'predicted_non25_steps': 0, 'policy_trace_mismatch_count': 0, 'falsifiable_next_step': 'Inspect training/selection objective and candidate extraction logs; rollout timing noise is not needed to explain H25-only behavior.'}`.
+- learned_s2: `{'classification': 'adaptive_horizon_used_and_trace_matches_policy', 'structurally_constant_policy': False, 'unique_leaf_horizons': [25, 35], 'actual_non25_steps': 409, 'predicted_non25_steps': 409, 'policy_trace_mismatch_count': 0, 'falsifiable_next_step': 'Use full paired aggregate analysis and targeted deterministic replays to test cost/time benefit and failure causality.'}`.
+- Next action: run full paired validation64 aggregate/model-selection analysis against the strong fixed-H grid before any final-test gate or method revision.
+
+
+## 2026-09-27T06:42:05.757776+00:00
+
+
+
+## 2026-09-27T06:47:05.332885+00:00
+

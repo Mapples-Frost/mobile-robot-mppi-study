@@ -994,3 +994,11 @@ Artifacts: `research_artifacts/aws_diagnostics/vehicle_case43_shard07_trajectory
 
 ## 2026-09-27T03:48:01.506727+00:00
 
+<!-- vehicle-validation64-shard-complete-20260926-shard10 -->
+## 2026-09-26 vehicle validation64 shard 10
+
+UTC: 2026-09-27T05:01:42.259853+00:00. Formal vehicle validation shard completed with validation_accessed=true, test_accessed=false, episodes=224, control_steps=19831. Artifacts: `research_artifacts/aws_formal_validation/vehicle_validation64_20260926/shard10/raw.json`, `research_artifacts/aws_formal_validation/vehicle_validation64_20260926/shard10/summary.md`. This is shard-level validation evidence only; final sealed test remains unauthorized.
+
+
+## 2026-09-27T05:04:18.568880+00:00
+

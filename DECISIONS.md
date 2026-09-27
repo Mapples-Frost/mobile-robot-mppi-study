@@ -322,3 +322,8 @@ Before evidence: v2 repaired the v1 arm-filter bug and ran all six already-opene
 Change: v3 is collation-only from completed v2 episode summaries and uses the aggregate timing schema already produced by the smoke helper. Controller, policies, terminal models, case43, seeds, horizon rule, solver/recovery behavior and validation/test access policy are unchanged.
 
 Outcome: see `research_artifacts/aws_diagnostics/vehicle_safe_shortening_v1_case43_replay_20260927_v3_collate/summary.md`. This confirms only an engineering precondition: safe-shortening v1 avoids H>25 on contaminated case43 in preserved v2 episodes. It does not authorize final test; backup and fresh development-validation remain required.
+
+<!-- vehicle-safe-shortening-v1-devval64-shard-20260927-v1-shard00 -->
+## 2026-09-27 vehicle safe-shortening v1 fresh development-validation shard 00
+
+UTC: 2026-09-27T09:24:18.053445+00:00. Ran a frozen fresh development-validation paired case-block shard for IMPROVED safe-shortening v1: 172 episodes, 13784 control steps, cases [14, 29, 42, 63], no historical validation64 bank reopen and no sealed-test access. The shard includes all 43 arms (3 adaptive plus matched fixed-H grid and seed0 independent-terminal grid) for each included case. This is development-validation/model-selection evidence only, not final-test evidence. Artifacts: `research_artifacts/aws_development_validation/vehicle_safe_shortening_v1_devval64_20260927_v1/shard00/summary.md`, `research_artifacts/aws_development_validation/vehicle_safe_shortening_v1_devval64_20260927_v1/shard00/raw.json`, `research_artifacts/aws_development_validation/vehicle_safe_shortening_v1_devval64_20260927_v1/shard00/completed.json`.

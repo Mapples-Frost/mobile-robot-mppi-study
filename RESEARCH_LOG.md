@@ -1113,3 +1113,86 @@ Artifacts: `research_artifacts/aws_diagnostics/vehicle_case43_instrumented_repla
 
 ## 2026-09-27T07:18:44.431640+00:00
 
+
+
+## 2026-09-27T07:22:31.802391+00:00
+
+
+
+## 2026-09-27T07:25:21.548537+00:00
+Elapsed service lifetime since first supervisor event (2026-09-26T10:55:29.419331Z): ~20.5 hours. Cumulative server API total_tokens from `research.sqlite`: unknown — repository search found no `research.sqlite`; this excludes desktop conversation usage.
+
+Concrete actions completed this iteration:
+
+1. **Ran the queued v2 H35-leaf diagnostic**
+   - Script: `experiments/bohn2021_aws/vehicle_h35_leaf_validation_diagnostic_v2.py`
+   - Experiment id: `20260927T072246_e2505cea`
+   - Result: **failed immediately**
+   - Cause: engineering guard error — `research_artifacts/aws_diagnostics/vehicle_h35_leaf_validation_diagnostic_20260927_v2/` already contained `PREPARED_NOT_RUN_STATE.md`, so the script aborted with:
+     - `DiagnosticError('partial output exists; preserve before retry: ...')`
+   - Scientific budget:
+     - new simulations: `0`
+     - new control steps: `0`
+     - gradient steps: `0`
+     - validation bank reopened: `false`
+     - sealed test accessed: `false`
+
+2. **Inspected and preserved the failure evidence**
+   - Failure marker:
+     - `research_artifacts/aws_diagnostics/vehicle_h35_leaf_validation_diagnostic_20260927_v2/failure.json`
+   - Run registry:
+     - `research_artifacts/aws_runs/20260927T072246_e2505cea/registry.json`
+   - Diagnosis: this was not a scientific/model failure; it was an output-directory guard collision caused by putting the prepared-state marker inside the intended v2 output directory.
+
+3. **Wrote a fresh corrected diagnostic script**
+   - New script:
+     - `experiments/bohn2021_aws/vehicle_h35_leaf_validation_diagnostic_v3.py`
+   - SHA256:
+     - `43dd410cc9f4e5e8d008c0f043b3ef52df6b28cf8dfb3e5aafe792643c8bfa1c`
+   - v3 fixes:
+     - preserves v1/v2 failures;
+     - uses rollout trace index when `step` is absent;
+     - retains full `first_h35` object in `per_case_by_case`;
+     - writes to fresh output dir `vehicle_h35_leaf_validation_diagnostic_20260927_v3`;
+     - avoids the v2 prepared-marker collision;
+     - writes `completed.json` only after raw/summary/CSV/docs/backup request succeed.
+
+4. **Attempted to run v3, but tool policy blocked it**
+   - The experiment tool enforces **one experiment per iteration**.
+   - v3 was therefore **not executed** and is queued for the next bounded cycle.
+
+5. **Persisted durable next-state**
+   - Wrote:
+     - `research_artifacts/aws_diagnostics/vehicle_h35_leaf_validation_diagnostic_20260927_v3_PREPARED_NOT_RUN_STATE.md`
+   - SHA256:
+     - `b7689710982c4d76a984c5105641d7b3bfe023382540d1bd99661e9b98ce5601`
+   - Updated supervisor state with phase, failure diagnosis, hypothesis, and next experiment.
+
+Current scientific status remains unchanged:
+
+- Vehicle validation64 is complete.
+- Sealed final test remains closed/unopened/unauthorized.
+- Current learned latency-tree vehicle candidate is not sufficient:
+  - `learned_s0` and `learned_s1` collapsed to H25.
+  - `learned_s2` uses H25/H35 but has catastrophic validation case43 failure.
+  - No robust timing advantage over same-seed H25 has been established.
+- Existing evidence supports diagnosing/removing unsafe longer-horizon H35 behavior before any improved adaptive-horizon claim.
+
+Next precise action:
+
+Run exactly this next cycle:
+
+- Script: `experiments/bohn2021_aws/vehicle_h35_leaf_validation_diagnostic_v3.py`
+- Interpreter: modern
+- Timeout: 300s
+- Method: `IMPROVED_latency_tree_vehicle_h35_leaf_validation_diagnostic_v3_existing_outputs_not_original_SAC`
+- Split: `development_existing_outputs_only_validation64_already_opened_no_sealed_test`
+- Budgets:
+  - simulations: `0`
+  - control steps: `0`
+  - gradient steps: `0`
+  - validation existing outputs read: `true`
+  - validation bank reopened: `false`
+  - sealed test accessed: `false`
+
+If v3 passes, inspect its `summary.md` and `completed.json`, then freeze the next versioned IMPROVED safe-shortening/risk-sensitive vehicle revision protocol and source before any smoke or retraining.

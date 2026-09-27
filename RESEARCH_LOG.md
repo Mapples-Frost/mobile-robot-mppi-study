@@ -720,3 +720,81 @@ UTC: 2026-09-27T00:49:15.611490+00:00. Formal vehicle validation shard completed
 
 ## 2026-09-27T00:51:58.306983+00:00
 
+<!-- vehicle-validation64-shard07-audit-20260927 -->
+## 2026-09-27 vehicle validation64 shard07 audit
+
+UTC: 2026-09-27T00:53:19+00:00. Post-run audit of formal shard07 completed with validation_accessed=true (reading existing shard outputs), sealed test accessed=false, simulations=0, training steps=0. Shard07 has 224 episodes and 19532 control steps, within the declared 224/33600 budget. Completed hash audit passed=True; episode trace/hash audit passed=True; aggregate replay checks passed=True. Learned candidates in shard07: s0 {'episodes': 2, 'steps': 170, 'success_count': 2, 'episode_failure_count': 0, 'switches': 0, 'horizon_counts': {'25': 170}, 'unique_horizons': [25], 'adaptive_in_this_shard': False}, s1 {'episodes': 9, 'steps': 658, 'success_count': 9, 'episode_failure_count': 0, 'switches': 0, 'horizon_counts': {'25': 658}, 'unique_horizons': [25], 'adaptive_in_this_shard': False}, s2 {'episodes': 6, 'steps': 551, 'success_count': 5, 'episode_failure_count': 1, 'switches': 14, 'horizon_counts': {'25': 532, '35': 19}, 'unique_horizons': [25, 35], 'adaptive_in_this_shard': True}. Vehicle validation64 progress is now 8/12 completed formal shards with 1792 episodes and 157727 control steps, plus one counted failed validation-access attempt with 0 episodes/control steps and preserved audit-schema false positives. This is not final model selection or a reproduction claim. New formal evidence requires external backup before shard08; request written at `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_VALIDATION64_SHARD07_AUDIT_20260927T005319.json` and final addendum at `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_VALIDATION64_SHARD07_AUDIT_FINAL_ADDENDUM_20260927T005319.json`. Sealed test remains closed.
+
+
+## 2026-09-27T00:56:03.955228+00:00
+
+<!-- vehicle-validation64-shard07-audit-v2-schema-repair-20260927 -->
+## 2026-09-27 vehicle validation64 shard07 audit v2 schema repair
+
+UTC: 2026-09-27T00:56:35+00:00. Repaired post-run audit of formal shard07 completed with validation_accessed=true (reading existing shard outputs and failed v1 audit artifacts), sealed test accessed=false, simulations=0, training steps=0. V2 preserves failed v1 audit `research_artifacts/aws_diagnostics/vehicle_validation64_shard07_audit_20260927/completed.json` and fixes only a registry-schema false positive: shard07's run registry records validation budget as `episodes_exact=224` rather than `episodes`/`validation_episodes`. Shard07 has 224 episodes and 19532 control steps, within the declared 224/33600 budget. Completed hash audit passed=True; episode trace/hash audit passed=True; aggregate replay checks passed=True. Learned candidates in shard07: s0 {'episodes': 2, 'steps': 170, 'success_count': 2, 'episode_failure_count': 0, 'switches': 0, 'horizon_counts': {'25': 170}, 'unique_horizons': [25], 'adaptive_in_this_shard': False}, s1 {'episodes': 9, 'steps': 658, 'success_count': 9, 'episode_failure_count': 0, 'switches': 0, 'horizon_counts': {'25': 658}, 'unique_horizons': [25], 'adaptive_in_this_shard': False}, s2 {'episodes': 6, 'steps': 551, 'success_count': 5, 'episode_failure_count': 1, 'switches': 14, 'horizon_counts': {'25': 532, '35': 19}, 'unique_horizons': [25, 35], 'adaptive_in_this_shard': True}. Vehicle validation64 progress is now 8/12 completed formal shards with 1792 episodes and 157727 control steps, plus one counted failed validation-access attempt with 0 episodes/control steps and preserved audit-schema false positives. This is not final model selection or a reproduction claim. New formal evidence requires external backup before shard08; v2 request written at `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_VALIDATION64_SHARD07_AUDIT_V2_20260927T005635.json` and final addendum at `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_VALIDATION64_SHARD07_AUDIT_V2_FINAL_ADDENDUM_20260927T005635.json`. Sealed test remains closed.
+
+
+## 2026-09-27T00:58:54.184203+00:00
+Concrete actions completed.
+
+- Ran the prepared shard07 audit-v2 schema repair as the one bounded experiment:
+  - Experiment: `20260927T005634_eb449ed8`
+  - Script: `experiments/bohn2021_aws/vehicle_validation64_shard07_audit_v2_schema_repair.py`
+  - Script SHA256: `da24d26c5fe85d43b05d3113ec80c40f837022536c0ab9f02a14da0015d62e05`
+  - Interpreter: modern
+  - Exit: `0`
+  - Runtime: `14.0125s`
+  - New simulations/control steps/gradient steps: `0 / 0 / 0`
+  - Validation access: existing shard07 artifacts only; validation bank not reopened
+  - Sealed final test: not accessed/opened/hashed
+
+- Audit-v2 result:
+  - Passed: `true`
+  - Preserved failed audit-v1 `20260927T005319_5d1112ca`
+  - Confirmed v1 failure was schema-only: `registry validation budget episode mismatch`
+  - Repair variable only: accept `validation_budget.episodes_exact=224` as equivalent shard episode-budget field
+  - Completed hash audit: passed
+  - Episode trace/hash audit: passed
+  - Aggregate replay: passed
+  - Episodes audited: `224`
+  - Control steps audited: `19532` / upper bound `33600`
+
+- Key artifacts:
+  - Raw: `research_artifacts/aws_diagnostics/vehicle_validation64_shard07_audit_v2_schema_repair_20260927/raw.json`
+    - SHA256: `0f4893f37e8a4d6244bdef5970cb34059982668fa5527f83a9c171781c2f0419`
+  - Summary: `research_artifacts/aws_diagnostics/vehicle_validation64_shard07_audit_v2_schema_repair_20260927/summary.md`
+    - SHA256: `b76c72b2a043fe9596b1a89fdd28f1c596b22d273b758fb6fb7fc1d2b2c665cd`
+  - Completed: `research_artifacts/aws_diagnostics/vehicle_validation64_shard07_audit_v2_schema_repair_20260927/completed.json`
+    - SHA256: `4764dabfc11f18ed33b29386509a48ef68e7bfe54bc4a92c8e61ca2cf3cccb6f`
+  - Run registry: `research_artifacts/aws_runs/20260927T005634_eb449ed8/registry.json`
+  - Backup request: `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_VALIDATION64_SHARD07_AUDIT_V2_20260927T005635.json`
+    - SHA256: `2b5c9534ac8429951cb6fc7fee1e61e11258066b5d3cc3fbe81ab719138143a2`
+  - Final addendum: `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_VALIDATION64_SHARD07_AUDIT_V2_FINAL_ADDENDUM_20260927T005635.json`
+    - SHA256: `cb76dc76ae62fab34f8ef301964e3b3ec57b28bf8b5fa5d9e3282d6324b38cf6`
+  - Post-run-finalized backup addendum written:
+    - `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_VALIDATION64_SHARD07_AUDIT_V2_RUN_FINALIZED_20260927T005634.json`
+    - SHA256: `2539abb366416dfe9a1b069909f65182db375f76ec3ee05cb12831590058d0e7`
+
+- Cumulative vehicle validation64 state:
+  - Formal shards completed: `0-7`
+  - Accepted audited shards: `0-7`
+  - Formal validation episodes completed: `1792 / 2688`
+  - Formal validation control steps completed: `157727`
+  - Remaining shards: `8-11`
+  - Preserved failures:
+    - shard02 modern-interpreter TensorFlow-missing formal attempt, 0 episodes/control steps
+    - shard00 audit-v1 schema false negative, repaired by v2
+    - shard05 audit-v1 schema false positive, repaired by v2
+    - shard07 audit-v1 schema false positive, repaired by v2
+
+- Current gate:
+  - Shard08 is blocked until a verified external backup proof after shard07 audit-v2 run finalization and the run-finalized addendum exists.
+  - Latest supervisor backup context predates shard07 audit-v2, so it is not adequate for shard08.
+  - Required next proof must cover shard07 formal outputs, failed v1 audit, passed v2 audit, finalized v2 run logs, docs/registry updates, backup requests/addenda/blocker, and the new run-finalized addendum.
+
+- State preserved:
+  - Durable state updated via `update_state`.
+  - Existing docs/registry were updated by the audit script.
+  - Final-test gate remains closed and unauthorized.
+
+Next action if backup proof appears: run exactly one formal experiment, shard08, with legacy interpreter and sealed test closed.

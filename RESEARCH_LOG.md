@@ -1790,3 +1790,69 @@ Current interpretation:
 - This remains development-validation/model-selection evidence only, not final-test evidence and not a reproduction-success claim.
 
 State has been persisted with `update_state`. Next queued action: verify/await external backup covering shard10 artifacts, run logs, docs, and the state addendum; then run **shard11** of the same frozen campaign with no controller/checkpoint/selection-rule changes and no sealed-test access.
+
+<!-- vehicle-safe-shortening-v1-devval64-shard-20260927-v1-shard11 -->
+## 2026-09-27 vehicle safe-shortening v1 fresh development-validation shard 11
+
+UTC: 2026-09-27T19:50:07.888027+00:00. Ran a frozen fresh development-validation paired case-block shard for IMPROVED safe-shortening v1: 172 episodes, 13756 control steps, cases [1, 34, 48, 58], no historical validation64 bank reopen and no sealed-test access. The shard includes all 43 arms (3 adaptive plus matched fixed-H grid and seed0 independent-terminal grid) for each included case. This is development-validation/model-selection evidence only, not final-test evidence. Artifacts: `research_artifacts/aws_development_validation/vehicle_safe_shortening_v1_devval64_20260927_v1/shard11/summary.md`, `research_artifacts/aws_development_validation/vehicle_safe_shortening_v1_devval64_20260927_v1/shard11/raw.json`, `research_artifacts/aws_development_validation/vehicle_safe_shortening_v1_devval64_20260927_v1/shard11/completed.json`.
+
+
+## 2026-09-27T19:51:46.626314+00:00
+Elapsed service lifetime since first supervisor event (2026-09-26T10:55:29.419331Z): **32h54m43.605s / 32.9121 h** to shard11 registry end time **2026-09-27T19:50:13.024525Z**; this is service wall-clock, not summed experiment runtime. Shard11 experiment runtime was **3111.938 s**.  
+Cumulative server API `total_tokens` from `research.sqlite` calls: **unknown**; repository tools expose no `*.sqlite` files, and desktop conversation usage is excluded.
+
+Concrete action completed: continued the frozen vehicle safe-shortening v1 development-validation campaign by running **shard11**.
+
+Key evidence:
+- Run registry: `research_artifacts/aws_runs/20260927T185820_013de85f/registry.json`
+- Runner: `experiments/bohn2021_aws/vehicle_safe_shortening_v1_devval_shard_runner.py`
+- Runner SHA256: `21db4b319901243bc512a356ceac71c2280c2db0fc9e473136586300678435d5`
+- Shard artifacts:
+  - `research_artifacts/aws_development_validation/vehicle_safe_shortening_v1_devval64_20260927_v1/shard11/summary.md`
+  - `research_artifacts/aws_development_validation/vehicle_safe_shortening_v1_devval64_20260927_v1/shard11/raw.json`
+  - `research_artifacts/aws_development_validation/vehicle_safe_shortening_v1_devval64_20260927_v1/shard11/completed.json`
+- Artifact hashes:
+  - summary SHA256 `669203fb62b783e81e92f8f960f717e171ecfe923dae40fc08f44c9d8be22ea6`
+  - raw SHA256 `7d9e356552e5909939be4a65ed1e0c30f29c987f6b119b6a3fc32288f7f54ea0`
+  - completed SHA256 `f2ba19773e0f9569f85ba9994c94c5be4be3d6ec1686aa51bf06b05905014da5`
+- Postrun state written:
+  - `research_artifacts/aws_development_validation/vehicle_safe_shortening_v1_devval64_20260927_v1/SHARD11_POSTRUN_STATE_20260927T195013Z.md`
+  - SHA256 `775fb41e0d3eda093123bb5e2daae25a668c2e9ed61829812616b5801dd0fc83`
+- Backup requests:
+  - `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_VEHICLE_SAFE_SHORTENING_V1_DEVVAL64_SHARD11_20260927T195008Z.json`
+  - `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_VEHICLE_SAFE_SHORTENING_V1_DEVVAL64_SHARD11_STATE_ADDENDUM_20260927T195013Z.json`
+  - state-addendum request SHA256 `abebec86c2d0a4982b83f40436cebf926e6c7c8e27427911d97ce45c04120f37`
+
+Shard11 budget/access:
+- Cases: `[1, 34, 48, 58]`
+- Episodes: **172**
+- Control steps: **13,756**
+- New training episodes / gradient steps: **0 / 0**
+- Sealed test episodes/control steps: **0 / 0**
+- Historical validation64 bank opened: **False**
+- Sealed final test opened/accessed: **False**
+- Final-test authorization requested: **False**
+- CloudWatch: **unavailable**; missing CloudWatch values are unknown, not zero.
+
+Shard11 primary same-seed H25 findings:
+- Seed0: adaptive vs same-seed H25 fixed success **4/4 vs 4/4**; horizons `{20: 24, 25: 265}`, no H>25. Physical+constraint delta `+0.0000503`, total-cost delta `-0.119950`, decision-time ratio mean `0.97517`.
+- Seed1: success **4/4 vs 4/4**; horizons `{15: 57, 25: 232}`, no H>25. Physical+constraint delta `+0.230412`, total-cost delta `-0.339588`, decision-time ratio mean `0.98009`.
+- Seed2: success **4/4 vs 4/4**; horizons `{10: 10, 25: 279}`, no H>25. Physical+constraint delta `+2.191780`, total-cost delta `+2.041780`, decision-time ratio mean `1.02046`.
+
+Cumulative frozen campaign status after shard11:
+- Completed shards: **12/16** (`00–11`)
+- Cases scored: **48/64**
+- Episodes completed: **2,064**
+- Control steps completed: **171,401**
+- New gradient training remains **0**; this campaign reuses historical gated policies and is not newly trained.
+
+Current interpretation:
+- Safe-shortening v1 remains one-sided/safety-preserving: **no H>25** selections on shards00–11.
+- Same-seed H25 success/failure parity is still preserved so far.
+- Adaptation remains sparse; seed2 remains effectively constant H25.
+- Physical+constraint cost is not improved overall; shard11 worsened physical+constraint for all three seeds, especially seed2.
+- Total-cost improvements where present are still largely attributable to the explicit shortening penalty, not better control.
+- AWS timing ratios remain noisy/near 1; no acceleration claim is supported.
+- This remains development-validation/model-selection evidence only, not final-test evidence and not a reproduction-success claim.
+
+State has been persisted with `update_state`. Next queued action: verify/await external backup covering shard11 artifacts, run logs, docs, and the state addendum; then run **shard12** under the same frozen controller/checkpoint/selection rules with no sealed-test access.

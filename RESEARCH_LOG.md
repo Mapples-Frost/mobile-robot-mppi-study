@@ -807,3 +807,109 @@ UTC: 2026-09-27T02:11:46.710508+00:00. Formal vehicle validation shard completed
 
 ## 2026-09-27T02:13:58.359309+00:00
 
+<!-- vehicle-validation64-shard08-audit-20260927 -->
+## 2026-09-27 vehicle validation64 shard08 audit
+
+UTC: 2026-09-27T02:15:20+00:00. Post-run audit of formal shard08 completed with validation_accessed=true (reading existing shard outputs), sealed test accessed=false, simulations=0, training steps=0. Shard08 has 224 episodes and 19703 control steps, within the declared 224/33600 budget. Completed hash audit passed=True; episode trace/hash audit passed=True; aggregate replay checks passed=True. Learned candidates in shard08: s0 {'episodes': 4, 'steps': 290, 'success_count': 4, 'episode_failure_count': 0, 'switches': 0, 'horizon_counts': {'25': 290}, 'unique_horizons': [25], 'adaptive_in_this_shard': False}, s1 {'episodes': 3, 'steps': 208, 'success_count': 3, 'episode_failure_count': 0, 'switches': 0, 'horizon_counts': {'25': 208}, 'unique_horizons': [25], 'adaptive_in_this_shard': False}, s2 {'episodes': 4, 'steps': 314, 'success_count': 4, 'episode_failure_count': 0, 'switches': 8, 'horizon_counts': {'25': 307, '35': 7}, 'unique_horizons': [25, 35], 'adaptive_in_this_shard': True}. Vehicle validation64 progress is now 9/12 completed formal shards with 2016 episodes and 177430 control steps, plus one counted failed validation-access attempt with 0 episodes/control steps and preserved audit-schema false positives. This is not final model selection or a reproduction claim. New formal evidence requires external backup before shard09; request written at `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_VALIDATION64_SHARD08_AUDIT_20260927T021520.json` and final addendum at `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_VALIDATION64_SHARD08_AUDIT_FINAL_ADDENDUM_20260927T021520.json`. Sealed test remains closed.
+
+
+## 2026-09-27T02:17:44.619381+00:00
+Concrete actions completed.
+
+### Evidence inspected
+- `STATUS.md`
+- `EXPERIMENT_REGISTRY.csv` tail
+- shard08 formal artifacts:
+  - `research_artifacts/aws_formal_validation/vehicle_validation64_20260926/shard08/completed.json`
+  - `summary.md`
+  - formal run registry `research_artifacts/aws_runs/20260927T010021_f39456a9/registry.json`
+- prepared audit source:
+  - `experiments/bohn2021_aws/vehicle_validation64_shard08_audit.py`
+- pre-shard08 backup proof:
+  - `research_artifacts/aws_backup_proofs/backup_proof_20260927T005920_after_shard07_audit_v2_run_finalized.json`
+
+No validation bank content was reopened during inspection. Sealed final test remained closed and was not hashed.
+
+### Experiment run
+Ran exactly one bounded metadata audit:
+
+- Script: `experiments/bohn2021_aws/vehicle_validation64_shard08_audit.py`
+- Interpreter: modern
+- Experiment ID: `20260927T021520_6b245ecf`
+- Exit status: `0`
+- Runtime: `14.0126 s`
+- New simulations/control steps/gradient steps: `0 / 0 / 0`
+- Validation access: existing shard08 outputs only
+- Validation bank reopened: `false`
+- Sealed final test accessed/opened/hashed: `false / false / false`
+
+### Shard08 audit result
+Audit passed.
+
+- Episodes audited: `224`
+- Control steps audited: `19703`
+- Control-step upper bound: `33600`
+- Completed hash audit: `true`
+- Episode trace/hash audit: `true`
+- Aggregate replay: `true`
+- Registry validation-budget schema repair accepted `episodes_exact=224`; no scientific criterion, controller behavior, model-selection rule, or final-test gate changed.
+
+Learned-horizon audit:
+
+| candidate | episodes | steps | successes | horizons | switches | adaptive in shard08 |
+|---|---:|---:|---:|---|---:|---|
+| learned_s0 | 4 | 290 | 4 | H25 only | 0 | false |
+| learned_s1 | 3 | 208 | 3 | H25 only | 0 | false |
+| learned_s2 | 4 | 314 | 4 | H25/H35 | 8 | true |
+
+### Key artifacts
+- Audit raw: `research_artifacts/aws_diagnostics/vehicle_validation64_shard08_audit_20260927/raw.json`
+  - SHA256 `2ef86bb9e2e68b673205cbd96811f9cb39711235cce8ce57d93126ae58ffe9fa`
+- Audit summary: `research_artifacts/aws_diagnostics/vehicle_validation64_shard08_audit_20260927/summary.md`
+  - SHA256 `ab9b319eb4e104d96740f39d44a4533c48eb48654720d546ab1fbdb6f9fa3f9c`
+- Audit completed marker: `research_artifacts/aws_diagnostics/vehicle_validation64_shard08_audit_20260927/completed.json`
+  - SHA256 `4c8cfbe5a6f68c1e4540c66dfd7e328e6222be0bde71162eec6e82c7aa4eb5a9`
+- Backup request: `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_VALIDATION64_SHARD08_AUDIT_20260927T021520.json`
+  - SHA256 `39942fb3f51edf9c970b54ed59371f9eadb4d57eddb3b89670f83b38b154375e`
+- Final addendum: `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_VALIDATION64_SHARD08_AUDIT_FINAL_ADDENDUM_20260927T021520.json`
+  - SHA256 `eb0277557c49a20c83a91023063ef965225ea625e438e1de4439dbe4c567e525`
+- Backup blocker note: `research_artifacts/aws_diagnostics/post_shard08_audit_backup_blocker_check_20260927.md`
+  - SHA256 `2cc7e666f2d291bfb77ae45d1b22f953f91e7d4571edece15feda9e10f4ac159`
+- Run-finalized backup request addendum written:
+  - `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_VALIDATION64_SHARD08_AUDIT_RUN_FINALIZED_20260927T021520.json`
+  - SHA256 `286e5821b8e55e69295a8f2660f2ebc35f3d55703a4465afc184e6ce1d553ec6`
+
+### Cumulative vehicle validation64 status
+- Formal shards completed: `0–8`
+- Accepted audited shards: `0–8`
+- Formal validation episodes completed: `2016 / 2688`
+- Formal validation control steps completed: `177430`
+- Remaining shards: `9, 10, 11`
+- Preserved failed formal attempt:
+  - shard02 modern-interpreter TensorFlow-missing attempt, 0 episodes/control steps/gradient steps
+- Preserved failed audit attempts:
+  - shard00 audit-v1 schema false negative, repaired by v2
+  - shard05 audit-v1 schema false positive, repaired by v2
+  - shard07 audit-v1 `episodes_exact` schema false positive, repaired by v2
+
+### Current blocker / next iteration
+Shard09 is blocked until a verified external backup proof exists after the shard08 audit run-finalized addendum.
+
+I checked for `research_artifacts/aws_backup_proofs/backup_proof_20260927T02*.json`; none exists yet.
+
+Next iteration should:
+1. Inspect only for an adequate post-shard08-audit external backup proof.
+2. If adequate, reconstruct/verify local pre-shard09 proof.
+3. Then run exactly one formal shard09 validation with legacy interpreter and sealed final test closed.
+4. If no proof exists, do not create new formal validation evidence.
+
+State was persisted via `update_state`. No reproduction-success claim is supported yet; this remains partial validation evidence for the IMPROVED latency-tree vehicle method, not ORIGINAL SAC, and not final-test evidence.
+
+<!-- post-shard08-audit-backup-gate-recheck-20260927T022136+0000 -->
+## 2026-09-27 post-shard08 audit backup gate recheck
+
+UTC: 2026-09-27T02:21:36+00:00. Metadata-only backup proof inventory check before shard09: validation_accessed=false, validation_bank_reopened=false, sealed test accessed/opened/hashed=false, simulations/control_steps/gradient_steps=0/0/0. Required proof was after `2026-09-27T02:15:35+00:00`. Repository-local `backup_proof_20260927T02*.json` count was 0; all `backup_proof_20260927T*.json` files were ['research_artifacts/aws_backup_proofs/backup_proof_20260927T005920_after_shard07_audit_v2_run_finalized.json']; adequate post-shard08 proofs found: 0. The supervisor-context backup at `2026-09-27T02:14:50.580286+00:00` is insufficient because it predates the shard08 audit run-finalized threshold and no local proof file exists. Shard09 remains backup-gated. No formal validation evidence was created; vehicle validation64 remains 9/12 shards, 2016/2688 episodes, 177430 control steps, final test closed. New artifacts: `research_artifacts/aws_diagnostics/post_shard08_audit_backup_gate_recheck_20260927T022136+0000/raw.json`, `research_artifacts/aws_diagnostics/post_shard08_audit_backup_gate_recheck_20260927T022136+0000/summary.md`, `research_artifacts/aws_diagnostics/post_shard08_audit_backup_gate_recheck_20260927T022136+0000/completed.json`. New backup request: `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_POST_SHARD08_AUDIT_GATE_RECHECK_20260927T022136+0000.json`. Next proof must be after this recheck and this metadata run's finalized registry/stdout/stderr/cloudwatch snapshot before shard09 can run. Method remains IMPROVED latency-tree, not ORIGINAL SAC, and no reproduction-success claim is supported.
+
+
+## 2026-09-27T02:22:50.418918+00:00
+

@@ -1490,3 +1490,59 @@ UTC: 2026-09-27T14:13:22.323523+00:00. Ran a frozen fresh development-validation
 
 ## 2026-09-27T14:16:19.724987+00:00
 
+<!-- vehicle-safe-shortening-v1-devval64-shard-20260927-v1-shard06 -->
+## 2026-09-27 vehicle safe-shortening v1 fresh development-validation shard 06
+
+UTC: 2026-09-27T15:11:23.792340+00:00. Ran a frozen fresh development-validation paired case-block shard for IMPROVED safe-shortening v1: 172 episodes, 14178 control steps, cases [7, 17, 37, 41], no historical validation64 bank reopen and no sealed-test access. The shard includes all 43 arms (3 adaptive plus matched fixed-H grid and seed0 independent-terminal grid) for each included case. This is development-validation/model-selection evidence only, not final-test evidence. Artifacts: `research_artifacts/aws_development_validation/vehicle_safe_shortening_v1_devval64_20260927_v1/shard06/summary.md`, `research_artifacts/aws_development_validation/vehicle_safe_shortening_v1_devval64_20260927_v1/shard06/raw.json`, `research_artifacts/aws_development_validation/vehicle_safe_shortening_v1_devval64_20260927_v1/shard06/completed.json`.
+
+
+## 2026-09-27T15:13:20.134497+00:00
+Elapsed service lifetime since first supervisor event (2026-09-26T10:55:29.419331Z): **28h15m54.373s / 28.2651 h** to latest shard06 artifact timestamp **2026-09-27T15:11:23.792340Z**. Cumulative server API `total_tokens` from `research.sqlite` calls: **unknown** because repository tools expose no `*sqlite*` files; desktop conversation usage excluded.
+
+Concrete action completed: continued the frozen vehicle safe-shortening v1 development-validation campaign by running **shard06**.
+
+Key evidence:
+- Run registry: `research_artifacts/aws_runs/20260927T141730_ae6afa30/registry.json`
+- Runner: `experiments/bohn2021_aws/vehicle_safe_shortening_v1_devval_shard_runner.py`
+- Runner SHA256: `21db4b319901243bc512a356ceac71c2280c2db0fc9e473136586300678435d5`
+- Shard artifacts:
+  - `research_artifacts/aws_development_validation/vehicle_safe_shortening_v1_devval64_20260927_v1/shard06/summary.md`
+  - `research_artifacts/aws_development_validation/vehicle_safe_shortening_v1_devval64_20260927_v1/shard06/raw.json`
+  - `research_artifacts/aws_development_validation/vehicle_safe_shortening_v1_devval64_20260927_v1/shard06/completed.json`
+- Postrun state written:
+  - `research_artifacts/aws_development_validation/vehicle_safe_shortening_v1_devval64_20260927_v1/SHARD06_POSTRUN_STATE_20260927T151123Z.md`
+  - SHA256 `6dc88555aea042b86e11859c1dc6558a6c5c3b670ca99a648db7820cad681f15`
+- Backup request written:
+  - `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_VEHICLE_SAFE_SHORTENING_V1_DEVVAL64_SHARD06_STATE_ADDENDUM_20260927T151123Z.json`
+  - SHA256 `1250eb61bc4099a28a86ea1c39a44cbae5816c0ac68aa9950fe8a1058d5bf664`
+
+Shard06 budget/access:
+- Episodes: **172**
+- Control steps: **14,178**
+- New training episodes / gradient steps: **0 / 0**
+- Sealed test episodes: **0**
+- Historical validation64 bank opened: **False**
+- Sealed final test opened: **False**
+- Final-test authorization requested: **False**
+
+Shard06 scientific findings:
+- Cases: `[7, 17, 37, 41]`
+- Seed0: adaptive vs same-seed H25 fixed success **3/4 vs 3/4**; case37 failed for both. Horizons `{20: 48, 25: 324}`, no H>25. Total-cost delta `-0.23999`, physical+constraint delta approximately `+0.000009`.
+- Seed1: success **4/4 vs 4/4**. Horizons `{15: 37, 25: 251}`, no H>25. Total-cost delta `-0.33200`, physical+constraint delta `+0.037997`.
+- Seed2: success **4/4 vs 4/4**. Horizons `{10: 1, 25: 287}`, no H>25. Total-cost delta `-0.01500`, physical+constraint delta approximately `-0.000003`.
+
+Cumulative campaign status after shard06:
+- Completed shards: **7/16** (`00–06`)
+- Cases scored: **28/64**
+- Episodes completed: **1,204**
+- Control steps completed: **101,443**
+- New gradient training remains **0**; this campaign reuses historical gated policies and is not newly trained.
+
+Current interpretation:
+- Safe-shortening v1 continues to avoid unsafe **H>25** choices and preserves same-seed H25 success/failure parity on completed fresh devval cases.
+- Adaptation remains sparse and one-sided. Seed2 is effectively constant H25; seed0/seed1 shorten occasionally.
+- Physical+constraint performance is not convincingly improved; total-cost changes are mostly from the explicit horizon penalty/shortening term.
+- Actual AWS decision-time ratios remain noisy/near 1, so no timing-speedup claim is supported yet.
+- This is development-validation/model-selection evidence only, not final-test evidence and not a reproduction success claim.
+
+State has been persisted with `update_state`. Next concrete action queued: run **shard07** of the same frozen campaign, with no controller/checkpoint/selection-rule changes and no sealed-test access.

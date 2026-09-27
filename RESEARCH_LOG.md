@@ -1856,3 +1856,12 @@ Current interpretation:
 - This remains development-validation/model-selection evidence only, not final-test evidence and not a reproduction-success claim.
 
 State has been persisted with `update_state`. Next queued action: verify/await external backup covering shard11 artifacts, run logs, docs, and the state addendum; then run **shard12** under the same frozen controller/checkpoint/selection rules with no sealed-test access.
+
+<!-- vehicle-safe-shortening-v1-devval64-shard-20260927-v1-shard12 -->
+## 2026-09-27 vehicle safe-shortening v1 fresh development-validation shard 12
+
+UTC: 2026-09-27T20:47:34.091485+00:00. Ran a frozen fresh development-validation paired case-block shard for IMPROVED safe-shortening v1: 172 episodes, 15129 control steps, cases [0, 2, 55, 59], no historical validation64 bank reopen and no sealed-test access. The shard includes all 43 arms (3 adaptive plus matched fixed-H grid and seed0 independent-terminal grid) for each included case. This is development-validation/model-selection evidence only, not final-test evidence. Artifacts: `research_artifacts/aws_development_validation/vehicle_safe_shortening_v1_devval64_20260927_v1/shard12/summary.md`, `research_artifacts/aws_development_validation/vehicle_safe_shortening_v1_devval64_20260927_v1/shard12/raw.json`, `research_artifacts/aws_development_validation/vehicle_safe_shortening_v1_devval64_20260927_v1/shard12/completed.json`.
+
+
+## 2026-09-27T20:49:46.244355+00:00
+

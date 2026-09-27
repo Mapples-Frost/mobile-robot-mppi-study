@@ -1065,3 +1065,22 @@ Artifacts: `research_artifacts/aws_diagnostics/vehicle_learned_policy_collapse_d
 
 ## 2026-09-27T06:47:05.332885+00:00
 
+<!-- vehicle-validation64-full-aggregate-model-selection-20260927-RESEARCH_LOG.md -->
+### Vehicle validation64 full aggregate/model-selection diagnostic (2026-09-27T06:48:01+00:00)
+
+- Metadata-only validation aggregation over existing shard outputs: 2688 episode summaries and 236348 represented control steps; no new simulations/control/training, no validation-bank reopen, no sealed-test access/hash.
+- Artifacts: `research_artifacts/aws_diagnostics/vehicle_validation64_full_aggregate_model_selection_20260927/raw.json`, `research_artifacts/aws_diagnostics/vehicle_validation64_full_aggregate_model_selection_20260927/summary.md`, completed marker `research_artifacts/aws_diagnostics/vehicle_validation64_full_aggregate_model_selection_20260927/completed.json`; tables `{'episode_table_csv': 'research_artifacts/aws_diagnostics/vehicle_validation64_full_aggregate_model_selection_20260927/episode_table.csv', 'arm_summary_csv': 'research_artifacts/aws_diagnostics/vehicle_validation64_full_aggregate_model_selection_20260927/arm_summary.csv', 'paired_deltas_summary_csv': 'research_artifacts/aws_diagnostics/vehicle_validation64_full_aggregate_model_selection_20260927/paired_deltas_summary.csv', 'case43_table_csv': 'research_artifacts/aws_diagnostics/vehicle_validation64_full_aggregate_model_selection_20260927/case43_table.csv'}`.
+- Matched-terminal all-seed fixed-H nominations: performance `matched_terminal_allseeds_H25`, speed-within-3%-cost `matched_terminal_allseeds_H25`.
+- Independent-terminal seed0 nominations: performance `fixed_seed0_terminal30_controllerH30`, speed-within-3%-cost `fixed_seed0_terminal30_controllerH30`.
+- Learned candidates: `learned_s0`: episodes=64, success=64, failures=0, phys=1563.71, total=1687.89, decision_mean_s=0.16884143365196969, horizons={'25': 4967}; `learned_s1`: episodes=64, success=64, failures=0, phys=1198.54, total=1322.54, decision_mean_s=0.1727579607954373, horizons={'25': 4960}; `learned_s2`: episodes=64, success=63, failures=1, phys=40228.6, total=40358.1, decision_mean_s=0.17713809508124634, horizons={'25': 4605, '35': 409}.
+- Adaptive diagnostic: `{'learned_s0': {'same_seed_speed_nomination': 'fixed_seed0_terminal25_controllerH25', 'adaptive_horizons_used': False, 'unique_horizons': [25], 'success_noninferior_proxy': True, 'cost_within_3pct_proxy': True, 'decision_at_least_10pct_faster_proxy': False, 'passes_against_same_seed_speed_nomination': False, 'reasons': ['not adaptive on validation: only one horizon used', 'decision mean does not show >=10% reduction vs same-seed speed nomination']}, 'learned_s1': {'same_seed_speed_nomination': 'fixed_seed1_terminal25_controllerH25', 'adaptive_horizons_used': False, 'unique_horizons': [25], 'success_noninferior_proxy': True, 'cost_within_3pct_proxy': True, 'decision_at_least_10pct_faster_proxy': False, 'passes_against_same_seed_speed_nomination': False, 'reasons': ['not adaptive on validation: only one horizon used', 'decision mean does not show >=10% reduction vs same-seed speed nomination']}, 'learned_s2': {'same_seed_speed_nomination': 'fixed_seed2_terminal25_controllerH25', 'adaptive_horizons_used': True, 'unique_horizons': [25, 35], 'success_noninferior_proxy': True, 'cost_within_3pct_proxy': False, 'decision_at_least_10pct_faster_proxy': False, 'passes_against_same_seed_speed_nomination': False, 'reasons': ['physical/control cost exceeds +3% proxy vs same-seed speed nomination', 'decision mean does not show >=10% reduction vs same-seed speed nomination']}}`.
+- Interpretation: The frozen validation campaign is complete and shows that the current IMPROVED latency-tree candidate is not a robust 3-seed adaptive-horizon success: learned_s0 and learned_s1 are H25-only, while learned_s2 is adaptive but has one catastrophic validation failure. These findings are validation/development model-selection evidence only; the sealed final test remains unauthorized. Paired fixed-H comparisons and timing here should guide diagnosis/revision, not a reproduction-success claim.
+- Next action after backup: prioritize targeted diagnosis of selection/training collapse (s0/s1 constant H25) and learned_s2 case43 deterministic replay/one-variable ablations before any final-test gate; likely prepare a versioned IMPROVED method revision.
+
+
+## 2026-09-27T06:51:09.485750+00:00
+
+
+
+## 2026-09-27T06:54:43.444444+00:00
+

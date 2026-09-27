@@ -1482,3 +1482,11 @@ UTC: 2026-09-27T13:13:53.294129+00:00. Ran a frozen fresh development-validation
 
 ## 2026-09-27T13:17:05.921801+00:00
 
+<!-- vehicle-safe-shortening-v1-devval64-shard-20260927-v1-shard05 -->
+## 2026-09-27 vehicle safe-shortening v1 fresh development-validation shard 05
+
+UTC: 2026-09-27T14:13:22.323523+00:00. Ran a frozen fresh development-validation paired case-block shard for IMPROVED safe-shortening v1: 172 episodes, 15126 control steps, cases [22, 25, 44, 51], no historical validation64 bank reopen and no sealed-test access. The shard includes all 43 arms (3 adaptive plus matched fixed-H grid and seed0 independent-terminal grid) for each included case. This is development-validation/model-selection evidence only, not final-test evidence. Artifacts: `research_artifacts/aws_development_validation/vehicle_safe_shortening_v1_devval64_20260927_v1/shard05/summary.md`, `research_artifacts/aws_development_validation/vehicle_safe_shortening_v1_devval64_20260927_v1/shard05/raw.json`, `research_artifacts/aws_development_validation/vehicle_safe_shortening_v1_devval64_20260927_v1/shard05/completed.json`.
+
+
+## 2026-09-27T14:16:19.724987+00:00
+

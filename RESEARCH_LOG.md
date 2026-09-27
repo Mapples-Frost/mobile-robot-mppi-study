@@ -1394,3 +1394,82 @@ UTC: 2026-09-27T11:25:22.996476+00:00. Ran a frozen fresh development-validation
 
 ## 2026-09-27T11:28:54.770839+00:00
 
+<!-- vehicle-safe-shortening-v1-devval64-shard-20260927-v1-shard03 -->
+## 2026-09-27 vehicle safe-shortening v1 fresh development-validation shard 03
+
+UTC: 2026-09-27T12:20:50.233484+00:00. Ran a frozen fresh development-validation paired case-block shard for IMPROVED safe-shortening v1: 172 episodes, 13603 control steps, cases [5, 24, 32, 56], no historical validation64 bank reopen and no sealed-test access. The shard includes all 43 arms (3 adaptive plus matched fixed-H grid and seed0 independent-terminal grid) for each included case. This is development-validation/model-selection evidence only, not final-test evidence. Artifacts: `research_artifacts/aws_development_validation/vehicle_safe_shortening_v1_devval64_20260927_v1/shard03/summary.md`, `research_artifacts/aws_development_validation/vehicle_safe_shortening_v1_devval64_20260927_v1/shard03/raw.json`, `research_artifacts/aws_development_validation/vehicle_safe_shortening_v1_devval64_20260927_v1/shard03/completed.json`.
+
+
+## 2026-09-27T12:22:52.228459+00:00
+Elapsed service lifetime since first supervisor event: **≥25h25m20.814s / 25.4224 h** as of latest shard03 artifact timestamp `2026-09-27T12:20:50.233484Z`.  
+Cumulative server API `total_tokens` from `research.sqlite`: **unknown**; repository tools still do not expose `research.sqlite` / `research.sqlite3`. Desktop conversation usage excluded.
+
+Concrete actions completed this iteration:
+
+1. **Inspected current frozen campaign evidence**
+   - Verified campaign directory inventory includes shards `00–02`, gate, bank.
+   - Read/checked:
+     - `shard02/completed.json`
+     - frozen runner `experiments/bohn2021_aws/vehicle_safe_shortening_v1_devval_shard_runner.py`
+     - `gate_completed.json`
+     - current status/audit/registry tails after shard03.
+   - No historical validation64 bank or sealed test was opened.
+
+2. **Executed next frozen vehicle devval shard**
+   - Ran:
+     - `experiments/bohn2021_aws/vehicle_safe_shortening_v1_devval_shard_runner.py --shard 3`
+     - legacy interpreter
+   - Exit status: **0**
+   - Runtime: **3051.896 s**
+   - Registry:
+     - `research_artifacts/aws_runs/20260927T113002_ce43de29/registry.json`
+   - Shard03 cases:
+     - `[5, 24, 32, 56]`
+   - Budget consumed:
+     - **172 development-validation episodes**
+     - **13,603 control steps**
+     - **0 training episodes**
+     - **0 gradient steps**
+     - **0 sealed-test episodes**
+
+3. **Shard03 main findings — development-validation only**
+   - Safe-shortening guard preserved: **no adaptive H > 25**.
+   - Same-seed H25 primary pairings:
+     - Seed0: adaptive vs fixed H25 success **4/4 vs 4/4**, horizons `{20: 27, 25: 246}`, physical delta `+0.0001136`, total delta `-0.134886`, decision ratio mean `1.00234`.
+     - Seed1: **4/4 vs 4/4**, horizons `{15: 27, 25: 246}`, physical delta `+0.0000374`, total delta `-0.269963`, decision ratio mean `1.01224`.
+     - Seed2: **4/4 vs 4/4**, horizons `{25: 273}`, physical delta `0`, total delta `0`, decision ratio mean `1.05534`.
+   - Interpretation unchanged: seed0/seed1 show limited shortening with mixed timing; seed2 remains effectively constant H25.
+
+4. **Cumulative current campaign after shards 00–03**
+   - Completed shards: **4 / 16**
+   - Fresh devval cases scored: **16 / 64**
+   - Episodes: **688**
+   - Control steps: **59,227**
+   - Fresh bank generation resets counted: **64**
+   - Preliminary primary same-seed H25 aggregate, not for selection:
+     - Seed0: success **16/16 vs 16/16**, adaptive horizons `{20: 127, 25: 1089}`, physical delta `+0.231487`, total delta `-0.403513`, approximate shard-mean decision ratio `0.98644`.
+     - Seed1: success **16/16 vs 16/16**, adaptive horizons `{15: 213, 25: 1003}`, physical delta `+1.171264`, total delta `-0.958736`, ratio `1.00570`.
+     - Seed2: success **16/16 vs 16/16**, adaptive horizons `{10: 2, 25: 1214}`, physical delta `+0.039709`, total delta `+0.009709`, ratio `1.01094`.
+
+5. **State and backup preservation**
+   - Wrote durable postrun state:
+     - `research_artifacts/aws_development_validation/vehicle_safe_shortening_v1_devval64_20260927_v1/SHARD03_POSTRUN_STATE_20260927T122050Z.md`
+     - sha256 `f39fb292df226816acdc1de91b17a6d7e5ef07b8034378b699790af9f461aa00`
+   - Wrote backup addendum request:
+     - `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_VEHICLE_SAFE_SHORTENING_V1_DEVVAL64_SHARD03_STATE_ADDENDUM_20260927T122050Z.json`
+     - sha256 `77b8a8a1f8c710ab71ef93e5b02c5f6159a0f566ce9033eebc1944615863c68e`
+   - Updated persistent research state via `update_state`.
+
+6. **Access control**
+   - Historical validation64 bank reopened: **false**
+   - Sealed final test accessed: **false**
+   - Final-test authorization requested: **false**
+   - No controller/checkpoint/selection-rule changes.
+
+Next queued action: **verify/observe backup for shard03 artifacts if available, then run shard04 with the same frozen runner and protocol**:
+
+```text
+experiments/bohn2021_aws/vehicle_safe_shortening_v1_devval_shard_runner.py --shard 4
+```
+
+Expected shard04 budget: **172 episodes**, control-step upper bound **25,800**, no training, no sealed test.

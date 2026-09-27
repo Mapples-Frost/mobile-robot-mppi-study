@@ -1224,3 +1224,11 @@ Decision: next IMPROVED vehicle revision should test safe-shortening/risk-sensit
 
 ## 2026-09-27T07:54:31.705075+00:00
 
+<!-- vehicle-safe-shortening-v1-smoke-20260927-v3 -->
+## 2026-09-27 vehicle safe-shortening v1 smoke
+
+UTC: 2026-09-27T08:02:25.089325+00:00. Engineering smoke for IMPROVED safe-shortening wrapper completed on vehicle smoke bank only: 24 episodes, 1764 control steps, replay passed=True. Validation64 and sealed test remained closed. This is not model-selection/final evidence. Artifacts: `research_artifacts/aws_diagnostics/vehicle_safe_shortening_v1_smoke_20260927_v3/summary.md`, `research_artifacts/aws_diagnostics/vehicle_safe_shortening_v1_smoke_20260927_v3/raw.json`, `research_artifacts/aws_diagnostics/vehicle_safe_shortening_v1_smoke_20260927_v3/completed.json`.
+
+
+## 2026-09-27T08:06:08.251033+00:00
+

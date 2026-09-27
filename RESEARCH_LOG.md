@@ -921,3 +921,76 @@ UTC: 2026-09-27T03:37:07.147485+00:00. Formal vehicle validation shard completed
 
 ## 2026-09-27T03:39:01.031229+00:00
 
+<!-- vehicle-validation64-shard09-audit-20260927 -->
+## 2026-09-27 vehicle validation64 shard09 audit
+
+UTC: 2026-09-27T03:40:23+00:00. Post-run audit of formal shard09 completed with validation_accessed=true (reading existing shard outputs), sealed test accessed=false, simulations=0, training steps=0. Shard09 has 224 episodes and 19876 control steps, within the declared 224/33600 budget. Completed hash audit passed=True; episode trace/hash audit passed=True; aggregate replay checks passed=True. Learned candidates in shard09: s0 {'episodes': 10, 'steps': 742, 'success_count': 10, 'episode_failure_count': 0, 'switches': 0, 'horizon_counts': {'25': 742}, 'unique_horizons': [25], 'adaptive_in_this_shard': False}, s1 {'episodes': 4, 'steps': 293, 'success_count': 4, 'episode_failure_count': 0, 'switches': 0, 'horizon_counts': {'25': 293}, 'unique_horizons': [25], 'adaptive_in_this_shard': False}, s2 {'episodes': 6, 'steps': 474, 'success_count': 6, 'episode_failure_count': 0, 'switches': 17, 'horizon_counts': {'25': 387, '35': 87}, 'unique_horizons': [25, 35], 'adaptive_in_this_shard': True}. Vehicle validation64 progress is now 10/12 completed formal shards with 2240 episodes and 197306 control steps, plus one counted failed validation-access attempt with 0 episodes/control steps and preserved audit-schema false positives. This is not final model selection or a reproduction claim. New formal evidence requires external backup before shard10; request written at `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_VALIDATION64_SHARD09_AUDIT_20260927T034023.json` and final addendum at `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_VALIDATION64_SHARD09_AUDIT_FINAL_ADDENDUM_20260927T034023.json`. Sealed test remains closed.
+
+
+## 2026-09-27T03:42:51.464430+00:00
+Concrete actions completed this iteration:
+
+- Inspected current shard09 evidence and backup context without reopening the validation bank and without sealed-test access.
+- Ran exactly one metadata-only audit experiment:
+  - Script: `experiments/bohn2021_aws/vehicle_validation64_shard09_audit.py`
+  - Experiment: `20260927T034023_8a42639a`
+  - Interpreter: modern
+  - Simulations/control steps/gradient steps: `0 / 0 / 0`
+  - Validation bank reopened: `false`
+  - Sealed test opened/hashed/accessed: `false / false / false`
+- Shard09 audit passed:
+  - Completed-hash audit: `true`
+  - Episode trace/hash audit: `true`
+  - Aggregate replay: `true`
+  - Episodes audited: `224`
+  - Control steps audited: `19876`
+- Shard09 learned-horizon audit:
+  - `learned_s0`: 10 episodes, 742 steps, H25 only, 10/10 success
+  - `learned_s1`: 4 episodes, 293 steps, H25 only, 4/4 success
+  - `learned_s2`: 6 episodes, 474 steps, H25/H35, 17 switches, 6/6 success
+- Updated/preserved evidence:
+  - Audit completed: `research_artifacts/aws_diagnostics/vehicle_validation64_shard09_audit_20260927/completed.json`
+  - SHA256: `4c1c57478ef99351f471a83ff8e3687cda639ca66bd3792eea5b647f35cd35fc`
+  - Audit raw: `research_artifacts/aws_diagnostics/vehicle_validation64_shard09_audit_20260927/raw.json`
+  - SHA256: `e9f9fa9d6e3dd037990ac820f6b23ba763007fe428720e389908507574f0a943`
+  - Audit summary: `research_artifacts/aws_diagnostics/vehicle_validation64_shard09_audit_20260927/summary.md`
+  - SHA256: `eef30d2b73007c44d69a7425a2a74fb9252e6d71b81b03018d678d511671470b`
+- Wrote run-finalized backup request addendum:
+  - `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_VALIDATION64_SHARD09_AUDIT_RUN_FINALIZED_20260927T034023.json`
+  - SHA256: `5b6f78fa7fdabd96bff775fc615f4524bb6abbb66165b5f398c89561069cfb87`
+- Persisted durable state via `update_state`.
+
+Current cumulative vehicle validation64 status:
+
+- Formal shards completed: `0–9` = `10/12`
+- Accepted audited shards: `0–9` = `10/12`
+- Formal validation episodes completed: `2240 / 2688`
+- Formal validation control steps completed: `197306`
+- Remaining shards: `10, 11`
+- Final sealed test: still closed, unauthorized, not opened, not hashed.
+- Scientific status: partial validation evidence for the IMPROVED latency-tree method only; no ORIGINAL SAC reproduction claim and no final success claim.
+
+Backup gate:
+
+- Shard10 is blocked.
+- No adequate repository-local `backup_proof_20260927T034*.json` or `backup_proof_20260927T03*.json` was found after the shard09 audit/run-finalized addendum.
+- Required next proof must be after `2026-09-27T03:40:38Z` and cover shard09 formal outputs, shard09 audit outputs, finalized audit run registry/stdout/stderr/cloudwatch snapshot, docs/registry updates, backup requests/addenda/blocker note, and the new run-finalized addendum.
+
+Next autonomous action:
+
+- First inspect only for an adequate post-shard09-audit-run-finalized external backup proof.
+- If adequate proof exists: reconstruct/verify local pre-shard10 proof, then run exactly one formal shard10 validation with the legacy interpreter using the frozen runner; sealed test remains closed.
+- If no adequate proof exists: do not create new formal validation evidence; preserve the backup gate and state.
+
+<!-- vehicle-case43-shard07-trajectory-diagnostic-20260927 -->
+## 2026-09-27 vehicle shard07 case43 trajectory diagnostic
+
+UTC: 2026-09-27T03:47:33.055258+00:00. Metadata-only diagnostic of already-created validation outputs completed: learned_s2 shard07 case43 versus same-seed terminal25 fixed H25 case43. No validation bank reopen, no sealed-test access/hash, no simulations/control steps/gradient steps.
+
+Key diagnostic facts: learned_s2 case43 failed at 150 steps with physical+constraint cost 39125.9 and horizons {'25': 149, '35': 1}; fixed seed2 terminal25 H25 succeeded in 96 steps with physical+constraint cost 90.4598. H35 steps were [3]. Prefix max previous-state/input diffs before the singleton H35 were 0 / 0; first input/post-state divergence steps were 3 / 4. Learned solver calls were all successful/accepted with retry_rows=0. Objective/terminal-value components and warm-start vectors were not persisted, so an instrumented non-formal replay is required for that part of the diagnosis.
+
+Artifacts: `research_artifacts/aws_diagnostics/vehicle_case43_shard07_trajectory_diagnostic_20260927/raw.json`, `research_artifacts/aws_diagnostics/vehicle_case43_shard07_trajectory_diagnostic_20260927/summary.md`, `research_artifacts/aws_diagnostics/vehicle_case43_shard07_trajectory_diagnostic_20260927/completed.json`. Backup requested at `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_VEHICLE_CASE43_SHARD07_DIAGNOSTIC_20260927T034733.json`; shard10 remains blocked until an adequate verified external backup proof covers shard09 audit run-finalized evidence and subsequent diagnostic artifacts.
+
+
+## 2026-09-27T03:48:01.506727+00:00
+

@@ -3398,3 +3398,11 @@ Current next queued action after verified backup appears:
 
 ## 2026-09-28T20:31:14.105901+00:00
 
+<!-- vehicle-stress-scenario-opportunity-stage1-v1-runner-dryrun-20260928T2045Z -->
+## 2026-09-28 vehicle stress-scenario Stage1 v1 runner dry-run
+
+UTC: 2026-09-28T20:36:29.506408+00:00. Wrote and dry-ran `experiments/bohn2021_aws/vehicle_stress_scenario_opportunity_probe_v1_runner.py` with no simulations, no candidate resets, no training, no validation64-bank access and no sealed-test access. The dry-run verified the frozen stress-v1 protocol, post-protocol backup proof, legacy runtime import and H5..H50 terminal metadata inherited from the verified fixed-H grid. Stage1 rollout remains blocked until external backup covers the runner source, dry-run outputs, docs/state and backup request. Artifacts: `research_artifacts/aws_diagnostics/vehicle_stress_scenario_opportunity_probe_v1_runner_dryrun_20260928T2045Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_stress_scenario_opportunity_probe_v1_runner_dryrun_20260928T2045Z/completed.json`.
+
+
+## 2026-09-28T20:38:42.209107+00:00
+

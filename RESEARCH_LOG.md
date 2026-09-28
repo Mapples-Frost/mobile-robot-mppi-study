@@ -2799,3 +2799,7 @@ UTC: 2026-09-28T13:38:03.170039+00:00. Development-only broad selector confirmat
 
 ## 2026-09-28T13:42:10.128618+00:00
 
+<!-- vehicle-v1-state-selector-broad-postdiagnostic-v0-20260928 -->
+## 2026-09-28 vehicle V1 state-selector broad postdiagnostic v0
+
+UTC: 2026-09-28T13:43:04.216531+00:00. No-simulation postdiagnostic completed after broad selector confirmation. Broad selector acceptance=True; benefit_vs_H15=(physical 38.7155, total 36.9005); triggered_cases=[7, 10]. Next frozen protocol: `research_artifacts/aws_protocols/vehicle_v1_fresh_continuation_label_probe_v0_frozen_20260928.md` / `research_artifacts/aws_protocols/vehicle_v1_fresh_continuation_label_probe_v0_frozen_20260928.json`. No validation64/test access and no new rollout/training. Backup required before further simulation.

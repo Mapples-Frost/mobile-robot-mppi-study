@@ -3235,3 +3235,15 @@ UTC: 2026-09-28T18:29:34.156351+00:00. Analysis-only; no rollouts/training/refit
 
 ## 2026-09-28T18:32:12.261165+00:00
 
+<!-- vehicle-stage2-positive-branch-schema-diagnostic-v0-20260928T1840Z -->
+## 2026-09-28 Stage2 positive-branch schema diagnostic v0
+
+UTC: 2026-09-28T18:33:51.465676+00:00. Analysis-only; no rollouts, no training/refit, no validation64/test access. Findings: parsed Stage2 positive horizon union `[1, 3, 10, 25, 30]`; case5 step18 matching raw dictionaries `25`; direct saved vector fields `0`. Frozen Stage2 gate remains failed and retrain/refit remains false. Next after verified backup: After verified backup, freeze a tiny deterministic replay-to-branch terminal-value smoke for case5 step18 plus neutral/harm controls; raw artifacts do not expose enough direct state-vector fields for state injection. Artifacts: `research_artifacts/aws_diagnostics/vehicle_stage2_positive_branch_schema_diagnostic_v0_20260928T1840Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_stage2_positive_branch_schema_diagnostic_v0_20260928T1840Z/raw.json`. Backup request: `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_VEHICLE_STAGE2_POSITIVE_BRANCH_SCHEMA_DIAGNOSTIC_V0_20260928T1840Z.json`.
+
+
+## 2026-09-28T18:36:06.590129+00:00
+
+
+
+## 2026-09-28T18:38:47.904198+00:00
+

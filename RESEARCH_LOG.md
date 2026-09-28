@@ -2678,3 +2678,7 @@ UTC: 2026-09-28T09:31:58.719179+00:00. IMPROVED actual-time-aware gated-horizon 
 ## 2026-09-28 vehicle actual-time V2b smoke postdiagnostic
 
 UTC: 2026-09-28T09:36:20.558519+00:00. Metadata-only postdiagnostic of the V2b smoke completed; no simulations/training, no validation64 bank access, and no sealed-test access. Smoke hard_pass=True; episodes=36; control_steps=2826. Weighted selected/fixed decision-time ratio=0.975365; adaptive seed ratios={'1': 0.923164173083399, '2': 1.016109314669204}. Decision: V2b is engineering-ready but not strong enough to justify a long validation campaign by default. Next protocol draft: `research_artifacts/aws_protocols/vehicle_scenario_opportunity_capability_diagnostic_v0_after_v2b_smoke_20260928.md`. Artifacts: `research_artifacts/aws_diagnostics/vehicle_actual_time_v2b_smoke_postdiagnostic_20260928T0935Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_actual_time_v2b_smoke_postdiagnostic_20260928T0935Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_actual_time_v2b_smoke_postdiagnostic_20260928T0935Z/completed.json`.
+
+
+## 2026-09-28T09:49:12.027747+00:00
+

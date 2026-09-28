@@ -430,3 +430,21 @@ Before evidence: full devval64 rejected safe-shortening v1; metadata diagnostic 
 Diagnostic change: two one-variable deterministic replays on the already-opened case only. Force H25 at the adaptive H10 step, and inject H10 into the fixed-H25 path at the same step. No training, no controller/terminal/model/source mutation, no sealed test.
 
 Outcome: see `research_artifacts/aws_diagnostics/vehicle_safe_shortening_v1_case9_counterfactual_v1_20260928T000944Z/summary.md`. This supports revising the IMPROVED method toward state-level safety/value estimation rather than revalidating v1. Evidence remains development-only and contaminated by case9 diagnosis.
+
+<!-- vehicle-safe-shortening-v1-case9-switch-sensitivity-v1-20260928-decision -->
+### Decision: case9 switch-sensitivity informs IMPROVED v2 horizon-change safety
+
+Before evidence: v1 full devval64 failed the gate; case9 one-step H10 at step57 was causally implicated by force/inject counterfactuals.
+
+New diagnostic: one-step H15, one-step H20, and H10-from-step57 onward replays on the same already-opened case. No training, no controller/terminal mutation, no sealed test.
+
+Outcome: `research_artifacts/aws_diagnostics/vehicle_safe_shortening_v1_case9_switch_sensitivity_v1_20260928T001549Z/summary.md`. Use this as development-only evidence for v2 design; it cannot serve as fresh validation.
+
+<!-- vehicle-safe-shortening-v1-case9-ramp-sensitivity-v1-20260928-decision -->
+### Decision input: case9 H10-return/ramp sensitivity for IMPROVED v2
+
+Before evidence: one-step H10 at step57 caused the case9 seed2 failure; one-step H15/H20 and continued H10 were safe on the same case.
+
+New diagnostic: transition/ramp schedules after H10 on the same already-opened case. No training, no controller/terminal mutation, no sealed test.
+
+Outcome: `The H10-return/ramp schedules still failed on this case; v2 should avoid H10 in comparable states unless a stronger continuation/risk model justifies it.`. Use only as development evidence for v2 transition-safety design.

@@ -1929,3 +1929,19 @@ UTC: 2026-09-28T00:10:40.253366+00:00. Ran two deterministic one-variable counte
 
 ## 2026-09-28T00:15:00.575027+00:00
 
+<!-- vehicle-safe-shortening-v1-case9-switch-sensitivity-v1-20260928 -->
+## 2026-09-28 vehicle safe-shortening v1 case9 seed2 switch-sensitivity v1
+
+UTC: 2026-09-28T00:16:50.954291+00:00. Ran three deterministic case9 seed2 switch-sensitivity counterfactual episodes on the already-opened fresh devval case: one-step H15, one-step H20, and H10 from step57 onward. Budget: 3 episodes, 231 control steps, 0 training/gradient steps; sealed test closed. Conclusion: On this diagnosed case, H15/H20 one-step switches and continuing H10 from step57 all avoid the prior single-H10-then-H25 failure; the v1 catastrophe is most consistent with an unsafe abrupt return to H25 after an H10 step rather than horizon switching in general. Artifacts: `research_artifacts/aws_diagnostics/vehicle_safe_shortening_v1_case9_switch_sensitivity_v1_20260928T001549Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_safe_shortening_v1_case9_switch_sensitivity_v1_20260928T001549Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_safe_shortening_v1_case9_switch_sensitivity_v1_20260928T001549Z/completed.json`; backup request `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_VEHICLE_SAFE_SHORTENING_V1_CASE9_SWITCH_SENSITIVITY_V1_20260928T001650Z.json`.
+
+
+## 2026-09-28T00:19:54.187929+00:00
+
+<!-- vehicle-safe-shortening-v1-case9-ramp-sensitivity-v1-20260928 -->
+## 2026-09-28 vehicle safe-shortening v1 case9 seed2 H10-return/ramp sensitivity v1
+
+UTC: 2026-09-28T00:21:46.705508+00:00. Ran three deterministic transition/ramp counterfactual episodes on already-opened fresh devval shard13/case9 seed2. Budget: 3 episodes, 450 control steps, 0 training/gradient steps; sealed test closed. Conclusion: The H10-return/ramp schedules still failed on this case; v2 should avoid H10 in comparable states unless a stronger continuation/risk model justifies it. Artifacts: `research_artifacts/aws_diagnostics/vehicle_safe_shortening_v1_case9_ramp_sensitivity_v1_20260928T002008Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_safe_shortening_v1_case9_ramp_sensitivity_v1_20260928T002008Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_safe_shortening_v1_case9_ramp_sensitivity_v1_20260928T002008Z/completed.json`; backup request `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_VEHICLE_SAFE_SHORTENING_V1_CASE9_RAMP_SENSITIVITY_V1_20260928T002146Z.json`.
+
+
+## 2026-09-28T00:25:09.500168+00:00
+

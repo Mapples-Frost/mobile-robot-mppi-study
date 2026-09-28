@@ -2073,3 +2073,11 @@ UTC: 2026-09-28T01:56:06+00:00. Metadata-only audit of the CURRENT reused gated-
 
 ## 2026-09-28T02:01:06.753011+00:00
 
+
+<!-- vehicle-gated-horizon-risk-reselection-v1-20260928T020201+0000 -->
+### Vehicle gated-horizon risk-first re-selection v1 (2026-09-28T02:02:01+00:00)
+Metadata-only re-selection over existing current gated-search training traces completed: research_artifacts/aws_diagnostics/vehicle_gated_horizon_risk_reselection_v1_20260928T020201+0000/completed.json. No rollout/control/training/test access. Frozen decision `freeze_and_run_small_smoke_after_backup`; adaptive nominated seeds=3, changed-from-current adaptive seeds=3. Summary: research_artifacts/aws_diagnostics/vehicle_gated_horizon_risk_reselection_v1_20260928T020201+0000/summary.md. Backup request: research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_VEHICLE_GATED_HORIZON_RISK_RESELECTION_V1_20260928T020201+0000.json.
+
+
+## 2026-09-28T02:07:47.540574+00:00
+

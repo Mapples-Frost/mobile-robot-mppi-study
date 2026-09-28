@@ -3524,3 +3524,66 @@ UTC: 2026-09-28T23:10:29.568387+00:00. No-simulation reanalysis of existing v1b 
 
 ## 2026-09-28T23:15:22.890171+00:00
 
+<!-- vehicle-stress-v1b-terminal-reward-ablation-v0-dryrun-20260928T2320Z -->
+## 2026-09-28 vehicle stress-v1b terminal/reward-source ablation v0 dry-run
+
+UTC: 2026-09-28T23:16:27.654790+00:00. No-simulation protocol freeze completed after prefix-artifact postdiagnostic. Corrected v1b positives remain 4 states across cases=[4, 5], label gate=False. Froze terminal/reward-source ablation over all four corrected positives plus deterministic controls [8,9,16,18]; smoke plan=27 episodes, full plan=59 episodes. No validation64/test access, no training/refit. Simulation remains blocked until verified external backup covers `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_BEFORE_VEHICLE_STRESS_V1B_TERMINAL_REWARD_ABLATION_V0_SMOKE_20260928T2320Z.json`, `research_artifacts/aws_protocols/vehicle_stress_v1b_terminal_reward_ablation_v0_frozen_20260928T2320Z.json`, dry-run outputs and source. Artifacts: `research_artifacts/aws_diagnostics/vehicle_stress_v1b_terminal_reward_ablation_v0_dryrun_20260928T2320Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_stress_v1b_terminal_reward_ablation_v0_dryrun_20260928T2320Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_stress_v1b_terminal_reward_ablation_v0_dryrun_20260928T2320Z/completed.json`.
+
+
+## 2026-09-28T23:18:04.748301+00:00
+Elapsed service lifetime since first supervisor event: ~60h22m31s (2026-09-26T10:55:29Z → latest artifact/state around 2026-09-28T23:18Z). Cumulative server API total_tokens: latest available supervisor value was ~89.84M tokens; not refreshed by this desktop/tool context, and this conversation’s usage is excluded.
+
+Concrete actions completed:
+
+1. Inspected the prior v1b prefix-artifact evidence and handoff.
+   - Confirmed from `summary.md` / `completed.json` that the previous strict `prefix_mismatch_non_H15=120` was a non-causal bookkeeping/hash artifact.
+   - Corrected dynamic physical prefixes match `120/120`.
+   - Corrected label set remains sparse: `4` positive states, cases `[4, 5]`; corrected label/refit gate remains false.
+   - No validation64-bank access and no sealed-test access.
+
+2. Ran the prepared no-simulation terminal/reward-source ablation dry-run:
+   - Script: `experiments/bohn2021_aws/vehicle_stress_v1b_terminal_reward_ablation_v0.py`
+   - Command mode: `--dry-run --i-accept-development-terminal-reward-ablation`
+   - Registry: `research_artifacts/aws_runs/20260928T231626_050f5c38/registry.json`
+   - Exit status: `0`
+   - Runtime: ~2.0 s
+   - New rollouts/control steps/training/gradient steps: all `0`
+   - validation64 bank: closed
+   - sealed final test: closed
+
+3. Frozen outputs produced:
+   - Dry-run summary: `research_artifacts/aws_diagnostics/vehicle_stress_v1b_terminal_reward_ablation_v0_dryrun_20260928T2320Z/summary.md`
+   - Dry-run raw: `research_artifacts/aws_diagnostics/vehicle_stress_v1b_terminal_reward_ablation_v0_dryrun_20260928T2320Z/raw.json`
+   - Dry-run completed marker: `research_artifacts/aws_diagnostics/vehicle_stress_v1b_terminal_reward_ablation_v0_dryrun_20260928T2320Z/completed.json`
+   - Frozen protocol JSON: `research_artifacts/aws_protocols/vehicle_stress_v1b_terminal_reward_ablation_v0_frozen_20260928T2320Z.json`
+   - Frozen protocol MD: `research_artifacts/aws_protocols/vehicle_stress_v1b_terminal_reward_ablation_v0_frozen_20260928T2320Z.md`
+   - Backup request before smoke: `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_BEFORE_VEHICLE_STRESS_V1B_TERMINAL_REWARD_ABLATION_V0_SMOKE_20260928T2320Z.json`
+   - Durable handoff: `research_artifacts/aws_state/continue_state_20260928T2318Z_after_terminal_reward_ablation_dryrun.md`
+
+Scientific status:
+
+- Research is continuing; no reproduction success or final-test claim.
+- The leading hypothesis remains terminal/reward-source or objective mismatch: sparse corrected positives may depend on H-specific terminal values or synthetic cost terms.
+- Scenario opportunity sparsity remains a strong competing explanation.
+- Training/refit is still deferred because the corrected label gate is false and evidence is not yet dense or robust enough.
+- The next simulation is blocked only by the backup policy, not by a scientific blocker.
+
+Next concrete action:
+
+1. Obtain/verify external backup postdating `2026-09-28T23:16:27.654790Z`, covering the dry-run outputs, source, protocol files, and backup request.
+2. Then run only the bounded smoke:
+
+```text
+modern python experiments/bohn2021_aws/vehicle_stress_v1b_terminal_reward_ablation_v0.py \
+  --run-smoke \
+  --input-backup-proof <verified_backup_proof_path> \
+  --i-accept-development-terminal-reward-ablation
+```
+
+Planned smoke budget: `27` development-only episodes, cap `4050` control steps, `0` training episodes, `0` gradient steps, no validation64, no sealed test.
+
+State has been preserved via `update_state` and the handoff file.
+
+
+## 2026-09-28T23:24:04.574888+00:00
+

@@ -3414,3 +3414,65 @@ UTC: 2026-09-28T21:46:28.826778+00:00. Development-only stress-v1 fixed-H map co
 
 ## 2026-09-28T21:49:07.358304+00:00
 
+<!-- vehicle-stress-v1-stage1-postdiagnostic-20260928T2155Z -->
+## 2026-09-28 vehicle stress-v1 Stage1 postdiagnostic
+
+UTC: 2026-09-28T21:50:13.083133+00:00. Analysis-only postdiagnostic over stress-v1 Stage1 completed with no simulations/control steps/training, no validation64-bank access and no sealed-test access. The predeclared Stage1 gate remains failed (aggregate=True, case-diversity=False, Stage2 trigger=False); material cases are [1, 4, 5, 6] and remain concentrated in the high_heading_long_or_medium stratum. No selector/refit/training is warranted yet. Next after verified backup: freeze and dry-run a v1b matched-continuation postdiagnostic to test whether the high-heading episode-level signal corresponds to real within-episode adaptive opportunity. Artifacts: `research_artifacts/aws_diagnostics/vehicle_stress_scenario_opportunity_probe_v1_stage1_postdiagnostic_20260928T2155Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_stress_scenario_opportunity_probe_v1_stage1_postdiagnostic_20260928T2155Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_stress_scenario_opportunity_probe_v1_stage1_postdiagnostic_20260928T2155Z/completed.json`.
+
+
+## 2026-09-28T21:51:11.355750+00:00
+Elapsed service lifetime: ~58h55m since first supervisor event (2026-09-26T10:55:29.419331Z), using latest artifact time 2026-09-28T21:50:13Z. Cumulative server API `total_tokens`: not refreshed/available in this desktop-tool context; this excludes the current desktop conversation usage.
+
+Concrete action completed:
+- Ran analysis-only postdiagnostic:
+  - Script: `experiments/bohn2021_aws/vehicle_stress_v1_stage1_postdiagnostic.py`
+  - Registry: `research_artifacts/aws_runs/20260928T215012_a9311541/registry.json`
+  - Runtime: ~2.0s
+  - New simulations/control steps/training: 0
+  - Validation64 opened: false
+  - Sealed test accessed: false
+
+Key preserved outputs:
+- `research_artifacts/aws_diagnostics/vehicle_stress_scenario_opportunity_probe_v1_stage1_postdiagnostic_20260928T2155Z/summary.md`
+- `research_artifacts/aws_diagnostics/vehicle_stress_scenario_opportunity_probe_v1_stage1_postdiagnostic_20260928T2155Z/raw.json`
+- `research_artifacts/aws_diagnostics/vehicle_stress_scenario_opportunity_probe_v1_stage1_postdiagnostic_20260928T2155Z/completed.json`
+- `research_artifacts/aws_state/vehicle_stress_v1_stage1_postdiagnostic_and_next_20260928T2155Z.md`
+- Backup request: `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_VEHICLE_STRESS_V1_STAGE1_POSTDIAGNOSTIC_20260928T2155Z.json`
+
+Scientific outcome:
+- The predeclared stress-v1 Stage1 gate remains failed and was not retrospectively changed:
+  - aggregate guard: true
+  - case-diversity gate: false
+  - Stage2 continuation trigger: false
+- Material H15-counterfactual cases are `[1, 4, 5, 6]`, all in `high_heading_long_or_medium`.
+- Stress-v1 shows stronger episode-level fixed-H opportunity than earlier probes, but the opportunity is still concentrated rather than broadly distributed.
+- H5 remains unusable as a positive label source: 17/20 failures.
+- Strict safe aggregate horizons are `[10, 15, 20, 25]`.
+- Best strict aggregate physical fixed horizon: H15.
+- Fastest strict aggregate horizon: H10.
+- Longer horizons can help physically in a few selected cases, but measured timing remains nonmonotone and scalar total cost includes synthetic horizon penalty, so there is no valid acceleration claim.
+
+Current diagnosis:
+- Leading bottleneck remains scenario/opportunity structure, not immediate training.
+- Evidence is not yet sufficient for selector refit/training: labels are one-stratum and episode-level only.
+- The next informative experiment is matched continuation from identical H15-prefix states, not another unchanged validation batch and not training on sparse labels.
+
+Blocker before further simulation:
+- A verified external backup is required before more simulations or unique development evidence. The required request file has been written.
+
+Exact next queued action after backup:
+1. Consume verified backup proof covering Stage1 rollout + this postdiagnostic.
+2. Freeze a `vehicle_stress_v1b_matched_continuation_postdiagnostic` protocol.
+3. Dry-run it with zero simulations.
+4. If dry-run passes, run bounded matched-prefix continuation:
+   - candidate positives: `[1, 4, 5, 6]`
+   - same-stratum controls: `[0, 2, 3, 7]`
+   - lower-stress controls: `[16, 17]`
+   - approximate upper bound: 140 branch continuations / 21k control steps.
+5. Decide from those matched-state labels whether scenario redesign, terminal/objective correction, or an IMPROVED longer-H selector/refit is warranted.
+
+State has been durably preserved with `update_state`. Final test remains sealed and unauthorized.
+
+
+## 2026-09-28T21:55:44.869134+00:00
+

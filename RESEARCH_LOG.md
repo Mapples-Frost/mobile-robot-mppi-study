@@ -2706,3 +2706,11 @@ UTC: 2026-09-28T10:26:46.034089+00:00. Fresh development-only fixed-H opportunit
 
 ## 2026-09-28T10:30:34.115197+00:00
 
+<!-- vehicle-fixed-h-opportunity-probe-v0-postdiagnostic-20260928T1030Z -->
+## 2026-09-28 fixed-H opportunity V0 postdiagnostic
+
+UTC: 2026-09-28T10:31:41.049775+00:00. Metadata-only postdiagnostic parsed the fresh fixed-H opportunity probe. No validation64/test access. Oracle best-physical same-bank physical delta vs H15=0.747195; LOOCV one-split physical-risk selector risk delta vs H15=-47.7779. Conclusion: document weak material opportunity and avoid another adaptive campaign until scenario design is revised under a new protocol. Artifacts: `research_artifacts/aws_diagnostics/vehicle_fixed_h_opportunity_probe_v0_postdiagnostic_20260928T1030Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_fixed_h_opportunity_probe_v0_postdiagnostic_20260928T1030Z/raw.json`.
+
+
+## 2026-09-28T10:36:56.196054+00:00
+

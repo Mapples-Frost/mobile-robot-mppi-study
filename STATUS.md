@@ -545,3 +545,8 @@ UTC: 2026-09-28T09:55:04.355094+00:00. Metadata-only preflight froze the next bo
 ## 2026-09-28 vehicle fixed-H opportunity probe V0
 
 UTC: 2026-09-28T10:26:46.034089+00:00. Fresh development-only fixed-H opportunity probe completed: 80 episodes, 6313 control steps, candidate resets=24. No validation64 or sealed-test access. Development opportunity flag=True; weak single-H pattern flag=False; safe horizons=[10, 15, 20, 25, 30, 35, 40, 45, 50]; strongest total H=15. Artifacts: `research_artifacts/aws_diagnostics/vehicle_fixed_h_opportunity_probe_v0_20260928/summary.md`, `research_artifacts/aws_diagnostics/vehicle_fixed_h_opportunity_probe_v0_20260928/raw.json`, `research_artifacts/aws_diagnostics/vehicle_fixed_h_opportunity_probe_v0_20260928/completed.json`.
+
+<!-- vehicle-fixed-h-opportunity-probe-v0-postdiagnostic-20260928T1030Z -->
+## 2026-09-28 fixed-H opportunity V0 postdiagnostic
+
+UTC: 2026-09-28T10:31:41.049775+00:00. Metadata-only postdiagnostic parsed the fresh fixed-H opportunity probe. No validation64/test access. Oracle best-physical same-bank physical delta vs H15=0.747195; LOOCV one-split physical-risk selector risk delta vs H15=-47.7779. Conclusion: document weak material opportunity and avoid another adaptive campaign until scenario design is revised under a new protocol. Artifacts: `research_artifacts/aws_diagnostics/vehicle_fixed_h_opportunity_probe_v0_postdiagnostic_20260928T1030Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_fixed_h_opportunity_probe_v0_postdiagnostic_20260928T1030Z/raw.json`.

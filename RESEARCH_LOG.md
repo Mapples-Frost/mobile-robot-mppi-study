@@ -2052,3 +2052,11 @@ UTC: 2026-09-28T00:51:01+00:00. Metadata-only gate check before frozen IMPROVED 
 
 ## 2026-09-28T00:53:30.850716+00:00
 
+<!-- vehicle-safe-shortening-v2-transition-hold-devval64-shard-20260928-v1-shard00 -->
+## 2026-09-28 vehicle safe-shortening v2 transition-hold fresh development-validation shard 00
+
+UTC: 2026-09-28T01:48:44.635740+00:00. Ran a frozen fresh development-validation paired case-block shard for IMPROVED safe-shortening v2 transition-hold: 172 episodes, 14487 control steps, cases [3, 44, 52, 56], no historical validation64 bank reopen and no sealed-test access. The shard includes all 43 arms (3 adaptive plus matched fixed-H grid and seed0 independent-terminal grid) for each included case. This is development-validation/model-selection evidence only, not final-test evidence. Artifacts: `research_artifacts/aws_development_validation/vehicle_safe_shortening_v2_transition_hold_devval64_20260928_v1/shard00/summary.md`, `research_artifacts/aws_development_validation/vehicle_safe_shortening_v2_transition_hold_devval64_20260928_v1/shard00/raw.json`, `research_artifacts/aws_development_validation/vehicle_safe_shortening_v2_transition_hold_devval64_20260928_v1/shard00/completed.json`.
+
+
+## 2026-09-28T01:50:34.473008+00:00
+

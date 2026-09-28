@@ -2605,3 +2605,72 @@ UTC: 2026-09-28T09:12:46+00:00. Metadata-only preflight for the frozen IMPROVED 
 
 ## 2026-09-28T09:15:59.323723+00:00
 
+<!-- vehicle-actual-time-v2b-candidate-failure-surface-diagnostic-20260928 -->
+## 2026-09-28 vehicle actual-time V2b candidate failure-surface diagnostic
+
+UTC: 2026-09-28T09:17:06+00:00. Metadata-only diagnostic completed over V2b candidate metrics and preflight artifacts: rows=111, nominations={'0': 'fixed', '1': 'h15_p1_g5', '2': 'h15_p1_g5'}, adaptive_nominated_seed_count=2/3. No simulations, no training, no validation64 bank access, and no sealed-test access. Verified seed0 has no eligible adaptive candidate under the current finite V2b gates; seeds1/2 both nominate h15_p1_g5. Next action after verified backup: run the already-frozen 36-episode legacy V2b smoke; do not resume the unchanged long risk-reselection devval shards by default. Artifacts: `research_artifacts/aws_diagnostics/vehicle_actual_time_v2b_candidate_failure_surface_diagnostic_20260928T0915Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_actual_time_v2b_candidate_failure_surface_diagnostic_20260928T0915Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_actual_time_v2b_candidate_failure_surface_diagnostic_20260928T0915Z/completed.json`.
+
+
+
+## 2026-09-28T09:19:14.111493+00:00
+~1d 22h 25m elapsed since first supervisor event (2026-09-26T10:55:29.419331Z). Cumulative server API `total_tokens`: unavailable from repository tools — no `research.sqlite` / `*.sqlite` found; this excludes desktop conversation usage.
+
+Concrete actions completed:
+
+1. Inspected current V2b smoke/protocol context:
+   - `STATUS.md`
+   - `experiments/bohn2021_aws/vehicle_gated_horizon_actual_time_reselection_v2b_smoke.py`
+   - `experiments/bohn2021_aws/vehicle_gated_horizon_risk_reselection_v1_smoke.py`
+   - V2b smoke protocol and preflight artifacts
+   - V2b nomination artifacts
+
+2. Executed the prepared metadata-only V2b candidate failure-surface diagnostic:
+   - Run: `research_artifacts/aws_runs/20260928T091706_df2c9e7e/registry.json`
+   - Script: `experiments/bohn2021_aws/vehicle_actual_time_v2b_candidate_failure_surface_diagnostic.py`
+   - Exit status: 0
+   - Runtime: ~2.0 s
+   - New rollouts/control steps/training/gradient steps: 0
+   - Historical validation64 bank opened: false
+   - Sealed test accessed: false
+
+3. Key findings:
+   - Parsed 111 candidate rows, 37 per seed.
+   - V2b remains IMPROVED finite metadata re-selection over existing gated candidates; zero new gradient training; not ORIGINAL SAC.
+   - Corrected nominations remain:
+     - seed0: fixed H25 fallback
+     - seed1: `h15_p1_g5`
+     - seed2: `h15_p1_g5`
+   - Adaptive nominated seed count: 2/3.
+   - Seed0 has zero eligible adaptive candidate under current actual-time/physical-risk gates.
+   - Seeds1/2 each have exactly one eligible adaptive candidate; both nominate the same finite candidate.
+   - Smoke preflight remains hard-pass, but no V2b rollout/smoke has yet tested actual executability, replay determinism, or realized timing.
+
+4. Artifacts written:
+   - `research_artifacts/aws_diagnostics/vehicle_actual_time_v2b_candidate_failure_surface_diagnostic_20260928T0915Z/summary.md`
+   - `research_artifacts/aws_diagnostics/vehicle_actual_time_v2b_candidate_failure_surface_diagnostic_20260928T0915Z/raw.json`
+   - `research_artifacts/aws_diagnostics/vehicle_actual_time_v2b_candidate_failure_surface_diagnostic_20260928T0915Z/completed.json`
+   - `research_artifacts/aws_state/vehicle_actual_time_v2b_candidate_failure_surface_diagnostic_20260928T0915Z.md`
+   - `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_VEHICLE_ACTUAL_TIME_V2B_CANDIDATE_FAILURE_SURFACE_DIAGNOSTIC_20260928T0915Z.json`
+   - Additional preserved iteration state:
+     - `research_artifacts/aws_state/vehicle_actual_time_v2b_iteration_state_20260928T0920Z.md`
+
+5. State preserved via `update_state`.
+
+Decision preserved for next iteration:
+
+- Do not resume unchanged long risk-reselection devval shards by default.
+- Backup is required before any further simulations because new diagnostic/state artifacts now exist.
+- After verified backup, run the already-frozen 36-episode legacy V2b smoke with:
+  - `experiments/bohn2021_aws/vehicle_gated_horizon_actual_time_reselection_v2b_smoke.py`
+  - legacy interpreter
+  - engineering-smoke classification only
+  - no validation64/test access.
+
+<!-- vehicle-gated-horizon-actual-time-reselection-v2b-smoke-20260928 -->
+## 2026-09-28 vehicle actual-time-aware gated-horizon V2b smoke
+
+UTC: 2026-09-28T09:31:58.719179+00:00. IMPROVED actual-time-aware gated-horizon V2b smoke completed on a fresh engineering bank: 36 episodes, 2826 control steps, hard_pass=True, selected_below_H25_seed_count=2. No validation64 bank or sealed test was opened. This is not model-selection/final evidence and does not modify any frozen devval campaign. Artifacts: `research_artifacts/aws_diagnostics/vehicle_gated_horizon_actual_time_reselection_v2b_smoke_20260928/summary.md`, `research_artifacts/aws_diagnostics/vehicle_gated_horizon_actual_time_reselection_v2b_smoke_20260928/raw.json`, `research_artifacts/aws_diagnostics/vehicle_gated_horizon_actual_time_reselection_v2b_smoke_20260928/completed.json`.
+
+
+## 2026-09-28T09:35:01.486270+00:00
+

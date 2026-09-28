@@ -2921,3 +2921,11 @@ UTC: 2026-09-28T15:09:21.816207+00:00. No simulations, no training/refit, no his
 
 ## 2026-09-28T15:13:32.401639+00:00
 
+<!-- vehicle-v1-transient-state-shadow-selection-v0-20260928T1515Z -->
+## 2026-09-28 vehicle V1 transient-state shadow selection v0
+
+UTC: 2026-09-28T15:16:08.577389+00:00. No-simulation target-selection diagnostic selected 12 H15-only transient/control branch states for the frozen continuation probe; future rollout budget 48 episodes / 7200 steps. No validation64/test/training access. Backup remains required before simulations. Artifacts: `research_artifacts/aws_diagnostics/vehicle_v1_transient_state_shadow_selection_v0_20260928T1515Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_v1_transient_state_shadow_selection_v0_20260928T1515Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_v1_transient_state_shadow_selection_v0_20260928T1515Z/completed.json`.
+
+
+## 2026-09-28T15:20:33.308679+00:00
+

@@ -3255,3 +3255,11 @@ UTC: 2026-09-28T18:33:51.465676+00:00. Analysis-only; no rollouts, no training/r
 
 ## 2026-09-28T18:46:34.077374+00:00
 
+<!-- vehicle-stage2-prefix-dynamics-hash-diagnostic-v0-20260928T1845Z -->
+## 2026-09-28 vehicle Stage2 prefix dynamics-hash diagnostic v0
+
+UTC: 2026-09-28T18:47:55.310618+00:00. Analysis-only over existing Stage2 v0b traces. Original saved-prefix mismatches among non-H15 pairs: 60/60; dynamics-only mismatches: 0/60; metadata-artifact confirmed=True. Corrected material-positive states=1 with horizons {'10': 1, '25': 1, '30': 1}; corrected refit gate=False. No new rollouts/control steps/training; no validation64 or sealed-test access. Next: after backup, run tiny terminal/objective instrumentation smoke on case5 step18 plus neutral/harm controls, or pivot if instrumentation is blocked.
+
+
+## 2026-09-28T18:53:12.968013+00:00
+

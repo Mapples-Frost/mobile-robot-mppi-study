@@ -2682,3 +2682,19 @@ UTC: 2026-09-28T09:36:20.558519+00:00. Metadata-only postdiagnostic of the V2b s
 
 ## 2026-09-28T09:49:12.027747+00:00
 
+<!-- vehicle-scenario-opportunity-capability-diagnostic-v0-20260928T0950Z -->
+## Vehicle scenario-opportunity/capability diagnostic V0
+
+UTC: 2026-09-28T09:50:19.198779+00:00. Metadata/source-only audit; no simulations, training, validation64 bank access, or sealed-test access. Finding: the vehicle environment supports straight-line goal/path length and heading variation plus three obstacle constraints/noisy forecasts, but the current registered vehicle config fixes initial x/y/theta, lacks plant process noise/model randomization, has no direct initial-speed state, and has no native curved-path generator. Decision: Run a bounded fixed-H opportunity probe only after backup; do not redesign scenarios or resume long adaptive validation until fixed-H Pareto opportunity is measured. Artifacts: `research_artifacts/aws_diagnostics/vehicle_scenario_opportunity_capability_diagnostic_v0_20260928T0950Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_scenario_opportunity_capability_diagnostic_v0_20260928T0950Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_scenario_opportunity_capability_diagnostic_v0_20260928T0950Z/completed.json`.
+
+
+## 2026-09-28T09:54:21.293994+00:00
+
+<!-- vehicle-fixed-h-opportunity-probe-v0-preflight-20260928T1000Z -->
+## Vehicle fixed-H opportunity probe V0 preflight
+
+UTC: 2026-09-28T09:55:04.355094+00:00. Metadata-only preflight froze the next bounded fixed-H opportunity-probe design: 80 planned fixed-H episodes, <=12000 control steps, 24 fresh candidate-bank resets, full H grid 5..50, independent seed0 terminal per H. Terminal grid ready=True. No simulations/training/validation64/test access occurred. External backup is required before the rollout. Artifacts: `research_artifacts/aws_diagnostics/vehicle_fixed_h_opportunity_probe_v0_preflight_20260928T1000Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_fixed_h_opportunity_probe_v0_preflight_20260928T1000Z/completed.json`, `research_artifacts/aws_protocols/vehicle_fixed_h_opportunity_probe_v0_frozen_20260928.md`.
+
+
+## 2026-09-28T10:00:17.636007+00:00
+

@@ -629,3 +629,35 @@ UTC: 2026-09-28T10:31:41.049775+00:00. Metadata-only postdiagnostic parsed the f
 ## Vehicle fixed-H opportunity probe V1 preflight
 
 UTC: 2026-09-28T10:43:42.205188+00:00. Metadata-only preflight froze an enlarged fixed-H opportunity map: 160 planned fixed-H episodes, <=24000 control steps, 64 fresh candidate-bank resets, 16 selected source-supported cases, full H grid 5..50. Terminal grid ready=True. No simulations/training/validation64/test access occurred. External backup is required before the rollout. Artifacts: `research_artifacts/aws_diagnostics/vehicle_fixed_h_opportunity_probe_v1_preflight_20260928T1045Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_fixed_h_opportunity_probe_v1_preflight_20260928T1045Z/completed.json`, `research_artifacts/aws_protocols/vehicle_fixed_h_opportunity_probe_v1_frozen_20260928.md`.
+
+
+## Priority user steering: diagnose scenario, reward, training and comparison design together
+
+User instruction on 2026-09-28: investigate causes across scenario design, reward design, training design, and comparison design. Routine evidence-driven revisions and necessary retraining within the adaptive MPC prediction-horizon question are authorized. This adds reward and comparison design explicitly to the existing causal-analysis priorities.
+
+At the next bounded analysis, maintain a four-axis evidence table with verified findings, competing hypotheses, missing evidence, and a discriminating experiment for each:
+
+1. SCENARIOS: inspect diversity, difficulty, constraints, transients, state observability, and actual state-dependent horizon tradeoffs. An episode-level oracle choosing one constant H per case is NOT an upper bound on within-episode adaptive switching; weak episode-level oracle gains do not exclude adaptive opportunity or prove learning is sound. Where informative compare horizon choices from identical intermediate states with consistent continuation, rather than relying only on initial-case metadata. Preserve the canonical benchmark, version modified scenarios, and never select cases based on favorable outcomes.
+2. REWARD: audit the implemented reward/cost sign, units, scaling, clipping/normalization, discounting, termination/truncation bootstrapping, failure and constraint penalties, horizon penalty, and terminal value. Check alignment between training objective and separately reported physical cost, success/safety and actual compute time. A synthetic horizon penalty is not measured runtime. Check that reward improvements are not artifacts of early termination, different episode lengths, or weighting that rewards unsafe shortcuts. Isolate objective/value changes with controlled ablations before attributing effects.
+3. TRAINING: examine actual data coverage, exploration, convergence, actor/critic or finite-search capacity, credit assignment, terminal-value quality and horizon compatibility, and seed variability. Separate checkpoint reuse/reselection from real training. When these are plausible bottlenecks, run the smallest informative retraining/value-refit intervention rather than repeatedly postponing it with audits. Record gradient updates, budgets, curves and checkpoint lineage.
+4. COMPARISONS: audit strong fixed-H search, per-H terminal learning and hyperparameter opportunities, total training/selection budgets, paired scenario seeds, stopping/failure accounting, checkpoint selection and statistical uncertainty. Separate matched-terminal and independently tuned terminal baselines. Randomize or block runtime comparisons and inspect timing noise and CPU/resource interference; report whole-decision and solver timing. Compare control/compute tradeoffs transparently rather than choosing a convenient weak H or changing scalar weights after outcomes. Fairness does not require identical algorithms, but does require adequate baseline tuning and disclosed resource differences.
+
+Do not change all four axes at once without an interpretable design. Rank causes by evidence and choose targeted, bounded experiments that distinguish them; avoid an indefinite documentation-only loop. Freeze each revised protocol before collecting its new results, keep all failures, mark changes IMPROVED, and use fresh confirmation data after development-driven changes. Final-test data remain sealed. Preserve currently running frozen experiments and service continuity. Continue autonomously and record why the next intervention has higher information value than another unchanged validation batch.
+
+Recorded UTC: 2026-09-28T11:29:42.249423+00:00
+
+
+## Latest user clarification: research directions are examples, not a closed checklist
+
+User clarification on 2026-09-28: scenario, reward, training and comparison design were suggested thinking directions only. They do not exhaust possible causes and must not rigidly constrain research. This clarification supersedes any earlier wording that makes a four-axis table or fixed diagnostic sequence mandatory on every iteration.
+
+Exercise independent scientific judgment. Form, revise and rank hypotheses from code, raw evidence, literature and controlled experiments, including causes outside the suggested categories. Follow unexpected findings; combine, replace or skip diagnostic categories when justified. Do not manufacture work simply to fill a checklist, and do not infer that unlisted causes or routine method changes require new permission. The user's suggestions are prompts for investigation, not established diagnoses or prescribed solutions.
+
+Choose the next action by expected information gain, scientific relevance and practical cost. A concise account of evidence, uncertainty, alternatives and the reason for the chosen experiment is sufficient; no mandatory four-part report. Investigate implementation, modeling, numerical, statistical or other causes whenever evidence warrants it, without treating this further list as exhaustive either. Perform necessary training or method/scenario revisions autonomously rather than indefinitely auditing. Retain the existing research question, ORIGINAL/IMPROVED distinction, fair baselines, independent tests, reproducibility, negative evidence, resource protections and external backups. Do not interrupt the current frozen experiment merely to apply this clarification.
+
+Recorded UTC: 2026-09-28T11:31:19.912942+00:00
+
+<!-- vehicle-fixed-h-opportunity-probe-v1-runner-20260928 -->
+## 2026-09-28 vehicle fixed-H opportunity probe V1
+
+UTC: 2026-09-28T11:38:22.599799+00:00. Enlarged fresh development-only fixed-H opportunity probe completed: 160 episodes, 13155 control steps, candidate resets=64. No validation64 or sealed-test access. Opportunity flag=True; weak single-H pattern flag=False; safe horizons=[10, 15, 20, 25, 30, 35, 40, 45, 50]; strongest total H=15. Artifacts: `research_artifacts/aws_diagnostics/vehicle_fixed_h_opportunity_probe_v1_20260928/summary.md`, `research_artifacts/aws_diagnostics/vehicle_fixed_h_opportunity_probe_v1_20260928/raw.json`, `research_artifacts/aws_diagnostics/vehicle_fixed_h_opportunity_probe_v1_20260928/completed.json`.

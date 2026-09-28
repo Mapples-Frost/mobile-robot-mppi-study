@@ -2722,3 +2722,7 @@ UTC: 2026-09-28T10:43:42.205188+00:00. Metadata-only preflight froze an enlarged
 
 ## 2026-09-28T10:46:43.791632+00:00
 
+<!-- vehicle-fixed-h-opportunity-probe-v1-runner-20260928 -->
+## 2026-09-28 vehicle fixed-H opportunity probe V1
+
+UTC: 2026-09-28T11:38:22.599799+00:00. Enlarged fresh development-only fixed-H opportunity probe completed: 160 episodes, 13155 control steps, candidate resets=64. No validation64 or sealed-test access. Opportunity flag=True; weak single-H pattern flag=False; safe horizons=[10, 15, 20, 25, 30, 35, 40, 45, 50]; strongest total H=15. Artifacts: `research_artifacts/aws_diagnostics/vehicle_fixed_h_opportunity_probe_v1_20260928/summary.md`, `research_artifacts/aws_diagnostics/vehicle_fixed_h_opportunity_probe_v1_20260928/raw.json`, `research_artifacts/aws_diagnostics/vehicle_fixed_h_opportunity_probe_v1_20260928/completed.json`.

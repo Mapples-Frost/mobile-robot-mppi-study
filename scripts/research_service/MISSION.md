@@ -1,5 +1,28 @@
 # Bøhn 2021 unattended research contract
 
+## Latest user clarification: research directions are examples, not a closed checklist
+
+User clarification on 2026-09-28: scenario, reward, training and comparison design were suggested thinking directions only. They do not exhaust possible causes and must not rigidly constrain research. This clarification supersedes any earlier wording that makes a four-axis table or fixed diagnostic sequence mandatory on every iteration.
+
+Exercise independent scientific judgment. Form, revise and rank hypotheses from code, raw evidence, literature and controlled experiments, including causes outside the suggested categories. Follow unexpected findings; combine, replace or skip diagnostic categories when justified. Do not manufacture work simply to fill a checklist, and do not infer that unlisted causes or routine method changes require new permission. The user's suggestions are prompts for investigation, not established diagnoses or prescribed solutions.
+
+Choose the next action by expected information gain, scientific relevance and practical cost. A concise account of evidence, uncertainty, alternatives and the reason for the chosen experiment is sufficient; no mandatory four-part report. Investigate implementation, modeling, numerical, statistical or other causes whenever evidence warrants it, without treating this further list as exhaustive either. Perform necessary training or method/scenario revisions autonomously rather than indefinitely auditing. Retain the existing research question, ORIGINAL/IMPROVED distinction, fair baselines, independent tests, reproducibility, negative evidence, resource protections and external backups. Do not interrupt the current frozen experiment merely to apply this clarification.
+
+
+## Priority user steering: diagnose scenario, reward, training and comparison design together
+
+User instruction on 2026-09-28: investigate causes across scenario design, reward design, training design, and comparison design. Routine evidence-driven revisions and necessary retraining within the adaptive MPC prediction-horizon question are authorized. This adds reward and comparison design explicitly to the existing causal-analysis priorities.
+
+At the next bounded analysis, maintain a four-axis evidence table with verified findings, competing hypotheses, missing evidence, and a discriminating experiment for each:
+
+1. SCENARIOS: inspect diversity, difficulty, constraints, transients, state observability, and actual state-dependent horizon tradeoffs. An episode-level oracle choosing one constant H per case is NOT an upper bound on within-episode adaptive switching; weak episode-level oracle gains do not exclude adaptive opportunity or prove learning is sound. Where informative compare horizon choices from identical intermediate states with consistent continuation, rather than relying only on initial-case metadata. Preserve the canonical benchmark, version modified scenarios, and never select cases based on favorable outcomes.
+2. REWARD: audit the implemented reward/cost sign, units, scaling, clipping/normalization, discounting, termination/truncation bootstrapping, failure and constraint penalties, horizon penalty, and terminal value. Check alignment between training objective and separately reported physical cost, success/safety and actual compute time. A synthetic horizon penalty is not measured runtime. Check that reward improvements are not artifacts of early termination, different episode lengths, or weighting that rewards unsafe shortcuts. Isolate objective/value changes with controlled ablations before attributing effects.
+3. TRAINING: examine actual data coverage, exploration, convergence, actor/critic or finite-search capacity, credit assignment, terminal-value quality and horizon compatibility, and seed variability. Separate checkpoint reuse/reselection from real training. When these are plausible bottlenecks, run the smallest informative retraining/value-refit intervention rather than repeatedly postponing it with audits. Record gradient updates, budgets, curves and checkpoint lineage.
+4. COMPARISONS: audit strong fixed-H search, per-H terminal learning and hyperparameter opportunities, total training/selection budgets, paired scenario seeds, stopping/failure accounting, checkpoint selection and statistical uncertainty. Separate matched-terminal and independently tuned terminal baselines. Randomize or block runtime comparisons and inspect timing noise and CPU/resource interference; report whole-decision and solver timing. Compare control/compute tradeoffs transparently rather than choosing a convenient weak H or changing scalar weights after outcomes. Fairness does not require identical algorithms, but does require adequate baseline tuning and disclosed resource differences.
+
+Do not change all four axes at once without an interpretable design. Rank causes by evidence and choose targeted, bounded experiments that distinguish them; avoid an indefinite documentation-only loop. Freeze each revised protocol before collecting its new results, keep all failures, mark changes IMPROVED, and use fresh confirmation data after development-driven changes. Final-test data remain sealed. Preserve currently running frozen experiments and service continuity. Continue autonomously and record why the next intervention has higher information value than another unchanged validation batch.
+
+
 ## Priority user steering: thorough causal analysis and retraining when warranted
 
 User instruction (2026-09-28): fully analyze the causes, and retrain when necessary. This explicitly authorizes bounded retraining within the existing scientific scope without further confirmation.

@@ -174,3 +174,8 @@ UTC: 2026-09-28T01:48:44.635740+00:00. Ran a frozen fresh development-validation
 ## 2026-09-28 amendment note: current gated-horizon audit before revised training-level experiment
 
 The current AWS safe-shortening controllers reuse gated_horizon_search_2026-09-25 policy.json files. The audit `research_artifacts/aws_diagnostics/vehicle_current_gated_horizon_training_audit_v1_20260928T015606+0000/summary.md` distinguishes this source from the older latency-tree policy and records that the operation was finite search/reselection, not gradient training. Any next method change must be labeled IMPROVED and frozen separately before smoke/validation.
+
+<!-- vehicle-gated-horizon-risk-reselection-v1-smoke-20260928 -->
+## 2026-09-28 vehicle gated-horizon risk-reselection v1 smoke
+
+UTC: 2026-09-28T02:21:04.988578+00:00. IMPROVED risk-first gated-horizon re-selection smoke completed on a fresh engineering bank: 36 episodes, 3258 control steps, hard_pass=True, risk_reselected_below_H25_seed_count=3. No validation64 bank or sealed test was opened. This is not model-selection/final evidence and does not modify the frozen v2 shard campaign. Artifacts: `research_artifacts/aws_diagnostics/vehicle_gated_horizon_risk_reselection_v1_smoke_20260928/summary.md`, `research_artifacts/aws_diagnostics/vehicle_gated_horizon_risk_reselection_v1_smoke_20260928/raw.json`, `research_artifacts/aws_diagnostics/vehicle_gated_horizon_risk_reselection_v1_smoke_20260928/completed.json`.

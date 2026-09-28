@@ -2081,3 +2081,11 @@ Metadata-only re-selection over existing current gated-search training traces co
 
 ## 2026-09-28T02:07:47.540574+00:00
 
+<!-- vehicle-gated-horizon-risk-reselection-v1-smoke-20260928 -->
+## 2026-09-28 vehicle gated-horizon risk-reselection v1 smoke
+
+UTC: 2026-09-28T02:21:04.988578+00:00. IMPROVED risk-first gated-horizon re-selection smoke completed on a fresh engineering bank: 36 episodes, 3258 control steps, hard_pass=True, risk_reselected_below_H25_seed_count=3. No validation64 bank or sealed test was opened. This is not model-selection/final evidence and does not modify the frozen v2 shard campaign. Artifacts: `research_artifacts/aws_diagnostics/vehicle_gated_horizon_risk_reselection_v1_smoke_20260928/summary.md`, `research_artifacts/aws_diagnostics/vehicle_gated_horizon_risk_reselection_v1_smoke_20260928/raw.json`, `research_artifacts/aws_diagnostics/vehicle_gated_horizon_risk_reselection_v1_smoke_20260928/completed.json`.
+
+
+## 2026-09-28T02:26:09.885706+00:00
+

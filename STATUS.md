@@ -447,3 +447,8 @@ UTC: 2026-09-28T01:56:06+00:00. Metadata-only audit of the CURRENT reused gated-
 <!-- vehicle-gated-horizon-risk-reselection-v1-20260928T020201+0000 -->
 ### Vehicle gated-horizon risk-first re-selection v1 (2026-09-28T02:02:01+00:00)
 Metadata-only re-selection over existing current gated-search training traces completed: research_artifacts/aws_diagnostics/vehicle_gated_horizon_risk_reselection_v1_20260928T020201+0000/completed.json. No rollout/control/training/test access. Frozen decision `freeze_and_run_small_smoke_after_backup`; adaptive nominated seeds=3, changed-from-current adaptive seeds=3. Summary: research_artifacts/aws_diagnostics/vehicle_gated_horizon_risk_reselection_v1_20260928T020201+0000/summary.md. Backup request: research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_VEHICLE_GATED_HORIZON_RISK_RESELECTION_V1_20260928T020201+0000.json.
+
+<!-- vehicle-gated-horizon-risk-reselection-v1-smoke-20260928 -->
+## 2026-09-28 vehicle gated-horizon risk-reselection v1 smoke
+
+UTC: 2026-09-28T02:21:04.988578+00:00. IMPROVED risk-first gated-horizon re-selection smoke completed on a fresh engineering bank: 36 episodes, 3258 control steps, hard_pass=True, risk_reselected_below_H25_seed_count=3. No validation64 bank or sealed test was opened. This is not model-selection/final evidence and does not modify the frozen v2 shard campaign. Artifacts: `research_artifacts/aws_diagnostics/vehicle_gated_horizon_risk_reselection_v1_smoke_20260928/summary.md`, `research_artifacts/aws_diagnostics/vehicle_gated_horizon_risk_reselection_v1_smoke_20260928/raw.json`, `research_artifacts/aws_diagnostics/vehicle_gated_horizon_risk_reselection_v1_smoke_20260928/completed.json`.

@@ -2698,3 +2698,11 @@ UTC: 2026-09-28T09:55:04.355094+00:00. Metadata-only preflight froze the next bo
 
 ## 2026-09-28T10:00:17.636007+00:00
 
+<!-- vehicle-fixed-h-opportunity-probe-v0-runner-20260928 -->
+## 2026-09-28 vehicle fixed-H opportunity probe V0
+
+UTC: 2026-09-28T10:26:46.034089+00:00. Fresh development-only fixed-H opportunity probe completed: 80 episodes, 6313 control steps, candidate resets=24. No validation64 or sealed-test access. Development opportunity flag=True; weak single-H pattern flag=False; safe horizons=[10, 15, 20, 25, 30, 35, 40, 45, 50]; strongest total H=15. Artifacts: `research_artifacts/aws_diagnostics/vehicle_fixed_h_opportunity_probe_v0_20260928/summary.md`, `research_artifacts/aws_diagnostics/vehicle_fixed_h_opportunity_probe_v0_20260928/raw.json`, `research_artifacts/aws_diagnostics/vehicle_fixed_h_opportunity_probe_v0_20260928/completed.json`.
+
+
+## 2026-09-28T10:30:34.115197+00:00
+

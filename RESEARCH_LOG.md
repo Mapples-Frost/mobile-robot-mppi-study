@@ -2783,3 +2783,11 @@ UTC: 2026-09-28T13:03:28.592333+00:00. Development-only selector smoke completed
 
 ## 2026-09-28T13:09:28.413414+00:00
 
+<!-- vehicle-v1-state-selector-shadow-scan-v0-20260928 -->
+## 2026-09-28 vehicle V1 state-selector shadow scan v0
+
+UTC: 2026-09-28T13:10:35.706528+00:00. No-simulation scan over existing V1 H15 traces: triggered_cases=[7, 10], extra_trigger_cases=[], shadow_gate=True. No validation64/test access. Artifacts: `research_artifacts/aws_diagnostics/vehicle_v1_state_selector_shadow_scan_v0_20260928T1310Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_v1_state_selector_shadow_scan_v0_20260928T1310Z/raw.json`. Backup required before further simulation.
+
+
+## 2026-09-28T13:16:35.196216+00:00
+

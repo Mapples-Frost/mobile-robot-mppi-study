@@ -2714,3 +2714,11 @@ UTC: 2026-09-28T10:31:41.049775+00:00. Metadata-only postdiagnostic parsed the f
 
 ## 2026-09-28T10:36:56.196054+00:00
 
+<!-- vehicle-fixed-h-opportunity-probe-v1-preflight-20260928T1045Z -->
+## Vehicle fixed-H opportunity probe V1 preflight
+
+UTC: 2026-09-28T10:43:42.205188+00:00. Metadata-only preflight froze an enlarged fixed-H opportunity map: 160 planned fixed-H episodes, <=24000 control steps, 64 fresh candidate-bank resets, 16 selected source-supported cases, full H grid 5..50. Terminal grid ready=True. No simulations/training/validation64/test access occurred. External backup is required before the rollout. Artifacts: `research_artifacts/aws_diagnostics/vehicle_fixed_h_opportunity_probe_v1_preflight_20260928T1045Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_fixed_h_opportunity_probe_v1_preflight_20260928T1045Z/completed.json`, `research_artifacts/aws_protocols/vehicle_fixed_h_opportunity_probe_v1_frozen_20260928.md`.
+
+
+## 2026-09-28T10:46:43.791632+00:00
+

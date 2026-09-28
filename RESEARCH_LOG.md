@@ -3207,3 +3207,19 @@ UTC: 2026-09-28T18:13:19.087643+00:00. Development-only matched-continuation rol
 
 ## 2026-09-28T18:15:33.917833+00:00
 
+<!-- vehicle-stress-scenario-stage2-postdiagnostic-v0-20260928T1815Z -->
+## 2026-09-28 vehicle stress-scenario Stage2 postdiagnostic v0
+
+UTC: 2026-09-28T18:17:00.039473+00:00. Analysis-only Stage2 postdiagnostic completed after the 72-episode matched-continuation rollout. Frozen Stage2 gate remains failed: positive states=0. Diagnostic semantic prefix comparison indicates 60/60 non-H15 prefixes match on state/control/cost semantics despite frozen hash mismatches. Under a diagnostic state-matched relaxation (not changing the frozen gate), positive states=1 and large total harms=11/60. Decision: do not retrain/refit now; the label signal is too sparse. Next high-information action is an analysis-only terminal/reward/modeling audit or a separately versioned stronger source-supported scenario design after backup. Artifacts: `research_artifacts/aws_diagnostics/vehicle_stress_scenario_stage2_postdiagnostic_v0_20260928T1815Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_stress_scenario_stage2_postdiagnostic_v0_20260928T1815Z/raw.json`. Backup request: `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_VEHICLE_STRESS_SCENARIO_STAGE2_POSTDIAGNOSTIC_V0_20260928T1815Z.json`.
+
+
+## 2026-09-28T18:20:13.811969+00:00
+
+<!-- vehicle-stress-reward-timing-terminal-audit-v0-20260928T1820Z -->
+## 2026-09-28 vehicle stress reward/timing/terminal audit v0
+
+UTC: 2026-09-28T18:20:44.138685+00:00. Analysis-only, no new rollouts/training and no validation64/test access. The audit separated physical cost, synthetic horizon penalty and measured decision time. Synthetic h_penalty is effectively 0.001 per H-step, so total_cost is not measured runtime. The only Stage2 material positive is physical-driven, but labels remain too sparse for selector/refit training; large non-H15 harms persist. Decision: do not retrain/refit now; after backup run a bounded source/config/checkpoint terminal-value and objective audit before any new simulation or IMPROVED refit. Artifacts: `research_artifacts/aws_diagnostics/vehicle_stress_reward_timing_terminal_audit_v0_20260928T1820Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_stress_reward_timing_terminal_audit_v0_20260928T1820Z/raw.json`. Backup request: `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_VEHICLE_STRESS_REWARD_TIMING_TERMINAL_AUDIT_V0_20260928T1820Z.json`.
+
+
+## 2026-09-28T18:23:54.552095+00:00
+

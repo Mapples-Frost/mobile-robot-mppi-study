@@ -3295,3 +3295,106 @@ UTC: 2026-09-28T20:13:04.601788+00:00. Development-only broad terminal-mode scan
 
 ## 2026-09-28T20:23:06.248021+00:00
 
+<!-- vehicle-stress-scenario-opportunity-protocol-v1-20260928T2025Z -->
+## 2026-09-28 vehicle stress-scenario opportunity protocol v1
+
+UTC: 2026-09-28T20:24:37.134009+00:00. Metadata-only diagnostic/protocol freeze completed after broad terminal-mode scan showed positives/flips local to case5 step18. No rollouts, control steps, training, validation64-bank access or sealed-test access. Frozen stress-v1 uses 256 metadata-only candidate resets, 20 selected source-supported cases, full fixed-H grid H5..H50 (200 episodes / 30,000-step cap) and a separate matched-continuation gate before any selector/refit. Immediate decision: no training/refit on current sparse labels; require backup before runner source/smoke or simulation. Artifacts: `research_artifacts/aws_diagnostics/vehicle_stress_scenario_opportunity_protocol_v1_20260928T2025Z/summary.md`, `research_artifacts/aws_protocols/vehicle_stress_scenario_opportunity_probe_v1_frozen_20260928T2025Z.md`, `research_artifacts/aws_protocols/vehicle_stress_scenario_opportunity_probe_v1_frozen_20260928T2025Z.json`.
+
+
+## 2026-09-28T20:25:20.089072+00:00
+Elapsed service lifetime since first supervisor event (2026-09-26T10:55:29.419331Z): ~57h29m.  
+Cumulative server API `total_tokens`: not refreshed/available in this desktop/tool context; I did not infer or fabricate it.
+
+Concrete actions completed:
+
+1. Persisted the supervisor-provided verified backup proof locally:
+   - `research_artifacts/aws_backup_proofs/backup_proof_20260928T202344_from_supervisor_context_after_broad_scan_and_v1_source.json`
+   - SHA256: `4d9401375c1b05a927b7445edafbfe545fca79a6b8dbdcc6a43820284a90afd3`
+
+2. Executed the zero-rollout stress-v1 protocol-freeze diagnostic:
+   - Script: `experiments/bohn2021_aws/vehicle_stress_scenario_opportunity_protocol_v1.py`
+   - Registry: `research_artifacts/aws_runs/20260928T202436_5f20690d/registry.json`
+   - Exit status: `0`
+   - Runtime: ~2.0s
+   - New rollouts/control steps/training/gradient steps: `0 / 0 / 0 / 0`
+   - Historical validation64 opened: `false`
+   - Sealed test accessed: `false`
+
+3. Frozen stress-v1 protocol artifacts:
+   - Protocol JSON: `research_artifacts/aws_protocols/vehicle_stress_scenario_opportunity_probe_v1_frozen_20260928T2025Z.json`
+   - Protocol MD: `research_artifacts/aws_protocols/vehicle_stress_scenario_opportunity_probe_v1_frozen_20260928T2025Z.md`
+   - Summary: `research_artifacts/aws_diagnostics/vehicle_stress_scenario_opportunity_protocol_v1_20260928T2025Z/summary.md`
+   - Completed marker: `research_artifacts/aws_diagnostics/vehicle_stress_scenario_opportunity_protocol_v1_20260928T2025Z/completed.json`
+   - State note: `research_artifacts/aws_state/vehicle_stress_scenario_opportunity_protocol_v1_20260928T2025Z.md`
+
+Scientific decision preserved:
+
+- Broad terminal-mode scan showed positives/flips only in case5 step18, so immediate selector refit/training is not warranted; it would overfit one mined development state.
+- Stress-v1 is now frozen as a source-supported scenario-opportunity diagnostic:
+  - 256 metadata-only candidate resets.
+  - 20 selected cases fixed before horizon scoring.
+  - Stage1 fixed-H grid: H5, H10, H15, H20, H25, H30, H35, H40, H45, H50.
+  - Stage1 budget: exactly 200 episodes, cap 30,000 control steps.
+  - No selector/refit/training unless Stage1 and separately frozen Stage2 matched-continuation gates produce multicase robust labels.
+
+Current blocker / next queued action:
+
+- Backup gate is active. New protocol artifacts require verified external backup before writing runner source, running a dry-run, or starting Stage1 simulations.
+- Backup request:
+  - `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_VEHICLE_STRESS_SCENARIO_OPPORTUNITY_PROTOCOL_V1_20260928T2025Z.json`
+
+State has been durably updated via `update_state`. Research is continuing; no sealed test was accessed.
+
+
+## 2026-09-28T20:28:17.872643+00:00
+Elapsed service lifetime since first supervisor event (2026-09-26T10:55:29.419331Z): ~57h34m31s.  
+Cumulative server API `total_tokens`: not refreshed/available in this desktop/tool context; I did not infer or fabricate it.
+
+Concrete actions completed:
+
+1. Inspected the frozen stress-v1 protocol and supporting evidence:
+   - `research_artifacts/aws_protocols/vehicle_stress_scenario_opportunity_probe_v1_frozen_20260928T2025Z.json`
+   - `research_artifacts/aws_protocols/vehicle_stress_scenario_opportunity_probe_v1_frozen_20260928T2025Z.md`
+   - `research_artifacts/aws_diagnostics/vehicle_stress_scenario_opportunity_protocol_v1_20260928T2025Z/completed.json`
+   - `research_artifacts/aws_diagnostics/vehicle_stress_scenario_opportunity_protocol_v1_20260928T2025Z/summary.md`
+   - Stress-v0 runner source for planned v1 derivation.
+
+2. Rechecked the backup gate:
+   - Available local proof: `research_artifacts/aws_backup_proofs/backup_proof_20260928T202344_from_supervisor_context_after_broad_scan_and_v1_source.json`
+   - Proof time: `2026-09-28T20:23:44.869486+00:00`
+   - Stress-v1 protocol freeze time: `2026-09-28T20:24:37.134009+00:00`
+   - Decision: the proof predates the frozen protocol, so it does **not** satisfy the protocol’s explicit requirement for verified backup before runner source, dry-run, or rollout.
+
+3. Preserved state:
+   - Wrote: `research_artifacts/aws_state/vehicle_stress_v1_backup_gate_recheck_20260928T2030Z.md`
+   - SHA256: `8df648b78f84bb8e30140d9357169b114ca0f7ad7cdecf7f4969cfafaf86c96b`
+
+4. Requested backup:
+   - Wrote: `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_VEHICLE_STRESS_V1_BACKUP_GATE_RECHECK_20260928T2030Z.json`
+   - SHA256: `0a51e68fc3e0904138edeb9e6cbda940b8853d53a2caabf6d65d9d4da8727341`
+
+Budget/access this iteration:
+
+- New experiments: `0`
+- New rollouts/control steps: `0 / 0`
+- New training/gradient steps: `0 / 0`
+- Historical validation64 bank opened: `false`
+- Sealed final test accessed: `false`
+
+Scientific state is unchanged:
+
+- No reproduction success or stable adaptive acceleration claim.
+- Leading hypothesis remains scenario/opportunity design bottleneck.
+- Stress-v0 and terminal broad scan evidence remains too sparse/local for selector refit or training.
+- Stress-v1 Stage1 remains the next informative experiment, but only after backup.
+
+Current next queued action after verified backup appears:
+
+1. Write/import-smoke the stress-v1 Stage1 runner derived from the audited v0 runner.
+2. Run zero-rollout dry-run under legacy interpreter.
+3. Request/verify backup of runner source and dry-run outputs.
+4. Then run the frozen 200-episode fixed-H H5..H50 Stage1 opportunity map if dry-run passes.
+
+
+## 2026-09-28T20:31:14.105901+00:00
+

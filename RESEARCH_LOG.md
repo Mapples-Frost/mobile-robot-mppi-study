@@ -3223,3 +3223,15 @@ UTC: 2026-09-28T18:20:44.138685+00:00. Analysis-only, no new rollouts/training a
 
 ## 2026-09-28T18:23:54.552095+00:00
 
+
+
+## 2026-09-28T18:28:37.380924+00:00
+
+<!-- vehicle-terminal-objective-source-audit-v0-20260928T1830Z -->
+## 2026-09-28 vehicle terminal/objective source audit v0
+
+UTC: 2026-09-28T18:29:34.156351+00:00. Analysis-only; no rollouts/training/refit and no validation64/test access. The audit verified that vehicle reward/search uses a synthetic horizon penalty separate from measured wall time, stress fixed-H mapping has H-specific terminal sources without detected hash/config mismatches, and current gated policies are short-only finite search (`gradient_updates=0`) using H25 terminal lineage. The current policy class cannot choose longer-H positives such as the parsed Stage2 H30 direction, so immediate refit of the current class is not justified. Terminal-value accuracy remains missing because traces did not record numeric value errors; source supports instrumentation via `mpc_value_fn`. Decision: do not retrain/refit now; after backup, run a bounded terminal-value instrumentation smoke or freeze a stronger source-supported stress-v1 scenario protocol before any broader retraining. Artifacts: `research_artifacts/aws_diagnostics/vehicle_terminal_objective_source_audit_v0_20260928T1830Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_terminal_objective_source_audit_v0_20260928T1830Z/raw.json`. Backup request: `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_VEHICLE_TERMINAL_OBJECTIVE_SOURCE_AUDIT_V0_20260928T1830Z.json`.
+
+
+## 2026-09-28T18:32:12.261165+00:00
+

@@ -552,3 +552,17 @@ UTC: 2026-09-28T08:50:05.424948+00:00. Read-only diagnostic over fresh devval sh
 Key result: Do not allocate another unchanged long risk-reselection shard by default. Preserve the partial campaign and prioritize a versioned training/selection or scenario-opportunity diagnostic that can create a stronger candidate or explain absent adaptive opportunity.
 
 Artifacts: `research_artifacts/aws_diagnostics/vehicle_risk_reselection_devval_partial_opportunity_diagnostic_20260928T0845Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_risk_reselection_devval_partial_opportunity_diagnostic_20260928T0845Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_risk_reselection_devval_partial_opportunity_diagnostic_20260928T0845Z/completed.json`. New diagnostic artifacts and doc updates require external backup before further simulations.
+
+<!-- vehicle-risk-reselection-partial-opportunity-diagnostic-v2-20260928 -->
+## 2026-09-28 risk-reselection partial opportunity/runtime diagnostic V2
+
+UTC: 2026-09-28T08:55:56.583581+00:00. Corrected read-only diagnostic over fresh devval shards [0, 1, 2, 3, 4, 5]; no simulations, no training, no sealed-test access, and no historical validation64 bank access. V2 supersedes v1 fixed-H timing-opportunity statements because v1 did not parse nested per-episode timing. Parsed 1104 per-episode summaries and shard-reported 1104 episodes / 97847 control steps.
+
+Decision: Pause additional unchanged long risk-reselection devval shards after backup; freeze an outcome-informed scheduling amendment and design a smaller versioned training/selection or scenario-opportunity experiment with actual measured-time objectives.
+
+Artifacts: `research_artifacts/aws_diagnostics/vehicle_risk_reselection_devval_partial_opportunity_diagnostic_v2_20260928T0855Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_risk_reselection_devval_partial_opportunity_diagnostic_v2_20260928T0855Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_risk_reselection_devval_partial_opportunity_diagnostic_v2_20260928T0855Z/completed.json`. New diagnostic artifacts and doc updates require external backup before further simulations.
+
+<!-- vehicle-gated-horizon-actual-time-reselection-v2-20260928 -->
+## 2026-09-28 vehicle actual-time-aware gated-horizon re-selection V2
+
+UTC: 2026-09-28T09:00:46+00:00. Metadata-only IMPROVED finite re-selection using existing training candidate metrics and corrected V2 timing/opportunity diagnostics; no simulations, no training, no historical validation64 bank reopen, and no sealed-test access. Adaptive nominations: 2/3; acceptance_for_smoke_met=True. Nominations: {'0': 'fixed', '1': 'h15_p1_g5', '2': 'h15_p1_g5'}. Next action after backup: `after_backup_freeze_and_run_small_actual_time_reselection_v2_smoke`. Artifacts: `research_artifacts/aws_diagnostics/vehicle_gated_horizon_actual_time_reselection_v2_20260928T0905Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_gated_horizon_actual_time_reselection_v2_20260928T0905Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_gated_horizon_actual_time_reselection_v2_20260928T0905Z/completed.json`.

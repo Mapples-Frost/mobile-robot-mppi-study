@@ -2503,3 +2503,87 @@ Artifacts: `research_artifacts/aws_diagnostics/vehicle_risk_reselection_devval_p
 
 ## 2026-09-28T08:54:39.683564+00:00
 
+
+<!-- vehicle-risk-reselection-partial-opportunity-diagnostic-v2-20260928 -->
+## 2026-09-28 risk-reselection partial opportunity/runtime diagnostic V2
+
+UTC: 2026-09-28T08:55:56.583581+00:00. Corrected read-only diagnostic over fresh devval shards [0, 1, 2, 3, 4, 5]; no simulations, no training, no sealed-test access, and no historical validation64 bank access. V2 supersedes v1 fixed-H timing-opportunity statements because v1 did not parse nested per-episode timing. Parsed 1104 per-episode summaries and shard-reported 1104 episodes / 97847 control steps.
+
+Decision: Pause additional unchanged long risk-reselection devval shards after backup; freeze an outcome-informed scheduling amendment and design a smaller versioned training/selection or scenario-opportunity experiment with actual measured-time objectives.
+
+Artifacts: `research_artifacts/aws_diagnostics/vehicle_risk_reselection_devval_partial_opportunity_diagnostic_v2_20260928T0855Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_risk_reselection_devval_partial_opportunity_diagnostic_v2_20260928T0855Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_risk_reselection_devval_partial_opportunity_diagnostic_v2_20260928T0855Z/completed.json`. New diagnostic artifacts and doc updates require external backup before further simulations.
+
+
+## 2026-09-28T09:00:00.718212+00:00
+
+
+<!-- vehicle-gated-horizon-actual-time-reselection-v2-20260928 -->
+## 2026-09-28 vehicle actual-time-aware gated-horizon re-selection V2
+
+UTC: 2026-09-28T09:00:46+00:00. Metadata-only IMPROVED finite re-selection using existing training candidate metrics and corrected V2 timing/opportunity diagnostics; no simulations, no training, no historical validation64 bank reopen, and no sealed-test access. Adaptive nominations: 2/3; acceptance_for_smoke_met=True. Nominations: {'0': 'fixed', '1': 'h15_p1_g5', '2': 'h15_p1_g5'}. Next action after backup: `after_backup_freeze_and_run_small_actual_time_reselection_v2_smoke`. Artifacts: `research_artifacts/aws_diagnostics/vehicle_gated_horizon_actual_time_reselection_v2_20260928T0905Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_gated_horizon_actual_time_reselection_v2_20260928T0905Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_gated_horizon_actual_time_reselection_v2_20260928T0905Z/completed.json`.
+
+
+## 2026-09-28T09:04:18.513108+00:00
+Cumulative elapsed since first supervisor event (2026-09-26T10:55:29.419331Z): ~1d 22h 10m as of 2026-09-28T09:06Z.  
+Cumulative server API `total_tokens` from `research.sqlite`: unavailable from accessible repository tools this iteration; no `research.sqlite`/token-usage file was visible under the repository, so I am not inventing a number.
+
+## Concrete actions completed
+
+1. **Inspected current evidence/state**
+   - Read `STATUS.md`.
+   - Read V2 opportunity/runtime diagnostic outputs:
+     - `research_artifacts/aws_diagnostics/vehicle_risk_reselection_devval_partial_opportunity_diagnostic_v2_20260928T0855Z/summary.md`
+     - `.../completed.json`
+     - `.../raw.json` partially.
+   - Read the outcome-informed scheduling amendment:
+     - `research_artifacts/aws_protocols/vehicle_risk_reselection_v1_scheduling_amendment_after_v2_20260928.md`
+   - Inspected actual-time reselection script source.
+
+2. **Executed the frozen metadata-only actual-time-aware reselection**
+   - Run: `20260928T090045_278ad959`
+   - Script: `experiments/bohn2021_aws/vehicle_gated_horizon_actual_time_reselection_v2.py`
+   - Exit status: `0`
+   - Runtime: ~2.01 s
+   - Budget: **0 rollouts, 0 control steps, 0 training episodes, 0 gradient steps**
+   - Access: **no sealed test, no historical validation64 bank reopen**
+
+3. **Main V2 result**
+   - The existing finite candidate class is **not fully exhausted** under measured-time-aware selection.
+   - Correct V2 nominal nominations:
+     - seed0: fixed H25 fallback
+     - seed1: `h15_p1_g5`
+     - seed2: `h15_p1_g5`
+   - Adaptive nominations: `2/3`
+   - Frozen metadata acceptance for smoke: `True`
+   - This is still **IMPROVED finite search/reselection**, not ORIGINAL SAC and not gradient training.
+
+4. **Important correction found**
+   - Post-run source inspection found a seed0 bookkeeping bug in V2:
+     - code used `overhead_by_seed.get(seed or -1)`
+     - for seed0, `seed or -1` becomes `-1`, so seed0 adaptive candidates were scored with zero selection overhead.
+   - Seeds 1 and 2 and the overall V2 acceptance appear unaffected, but **V2 seed0 candidate timing fields are unreliable** until repaired.
+
+5. **Prepared repair source**
+   - Wrote:
+     - `experiments/bohn2021_aws/vehicle_gated_horizon_actual_time_reselection_v2b_seed0_overhead_repair.py`
+   - SHA256:
+     - `529436ff04ab288474a4ad3f0a6579a4793b0de512d8ba1523933f6b7db0996e`
+   - Not executed yet, preserving one-experiment-per-iteration discipline.
+
+6. **Preserved state**
+   - Wrote:
+     - `research_artifacts/aws_state/vehicle_actual_time_reselection_v2_and_v2b_repair_pending_20260928T0906Z.md`
+   - Updated durable supervisor state via `update_state`.
+
+## Current blockers / next action
+
+- **Backup required before any further simulations** covering:
+  - V2 outputs,
+  - run registry/logs,
+  - docs/state updates,
+  - V2b repair source.
+- Before any smoke rollout, run the metadata-only V2b repair:
+  - `experiments/bohn2021_aws/vehicle_gated_horizon_actual_time_reselection_v2b_seed0_overhead_repair.py`
+- If V2b still confirms ≥2 adaptive nominations, then after verified backup freeze and run a small actual-time V2b smoke/confirmation block.
+- Do **not** resume unchanged risk-reselection devval shards06–15 by default.
+- Do **not** open/request sealed final test.

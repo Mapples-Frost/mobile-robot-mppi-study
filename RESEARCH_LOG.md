@@ -1945,3 +1945,11 @@ UTC: 2026-09-28T00:21:46.705508+00:00. Ran three deterministic transition/ramp c
 
 ## 2026-09-28T00:25:09.500168+00:00
 
+<!-- vehicle-safe-shortening-v1-case9-h10-hold-sensitivity-v1-20260928T002551Z -->
+## 2026-09-28 vehicle safe-shortening v1 case9 H10 hold diagnostic
+
+Development-only case9 seed2 H10 hold-length diagnostic completed: 4 new episodes, 308 new control steps, no training and no sealed-test access. Result: At least one finite H10 hold repaired the case9 transition; shortest successful hold among tested lengths is 3 steps. This supports considering transition dwell/hysteresis in v2, but only as development evidence from one already-opened case. Artifacts: `research_artifacts/aws_diagnostics/vehicle_safe_shortening_v1_case9_h10_hold_sensitivity_v1_20260928T002551Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_safe_shortening_v1_case9_h10_hold_sensitivity_v1_20260928T002551Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_safe_shortening_v1_case9_h10_hold_sensitivity_v1_20260928T002551Z/completed.json`.
+
+
+## 2026-09-28T00:31:35.917800+00:00
+

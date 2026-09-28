@@ -3612,3 +3612,11 @@ UTC: 2026-09-28T23:38:12.743052+00:00. No-simulation backup-gate audit after wri
 
 ## 2026-09-28T23:39:08.756709+00:00
 
+<!-- vehicle-stress-v1b-terminal-reward-ablation-v0c-legacy-schema-repair-run-20260928T2340Z_legacy_schema_repair-smoke -->
+## 2026-09-28 vehicle stress-v1b terminal/reward-source ablation v0 smoke
+
+UTC: 2026-09-28T23:49:55.683264+00:00. Development-only ablation completed: 27 episodes, 2402 control steps. No validation64/test access and no training/refit. Terminal-artifact strength=strong; material-label flips=6; synthetic-only material rows=0. Decision remains no selector/refit from this diagnostic alone. Artifacts: `research_artifacts/aws_diagnostics/vehicle_stress_v1b_terminal_reward_ablation_v0c_smoke_20260928T2340Z_legacy_schema_repair/summary.md`, `research_artifacts/aws_diagnostics/vehicle_stress_v1b_terminal_reward_ablation_v0c_smoke_20260928T2340Z_legacy_schema_repair/raw.json`, `research_artifacts/aws_diagnostics/vehicle_stress_v1b_terminal_reward_ablation_v0c_smoke_20260928T2340Z_legacy_schema_repair/completed.json`. Backup request: `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_VEHICLE_STRESS_V1B_TERMINAL_REWARD_ABLATION_V0_SMOKE_20260928T234955.683264+0000.json`.
+
+
+## 2026-09-28T23:53:27.836279+00:00
+

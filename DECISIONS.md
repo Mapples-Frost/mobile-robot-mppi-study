@@ -421,3 +421,12 @@ Before evidence: full v1 devval64 failed the frozen gate; metadata-only case9 di
 Diagnostic action: parsed existing step traces, guard values, raw and executed horizons, training-selection records, and fixed-grid devval summaries. No new rollouts/training/test access.
 
 Outcome: see `research_artifacts/aws_diagnostics/vehicle_safe_shortening_v1_trace_policy_diagnostic_20260928T000351Z/summary.md`. No trace-level dispatch inconsistency or H>25 request was found. The near-collapse to H25 follows the selected gated policies and thresholds; seed2's strict h10_p0_g5 profile produces extremely rare H10 states. This supports a versioned IMPROVED v2 change focused on learned/selection objective and state-level safety/value estimation, after one bounded deterministic counterfactual replay for case9/case43.
+
+<!-- vehicle-safe-shortening-v1-case9-counterfactual-v1-20260928-decision -->
+### Decision: case9 seed2 v1 failure is a horizon-choice causal hazard, not dispatch/noise
+
+Before evidence: full devval64 rejected safe-shortening v1; metadata diagnostic showed adaptive and matched-H25 case9 trajectories were identical before step57, where adaptive selected H10 once, then adaptive failed while matched H25 succeeded.
+
+Diagnostic change: two one-variable deterministic replays on the already-opened case only. Force H25 at the adaptive H10 step, and inject H10 into the fixed-H25 path at the same step. No training, no controller/terminal/model/source mutation, no sealed test.
+
+Outcome: see `research_artifacts/aws_diagnostics/vehicle_safe_shortening_v1_case9_counterfactual_v1_20260928T000944Z/summary.md`. This supports revising the IMPROVED method toward state-level safety/value estimation rather than revalidating v1. Evidence remains development-only and contaminated by case9 diagnosis.

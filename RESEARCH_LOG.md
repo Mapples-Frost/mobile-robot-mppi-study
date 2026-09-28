@@ -1921,3 +1921,11 @@ UTC: 2026-09-28T00:04:02.901867+00:00. Parsed existing safe-shortening v1 devval
 
 ## 2026-09-28T00:08:56.405005+00:00
 
+<!-- vehicle-safe-shortening-v1-case9-counterfactual-v1-20260928 -->
+## 2026-09-28 vehicle safe-shortening v1 case9 seed2 counterfactual v1
+
+UTC: 2026-09-28T00:10:40.253366+00:00. Ran two deterministic one-variable counterfactual episodes on already-opened fresh devval shard13/case9 seed2: force H25 at the saved adaptive H10 step, and inject H10 at the same step into the matched-H25 path. Budget: 2 episodes, 227 control steps, 0 training/gradient steps; sealed test closed. Outcome: The one-step horizon choice is causally implicated: forcing H25 at the saved H10 decision rescues the case, while injecting H10 into the matched-H25 path reproduces the adaptive failure pattern. Artifacts: `research_artifacts/aws_diagnostics/vehicle_safe_shortening_v1_case9_counterfactual_v1_20260928T000944Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_safe_shortening_v1_case9_counterfactual_v1_20260928T000944Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_safe_shortening_v1_case9_counterfactual_v1_20260928T000944Z/completed.json`; backup request `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_VEHICLE_SAFE_SHORTENING_V1_CASE9_COUNTERFACTUAL_V1_20260928T001040Z.json`.
+
+
+## 2026-09-28T00:15:00.575027+00:00
+

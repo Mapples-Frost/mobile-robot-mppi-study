@@ -2490,3 +2490,16 @@ UTC: 2026-09-28T08:35:14.280065+00:00. Ran a frozen fresh development-validation
 
 ## 2026-09-28T08:48:06.178376+00:00
 
+
+<!-- vehicle-risk-reselection-partial-opportunity-diagnostic-20260928 -->
+## 2026-09-28 risk-reselection partial opportunity/runtime diagnostic
+
+UTC: 2026-09-28T08:50:05.424948+00:00. Read-only diagnostic over fresh devval shards [0, 1, 2, 3, 4, 5]; no simulations, no training, no sealed-test access, and no historical validation64 bank access. Parsed 1104 per-episode summaries and shard-reported 1104 episodes / 97847 control steps.
+
+Key result: Do not allocate another unchanged long risk-reselection shard by default. Preserve the partial campaign and prioritize a versioned training/selection or scenario-opportunity diagnostic that can create a stronger candidate or explain absent adaptive opportunity.
+
+Artifacts: `research_artifacts/aws_diagnostics/vehicle_risk_reselection_devval_partial_opportunity_diagnostic_20260928T0845Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_risk_reselection_devval_partial_opportunity_diagnostic_20260928T0845Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_risk_reselection_devval_partial_opportunity_diagnostic_20260928T0845Z/completed.json`. New diagnostic artifacts and doc updates require external backup before further simulations.
+
+
+## 2026-09-28T08:54:39.683564+00:00
+

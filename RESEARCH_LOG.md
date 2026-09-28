@@ -2865,3 +2865,59 @@ Next action:
 - Run `vehicle_v1_fresh_continuation_label_postdiagnostic_v0b_schema_repair.py` as the next no-simulation diagnostic.
 - Then require verified external backup covering failed v0, v0b repair, repair source, and frozen transient-state protocol before any new rollout.
 - After backup, execute the frozen `vehicle_v1_transient_state_continuation_probe_v0` to test whether generic branch states missed high-transient opportunity.
+
+
+## 2026-09-28T15:08:38.210396+00:00
+Elapsed service lifetime: about 2 days 4h17m since 2026-09-26T10:55:29.419331Z. Server API total_tokens from research.sqlite: unknown/unavailable from repository tools; not reported as zero.
+
+Concrete actions completed:
+
+1. Inspected the pending repair and evidence:
+   - `experiments/bohn2021_aws/vehicle_v1_fresh_continuation_label_postdiagnostic_v0b_schema_repair.py`
+   - v0 failed postdiagnostic summary/raw/registry
+   - frozen transient-state continuation protocol
+
+2. Executed the pending no-simulation v0b schema repair:
+   - Script: `experiments/bohn2021_aws/vehicle_v1_fresh_continuation_label_postdiagnostic_v0b_schema_repair.py`
+   - Registry: `research_artifacts/aws_runs/20260928T150458_c0c16c13/registry.json`
+   - Exit status: `1`
+   - Runtime: about `2.0s`
+   - New rollouts/control steps/training/gradient: `0 / 0 / 0 / 0`
+   - Historical validation64 opened: `False`
+   - Sealed test accessed: `False`
+
+3. Diagnosed the v0b failure:
+   - v0b validated the scientific inputs and wrote:
+     - `research_artifacts/aws_diagnostics/vehicle_v1_fresh_continuation_label_postdiagnostic_v0b_schema_repair_20260928T1505Z/raw.json`
+   - It then failed before summary/completed marker because `write_summary(out)` referenced `out['backup_request']` before that field was populated.
+   - This is another documentation/completion ordering bug only; it consumed no scientific simulation/training budget and does not change the fresh-probe finding.
+
+4. Preserved scientific findings:
+   - Fresh continuation-label probe remains `0/24` material-positive non-H15 states.
+   - Fresh refit/training gate remains `False`.
+   - Best non-H15 total gain remains about `0.560688`, below the frozen `+3` material threshold.
+   - Large non-H15 harms remain `35`.
+   - Interpretation unchanged: the earlier nearest-state selector gain is development-only and concentrated in mined cases/states; immediate refit/retraining or unchanged validation is not justified yet.
+
+5. Wrote robust v0c repair source:
+   - `experiments/bohn2021_aws/vehicle_v1_fresh_continuation_label_postdiagnostic_v0c_schema_repair.py`
+   - SHA256: `de8851666f09e16c8559219f7fef6878c64845d0254bd4d1c0b3772f56571355`
+   - Purpose: account for both failed no-simulation completion attempts, validate preserved artifacts, write summary/raw/completed/state/backup request, and leave the frozen transient-state protocol unchanged.
+
+6. Persisted state:
+   - `research_artifacts/aws_state/vehicle_v1_fresh_continuation_label_postdiagnostic_v0b_failed_v0c_pending_20260928T1512Z.md`
+   - Updated durable supervisor state via `update_state`.
+
+Next action:
+- Run `vehicle_v1_fresh_continuation_label_postdiagnostic_v0c_schema_repair.py` as the next no-simulation diagnostic.
+- Then require verified external backup covering v0/v0b/v0c artifacts, repair source, and frozen transient-state protocol before any new rollout.
+- After backup, execute the frozen `vehicle_v1_transient_state_continuation_probe_v0`; if it finds fewer than 2 material positives, move to versioned stress-scenario opportunity design rather than retraining on sparse labels.
+
+<!-- vehicle-v1-fresh-continuation-label-postdiagnostic-v0c-schema-repair-20260928T1510Z -->
+## 2026-09-28 vehicle V1 fresh continuation-label postdiagnostic v0c schema repair
+
+UTC: 2026-09-28T15:09:21.816207+00:00. No simulations, no training/refit, no historical validation64, no sealed test. The preceding v0 and v0b postdiagnostic repair attempts failed only in documentation/completion code after validating/writing partial artifacts. Fresh continuation labels remain 0/24 material positives; immediate selector refit/retraining remains deferred. Next frozen diagnostic: `research_artifacts/aws_protocols/vehicle_v1_transient_state_continuation_probe_v0_frozen_20260928.md`; execute only after a verified external backup covers v0/v0b/v0c outputs and the protocol. Artifacts: `research_artifacts/aws_diagnostics/vehicle_v1_fresh_continuation_label_postdiagnostic_v0c_schema_repair_20260928T1510Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_v1_fresh_continuation_label_postdiagnostic_v0c_schema_repair_20260928T1510Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_v1_fresh_continuation_label_postdiagnostic_v0c_schema_repair_20260928T1510Z/completed.json`.
+
+
+## 2026-09-28T15:13:32.401639+00:00
+

@@ -274,3 +274,8 @@ UTC: 2026-09-28T11:54:18.311563+00:00. Metadata/trace-only diagnostic selected 4
 ## 2026-09-28 vehicle V1 controlled-continuation diagnostic v0
 
 UTC: 2026-09-28T12:20:32.088109+00:00. Development-only identical-prefix continuation diagnostic completed: 32 episodes, 2447 control steps, no validation64/test access. Confirmed material states=3; selector-smoke gate=True. Artifacts: `research_artifacts/aws_diagnostics/vehicle_v1_controlled_continuation_diagnostic_v0b_20260928/summary.md`, `research_artifacts/aws_diagnostics/vehicle_v1_controlled_continuation_diagnostic_v0b_20260928/raw.json`, `research_artifacts/aws_diagnostics/vehicle_v1_controlled_continuation_diagnostic_v0b_20260928/completed.json`.
+
+<!-- vehicle-v1-state-continuation-selector-offline-refit-v0-20260928T1240Z -->
+## 2026-09-28 vehicle V1 state-continuation selector offline refit v0
+
+UTC: 2026-09-28T12:43:00.533809+00:00. Metadata/trace-only offline selector refit completed with no simulations/training/validation64/test access. Offline gate=False; selected radius=0.1; positive latches=3/3; guard hits=0; nonpositive latches=0. Next frozen smoke protocol: `research_artifacts/aws_protocols/vehicle_v1_state_continuation_selector_smoke_v0_frozen_20260928.json`; backup required before rollout.

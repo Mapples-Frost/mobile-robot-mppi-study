@@ -1953,3 +1953,11 @@ Development-only case9 seed2 H10 hold-length diagnostic completed: 4 new episode
 
 ## 2026-09-28T00:31:35.917800+00:00
 
+<!-- vehicle-safe-shortening-v2-transition-hold-smoke-20260928 -->
+## 2026-09-28 vehicle safe-shortening v2 transition-hold smoke
+
+UTC: 2026-09-28T00:39:40.931469+00:00. IMPROVED v2 transition-hold protocol frozen and engineering smoke completed on a fresh v2 smoke bank: 24 episodes, 1800 control steps, replay passed=True. No validation64 bank or sealed test was opened. This is not model-selection/final evidence. Artifacts: `research_artifacts/aws_diagnostics/vehicle_safe_shortening_v2_transition_hold_smoke_20260928/summary.md`, `research_artifacts/aws_diagnostics/vehicle_safe_shortening_v2_transition_hold_smoke_20260928/raw.json`, `research_artifacts/aws_diagnostics/vehicle_safe_shortening_v2_transition_hold_smoke_20260928/completed.json`.
+
+
+## 2026-09-28T00:45:02.486179+00:00
+

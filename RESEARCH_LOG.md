@@ -2807,3 +2807,11 @@ UTC: 2026-09-28T13:43:04.216531+00:00. No-simulation postdiagnostic completed af
 
 ## 2026-09-28T14:21:30.892859+00:00
 
+<!-- vehicle-v1-fresh-continuation-label-probe-v0-20260928 -->
+## 2026-09-28 vehicle V1 fresh continuation-label probe v0
+
+UTC: 2026-09-28T14:53:19.951434+00:00. Development-only fresh continuation-label probe completed: 96 episodes, 7632 control steps, fresh candidate resets=48. No validation64/test access. Positive states=0 across cases=[]; negative/neutral states=24; refit/training gate=False. Artifacts: `research_artifacts/aws_diagnostics/vehicle_v1_fresh_continuation_label_probe_v0_20260928/summary.md`, `research_artifacts/aws_diagnostics/vehicle_v1_fresh_continuation_label_probe_v0_20260928/raw.json`, `research_artifacts/aws_diagnostics/vehicle_v1_fresh_continuation_label_probe_v0_20260928/completed.json`.
+
+
+## 2026-09-28T14:56:43.337384+00:00
+

@@ -2747,3 +2747,11 @@ UTC: 2026-09-28T11:54:18.311563+00:00. Metadata/trace-only diagnostic selected 4
 
 ## 2026-09-28T12:08:10.590846+00:00
 
+<!-- vehicle-v1-controlled-continuation-diagnostic-v0b-one-variable-terminal-helper-repair-20260928 -->
+## 2026-09-28 vehicle V1 controlled-continuation diagnostic v0
+
+UTC: 2026-09-28T12:20:32.088109+00:00. Development-only identical-prefix continuation diagnostic completed: 32 episodes, 2447 control steps, no validation64/test access. Confirmed material states=3; selector-smoke gate=True. Artifacts: `research_artifacts/aws_diagnostics/vehicle_v1_controlled_continuation_diagnostic_v0b_20260928/summary.md`, `research_artifacts/aws_diagnostics/vehicle_v1_controlled_continuation_diagnostic_v0b_20260928/raw.json`, `research_artifacts/aws_diagnostics/vehicle_v1_controlled_continuation_diagnostic_v0b_20260928/completed.json`.
+
+
+## 2026-09-28T12:23:25.780435+00:00
+

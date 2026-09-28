@@ -620,3 +620,13 @@ UTC: 2026-09-28T15:09:21.816207+00:00. No simulations, no training/refit, no his
 ## 2026-09-28 vehicle V1 transient-state shadow selection v0
 
 UTC: 2026-09-28T15:16:08.577389+00:00. No-simulation target-selection diagnostic selected 12 H15-only transient/control branch states for the frozen continuation probe; future rollout budget 48 episodes / 7200 steps. No validation64/test/training access. Backup remains required before simulations. Artifacts: `research_artifacts/aws_diagnostics/vehicle_v1_transient_state_shadow_selection_v0_20260928T1515Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_v1_transient_state_shadow_selection_v0_20260928T1515Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_v1_transient_state_shadow_selection_v0_20260928T1515Z/completed.json`.
+
+<!-- vehicle-v1-transient-state-shadow-selection-v0b-unique-repair-20260928T1520Z -->
+## 2026-09-28 vehicle V1 transient-state shadow selection v0b unique repair
+
+UTC: 2026-09-28T15:21:49.063213+00:00. No-simulation repair fixed the v0 duplicated transient target schedule by collapsing to one H15 reference trace per case before target selection. Selected 12 unique case/kind targets; future rollout budget 48 episodes / 7200 steps. No validation64/test/training access. Verified backup is required before any continuation rollout. Artifacts: `research_artifacts/aws_diagnostics/vehicle_v1_transient_state_shadow_selection_v0b_unique_repair_20260928T1520Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_v1_transient_state_shadow_selection_v0b_unique_repair_20260928T1520Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_v1_transient_state_shadow_selection_v0b_unique_repair_20260928T1520Z/completed.json`.
+
+<!-- vehicle-v1-transient-state-backup-gate-recheck-v0-20260928T1530Z -->
+## 2026-09-28 vehicle V1 transient-state backup gate recheck v0
+
+UTC: 2026-09-28T15:31:09+00:00. Metadata-only pre-rollout backup gate recheck completed with no simulations/training, no historical validation64 access, and no sealed-test access. Adequate verified external backup proofs after `2026-09-28T15:21:49.063213+00:00` found: `0`; post-required candidates: `0`. The supervisor-context backup at `2026-09-28T15:21:12.658722+00:00` predates v0b completion and is inadequate for this gate. Rollout-runner source work and continuation rollout remain blocked pending external backup covering v0/v0b artifacts/source, frozen transient protocol, this recheck/source/outputs, docs/registry/state and run logs. Backup request: `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_VEHICLE_V1_TRANSIENT_STATE_GATE_RECHECK_V0_20260928T1530Z.json`.

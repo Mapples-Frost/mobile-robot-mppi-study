@@ -2929,3 +2929,74 @@ UTC: 2026-09-28T15:16:08.577389+00:00. No-simulation target-selection diagnostic
 
 ## 2026-09-28T15:20:33.308679+00:00
 
+<!-- vehicle-v1-transient-state-shadow-selection-v0b-unique-repair-20260928T1520Z -->
+## 2026-09-28 vehicle V1 transient-state shadow selection v0b unique repair
+
+UTC: 2026-09-28T15:21:49.063213+00:00. No-simulation repair fixed the v0 duplicated transient target schedule by collapsing to one H15 reference trace per case before target selection. Selected 12 unique case/kind targets; future rollout budget 48 episodes / 7200 steps. No validation64/test/training access. Verified backup is required before any continuation rollout. Artifacts: `research_artifacts/aws_diagnostics/vehicle_v1_transient_state_shadow_selection_v0b_unique_repair_20260928T1520Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_v1_transient_state_shadow_selection_v0b_unique_repair_20260928T1520Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_v1_transient_state_shadow_selection_v0b_unique_repair_20260928T1520Z/completed.json`.
+
+
+## 2026-09-28T15:24:13.516184+00:00
+Elapsed service lifetime since first supervisor event (2026-09-26T10:55:29.419331Z): about **2 days 4h28m**.  
+Cumulative server API `total_tokens` from `research.sqlite` calls, excluding this desktop conversation: **unavailable through repository tools this cycle; not reported as zero**.
+
+Concrete action completed:
+
+- Ran the pending no-simulation repair:
+  - Script: `experiments/bohn2021_aws/vehicle_v1_transient_state_shadow_selection_v0b_unique_repair.py`
+  - Registry: `research_artifacts/aws_runs/20260928T152148_c0e1440e/registry.json`
+  - Exit status: `0`
+  - Runtime: `2.0056s`
+  - New rollouts/control steps/training/gradient: `0 / 0 / 0 / 0`
+  - Historical validation64 opened: `False`
+  - Sealed test accessed: `False`
+
+Evidence inspected/preserved:
+
+- v0 target selection had a no-simulation duplicate-schedule defect: 12 selected rows but only 6 unique case/kind/step targets.
+- v0b repaired this by collapsing to one H15 reference trace per case before target selection.
+- v0b selected **12 unique case/kind targets**:
+  - High-transient: cases `0,2,3,6,7,9,10,11`
+  - Low/control: cases `1,4,5,8`
+  - Branch horizons remain `[10, 15, 30, 35]`
+  - Future rollout budget remains `48 episodes / 7200 control steps`
+- This is still only target-selection evidence, not adaptive opportunity evidence.
+- Fresh-label negative result remains unchanged: `0/24` material-positive non-H15 identical-H15-prefix states; immediate selector refit/retraining remains premature.
+
+Key artifacts:
+
+- `research_artifacts/aws_diagnostics/vehicle_v1_transient_state_shadow_selection_v0b_unique_repair_20260928T1520Z/summary.md`
+- `research_artifacts/aws_diagnostics/vehicle_v1_transient_state_shadow_selection_v0b_unique_repair_20260928T1520Z/raw.json`
+- `research_artifacts/aws_diagnostics/vehicle_v1_transient_state_shadow_selection_v0b_unique_repair_20260928T1520Z/completed.json`
+- `research_artifacts/aws_state/vehicle_v1_transient_state_shadow_selection_v0b_unique_repair_20260928T1520Z.md`
+- Backup request:
+  - `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_VEHICLE_V1_TRANSIENT_STATE_SHADOW_SELECTION_V0B_UNIQUE_REPAIR_20260928T1520Z.json`
+
+Current scientific status:
+
+- The mined nearest-state selector gain remains provisional and concentrated in cases 7/10.
+- The leading hypothesis remains sparse/case-specific canonical V1 adaptive opportunity, possibly concentrated in high-transient or near-obstacle states.
+- The next discriminating experiment is the frozen transient-state continuation rollout, but it is **backup-gated**.
+- No validation64 or sealed test access occurred; no reproduction or success claim is allowed.
+
+State preserved via `update_state`.
+
+Next iteration queue:
+
+1. Verify external backup after `2026-09-28T15:21:49Z` covering v0/v0b outputs, source, protocol, registries/docs/state.
+2. After backup, write/freeze rollout runner consuming the v0b unique target list without changing selection.
+3. Smoke runner with no simulation; request/verify backup for runner source.
+4. Execute frozen transient-state continuation rollout under legacy interpreter:
+   - max `48 episodes / 7200 steps`
+   - prefix `H15`
+   - branch horizons `[10,15,30,35]`
+   - no training, no validation64, no sealed test.
+5. If `<2` material positives and no solver/safety artifact explains absence, move to versioned stress-scenario opportunity design before retraining.
+
+<!-- vehicle-v1-transient-state-backup-gate-recheck-v0-20260928T1530Z -->
+## 2026-09-28 vehicle V1 transient-state backup gate recheck v0
+
+UTC: 2026-09-28T15:31:09+00:00. Metadata-only pre-rollout backup gate recheck completed with no simulations/training, no historical validation64 access, and no sealed-test access. Adequate verified external backup proofs after `2026-09-28T15:21:49.063213+00:00` found: `0`; post-required candidates: `0`. The supervisor-context backup at `2026-09-28T15:21:12.658722+00:00` predates v0b completion and is inadequate for this gate. Rollout-runner source work and continuation rollout remain blocked pending external backup covering v0/v0b artifacts/source, frozen transient protocol, this recheck/source/outputs, docs/registry/state and run logs. Backup request: `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_VEHICLE_V1_TRANSIENT_STATE_GATE_RECHECK_V0_20260928T1530Z.json`.
+
+
+## 2026-09-28T15:32:54.539325+00:00
+

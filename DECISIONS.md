@@ -458,3 +458,13 @@ Development-only case9 seed2 H10 hold-length diagnostic completed: 4 new episode
 ## 2026-09-28 vehicle safe-shortening v2 transition-hold smoke
 
 UTC: 2026-09-28T00:39:40.931469+00:00. IMPROVED v2 transition-hold protocol frozen and engineering smoke completed on a fresh v2 smoke bank: 24 episodes, 1800 control steps, replay passed=True. No validation64 bank or sealed test was opened. This is not model-selection/final evidence. Artifacts: `research_artifacts/aws_diagnostics/vehicle_safe_shortening_v2_transition_hold_smoke_20260928/summary.md`, `research_artifacts/aws_diagnostics/vehicle_safe_shortening_v2_transition_hold_smoke_20260928/raw.json`, `research_artifacts/aws_diagnostics/vehicle_safe_shortening_v2_transition_hold_smoke_20260928/completed.json`.
+
+<!-- vehicle-safe-shortening-v2-transition-hold-devval-preflight-20260928T004500Z -->
+## 2026-09-28 vehicle safe-shortening v2 transition-hold devval preflight
+
+UTC: 2026-09-28T00:46:17.422154+00:00. Ran metadata/runtime preflight for the frozen IMPROVED v2 transition-hold development-validation campaign. No devval bank generation, no rollout/control steps, no historical validation64 bank reopen, and no sealed-test access. Schedule/arm dimensions verified: 2752 episodes, 16 shards, 43 arms; terminal-source metadata verified for 12 unique sources. Decision: Preflight passed. Do not run v2 devval shard until supervisor reports verified external backup for smoke, protocols, runner and this preflight. After backup, next concrete action is shard00 with legacy interpreter. Artifacts: `research_artifacts/aws_diagnostics/vehicle_safe_shortening_v2_transition_hold_devval_preflight_20260928T004500Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_safe_shortening_v2_transition_hold_devval_preflight_20260928T004500Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_safe_shortening_v2_transition_hold_devval_preflight_20260928T004500Z/completed.json`.
+
+<!-- decision-v2-devval-backup-gate-20260928T005101+0000 -->
+## 2026-09-28 decision: hold v2 devval until post-preflight backup proof
+
+Evidence: metadata-only gate recheck at 2026-09-28T00:51:01+00:00 found 0 adequate repository-local backup proofs after `2026-09-28T00:46:20+00:00`. The latest supervisor-context verified backup at `2026-09-28T00:45:40.181961+00:00` predates the v2 devval preflight and cannot cover its outputs/logs. Decision: do not start v2 devval shard00 until a verified external backup after this recheck covers the v2 protocols/source, smoke, preflight, docs/registry, backup requests, this gate recheck, and this run's finalized logs. This is a storage/recoverability gate only; it does not alter the frozen v2 controller, schedule, selection rules, or acceptance criteria.

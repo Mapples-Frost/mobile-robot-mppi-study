@@ -1961,3 +1961,94 @@ UTC: 2026-09-28T00:39:40.931469+00:00. IMPROVED v2 transition-hold protocol froz
 
 ## 2026-09-28T00:45:02.486179+00:00
 
+<!-- vehicle-safe-shortening-v2-transition-hold-devval-preflight-20260928T004500Z -->
+## 2026-09-28 vehicle safe-shortening v2 transition-hold devval preflight
+
+UTC: 2026-09-28T00:46:17.422154+00:00. Ran metadata/runtime preflight for the frozen IMPROVED v2 transition-hold development-validation campaign. No devval bank generation, no rollout/control steps, no historical validation64 bank reopen, and no sealed-test access. Schedule/arm dimensions verified: 2752 episodes, 16 shards, 43 arms; terminal-source metadata verified for 12 unique sources. Decision: Preflight passed. Do not run v2 devval shard until supervisor reports verified external backup for smoke, protocols, runner and this preflight. After backup, next concrete action is shard00 with legacy interpreter. Artifacts: `research_artifacts/aws_diagnostics/vehicle_safe_shortening_v2_transition_hold_devval_preflight_20260928T004500Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_safe_shortening_v2_transition_hold_devval_preflight_20260928T004500Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_safe_shortening_v2_transition_hold_devval_preflight_20260928T004500Z/completed.json`.
+
+
+## 2026-09-28T00:47:58.804161+00:00
+Elapsed service lifetime since first supervisor event: ~37h52m from 2026-09-26T10:55:29.419331Z to ~2026-09-28T00:47Z; this is service wall-clock, not summed experiment runtime.  
+Cumulative server API total_tokens from research.sqlite calls: unavailable to repository tools; `*sqlite*` search found no usable database entries, and desktop conversation usage is excluded.
+
+Concrete actions completed this iteration:
+
+1. Ran the frozen v2 development-validation preflight:
+   - Script: `experiments/bohn2021_aws/vehicle_safe_shortening_v2_devval_preflight.py`
+   - Interpreter: legacy
+   - Registry: `research_artifacts/aws_runs/20260928T004617_70cc8a85/registry.json`
+   - Exit status: `0`
+   - Runtime: `4.01s`
+   - No rollout episodes, no control steps, no bank generation, no training, no sealed-test access.
+
+2. Verified evidence from the preflight:
+   - Legacy TF runtime passed: TensorFlow `1.15.5`.
+   - V2 smoke completed marker/hash/access flags passed.
+   - Smoke budget confirmed: `24` episodes / `1800` control steps.
+   - Smoke had `validation64_bank_opened=false`, `sealed_test_accessed=false`.
+   - Fresh v2 devval bank is absent and not partially created.
+   - Frozen v2 devval schedule verified:
+     - `2752` planned episodes
+     - `16` shards
+     - `43` arms
+     - `172` episodes per shard
+     - `64` cases, each paired across all arms
+     - `3` adaptive v2 arms
+     - `30` same-seed matched-terminal fixed-H grid arms
+     - `10` independent-terminal seed0 fixed-H grid arms
+   - `12` terminal sources verified by metadata/hash.
+
+3. Key artifacts created/verified:
+   - `research_artifacts/aws_diagnostics/vehicle_safe_shortening_v2_transition_hold_devval_preflight_20260928T004500Z/summary.md`
+   - `research_artifacts/aws_diagnostics/vehicle_safe_shortening_v2_transition_hold_devval_preflight_20260928T004500Z/raw.json`
+   - `research_artifacts/aws_diagnostics/vehicle_safe_shortening_v2_transition_hold_devval_preflight_20260928T004500Z/completed.json`
+   - Backup request:
+     - `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_VEHICLE_SAFE_SHORTENING_V2_DEVVAL_PREFLIGHT_20260928T004617.json`
+
+4. Important hashes:
+   - Preflight script: `05b9d530ad4347674f9e21d086d9ac3c54bce4c3c25448593255647041d4dcce`
+   - Devval shard runner: `0f35aa0432f4d0d7f57df74c8dc5aee5ae33d0a848f191ea3696e196291da229`
+   - Devval protocol: `57556418b6caee02fd28a949aa92ceeba705361c4a80c183e12b1d67e80c293a`
+   - Transition protocol: `cba016c6ca3615de2a1c2b770e24475d4f06784b6060d97ac30e50f509bae65e`
+
+5. State preserved via `update_state`.
+   - Current phase: v2 transition-hold preflight complete, backup gate active.
+   - No sealed final test opened.
+   - No historical validation64 bank reopened.
+   - No fresh v2 devval bank generated yet.
+   - No formal final-test evidence claimed.
+
+Current gate:
+
+- Last verified external backup in supervisor context was at `2026-09-28T00:45:40Z`, before this preflight.
+- New unbacked files now include the v2 preflight outputs, backup request, run registry, and doc/registry appends.
+- Per frozen protocol, do **not** start v2 devval shard00 until a verified external backup after `2026-09-28T00:46:17Z` covers the v2 smoke, protocols, runner, preflight outputs, registry/docs, and backup request.
+
+Next concrete action after backup verification:
+
+Run exactly one v2 fresh development-validation shard:
+
+```text
+experiments/bohn2021_aws/vehicle_safe_shortening_v2_transition_hold_devval_shard_runner.py --shard 0
+```
+
+with legacy interpreter only.
+
+Declared shard00 budget:
+- 172 rollout episodes
+- Max 25,800 control steps
+- 64 fresh devval bank reset snapshots if bank is absent
+- 0 training episodes
+- 0 gradient steps
+- 0 sealed-test episodes
+
+Purpose: first paired frozen v2 devval block across all 43 arms for 4 fresh cases, including all 3 adaptive seeds and full strong fixed-H comparators.
+
+<!-- vehicle-safe-shortening-v2-devval-backup-gate-recheck-20260928T005101+0000 -->
+## 2026-09-28 vehicle safe-shortening v2 devval backup gate recheck
+
+UTC: 2026-09-28T00:51:01+00:00. Metadata-only gate check before frozen IMPROVED v2 transition-hold devval shard00. No rollout/control steps, no training, no fresh devval bank generation, no historical validation64 bank reopen, and no sealed-test access/hash occurred. Required proof time was after `2026-09-28T00:46:20+00:00` and after preflight/run-log finalization. Repository-local post-preflight candidate proofs found: 0; adequate proofs found: 0. Latest supervisor-context verified backup remains `2026-09-28T00:45:40.181961+00:00`, which predates the v2 preflight and is therefore inadequate. Fresh v2 devval root exists=False, shard00 exists=False, fresh bank exists=False. Shard00 blocked=True. Artifacts: `research_artifacts/aws_diagnostics/vehicle_safe_shortening_v2_devval_backup_gate_recheck_20260928T005101+0000/summary.md`, `research_artifacts/aws_diagnostics/vehicle_safe_shortening_v2_devval_backup_gate_recheck_20260928T005101+0000/raw.json`, `research_artifacts/aws_diagnostics/vehicle_safe_shortening_v2_devval_backup_gate_recheck_20260928T005101+0000/completed.json`. Backup request: `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_VEHICLE_SAFE_SHORTENING_V2_DEVVAL_BACKUP_GATE_RECHECK_20260928T005101+0000.json`. Next after verified backup: run exactly one legacy shard00 (`experiments/bohn2021_aws/vehicle_safe_shortening_v2_transition_hold_devval_shard_runner.py --shard 0`) with 172 episodes/max 25,800 control steps and sealed test closed.
+
+
+## 2026-09-28T00:53:30.850716+00:00
+

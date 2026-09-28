@@ -154,3 +154,13 @@ Artifacts: `research_artifacts/aws_diagnostics/vehicle_learned_policy_collapse_d
 ## 2026-09-28 vehicle safe-shortening v2 transition-hold smoke
 
 UTC: 2026-09-28T00:39:40.931469+00:00. IMPROVED v2 transition-hold protocol frozen and engineering smoke completed on a fresh v2 smoke bank: 24 episodes, 1800 control steps, replay passed=True. No validation64 bank or sealed test was opened. This is not model-selection/final evidence. Artifacts: `research_artifacts/aws_diagnostics/vehicle_safe_shortening_v2_transition_hold_smoke_20260928/summary.md`, `research_artifacts/aws_diagnostics/vehicle_safe_shortening_v2_transition_hold_smoke_20260928/raw.json`, `research_artifacts/aws_diagnostics/vehicle_safe_shortening_v2_transition_hold_smoke_20260928/completed.json`.
+
+<!-- vehicle-safe-shortening-v2-transition-hold-devval-preflight-20260928T004500Z -->
+## 2026-09-28 vehicle safe-shortening v2 transition-hold devval preflight
+
+UTC: 2026-09-28T00:46:17.422154+00:00. Ran metadata/runtime preflight for the frozen IMPROVED v2 transition-hold development-validation campaign. No devval bank generation, no rollout/control steps, no historical validation64 bank reopen, and no sealed-test access. Schedule/arm dimensions verified: 2752 episodes, 16 shards, 43 arms; terminal-source metadata verified for 12 unique sources. Decision: Preflight passed. Do not run v2 devval shard until supervisor reports verified external backup for smoke, protocols, runner and this preflight. After backup, next concrete action is shard00 with legacy interpreter. Artifacts: `research_artifacts/aws_diagnostics/vehicle_safe_shortening_v2_transition_hold_devval_preflight_20260928T004500Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_safe_shortening_v2_transition_hold_devval_preflight_20260928T004500Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_safe_shortening_v2_transition_hold_devval_preflight_20260928T004500Z/completed.json`.
+
+<!-- protocol-v2-devval-backup-gate-state-20260928T005101+0000 -->
+## 2026-09-28 v2 transition-hold devval backup gate state
+
+The frozen v2 transition-hold development-validation protocol remains unchanged. This gate recheck created no rollout, no bank generation, no training, and no sealed-test access. Shard00 remains blocked until an external backup proof after `2026-09-28T00:51:01+00:00` (and after this run_experiment finalizes) covers the v2 smoke/protocols/runner/preflight artifacts and run logs plus docs/registry and backup requests. Once satisfied, the next protocol action is exactly shard00 with legacy interpreter and the preregistered shard00 budget: 172 episodes, max 25,800 control steps, 0 training/gradient steps, sealed test closed.

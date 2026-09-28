@@ -2735,3 +2735,11 @@ UTC: 2026-09-28T11:49:17.454140+00:00. Metadata-only postdiagnostic applied froz
 
 ## 2026-09-28T11:52:51.644256+00:00
 
+<!-- vehicle-v1-continuation-target-diagnostic-20260928T1155Z -->
+## 2026-09-28 V1 continuation target diagnostic
+
+UTC: 2026-09-28T11:54:18.311563+00:00. Metadata/trace-only diagnostic selected 4 V1 cases for a future controlled continuation replay; max future episodes=32, control-step bound=4800. No simulations/training/validation64/test access occurred. Next action after verified backup: after verified backup, implement/run the frozen controlled-continuation diagnostic before selector/refit training. Artifacts: `research_artifacts/aws_diagnostics/vehicle_v1_continuation_target_diagnostic_20260928T1155Z/summary.md`, `research_artifacts/aws_protocols/vehicle_v1_controlled_continuation_diagnostic_v0_frozen_20260928.md`.
+
+
+## 2026-09-28T11:58:57.747763+00:00
+

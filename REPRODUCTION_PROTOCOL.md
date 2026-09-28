@@ -264,3 +264,8 @@ UTC: 2026-09-28T11:38:22.599799+00:00. Enlarged fresh development-only fixed-H o
 ## 2026-09-28 fixed-H opportunity V1 postdiagnostic
 
 UTC: 2026-09-28T11:49:17.454140+00:00. Metadata-only postdiagnostic applied frozen V1 materiality and LOOCV predictor gates. No simulation/training/validation64/test access. Physical oracle pass=True; total oracle pass=True; predictor gate pass=False. Decision: after verified backup, run a bounded controlled continuation/value-and-transition diagnostic on representative V1 states because oracle opportunity is material but metadata predictability is not yet robust enough for broad retraining/refit. Artifacts: `research_artifacts/aws_diagnostics/vehicle_fixed_h_opportunity_probe_v1_postdiagnostic_20260928T1150Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_fixed_h_opportunity_probe_v1_postdiagnostic_20260928T1150Z/raw.json`.
+
+<!-- vehicle-v1-continuation-target-diagnostic-20260928T1155Z -->
+## 2026-09-28 V1 continuation target diagnostic
+
+UTC: 2026-09-28T11:54:18.311563+00:00. Metadata/trace-only diagnostic selected 4 V1 cases for a future controlled continuation replay; max future episodes=32, control-step bound=4800. No simulations/training/validation64/test access occurred. Next action after verified backup: after verified backup, implement/run the frozen controlled-continuation diagnostic before selector/refit training. Artifacts: `research_artifacts/aws_diagnostics/vehicle_v1_continuation_target_diagnostic_20260928T1155Z/summary.md`, `research_artifacts/aws_protocols/vehicle_v1_controlled_continuation_diagnostic_v0_frozen_20260928.md`.

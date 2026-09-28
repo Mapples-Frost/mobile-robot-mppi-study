@@ -3004,3 +3004,11 @@ UTC: 2026-09-28T15:31:09+00:00. Metadata-only pre-rollout backup gate recheck co
 
 ## 2026-09-28T15:56:19.601407+00:00
 
+<!-- vehicle-v1-transient-state-continuation-probe-v0-runner-20260928 -->
+## 2026-09-28 vehicle V1 transient-state continuation probe v0
+
+UTC: 2026-09-28T16:13:21.894935+00:00. Development-only H15-prefix transient/control continuation probe completed: 48 episodes, 3900 control steps. No validation64/test/training access. Positive states=0/12; positive cases outside mined case7/case10=[]; gate_pass=False; clean_scenario_scarcity_fail=False; next=repair/diagnose rollout artifacts before interpreting opportunity scarcity. Artifacts: `research_artifacts/aws_diagnostics/vehicle_v1_transient_state_continuation_probe_v0_20260928/summary.md`, `research_artifacts/aws_diagnostics/vehicle_v1_transient_state_continuation_probe_v0_20260928/raw.json`, `research_artifacts/aws_diagnostics/vehicle_v1_transient_state_continuation_probe_v0_20260928/completed.json`.
+
+
+## 2026-09-28T16:15:51.831061+00:00
+

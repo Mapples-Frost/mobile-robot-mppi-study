@@ -636,3 +636,8 @@ UTC: 2026-09-28T16:21:58.495258+00:00. No-simulation protocol freeze completed a
 ## 2026-09-28 vehicle stress-scenario Stage1 runner dry-run
 
 UTC: 2026-09-28T16:42:12.906760+00:00. Wrote/froze and dry-ran `experiments/bohn2021_aws/vehicle_stress_scenario_opportunity_probe_v0_runner.py` with no simulations, no candidate resets, no training, no validation64-bank access and no sealed-test access. The dry-run verified the frozen stress protocol, post-protocol backup proof, legacy runtime import and H5..H50 terminal metadata. Stage1 rollout remains blocked until external backup covers the runner source, dry-run outputs, docs/state and backup request. Artifacts: `research_artifacts/aws_diagnostics/vehicle_stress_scenario_opportunity_probe_v0_runner_dryrun_20260928T1645Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_stress_scenario_opportunity_probe_v0_runner_dryrun_20260928T1645Z/completed.json`.
+
+<!-- vehicle-stress-scenario-opportunity-stage1-runner-20260928 -->
+## 2026-09-28 vehicle stress-scenario opportunity Stage1
+
+UTC: 2026-09-28T17:23:53.013870+00:00. Development-only stress fixed-H map completed: 120 episodes, 9930 control steps, candidate resets=128. No training, no validation64-bank access and no sealed-test access. Stage2 candidate trigger=True; total oracle gain=25.1128; physical oracle gain=26.6419. Artifacts: `research_artifacts/aws_diagnostics/vehicle_stress_scenario_opportunity_probe_v0_stage1_20260928/summary.md`, `research_artifacts/aws_diagnostics/vehicle_stress_scenario_opportunity_probe_v0_stage1_20260928/raw.json`, `research_artifacts/aws_diagnostics/vehicle_stress_scenario_opportunity_probe_v0_stage1_20260928/completed.json`.

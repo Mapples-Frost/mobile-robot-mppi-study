@@ -3087,3 +3087,99 @@ UTC: 2026-09-28T17:23:53.013870+00:00. Development-only stress fixed-H map compl
 
 ## 2026-09-28T17:26:52.098049+00:00
 
+<!-- vehicle-stress-scenario-stage1-postdiagnostic-20260928T1730Z -->
+## 2026-09-28 vehicle stress Stage1 postdiagnostic
+
+UTC: 2026-09-28T17:28:00.487210+00:00. No new simulations/training and no validation64/test access. Postdiagnostic of the 120-episode stress fixed-H map found branch horizons [10, 15, 25, 30, 35, 45] strict-safe, material non-H15 branch-positive cases [5] (stress positives [5]), negative/nonmaterial cases 11, and aggregate Stage1 oracle gains total=25.112830251670744 physical=26.64187681523896. Decision: freeze Stage2 identical-state continuation after verified backup; do not retrain/refit yet because Stage1 is episode-level. Artifacts: `research_artifacts/aws_diagnostics/vehicle_stress_scenario_opportunity_probe_v0_stage1_postdiagnostic_20260928T1730Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_stress_scenario_opportunity_probe_v0_stage1_postdiagnostic_20260928T1730Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_stress_scenario_opportunity_probe_v0_stage1_postdiagnostic_20260928T1730Z/completed.json`.
+
+
+## 2026-09-28T17:29:07.617640+00:00
+Elapsed service lifetime: ~54h32m41s since 2026-09-26T10:55:29.419331Z, measured to latest recorded run at 2026-09-28T17:28:10Z. Cumulative server API total_tokens: unavailable/not recomputed because `research.sqlite` was not present in the repository-accessible path; desktop conversation usage excluded.
+
+Concrete actions completed:
+
+1. Ran the Stage1 postdiagnostic, no simulation/training/test access:
+   - Script: `experiments/bohn2021_aws/vehicle_stress_scenario_stage1_postdiagnostic_v0.py`
+   - Run registry: `research_artifacts/aws_runs/20260928T172800_15070a65/registry.json`
+   - Exit status: 0
+   - New rollouts/control steps/training/test: all 0
+   - Validation64 and sealed final test remained closed.
+
+2. Inspected and preserved Stage1 stress-scenario evidence:
+   - Output summary: `research_artifacts/aws_diagnostics/vehicle_stress_scenario_opportunity_probe_v0_stage1_postdiagnostic_20260928T1730Z/summary.md`
+   - Output raw: `research_artifacts/aws_diagnostics/vehicle_stress_scenario_opportunity_probe_v0_stage1_postdiagnostic_20260928T1730Z/raw.json`
+   - Completed marker: `research_artifacts/aws_diagnostics/vehicle_stress_scenario_opportunity_probe_v0_stage1_postdiagnostic_20260928T1730Z/completed.json`
+
+3. Main evidence from postdiagnostic:
+   - Branch horizons for Stage2 `[10,15,25,30,35,45]` were strict-safe across Stage1:
+     - 72/72 branch rows successful
+     - 0 constraints
+     - 0 initial failed steps
+     - 0 solver failed steps
+   - H5 was excluded as unsafe/ineffective:
+     - 10/12 H5 rows failed or were constrained.
+   - Stage1 aggregate oracle gains remain material:
+     - total gain: `25.112830251670744`
+     - physical gain: `26.64187681523896`
+   - But case-level material opportunity is narrow:
+     - exactly one material non-H15 branch-positive case: case 5, a stress case
+     - best total and physical branch horizon for that case: H30
+     - 11/12 cases were nonmaterial.
+   - Aggregate cost/time frontier still spans multiple horizons `[10,15,25,30,35]`, so Stage2 matched-state continuation remains scientifically justified, but broad retraining/refit is still premature.
+
+4. Decision preserved:
+   - Stage2 identical-state continuation should be frozen after backup.
+   - Rationale: Stage1 shows safe episode-level opportunity, but only matched continuation can determine whether there is useful within-episode adaptive-horizon opportunity.
+   - Do not retrain/refit yet; wait for Stage2 labels.
+
+5. Backup gate:
+   - New backup request created:
+     - `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_VEHICLE_STRESS_SCENARIO_STAGE1_POSTDIAGNOSTIC_20260928T1730Z.json`
+   - I checked for a post-17:28 backup proof and none was present in the repository listing.
+   - Therefore I did not run Stage2 or any additional simulation.
+
+6. State preserved via `update_state`.
+   - Current phase: `vehicle_stress_scenario_stage1_postdiagnostic_complete_backup_blocked_before_stage2`
+   - Next iteration should first verify an external backup proof covering the postdiagnostic artifacts and run registry. Only then freeze Stage2 protocol/runner and proceed.
+
+
+## 2026-09-28T17:32:33.625564+00:00
+Elapsed service lifetime: ~54h33m+ since 2026-09-26T10:55:29Z. Cumulative server API total_tokens: unavailable/not recomputed because `research.sqlite` is not present in the repository-accessible path; desktop conversation usage excluded.
+
+Concrete actions completed this iteration:
+
+1. Checked the backup gate before doing any further scientific work.
+   - Searched `research_artifacts/aws_backup_proofs` for a post-17:28 verified backup proof.
+   - No such backup proof was present.
+   - Latest visible verified proof remains pre-postdiagnostic: `backup_proof_20260928T164347_from_supervisor_context_after_stage1_runner_dryrun.json`.
+
+2. Reaffirmed the backup requirement by writing:
+   - `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_VEHICLE_STRESS_SCENARIO_STAGE1_POSTDIAGNOSTIC_GATE_RECHECK_20260928T1731Z.json`
+   - SHA256: `bcf04cf072d5396c571bc37182686360d90af3f3e4a4a8b41490176effa5814f`
+
+3. Preserved state with `update_state`.
+   - Current phase: `vehicle_stress_scenario_stage1_postdiagnostic_complete_backup_blocked_before_stage2_reaffirmed`
+
+4. Did not run any simulations or training.
+   - New rollouts: 0
+   - New control steps: 0
+   - New training episodes: 0
+   - New gradient steps: 0
+   - historical_validation64_bank_opened: false
+   - sealed_test_accessed: false
+
+Scientific status remains unchanged:
+
+- Stage1 stress fixed-H map/postdiagnostic is complete but not yet externally backed up after the postdiagnostic.
+- Stage1 showed:
+  - branch horizons `[10,15,25,30,35,45]` were strict-safe,
+  - H5 was unsafe/ineffective,
+  - aggregate oracle gains were material,
+  - only one material non-H15 branch-positive case, case 5.
+- Therefore Stage2 matched identical-state continuation is still the next discriminating experiment, but it is blocked until a verified backup proof appears.
+
+Next action:
+
+- On the next cycle, first check for a verified backup proof postdating the Stage1 postdiagnostic/gate-recheck request.
+- If present, verify proof status and coverage, then freeze the Stage2 identical-state continuation protocol/runner.
+- If absent, continue to preserve the blocker state and avoid new simulations.

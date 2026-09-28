@@ -2815,3 +2815,53 @@ UTC: 2026-09-28T14:53:19.951434+00:00. Development-only fresh continuation-label
 
 ## 2026-09-28T14:56:43.337384+00:00
 
+
+
+## 2026-09-28T15:01:41.444392+00:00
+Elapsed service lifetime: about 2 days 4h13m since 2026-09-26T10:55:29.419331Z. Server API total_tokens from research.sqlite: unknown/unavailable from repository tools; not reported as zero.
+
+Concrete actions completed this iteration:
+
+1. Executed the pending no-simulation postdiagnostic:
+   - Script: `experiments/bohn2021_aws/vehicle_v1_fresh_continuation_label_postdiagnostic_v0.py`
+   - Registry: `research_artifacts/aws_runs/20260928T145806_b791973a/registry.json`
+   - Exit status: `1`
+   - New simulations/control steps/training/gradient: `0/0/0/0`
+   - Historical validation64 opened: `False`
+   - Sealed test accessed: `False`
+
+2. Failure diagnosis:
+   - The script wrote the substantive raw/summary/protocol outputs, then failed only during documentation append.
+   - Cause: stale key name in `append_docs`:
+     - used: `best_non_H15_total_gain_candidates`
+     - actual raw key: `max_non_H15_total_gain_candidates`
+   - This is a documentation/completion schema error, not a simulation/scientific result failure.
+
+3. Verified partial postdiagnostic evidence:
+   - `research_artifacts/aws_diagnostics/vehicle_v1_fresh_continuation_label_postdiagnostic_v0_20260928T1500Z/summary.md`
+   - `research_artifacts/aws_diagnostics/vehicle_v1_fresh_continuation_label_postdiagnostic_v0_20260928T1500Z/raw.json`
+   - Frozen next protocol:
+     - `research_artifacts/aws_protocols/vehicle_v1_transient_state_continuation_probe_v0_frozen_20260928.md`
+     - `research_artifacts/aws_protocols/vehicle_v1_transient_state_continuation_probe_v0_frozen_20260928.json`
+
+4. Key scientific state preserved:
+   - Fresh continuation-label probe remains `0/24` material-positive non-H15 identical-H15-prefix states.
+   - Fresh refit/training gate remains `False`.
+   - Best non-H15 total gain was only about `0.560688`, far below the frozen `+3` material threshold.
+   - v0 summary reports `35` large non-H15 harms.
+   - This weakens the previously mined selector result and argues against immediate refit/retraining or unchanged validation.
+
+5. Wrote repair source:
+   - `experiments/bohn2021_aws/vehicle_v1_fresh_continuation_label_postdiagnostic_v0b_schema_repair.py`
+   - SHA256: `cbf4f6f3b95aae89ba6d1f2542937cc2a78c4fadf15aae910bc46a248da03db4`
+   - Purpose: validate partial v0 outputs, preserve failed-run evidence, append docs with corrected key, write completed marker and backup request.
+   - It was not executed because the experiment runner enforces one experiment per iteration.
+
+6. Persisted state for continuation:
+   - `research_artifacts/aws_state/vehicle_v1_fresh_continuation_label_postdiagnostic_v0_failed_and_repair_pending_20260928T1508Z.md`
+   - Updated durable supervisor state via `update_state`.
+
+Next action:
+- Run `vehicle_v1_fresh_continuation_label_postdiagnostic_v0b_schema_repair.py` as the next no-simulation diagnostic.
+- Then require verified external backup covering failed v0, v0b repair, repair source, and frozen transient-state protocol before any new rollout.
+- After backup, execute the frozen `vehicle_v1_transient_state_continuation_probe_v0` to test whether generic branch states missed high-transient opportunity.

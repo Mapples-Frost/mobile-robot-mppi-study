@@ -3600,3 +3600,15 @@ UTC: 2026-09-28T23:26:36.817792+00:00. No-simulation readiness diagnostic comple
 
 ## 2026-09-28T23:32:09.478100+00:00
 
+
+
+## 2026-09-28T23:35:36.409905+00:00
+
+<!-- vehicle-stress-v1b-terminal-reward-ablation-v0c-backup-gate-handoff-20260928T2348Z -->
+## 2026-09-28 v0c terminal/reward ablation backup-gate handoff
+
+UTC: 2026-09-28T23:38:12.743052+00:00. No-simulation backup-gate audit after writing `experiments/bohn2021_aws/vehicle_stress_v1b_terminal_reward_ablation_v0c_legacy_schema_repair.py`. Existing latest adequate backup proof is `research_artifacts/aws_backup_proofs/backup_proof_20260928T233249_from_supervisor_context_after_v0b_legacy_retry_wrapper.json` at `2026-09-28T23:32:49.855291+00:00`, which does not postdate the v0c source gate `2026-09-28T23:35:06.156002+00:00`. Smoke remains blocked pending backup; no rollouts/training/validation/test occurred. Preserved v0 modern-TF failure and v0b schema KeyError. Next exact action after backup: run the v0c legacy schema-repair 27-episode smoke, then inspect terminal-label flips, physical-vs-total gains, zero-terminal robustness, safety/solver rows and timing before any training/refit/scenario revision. Artifacts: `research_artifacts/aws_diagnostics/vehicle_stress_v1b_terminal_reward_ablation_v0c_backup_gate_handoff_20260928T2348Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_stress_v1b_terminal_reward_ablation_v0c_backup_gate_handoff_20260928T2348Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_stress_v1b_terminal_reward_ablation_v0c_backup_gate_handoff_20260928T2348Z/completed.json`, request `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_BEFORE_VEHICLE_STRESS_V1B_TERMINAL_REWARD_ABLATION_V0C_SMOKE_20260928T2348Z.json`.
+
+
+## 2026-09-28T23:39:08.756709+00:00
+

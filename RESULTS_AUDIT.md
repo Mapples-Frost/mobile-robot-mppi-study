@@ -686,3 +686,8 @@ UTC: 2026-09-28T18:47:55.310618+00:00. Analysis-only over existing Stage2 v0b tr
 ## 2026-09-28 vehicle Stage2 terminal/objective instrumentation smoke v0
 
 UTC: 2026-09-28T19:14:57.185496+00:00. Development-only terminal/objective smoke completed: 25 episodes, 2339 control steps. No validation64/test access and no training/refit. Per-H positive counts by terminal mode: {'h15_terminal': 2, 'h25_terminal': 2, 'per_h': 3, 'zero_terminal': 3}; terminal-mode material-label flips: 5. Case5-step18 H30 per-H branch value/objective recorded in `research_artifacts/aws_diagnostics/vehicle_stage2_terminal_objective_smoke_v0_20260928T1900Z/summary.md` and raw artifacts. Decision remains no retraining/refit from this smoke alone; use results to choose terminal refit vs stress-v1 scenario opportunity mapping. Backup request: `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_VEHICLE_STAGE2_TERMINAL_OBJECTIVE_SMOKE_V0_20260928T191457.185496+0000.json`.
+
+<!-- vehicle-stage2-terminal-mode-broad-scan-v0-20260928T1915Z -->
+## 2026-09-28 vehicle Stage2 terminal-mode broad scan v0
+
+UTC: 2026-09-28T20:13:04.601788+00:00. Development-only broad terminal-mode scan completed: 156 episodes, 12825 control steps. No validation64/test access and no training/refit. Material positives rows/states/cases=10/1/1; terminal label flips rows/states/cases=3/1/1. Predeclared gate=False; next=do_not_refit_selector; freeze_source_supported_stress_v1_opportunity_protocol. Summary: `research_artifacts/aws_diagnostics/vehicle_stage2_terminal_mode_broad_scan_v0_20260928T1915Z/summary.md`. Backup request: `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_VEHICLE_STAGE2_TERMINAL_MODE_BROAD_SCAN_V0_20260928T201304.601788+0000.json`.

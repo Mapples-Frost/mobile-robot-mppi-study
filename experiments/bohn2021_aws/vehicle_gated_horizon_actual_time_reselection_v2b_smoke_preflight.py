@@ -12,7 +12,6 @@ import ast
 import datetime as dt
 import hashlib
 import json
-import re
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -111,9 +110,15 @@ def main() -> int:
     checks["seed1_seed2_are_adaptive_h15_p1_g5"] = actual_ids.get("1") == "h15_p1_g5" and actual_ids.get("2") == "h15_p1_g5"
     checks["protocol_episode_budget_matches_source"] = protocol["split"]["episodes_exact"] == 36 and protocol["budgets"]["control_step_upper_bound"] == 5400
     checks["source_constants_match_protocol"] = (consts.get("CASES_EXPECTED") == 2 and consts.get("REPEATS") == 2 and consts.get("MAX_STEPS") == 150 and consts.get("BASE_H") == 25)
-    checks["source_forbids_validation_test_in_docs"] = ("historical_validation64_bank_opened": False) if False else ("historical_validation64_bank_opened" in smoke_text and "sealed_test_accessed" in smoke_text)
+    checks["source_records_no_validation_or_test_access"] = (
+        "historical_validation64_bank_opened" in smoke_text
+        and "validation64_bank_opened" in smoke_text
+        and "sealed_test_accessed" in smoke_text
+        and "sealed_test_bank_opened" in smoke_text
+    )
     checks["source_has_no_above_H25_dispatch_clause"] = "selected = min(raw_h, BASE_H)" in smoke_text
-    checks["source_uses_legacy_runtime_preflight"] = "runtime_preflight" in smoke_text and "TensorFlow" not in smoke_text  # smoke delegates actual TF import to base.runtime_preflight
+    checks["source_uses_runtime_preflight"] = "base.runtime_preflight()" in smoke_text
+    checks["source_has_no_direct_tensorflow_import"] = "import tensorflow" not in smoke_text and "from tensorflow" not in smoke_text
     checks["smoke_output_not_started"] = not (ROOT / "research_artifacts/aws_diagnostics/vehicle_gated_horizon_actual_time_reselection_v2b_smoke_20260928/completed.json").exists()
     checks["no_validation_or_test_access"] = True
     checks["new_rollouts"] = 0

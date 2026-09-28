@@ -496,3 +496,9 @@ UTC: 2026-09-28T09:00:46+00:00. Metadata-only IMPROVED finite re-selection using
 ## 2026-09-28 vehicle actual-time-aware re-selection V2b seed0-overhead repair
 
 UTC: 2026-09-28T09:05:35+00:00. Metadata-only repair of V2 seed0 selection-overhead bookkeeping; no simulations, no training, no validation64 bank reopen, and no sealed-test access. Corrected nominations: {'0': 'fixed', '1': 'h15_p1_g5', '2': 'h15_p1_g5'}; adaptive_nominated_seed_count=2/3; acceptance_for_smoke_met=True; changes_vs_V2={'seed0_overhead_fraction_applied_now': 0.0016665805221004085, 'previous_v2_acceptance_for_smoke_met': True, 'corrected_acceptance_for_smoke_met': True, 'acceptance_changed': False, 'previous_v2_nomination_ids': {'0': 'fixed', '1': 'h15_p1_g5', '2': 'h15_p1_g5'}, 'corrected_nomination_ids': {'0': 'fixed', '1': 'h15_p1_g5', '2': 'h15_p1_g5'}, 'nomination_ids_changed': False}. Next action after backup: `after_backup_freeze_and_run_small_actual_time_reselection_v2b_smoke`.
+
+<!-- vehicle-gated-horizon-actual-time-reselection-v2b-smoke-preflight-20260928 -->
+## 2026-09-28 vehicle actual-time-aware V2b smoke preflight
+
+UTC: 2026-09-28T09:12:46+00:00. Metadata-only preflight for the frozen IMPROVED V2b smoke completed: hard_pass=True, nominations={'0': 'fixed', '1': 'h15_p1_g5', '2': 'h15_p1_g5'}. No simulations, training, validation64 bank access, or sealed-test access. Next action after verified backup: `after_verified_backup_run_legacy_actual_time_v2b_smoke`. Artifacts: `research_artifacts/aws_diagnostics/vehicle_gated_horizon_actual_time_reselection_v2b_smoke_preflight_20260928T0910Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_gated_horizon_actual_time_reselection_v2b_smoke_preflight_20260928T0910Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_gated_horizon_actual_time_reselection_v2b_smoke_preflight_20260928T0910Z/completed.json`.
+

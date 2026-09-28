@@ -3587,3 +3587,16 @@ State has been preserved via `update_state` and the handoff file.
 
 ## 2026-09-28T23:24:04.574888+00:00
 
+
+<!-- vehicle-stress-v1b-terminal-reward-ablation-presmoke-readiness-v0-20260928T2325Z -->
+## 2026-09-28 vehicle stress-v1b terminal/reward ablation pre-smoke readiness v0
+
+UTC: 2026-09-28T23:26:36.817792+00:00. No-simulation readiness diagnostic completed; no validation64/test access and no training/refit. It did not repeat the prefix audit. The frozen smoke covers 27 episodes: positive targets [2, 4] from cases [4, 5] plus controls [8, 16]; full protocol remains 59 episodes. A-priori risks are ['sparse_development_mined_positive_labels', 'physical_vs_total_best_horizon_disagreement', 'multi_horizon_material_labels_possible_terminal_or_path_sensitivity']. Adequate local backup proofs after `2026-09-28T23:23:38.071390+00:00`: 1; therefore the next smoke remains backup-gated unless a newer external proof is supplied. Artifacts: `research_artifacts/aws_diagnostics/vehicle_stress_v1b_terminal_reward_ablation_presmoke_readiness_v0_20260928T2325Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_stress_v1b_terminal_reward_ablation_presmoke_readiness_v0_20260928T2325Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_stress_v1b_terminal_reward_ablation_presmoke_readiness_v0_20260928T2325Z/completed.json`. Backup request: `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_VEHICLE_STRESS_V1B_TERMINAL_REWARD_ABLATION_PRESMOKE_READINESS_V0_20260928T2325Z.json`.
+
+
+## 2026-09-28T23:28:10.048905+00:00
+
+
+
+## 2026-09-28T23:32:09.478100+00:00
+

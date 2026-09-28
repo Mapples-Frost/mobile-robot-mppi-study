@@ -2775,3 +2775,11 @@ UTC: 2026-09-28T12:50:58.024985+00:00. No-simulation case-level audit completed 
 
 ## 2026-09-28T12:56:26.527691+00:00
 
+<!-- vehicle-v1-state-continuation-selector-smoke-v0b-20260928 -->
+## 2026-09-28 vehicle V1 state-continuation selector smoke v0b
+
+UTC: 2026-09-28T13:03:28.592333+00:00. Development-only selector smoke completed: 16 episodes, 1224 control steps, no validation64/test access. Expansion gate=True; safety=True; opportunity cases improved=[7, 10]. Artifacts: `research_artifacts/aws_diagnostics/vehicle_v1_state_continuation_selector_smoke_v0b_20260928/summary.md`, `research_artifacts/aws_diagnostics/vehicle_v1_state_continuation_selector_smoke_v0b_20260928/raw.json`, `research_artifacts/aws_diagnostics/vehicle_v1_state_continuation_selector_smoke_v0b_20260928/completed.json`.
+
+
+## 2026-09-28T13:09:28.413414+00:00
+

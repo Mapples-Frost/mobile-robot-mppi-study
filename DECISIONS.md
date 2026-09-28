@@ -686,3 +686,8 @@ UTC: 2026-09-28T12:43:00.533809+00:00. Metadata/trace-only offline selector refi
 ## 2026-09-28 vehicle V1 state-continuation selector case-level latch audit v0
 
 UTC: 2026-09-28T12:50:58.024985+00:00. No-simulation case-level audit completed after offline refit. Strict offline gate=False, case-level latch gate=True; positive cases latched=[7, 10]; guard hits=0; nonpositive-case latches=0; bad premature latches=0. Frozen v0b selector-smoke protocol: `research_artifacts/aws_protocols/vehicle_v1_state_continuation_selector_smoke_v0b_caselevel_gate_frozen_20260928.json`. Backup required before any rollout.
+
+<!-- vehicle-v1-state-continuation-selector-smoke-v0b-20260928 -->
+## 2026-09-28 vehicle V1 state-continuation selector smoke v0b
+
+UTC: 2026-09-28T13:03:28.592333+00:00. Development-only selector smoke completed: 16 episodes, 1224 control steps, no validation64/test access. Expansion gate=True; safety=True; opportunity cases improved=[7, 10]. Artifacts: `research_artifacts/aws_diagnostics/vehicle_v1_state_continuation_selector_smoke_v0b_20260928/summary.md`, `research_artifacts/aws_diagnostics/vehicle_v1_state_continuation_selector_smoke_v0b_20260928/raw.json`, `research_artifacts/aws_diagnostics/vehicle_v1_state_continuation_selector_smoke_v0b_20260928/completed.json`.

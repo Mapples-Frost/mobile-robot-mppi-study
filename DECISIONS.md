@@ -661,3 +661,8 @@ Recorded UTC: 2026-09-28T11:31:19.912942+00:00
 ## 2026-09-28 vehicle fixed-H opportunity probe V1
 
 UTC: 2026-09-28T11:38:22.599799+00:00. Enlarged fresh development-only fixed-H opportunity probe completed: 160 episodes, 13155 control steps, candidate resets=64. No validation64 or sealed-test access. Opportunity flag=True; weak single-H pattern flag=False; safe horizons=[10, 15, 20, 25, 30, 35, 40, 45, 50]; strongest total H=15. Artifacts: `research_artifacts/aws_diagnostics/vehicle_fixed_h_opportunity_probe_v1_20260928/summary.md`, `research_artifacts/aws_diagnostics/vehicle_fixed_h_opportunity_probe_v1_20260928/raw.json`, `research_artifacts/aws_diagnostics/vehicle_fixed_h_opportunity_probe_v1_20260928/completed.json`.
+
+<!-- vehicle-fixed-h-opportunity-probe-v1-postdiagnostic-20260928T1150Z -->
+## 2026-09-28 fixed-H opportunity V1 postdiagnostic
+
+UTC: 2026-09-28T11:49:17.454140+00:00. Metadata-only postdiagnostic applied frozen V1 materiality and LOOCV predictor gates. No simulation/training/validation64/test access. Physical oracle pass=True; total oracle pass=True; predictor gate pass=False. Decision: after verified backup, run a bounded controlled continuation/value-and-transition diagnostic on representative V1 states because oracle opportunity is material but metadata predictability is not yet robust enough for broad retraining/refit. Artifacts: `research_artifacts/aws_diagnostics/vehicle_fixed_h_opportunity_probe_v1_postdiagnostic_20260928T1150Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_fixed_h_opportunity_probe_v1_postdiagnostic_20260928T1150Z/raw.json`.

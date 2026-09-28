@@ -2477,3 +2477,12 @@ Current blocker / next action:
   - frozen risk-reselection devval64 protocol
   - no historical validation64 bank access
   - no sealed final-test access.
+
+<!-- vehicle-gated-horizon-risk-reselection-v1-devval64-shard-20260928-v1-shard05 -->
+## 2026-09-28 vehicle gated-horizon risk-reselection v1 fresh development-validation shard 05
+
+UTC: 2026-09-28T08:35:14.280065+00:00. Ran a frozen fresh development-validation paired case-block shard for IMPROVED risk-reselected gated-horizon v1: 184 episodes, 16079 control steps, cases [0, 34, 54, 55], no historical validation64 bank reopen and no sealed-test access. The shard includes all 46 arms (risk-reselected, current stored gated policies, matched fixed-H grid, and seed0 independent-terminal grid) for each included case. This is development-validation/model-selection evidence only, not final-test evidence. Artifacts: `research_artifacts/aws_development_validation/vehicle_gated_horizon_risk_reselection_v1_devval64_20260928_v1/shard05/summary.md`, `research_artifacts/aws_development_validation/vehicle_gated_horizon_risk_reselection_v1_devval64_20260928_v1/shard05/raw.json`, `research_artifacts/aws_development_validation/vehicle_gated_horizon_risk_reselection_v1_devval64_20260928_v1/shard05/completed.json`.
+
+
+## 2026-09-28T08:41:27.362343+00:00
+

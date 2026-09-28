@@ -169,3 +169,8 @@ The frozen v2 transition-hold development-validation protocol remains unchanged.
 ## 2026-09-28 vehicle safe-shortening v2 transition-hold fresh development-validation shard 00
 
 UTC: 2026-09-28T01:48:44.635740+00:00. Ran a frozen fresh development-validation paired case-block shard for IMPROVED safe-shortening v2 transition-hold: 172 episodes, 14487 control steps, cases [3, 44, 52, 56], no historical validation64 bank reopen and no sealed-test access. The shard includes all 43 arms (3 adaptive plus matched fixed-H grid and seed0 independent-terminal grid) for each included case. This is development-validation/model-selection evidence only, not final-test evidence. Artifacts: `research_artifacts/aws_development_validation/vehicle_safe_shortening_v2_transition_hold_devval64_20260928_v1/shard00/summary.md`, `research_artifacts/aws_development_validation/vehicle_safe_shortening_v2_transition_hold_devval64_20260928_v1/shard00/raw.json`, `research_artifacts/aws_development_validation/vehicle_safe_shortening_v2_transition_hold_devval64_20260928_v1/shard00/completed.json`.
+
+<!-- vehicle-current-gated-horizon-training-audit-v1-20260928 -->
+## 2026-09-28 amendment note: current gated-horizon audit before revised training-level experiment
+
+The current AWS safe-shortening controllers reuse gated_horizon_search_2026-09-25 policy.json files. The audit `research_artifacts/aws_diagnostics/vehicle_current_gated_horizon_training_audit_v1_20260928T015606+0000/summary.md` distinguishes this source from the older latency-tree policy and records that the operation was finite search/reselection, not gradient training. Any next method change must be labeled IMPROVED and frozen separately before smoke/validation.

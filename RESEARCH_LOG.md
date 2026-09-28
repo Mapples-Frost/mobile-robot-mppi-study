@@ -2060,3 +2060,16 @@ UTC: 2026-09-28T01:48:44.635740+00:00. Ran a frozen fresh development-validation
 
 ## 2026-09-28T01:50:34.473008+00:00
 
+
+
+## 2026-09-28T01:55:48.534100+00:00
+
+
+<!-- vehicle-current-gated-horizon-training-audit-v1-20260928 -->
+## 2026-09-28 current gated-horizon training/search audit v1
+
+UTC: 2026-09-28T01:56:06+00:00. Metadata-only audit of the CURRENT reused gated-horizon policies used by AWS safe-shortening v1/v2, not merely the older latency-tree policy. No rollouts/control steps, no training/gradient steps, no historical validation64 reopen, and no sealed-test access/hash occurred. Audited finite search/reselection over 36 structured candidates plus fixed H25 per seed and selected/fixed training traces; already-opened v2 shard00 adaptive traces were used only for development coverage comparison. Key result: current policies came from finite candidate search with gradient_updates=0; objective is mean raw total_cost among hard-gated admissible candidates, with no measured runtime term and no transition/dwell-risk model. Candidate tables and coverage summaries are in `research_artifacts/aws_diagnostics/vehicle_current_gated_horizon_training_audit_v1_20260928T015606+0000/summary.md` / `research_artifacts/aws_diagnostics/vehicle_current_gated_horizon_training_audit_v1_20260928T015606+0000/raw.json`. Next: freeze and run a bounded IMPROVED re-selection/refit diagnostic before any further unchanged validation shard.
+
+
+## 2026-09-28T02:01:06.753011+00:00
+

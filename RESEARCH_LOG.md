@@ -3012,3 +3012,58 @@ UTC: 2026-09-28T16:13:21.894935+00:00. Development-only H15-prefix transient/con
 
 ## 2026-09-28T16:15:51.831061+00:00
 
+<!-- vehicle-v1-transient-state-prefix-artifact-postdiagnostic-v0-20260928T1620Z -->
+## 2026-09-28 vehicle V1 transient prefix-artifact postdiagnostic
+
+UTC: 2026-09-28T16:17:02.727726+00:00. No-simulation recomputation repaired the transient probe artifact: original prefix mismatches 36/36 were due to retained `decision.branch_horizon` metadata; repaired mismatches 0/36. Positive states remain 0/12; best non-H15 total gain 0.4132901295410196; clean scenario-scarcity gate fail False. Next after backup: freeze a versioned stress-scenario opportunity protocol before retraining. Artifacts: `research_artifacts/aws_diagnostics/vehicle_v1_transient_state_prefix_artifact_postdiagnostic_v0_20260928T1620Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_v1_transient_state_prefix_artifact_postdiagnostic_v0_20260928T1620Z/raw.json`.
+
+
+## 2026-09-28T16:21:12.257506+00:00
+
+<!-- vehicle-stress-scenario-opportunity-protocol-v0-20260928T1625Z -->
+## 2026-09-28 vehicle stress-scenario opportunity protocol v0
+
+UTC: 2026-09-28T16:21:58.495258+00:00. No-simulation protocol freeze completed after canonical fresh/transient continuation produced no material non-H15 label density. Frozen a source-supported natural-stress Vehicle V1 diagnostic: 128 candidate resets, 12 selected cases, Stage1 fixed-H grid H5..H50 with 120 episodes/18,000-step cap, and conditional identical-state continuation before any selector/refit. No validation64 or sealed-test access; no training. Next requires external backup before runner source/smoke or simulation. Artifacts: `research_artifacts/aws_diagnostics/vehicle_stress_scenario_opportunity_protocol_v0_20260928T1625Z/summary.md`, `research_artifacts/aws_protocols/vehicle_stress_scenario_opportunity_probe_v0_frozen_20260928.md`, `research_artifacts/aws_protocols/vehicle_stress_scenario_opportunity_probe_v0_frozen_20260928.json`.
+
+
+## 2026-09-28T16:25:15.901620+00:00
+Elapsed service lifetime: ~53h27m since 2026-09-26T10:55:29.419331Z. Cumulative server API `total_tokens` from `research.sqlite`: unavailable to repository tools this cycle (`research.sqlite` was not exposed/found in the repo); desktop conversation usage is excluded.
+
+Concrete actions completed:
+
+1. Executed the no-simulation Vehicle V1 stress-scenario protocol freezer:
+   - Script: `experiments/bohn2021_aws/vehicle_stress_scenario_opportunity_protocol_v0.py`
+   - Run record: `research_artifacts/aws_runs/20260928T162158_f90130c6/registry.json`
+   - Exit status: `0`
+   - Runtime: ~2.0 s
+   - No simulations, no training, no validation64 access, no sealed-test access.
+
+2. Frozen new development-only protocol:
+   - Markdown: `research_artifacts/aws_protocols/vehicle_stress_scenario_opportunity_probe_v0_frozen_20260928.md`
+   - JSON: `research_artifacts/aws_protocols/vehicle_stress_scenario_opportunity_probe_v0_frozen_20260928.json`
+   - Completed marker: `research_artifacts/aws_diagnostics/vehicle_stress_scenario_opportunity_protocol_v0_20260928T1625Z/completed.json`
+   - Protocol JSON SHA256: `6e66f314dc1e3070c934d5b56c5994273ad3f3c0d17dddb3b133f9124d7ab1c6`
+
+3. Preserved decision rationale:
+   - Canonical fresh continuation: `0/24` material-positive non-H15 states.
+   - Repaired transient continuation: `0/12` material-positive states; prefix mismatch artifact repaired to `0/36` mismatches.
+   - Therefore immediate retraining/refit on canonical sparse labels remains unjustified.
+   - Next informative action is source-supported stress-scenario opportunity mapping.
+
+4. Frozen Stage 1 stress opportunity design:
+   - Candidate resets: `128`
+   - Selected cases: `12` by pre-outcome metadata selection
+   - Horizons: `[5,10,15,20,25,30,35,40,45,50]`
+   - Budget: `120` episodes, upper bound `18,000` control steps
+   - Zero training / zero gradient updates
+   - Development-only; not model selection; not final test.
+
+5. Backup gate status:
+   - New backup request written:
+     `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_VEHICLE_STRESS_SCENARIO_OPPORTUNITY_PROTOCOL_V0_20260928T1625Z.json`
+   - Checked for post-16:21 backup proof matching `backup_proof_20260928T16*.json`; none present.
+   - Therefore no runner source or rollout was started.
+
+State preserved via `update_state`.  
+
+Next iteration should first verify a new external backup proof postdating `2026-09-28T16:21:58Z`. If present, write/import-smoke the Stage 1 stress fixed-H runner with zero simulation, request/verify backup for that source, then run the 120-episode legacy-interpreter stress map.

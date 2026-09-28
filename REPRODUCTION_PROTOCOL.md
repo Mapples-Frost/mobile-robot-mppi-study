@@ -334,3 +334,13 @@ UTC: 2026-09-28T15:31:09+00:00. Metadata-only pre-rollout backup gate recheck co
 ## 2026-09-28 vehicle V1 transient-state continuation probe v0
 
 UTC: 2026-09-28T16:13:21.894935+00:00. Development-only H15-prefix transient/control continuation probe completed: 48 episodes, 3900 control steps. No validation64/test/training access. Positive states=0/12; positive cases outside mined case7/case10=[]; gate_pass=False; clean_scenario_scarcity_fail=False; next=repair/diagnose rollout artifacts before interpreting opportunity scarcity. Artifacts: `research_artifacts/aws_diagnostics/vehicle_v1_transient_state_continuation_probe_v0_20260928/summary.md`, `research_artifacts/aws_diagnostics/vehicle_v1_transient_state_continuation_probe_v0_20260928/raw.json`, `research_artifacts/aws_diagnostics/vehicle_v1_transient_state_continuation_probe_v0_20260928/completed.json`.
+
+<!-- vehicle-v1-transient-state-prefix-artifact-postdiagnostic-v0-20260928T1620Z -->
+## 2026-09-28 vehicle V1 transient prefix-artifact postdiagnostic
+
+UTC: 2026-09-28T16:17:02.727726+00:00. No-simulation recomputation repaired the transient probe artifact: original prefix mismatches 36/36 were due to retained `decision.branch_horizon` metadata; repaired mismatches 0/36. Positive states remain 0/12; best non-H15 total gain 0.4132901295410196; clean scenario-scarcity gate fail False. Next after backup: freeze a versioned stress-scenario opportunity protocol before retraining. Artifacts: `research_artifacts/aws_diagnostics/vehicle_v1_transient_state_prefix_artifact_postdiagnostic_v0_20260928T1620Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_v1_transient_state_prefix_artifact_postdiagnostic_v0_20260928T1620Z/raw.json`.
+
+<!-- vehicle-stress-scenario-opportunity-protocol-v0-20260928T1625Z -->
+## 2026-09-28 vehicle stress-scenario opportunity protocol v0
+
+UTC: 2026-09-28T16:21:58.495258+00:00. No-simulation protocol freeze completed after canonical fresh/transient continuation produced no material non-H15 label density. Frozen a source-supported natural-stress Vehicle V1 diagnostic: 128 candidate resets, 12 selected cases, Stage1 fixed-H grid H5..H50 with 120 episodes/18,000-step cap, and conditional identical-state continuation before any selector/refit. No validation64 or sealed-test access; no training. Next requires external backup before runner source/smoke or simulation. Artifacts: `research_artifacts/aws_diagnostics/vehicle_stress_scenario_opportunity_protocol_v0_20260928T1625Z/summary.md`, `research_artifacts/aws_protocols/vehicle_stress_scenario_opportunity_probe_v0_frozen_20260928.md`, `research_artifacts/aws_protocols/vehicle_stress_scenario_opportunity_probe_v0_frozen_20260928.json`.

@@ -566,3 +566,8 @@ UTC: 2026-09-28T12:20:32.088109+00:00. Development-only identical-prefix continu
 ## 2026-09-28 vehicle V1 state-continuation selector offline refit v0
 
 UTC: 2026-09-28T12:43:00.533809+00:00. Metadata/trace-only offline selector refit completed with no simulations/training/validation64/test access. Offline gate=False; selected radius=0.1; positive latches=3/3; guard hits=0; nonpositive latches=0. Next frozen smoke protocol: `research_artifacts/aws_protocols/vehicle_v1_state_continuation_selector_smoke_v0_frozen_20260928.json`; backup required before rollout.
+
+<!-- vehicle-v1-state-continuation-selector-caselevel-audit-v0-20260928T1250Z -->
+## 2026-09-28 vehicle V1 state-continuation selector case-level latch audit v0
+
+UTC: 2026-09-28T12:50:58.024985+00:00. No-simulation case-level audit completed after offline refit. Strict offline gate=False, case-level latch gate=True; positive cases latched=[7, 10]; guard hits=0; nonpositive-case latches=0; bad premature latches=0. Frozen v0b selector-smoke protocol: `research_artifacts/aws_protocols/vehicle_v1_state_continuation_selector_smoke_v0b_caselevel_gate_frozen_20260928.json`. Backup required before any rollout.

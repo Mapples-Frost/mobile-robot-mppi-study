@@ -2211,3 +2211,89 @@ Current blocker / next action:
   - legacy interpreter
   - no historical validation64 bank access
   - no sealed final-test access.
+
+<!-- vehicle-gated-horizon-risk-reselection-v1-devval64-shard-20260928-v1-shard02 -->
+## 2026-09-28 vehicle gated-horizon risk-reselection v1 fresh development-validation shard 02
+
+UTC: 2026-09-28T05:27:19.235465+00:00. Ran a frozen fresh development-validation paired case-block shard for IMPROVED risk-reselected gated-horizon v1: 184 episodes, 15023 control steps, cases [2, 5, 14, 56], no historical validation64 bank reopen and no sealed-test access. The shard includes all 46 arms (risk-reselected, current stored gated policies, matched fixed-H grid, and seed0 independent-terminal grid) for each included case. This is development-validation/model-selection evidence only, not final-test evidence. Artifacts: `research_artifacts/aws_development_validation/vehicle_gated_horizon_risk_reselection_v1_devval64_20260928_v1/shard02/summary.md`, `research_artifacts/aws_development_validation/vehicle_gated_horizon_risk_reselection_v1_devval64_20260928_v1/shard02/raw.json`, `research_artifacts/aws_development_validation/vehicle_gated_horizon_risk_reselection_v1_devval64_20260928_v1/shard02/completed.json`.
+
+
+## 2026-09-28T05:29:45.385219+00:00
+Elapsed service lifetime: ~42.7 h since first supervisor event `2026-09-26T10:55:29.419331Z` (service wall-clock; excludes summed experiment runtime and desktop conversation). Cumulative server API `total_tokens`: unavailable to repository tools; no usable `research.sqlite`/`research.sqlite3` has been found; desktop conversation usage excluded.
+
+Concrete actions completed this iteration:
+
+1. Ran exactly one bounded legacy TF1 development-validation experiment:
+   - Script: `experiments/bohn2021_aws/vehicle_gated_horizon_risk_reselection_v1_devval_shard_runner.py --shard 2`
+   - Method: `IMPROVED_vehicle_gated_horizon_risk_reselection_v1_devval64_shard02_not_original_SAC`
+   - Registry: `research_artifacts/aws_runs/20260928T043243_dd7fca89/registry.json`
+   - Exit status: `0`
+   - Runtime: `3282.04 s`
+   - Episodes: `184`
+   - Control steps: `15023`
+   - New training / gradient steps: `0 / 0`
+   - Historical validation64 bank opened: `False`
+   - Sealed final test opened: `False`
+
+2. Inspected shard02 outputs:
+   - Summary: `research_artifacts/aws_development_validation/vehicle_gated_horizon_risk_reselection_v1_devval64_20260928_v1/shard02/summary.md`
+   - Completed marker: `.../shard02/completed.json`
+   - Cases: `[2, 5, 14, 56]`
+
+3. Key shard02 development-validation findings:
+   - Seed0 risk-reselected vs matched fixed H25:
+     - Success `4/4 vs 4/4`
+     - Physical delta `+0.067169`
+     - Total delta `-0.112831`
+     - Mean decision-time ratio `1.00959`
+     - Horizons `H25:248, H20:36`
+   - Seed1 risk-reselected vs matched fixed H25:
+     - Success `4/4 vs 4/4`
+     - Physical delta `+2.31745e-05`
+     - Total delta `-0.274977`
+     - Mean decision-time ratio `0.997687`
+     - Horizons `H25:229, H20:55`
+   - Seed2 risk-reselected vs matched fixed H25:
+     - Success `4/4 vs 4/4`
+     - Physical delta `+5.19315e-07`
+     - Total delta `-0.0499995`
+     - Mean decision-time ratio `1.02585`
+     - Horizons `H25:279, H15:5`
+
+4. Safety / execution evidence:
+   - No adaptive-arm constraints reported in shard02.
+   - No adaptive-arm initial solver failures reported.
+   - No adaptive-arm final solver failures reported.
+   - Common safe wrapper executed no `H > 25`.
+
+5. Campaign progress after shard02:
+   - Completed risk-reselection devval shards: `3/16` (`shard00`, `shard01`, `shard02`)
+   - Completed episodes: `552`
+   - Completed control steps: `47655`
+   - Completed fresh devval case blocks: `12/64`
+   - Still development-validation/model-selection evidence only.
+   - Not final-test evidence.
+   - Not an ORIGINAL SAC/neural-training reproduction claim.
+
+Scientific interpretation:
+- Risk-first re-selection remains implementation-ready and has not shown obvious safety regression in completed fresh devval shards.
+- Total cost vs matched fixed H25 remains favorable in shard02 because the synthetic horizon/work term rewards shorter horizons, but physical-control deltas are small and slightly positive for all three seeds in shard02.
+- Actual measured decision-time ratios remain mixed; seed2 is slower despite rare short-H use. No compute-time advantage claim is supported yet.
+- Seed2 adaptation is still sparse, so candidate sufficiency / policy-class limitations remain active hypotheses.
+- The frozen v2 transition-hold campaign remains preserved and unchanged.
+
+State preserved:
+- Wrote state note:
+  - `research_artifacts/aws_state/vehicle_gated_horizon_risk_reselection_v1_devval_shard02_state_20260928T0535Z.md`
+- Wrote backup addendum request:
+  - `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_VEHICLE_GATED_HORIZON_RISK_RESELECTION_V1_DEVVAL64_SHARD02_STATE_ADDENDUM_20260928T0535Z.json`
+- Durable supervisor state updated with shard02 evidence, campaign progress, backup gate, and next action.
+
+Current blocker / next action:
+- A verified external backup is required before running more simulations.
+- After backup verification, next exact action is one experiment only:
+  - `experiments/bohn2021_aws/vehicle_gated_horizon_risk_reselection_v1_devval_shard_runner.py --shard 3`
+  - legacy interpreter
+  - frozen risk-reselection devval64 protocol
+  - no historical validation64 bank access
+  - no sealed final-test access.

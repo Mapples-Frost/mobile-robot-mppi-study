@@ -3406,3 +3406,11 @@ UTC: 2026-09-28T20:36:29.506408+00:00. Wrote and dry-ran `experiments/bohn2021_a
 
 ## 2026-09-28T20:38:42.209107+00:00
 
+<!-- vehicle-stress-scenario-opportunity-stage1-v1-runner-20260928T2045Z -->
+## 2026-09-28 vehicle stress-scenario opportunity Stage1 v1
+
+UTC: 2026-09-28T21:46:28.826778+00:00. Development-only stress-v1 fixed-H map completed: 200 episodes, 16912 control steps, candidate resets=256. No training, no validation64-bank access and no sealed-test access. Stage2 candidate trigger=False; total oracle gain=176.655; physical oracle gain=179.657; material cases=[1, 4, 5, 6]. Artifacts: `research_artifacts/aws_diagnostics/vehicle_stress_scenario_opportunity_probe_v1_stage1_20260928T2045Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_stress_scenario_opportunity_probe_v1_stage1_20260928T2045Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_stress_scenario_opportunity_probe_v1_stage1_20260928T2045Z/completed.json`.
+
+
+## 2026-09-28T21:49:07.358304+00:00
+

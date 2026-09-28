@@ -581,3 +581,8 @@ UTC: 2026-09-28T13:03:28.592333+00:00. Development-only selector smoke completed
 ## 2026-09-28 vehicle V1 state-selector shadow scan v0
 
 UTC: 2026-09-28T13:10:35.706528+00:00. No-simulation scan over existing V1 H15 traces: triggered_cases=[7, 10], extra_trigger_cases=[], shadow_gate=True. No validation64/test access. Artifacts: `research_artifacts/aws_diagnostics/vehicle_v1_state_selector_shadow_scan_v0_20260928T1310Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_v1_state_selector_shadow_scan_v0_20260928T1310Z/raw.json`. Backup required before further simulation.
+
+<!-- vehicle-v1-state-continuation-selector-broad-dev-confirmation-v0-20260928 -->
+## 2026-09-28 vehicle V1 state-continuation selector broad development confirmation v0
+
+UTC: 2026-09-28T13:38:03.170039+00:00. Development-only broad selector confirmation completed: 64 episodes, 4880 control steps, no validation64/test access. Protocol acceptance=True; safety=True; benefit_vs_H15=(physical 38.7155, total 36.9005); triggered_cases=[7, 10]. Artifacts: `research_artifacts/aws_diagnostics/vehicle_v1_state_continuation_selector_broad_dev_confirmation_v0_20260928/summary.md`, `research_artifacts/aws_diagnostics/vehicle_v1_state_continuation_selector_broad_dev_confirmation_v0_20260928/raw.json`, `research_artifacts/aws_diagnostics/vehicle_v1_state_continuation_selector_broad_dev_confirmation_v0_20260928/completed.json`.

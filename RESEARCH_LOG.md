@@ -2791,3 +2791,11 @@ UTC: 2026-09-28T13:10:35.706528+00:00. No-simulation scan over existing V1 H15 t
 
 ## 2026-09-28T13:16:35.196216+00:00
 
+<!-- vehicle-v1-state-continuation-selector-broad-dev-confirmation-v0-20260928 -->
+## 2026-09-28 vehicle V1 state-continuation selector broad development confirmation v0
+
+UTC: 2026-09-28T13:38:03.170039+00:00. Development-only broad selector confirmation completed: 64 episodes, 4880 control steps, no validation64/test access. Protocol acceptance=True; safety=True; benefit_vs_H15=(physical 38.7155, total 36.9005); triggered_cases=[7, 10]. Artifacts: `research_artifacts/aws_diagnostics/vehicle_v1_state_continuation_selector_broad_dev_confirmation_v0_20260928/summary.md`, `research_artifacts/aws_diagnostics/vehicle_v1_state_continuation_selector_broad_dev_confirmation_v0_20260928/raw.json`, `research_artifacts/aws_diagnostics/vehicle_v1_state_continuation_selector_broad_dev_confirmation_v0_20260928/completed.json`.
+
+
+## 2026-09-28T13:42:10.128618+00:00
+

@@ -3516,3 +3516,11 @@ UTC: 2026-09-28T23:05:38.893157+00:00. Development-only matched-continuation rol
 
 ## 2026-09-28T23:09:29.525464+00:00
 
+<!-- vehicle-stress-v1b-prefix-artifact-postdiagnostic-v0-20260928T2315Z -->
+## 2026-09-28 vehicle stress-v1b prefix-artifact postdiagnostic v0
+
+UTC: 2026-09-28T23:10:29.568387+00:00. No-simulation reanalysis of existing v1b traces found the reported `prefix_mismatch_non_H15=120` was a bookkeeping artifact: all 120/120 non-H15 comparisons match the H15 physical prefix after excluding non-causal prefix-step `decision.branch_horizon`/timing metadata. Corrected labels: positive states=4 across cases=[4, 5], negative/neutral=16, corrected label gate=False. This repairs the zero-positive headline but still does not justify selector/refit because positives are sparse and development-mined. Next after verified backup: bounded terminal/reward-source ablation on corrected-positive states plus controls. Artifacts: `research_artifacts/aws_diagnostics/vehicle_stress_v1b_prefix_artifact_postdiagnostic_v0_20260928T2315Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_stress_v1b_prefix_artifact_postdiagnostic_v0_20260928T2315Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_stress_v1b_prefix_artifact_postdiagnostic_v0_20260928T2315Z/completed.json`.
+
+
+## 2026-09-28T23:15:22.890171+00:00
+

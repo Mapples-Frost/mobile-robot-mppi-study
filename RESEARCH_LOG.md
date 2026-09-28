@@ -3476,3 +3476,15 @@ State has been durably preserved with `update_state`. Final test remains sealed 
 
 ## 2026-09-28T21:55:44.869134+00:00
 
+
+
+## 2026-09-28T21:59:45.650867+00:00
+
+<!-- vehicle-stress-v1b-matched-continuation-prepare-20260928T2210Z-schema-repair -->
+## 2026-09-28 vehicle stress-v1b matched-continuation prepare
+
+UTC: 2026-09-28T22:01:19.844699+00:00. Analysis-only prepare/dry-run froze a matched-continuation postdiagnostic after stress-v1 Stage1 failed its diversity gate. Targets=20 (positive cases [1, 4, 5, 6], same-stratum controls [0, 2, 3, 7], lower-stress controls [16, 17]); branch horizons=[10, 15, 25, 30, 35, 45, 50]; planned continuations=140; control-step cap=21000. No simulations, no training/refit, no validation64-bank access and no sealed-test access. Rollout is backup-blocked until external backup covers `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_BEFORE_VEHICLE_STRESS_V1B_MATCHED_CONTINUATION_ROLLOUT_20260928T2210Z_SCHEMA_REPAIR.json`, `research_artifacts/aws_protocols/vehicle_stress_v1b_matched_continuation_frozen_20260928T2210Z_schema_repair.json`, `research_artifacts/aws_protocols/vehicle_stress_v1b_matched_continuation_frozen_20260928T2210Z_schema_repair.md`, `research_artifacts/aws_diagnostics/vehicle_stress_v1b_matched_continuation_prepare_20260928T2210Z_schema_repair` and this runner source.
+
+
+## 2026-09-28T22:02:50.615479+00:00
+

@@ -3071,3 +3071,11 @@ Next iteration should first verify a new external backup proof postdating `2026-
 
 ## 2026-09-28T16:30:46.533870+00:00
 
+<!-- vehicle-stress-scenario-opportunity-stage1-runner-dryrun-20260928T1645Z -->
+## 2026-09-28 vehicle stress-scenario Stage1 runner dry-run
+
+UTC: 2026-09-28T16:42:12.906760+00:00. Wrote/froze and dry-ran `experiments/bohn2021_aws/vehicle_stress_scenario_opportunity_probe_v0_runner.py` with no simulations, no candidate resets, no training, no validation64-bank access and no sealed-test access. The dry-run verified the frozen stress protocol, post-protocol backup proof, legacy runtime import and H5..H50 terminal metadata. Stage1 rollout remains blocked until external backup covers the runner source, dry-run outputs, docs/state and backup request. Artifacts: `research_artifacts/aws_diagnostics/vehicle_stress_scenario_opportunity_probe_v0_runner_dryrun_20260928T1645Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_stress_scenario_opportunity_probe_v0_runner_dryrun_20260928T1645Z/completed.json`.
+
+
+## 2026-09-28T16:43:10.417411+00:00
+

@@ -4194,3 +4194,15 @@ UTC: 2026-09-29T07:06:37.183945+00:00. Development-only broader true variable-H 
 
 ## 2026-09-29T07:09:47.963944+00:00
 
+<!-- vehicle-true-variable-horizon-broader-block-postdiagnostic-v0-20260929T0710Z -->
+## 2026-09-29 vehicle true variable-H broader block postdiagnostic v0
+
+UTC: 2026-09-29T07:10:49.936167+00:00. Metadata-only postdiagnostic completed with no simulations/training/refit, validation64 closed and sealed test closed. H10 is not a robust global physical improvement (strict non-control H10-vs-H15 improvements 0/6; global non-control H10 physical is much worse than H15/H25), but a near-best physical oracle over H10/H15/H25 is mixed ({'15': 2, '10': 4, '25': 2}) and has non-control decision-time saving 0.367 vs fixed H25 with physical delta -1.60051. Decision: larger source-supported true-H oracle-label/value-modeling diagnostic before any selector training; do not repeat sparse label sweeps.
+
+
+## 2026-09-29T07:14:08.745914+00:00
+
+
+
+## 2026-09-29T07:18:50.489791+00:00
+

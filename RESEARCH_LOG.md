@@ -4351,3 +4351,19 @@ UTC: 2026-09-29T08:56:19.227244+00:00. Offline/no-simulation diagnostic using on
 
 ## 2026-09-29T09:00:16.908812+00:00
 
+<!-- vehicle-true-variable-H-terminal-consistency-audit-v0-20260929T0915Z -->
+## 2026-09-29 vehicle true-variable-H terminal-consistency audit v0
+
+UTC: 2026-09-29T09:01:25.144883+00:00. Offline/no-simulation audit of terminal-profile consistency after the state-observable H10/H15 nested-CV result; validation64 and sealed test stayed closed. Robust target has value=True; mismatch bad=True. Decision: terminal-consistent labels retain some measured compute value, but cross-profile label transfer is unsafe; next intervention should calibrate terminal/objective targets before any learned selector rollout. Artifacts: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_terminal_consistency_audit_v0_20260929T0915Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_terminal_consistency_audit_v0_20260929T0915Z/raw.json`.
+
+
+## 2026-09-29T09:04:42.624373+00:00
+
+<!-- vehicle-true-variable-H-robust-terminal-label-cv-v0-20260929T0925Z -->
+## 2026-09-29 vehicle true-variable-H robust terminal-label CV v0
+
+UTC: 2026-09-29T09:08:51.121000+00:00. Offline/no-simulation robust-terminal label diagnostic; validation64 and sealed test stayed closed. Pass summary: {'terminal_agreement_only': ['risk_anchor_source_all_profiles'], 'aggregate_terminal_robust': [], 'strict_per_profile_regret2': ['risk_anchor_source_all_profiles']}; strong pass summary: {'terminal_agreement_only': [], 'aggregate_terminal_robust': [], 'strict_per_profile_regret2': []}. Decision: robust terminal labels are learnable only on risk-anchor subset; next collect/freeze source-independent confirmation or value-calibration smoke, not broad validation. Artifacts: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_robust_terminal_label_cv_v0_20260929T0925Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_robust_terminal_label_cv_v0_20260929T0925Z/raw.json`.
+
+
+## 2026-09-29T09:12:28.857246+00:00
+

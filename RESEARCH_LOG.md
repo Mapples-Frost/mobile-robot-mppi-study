@@ -5318,3 +5318,90 @@ Next action after backup verification:
 
 ## 2026-09-29T22:01:48.308750+00:00
 
+<!-- vehicle-true-variable-H-calibrated-risk-value-refit-v14-20260929T2215Z -->
+## 2026-09-29 vehicle true-variable-H v14 calibrated risk/value refit
+
+Elapsed service lifetime at write: >83.2 h since 2026-09-26T10:55:29.419331Z. Development-only IMPROVED calibrated risk/value refit over opened banks; no MPC simulation, validation64 or sealed test. configs=1296; selector_refit_evaluations=32405; global_pass5=0; nested_save=0.0292; nested_bad=2; nested_pass5=False; decision: Calibrated uncertainty over the current deployable feature/data representation still cannot safely extract >=5% opened-bank savings; next run targeted boundary acquisition or a richer terminal/risk-value learning refit rather than another static/history feature sweep or validation rollout.. Artifacts: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_calibrated_risk_value_refit_v14_20260929T2215Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_calibrated_risk_value_refit_v14_20260929T2215Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_calibrated_risk_value_refit_v14_20260929T2215Z/completed.json`.
+
+
+## 2026-09-29T22:09:40.645890+00:00
+Elapsed service lifetime: >83.2 h since 2026-09-26T10:55:29.419331Z. Cumulative server API total_tokens: unavailable from repository-visible state in this API turn; not estimated; excludes desktop/API conversation.
+
+Concrete actions completed this iteration:
+
+1. **Astra review check**
+   - Checked `docs/bohn2021_takeover/astra_reviews/LATEST.md`.
+   - Result: absent. No Astra recommendations to disposition; continued without waiting.
+
+2. **Backup precondition verified before new science**
+   - Latest verified external backup from supervisor context:
+     - Commit: `69aa148a3fa11d0304f7fb7fae415a9992690061`
+     - Time: `2026-09-29T22:02:33Z`
+     - Package SHA256: `32b80ff5c10c5c4cbf05b643a11077dea39508e0cc5be830caee544f8b204b3f`
+   - This covered the v13b/audit state before starting v14.
+
+3. **Implemented and ran v14 calibrated risk/value refit**
+   - New source:
+     - `experiments/bohn2021_aws/vehicle_true_variable_horizon_calibrated_risk_value_refit_v14.py`
+     - SHA256: `718f21e564541b4c5ef0ec3e05946782ffc00d92dcc5dace3328bf659e3780f2`
+   - Frozen protocol:
+     - `research_artifacts/aws_protocols/vehicle_true_variable_horizon_calibrated_risk_value_refit_v14_preoutcome_frozen_20260929T2215Z.json`
+   - Registry:
+     - `research_artifacts/aws_runs/20260929T220747_9784c9c3/registry.json`
+   - Result artifacts:
+     - `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_calibrated_risk_value_refit_v14_20260929T2215Z/summary.md`
+     - `.../raw.json`
+     - `.../completed.json`
+
+4. **v14 result**
+   - Classification: development-only IMPROVED calibrated risk/value selector refit.
+   - No MPC simulation, no gradient/RL training, no validation64 access, no sealed-test access.
+   - Rows: `68`
+   - Banks: `fresh_v0`, `fresh_v1`, `fresh_v11`, `fresh_v2`, `fresh_v8c`
+   - Positives: `58`
+   - Catastrophic H10 rows: `10`
+   - H15-prefix traces loaded: `68/68`
+   - Configs: `1296`
+   - Selector-refit evaluations: `32,405`
+
+   Key outcomes:
+   - Global best config had **0 catastrophic false positives** but only **2.08% decision-time saving**, below the 5% gate.
+   - Global pass5 count: `0`; pass10 count: `0`.
+   - Nested deployment:
+     - Decision saving vs fixed H15: `2.92%`
+     - Solver saving vs fixed H15: `3.25%`
+     - Physical gate: `True`
+     - H10 choices: `9`
+     - Catastrophic H10 false positives: `2`
+     - pass5: `False`
+     - pass10: `False`
+
+   Nested false-positive rows:
+   - `fresh_v8c/fresh_case02_slot1_mid_late_control`
+     - group: `risk_low_heading_low_clearance_prior_catastrophic_mode`
+     - phys delta: about `247.867`
+     - decision gain: about `0.122 s`
+   - `fresh_v11/fresh_case05_slot1_mid_late_control`
+     - group: `lower_stress_specificity_control`
+     - phys delta: about `40.0565`
+     - decision gain: about `0.361 s`
+
+5. **Scientific decision**
+   - v14 failed the predeclared development gate.
+   - Do **not** open validation64 or sealed test.
+   - New evidence strengthens the diagnosis: real H10/H15 opportunity exists from v11/v12 oracle evidence, but current deployable instantaneous/H15-prefix feature representations plus calibrated uncertainty still cannot safely extract it.
+   - Next best intervention is **targeted boundary acquisition** around the catastrophic/safe lookalike modes, or a richer terminal/risk-value learning/refit if boundary acquisition remains insufficient.
+
+6. **State preserved**
+   - Durable state updated via `update_state`.
+   - Current phase: `after_v14_calibrated_risk_value_refit_failed_opened_development_gate_backup_required`.
+   - Backup request created:
+     - `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_CALIBRATED_RISK_VALUE_REFIT_V14_20260929T2215Z.json`
+
+Current blocker for next iteration:
+- v14 source/protocol/results/docs are **not yet externally backed up** after the prior verified commit. Satisfy the new backup request before further scientific simulation/refit or new protocol/source generation if possible.
+
+Next queued action after backup:
+1. Inspect v14 raw prediction scores for the two nested false positives and nearest safe/catastrophic neighbors.
+2. Freeze a bounded v15 targeted boundary-acquisition protocol around those ambiguous mid-late/control states and nearest safe lookalikes.
+3. Run only development MPC continuations with explicit budget caps; still no validation64 or sealed test.

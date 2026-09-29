@@ -4342,3 +4342,12 @@ Current blocker / next action:
   - Purpose: determine whether an online/state-observable H10/H15 rule can beat fixed true H15 without metadata leakage.
 - If it passes only terminal-fixed deployable gates, freeze a tiny development rollout with selector overhead and blocked/randomized timing.
 - If it fails or only pooled/terminal-dependent subsets pass, pivot to terminal-value/objective calibration or scenario/modeling intervention rather than rolling out a metadata selector.
+
+<!-- vehicle-true-variable-H-state-observable-h10-h15-model-cv-v0b-bounded-20260929T0905Z -->
+## 2026-09-29 vehicle true-variable-H state-observable H10/H15 model-CV v0b bounded
+
+UTC: 2026-09-29T08:56:19.227244+00:00. Offline/no-simulation diagnostic using only initial branch observations and online-derived transforms; validation64 and sealed test stayed closed. Candidate configs per outer fold=36. Passing datasets=['risk_anchor_source_all_profiles']; strong passes=[]; terminal-fixed passes=[]. Proceed to selector rollout=False. Decision: state-observable CV passes only in pooled/diagnostic subsets; do not rollout yet because terminal-profile dependence remains unresolved. Artifacts: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_state_observable_h10_h15_model_cv_v0b_bounded_20260929T0905Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_state_observable_h10_h15_model_cv_v0b_bounded_20260929T0905Z/raw.json`.
+
+
+## 2026-09-29T09:00:16.908812+00:00
+

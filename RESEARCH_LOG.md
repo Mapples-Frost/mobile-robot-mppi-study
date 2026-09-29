@@ -4371,3 +4371,19 @@ UTC: 2026-09-29T09:08:51.121000+00:00. Offline/no-simulation robust-terminal lab
 
 ## 2026-09-29T09:27:20.078399+00:00
 
+<!-- vehicle-true-variable-H-safety-gated-selector-cv-v0b-fast-20260929T0950Z -->
+## 2026-09-29 vehicle true-variable-H safety-gated selector CV v0b fast
+
+UTC: 2026-09-29T09:28:26.718027+00:00. Offline/no-simulation fast safety-gated robust-label selector diagnostic; validation64 and sealed test stayed closed. This repairs the v0 timeout by removing nested hyperparameter selection and evaluating five predeclared configs directly. Pass summary: {'terminal_agreement_only': ['matched_terminal_only'], 'aggregate_terminal_robust': ['matched_terminal_only'], 'strict_per_profile_regret2': ['matched_terminal_only']}; strong pass summary: {'terminal_agreement_only': [], 'aggregate_terminal_robust': [], 'strict_per_profile_regret2': []}. Decision: diagnostic same-config safety-gated CV passes beyond risk-only; next run an optimized nested/fresh-source confirmation before any selector rollout or validation. Artifacts: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_safety_gated_selector_cv_v0b_fast_20260929T0950Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_safety_gated_selector_cv_v0b_fast_20260929T0950Z/raw.json`.
+
+
+## 2026-09-29T09:32:23.364096+00:00
+
+<!-- vehicle-true-variable-H-domain-profile-transfer-audit-v0-20260929T1000Z -->
+## 2026-09-29 vehicle true-variable-H domain/profile transfer audit v0
+
+UTC: 2026-09-29T09:33:02.747287+00:00. Development-only offline source/profile transfer diagnostic; validation64 and sealed test stayed closed. Pass summary: {'terminal_agreement_only': ['matched_terminal_only:train_risk_test_oracle', 'shared_h15_terminal_only:train_oracle_test_risk', 'shared_h15_terminal_only:train_risk_test_oracle', 'profile_transfer:train_matched_test_shared', 'profile_transfer:train_shared_test_matched'], 'aggregate_terminal_robust': ['matched_terminal_only:train_risk_test_oracle', 'shared_h15_terminal_only:train_oracle_test_risk', 'shared_h15_terminal_only:train_risk_test_oracle', 'profile_transfer:train_matched_test_shared', 'profile_transfer:train_shared_test_matched'], 'strict_per_profile_regret2': ['matched_terminal_only:train_risk_test_oracle', 'shared_h15_terminal_only:train_oracle_test_risk', 'shared_h15_terminal_only:train_risk_test_oracle', 'profile_transfer:train_matched_test_shared', 'profile_transfer:train_shared_test_matched']}; strong pass summary: {'terminal_agreement_only': ['shared_h15_terminal_only:train_oracle_test_risk', 'profile_transfer:train_matched_test_shared', 'profile_transfer:train_shared_test_matched'], 'aggregate_terminal_robust': ['shared_h15_terminal_only:train_oracle_test_risk', 'profile_transfer:train_matched_test_shared', 'profile_transfer:train_shared_test_matched'], 'strict_per_profile_regret2': ['shared_h15_terminal_only:train_oracle_test_risk', 'profile_transfer:train_matched_test_shared', 'profile_transfer:train_shared_test_matched']}; source-transfer passes: 9; profile-transfer passes: 6. Decision: At least one source-held-out transfer retained a safe >=5% measured decision saving; after backup, run a small fresh-source confirmation or optimized nested source-held-out selector before any validation rollout.. Artifacts: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_domain_profile_transfer_audit_v0_20260929T1000Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_domain_profile_transfer_audit_v0_20260929T1000Z/raw.json`.
+
+
+## 2026-09-29T09:36:43.745787+00:00
+

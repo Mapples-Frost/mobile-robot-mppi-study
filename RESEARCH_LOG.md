@@ -4258,3 +4258,11 @@ UTC: 2026-09-29T08:25:34.518865+00:00. Development-only source-independent risk-
 
 ## 2026-09-29T08:28:32.026640+00:00
 
+<!-- vehicle-true-variable-H-terminal-profile-effect-postdiagnostic-v0-20260929T0835Z -->
+## 2026-09-29 vehicle true-variable-H terminal-profile effect postdiagnostic v0
+
+UTC: 2026-09-29T08:29:37.325397+00:00. No simulations/training/refit; validation64 and sealed test stayed closed. Parsed `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_risk_anchor_acquisition_v0_run_20260929T0825Z/raw.json` after the source-independent risk-anchor acquisition. Label flips across terminal profiles were 7/10 states (4/5 risk states), material non-H15 terminal physical effects occurred in 7 states, and fixed H15 absorbed the risk-group H25 tradeoff (`fixed_H15_absorbs_vs_H25=True`). Selector/refit remains blocked. Next action after backup: await external backup, then freeze a bounded terminal-value residual/calibration audit plus H10/H15 risk-aware offline CV; do not run closed-loop selector or gradient/value refit yet. Artifacts: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_terminal_profile_effect_postdiagnostic_v0_20260929T0835Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_terminal_profile_effect_postdiagnostic_v0_20260929T0835Z/raw.json`.
+
+
+## 2026-09-29T08:34:43.588815+00:00
+

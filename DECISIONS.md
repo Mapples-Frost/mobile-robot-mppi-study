@@ -949,3 +949,14 @@ Deadline verification on 2026-09-29: IEEE RAS currently lists the IROS 2027 pape
 ## 2026-09-29 vehicle stress-v1d trace-selected terminal-stable opportunity smoke
 
 UTC: 2026-09-29T03:12:03.807872+00:00. Development-only trace-selected terminal-stable opportunity smoke completed: 188 episodes, 14913 control steps, candidate resets=0. Robust-positive states=0 across cases=[]; negative/neutral states=12; smoke gate=False; blocking artifacts=0. No validation64-bank or sealed-test access, no training/refit. Artifacts: `research_artifacts/aws_diagnostics/vehicle_stress_v1d_trace_selected_terminal_stable_opportunity_v0_smoke_20260929T0210Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_stress_v1d_trace_selected_terminal_stable_opportunity_v0_smoke_20260929T0210Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_stress_v1d_trace_selected_terminal_stable_opportunity_v0_smoke_20260929T0210Z/completed.json`.
+
+
+## Latest user instruction 2026-09-29: keep diagnosing and retrain when needed
+
+The user reiterates: continue investigating the previously suggested directions, and retrain when necessary. Experimental/scenario design, reward design, training design, and comparison design are priorities for consideration, not an exhaustive checklist or mandatory sequence. Follow other evidence-supported explanations autonomously.
+
+Use the latest v1c/v1d negative evidence to choose a discriminating intervention rather than another unchanged label-density sweep. Distinguish lack of physical-cost improvement from lack of a control-versus-compute tradeoff: near-equal control cost at shorter H may still offer value if actual measured decision time improves without safety loss. Do not equate a physical-improvement label gate with the full research objective. Conversely do not claim speed from H alone.
+
+Reassess whether sparse-label prerequisites are specific to the proposed supervised selector, rather than prerequisites for all learning methods. When training quality, representation, exploration, terminal-value accuracy or objective mismatch is plausibly limiting, execute a bounded controlled retraining/value-refit or alternative learning experiment with a clear hypothesis, baseline, budget and observable outcomes. Do not indefinitely defer all training merely because the current selector's positive-label gate fails. If another diagnostic is more informative, record the evidence and decision it will resolve; avoid repeated metadata-only reports with no new information. Preserve fixed-H strength, disclosed budgets, independent validation/test, ORIGINAL versus IMPROVED labels, all negative evidence and external backups. Do not interrupt an active frozen experiment to deliver this instruction. Continue autonomously.
+
+Recorded UTC: 2026-09-29T03:22:27.313537+00:00

@@ -4669,4 +4669,8 @@ Artifacts: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_fai
 
 
 ## 2026-09-29T12:19:07.562580+00:00
+- 2026-09-29T12:22:23.348640+00:00 `vehicle_true_variable_horizon_risk_tree_representation_v6`: nonlinear risk-tree representation diagnostic; deploy_strong=0, deploy_weak=0, best_deploy_min_save=0.1439, best_deploy_bad=1; no simulation/validation/test; artifacts `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_risk_tree_representation_v6_20260929T122023Z/summary.md`.
+
+
+## 2026-09-29T12:27:30.456846+00:00
 

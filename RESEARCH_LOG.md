@@ -4278,3 +4278,67 @@ UTC: 2026-09-29T08:40:47.765150+00:00. Offline/no-simulation syntax-repaired dia
 
 ## 2026-09-29T08:44:24.550084+00:00
 
+<!-- vehicle-true-variable-H-h10-h15-feature-deployability-audit-v0-20260929T0850Z -->
+## 2026-09-29 vehicle true-variable-H H10/H15 feature-deployability audit v0
+
+UTC: 2026-09-29T08:45:28.701100+00:00. Offline/no-simulation audit of the v0b H10/H15 residual-CV result. Validation64 and sealed test stayed closed; no training/refit. Original v0b deployable-proxy passes=2, but state/online-observable passes after feature audit=0; metadata-feature passes=3. Leakage blocks selector rollout=True. Decision: block the proposed selector-overhead rollout based on cat:selection_group; the only v0b passes use non-online scenario/protocol metadata.  Next bounded action should be a state-observable H10/H15 model-CV/refit or terminal-value calibration diagnostic, not a rollout of a metadata oracle.. Artifacts: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_h10_h15_feature_deployability_audit_v0_20260929T0850Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_h10_h15_feature_deployability_audit_v0_20260929T0850Z/raw.json`.
+
+
+## 2026-09-29T08:51:41.023734+00:00
+Elapsed since first supervisor event: ~2d 21h 50m (`251,399.281769` s recorded by the completed audit). Cumulative server API `total_tokens`: unavailable from repository tools this iteration; I did not invent a value.
+
+Concrete progress completed:
+
+1. **Ran the H10/H15 feature-deployability/leakage audit**
+   - Script: `experiments/bohn2021_aws/vehicle_true_variable_horizon_h10_h15_feature_deployability_audit_v0.py`
+   - Run registry: `research_artifacts/aws_runs/20260929T084528_3ce13e0a/registry.json`
+   - Status: complete, exit `0`
+   - Budget: `0` simulations, `0` control steps, `0` training/refit/gradient steps
+   - Validation64: not opened
+   - Sealed test: not accessed
+
+2. **Key scientific finding**
+   - v0b had reported `2` apparent H10/H15 CV passes against fixed true H15.
+   - This audit found **0 valid state/online-observable deployable passes**.
+   - The passes were driven by metadata:
+     - `metadata_feature_passes = 3`
+     - `selection_group_passes = 2`
+   - Decision: **block selector-overhead rollout based on `cat:selection_group`**. It is protocol/source metadata leakage, not a deployable adaptive MPC-horizon policy.
+
+3. **Interpretation**
+   - The true variable-H mechanism still has development evidence of measured compute savings.
+   - But the current H10/H15 selector evidence does **not** yet establish a deployable learned rule.
+   - Fixed true H15 remains the main comparator.
+   - Terminal-profile/value mismatch remains a major bottleneck.
+
+4. **Prepared next diagnostic source**
+   - Wrote:
+     - `experiments/bohn2021_aws/vehicle_true_variable_horizon_state_observable_h10_h15_model_cv_v0.py`
+       - SHA256: `3bb498fd47784df5a960e85ef5cd66d1c25d738dfa54aec1136275dc1b3cde30`
+     - `experiments/bohn2021_aws/vehicle_true_variable_horizon_state_observable_h10_h15_model_cv_v0b_bounded.py`
+       - SHA256: `aef308708bcf63f4f060fed9eb0e108c38039d174c0651fa526188f6854d8e9b`
+   - Preferred next script: the bounded v0b version.
+
+5. **Attempted next execution, blocked by contract guard**
+   - Attempted to run bounded state-observable CV script.
+   - Tool returned: `ValueError: One experiment per iteration`.
+   - No script execution occurred; this is only a scheduler/contract guard, not a scientific result.
+
+6. **State preserved**
+   - Wrote handoff:
+     - `research_artifacts/aws_state/vehicle_true_variable_horizon_feature_deployability_and_state_observable_cv_handoff_20260929T0852Z.md`
+   - Wrote backup request:
+     - `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_FEATURE_DEPLOYABILITY_AND_STATE_OBSERVABLE_CV_SOURCE_PREP_20260929T0852Z.json`
+   - Updated durable supervisor state via `update_state`.
+
+Current blocker / next action:
+
+- Latest verified backup predates the feature audit and new CV source files, so **unbacked artifacts exist**.
+- Do not run new simulations/training/refit until backup is verified.
+- Next exact research action after backup, or if supervisor allows offline diagnostics before backup:
+  - Run `experiments/bohn2021_aws/vehicle_true_variable_horizon_state_observable_h10_h15_model_cv_v0b_bounded.py`
+  - Modern interpreter
+  - Offline only: `0` simulations, `0` control steps, `0` validation/test episodes
+  - Purpose: determine whether an online/state-observable H10/H15 rule can beat fixed true H15 without metadata leakage.
+- If it passes only terminal-fixed deployable gates, freeze a tiny development rollout with selector overhead and blocked/randomized timing.
+- If it fails or only pooled/terminal-dependent subsets pass, pivot to terminal-value/objective calibration or scenario/modeling intervention rather than rolling out a metadata selector.

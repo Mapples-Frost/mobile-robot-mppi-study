@@ -5194,3 +5194,12 @@ Current blocker: **external backup is not yet verified after v11 artifacts and t
 Next action must be to run `scripts/research_service/backup.py` before any further scientific simulation, training, selector refit, or validation.
 
 Next scientific action after backup: freeze/implement a bounded IMPROVED v12 risk/value representation refit using opened development banks including v11, with nested/LOBO gates and no validation64/sealed-test access.
+
+<!-- vehicle-true-variable-H-outcome-aligned-refit-v12-20260929T1855Z -->
+## 2026-09-29 vehicle true-variable-H v12 outcome-aligned refit
+
+UTC: 2026-09-29T20:41:46.782259+00:00. Development-only IMPROVED relabel/refit over opened banks including v11; no MPC simulation, no validation64, no sealed test, no gradient training. label_flips=2; aligned_oracle_save=0.3080; nested_deploy_save=0.0674, nested_deploy_bad=5, nested_deploy_pass5=False; nested_all_save=0.1300, nested_all_bad=1. Decision: Objective/label mismatch is verified but deployable selector still fails nested gate; next intervention should train/refit richer deployable risk/value representation using the aligned objective, not validation rollout.. Artifacts: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_outcome_aligned_refit_v12_20260929T1855Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_outcome_aligned_refit_v12_20260929T1855Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_outcome_aligned_refit_v12_20260929T1855Z/completed.json`.
+
+
+## 2026-09-29T20:42:19.530496+00:00
+

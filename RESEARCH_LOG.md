@@ -4640,3 +4640,15 @@ Decision:
 Current blocker for further simulation/training:
 
 - Need externally verified backup covering the new v2 run outputs and state. No user input is needed unless backup infrastructure fails repeatedly.
+
+## vehicle-true-variable-H-failure-aware-selector-refit-v3b-compact-lobo-20260929T113906Z
+
+Development-only failure-aware selector refit/LOBO diagnostic over opened fresh_v0/v1/v2 banks. No simulations, no validation64, no sealed test, no gradient training.
+
+Headline: best deployable strong pass = `False`, strong deployable candidates = `0`, best variant = `v3_deploy_obs_state_step_risk_std_primary_only_negall_nonpositive_vetocatastrophic_only_s2_q0.75_rs1_nm1_vm0.75`, decision = No deployable-feature selector class passed opened-bank LOBO strong gates; prioritize bounded value/objective/representation retraining or terminal-value refit rather than another nearest-neighbour threshold sweep..
+
+Artifacts: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_failure_aware_selector_refit_v3b_compact_lobo_20260929T113906Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_failure_aware_selector_refit_v3b_compact_lobo_20260929T113906Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_failure_aware_selector_refit_v3b_compact_lobo_20260929T113906Z/completed.json`.
+
+
+## 2026-09-29T11:59:35.225998+00:00
+

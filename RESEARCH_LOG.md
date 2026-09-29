@@ -4138,3 +4138,11 @@ UTC: 2026-09-29T06:15:47.686870+00:00. Development-only repeated H10-vs-H15 diag
 
 ## 2026-09-29T06:18:01.032303+00:00
 
+<!-- vehicle-stress-v1e-case5-timing-decomposition-postdiagnostic-v0-20260929T0625Z -->
+## 2026-09-29 vehicle stress-v1e case5 timing decomposition postdiagnostic v0
+
+UTC: 2026-09-29T06:21:53.357872+00:00. Metadata/no-rollout decomposition of the 24-episode v1e case5 repeated diagnostic. No new simulations, no training/refit, no validation64 bank, and no sealed-test access. Key result: stable local H10 physical gains do not translate into a robust measured compute tradeoff under the current implementation. Executed H10 and H15 steps have the same recorded optimizer-vector size `{'10': [862], '15': [862]}`, measured decision differences track solver-attempt wall time, and no state/terminal group reaches the predeclared >=5% median whole-episode decision-time saving. Classification: `stable_local_physical_opportunity_but_current_fixed_size_mpc_no_measured_compute_tradeoff`. Next action after backup: Next run should be metadata/source audit plus, if supported, a one-variable IMPROVED solver experiment that actually changes MPC problem dimension or controller construction for H10/H15 on development states. If variable-dimensional repair is not feasible on this codebase, pivot to value/terminal/modeling/scenario-opportunity work and treat shorter-H-as-speed as invalid for current implementation. Backup request: `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_VEHICLE_STRESS_V1E_CASE5_TIMING_DECOMPOSITION_POSTDIAGNOSTIC_V0_20260929T0625Z.json`.
+
+
+## 2026-09-29T06:23:54.185225+00:00
+

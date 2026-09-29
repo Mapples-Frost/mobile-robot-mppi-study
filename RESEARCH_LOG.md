@@ -4480,3 +4480,11 @@ UTC: 2026-09-29T10:31:07.207110+00:00. Metadata-only/no-simulation protocol free
 
 ## 2026-09-29T10:33:29.560533+00:00
 
+<!-- vehicle-true-variable-H-fresh-source-confirmation-v1-run-20260929T1110Z -->
+## 2026-09-29 vehicle true-variable-H fresh-source confirmation v1 run
+
+UTC: 2026-09-29T10:47:06.765333+00:00. Development-only independent fresh-source confirmation completed for `disagreementVeto_s1_raw_abs_l2_m1.5_v1.0`: 136 episodes (8 H15 traces + 128 blocked H10/H15 branches), 6654 control steps. No validation64, no sealed test, no training/refit. Primary gate: {'scope': 'shared_h15_terminal', 'groups': 16, 'h10_predictions': 5, 'h15_predictions': 11, 'nonconstant_horizons': True, 'confusion_vs_fresh_h10_beneficial_label': {'TP': 5, 'FP': 0, 'FN': 9, 'TN': 2}, 'false_positive_rows': [], 'catastrophic_false_positive_rows': [], 'unsafe_rows': [], 'physical_tolerance_sum_vs_fixed_H15': 32.0, 'physical_gate': True, 'fixed_H15_physical_sum': 87.81786992090244, 'comparison_policy_vs_fixed_H15': {'physical_delta_vs_fixed_H15': 0.22815922495708207, 'decision_relative_saving_vs_fixed_H15': 0.08207176592861759, 'solver_relative_saving_vs_fixed_H15': 0.09159857845021688}, 'comparison_oracle_vs_fixed_H15': {'physical_delta_vs_fixed_H15': 1.0362879287184228, 'decision_relative_saving_vs_fixed_H15': 0.24461430437627588, 'solver_relative_saving_vs_fixed_H15': 0.269078665753328}, 'oracle_chosen_counts': {'10': 14, '15': 2}, 'policy_chosen_counts': {'15': 11, '10': 5}, 'decision_saving_gate_5pct': True, 'decision_saving_gate_10pct_strong': False, 'primary_pass_5pct': True, 'primary_strong_10pct': False, 'solver_saving_reported_not_primary': 0.09159857845021688}. Decision: v1 independent fresh-source confirmation gives only weak measured-decision saving; inspect timing uncertainty and consider value/objective/representation calibration before validation. Artifacts: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_fresh_source_confirmation_v1_run_20260929T1110Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_fresh_source_confirmation_v1_run_20260929T1110Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_fresh_source_confirmation_v1_run_20260929T1110Z/completed.json`.
+
+
+## 2026-09-29T10:52:39.343618+00:00
+

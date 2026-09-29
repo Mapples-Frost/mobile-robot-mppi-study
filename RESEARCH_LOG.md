@@ -3732,3 +3732,15 @@ UTC: 2026-09-29T03:12:03.807872+00:00. Development-only trace-selected terminal-
 
 ## 2026-09-29T03:24:31.313387+00:00
 
+
+
+## 2026-09-29T03:29:10.194687+00:00
+
+<!-- vehicle-stress-v1d-solver-timing-schema-postdiagnostic-v0-20260929T0340Z -->
+## 2026-09-29 vehicle stress-v1d solver/decision timing schema postdiagnostic
+
+UTC: 2026-09-29T03:29:37.352912+00:00. No-simulation timing-schema repair over existing v1d smoke outputs. The earlier Pareto script reported solver-time gains as null because v1d rows store `solver_attempt_sum_s`; this diagnostic re-extracted solver-attempt timing while keeping whole-decision timing separate. Both decision+solver strict compute-safe states=3/12, both relaxed=6/12; decision-only strict/relaxed states=0/1. Classification `solver_confirmed_compute_opportunity_sparse_or_constantH_absorbable`; train/refit now remains false. Artifacts: `research_artifacts/aws_diagnostics/vehicle_stress_v1d_solver_timing_schema_postdiagnostic_v0_20260929T0340Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_stress_v1d_solver_timing_schema_postdiagnostic_v0_20260929T0340Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_stress_v1d_solver_timing_schema_postdiagnostic_v0_20260929T0340Z/completed.json`. Backup request: `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_VEHICLE_STRESS_V1D_SOLVER_TIMING_SCHEMA_POSTDIAGNOSTIC_V0_20260929T0340Z.json`. Validation64 and sealed test stayed closed.
+
+
+## 2026-09-29T03:34:01.537997+00:00
+

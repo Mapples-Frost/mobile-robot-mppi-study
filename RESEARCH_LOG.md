@@ -4876,3 +4876,70 @@ python experiments/bohn2021_aws/vehicle_true_variable_horizon_risk_probe_acquisi
 3. If v8c completes, use its frozen decision rule to choose the next bounded intervention: risk/value representation training or value-refit if fresh H10 catastrophic modes reproduce; otherwise reassess scenario/control-compute opportunity.
 
 No validation64 or sealed final test was accessed. Research is not complete.
+
+
+## 2026-09-29T13:24:20.620733+00:00
+Elapsed service lifetime: >74.5 h since 2026-09-26T10:55:29.419331Z. Cumulative server API total_tokens: unavailable from repository-visible state in this API turn; do not estimate; excludes desktop/API conversation.
+
+Concrete actions completed this iteration:
+
+- Attempted the required external backup before running the repaired v8c risk-probe simulation.
+  - Script: `scripts/research_service/backup.py`
+  - Registry: `research_artifacts/aws_runs/20260929T132120_54f69c3b/registry.json`
+  - Result: failed after ~36.0 s, exit status `1`, with empty stdout/stderr.
+  - Scientific effect: none — no simulation, no training/refit, no validation64 access, no sealed-test access.
+
+- Inspected the failed backup evidence and backup script.
+  - Confirmed this is an infrastructure/backup-gate issue, not a scientific result.
+  - Did not read or log credentials/secrets.
+  - Latest verified backup remains the earlier commit `6226c4882a07f5d39c66f3ffd7a7bb36436a74fe`; it does not cover the newest failed-backup record and newly written capture script.
+
+- Prepared a metadata-only backup-status capture for the next bounded cycle:
+  - `experiments/bohn2021_aws/backup_failure_status_capture_after_v8c_prebackup_v0.py`
+  - sha256: `e767aa1ba9968db937ef12298b16ae4e1990c418eea637e123d57757c1f1ba8c`
+  - Purpose: sanitize and record `/data/openai-agent/state/backup_status.json` and decide whether backup is adequate despite the silent backup failure.
+  - It is explicitly no-simulation/no-training/no-validation/no-test.
+  - I attempted to run it, but the tool layer enforced the one-experiment-per-iteration limit after the backup attempt, so it is queued for the next cycle.
+
+- Persisted handoff state and backup retry request:
+  - `research_artifacts/aws_state/continue_state_20260929T1326_after_backup_failure_before_v8c.md`
+  - `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_RETRY_AFTER_V8C_PREBACKUP_FAILURE_20260929T1326Z.json`
+  - Updated durable supervisor state via `update_state`.
+
+Budget consumed this iteration:
+
+- Development simulation episodes: 0
+- Development control steps: 0
+- Training episodes / gradient steps / selector refit: 0
+- validation64 episodes: 0
+- sealed-test episodes: 0
+- Backup attempts: 1
+- New source files written: 1 metadata-only infrastructure script
+
+Current blocker:
+
+- Further scientific simulation/training/refit is blocked until external backup coverage is verified for:
+  - v8b partial evidence,
+  - v8c repair source,
+  - the failed backup attempt record,
+  - the new backup-status capture script and handoff files.
+
+Next concrete action:
+
+1. Run the metadata-only capture script:
+   ```bash
+   python experiments/bohn2021_aws/backup_failure_status_capture_after_v8c_prebackup_v0.py \
+     --i-accept-no-simulation-backup-status-capture
+   ```
+
+2. If it shows backup is inadequate, retry/fix `scripts/research_service/backup.py` without changing IAM/resources or exposing credentials.
+
+3. Once verified backup is available, run v8c under the legacy interpreter:
+   ```bash
+   python experiments/bohn2021_aws/vehicle_true_variable_horizon_risk_probe_acquisition_v8c_flexible_state_count.py \
+     --run \
+     --backup-verified-commit <new_verified_commit> \
+     --i-accept-development-risk-probe-v8
+   ```
+
+No validation64 or sealed final test was accessed. Research is not complete.

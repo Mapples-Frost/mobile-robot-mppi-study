@@ -3688,3 +3688,11 @@ UTC: 2026-09-29T00:49:36.253292+00:00. Metadata-only backup gate recheck complet
 
 ## 2026-09-29T00:50:52.103668+00:00
 
+<!-- vehicle-stress-v1c-terminal-stable-label-density-probe-v0c-smoke-20260929T0055Z_hash_repair -->
+## 2026-09-29 vehicle stress-v1c terminal-stable label-density probe v0 smoke
+
+UTC: 2026-09-29T01:51:16.916158+00:00. Development-only terminal-stable label-density smoke completed: 168 episodes, 13328 control steps, candidate resets=256. Robust-positive states=0 across cases=[]; negative/neutral states=12; smoke gate=False; full label-density gate=False; blocking artifacts=144. No validation64-bank or sealed-test access, no training/refit. Artifacts: `research_artifacts/aws_diagnostics/vehicle_stress_v1c_terminal_stable_label_density_probe_v0c_smoke_20260929T0055Z_hash_repair/summary.md`, `research_artifacts/aws_diagnostics/vehicle_stress_v1c_terminal_stable_label_density_probe_v0c_smoke_20260929T0055Z_hash_repair/raw.json`, `research_artifacts/aws_diagnostics/vehicle_stress_v1c_terminal_stable_label_density_probe_v0c_smoke_20260929T0055Z_hash_repair/completed.json`.
+
+
+## 2026-09-29T01:52:31.883015+00:00
+

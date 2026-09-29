@@ -3660,3 +3660,15 @@ UTC: 2026-09-29T00:33:47.519199+00:00. No-simulation dry-run completed for the f
 
 ## 2026-09-29T00:36:50.973534+00:00
 
+<!-- vehicle-stress-v1c-terminal-stable-label-density-probe-v0b-dryrun-20260929T0045Z_schema_repair -->
+## 2026-09-29 vehicle stress-v1c terminal-stable label-density probe v0 dry-run
+
+UTC: 2026-09-29T00:38:54.331272+00:00. No-simulation dry-run completed for the fresh non-mined terminal-stable label-density probe. Verified frozen protocol `research_artifacts/aws_protocols/vehicle_stress_v1c_terminal_stable_label_density_v0_frozen_20260929T0040Z.json` and corrected objective diagnostic v0b `research_artifacts/aws_diagnostics/vehicle_stress_v1b_terminal_objective_alignment_postdiagnostic_v0b_schema_repair_20260929T0035Z/completed.json`; no candidate resets, rollouts, training/refit, validation64-bank access or sealed-test access. Smoke plan remains blocked until external backup covers the new runner, dry-run outputs, v0b artifacts and request `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_BEFORE_VEHICLE_STRESS_V1C_TERMINAL_STABLE_LABEL_DENSITY_PROBE_V0B_SMOKE_20260929T0045Z_schema_repair.json`. Planned smoke upper bound is 168 episodes/25200 control steps; full upper bound is 560 episodes/84000 control steps.
+
+
+## 2026-09-29T00:39:59.069845+00:00
+
+
+
+## 2026-09-29T00:42:50.450025+00:00
+

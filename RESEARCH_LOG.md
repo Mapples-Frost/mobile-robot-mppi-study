@@ -4496,3 +4496,11 @@ UTC: 2026-09-29T10:47:06.765333+00:00. Development-only independent fresh-source
 
 ## 2026-09-29T11:04:02.176390+00:00
 
+<!-- vehicle-true-variable-H-selector-refit-v2c-relaxed-schema-20260929T1145Z -->
+## 2026-09-29 vehicle true-variable-H selector-refit v2b schema-repair diagnostic
+
+UTC: 2026-09-29T11:07:41.854535+00:00. Metadata/refit-only diagnostic completed with 0 simulations/control steps, no validation64, no sealed test, no gradient training. It cross-trained simple selector variants on fresh_v0/fresh_v1 development banks and evaluated on the opposite bank. Decision: A simple refit reaches cross-bank strong shared-H15 performance but has matched-terminal robustness concerns; either constrain claims/profile to shared-H15 terminal or prioritize terminal-value calibration before validation.. Artifacts: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_selector_refit_v2c_relaxed_schema_20260929T1145Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_selector_refit_v2c_relaxed_schema_20260929T1145Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_selector_refit_v2c_relaxed_schema_20260929T1145Z/completed.json`, candidate protocol `research_artifacts/aws_protocols/vehicle_true_variable_horizon_selector_refit_v2c_relaxed_schema_20260929T1145Z_candidate_protocol.json`.
+
+
+## 2026-09-29T11:12:37.166060+00:00
+

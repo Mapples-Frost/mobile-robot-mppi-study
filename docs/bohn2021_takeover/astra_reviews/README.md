@@ -12,3 +12,7 @@ Evidence coverage: /data/openai-agent/state/astra_reviewer/checkpoint.json
 Events: /data/openai-agent/state/astra_reviewer/events.jsonl
 
 Report limitations include concurrent-source changes, development-data reuse and inaccessible sealed evidence. Each report must distinguish verified defects from hypotheses. Existing experiment budgets, data isolation, fair baselines and original/improved labeling remain mandatory.
+
+## Provider compatibility evidence
+
+2026-09-29: initial smoke echoed max; subsequent Responses requests, including ordinary text and tool calls, echoed xhigh despite max in request. Worker continues requesting max, accepts only verified max/xhigh, records returned effort per call and in each report manifest, and never claims unverified max execution. No model substitution. Chat Completions probe omitted effort metadata and was not selected. This limitation was disclosed to user.

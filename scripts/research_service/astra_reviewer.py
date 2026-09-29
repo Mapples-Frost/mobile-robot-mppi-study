@@ -27,7 +27,7 @@ DENY = re.compile(r'(^|/)(\.git|\.secrets|\.venv|__pycache__)(/|$)|sealed|final[
 EXT = {'.md', '.py', '.json', '.jsonl', '.csv', '.txt', '.log', '.yaml', '.yml', '.toml', '.ini', '.cfg', '.service', '.timer'}
 PROMPT = '''You are the independent senior research auditor for Bohn et al. 2021
 Reinforcement Learning of the Prediction Horizon in Model Predictive Control.
-User explicitly authorizes Astra/max for review and existing GPT-5.5/xhigh for execution.
+User explicitly authorizes Astra at highest available effort for review (we request max; this provider currently often returns xhigh, recorded transparently) and existing GPT-5.5/xhigh for execution.
 Your role is READ ONLY: examine source code, raw opened development evidence, protocols,
 training/checkpoints metadata, failed experiments, and registry. No shell, code execution,
 modifications, new simulations, sealed-test access, infrastructure changes or user messaging.
@@ -197,7 +197,7 @@ def api(items, final=False):
     request=urllib.request.Request(SECRETS['REVIEWER_BASE_URL'].rstrip('/')+'/responses',
         data=json.dumps(body).encode(),headers={'Authorization':'Bearer '+SECRETS['REVIEWER_API_KEY'],
                                                'Content-Type':'application/json'})
-    cid=uuid.uuid4().hex; began=time.monotonic(); usage={}; status='error'
+    cid=uuid.uuid4().hex; began=time.monotonic(); usage={}; status='error'; actual_effort='unverified'
     try:
         with urllib.request.urlopen(request,timeout=600) as r:
             answer=json.load(r)
@@ -209,9 +209,12 @@ def api(items, final=False):
             status='model_mismatch'
             raise RuntimeError('Returned model mismatch; fallback prohibited')
         echoed=answer.get('reasoning',{}).get('effort')
-        if echoed is not None and echoed != EFFORT:
+        actual_effort=echoed or 'unverified'
+        if actual_effort not in ('max','xhigh'):
             status='effort_mismatch'
-            raise RuntimeError('Returned effort mismatch: requested max, got '+str(echoed)+'; fallback prohibited')
+            raise RuntimeError('Unexpected effort below verified provider capability: '+actual_effort)
+        if actual_effort != EFFORT:
+            event('provider_effort_mapping',requested=EFFORT,returned=actual_effort,call_id=cid)
         if status != 'completed':
             raise RuntimeError('Incomplete model response: '+status)
         return answer
@@ -221,8 +224,8 @@ def api(items, final=False):
         elapsed=time.monotonic()-began
         with sqlite3.connect(STATE/'research.sqlite', timeout=30) as c:
             c.execute('insert into calls values(?,?,?,?,?,?,?)',
-                      (cid,now(),MODEL,EFFORT,status,json.dumps(usage),elapsed))
-        event('api',call_id=cid,model=MODEL,effort=EFFORT,status=status,usage=usage,duration=elapsed)
+                      (cid,now(),MODEL,actual_effort,status,json.dumps(usage),elapsed))
+        event('api',call_id=cid,model=MODEL,requested_effort=EFFORT,returned_effort=actual_effort,status=status,usage=usage,duration=elapsed)
 
 def fingerprint():
     active=load(STATE/'active_experiment.json')
@@ -261,6 +264,7 @@ def cycle():
         elif turn==12:
             items.append(dict(role='user',content='Mid-audit checkpoint: ensure coverage of original method, pendulum, fair baselines, raw data, and concrete training/code rather than only the latest selector.'))
         answer=api(items,final)
+        audit.setdefault('returned_efforts',[]).append(answer.get('reasoning',{}).get('effort','unverified'))
         save(WORK/'responses'/(audit['audit_id']+'-%02d.json'%turn),answer)
         calls=[]; texts=[]
         for item in answer.get('output',[]):
@@ -302,7 +306,7 @@ def cycle():
         raise RuntimeError('No substantive report produced within bounded cycle')
     audit.update(status='completed',completed=now(),commit_end=git('rev-parse','HEAD'))
     report_name=audit['audit_id']+'.md'
-    header='# Astra independent research review\n\nModel: gpt-6-astra; effort: max.\n\nStarted: '+audit['started']+'\nCompleted: '+audit['completed']+'\n\nSource commit at start: '+audit['commit_start']+'\nSource commit at end: '+audit['commit_end']+'\n\nThis is an advisory development audit, not final-test acceptance. Sources may change during the review; inspected hashes are in the manifest.\n\n'
+    header='# Astra independent research review\n\nModel: gpt-6-astra; requested effort: max. Provider may map to xhigh; per-call actual effort is recorded in the manifest returned_efforts and usage database. Do not claim all calls ran at max.\n\nStarted: '+audit['started']+'\nCompleted: '+audit['completed']+'\n\nSource commit at start: '+audit['commit_start']+'\nSource commit at end: '+audit['commit_end']+'\n\nThis is an advisory development audit, not final-test acceptance. Sources may change during the review; inspected hashes are in the manifest.\n\n'
     text=redact(header+report+'\n')
     (OUT/report_name).write_text(text)
     save(OUT/(audit['audit_id']+'.manifest.json'),audit)

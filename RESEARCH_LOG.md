@@ -4943,3 +4943,78 @@ Next concrete action:
    ```
 
 No validation64 or sealed final test was accessed. Research is not complete.
+
+<!-- vehicle-true-variable-H-risk-probe-acquisition-v8c-flexible-state-count-20260929T1320Z -->
+## 2026-09-29 vehicle true-variable-H targeted risk-probe acquisition v8
+
+UTC: 2026-09-29T13:28:53.781213+00:00. Development-only fresh-source risk probe completed: 36 episodes, 1596 control steps, validation64 closed, sealed test closed, no training/refit. Catastrophic H10 rows: 2; early catastrophics: 1; beneficial H10 rows: 6. Decision: adaptive opportunity exists but requires risk-aware value/representation learning before selector rollout. Artifacts: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_risk_probe_acquisition_v8c_flexible_state_count_20260929T1320Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_risk_probe_acquisition_v8c_flexible_state_count_20260929T1320Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_risk_probe_acquisition_v8c_flexible_state_count_20260929T1320Z/completed.json`.
+
+
+## 2026-09-29T13:30:37.065233+00:00
+Elapsed service lifetime: >74.6 h since 2026-09-26T10:55:29.419331Z. Cumulative server API total_tokens: unavailable from repository-visible state in this API turn; do not estimate; excludes desktop/API conversation.
+
+Concrete actions completed this iteration:
+
+- Ran the queued v8c true-variable-H risk-probe diagnostic after verified backup coverage.
+  - Script: `experiments/bohn2021_aws/vehicle_true_variable_horizon_risk_probe_acquisition_v8c_flexible_state_count.py`
+  - Interpreter: legacy Python/TF1 runtime
+  - Registry: `research_artifacts/aws_runs/20260929T132516_01401074/registry.json`
+  - Exit status: `0`
+  - Runtime: ~220.1 s
+  - Development budget: 36 episodes / 1596 control steps
+  - Training/refit: 0
+  - validation64 access: false
+  - sealed-test access: false
+
+Key evidence inspected from new v8c outputs:
+
+- Output summary:
+  - `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_risk_probe_acquisition_v8c_flexible_state_count_20260929T1320Z/summary.md`
+- Completion/hash record:
+  - `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_risk_probe_acquisition_v8c_flexible_state_count_20260929T1320Z/completed.json`
+
+v8c result:
+
+- 8 fresh branch states probed.
+- H10 beneficial on 6 / 8 states.
+- H10 catastrophic on 2 / 8 states.
+- Fixed H15 physical cost sum: `58.98`
+- Fixed H10 physical cost sum: `562.66`
+- Fixed H10 measured decision time: `15.46 s`
+- Fixed H15 measured decision time: `19.00 s`
+- Fixed H10 measured decision-time saving vs H15: `18.6%`, but with unacceptable catastrophic physical failures.
+- Oracle over these branch states:
+  - Physical cost sum: `59.49`
+  - Decision time: `15.85 s`
+  - Measured decision-time saving vs H15: `16.6%`
+
+Scientific interpretation:
+
+- This is not merely a label-density issue.
+- v8c shows a real control-vs-measured-compute opportunity from identical branch states: many states can safely use H10 and save actual decision time.
+- But fixed H10 is not acceptable because low-clearance/risk states caused catastrophic physical degradation.
+- The next informative direction is therefore a risk-aware value/representation selector/refit, not another unchanged threshold/nearest-neighbor/label-density sweep.
+
+Persisted state:
+
+- Wrote handoff:
+  - `research_artifacts/aws_state/continue_state_20260929T1332_after_v8c_risk_probe.md`
+- Updated durable supervisor state via `update_state`.
+
+Current backup state:
+
+- Latest verified backup before v8c:
+  - Commit: `7e530cb17ad32a4d0c8d2cc881fd623c5a6438a0`
+  - Package: `20260929T132500_c9d50dc3.tar.gz`
+  - SHA256: `5a19fe190b52278d37e5d2db97a89261a43f8159aae19f7aff29397b0645e333`
+- New v8c outputs and this handoff are not yet covered by a verified backup.
+- Further scientific simulation/training/refit should wait until backup verification covers these new artifacts.
+
+Next concrete action:
+
+1. Verify external backup for the v8c outputs and new state.
+2. Then implement/freeze/run a bounded IMPROVED v9 development-only risk-aware selector/refit smoke.
+3. v9 hypothesis: a conservative risk-aware selector can choose H10 on safe branch states and H15 on catastrophic low-clearance states, preserving near-H15 physical performance while reducing measured decision time.
+4. No validation64 or sealed final test access until an independently justified gate is met.
+
+Research is not complete.

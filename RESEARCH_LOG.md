@@ -4170,3 +4170,11 @@ UTC: 2026-09-29T06:34:58.895215+00:00. Metadata-only dry-run froze a four-episod
 
 ## 2026-09-29T06:46:52.549446+00:00
 
+<!-- vehicle-true-variable-horizon-case5-smoke-v0b-schema-repair-run-20260929T0645Z -->
+## 2026-09-29 vehicle true variable-horizon case5 smoke v0 run
+
+UTC: 2026-09-29T06:49:27.363915+00:00. Development-only true variable-dimension MPC smoke completed: 4 episodes, 170 control steps. Dimension reduced for all pairs=True; safety ok for all pairs=True; median solver relative H10 saving=0.3497927735098441; pass to broader variable-H block=True. No validation64-bank or sealed-test access, no training/refit. Artifacts: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_case5_smoke_v0b_schema_repair_run_20260929T0645Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_case5_smoke_v0b_schema_repair_run_20260929T0645Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_case5_smoke_v0b_schema_repair_run_20260929T0645Z/completed.json`.
+
+
+## 2026-09-29T06:52:32.665896+00:00
+

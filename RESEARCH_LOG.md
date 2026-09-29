@@ -4226,3 +4226,11 @@ UTC: 2026-09-29T07:46:20.416993+00:00. Development-only oracle-label bank comple
 
 ## 2026-09-29T07:57:16.435368+00:00
 
+<!-- vehicle_true_variable_horizon_selector_feasibility_postdiagnostic_v0-20260929T0755Z -->
+## 2026-09-29 vehicle true-variable-H selector feasibility postdiagnostic v0
+
+UTC: 2026-09-29T07:59:39.665914+00:00. Offline development diagnostic completed with no simulation/training/refit, validation64 closed, sealed test closed. Accepted for fresh rollout: False. Primary label counts: {'10': 17, '15': 3, '25': 2}. H25 unique primary states: 1. Decision: Do not launch selector training/refit yet from this oracle bank: the offline deployable leave-one-state-out gate did not pass. Next highest-information action is a versioned fresh development risk-anchor/terminal-consistency bank (true H10/H15/H25, matched/shared terminal, blocked timing) or terminal-value/objective repair, not scaling a selector on sparse anchor-dependent labels. Artifacts: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_selector_feasibility_postdiagnostic_v0_20260929T0755Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_selector_feasibility_postdiagnostic_v0_20260929T0755Z/raw.json`. Backup request: `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_VEHICLE_TRUE_VARIABLE_HORIZON_SELECTOR_FEASIBILITY_POSTDIAGNOSTIC_V0_20260929T075939.665914+0000.json`.
+
+
+## 2026-09-29T08:03:54.253484+00:00
+

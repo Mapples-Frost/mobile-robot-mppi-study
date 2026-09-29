@@ -5511,3 +5511,11 @@ Elapsed service lifetime at write: >84.1 h since 2026-09-26T10:55:29.419331Z. De
 
 ## 2026-09-29T23:22:51.484004+00:00
 
+<!-- vehicle-true-variable-H-boundary-augmented-refit-v16b-fast-20260929T2320Z -->
+## 2026-09-29 vehicle true-variable-H v16b-fast boundary-augmented refit
+
+Elapsed service lifetime at write: >84.5 h since 2026-09-26T10:55:29.419331Z. Development-only IMPROVED runtime repair after v16 timeout; no MPC simulation, no validation64/sealed-test access, no gradient training. rows=92; configs=1296; equivalent_selector_refit_evaluations=32406; cached_score_fits=1356; strict_nested_save=0.015308; strict_nested_bad=4; strict_nested_pass5=False; global_pass5=0; decision: v16b boundary labels repair local/in-sample separability but not held-out generalization; boundary-risk information is relevant but static/refit features remain insufficient. Pivot to richer learned risk/terminal-value representation rather than another static-feature sweep.. Artifacts: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_boundary_augmented_refit_v16b_fast_20260929T2320Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_boundary_augmented_refit_v16b_fast_20260929T2320Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_boundary_augmented_refit_v16b_fast_20260929T2320Z/completed.json`.
+
+
+## 2026-09-29T23:30:12.348462+00:00
+

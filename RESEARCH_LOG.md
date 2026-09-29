@@ -5519,3 +5519,15 @@ Elapsed service lifetime at write: >84.5 h since 2026-09-26T10:55:29.419331Z. De
 
 ## 2026-09-29T23:30:12.348462+00:00
 
+
+
+## 2026-09-29T23:35:27.854883+00:00
+
+<!-- vehicle-true-variable-H-bank-consensus-v17-20260929T2345Z -->
+## 2026-09-29 vehicle true-variable-H v17 bank-consensus uncertainty veto
+
+Elapsed service lifetime at write: >84.7 h since 2026-09-26T10:55:29.419331Z. Development-only IMPROVED offline/refit diagnostic; no MPC simulation, no validation64/sealed-test access, no gradient training. candidate_configs=21; strict_nested_save=0.000000; strict_nested_solver_save=0.000000; strict_nested_bad=0; strict_nested_h10=0; strict_nested_pass5=False; cache_fits=1705. Decision: v17 bank-consensus veto eliminates catastrophic H10 false positives but is too conservative for the >=5% gate; current deployable representation/data appear insufficient for useful safe compute savings. Pivot to terminal/risk-value learning or new source-independent state coverage, not another static selector sweep.. Artifacts: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_bank_consensus_v17_20260929T2345Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_bank_consensus_v17_20260929T2345Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_bank_consensus_v17_20260929T2345Z/completed.json`. Astra response log updated at `docs/bohn2021_takeover/astra_reviews/RESPONSE_LOG.md` if latest review existed.
+
+
+## 2026-09-29T23:41:00.065265+00:00
+

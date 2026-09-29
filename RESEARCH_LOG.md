@@ -3780,3 +3780,11 @@ UTC: 2026-09-29T03:49:04.748176+00:00. No-simulation upper-bound analysis over e
 
 ## 2026-09-29T03:58:38.476259+00:00
 
+<!-- vehicle-terminal-value-rank-predictivity-postdiagnostic-v0-20260929T0425Z -->
+## 2026-09-29 terminal-value/objective rank-predictivity postdiagnostic
+
+UTC: 2026-09-29T04:00:06.808140+00:00. No-simulation diagnostic over v1d fresh trace-selected and v1b mined terminal-ablation branch rows. v1d compute-safe non-H15 state-mode groups=20; objective-min matched best measured-compute horizon in 5 groups (rate=0.25). v1b severe objective-rank harm groups=7. Classification `objective_terminal_rank_misaligned_for_compute_safe_choices`. Decision: freeze an IMPROVED objective/terminal repair feasibility diagnostic using realised continuation and measured-time labels; do not train a selector to imitate raw branch objective minima. No validation64/sealed-test access and no training/refit. Backup requested at `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_VEHICLE_TERMINAL_VALUE_RANK_PREDICTIVITY_POSTDIAGNOSTIC_V0_20260929T0425Z.json`.
+
+
+## 2026-09-29T04:05:55.615076+00:00
+

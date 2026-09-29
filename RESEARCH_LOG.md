@@ -4214,3 +4214,11 @@ UTC: 2026-09-29T07:20:14.573384+00:00. Metadata-only/no-simulation protocol free
 
 ## 2026-09-29T07:23:18.062424+00:00
 
+<!-- vehicle-true-variable-horizon-oracle-bank-v0-run-20260929T0725Z -->
+## 2026-09-29 vehicle true variable-H oracle bank v0 run
+
+UTC: 2026-09-29T07:46:20.416993+00:00. Development-only oracle-label bank completed: 192 branch episodes, 9072 control steps, validation64 closed, sealed test closed, no training/refit. Gates: {'physical_gate_vs_H25_primary_noncontrol': True, 'aggregate_decision_saving_gate_vs_H25_primary_noncontrol': True, 'median_decision_saving_gate_vs_H25_primary_noncontrol': True, 'safety_gate': True, 'label_non_degeneracy_gate': True, 'pass_to_selector_or_value_modeling_design': True, 'train_or_refit_now': False}. Label counts: {'15': 5, '10': 25, '25': 2}. Artifacts: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_oracle_bank_v0_run_20260929T0725Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_oracle_bank_v0_run_20260929T0725Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_oracle_bank_v0_run_20260929T0725Z/completed.json`.
+
+
+## 2026-09-29T07:49:13.436217+00:00
+

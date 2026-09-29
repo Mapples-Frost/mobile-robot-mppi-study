@@ -3716,3 +3716,11 @@ UTC: 2026-09-29T02:06:02.076034+00:00. No-simulation dry-run completed for the t
 
 ## 2026-09-29T02:07:45.613230+00:00
 
+<!-- vehicle-stress-v1d-trace-selected-terminal-stable-opportunity-v0-smoke-20260929T0210Z -->
+## 2026-09-29 vehicle stress-v1d trace-selected terminal-stable opportunity smoke
+
+UTC: 2026-09-29T03:12:03.807872+00:00. Development-only trace-selected terminal-stable opportunity smoke completed: 188 episodes, 14913 control steps, candidate resets=0. Robust-positive states=0 across cases=[]; negative/neutral states=12; smoke gate=False; blocking artifacts=0. No validation64-bank or sealed-test access, no training/refit. Artifacts: `research_artifacts/aws_diagnostics/vehicle_stress_v1d_trace_selected_terminal_stable_opportunity_v0_smoke_20260929T0210Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_stress_v1d_trace_selected_terminal_stable_opportunity_v0_smoke_20260929T0210Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_stress_v1d_trace_selected_terminal_stable_opportunity_v0_smoke_20260929T0210Z/completed.json`.
+
+
+## 2026-09-29T03:15:05.201981+00:00
+

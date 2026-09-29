@@ -941,3 +941,11 @@ Keep the project outcome-oriented: connect each diagnosis to a concrete falsifia
 Prioritize a reliable reproducible evidence package that supports either ORIGINAL reproduction, clearly labeled IMPROVED results, or a credible negative conclusion. Plan backward from submission with time for independent multi-seed evaluation, statistical audit, figures and writing, while avoiding unsupported completion-time promises. The actual compute availability still ends on 2026-10-25 at 18:30 Asia/Shanghai; mandatory externally recoverable code/config/checkpoints/raw results/registry and resumable handoff must be verified before termination. Do not modify AWS termination schedules/resources or purchase continued infrastructure. Continuing beyond server lifetime needs an available authorized host; the March planning target does not extend this instance. Preserve current experiments and autonomous service continuity.
 
 Recorded UTC: 2026-09-29T02:07:27.049056+00:00
+
+
+Deadline verification on 2026-09-29: IEEE RAS currently lists the IROS 2027 paper submission deadline as 2027-03-01 at https://www.ieee-ras.org/event/2027-ieee-rsj-international-conference-on-intelligent-robots-and-systems-iros-70525/ . Use this currently published date for planning, with a buffer; exact cutoff timezone and later changes require checking the conference call/submission portal. This updates the earlier unverified month-only planning note.
+
+<!-- vehicle-stress-v1d-trace-selected-terminal-stable-opportunity-v0-smoke-20260929T0210Z -->
+## 2026-09-29 vehicle stress-v1d trace-selected terminal-stable opportunity smoke
+
+UTC: 2026-09-29T03:12:03.807872+00:00. Development-only trace-selected terminal-stable opportunity smoke completed: 188 episodes, 14913 control steps, candidate resets=0. Robust-positive states=0 across cases=[]; negative/neutral states=12; smoke gate=False; blocking artifacts=0. No validation64-bank or sealed-test access, no training/refit. Artifacts: `research_artifacts/aws_diagnostics/vehicle_stress_v1d_trace_selected_terminal_stable_opportunity_v0_smoke_20260929T0210Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_stress_v1d_trace_selected_terminal_stable_opportunity_v0_smoke_20260929T0210Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_stress_v1d_trace_selected_terminal_stable_opportunity_v0_smoke_20260929T0210Z/completed.json`.

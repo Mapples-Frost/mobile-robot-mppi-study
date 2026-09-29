@@ -4805,3 +4805,74 @@ Next concrete action:
    - with `--run --backup-verified-commit <verified_commit> --i-accept-development-risk-probe-v8`.
 
 No validation64 or sealed test was accessed. Research is not complete.
+
+
+## 2026-09-29T13:21:04.633423+00:00
+Elapsed service lifetime: >74.4 h since 2026-09-26T10:55:29.419331Z. Cumulative server API total_tokens: unavailable from repository-visible state in this API turn; do not estimate; excludes desktop/API conversation.
+
+Concrete actions completed this iteration:
+
+- Ran the prepared v8b true-variable-H risk-probe diagnostic under the required legacy Python/TF1 runtime after verified backup commit `6226c4882a07f5d39c66f3ffd7a7bb36436a74fe`.
+  - Script: `experiments/bohn2021_aws/vehicle_true_variable_horizon_risk_probe_acquisition_v8b_legacy_retry.py`
+  - Registry: `research_artifacts/aws_runs/20260929T131628_ec8e3d21/registry.json`
+  - Result: failed after ~68 s with:
+    - `ContractError('expected 16 selected branch states, got 8')`
+  - Failure artifact:
+    - `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_risk_probe_acquisition_v8b_legacy_retry_20260929T1312Z/failed.json`
+
+- Inspected the failure evidence.
+  - `progress.json` shows v8b completed Stage-A only:
+    - 4 development H15 trace episodes
+    - 300 control steps
+    - no Stage-B H10/H15 paired continuation comparisons
+    - no training/refit
+    - no validation64 access
+    - no sealed-test access
+  - The issue is an execution-contract bug, not a scientific negative result.
+  - Diagnosis: v8 was intentionally designed for 4 fresh cases × 2 branch states/case = 8 branch states, but it reused a helper from an earlier 8-case protocol that hard-coded an expected total of 16 selected states.
+
+- Prepared a narrow versioned repair:
+  - `experiments/bohn2021_aws/vehicle_true_variable_horizon_risk_probe_acquisition_v8c_flexible_state_count.py`
+  - sha256: `c9c4ca8923afdf8ac41e5d32287fba8d3269ec019e79991a108a1b1846b89296`
+  - Repair scope:
+    - preserves v8/v8b evidence;
+    - uses a fresh output namespace;
+    - keeps case selection, risk scoring, selection windows, branch template, and scientific protocol unchanged;
+    - only generalizes the stale selected-state count assertion from `16` to `len(stage_a_episodes) * branch_states_per_case`.
+
+- Persisted state and backup request:
+  - State:
+    - `research_artifacts/aws_state/continue_state_20260929T1320_after_v8b_failure_v8c_prebackup.md`
+  - Backup request:
+    - `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_V8B_PARTIAL_FAILURE_BEFORE_V8C_20260929T1320Z.json`
+  - Also updated durable supervisor state via `update_state`.
+
+Budget consumed this iteration:
+
+- Development simulation episodes: 4  
+- Development control steps: 300  
+- Training episodes / gradient steps / selector refit: 0  
+- validation64 episodes: 0  
+- sealed-test episodes: 0  
+
+Current status:
+
+- Latest verified backup before v8b was commit `6226c4882a07f5d39c66f3ffd7a7bb36436a74fe`.
+- New v8b partial evidence, v8c repair source, and the latest state/backup-request files are not yet externally backed up.
+- Therefore the next scientific simulation is blocked until backup is verified.
+
+Next concrete action:
+
+1. Run/verify external backup covering the new v8b/v8c artifacts.
+2. Then run v8c under the legacy interpreter:
+
+```bash
+python experiments/bohn2021_aws/vehicle_true_variable_horizon_risk_probe_acquisition_v8c_flexible_state_count.py \
+  --run \
+  --backup-verified-commit <new_verified_commit> \
+  --i-accept-development-risk-probe-v8
+```
+
+3. If v8c completes, use its frozen decision rule to choose the next bounded intervention: risk/value representation training or value-refit if fresh H10 catastrophic modes reproduce; otherwise reassess scenario/control-compute opportunity.
+
+No validation64 or sealed final test was accessed. Research is not complete.

@@ -641,3 +641,52 @@ UTC: `2026-09-29T04:21:11.547953+00:00`. Development-only no-simulation audit; v
 Freeze a v1e stress-v1-only targeted common-prefix smoke: choose states from stress-v1 Stage1 H15 traces for cases 4 and 5 (plus runner-material case1/6 and negative/control cases), before any non-H15 branch outcomes; include horizons [10,15,20,25,30,45,50] and terminal-stable modes [zero_terminal,H15_common_terminal]. Acceptance before any refit remains >=2 terminal-stable material positive states across >=2 stress-v1 cases, retained controls, and zero prefix/state/safety artifacts. This replaces using the older Stage2-v0b prefix-blocked candidates as v1d targets.
 
 Backup request: `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_VEHICLE_STRESS_V1D_STAGE2_CROSSBANK_IDENTITY_AUDIT_V0_20260929T0445Z.json`.
+
+## vehicle_stress_v1e_targeted_common_prefix_prepare_v0-20260929T0505Z
+
+# Vehicle stress-v1e targeted common-prefix prepare v0
+
+UTC: `2026-09-29T04:27:30.547378+00:00`. No simulations, no candidate resets, no training/refit, no validation64 bank, no sealed test.
+
+## Headline
+
+- Cross-bank audit confirmed Stage2-v0b prefix-blocked candidates are legacy stress-v0 evidence, not valid stress-v1/v1d targets.
+- This prepare step freezes stress-v1-only targets from existing stress-v1 H15 traces for missed episode-positive cases plus controls.
+- Targets: `12`; planned v1e smoke after backup: `168` episodes / `25200` control-step cap.
+- Train/refit now: `False`.
+
+## Frozen targets
+
+| target | case | role | group | source cand | branch step | window | score | v1d target count | stage1 material H |
+|---:|---:|---|---|---:|---:|---|---:|---:|---|
+| 0 | 4 | `missed_physical_gain_ge3` | `high_heading_long_or_medium` | 127 | 20 | `early` | 1.45093 | 0 | `[45]` |
+| 1 | 4 | `missed_physical_gain_ge3` | `high_heading_long_or_medium` | 127 | 36 | `middle` | 8.18294 | 0 | `[45]` |
+| 2 | 4 | `missed_physical_gain_ge3` | `high_heading_long_or_medium` | 127 | 46 | `late` | 2.19811 | 0 | `[45]` |
+| 3 | 5 | `missed_physical_gain_ge3` | `high_heading_long_or_medium` | 148 | 27 | `early` | 4.10003 | 0 | `[10, 20, 25, 30, 35, 40, 45, 50]` |
+| 4 | 5 | `missed_physical_gain_ge3` | `high_heading_long_or_medium` | 148 | 53 | `middle` | 37.5759 | 0 | `[10, 20, 25, 30, 35, 40, 45, 50]` |
+| 5 | 5 | `missed_physical_gain_ge3` | `high_heading_long_or_medium` | 148 | 54 | `late` | 40.566 | 0 | `[10, 20, 25, 30, 35, 40, 45, 50]` |
+| 6 | 1 | `runner_material_not_physical_ge3_context` | `high_heading_long_or_medium` | 101 | 42 | `mid_high_trace` | 10.4074 | 0 | `[30, 45, 50]` |
+| 7 | 6 | `runner_material_not_physical_ge3_context` | `high_heading_long_or_medium` | 49 | 28 | `mid_high_trace` | 10.2702 | 1 | `[10]` |
+| 8 | 0 | `same_stratum_negative_control` | `high_heading_long_or_medium` | 95 | 42 | `mid_high_trace` | 15.0081 | 2 | `[]` |
+| 9 | 2 | `same_stratum_negative_control` | `high_heading_long_or_medium` | 114 | 52 | `mid_high_trace` | 6.59007 | 1 | `[]` |
+| 10 | 16 | `lower_stress_control` | `lower_stress_control` | 130 | 49 | `mid_high_trace` | 11.806 | 2 | `[]` |
+| 11 | 17 | `lower_stress_control` | `lower_stress_control` | 187 | 13 | `mid_high_trace` | 10.4667 | 0 | `[]` |
+
+## Four-axis decision update
+
+- SCENARIOS: v1d missed stress-v1 physical-gain cases 4/5. v1e now targets those exact stress-v1 cases from H15 traces, plus runner-material context and negative/lower-stress controls.
+- REWARD/TERMINAL: labels remain terminal-stable realised physical continuation under zero and H15-common terminal; raw objective/per-H/H25 labels remain excluded as selector targets.
+- TRAINING: no selector/value refit is justified until the v1e smoke gate passes; this prepare is zero training/gradient/refit.
+- COMPARISONS: no adaptive or timing claim. A later method, if any, must face strong same-distribution fixed-H/Pareto baselines and measured timing.
+
+## Next action after backup
+
+Implement/run the bounded v1e stress-v1-only common-prefix smoke using the frozen schedule in the protocol. Do not run validation64 or sealed test. Do not reuse Stage2-v0b candidates as stress-v1 targets.
+
+Frozen protocol JSON: `research_artifacts/aws_protocols/vehicle_stress_v1e_targeted_common_prefix_prepare_v0_frozen_20260929T0505Z.json`.
+Backup request before v1e smoke: `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_BEFORE_VEHICLE_STRESS_V1E_TARGETED_COMMON_PREFIX_SMOKE_20260929T0505Z.json`.
+
+<!-- vehicle-stress-v1e-targeted-common-prefix-smoke-v0-dryrun-20260929T0515Z -->
+## 2026-09-29 vehicle stress-v1e targeted common-prefix smoke v0 dry-run
+
+UTC: 2026-09-29T04:31:34.690006+00:00. No-simulation readiness diagnostic completed for the stress-v1-only v1e common-prefix smoke. Verified the frozen prepare protocol, 12 targets, 168 scheduled episodes, stress-v1 bank target/candidate consistency and closed validation/test access. Rollout remains blocked until verified external backup covers `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_BEFORE_VEHICLE_STRESS_V1E_TARGETED_COMMON_PREFIX_SMOKE_V0_RUN_20260929T0515Z.json` plus this runner/dry-run/protocol/prepare artifacts.

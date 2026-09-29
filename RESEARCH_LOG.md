@@ -5116,3 +5116,81 @@ Current blocker / next safe action:
 
 ## 2026-09-29T18:26:56.080559+00:00
 
+<!-- vehicle-true-variable-H-risk-boundary-acquisition-v11-20260929T1835Z -->
+## 2026-09-29 vehicle true-variable-H targeted risk-boundary acquisition v11
+
+UTC: 2026-09-29T18:34:06.725804+00:00. Development-only source-independent risk-boundary acquisition completed: 54 episodes, 2929 control steps, validation64 closed, sealed test closed, no training/refit. Catastrophic H10 rows: 2; early catastrophics: 1; beneficial H10 rows: 8. Decision: adaptive opportunity exists but requires risk-aware value/representation learning before selector rollout. Artifacts: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_risk_boundary_acquisition_v11_20260929T1835Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_risk_boundary_acquisition_v11_20260929T1835Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_risk_boundary_acquisition_v11_20260929T1835Z/completed.json`.
+
+
+## 2026-09-29T18:35:48.219567+00:00
+Elapsed service lifetime: >79.6 h since 2026-09-26T10:55:29.419331Z.  
+Cumulative server API total_tokens: unavailable from repository-visible state in this API turn; not estimated; excludes desktop/API conversation.
+
+Concrete actions completed this iteration:
+
+1. **Astra review check**
+   - Checked `docs/bohn2021_takeover/astra_reviews/LATEST.md`.
+   - It does not exist, so there were no Astra recommendations to verify or log.
+
+2. **Inspected v11 source**
+   - Read `experiments/bohn2021_aws/vehicle_true_variable_horizon_risk_boundary_acquisition_v11.py`.
+   - Confirmed it is a development-only IMPROVED targeted risk-boundary acquisition wrapper around the audited v8 true-H10/H15 branch runner.
+   - Confirmed intended split restrictions: no validation64 and no sealed test access.
+
+3. **Ran v11 targeted risk-boundary acquisition**
+   - Script: `experiments/bohn2021_aws/vehicle_true_variable_horizon_risk_boundary_acquisition_v11.py`
+   - Interpreter: legacy
+   - Registry: `research_artifacts/aws_runs/20260929T182803_0d6ab828/registry.json`
+   - Exit status: 0
+   - Runtime: ~368 s
+   - Budget used:
+     - 54 development-only MPC simulation episodes
+     - 2929 control steps
+     - 0 training episodes
+     - 0 gradient steps
+     - 0 selector refit evaluations
+     - 0 validation64 episodes
+     - 0 sealed-test episodes
+   - Access flags:
+     - `validation64_bank_opened=false`
+     - `sealed_test_accessed=false`
+
+4. **v11 scientific result**
+   - Summary: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_risk_boundary_acquisition_v11_20260929T1835Z/summary.md`
+   - Completed marker: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_risk_boundary_acquisition_v11_20260929T1835Z/completed.json`
+   - Protocol: `research_artifacts/aws_protocols/vehicle_true_variable_horizon_risk_boundary_acquisition_v11_preoutcome_frozen_20260929T1835Z.json`
+   - Headline:
+     - 12 branch states from 6 fresh source-independent cases.
+     - H10-beneficial rows: 8/12.
+     - Catastrophic H10 rows: 2/12.
+     - Early catastrophic rows: 1/12.
+     - Risk-role catastrophics: 0.
+     - Oracle decision saving vs fixed H15: 12.51%.
+     - Fixed H10 decision saving vs H15: 55.23%, but unsafe at the per-state level because of catastrophic H10 rows.
+   - Interpretation:
+     - v11 strengthens evidence that true variable-horizon branch-level compute opportunity exists.
+     - The remaining blocker is safe deployable selection/risk-value representation, not absence of adaptive opportunity.
+     - Catastrophic H10 can occur outside the originally targeted high-risk roles, so the next method must be conservative and explicitly learn/penalize catastrophic false positives.
+
+5. **Backup status**
+   - Latest verified backup before v11:
+     - Commit: `43c983f1e0d0d43bc0166f1b5153390b71e7218a`
+     - Package: `20260929T182736_556bd907.tar.gz`
+     - SHA256: `2c3b32d3cf642a8ae4eb005d96ad8d77df2185a8b456b04b17327594fc780cce`
+   - v11 artifacts were created after that backup and are not yet externally backed up.
+   - I attempted to run `scripts/research_service/backup.py`, but the one-experiment-per-iteration guard blocked it:
+     - `ValueError: One experiment per iteration: persist next action for the next bounded cycle`
+
+6. **State preservation**
+   - Wrote:
+     - `research_artifacts/aws_state/continue_state_20260929T1836_after_v11_unbacked.md`
+   - Updated durable supervisor state with:
+     - v11 result summary
+     - current backup blocker
+     - next queue
+     - explicit prohibition on further science until backup verifies.
+
+Current blocker: **external backup is not yet verified after v11 artifacts and the new continue-state file.**  
+Next action must be to run `scripts/research_service/backup.py` before any further scientific simulation, training, selector refit, or validation.
+
+Next scientific action after backup: freeze/implement a bounded IMPROVED v12 risk/value representation refit using opened development banks including v11, with nested/LOBO gates and no validation64/sealed-test access.

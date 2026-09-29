@@ -3788,3 +3788,15 @@ UTC: 2026-09-29T04:00:06.808140+00:00. No-simulation diagnostic over v1d fresh t
 
 ## 2026-09-29T04:05:55.615076+00:00
 
+<!-- vehicle-objective-terminal-repair-feasibility-v0-20260929T0415Z -->
+## 2026-09-29 objective/terminal repair feasibility v0
+
+UTC: 2026-09-29T04:06:49.123415+00:00. Ran frozen no-simulation leave-state-out closed-form diagnostic over existing v1d/v1b development branch rows. Classification `simple_objective_terminal_repair_not_supported_from_current_labels`. Ridge objective/value/horizon severe harms=11 mean loss=6.94513; raw objective severe harms=7 mean loss=4.5757; horizon-only severe harms=9 mean loss=2.55875. v1d compute-safe match rates ridge/raw/horizon=0.0/0.25/0.0. Decision: do not train/refit a selector from current v1d/v1b labels; pivot to versioned scenario/opportunity redesign or richer terminal-value representation diagnostic. No validation64/sealed-test access, no rollout/training/persistent refit. Backup requested at `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_VEHICLE_OBJECTIVE_TERMINAL_REPAIR_FEASIBILITY_V0_20260929T0415Z.json`.
+
+
+## 2026-09-29T04:10:30.402495+00:00
+
+
+
+## 2026-09-29T04:15:43.859627+00:00
+

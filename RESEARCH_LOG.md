@@ -5405,3 +5405,15 @@ Next queued action after backup:
 1. Inspect v14 raw prediction scores for the two nested false positives and nearest safe/catastrophic neighbors.
 2. Freeze a bounded v15 targeted boundary-acquisition protocol around those ambiguous mid-late/control states and nearest safe lookalikes.
 3. Run only development MPC continuations with explicit budget caps; still no validation64 or sealed test.
+
+
+## 2026-09-29T22:14:09.238218+00:00
+
+<!-- vehicle-true-variable-H-v14-fp-neighbor-audit-v0-20260929T2225Z -->
+## 2026-09-29 vehicle true-variable-H v14 false-positive neighbor audit
+
+Elapsed service lifetime at write: >83.3 h since 2026-09-26T10:55:29.419331Z. Development-only metadata diagnostic; no MPC simulation, validation64 or sealed test. Audited v14 nested false positives=2 with reconstructed selected configs and nearest safe/catastrophic training lookalikes. Candidate v15 boundary plan contains 24 branch states (96 H10/H15 repeat episodes if later frozen). Decision: Freeze and run a small v15 development-only boundary acquisition using the candidate saved H15-prefix centers/offsets, after this audit is externally backed up; do not open validation64/sealed test.. Artifacts: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v14_false_positive_neighbor_audit_v0_20260929T2225Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v14_false_positive_neighbor_audit_v0_20260929T2225Z/audit.json`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v14_false_positive_neighbor_audit_v0_20260929T2225Z/completed.json`.
+
+
+## 2026-09-29T22:18:33.015824+00:00
+

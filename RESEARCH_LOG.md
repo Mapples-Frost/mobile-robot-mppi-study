@@ -4403,3 +4403,55 @@ UTC: 2026-09-29T09:41:53.773237+00:00. Metadata-only/no-simulation protocol free
 
 ## 2026-09-29T09:51:45.667775+00:00
 
+
+
+## 2026-09-29T09:56:04.150189+00:00
+
+
+
+## 2026-09-29T09:58:34.906803+00:00
+Cumulative elapsed service lifetime: ~71.1 h since 2026-09-26T10:55:29Z. Cumulative server API total_tokens: unavailable from exposed repository tools this cycle because `research.sqlite` was not listable/readable here; this excludes desktop conversation usage.
+
+Concrete actions completed:
+
+- Accepted the supervisor-provided verified backup gate as sufficient for simulation recovery:
+  - commit `d93cd8a8f0b2d11c09cb8fa512422cb9cbe0b531`
+  - package SHA256 `7cbbeb12c2536878035097f9d4b7dcdd744989b06b9573107b899d505c551bf7`
+  - `remaining_changed_files: 0`
+- Attempted to run the frozen fresh-source confirmation runner.
+- The attempt failed immediately at CLI parsing, before any simulation:
+  - script: `experiments/bohn2021_aws/vehicle_true_variable_horizon_fresh_source_confirmation_v0_runner.py`
+  - registry: `research_artifacts/aws_runs/20260929T095648_cf18ccf0/registry.json`
+  - exit status: `2`
+  - runtime: ~2.0 s
+  - cause: omitted required `--backup-verified-commit`
+- Verified from source that required arguments are:
+  - `--run`
+  - `--backup-verified-commit d93cd8a8f0b2d11c09cb8fa512422cb9cbe0b531`
+  - `--i-accept-development-fresh-source-confirmation-v0`
+- Checked for partial run output under the fixed run directory; none was present.
+- Preserved handoff state in:
+  - `research_artifacts/aws_state/continue_state_20260929T1000_after_fresh_source_runner_cli_arg_failure.md`
+- Persisted durable state via `update_state`.
+
+Safety/budget status:
+
+- New simulations: `0`
+- New control steps: `0`
+- New training/refit/gradient steps: `0`
+- validation64 opened: `false`
+- sealed test accessed: `false`
+- Research question unchanged.
+
+Next concrete action for the next bounded iteration:
+
+Run the same backed-up runner with corrected args:
+
+```text
+experiments/bohn2021_aws/vehicle_true_variable_horizon_fresh_source_confirmation_v0_runner.py
+--run
+--backup-verified-commit d93cd8a8f0b2d11c09cb8fa512422cb9cbe0b531
+--i-accept-development-fresh-source-confirmation-v0
+```
+
+Declared budget remains: 136 development-only episodes, ≤20400 control steps, no validation64, no sealed test, no training/refit.

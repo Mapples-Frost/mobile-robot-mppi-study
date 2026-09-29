@@ -5441,3 +5441,60 @@ Elapsed service lifetime at write: >83.7 h since 2026-09-26T10:55:29.419331Z. De
 
 ## 2026-09-29T22:43:45.167023+00:00
 
+<!-- vehicle-true-variable-H-v15-case-snapshot-recovery-diagnostic-v0-20260929T2305Z -->
+## 2026-09-29 v15 case-snapshot recovery diagnostic v0
+
+Elapsed service lifetime at write: >83.8 h since 2026-09-26T10:55:29.419331Z. Metadata-only diagnostic after the v15 full-acquisition preparation failure; no MPC simulation, no selector refit/search, no training, no validation64/sealed-test access. Required candidates=24; direct/raw case recovery full=False; recoverable candidates=9/24; missing candidates=15. Decision: Not all v15 candidates have recoverable case/TVP snapshots via raw/manifest scan; do not rerun v0. Next inspect source runner case-bank construction and either repair deterministic source-case reconstruction or freeze a reduced recoverable-candidate acquisition.. Artifacts: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v15_case_snapshot_recovery_diagnostic_v0_20260929T2305Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v15_case_snapshot_recovery_diagnostic_v0_20260929T2305Z/completed.json`.
+
+
+## 2026-09-29T22:48:03.624529+00:00
+
+<!-- vehicle-true-variable-H-v15-protocol-case-snapshot-recovery-v0b-20260929T2315Z -->
+## 2026-09-29 v15 protocol-aware case-snapshot recovery v0b
+
+Elapsed service lifetime at write: >83.9 h since 2026-09-26T10:55:29.419331Z. Metadata-only recovery diagnostic after the v15 acquisition v0 pre-simulation failure and the raw-only recovery miss; no MPC simulation, no selector refit/search, no training, no validation64/sealed-test access. Candidate recovery: 24/24 recoverable, missing=0; routes={'raw_direct_case_snapshot': 9, 'freeze_protocol_selected_fresh_case': 15}. Decision: All 24 predeclared v15 candidates are recoverable without case reselection; write a v0b acquisition runner that falls back to frozen fresh-source protocols for fresh_v0/v1/v2 case snapshots, then run the 96-episode acquisition only after these recovery artifacts and source repair are externally backed up.. Artifacts: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v15_protocol_case_snapshot_recovery_v0b_20260929T2315Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v15_protocol_case_snapshot_recovery_v0b_20260929T2315Z/completed.json`.
+
+
+## 2026-09-29T22:51:55.409160+00:00
+Elapsed service lifetime: ~84.6 h since 2026-09-26T10:55:29.419331Z. Server API `total_tokens` from `research.sqlite` excluding this desktop conversation: unavailable in the provided supervisor/tool context, so not restated numerically.
+
+Concrete actions completed:
+
+1. Checked Astra reviewer handoff path: `docs/bohn2021_takeover/astra_reviews/LATEST.md` is absent; no reviewer recommendations pending.
+
+2. Ran metadata-only v15 protocol-aware case snapshot recovery diagnostic:
+   - Script: `experiments/bohn2021_aws/vehicle_true_variable_horizon_v15_protocol_case_snapshot_recovery_v0b.py`
+   - Registry: `research_artifacts/aws_runs/20260929T224854_63ad7a96/registry.json`
+   - Summary: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v15_protocol_case_snapshot_recovery_v0b_20260929T2315Z/summary.md`
+   - Completed: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v15_protocol_case_snapshot_recovery_v0b_20260929T2315Z/completed.json`
+   - Result: all 24 predeclared v15 candidates are recoverable without case reselection.
+   - Recovery routes: 9 via raw direct case snapshots, 15 via frozen fresh-source protocols.
+   - No MPC simulation, no selector refit, no training, no validation64, no sealed test.
+
+3. Wrote repaired v15 boundary acquisition source:
+   - Path: `experiments/bohn2021_aws/vehicle_true_variable_horizon_v15_boundary_acquisition_v0b.py`
+   - SHA256: `eb66383ffb0326da6fb793a3939c4f5e6fa8eef7a93f63f539e87fcc8c28e91e`
+   - Change: minimal v0 repair only; raw case lookup first, then frozen-protocol fallback for `fresh_v0/fresh_v1/fresh_v2`.
+   - Preserves: 24 candidates, H10/H15 x2 schedule, 96-episode / 14400-step cap, shared H15 terminal, and v0 decision rules.
+   - Not yet executed because the one-experiment-per-iteration guard was already used.
+
+4. Preserved next-iteration state:
+   - State file: `research_artifacts/aws_state/continue_state_20260929T2330_after_v15_recovery_run_and_v0b_source_written.md`
+   - Durable supervisor state updated via `update_state`.
+
+Budget this cycle:
+- Development MPC episodes: 0
+- Development control steps: 0
+- Training episodes / gradient steps: 0 / 0
+- Selector refit evaluations: 0
+- Validation64 / sealed-test episodes: 0 / 0
+- Metadata experiments completed: 1
+- New source files written: 1
+
+Next concrete action:
+1. Verify external backup for the new recovery outputs/docs/registry and `vehicle_true_variable_horizon_v15_boundary_acquisition_v0b.py`.
+2. Then run, with legacy interpreter, exactly one bounded development experiment:
+
+`experiments/bohn2021_aws/vehicle_true_variable_horizon_v15_boundary_acquisition_v0b.py --run --backup-verified-commit <verified_commit> --i-accept-development-v15-boundary-acquisition`
+
+Declared budget: 96 development MPC episodes, ≤14400 control steps, no training/refit, no validation64, no sealed test.

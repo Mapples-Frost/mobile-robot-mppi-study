@@ -1,0 +1,124 @@
+{
+  "audit_id": "20260929T153837Z",
+  "status": "completed",
+  "started": "2026-09-29T15:38:37.994976+00:00",
+  "turn": 24,
+  "commit_start": "6a1c80b218f6a11499f99523829905018aeb0eb1",
+  "dirty_diff_hash": "5c0fa5d9f567c991a11f9a3cee624c00762a1b82146f880adf40b6a3194abeb4",
+  "fingerprint": "[\"20260929T140824_fbdb657d\", null, \"running\", \"vehicle IMPROVED development diagnostics: after v9 opened-bank selector refit; v10 risk/value kNN refit implemented but not yet executed\"]",
+  "inspected": [
+    {
+      "path": "STATUS.md",
+      "sha256": "0afc44577845cc6fde09f0010525e510adf7afd70cefacd5fa8c0edf05956aaf"
+    },
+    {
+      "path": "REPRODUCTION_PROTOCOL.md",
+      "sha256": "c0914b8cdad8bcad4dbb696daf5544988cb92f9a834a616db4c5778eaa63dfe2"
+    },
+    {
+      "path": "experiments/bohn2021_reproduction/SOURCE_MAP.md",
+      "sha256": "c4c1851e0219521f9ac86369cab62456ea803ed1e170519a149723f81b3f57f7"
+    },
+    {
+      "path": "experiments/bohn2021_reproduction/runtime.py",
+      "sha256": "15d083e7b4b9db311a95e35541819620cf547ad9e1642821144f82e13b9186d1"
+    },
+    {
+      "path": "docs/protocols/bohn2021_latency_tree_2026-09-26.md",
+      "sha256": "689fd8dc403e30ac5444a238be75f09d6af660a8273d5fc80ea64955f5c0313e"
+    },
+    {
+      "path": "experiments/bohn2021_reproduction/configure.py",
+      "sha256": "d3f1ea24c946c18e182ee97d0d58b4a2d7aa3316491ab33dac251d0773721bb5"
+    },
+    {
+      "path": "experiments/bohn2021_aws/vehicle_true_variable_horizon_risk_value_knn_refit_v10.py",
+      "sha256": "7b3098fe4ba576c12e529ede6b3884bcb25458718bc1a4ae43ca4335d745558d"
+    },
+    {
+      "path": "experiments/bohn2021_aws/vehicle_true_variable_horizon_risk_value_knn_refit_v10.py",
+      "sha256": "7b3098fe4ba576c12e529ede6b3884bcb25458718bc1a4ae43ca4335d745558d"
+    },
+    {
+      "path": "experiments/bohn2021_aws/vehicle_true_variable_horizon_risk_tree_representation_v6.py",
+      "sha256": "cc4bce62c662ac8209334f05879331f970567f4796857e8bcf6070f3f6b706d7"
+    },
+    {
+      "path": "experiments/bohn2021_reproduction/run.py",
+      "sha256": "515016aa20cbc110e9c3fb4145e1b6d3260bbab0ec7d0797131f7ac3c68d2abd"
+    },
+    {
+      "path": "research_artifacts/bohn2021_reproduction_2026-09-17/sources/stable-baselines-horizon/stable_baselines/sac/sac.py",
+      "sha256": "acb779424b1e9378bc7e306ee305a096c2e15e0ae519f41604ba4665831443d4"
+    },
+    {
+      "path": "research_artifacts/bohn2021_reproduction_2026-09-17/results/paper_defaults/pendulum_rl_s0.log",
+      "sha256": "1201d8465de230bf032b03b77a8663f2c242818722f85ec28526b3910d206755"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/pendulum_inventory_metadata/raw.json",
+      "sha256": "8e423cfeee708ea62c0caa219e17cac0f87b54befd7b911cbdd677b2ae883f15"
+    },
+    {
+      "path": "research_artifacts/bohn2021_reproduction_2026-09-17/sources/gym-horizon/gym_let_mpc/controllers.py",
+      "sha256": "a34ea0764caf8bde123bf9e8c7a8316d8dbff454d0cce558bbd84229eb60defc"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_risk_probe_acquisition_v8c_flexible_state_count_20260929T1320Z/raw.json",
+      "sha256": "bd3c392ceae8b504b4089d0c70740eeacf9c7a3436459c1e5a16ce0d30bd1056"
+    },
+    {
+      "path": "experiments/bohn2021_aws/vehicle_true_variable_horizon_risk_probe_acquisition_v8c_flexible_state_count.py",
+      "sha256": "c9c4ca8923afdf8ac41e5d32287fba8d3269ec019e79991a108a1b1846b89296"
+    },
+    {
+      "path": "experiments/bohn2021_aws/vehicle_true_variable_horizon_risk_probe_acquisition_v8.py",
+      "sha256": "77ab56afbba54ba5662f413d24a4aa14b047bbca293b88f3ea07208dcf17aba4"
+    },
+    {
+      "path": "experiments/bohn2021_aws/vehicle_true_variable_horizon_fresh_source_confirmation_v1_runner.py",
+      "sha256": "5228115f282eaaeaa1212f9191bfa8fc3e47fa10be940152732f5f978984dfd7"
+    },
+    {
+      "path": "experiments/bohn2021_aws/vehicle_true_variable_horizon_case5_smoke_v0_runner.py",
+      "sha256": "1f7101bb336e0ee5028ed44dd0c9bc89bedaf3b02fa7f3187fc1eaef265005f9"
+    },
+    {
+      "path": "experiments/bohn2021_aws/vehicle_true_variable_horizon_case5_smoke_v0_runner.py",
+      "sha256": "1f7101bb336e0ee5028ed44dd0c9bc89bedaf3b02fa7f3187fc1eaef265005f9"
+    },
+    {
+      "path": "EXPERIMENT_REGISTRY.csv",
+      "sha256": "a5f7538fa9765d0bc8e8515c47df8da7d0b81c04d0f7cd84158b97e1c4e893bf"
+    }
+  ],
+  "returned_efforts": [
+    "xhigh",
+    "xhigh",
+    "xhigh",
+    "xhigh",
+    "xhigh",
+    "xhigh",
+    "xhigh",
+    "xhigh",
+    "xhigh",
+    "xhigh",
+    "xhigh",
+    "xhigh",
+    "xhigh",
+    "xhigh",
+    "xhigh",
+    "xhigh",
+    "xhigh",
+    "xhigh",
+    "xhigh",
+    "xhigh",
+    "xhigh",
+    "xhigh",
+    "xhigh",
+    "max"
+  ],
+  "updated": "2026-09-29T23:17:20.117237+00:00",
+  "completed": "2026-09-29T23:17:20.408254+00:00",
+  "commit_end": "d2e569ebba73d042e2ae86e5595ff19ba0bad973"
+}

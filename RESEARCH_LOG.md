@@ -4504,3 +4504,139 @@ UTC: 2026-09-29T11:07:41.854535+00:00. Metadata/refit-only diagnostic completed 
 
 ## 2026-09-29T11:12:37.166060+00:00
 
+<!-- vehicle-true-variable-H-fresh-source-confirmation-freeze-v2-20260929T1120Z -->
+## 2026-09-29 vehicle true-variable-H fresh-source confirmation freeze v2
+
+UTC: 2026-09-29T11:13:49.017027+00:00. Metadata-only/no-simulation freeze for v2c top candidate `source_only::v2b_raw_abs_l2_prs1.25_nm1.5_vm0.75_agreement_only_disagreement_only` under shared-H15 terminal primary scope. Selected unused fresh-source candidate IDs [44, 26, 239, 159, 146, 203, 251, 12]; total future budget 136 episodes / cap 20400 control steps; no validation64/sealed test/training/refit. Matched-terminal remains secondary because v2c showed robustness failures. Artifacts: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_fresh_source_confirmation_freeze_v2_20260929T1120Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_fresh_source_confirmation_freeze_v2_20260929T1120Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_fresh_source_confirmation_freeze_v2_20260929T1120Z/completed.json`, protocol `research_artifacts/aws_protocols/vehicle_true_variable_horizon_fresh_source_confirmation_freeze_v2_frozen_20260929T1120Z.json`.
+
+
+## 2026-09-29T11:17:41.127534+00:00
+Elapsed service lifetime: ~72.33 h since 2026-09-26T10:55:29.419331Z.  
+Cumulative server API total_tokens: not available from repository-visible files in this API turn; must be filled from supervisor SQLite/JSONL, excluding this desktop/API conversation usage.
+
+Concrete actions completed:
+
+1. Inspected the current evidence state:
+   - v1 fresh-source confirmation was safe/nonconstant but weak: 8.207% measured decision saving, below the 10% strong gate.
+   - v2c selector-refit diagnostic found a development-promising source-only shared-H15-terminal selector with cross-bank minimum decision saving 10.466% and zero primary catastrophic false positives, but matched-terminal remained unsafe/fragile with 5 bad rows.
+   - Therefore the most informative next step is unused fresh-source confirmation, not another label-density sweep and not validation/test.
+
+2. Executed one bounded metadata-only experiment:
+   - Script: `experiments/bohn2021_aws/vehicle_true_variable_horizon_fresh_source_confirmation_freeze_v2.py`
+   - Registry: `research_artifacts/aws_runs/20260929T111348_2d45546c/registry.json`
+   - Exit: success
+   - Budget actual: 0 simulations, 0 control steps, 0 training/refit/gradient steps, 0 validation64, 0 sealed test.
+
+3. Frozen v2 protocol:
+   - Protocol: `research_artifacts/aws_protocols/vehicle_true_variable_horizon_fresh_source_confirmation_freeze_v2_frozen_20260929T1120Z.json`
+   - Summary: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_fresh_source_confirmation_freeze_v2_20260929T1120Z/summary.md`
+   - Completed: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_fresh_source_confirmation_freeze_v2_20260929T1120Z/completed.json`
+   - Candidate: `source_only::v2b_raw_abs_l2_prs1.25_nm1.5_vm0.75_agreement_only_disagreement_only`
+   - Primary scope: `shared_h15_terminal`; matched-terminal remains secondary diagnostic only.
+   - Selected unused source IDs: `[44, 26, 239, 159, 146, 203, 251, 12]`
+   - Future run budget: 136 development episodes, cap 20,400 control steps, no training/refit/validation/test.
+
+4. Wrote v2 runner source, not executed yet:
+   - `experiments/bohn2021_aws/vehicle_true_variable_horizon_fresh_source_confirmation_v2_runner.py`
+   - sha256: `dabb3c582c1600674b47ddeb78214c02616150a85f6e3564b4d8d32a7e9cf866`
+
+5. Preserved state and backup request:
+   - State: `research_artifacts/aws_state/continue_state_20260929T1115_after_freeze_v2_and_runner_source.md`
+   - Backup request: `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_FRESH_SOURCE_CONFIRMATION_V2_FREEZE_AND_RUNNER_20260929T1115Z.json`
+
+Safety/access status:
+- Sealed test: not accessed.
+- validation64 for revised selector: not opened.
+- No mobile-robot MPPI work resumed.
+- Current branch remains development-only IMPROVED evidence, not ORIGINAL SAC reproduction.
+
+Next required action:
+1. Verify external backup covering the v2 freeze outputs and v2 runner source.
+2. Then run:
+   `experiments/bohn2021_aws/vehicle_true_variable_horizon_fresh_source_confirmation_v2_runner.py --run --backup-verified-commit <verified_commit> --i-accept-development-fresh-source-confirmation-v2`
+3. If v2 strong-passes, freeze validation64 with fair fixed true-H baselines and actual timing. If weak/fails, move to targeted terminal-value/objective/representation or bounded training/refit ablation rather than another unchanged selector sweep.
+
+<!-- vehicle-true-variable-H-fresh-source-confirmation-v2-run-20260929T1135Z -->
+## 2026-09-29 vehicle true-variable-H fresh-source confirmation v2 run
+
+UTC: 2026-09-29T11:30:44.849870+00:00. Development-only unused fresh-source confirmation completed for `source_only::v2b_raw_abs_l2_prs1.25_nm1.5_vm0.75_agreement_only_disagreement_only`: 136 episodes (8 H15 traces + 128 blocked H10/H15 branches), 6355 control steps. No validation64, no sealed test, no training/refit. Primary gate: {'scope': 'shared_h15_terminal', 'groups': 16, 'h10_predictions': 7, 'h15_predictions': 9, 'nonconstant_horizons': True, 'confusion_vs_fresh_h10_beneficial_label': {'TP': 5, 'FP': 2, 'FN': 9, 'TN': 0}, 'false_positive_rows': [{'base_state_id': 'fresh_case04_slot0_early_mid', 'fresh_confirmation_group': 'fresh_high_heading_short', 'h10_safe_all': True, 'h15_safe_all': True, 'physical_delta_h10_minus_h15': 136.9152309816722, 'decision_delta_h10_minus_h15': -0.8018156842736062, 'row_tolerance': 2.0, 'diagnostics': {'nearest_pos': 0.3183019756765563, 'nearest_neg': 0.6693482442856566, 'nearest_veto': 0.5105084217465663, 'support': 4, 'radius': 0.6647337186896707, 'support_ok': True, 'neg_ok': True, 'veto_ok': True, 'reason': 'h10'}, 'catastrophic_threshold': 3.8139257703814136}, {'base_state_id': 'fresh_case05_slot0_early_mid', 'fresh_confirmation_group': 'fresh_low_heading_low_clearance_control', 'h10_safe_all': True, 'h15_safe_all': True, 'physical_delta_h10_minus_h15': 132.65816547206765, 'decision_delta_h10_minus_h15': -0.9841039822786115, 'row_tolerance': 2.0, 'diagnostics': {'nearest_pos': 0.3599241243371876, 'nearest_neg': 0.7252531108911741, 'nearest_veto': 0.3686667415340344, 'support': 4, 'radius': 0.6647337186896707, 'support_ok': True, 'neg_ok': True, 'veto_ok': True, 'reason': 'h10'}, 'catastrophic_threshold': 4.184115892836806}], 'catastrophic_false_positive_rows': [{'base_state_id': 'fresh_case04_slot0_early_mid', 'fresh_confirmation_group': 'fresh_high_heading_short', 'h10_safe_all': True, 'h15_safe_all': True, 'physical_delta_h10_minus_h15': 136.9152309816722, 'decision_delta_h10_minus_h15': -0.8018156842736062, 'row_tolerance': 2.0, 'diagnostics': {'nearest_pos': 0.3183019756765563, 'nearest_neg': 0.6693482442856566, 'nearest_veto': 0.5105084217465663, 'support': 4, 'radius': 0.6647337186896707, 'support_ok': True, 'neg_ok': True, 'veto_ok': True, 'reason': 'h10'}, 'catastrophic_threshold': 3.8139257703814136}, {'base_state_id': 'fresh_case05_slot0_early_mid', 'fresh_confirmation_group': 'fresh_low_heading_low_clearance_control', 'h10_safe_all': True, 'h15_safe_all': True, 'physical_delta_h10_minus_h15': 132.65816547206765, 'decision_delta_h10_minus_h15': -0.9841039822786115, 'row_tolerance': 2.0, 'diagnostics': {'nearest_pos': 0.3599241243371876, 'nearest_neg': 0.7252531108911741, 'nearest_veto': 0.3686667415340344, 'support': 4, 'radius': 0.6647337186896707, 'support_ok': True, 'neg_ok': True, 'veto_ok': True, 'reason': 'h10'}, 'catastrophic_threshold': 4.184115892836806}], 'unsafe_rows': [], 'physical_tolerance_sum_vs_fixed_H15': 32.0, 'physical_gate': False, 'fixed_H15_physical_sum': 114.41260760169516, 'comparison_policy_vs_fixed_H15': {'physical_delta_vs_fixed_H15': 269.6448236443954, 'decision_relative_saving_vs_fixed_H15': 0.11059728363795457, 'solver_relative_saving_vs_fixed_H15': 0.11713906602512027}, 'comparison_oracle_vs_fixed_H15': {'physical_delta_vs_fixed_H15': -1.6660502167614197, 'decision_relative_saving_vs_fixed_H15': 0.24975081536769275, 'solver_relative_saving_vs_fixed_H15': 0.2688011200020139}, 'oracle_chosen_counts': {'10': 14, '15': 2}, 'policy_chosen_counts': {'15': 9, '10': 7}, 'decision_saving_gate_5pct': True, 'decision_saving_gate_10pct_strong': True, 'primary_pass_5pct': False, 'primary_strong_10pct': False, 'solver_saving_reported_not_primary': 0.11713906602512027}. Decision: v2 independent fresh-source confirmation failed safety/physical gates; block selector rollout and prioritize value/objective/representation refit or training ablation. Artifacts: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_fresh_source_confirmation_v2_run_20260929T1135Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_fresh_source_confirmation_v2_run_20260929T1135Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_fresh_source_confirmation_v2_run_20260929T1135Z/completed.json`.
+
+
+## 2026-09-29T11:32:40.356032+00:00
+Elapsed service lifetime: ~72.7 h since 2026-09-26T10:55:29.419331Z.  
+Cumulative server API total_tokens: unavailable from repository-visible state in this API turn; not estimated and excludes this desktop/API conversation.
+
+Concrete actions completed:
+
+1. **Verified/inspected frozen v2 protocol and runner**
+   - Protocol: `research_artifacts/aws_protocols/vehicle_true_variable_horizon_fresh_source_confirmation_freeze_v2_frozen_20260929T1120Z.json`
+   - Runner: `experiments/bohn2021_aws/vehicle_true_variable_horizon_fresh_source_confirmation_v2_runner.py`
+   - Used supervisor-provided verified backup commit before running: `e31dfe9ae30a8e5d0656a2e545124dc490860807`.
+
+2. **Executed the frozen development-only v2 fresh-source confirmation**
+   - Registry: `research_artifacts/aws_runs/20260929T111808_0f8e0897/registry.json`
+   - Run dir: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_fresh_source_confirmation_v2_run_20260929T1135Z/`
+   - Exit: success
+   - Budget actual:
+     - 136 development episodes
+     - 6,355 control steps
+     - 0 training episodes
+     - 0 gradient steps
+     - 0 selector refit steps
+     - 0 validation64 episodes
+     - 0 sealed-test episodes
+   - Access status: validation64 unopened; sealed final test unopened.
+
+3. **Scientific result: v2 selector failed physical/safety-performance gate**
+   - Candidate: `source_only::v2b_raw_abs_l2_prs1.25_nm1.5_vm0.75_agreement_only_disagreement_only`
+   - Primary profile: shared-H15 terminal.
+   - The selector was nonconstant and achieved measured compute savings, but produced catastrophic H10 false positives:
+     - H10 predictions: 7 / 16 states
+     - H15 abstentions: 9 / 16 states
+     - Confusion vs fresh H10-beneficial labels: TP=5, FP=2, FN=9, TN=0
+     - Policy vs fixed H15:
+       - Physical delta: **+269.645**, tolerance sum 32.0 → **physical gate failed**
+       - Whole-decision saving: **11.06%**
+       - Solver saving: **11.71%**
+     - Strong/weak pass: both **false** because physical gate failed.
+
+4. **Failure anatomy preserved**
+   - Catastrophic false positives:
+     1. `fresh_case04_slot0_early_mid`
+        - H10 physical ≈ 152.171 vs H15 ≈ 15.256
+        - Delta ≈ +136.915
+        - Decision saving ≈ 0.802 s
+        - Both safe/successful; solver failures 0.
+     2. `fresh_case05_slot0_early_mid`
+        - H10 physical ≈ 149.395 vs H15 ≈ 16.737
+        - Delta ≈ +132.658
+        - Decision saving ≈ 0.984 s
+        - Both safe/successful; solver failures 0.
+
+   These are real control/compute tradeoff failures, not solver failure, unsafe termination, or early-termination artifacts.
+
+5. **Important positive diagnostic evidence**
+   - Same fresh block still has strong adaptive opportunity under an oracle:
+     - Oracle H10 choices: 14 / 16
+     - Oracle physical delta vs fixed H15: **−1.666**
+     - Oracle whole-decision saving: **24.98%**
+     - Oracle solver saving: **26.88%**
+   - Interpretation: the scenario/branch states do contain useful state-dependent H10/H15 opportunities. The current bottleneck is the selector/objective/representation, not absence of adaptive-horizon opportunity.
+
+6. **State preserved**
+   - New state file:
+     - `research_artifacts/aws_state/continue_state_20260929T1135_after_fresh_source_confirmation_v2_run_inspected.md`
+   - Durable supervisor state updated via `update_state`.
+   - Backup request written by runner:
+     - `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_VEHICLE_TRUE_VARIABLE_HORIZON_FRESH_SOURCE_CONFIRMATION_V2_RUN_20260929T113044.849870+0000.json`
+
+Decision:
+
+- **Do not advance this v2c selector to validation64.**
+- Treat v2 as development-only negative evidence.
+- Next informative action after verified backup is not another unchanged label-density sweep. It should be a no-simulation opened-bank failure-aware analysis/refit design over v0/v1/v2, specifically testing whether richer pre-decision features/objectives can eliminate catastrophic H10 false positives while retaining measured compute savings.
+- If opened-bank leave-one-bank-out analysis cannot find a robust zero-catastrophic-FP rule with adequate timing savings, move to bounded value/objective/representation retraining or refit ablation before any validation rollout.
+
+Current blocker for further simulation/training:
+
+- Need externally verified backup covering the new v2 run outputs and state. No user input is needed unless backup infrastructure fails repeatedly.

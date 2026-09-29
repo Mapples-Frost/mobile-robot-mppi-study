@@ -4186,3 +4186,11 @@ UTC: 2026-09-29T06:53:40.714474+00:00. Metadata-only/no-simulation protocol free
 
 ## 2026-09-29T06:58:45.125102+00:00
 
+<!-- vehicle-true-variable-horizon-broader-block-v0-run-20260929T0650Z -->
+## 2026-09-29 vehicle true variable-H broader block v0 run
+
+UTC: 2026-09-29T07:06:37.183945+00:00. Development-only broader true variable-H block completed: 48 branch episodes, 2952 control steps, validation64 closed, sealed test closed, no training/refit. Gates: implementation=True, safety=True, compute=True, physical=True, pass_to_selector_or_value_learning_design=True. Artifacts: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_broader_block_v0_run_20260929T0650Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_broader_block_v0_run_20260929T0650Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_broader_block_v0_run_20260929T0650Z/completed.json`.
+
+
+## 2026-09-29T07:09:47.963944+00:00
+

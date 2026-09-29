@@ -1055,3 +1055,8 @@ UTC: 2026-09-29T06:49:27.363915+00:00. Development-only true variable-dimension 
 ## 2026-09-29 vehicle true variable-H broader block freeze v0
 
 UTC: 2026-09-29T06:53:40.714474+00:00. Metadata-only/no-simulation protocol freeze completed after v0b. v0b proved true-H construction speed feasibility but physical tradeoff remains unresolved (H10-vs-H15 physical gains [-450.49814372103845, -0.046977699789351846]). Frozen next development protocol `research_artifacts/aws_protocols/vehicle_true_variable_horizon_broader_block_v0_frozen_20260929T0650Z.json` has 48 planned branch episodes, cap 7200 control steps, horizons [10, 15, 25], terminal profiles ['matched_terminal', 'shared_h15_terminal'], repeats 2, validation64 closed and sealed test closed. More simulation is blocked until backup covers `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_BEFORE_VEHICLE_TRUE_VARIABLE_HORIZON_BROADER_BLOCK_V0_RUN_20260929T0650Z.json` and all v0b/freeze artifacts.
+
+<!-- vehicle-true-variable-horizon-broader-block-v0-run-20260929T0650Z -->
+## 2026-09-29 vehicle true variable-H broader block v0 run
+
+UTC: 2026-09-29T07:06:37.183945+00:00. Development-only broader true variable-H block completed: 48 branch episodes, 2952 control steps, validation64 closed, sealed test closed, no training/refit. Gates: implementation=True, safety=True, compute=True, physical=True, pass_to_selector_or_value_learning_design=True. Artifacts: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_broader_block_v0_run_20260929T0650Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_broader_block_v0_run_20260929T0650Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_broader_block_v0_run_20260929T0650Z/completed.json`.

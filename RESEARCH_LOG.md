@@ -5018,3 +5018,11 @@ Next concrete action:
 4. No validation64 or sealed final test access until an independently justified gate is met.
 
 Research is not complete.
+
+
+## 2026-09-29T13:41:05.554996+00:00
+- 2026-09-29T13:48:19.461516+00:00 `vehicle_true_variable_horizon_risk_refit_v9_opened_banks`: opened-bank risk-aware finite selector refit including v8c; pure_deploy_pass10=0, pure_deploy_pass5=0, best_deploy=v9_deploy_obs_pose_step_no_risk_d1_ml2_mp1_mc0_mg0 min_save=0.0594 bad=3 v8c_bad=2; no simulation/validation/test; artifacts `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_risk_refit_v9_opened_banks_20260929T1345Z/summary.md`.
+
+
+## 2026-09-29T13:50:27.198415+00:00
+

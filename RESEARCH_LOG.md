@@ -4752,3 +4752,56 @@ Purpose remains unchanged: bounded development-only H10/H15 risk-probe acquisiti
 
 ## 2026-09-29T13:11:57.851419+00:00
 
+
+
+## 2026-09-29T13:15:29.292363+00:00
+Elapsed service lifetime: >74.3 h since 2026-09-26T10:55:29.419331Z. Cumulative server API total_tokens: unavailable from repository-visible state in this API turn; not estimated and excludes this desktop/API conversation.
+
+Concrete progress this iteration:
+
+- Tried the required external backup before running the prepared v8b risk-probe diagnostic.
+  - `scripts/research_service/backup.py`
+  - Registry: `research_artifacts/aws_runs/20260929T131215_23fa83ef/registry.json`
+  - Failed with exit status 1 after ~36 s; stdout/stderr empty.
+  - No simulations, no control steps, no training/refit, no validation64 access, no sealed-test access.
+
+- Inspected the backup registry and backup script behavior.
+  - `backup.py` records the detailed sanitized exception into supervisor state outside the repository, so the repo-visible registry alone cannot explain the failure.
+  - This is an infrastructure/backup blocker, not a scientific result.
+
+- Wrote a zero-budget metadata-capture script for the next iteration:
+  - `experiments/bohn2021_aws/backup_failure_status_capture_v8b_v0.py`
+  - sha256: `3ae47ca4aa134b46a894c0e76f0f1b5e2388da6e2f37baad4e8a0f770f6f4ad3`
+  - Purpose: safely copy sanitized backup status from supervisor state into repository evidence, without simulations/training/refit/validation/test or secrets.
+
+- Attempted to run that metadata-capture script, but the tool layer enforced “one experiment per iteration,” so it was not run. I persisted the next step instead.
+
+- Persisted handoff:
+  - `research_artifacts/aws_state/continue_state_20260929T1316_after_backup_failure_before_v8b_capture.md`
+
+Current blocker:
+
+- Latest verified external backup is still:
+  - Time: `2026-09-29T13:07:51.958731+00:00`
+  - Commit: `3f47aff3df355ffecba9eb17d705ffdcae6fa1e1`
+  - Package: `20260929T130748_fe2bead3.tar.gz`
+  - SHA256: `470c391fb3944bbc5678673b3b291b48ade0c5fee495d39a6cf7c634bdf1f54c`
+- New v8 failure evidence, v8b source, the failed backup registry, the new backup-capture source, and this state are not yet externally backed up.
+- Therefore v8b simulations remain blocked until backup is verified or the backup failure is diagnosed/resolved.
+
+Next concrete action:
+
+1. Run the metadata-only capture:
+   - `experiments/bohn2021_aws/backup_failure_status_capture_v8b_v0.py`
+   - modern interpreter
+   - args: `--i-accept-no-simulation-backup-status-capture`
+   - all budgets zero.
+
+2. If it confirms backup is still inadequate, diagnose/repair or retry `scripts/research_service/backup.py` before any further scientific simulations.
+
+3. Once backup is verified, run:
+   - `experiments/bohn2021_aws/vehicle_true_variable_horizon_risk_probe_acquisition_v8b_legacy_retry.py`
+   - legacy interpreter
+   - with `--run --backup-verified-commit <verified_commit> --i-accept-development-risk-probe-v8`.
+
+No validation64 or sealed test was accessed. Research is not complete.

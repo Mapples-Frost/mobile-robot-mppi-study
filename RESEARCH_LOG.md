@@ -5498,3 +5498,12 @@ Next concrete action:
 `experiments/bohn2021_aws/vehicle_true_variable_horizon_v15_boundary_acquisition_v0b.py --run --backup-verified-commit <verified_commit> --i-accept-development-v15-boundary-acquisition`
 
 Declared budget: 96 development MPC episodes, ≤14400 control steps, no training/refit, no validation64, no sealed test.
+
+<!-- vehicle-true-variable-H-v15-boundary-acquisition-v0b-20260929T2325Z -->
+## 2026-09-29 vehicle true-variable-H v15 local boundary acquisition v0b
+
+Elapsed service lifetime at write: >84.1 h since 2026-09-26T10:55:29.419331Z. Development-only local boundary acquisition on 24 saved H15-prefix candidates x H10/H15 x2 repeats; no validation64/sealed-test access, no selector refit/search, no gradient training. v0b repairs only case-snapshot lookup using frozen fresh-source protocols where raw outputs omit selected-source snapshots. Budget actual: 96 episodes, 4486 control steps. Aggregate: pairs=48/48, all_h15_safe=True, catastrophic_h10=24, beneficial_h10=24, decision_saving_H10_vs_H15=0.24805757791328023, label_data_sufficient_for_refit=True. Decision: v15 boundary acquisition produced interpretable local labels with both catastrophic and safe-beneficial H10 outcomes; next freeze a boundary-augmented conservative refit, still development-only and requiring zero catastrophic H10 plus >=5% opened-development saving before any unused-source confirmation.. Artifacts: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v15_boundary_acquisition_v0b_20260929T2325Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v15_boundary_acquisition_v0b_20260929T2325Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v15_boundary_acquisition_v0b_20260929T2325Z/completed.json`.
+
+
+## 2026-09-29T23:07:00.464747+00:00
+

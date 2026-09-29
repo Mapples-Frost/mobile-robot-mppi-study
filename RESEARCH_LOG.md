@@ -4206,3 +4206,11 @@ UTC: 2026-09-29T07:10:49.936167+00:00. Metadata-only postdiagnostic completed wi
 
 ## 2026-09-29T07:18:50.489791+00:00
 
+<!-- vehicle-true-variable-horizon-oracle-bank-freeze-v0-20260929T0725Z -->
+## 2026-09-29 vehicle true variable-H oracle bank freeze v0
+
+UTC: 2026-09-29T07:20:14.573384+00:00. Metadata-only/no-simulation protocol freeze completed for a larger source-supported true-H oracle-label/value-modeling bank. Planned development branch budget is 192 episodes / 28800 control-step cap, horizons [10, 15, 25], terminal profiles ['matched_terminal', 'shared_h15_terminal'], repeats 2, selected states 16 (11 non-control for primary gate). Validation64 and sealed test remain closed; training/refit/candidate resets are zero. More simulation/training/refit is blocked until an external verified backup covers `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_BEFORE_VEHICLE_TRUE_VARIABLE_HORIZON_ORACLE_BANK_V0_RUN_20260929T0725Z.json` and this freezer output. Protocol: `research_artifacts/aws_protocols/vehicle_true_variable_horizon_oracle_bank_v0_frozen_20260929T0725Z.json`.
+
+
+## 2026-09-29T07:23:18.062424+00:00
+

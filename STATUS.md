@@ -1065,3 +1065,8 @@ UTC: 2026-09-29T07:06:37.183945+00:00. Development-only broader true variable-H 
 ## 2026-09-29 vehicle true variable-H broader block postdiagnostic v0
 
 UTC: 2026-09-29T07:10:49.936167+00:00. Metadata-only postdiagnostic completed with no simulations/training/refit, validation64 closed and sealed test closed. H10 is not a robust global physical improvement (strict non-control H10-vs-H15 improvements 0/6; global non-control H10 physical is much worse than H15/H25), but a near-best physical oracle over H10/H15/H25 is mixed ({'15': 2, '10': 4, '25': 2}) and has non-control decision-time saving 0.367 vs fixed H25 with physical delta -1.60051. Decision: larger source-supported true-H oracle-label/value-modeling diagnostic before any selector training; do not repeat sparse label sweeps.
+
+<!-- vehicle-true-variable-horizon-oracle-bank-freeze-v0-20260929T0725Z -->
+## 2026-09-29 vehicle true variable-H oracle bank freeze v0
+
+UTC: 2026-09-29T07:20:14.573384+00:00. Metadata-only/no-simulation protocol freeze completed for a larger source-supported true-H oracle-label/value-modeling bank. Planned development branch budget is 192 episodes / 28800 control-step cap, horizons [10, 15, 25], terminal profiles ['matched_terminal', 'shared_h15_terminal'], repeats 2, selected states 16 (11 non-control for primary gate). Validation64 and sealed test remain closed; training/refit/candidate resets are zero. More simulation/training/refit is blocked until an external verified backup covers `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_BEFORE_VEHICLE_TRUE_VARIABLE_HORIZON_ORACLE_BANK_V0_RUN_20260929T0725Z.json` and this freezer output. Protocol: `research_artifacts/aws_protocols/vehicle_true_variable_horizon_oracle_bank_v0_frozen_20260929T0725Z.json`.

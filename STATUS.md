@@ -860,3 +860,90 @@ UTC: 2026-09-29T04:00:06.808140+00:00. No-simulation diagnostic over v1d fresh t
 ## 2026-09-29 objective/terminal repair feasibility v0
 
 UTC: 2026-09-29T04:06:49.123415+00:00. Ran frozen no-simulation leave-state-out closed-form diagnostic over existing v1d/v1b development branch rows. Classification `simple_objective_terminal_repair_not_supported_from_current_labels`. Ridge objective/value/horizon severe harms=11 mean loss=6.94513; raw objective severe harms=7 mean loss=4.5757; horizon-only severe harms=9 mean loss=2.55875. v1d compute-safe match rates ridge/raw/horizon=0.0/0.25/0.0. Decision: do not train/refit a selector from current v1d/v1b labels; pivot to versioned scenario/opportunity redesign or richer terminal-value representation diagnostic. No validation64/sealed-test access, no rollout/training/persistent refit. Backup requested at `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_VEHICLE_OBJECTIVE_TERMINAL_REPAIR_FEASIBILITY_V0_20260929T0415Z.json`.
+
+## vehicle_stress_v1d_state_coverage_opportunity_postdiagnostic_v0-20260929T0435Z
+
+# Vehicle stress-v1d state-coverage/opportunity postdiagnostic v0
+
+UTC: `2026-09-29T04:17:05.010358+00:00`. Development-only no-simulation diagnostic; validation64 and sealed test stayed closed.
+
+## Headline
+
+- Classification: `target_state_coverage_failure_with_prefix_blocked_high_leverage_candidates`.
+- Stage1 runner-material episode cases: `[1, 4, 5, 6]`; v1d selected coverage: `1/4`.
+- Stage1 physical-gain>=3 episode cases: `[4, 5]`; v1d selected coverage: `0/2`.
+- v1d terminal-stable robust positives remain: `0` / `12`.
+- Stage2 prefix-blocked but state-close material candidates: `3` across cases `[5]`; accepted prefix-clean material candidates: `0`.
+- Train/refit now: `False`.
+- Recommended next action: `freeze targeted v1e common-prefix continuation smoke before scenario redesign or selector/value refit`.
+
+## Case-level coverage table
+
+| case | group | runner material | phys>=3 case | strict material H | v1d targets | v1d branch steps | v1d gains | stage2 blocked material branches/H/maxgain |
+|---:|---|---:|---:|---|---:|---|---|---|
+| 0 | `high_heading_long_or_medium` | 0 | 0 | `[]` | 2 | `[14, 36]` | `[0.0, 0.0]` | `[]` / `[]` / 0 |
+| 1 | `high_heading_long_or_medium` | 1 | 0 | `[30, 45, 50]` | 0 | `[]` | `[]` | `[]` / `[]` / 0 |
+| 2 | `high_heading_long_or_medium` | 0 | 0 | `[]` | 1 | `[32]` | `[0.000366]` | `[]` / `[]` / 0 |
+| 3 | `high_heading_long_or_medium` | 0 | 0 | `[]` | 1 | `[41]` | `[0.000162]` | `[]` / `[]` / 0 |
+| 4 | `high_heading_long_or_medium` | 1 | 1 | `[45]` | 0 | `[]` | `[]` | `[]` / `[]` / 0 |
+| 5 | `high_heading_long_or_medium` | 1 | 1 | `[10, 20, 25, 30, 35, 40, 45, 50]` | 0 | `[]` | `[]` | `[18]` / `[10, 25, 30]` / 26.18 |
+| 6 | `high_heading_long_or_medium` | 1 | 0 | `[10]` | 1 | `[22]` | `[0.0]` | `[]` / `[]` / 0 |
+| 9 | `high_heading_long_or_medium` | 0 | 0 | `[]` | 1 | `[54]` | `[0.600712]` | `[]` / `[]` / 0 |
+| 11 | `high_heading_short` | 0 | 0 | `[]` | 1 | `[66]` | `[1.2e-05]` | `[]` / `[]` / 0 |
+| 12 | `high_heading_short` | 0 | 0 | `[]` | 1 | `[44]` | `[5.1e-05]` | `[]` / `[]` / 0 |
+| 15 | `low_heading_low_clearance` | 0 | 0 | `[]` | 1 | `[29]` | `[0.001805]` | `[]` / `[]` / 0 |
+| 16 | `lower_stress_control` | 0 | 0 | `[]` | 2 | `[33, 20]` | `[0.0, 0.0]` | `[]` / `[]` / 0 |
+| 18 | `lower_stress_control` | 0 | 0 | `[]` | 1 | `[63]` | `[0.027609]` | `[]` / `[]` / 0 |
+
+## Interpretation
+
+- SCENARIOS: opportunity in the current source-supported vehicle family is still sparse and concentrated, but absence of adaptive opportunity is not established because v1d selected no states from the two Stage1 cases with episode-level physical gain >= 3.
+- REWARD/TERMINAL/VALUE: objective/terminal repair and raw objective imitation remain unsupported; terminal-stable labels are still required before any selector target is trusted.
+- TRAINING: the failed v1d label gate should not trigger selector/value training; it currently diagnoses state-selection coverage rather than a trainable label bank.
+- COMPARISONS: shorter H or oracle branch labels do not prove speed; any follow-up must keep physical cost, success/safety and repeated measured decision time separate against fixed-H/Pareto baselines.
+
+## Next discriminating intervention
+
+Freeze a compact IMPROVED v1e targeted common-prefix continuation smoke (development only, no validation64/test): rerun common H15-prefix branch comparisons for the missed episode-positive cases, especially Stage2's prefix-blocked case5 branch-step 18 candidate, plus case1/case4 high-trace states and negative/control states.  Acceptance should require >=2 terminal-stable material positive states from at least two cases, retained negatives/controls, and no prefix/state/safety artifacts before any selector/value refit.  If it fails, pivot toward versioned scenario/opportunity redesign or richer dynamics/terminal-value modeling rather than another unchanged label-density sweep.
+
+Backup request: `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_VEHICLE_STRESS_V1D_STATE_COVERAGE_OPPORTUNITY_POSTDIAGNOSTIC_V0_20260929T0435Z.json`.
+
+## vehicle_stress_v1d_stage2_crossbank_identity_audit_v0-20260929T0445Z
+
+# Vehicle stress-v1d / Stage2 cross-bank identity audit v0
+
+UTC: `2026-09-29T04:21:11.547953+00:00`. Development-only no-simulation audit; validation64 and sealed test stayed closed.
+
+## Headline
+
+- Classification: `stage2_prefix_blocked_candidates_are_cross_bank_not_valid_v1d_targets`.
+- Stage2 v0b source Stage1 raw: `research_artifacts/aws_diagnostics/vehicle_stress_scenario_opportunity_probe_v0_stage1_20260928/raw.json`.
+- Stress-v1 Stage1 raw: `research_artifacts/aws_diagnostics/vehicle_stress_scenario_opportunity_probe_v1_stage1_20260928T2045Z/raw.json`.
+- Stage2 v0b rollout time precedes stress-v1 Stage1/postdiagnostic: `True`.
+- Prefix-blocked Stage2 candidate cases in prior coverage diagnostic: `[5]`.
+- Same-case identity supported for those cases: `[]`; mismatched cases: `[1, 4, 5, 6]`.
+- Corrective decision: `downgrade prior prefix-blocked case5 evidence to legacy/provenance diagnostic only; do not use it as stress-v1/v1d target evidence`.
+- Train/refit now: `False`.
+- Next action: `freeze stress-v1-only v1e targeted common-prefix target-preparation/protocol before any rollout`.
+
+## Case identity comparisons
+
+| case | v1 source idx/theta/traj/group | stage2-v0b source idx/theta/traj/group | same identity? |
+|---:|---|---|---:|
+| 1 | `101` / `-0.5773938991142985` / `87` / `high_heading_long_or_medium` | `None` / `None` / `None` / `None` | 0 |
+| 4 | `127` / `-0.5854361683372875` / `86` / `high_heading_long_or_medium` | `11` / `-0.6458841144466452` / `63` / `stress` | 0 |
+| 5 | `148` / `0.6077726581324596` / `98` / `high_heading_long_or_medium` | `34` / `-0.613104347801943` / `94` / `stress` | 0 |
+| 6 | `49` / `0.6453497915281274` / `99` / `high_heading_long_or_medium` | `None` / `None` / `None` / `None` | 0 |
+
+## Interpretation
+
+- SCENARIOS/IMPLEMENTATION: the previous state-coverage result correctly shows that v1d missed stress-v1 episode-positive cases 4 and 5, but the Stage2 prefix-blocked case5 candidates came from an older stress-v0 Stage1 bank and must not be treated as same-case evidence for stress-v1/v1d case5.
+- REWARD/TERMINAL/VALUE: objective/terminal repair remains unsupported; this audit only corrects candidate provenance and does not create selector labels.
+- TRAINING: do not train/refit now. The valid next rollout, if backed up, must target stress-v1 H15 traces for missed cases 4/5 (and controls) directly rather than replaying older Stage2-v0b case ids as positives.
+- COMPARISONS: no timing or adaptive-performance claim is made; all future speed claims still require blocked repeated measured timing against fixed-H/Pareto baselines.
+
+## Revised next discriminating intervention
+
+Freeze a v1e stress-v1-only targeted common-prefix smoke: choose states from stress-v1 Stage1 H15 traces for cases 4 and 5 (plus runner-material case1/6 and negative/control cases), before any non-H15 branch outcomes; include horizons [10,15,20,25,30,45,50] and terminal-stable modes [zero_terminal,H15_common_terminal]. Acceptance before any refit remains >=2 terminal-stable material positive states across >=2 stress-v1 cases, retained controls, and zero prefix/state/safety artifacts. This replaces using the older Stage2-v0b prefix-blocked candidates as v1d targets.
+
+Backup request: `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_VEHICLE_STRESS_V1D_STAGE2_CROSSBANK_IDENTITY_AUDIT_V0_20260929T0445Z.json`.

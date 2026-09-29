@@ -3760,3 +3760,19 @@ UTC: 2026-09-29T03:40:02.024862+00:00. No-simulation dry-run built a frozen 186-
 
 ## 2026-09-29T03:43:08.117831+00:00
 
+<!-- vehicle-v1d-compute-tradeoff-single-run-gate-postdiagnostic-v0-20260929T0415Z -->
+## 2026-09-29 vehicle v1d compute-tradeoff single-run gate postdiagnostic
+
+UTC: 2026-09-29T03:44:19.713265+00:00. No-simulation diagnostic applied the frozen repeated-timing confirmation gate to existing v1d single-run branch rows for the 6 H10-labelled states plus 4 negative controls. Strict confirmed H10-labelled states=1/6, relaxed=6/6, strict negative controls=0/4, missing required arms=0. Decision: do not spend the 186-episode confirmation yet; freeze negative/absorbed compute-opportunity diagnosis or design a versioned scenario/value diagnostic. No validation64/sealed-test access and no training/refit. Backup requested at `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_VEHICLE_V1D_COMPUTE_TRADEOFF_SINGLE_RUN_GATE_POSTDIAGNOSTIC_V0_20260929T0415Z.json` before further simulation.
+
+
+## 2026-09-29T03:48:38.105900+00:00
+
+<!-- vehicle-v1d-compute-tradeoff-oracle-upper-bound-postdiagnostic-v0-20260929T0355Z -->
+## 2026-09-29 vehicle v1d compute-tradeoff oracle upper-bound postdiagnostic
+
+UTC: 2026-09-29T03:49:04.748176+00:00. No-simulation upper-bound analysis over existing v1d branch rows: strict state-level H10 oracle selects H10 in 1/10 states and saves 1.08% decision time vs fixed H25 on this branch bank; relaxed labelled oracle saves 4.76% but is epsilon/terminal sensitive. Classification: `strict_compute_selector_upper_bound_too_sparse`. Decision: do not run the 186-episode repeated timing confirmation or selector/refit now; freeze a negative current-scenario compute-opportunity diagnosis, then design a versioned source-supported scenario/value diagnostic. No validation64/sealed-test access and no training/refit. Backup requested at `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_VEHICLE_V1D_COMPUTE_TRADEOFF_ORACLE_UPPER_BOUND_POSTDIAGNOSTIC_V0_20260929T0355Z.json` before further simulation.
+
+
+## 2026-09-29T03:51:48.151754+00:00
+

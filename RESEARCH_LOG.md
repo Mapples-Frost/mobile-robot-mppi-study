@@ -5038,3 +5038,77 @@ Research is not complete.
 
 ## 2026-09-29T18:14:52.589056+00:00
 
+<!-- vehicle-true-variable-H-risk-value-fast-refit-v10b-20260929T1815Z -->
+## 2026-09-29 vehicle true-variable-H v10b fast risk/value refit
+
+UTC: 2026-09-29T18:20:01.772872+00:00. Development-only opened-bank supervised/nonparametric refit after v10 timeout; no MPC simulation, no validation64, no sealed test. configs=1152; global_pass5=0; nested_save=0.0843; nested_bad=2; decision: Deployable risk/value refit still permits catastrophic H10 false positives; next freeze targeted risk-data acquisition around ambiguous catastrophic/near-safe states or richer terminal/risk value training, not validation rollout.. Artifacts: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_risk_value_fast_refit_v10b_20260929T1815Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_risk_value_fast_refit_v10b_20260929T1815Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_risk_value_fast_refit_v10b_20260929T1815Z/completed.json`.
+
+
+## 2026-09-29T18:20:49.873884+00:00
+Elapsed service lifetime: >79.4 h since 2026-09-26T10:55:29.419331Z. Cumulative server API total_tokens: unavailable from repository-visible state in this API turn; do not estimate; excludes desktop/API conversation.
+
+Concrete work completed this iteration:
+
+- Checked for Astra reviewer handoff: `docs/bohn2021_takeover/astra_reviews/LATEST.md` is not present, so no external-review recommendations were available to verify/action.
+- Used the verified backup from supervisor context before running science:
+  - commit `28446b7bb8e64ff83bfb07170ad3ad4a36f83ee7`
+  - backup time `2026-09-29T18:15:45.561429+00:00`
+  - `remaining_changed_files: 0`
+- Ran the bounded development-only refit:
+  - script: `experiments/bohn2021_aws/vehicle_true_variable_horizon_risk_value_fast_refit_v10b.py`
+  - registry: `research_artifacts/aws_runs/20260929T181625_f8de167a/registry.json`
+  - exit status: `0`
+  - runtime: `218.1 s`
+  - no MPC simulation, no training, no validation64, no sealed-test access.
+
+Scientific result from v10b:
+
+- Opened development rows: `56`
+- Banks: `fresh_v0`, `fresh_v1`, `fresh_v2`, `fresh_v8c`
+- Positive rows: `48`
+- Catastrophic H10 rows: `8`
+- Configs evaluated: `1152`
+- Selector/refit evaluations: `18436`
+- Global LOBO:
+  - pass10 configs: `0`
+  - pass5 configs: `0`
+  - best global config had zero catastrophic false positives but only `1.20%` minimum decision saving, below the weak 5% gate.
+- Nested opened-bank selection:
+  - decision saving vs fixed H15: `8.43%`
+  - H10 chosen rows: `20`
+  - catastrophic H10 false positives: `2`
+  - physical gate: `False`
+  - pass5: `False`
+  - pass10: `False`
+
+Interpretation:
+
+- v10b provides further negative evidence against simple deployable tree/kNN/poly risk-value selectors on the current 56 opened rows.
+- There is still branch-level compute opportunity, but current deployable representations cannot safely separate beneficial H10 from catastrophic H10 under nested bank holdout.
+- This supports the current hypothesis that the blocker is risk/terminal-value representation and/or missing targeted boundary examples, not simply sparse labels or absence of a control-compute tradeoff.
+- This does **not** justify validation64 rollout or sealed-test access.
+
+Artifacts produced:
+
+- `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_risk_value_fast_refit_v10b_20260929T1815Z/summary.md`
+- `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_risk_value_fast_refit_v10b_20260929T1815Z/raw.json`
+- `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_risk_value_fast_refit_v10b_20260929T1815Z/completed.json`
+- `research_artifacts/aws_protocols/vehicle_true_variable_horizon_risk_value_fast_refit_v10b_preoutcome_frozen_20260929T1815Z.json`
+- `research_artifacts/aws_state/continue_state_20260929T1815_after_risk_value_fast_refit_v10b.md`
+- `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_RISK_VALUE_FAST_REFIT_V10B_20260929T1815Z.json`
+
+Budget/accounting this iteration:
+
+- development MPC simulation episodes: `0`
+- development control steps: `0`
+- training episodes: `0`
+- gradient steps: `0`
+- selector/refit evaluations: `18436`
+- validation64 episodes: `0`
+- sealed-test episodes: `0`
+
+Current blocker / next safe action:
+
+- New v10b artifacts and doc/registry updates are not yet externally verified.
+- Per project policy, next iteration must first run/verify backup coverage for v10b before any further scientific simulation/training/refit.
+- After backup, the next scientific action should be a frozen v11 targeted risk-data acquisition or richer terminal/risk-value refit focused on ambiguous catastrophic/near-safe H10 boundary states, using development-only sources and no validation64/sealed-test access.

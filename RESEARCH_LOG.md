@@ -4660,3 +4660,13 @@ Artifacts: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_fai
 
 ## 2026-09-29T12:09:52.932665+00:00
 
+
+- 2026-09-29T12:11:15.604110+00:00 `vehicle_true_variable_horizon_delta_value_model_v4_lobo`: closed-form delta/risk value LOBO over opened fresh_v0/v1/v2; strong=0, weak=0, best_min_save=0.03178, bad=0; no validation64/test/simulation; artifacts `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_delta_value_model_v4_lobo_20260929T121112Z/summary.md`.
+
+
+## 2026-09-29T12:14:49.677322+00:00
+- 2026-09-29T12:15:33.708169+00:00 `vehicle_true_variable_horizon_terminal_causality_fresh_v5`: fresh-bank terminal-causality diagnostic; shared_cat=6, resolved_by_matched=1, persistent=5, flips=13; no simulation/validation/test; artifacts `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_terminal_causality_fresh_v5_20260929T121533Z/summary.md`.
+
+
+## 2026-09-29T12:19:07.562580+00:00
+

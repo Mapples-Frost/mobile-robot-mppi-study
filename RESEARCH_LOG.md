@@ -4674,3 +4674,13 @@ Artifacts: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_fai
 
 ## 2026-09-29T12:27:30.456846+00:00
 
+<!-- vehicle-true-variable-H-history-representation-v7-20260929T122843Z -->
+## 2026-09-29 true-variable-H history/static representation v7
+
+UTC: 2026-09-29T12:49:03.130935+00:00. Development-only opened-fresh-bank diagnostic, no simulations/control steps, no validation64, no sealed test, no gradient training. Headline: `{"best_online_history_bad": 1, "best_online_history_min_save": 0.1439090695782106, "best_online_history_variant": "v7_online_obs_pose_baseline_recomputed_d1_ml2_mp1_mc0_mg0", "best_same_step_bad": 3, "best_same_step_min_save": 0.12353000768917985, "best_same_step_variant": "v7_diagnostic_same_step_h15_solve_history_static_d1_ml2_mp1_mc0_mg0", "best_variant": "v7_online_obs_pose_baseline_recomputed_d1_ml2_mp1_mc0_mg0", "families": 5, "online_history_strong_candidates": 0, "online_history_weak_candidates": 0, "rows": 48, "same_step_strong_candidates": 0, "tree_fits": 3240, "tree_variants": 1080}`. Decision: History/static deployable features still fail opened-bank weak/strong gates. Prioritize targeted source-independent risk acquisition or value-function training/refit with richer risk/clearance representation rather than another selector-only sweep.
+
+Artifacts: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_history_representation_v7_lobo_20260929T122843Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_history_representation_v7_lobo_20260929T122843Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_history_representation_v7_lobo_20260929T122843Z/completed.json`. Backup request: `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_HISTORY_REPRESENTATION_V7_20260929T122843Z.json`.
+
+
+## 2026-09-29T12:51:34.623707+00:00
+

@@ -4464,3 +4464,19 @@ UTC: 2026-09-29T10:12:36.235821+00:00. Development-only fresh-source confirmatio
 
 ## 2026-09-29T10:22:30.899505+00:00
 
+<!-- vehicle-true-variable-H-guard-veto-diagnostic-v0-20260929T1035Z -->
+## 2026-09-29 vehicle true-variable-H guard/veto diagnostic v0
+
+UTC: 2026-09-29T10:23:39.042896+00:00. No-simulation development diagnostic after fresh-source confirmation failure. Source labels: {'agreement_positive_h10': 13, 'agreement_non_h10': 1, 'terminal_disagreement_or_missing': 12}; total 26 examples. Passing weak fresh shared-H15 variants: ['allNonposVeto_s1_raw_abs_l2_m1.5_v1.0', 'disagreementVeto_s1_raw_abs_l2_m1.5_v1.0', 'recall_s1_raw_abs_l2_agreementNeg_m1.5']; passing strong variants: ['allNonposVeto_s1_raw_abs_l2_m1.5_v1.0', 'disagreementVeto_s1_raw_abs_l2_m1.5_v1.0', 'recall_s1_raw_abs_l2_agreementNeg_m1.5']. Decision: Exploratory source-label veto/representation variants can exceed the strong 10% fresh development gate without catastrophic H10 false positives. Because this is outcome-informed, freeze a new fresh-source confirmation block for the top simple variant before any validation64/test access.. Artifacts: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_guard_veto_diagnostic_v0_20260929T1035Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_guard_veto_diagnostic_v0_20260929T1035Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_guard_veto_diagnostic_v0_20260929T1035Z/completed.json`.
+
+
+## 2026-09-29T10:27:01.462398+00:00
+
+<!-- vehicle-true-variable-H-fresh-source-confirmation-freeze-v1-20260929T1055Z -->
+## 2026-09-29 vehicle true-variable-H fresh-source confirmation freeze v1
+
+UTC: 2026-09-29T10:31:07.207110+00:00. Metadata-only/no-simulation protocol freeze completed for `disagreementVeto_s1_raw_abs_l2_m1.5_v1.0`. It excludes previous Stage1/oracle/risk sources and all v0 fresh-source candidate IDs [13, 37, 45, 155, 186, 205, 227, 245]; selected independent candidate IDs [161, 165, 27, 157, 171, 76, 111, 238]. Future runner budget is 136 episodes / 20400 control-step cap. No validation64/test/training/refit. Artifacts: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_fresh_source_confirmation_freeze_v1_20260929T1055Z/summary.md`, `research_artifacts/aws_protocols/vehicle_true_variable_horizon_fresh_source_confirmation_freeze_v1_frozen_20260929T1055Z.json`.
+
+
+## 2026-09-29T10:33:29.560533+00:00
+

@@ -4146,3 +4146,19 @@ UTC: 2026-09-29T06:21:53.357872+00:00. Metadata/no-rollout decomposition of the 
 
 ## 2026-09-29T06:23:54.185225+00:00
 
+<!-- vehicle-mpc-horizon-source-audit-v0-20260929T0630Z -->
+## 2026-09-29 vehicle MPC horizon source audit v0
+
+UTC: 2026-09-29T06:24:54.793907+00:00. No-simulation source audit after the v1e case5 timing decomposition. No rollouts, no training/refit, no validation64 bank, no sealed-test access. Classification: `trace_fixed_size_but_source_has_possible_rebuild_path_needs_targeted_instrumentation`. The audit supports treating current shorter-H timing as a fixed-size masked-horizon implementation issue rather than a selector label-density problem alone. Next action after backup: After backup, freeze a no/one-rollout instrumentation smoke around the possible rebuild path before any selector/refit. Backup request: `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_VEHICLE_MPC_HORIZON_SOURCE_AUDIT_V0_20260929T0630Z.json`.
+
+
+## 2026-09-29T06:28:02.711281+00:00
+
+<!-- vehicle-true-variable-horizon-case5-smoke-v0-dryrun-20260929T0640Z -->
+## 2026-09-29 vehicle true variable-horizon case5 smoke v0 dry-run
+
+UTC: 2026-09-29T06:34:58.895215+00:00. Metadata-only dry-run froze a four-episode development smoke to test true variable-dimension MPC controllers on the two v1e case5 H15-common-terminal positive states. Planned smoke: 4 direct branch episodes, cap 600 control steps, true `mpc.params.n_horizon` in [10, 15], no candidate resets, no training/refit, no validation64/sealed-test access. It is motivated by the fixed-size H50 AHMPC timing bottleneck and replaces another unchanged v1c/v1d/v1e label-density sweep. Smoke is blocked until verified backup covers `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_BEFORE_VEHICLE_TRUE_VARIABLE_HORIZON_CASE5_SMOKE_V0_RUN_20260929T0640Z.json` plus source/protocol/dry-run artifacts.
+
+
+## 2026-09-29T06:36:11.271451+00:00
+

@@ -5417,3 +5417,11 @@ Elapsed service lifetime at write: >83.3 h since 2026-09-26T10:55:29.419331Z. De
 
 ## 2026-09-29T22:18:33.015824+00:00
 
+
+
+## 2026-09-29T22:22:44.465710+00:00
+
+<!-- vehicle-true-variable-H-v15-candidate-trace-preflight-v0b-20260929T2235Z -->
+## 2026-09-29 vehicle true-variable-H v15 candidate trace preflight v0b
+
+Elapsed service lifetime at write: >83.5 h since 2026-09-26T10:55:29.419331Z. Development-only structural preflight; no MPC simulation, no selector refit/search, no gradient training, no validation64 or sealed test. Candidate branch states=24 across 8 traces; existing trace paths=8/8; parsed step coverage=8/8; blocked candidates=0. Decision: Inputs are structurally sufficient for a very small v15 smoke: implement/freeze paired H10/H15 continuation on the two false-positive center states first, then expand only if replay fidelity checks pass.. Artifacts: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v15_candidate_trace_preflight_v0b_20260929T2235Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v15_candidate_trace_preflight_v0b_20260929T2235Z/preflight.json`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v15_candidate_trace_preflight_v0b_20260929T2235Z/completed.json`.

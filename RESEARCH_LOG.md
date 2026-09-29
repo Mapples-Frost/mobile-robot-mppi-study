@@ -4041,3 +4041,76 @@ Next preserved action:
    - development only; no validation64; no sealed test.
 
 State was persisted via `update_state` with the active hypothesis, completed run, locked decisions, backup gate, and next experiment queue.
+
+<!-- vehicle-stress-v1e-case5-positive-stability-timing-v0-dryrun-20260929T0605Z -->
+## 2026-09-29 vehicle stress-v1e case5 positive stability/timing v0 dry-run
+
+UTC: 2026-09-29T05:56:00.632000+00:00. No-simulation readiness for a repeated paired diagnostic of the two v1e case-5 robust-positive states. Frozen design: 24 development episodes, cap 3600 control steps, H10 vs H15, terminal modes ['zero_terminal', 'h15_common_terminal'], repeats 3; no validation64 or sealed-test access; no training/refit. Run is blocked until verified backup covers `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_BEFORE_VEHICLE_STRESS_V1E_CASE5_POSITIVE_STABILITY_TIMING_V0_RUN_20260929T0605Z.json`.
+
+
+## 2026-09-29T05:56:57.849543+00:00
+Elapsed service lifetime since first supervisor event (2026-09-26T10:55:29.419331Z): ~67.01 h / 2 d 19 h 0 m as of the completed dry-run.  
+Cumulative server API `total_tokens` from repository-accessible `research.sqlite`: unavailable; prior check found no usable token-usage table, so `0` is not treated as a measured cumulative count.
+
+Concrete action completed this iteration:
+
+- Ran exactly one bounded no-simulation dry-run:
+  - Script: `experiments/bohn2021_aws/vehicle_stress_v1e_case5_positive_stability_timing_v0_runner.py`
+  - Mode: `--dry-run`
+  - Interpreter: modern
+  - Registry: `research_artifacts/aws_runs/20260929T055600_a5c85728/registry.json`
+  - Exit status: `0`
+  - Runtime: ~2.01 s
+  - New rollouts/control steps/training/gradient/refit: `0/0/0/0/0`
+  - Validation64 opened: `False`
+  - Sealed test accessed: `False`
+
+What was frozen:
+
+- Diagnostic: repeated paired stability/timing check for the two v1e case-5 positive states:
+  - `v1e_t04_case05_cand148_b053_middle`
+  - `v1e_t05_case05_cand148_b054_late`
+- Design:
+  - H10 vs H15
+  - terminal modes: `zero_terminal`, `h15_common_terminal`
+  - 3 repeats
+  - planned episodes: `24`
+  - control-step cap: `3600`
+- Frozen protocol:
+  - `research_artifacts/aws_protocols/vehicle_stress_v1e_case5_positive_stability_timing_v0_frozen_20260929T0605Z.json`
+  - protocol SHA256: `2cf2775e8c0a4f220d4bae00101577533dc9df278f681805f3fdf0bc4a39feb9`
+
+Artifacts created/verified:
+
+- `research_artifacts/aws_diagnostics/vehicle_stress_v1e_case5_positive_stability_timing_v0_dryrun_20260929T0605Z/raw.json`
+- `research_artifacts/aws_diagnostics/vehicle_stress_v1e_case5_positive_stability_timing_v0_dryrun_20260929T0605Z/summary.md`
+- `research_artifacts/aws_diagnostics/vehicle_stress_v1e_case5_positive_stability_timing_v0_dryrun_20260929T0605Z/completed.json`
+- `research_artifacts/aws_state/vehicle_stress_v1e_case5_positive_stability_timing_v0_dryrun_20260929T0605Z.md`
+- Backup request before any more simulation:
+  - `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_BEFORE_VEHICLE_STRESS_V1E_CASE5_POSITIVE_STABILITY_TIMING_V0_RUN_20260929T0605Z.json`
+
+Scientific decision preserved:
+
+- Do **not** train/refit a selector from v1e labels: positives are only `2/12` states and confined to case 5.
+- This dry-run is not validation evidence, not final-test evidence, and not a speed claim.
+- The next simulation should be the frozen 24-episode paired case5 diagnostic, not another unchanged label-density sweep.
+
+Current blocker:
+
+- More simulations are blocked until a verified external backup covers the new dry-run/protocol/source/docs/request artifacts.
+- I attempted to schedule `scripts/research_service/backup.py`, but the tool rejected a second experiment in this iteration with: “One experiment per iteration.” Backup itself did not fail or run.
+
+Next preserved action:
+
+1. Run `scripts/research_service/backup.py` as the next bounded experiment.
+2. Verify `status=verified` and `remaining_changed_files=0`.
+3. Then run, with legacy interpreter:
+
+```bash
+experiments/bohn2021_aws/vehicle_stress_v1e_case5_positive_stability_timing_v0_runner.py \
+  --run-repeats \
+  --backup-proof <verified_post_dryrun_backup_proof> \
+  --i-accept-development-v1e-case5-stability-timing-v0
+```
+
+State was persisted with the active hypothesis, evidence, locked decisions, backup gate, and next-experiment queue.

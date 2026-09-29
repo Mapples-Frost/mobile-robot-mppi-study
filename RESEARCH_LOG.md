@@ -4118,3 +4118,23 @@ State was persisted with the active hypothesis, evidence, locked decisions, back
 
 ## 2026-09-29T06:02:19.742677+00:00
 
+<!-- backup-failure-status-capture-after-case5-dryrun-v0-20260929T0600Z -->
+## 2026-09-29 backup status capture after case5 dry-run backup failure
+
+UTC: 2026-09-29T06:03:36.445026+00:00. Metadata-only capture of supervisor backup state completed with no simulations, no control steps, no training/refit, no validation64-bank access and no sealed-test access.
+The preceding backup attempt registry is `research_artifacts/aws_runs/20260929T055736_7b5b40b7/registry.json` with exit status `1` and runtime seconds `34.02472666601534`.
+Backup status classification: adequate post-case5-dryrun backup=`False`; reasons=`['status_file_missing_or_unreadable']`.
+Minimum required backup time for the case5 run is `None`.
+Next action: `retry scripts/research_service/backup.py once; if it fails again, continue infrastructure diagnosis before simulations`. Artifacts: `research_artifacts/aws_diagnostics/backup_failure_status_capture_after_case5_dryrun_v0_20260929T0600Z/summary.md`, `research_artifacts/aws_diagnostics/backup_failure_status_capture_after_case5_dryrun_v0_20260929T0600Z/completed.json`.
+
+
+## 2026-09-29T06:06:26.936696+00:00
+
+<!-- vehicle-stress-v1e-case5-positive-stability-timing-v0-run-20260929T0605Z -->
+## 2026-09-29 vehicle stress-v1e case5 positive stability/timing v0 run
+
+UTC: 2026-09-29T06:15:47.686870+00:00. Development-only repeated H10-vs-H15 diagnostic completed on the two v1e case-5 positive states: 24 episodes, 2280 control steps. Material pairs=12/12, all_group_stable_2_of_3=True, overall median relative H10 decision-time saving=-0.024332120133337094, pass_to_next_design_consideration=False. No validation64-bank or sealed-test access; no training/refit. Artifacts: `research_artifacts/aws_diagnostics/vehicle_stress_v1e_case5_positive_stability_timing_v0_run_20260929T0605Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_stress_v1e_case5_positive_stability_timing_v0_run_20260929T0605Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_stress_v1e_case5_positive_stability_timing_v0_run_20260929T0605Z/completed.json`.
+
+
+## 2026-09-29T06:18:01.032303+00:00
+

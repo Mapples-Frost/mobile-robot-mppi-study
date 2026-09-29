@@ -296,13 +296,17 @@ def cycle():
                                      unique_files=len({x['path'] for x in audit['inspected']}),updated=now()))
         if not calls and texts:
             candidate='\n\n'.join(texts)
-            if len(candidate)>1500 and len({x['path'] for x in audit['inspected']})>=20 and (turn>=16 or final):
+            if len(candidate)>1500 and len({x['path'] for x in audit['inspected']})>=(8 if final else 20) and (turn>=16 or final):
                 report=candidate
                 break
             if final:
-                raise RuntimeError('Audit insufficient: no substantive report/evidence coverage')
+                audit.update(status='insufficient_evidence',ended=now())
+                save(WORK/'checkpoint.json',audit)
+                raise RuntimeError('Audit insufficient: no substantive report/evidence coverage; next bounded cycle will revisit omitted evidence')
             items.append(dict(role='user',content='Continue the audit with primary evidence tools. A short preliminary answer is not the requested comprehensive report.'))
     if not report:
+        audit.update(status='insufficient_evidence',ended=now())
+        save(WORK/'checkpoint.json',audit)
         raise RuntimeError('No substantive report produced within bounded cycle')
     audit.update(status='completed',completed=now(),commit_end=git('rev-parse','HEAD'))
     report_name=audit['audit_id']+'.md'

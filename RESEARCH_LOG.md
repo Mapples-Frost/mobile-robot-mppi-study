@@ -3696,3 +3696,15 @@ UTC: 2026-09-29T01:51:16.916158+00:00. Development-only terminal-stable label-de
 
 ## 2026-09-29T01:52:31.883015+00:00
 
+
+
+## 2026-09-29T01:57:18.562580+00:00
+
+<!-- vehicle-stress-v1c-terminal-stable-smoke-reanalysis-v0-20260929T0205Z -->
+## 2026-09-29 vehicle stress-v1c terminal-stable smoke reanalysis v0
+
+UTC: 2026-09-29T01:57:43.455155+00:00. No-simulation development reanalysis completed. Legacy prefix-hash mismatches were diagnosed as bookkeeping over-blocking: legacy mismatches=144, repaired physical-prefix mismatches=0, max physical-prefix deviation=0.0. Repaired robust-positive states remain 0 across cases []; repaired smoke gate=False. Therefore do not train/refit from v1c labels and do not run full v1c unchanged; next action is a versioned scenario/terminal-opportunity diagnostic on fresh source-supported states. No validation64/test access, no new rollouts/control steps/training. Artifacts: `research_artifacts/aws_diagnostics/vehicle_stress_v1c_terminal_stable_label_density_smoke_reanalysis_v0_20260929T0205Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_stress_v1c_terminal_stable_label_density_smoke_reanalysis_v0_20260929T0205Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_stress_v1c_terminal_stable_label_density_smoke_reanalysis_v0_20260929T0205Z/completed.json`.
+
+
+## 2026-09-29T02:00:41.449651+00:00
+

@@ -6,3 +6,5 @@ agent.env
 *.secret
 research_artifacts/
 source_snapshots/
+
+reviewer.env

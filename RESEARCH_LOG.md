@@ -3708,3 +3708,11 @@ UTC: 2026-09-29T01:57:43.455155+00:00. No-simulation development reanalysis comp
 
 ## 2026-09-29T02:00:41.449651+00:00
 
+<!-- vehicle-stress-v1d-trace-selected-terminal-stable-opportunity-v0-dryrun-20260929T0210Z -->
+## 2026-09-29 vehicle stress-v1d trace-selected terminal-stable opportunity dry-run
+
+UTC: 2026-09-29T02:06:02.076034+00:00. No-simulation dry-run completed for the trace-selected terminal-stable opportunity probe. Verified frozen protocol `research_artifacts/aws_protocols/vehicle_stress_v1d_trace_selected_terminal_stable_opportunity_v0_frozen_20260929T0210Z.json`, v1c repaired smoke reanalysis `research_artifacts/aws_diagnostics/vehicle_stress_v1c_terminal_stable_label_density_smoke_reanalysis_v0_20260929T0205Z/completed.json`, and v1c bank marker `research_artifacts/aws_diagnostics/vehicle_stress_v1c_terminal_stable_label_density_probe_v0c_bank_20260929T0055Z_hash_repair/completed.json`. No candidate resets, rollouts, training/refit, validation64-bank access or sealed-test access. Planned smoke upper bound is 188 episodes/28200 control steps (20 H15 scan episodes plus 168 common-prefix branch episodes). Smoke is blocked until verified external backup covers the new runner/dry-run/protocol and request `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_BEFORE_VEHICLE_STRESS_V1D_TRACE_SELECTED_TERMINAL_STABLE_OPPORTUNITY_V0_SMOKE_20260929T0210Z.json`.
+
+
+## 2026-09-29T02:07:45.613230+00:00
+

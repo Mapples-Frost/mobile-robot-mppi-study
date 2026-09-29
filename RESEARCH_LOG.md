@@ -4234,3 +4234,19 @@ UTC: 2026-09-29T07:59:39.665914+00:00. Offline development diagnostic completed 
 
 ## 2026-09-29T08:03:54.253484+00:00
 
+<!-- vehicle-true-variable-H-risk-anchor-acquisition-freeze-v0-20260929T0810Z -->
+## 2026-09-29 vehicle true-variable-H risk-anchor acquisition freeze v0
+
+UTC: 2026-09-29T08:05:06.624876+00:00. Metadata-only/no-simulation protocol freeze completed after selector feasibility failed. Selector accepted for fresh rollout: False; primary labels {'10': 17, '15': 3, '25': 2}; H25 unique primary states 1; terminal-profile disagreements 5. Frozen source-independent protocol `research_artifacts/aws_protocols/vehicle_true_variable_horizon_risk_anchor_acquisition_freeze_v0_frozen_20260929T0810Z.json` selects 10 stress-v1 H15-trace targets outside oracle-bank cases, with 120 planned true-H branch episodes and cap 18000 control steps. No validation64/test/training/refit. Further simulation/training/refit requires verified backup covering `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_VEHICLE_TRUE_VARIABLE_HORIZON_RISK_ANCHOR_ACQUISITION_FREEZE_V0_20260929T0810Z.json` and this new source/protocol.
+
+
+## 2026-09-29T08:07:30.181582+00:00
+
+<!-- vehicle-true-variable-H-risk-anchor-acquisition-v0-dryrun-20260929T0825Z -->
+## 2026-09-29 vehicle true-variable-H risk-anchor acquisition v0 dry-run
+
+UTC: 2026-09-29T08:12:36.696857+00:00. Wrote and dry-ran `experiments/bohn2021_aws/vehicle_true_variable_horizon_risk_anchor_acquisition_v0_runner.py` with no simulations, no candidate resets, no training/refit, no validation64-bank access and no sealed-test access. It verifies the frozen source-independent risk-anchor protocol `research_artifacts/aws_protocols/vehicle_true_variable_horizon_risk_anchor_acquisition_freeze_v0_frozen_20260929T0810Z.json` (120 planned true-H branch episodes, cap 18000 control steps) after the selector-feasibility failure. Further simulation is blocked until verified external backup covers this runner/dry-run/freeze artifacts and `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_BEFORE_VEHICLE_TRUE_VARIABLE_HORIZON_RISK_ANCHOR_ACQUISITION_V0_RUN_20260929T0825Z.json`.
+
+
+## 2026-09-29T08:13:07.939324+00:00
+

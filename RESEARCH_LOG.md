@@ -4744,3 +4744,7 @@ experiments/bohn2021_aws/vehicle_true_variable_horizon_risk_probe_acquisition_v8
 ```
 
 Purpose remains unchanged: bounded development-only H10/H15 risk-probe acquisition to decide between terminal-value/objective refit, online risk/representation/training smoke, or a scenario-opportunity/design conclusion. No validation64 or sealed final-test access is authorized for this step.
+
+
+## 2026-09-29T13:07:08.556417+00:00
+

@@ -3968,3 +3968,76 @@ UTC: 2026-09-29T05:43:14.124635+00:00. Development-only v1e targeted common-pref
 
 ## 2026-09-29T05:45:53.242487+00:00
 
+
+
+## 2026-09-29T05:51:24.303194+00:00
+
+<!-- vehicle-stress-v1e-smoke-postdiagnostic-v0b-schema-repair-20260929T0600Z -->
+## 2026-09-29 vehicle stress-v1e smoke postdiagnostic v0b schema repair
+
+UTC: 2026-09-29T05:52:23.686516+00:00. No-simulation repaired postdiagnostic of the completed v1e v0b schema-repair smoke. Failed postdiagnostic v0 is preserved as a reporting/parser failure (missing `backup_request`; Markdown table columns misparsed) and is superseded. Authoritative parent raw analysis shows 2 robust-positive states across cases [5], 10 negative/neutral states, control positives 0/4, blocking artifacts 0, and gate=False. Positives are concentrated in case 5, so do not train/refit a selector from this bank. Next bounded action after backup: freeze and, after verified backup, run a small repeated positive-state stability/timing diagnostic for the two case-5 robust-positive H15-prefix states using paired H10 versus H15 under both terminal modes. No validation64 bank or sealed-test access; no training/refit. Artifacts: `research_artifacts/aws_diagnostics/vehicle_stress_v1e_smoke_postdiagnostic_v0b_schema_repair_20260929T0600Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_stress_v1e_smoke_postdiagnostic_v0b_schema_repair_20260929T0600Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_stress_v1e_smoke_postdiagnostic_v0b_schema_repair_20260929T0600Z/completed.json`.
+
+
+## 2026-09-29T05:54:33.370734+00:00
+Elapsed service lifetime since first supervisor event (2026-09-26T10:55:29.419331Z): ~66.95 h / ~2 d 18 h 57 m as of the completed run.  
+Cumulative server API `total_tokens` from repository-accessible `research.sqlite`: not reliably available; the script found no usable token-usage table (`sources=[]`) and reported `total_tokens=0`, so I am treating the cumulative token count as unavailable rather than as a measured zero.
+
+Concrete action completed this iteration:
+
+- Ran exactly one bounded no-simulation postdiagnostic:
+  - Script: `experiments/bohn2021_aws/vehicle_stress_v1e_smoke_postdiagnostic_v0b_schema_repair.py`
+  - SHA256: `53f4d570669961e8a9c5403c7e32763c52c78b10946f8ab4c92a64223ec083e1`
+  - Registry: `research_artifacts/aws_runs/20260929T055223_b0e5ed69/registry.json`
+  - Exit status: `0`
+  - Runtime: ~2.01 s
+  - New rollouts/control steps/training/gradient/refit: `0/0/0/0/0`
+  - Validation64 opened: `False`
+  - Sealed test accessed: `False`
+
+Key evidence inspected/produced:
+
+- Repaired the failed v1e smoke postdiagnostic:
+  - Failed v0 is preserved as a reporting/parser failure: missing `backup_request` and Markdown-table column misparse.
+  - v0b uses authoritative parent `raw.json -> analysis.state_rows`.
+- Parent v1e v0b smoke remains unchanged:
+  - `168` development episodes
+  - `14308` control steps
+  - no validation64/test access
+  - no training/refit
+- Authoritative v1e label result:
+  - Robust-positive states: `2/12`
+  - Robust-positive cases: `[5]` only
+  - Negative/neutral states: `10`
+  - Control positives: `0/4`
+  - Blocking artifacts: `0`
+  - Frozen selector/value-refit gate: `False`
+
+Scientific decision:
+
+- The result partially supports the target-state coverage hypothesis: v1d missed some relevant stress-v1 states, and targeted v1e sampling found two positives.
+- But the positives are too concentrated: both are adjacent states in case 5.
+- Therefore: do **not** train/refit a selector from the v1e labels.
+- The next informative action is not another unchanged label-density sweep. It is a bounded repeated paired diagnostic to test whether the two case-5 H10-vs-H15 positives are stable local opportunities or one-run solver/terminal/timing artifacts.
+
+Artifacts created:
+
+- `research_artifacts/aws_diagnostics/vehicle_stress_v1e_smoke_postdiagnostic_v0b_schema_repair_20260929T0600Z/summary.md`
+- `research_artifacts/aws_diagnostics/vehicle_stress_v1e_smoke_postdiagnostic_v0b_schema_repair_20260929T0600Z/raw.json`
+- `research_artifacts/aws_diagnostics/vehicle_stress_v1e_smoke_postdiagnostic_v0b_schema_repair_20260929T0600Z/completed.json`
+- `research_artifacts/aws_state/vehicle_stress_v1e_smoke_postdiagnostic_v0b_schema_repair_20260929T0600Z.md`
+- Backup request:
+  - `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_VEHICLE_STRESS_V1E_SMOKE_POSTDIAGNOSTIC_V0B_SCHEMA_REPAIR_20260929T0600Z.json`
+
+Next preserved action:
+
+1. Obtain/verify external backup covering the new postdiagnostic artifacts, docs/state updates, run registry, backup request, and the already-written case5 timing runner source.
+2. Then run the no-simulation dry-run:
+   - `experiments/bohn2021_aws/vehicle_stress_v1e_case5_positive_stability_timing_v0_runner.py --dry-run --i-accept-development-v1e-case5-stability-timing-v0`
+3. After that dry-run and its backup, run the 24-episode legacy repeated paired diagnostic:
+   - two case5 positive states
+   - H10 vs H15
+   - terminal modes `zero_terminal` and `h15_common_terminal`
+   - 3 repeats
+   - development only; no validation64; no sealed test.
+
+State was persisted via `update_state` with the active hypothesis, completed run, locked decisions, backup gate, and next experiment queue.

@@ -4692,3 +4692,55 @@ Artifacts: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_his
 
 ## 2026-09-29T13:00:26.125847+00:00
 
+
+
+## 2026-09-29T13:03:00.292196+00:00
+Elapsed service lifetime: >73.9 h since 2026-09-26T10:55:29.419331Z. Cumulative server API total_tokens: unavailable from repository-visible state in this API turn; not estimated; excludes desktop/API conversation.
+
+Concrete action completed this iteration:
+
+- Verified the latest supervisor-provided backup was externally recoverable before attempting new work:
+  - commit `9045afb78cda6f6406859c23c4c9649ac77e0d79`
+  - package sha256 `831ae6d59b7831577a7bdd7c6574d4c72d6d3d36dcc993a35b96e13803b5e04e`
+  - `remaining_changed_files=0`
+- Attempted the prepared v8 diagnostic:
+  - `experiments/bohn2021_aws/vehicle_true_variable_horizon_risk_probe_acquisition_v8.py`
+- The run failed immediately before any simulation because the script requires `--backup-verified-commit`.
+  - Failed registry: `research_artifacts/aws_runs/20260929T130126_7323a6e1/registry.json`
+  - Exit status: `2`
+  - Runtime: ~2.0 s
+- Prepared the corrected invocation, but the one-experiment-per-iteration guard correctly blocked a second run in the same bounded cycle.
+
+Safety/access accounting:
+
+- New development simulation episodes: `0`
+- New control steps: `0`
+- New training episodes / gradient steps / refit steps: `0`
+- Validation64 opened: `false`
+- Sealed test opened: `false`
+- Mobile-robot MPPI resumed: `false`
+- No scientific result changed; this was an invocation/protocol-gate failure only.
+
+State preserved:
+
+- Wrote handoff:
+  - `research_artifacts/aws_state/continue_state_20260929T1302_after_v8_arg_failure.md`
+  - sha256 `af751f1b71a860c0642e639ed1dc0c3e6afd58817a03db281c24db869f47c198`
+- Wrote backup request:
+  - `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_V8_ARG_FAILURE_20260929T1302Z.json`
+  - sha256 `ba7075650e953b9ad19bb940b0ded93ebfbcddee3fdafd97229610c4d333f538`
+- Persisted next action via `update_state`.
+
+Next concrete action:
+
+1. Verify/request external backup covering the failed v8 registry and new handoff files.
+2. Then run corrected v8 exactly once:
+
+```text
+experiments/bohn2021_aws/vehicle_true_variable_horizon_risk_probe_acquisition_v8.py
+--run
+--backup-verified-commit <latest_verified_backup_commit>
+--i-accept-development-risk-probe-v8
+```
+
+Purpose remains unchanged: bounded development-only H10/H15 risk-probe acquisition to decide between terminal-value/objective refit, online risk/representation/training smoke, or a scenario-opportunity/design conclusion. No validation64 or sealed final-test access is authorized for this step.

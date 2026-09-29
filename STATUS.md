@@ -1001,3 +1001,8 @@ UTC: 2026-09-29T04:31:34.690006+00:00. No-simulation readiness diagnostic comple
 ## 2026-09-29 vehicle stress-v1e targeted common-prefix smoke v0b schema-repair dry-run
 
 UTC: 2026-09-29T04:42:19.715892+00:00. No-simulation schema repair readiness completed. Parent v0 failure is confirmed as `KeyError('role')`; v0b changes only the schedule-item role alias (`role = case_role`) before calling the inherited branch runner. Frozen v1e targets/schedule/gate remain unchanged: 168 planned episodes, control-step cap 25200, no training/refit, no validation64 or sealed-test access. Run is blocked until verified external backup covers `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_BEFORE_VEHICLE_STRESS_V1E_TARGETED_COMMON_PREFIX_SMOKE_V0B_SCHEMA_REPAIR_RUN_20260929T0545Z.json` and v0b source/amendment/dry-run artifacts.
+
+<!-- vehicle-stress-v1e-targeted-common-prefix-smoke-v0b-schema-repair-run-20260929T0545Z -->
+## 2026-09-29 vehicle stress-v1e targeted common-prefix smoke v0b schema-repair run
+
+UTC: 2026-09-29T05:43:14.124635+00:00. Development-only v1e targeted common-prefix smoke completed after one-variable role-alias schema repair: 168 episodes, 14308 control steps. Robust-positive states=2 across cases=[5]; gate=False; blocking artifacts=0. No validation64-bank or sealed-test access, no training/refit. Artifacts: `research_artifacts/aws_diagnostics/vehicle_stress_v1e_targeted_common_prefix_smoke_v0b_schema_repair_run_20260929T0545Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_stress_v1e_targeted_common_prefix_smoke_v0b_schema_repair_run_20260929T0545Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_stress_v1e_targeted_common_prefix_smoke_v0b_schema_repair_run_20260929T0545Z/completed.json`.

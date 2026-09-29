@@ -4250,3 +4250,11 @@ UTC: 2026-09-29T08:12:36.696857+00:00. Wrote and dry-ran `experiments/bohn2021_a
 
 ## 2026-09-29T08:13:07.939324+00:00
 
+<!-- vehicle-true-variable-H-risk-anchor-acquisition-v0-run-20260929T0825Z -->
+## 2026-09-29 vehicle true-variable-H risk-anchor acquisition v0 run
+
+UTC: 2026-09-29T08:25:34.518865+00:00. Development-only source-independent risk-anchor acquisition completed: 120 branch episodes, 4414 control steps, validation64 closed, sealed test closed, no training/refit. Gates: {'fresh_H15_H25_anchor_cases_or_all_H10_gate': True, 'stable_H15_H25_anchor_cases_or_all_H10_gate': False, 'terminal_consistency_not_dominated_gate': False, 'physical_gate_vs_H25_risk_anchor_primary': True, 'aggregate_decision_saving_gate_vs_H25_risk_anchor_primary': True, 'median_decision_saving_gate_vs_H25_risk_anchor_primary': True, 'safety_gate': True, 'fixed_short_not_absorbed_gate': False, 'pass_to_offline_deployable_selector_cv': False, 'train_or_refit_now': False}. Risk labels: {'10': 6, '15': 3, '25': 1}. Decision: block selector refit; prioritize terminal-value/objective/modeling repair because labels are terminal-profile dependent or too concentrated. Artifacts: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_risk_anchor_acquisition_v0_run_20260929T0825Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_risk_anchor_acquisition_v0_run_20260929T0825Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_risk_anchor_acquisition_v0_run_20260929T0825Z/completed.json`.
+
+
+## 2026-09-29T08:28:32.026640+00:00
+

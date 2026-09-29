@@ -690,3 +690,8 @@ Backup request before v1e smoke: `research_artifacts/aws_backup_proofs/REQUEST_B
 ## 2026-09-29 vehicle stress-v1e targeted common-prefix smoke v0 dry-run
 
 UTC: 2026-09-29T04:31:34.690006+00:00. No-simulation readiness diagnostic completed for the stress-v1-only v1e common-prefix smoke. Verified the frozen prepare protocol, 12 targets, 168 scheduled episodes, stress-v1 bank target/candidate consistency and closed validation/test access. Rollout remains blocked until verified external backup covers `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_BEFORE_VEHICLE_STRESS_V1E_TARGETED_COMMON_PREFIX_SMOKE_V0_RUN_20260929T0515Z.json` plus this runner/dry-run/protocol/prepare artifacts.
+
+<!-- vehicle-stress-v1e-targeted-common-prefix-smoke-v0b-schema-repair-dryrun-20260929T0545Z -->
+## 2026-09-29 vehicle stress-v1e targeted common-prefix smoke v0b schema-repair dry-run
+
+UTC: 2026-09-29T04:42:19.715892+00:00. No-simulation schema repair readiness completed. Parent v0 failure is confirmed as `KeyError('role')`; v0b changes only the schedule-item role alias (`role = case_role`) before calling the inherited branch runner. Frozen v1e targets/schedule/gate remain unchanged: 168 planned episodes, control-step cap 25200, no training/refit, no validation64 or sealed-test access. Run is blocked until verified external backup covers `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_BEFORE_VEHICLE_STRESS_V1E_TARGETED_COMMON_PREFIX_SMOKE_V0B_SCHEMA_REPAIR_RUN_20260929T0545Z.json` and v0b source/amendment/dry-run artifacts.

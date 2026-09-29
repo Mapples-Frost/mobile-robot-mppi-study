@@ -5211,3 +5211,110 @@ UTC: 2026-09-29T20:41:46.782259+00:00. Development-only IMPROVED relabel/refit o
 
 ## 2026-09-29T21:55:03.866674+00:00
 
+<!-- vehicle-true-variable-H-history-feature-refit-v13b-20260929T2150Z -->
+## 2026-09-29 vehicle true-variable-H v13b compact/cached history-feature refit
+
+UTC: 2026-09-29T21:56:27.648118+00:00. Development-only IMPROVED compact/cached H15-prefix history-feature conservative support refit; no MPC simulation, no validation64, no sealed test, no gradient training. rows=68; traces=68/68; global_pass5=0; nested_save=0.0150; nested_bad=1; nested_pass5=False; decision: H15-prefix history/static engineered features still do not yield a safe deployable selector; next prioritize explicit risk/terminal-value learning/refit with uncertainty or targeted boundary acquisition, not another static-feature sweep or validation rollout.. Artifacts: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_history_feature_refit_v13b_fast_20260929T2150Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_history_feature_refit_v13b_fast_20260929T2150Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_history_feature_refit_v13b_fast_20260929T2150Z/completed.json`.
+
+
+## 2026-09-29T21:57:25.372566+00:00
+Elapsed service lifetime: >83.0 h since 2026-09-26T10:55:29.419331Z. Cumulative server API total_tokens: unavailable from repository-visible state in this API turn; do not estimate; excludes desktop/API conversation.
+
+Concrete actions completed this iteration:
+
+1. **Astra review check**
+   - Checked `docs/bohn2021_takeover/astra_reviews/LATEST.md`.
+   - No file exists, so no Astra recommendations required disposition this cycle.
+
+2. **Backup gate before science**
+   - Confirmed latest verified backup from supervisor context before the run:
+     - commit `bbc343c32a9f29ca049ac952bfcae221b9c09450`
+     - package SHA256 `c9690f98d8edf16497a1cb6970286593cfcc67115e35b87960f20462e4d3423e`
+     - remaining changed files `0`
+   - This cleared the prior backup blocker for running v13b.
+
+3. **Ran v13b compact/cached history-feature refit**
+   - Script: `experiments/bohn2021_aws/vehicle_true_variable_horizon_history_feature_refit_v13b_fast.py`
+   - Registry: `research_artifacts/aws_runs/20260929T215618_84fa94cb/registry.json`
+   - Runtime: ~10.0 s
+   - Classification: development-only IMPROVED refit; no MPC simulation, no gradient training, no validation64, no sealed test.
+   - Actual budget:
+     - development MPC episodes: `0`
+     - control steps: `0`
+     - training episodes: `0`
+     - gradient steps: `0`
+     - selector refit evaluations: `24,305`
+     - validation64 episodes: `0`
+     - sealed test episodes: `0`
+
+4. **v13b result**
+   - Rows: `68`
+   - Banks: `fresh_v0`, `fresh_v1`, `fresh_v11`, `fresh_v2`, `fresh_v8c`
+   - Positive H10-beneficial rows: `58`
+   - Catastrophic H10 rows: `10`
+   - H15-prefix traces loaded: `68/68`
+   - Feature counts:
+     - base_no_history: `48`
+     - history_no_risk: `136`
+     - history_with_risk: `137`
+   - Compact configs: `972`
+   - Global pass10 count: `0`
+   - Global pass5 count: `0`
+   - History-family global pass5 count: `0`
+   - Best global config:
+     - `v13b_base_no_history_k1_cg1.25_q0.5_m0.75_g0.0_p2.0`
+     - bad/catastrophic false positives: `0`
+     - H10 choices: `10`
+     - min decision saving vs fixed H15: `0.00%`
+     - average decision saving vs fixed H15: `4.53%`
+   - Nested aggregate:
+     - decision saving vs fixed H15: `1.50%`
+     - catastrophic H10 false positives: `1`
+     - physical gate: `True`
+     - H10 choices: `7`
+     - pass5: `False`
+     - pass10: `False`
+
+5. **Scientific conclusion**
+   - v13b directly tested the H15-prefix history-feature hypothesis after v13 timed out.
+   - Result: **failed weak and strong opened-development gates**.
+   - Interpretation: engineered deployable static/history support features still do not yield a safe useful selector. The bottleneck is more likely calibrated catastrophic-risk / continuation-value estimation under uncertainty, and/or insufficient boundary labels—not simply sparse positive labels or lack of adaptive opportunity.
+   - No validation rollout is justified.
+
+6. **Artifacts produced**
+   - `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_history_feature_refit_v13b_fast_20260929T2150Z/summary.md`
+   - `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_history_feature_refit_v13b_fast_20260929T2150Z/raw.json`
+   - `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_history_feature_refit_v13b_fast_20260929T2150Z/completed.json`
+   - `research_artifacts/aws_protocols/vehicle_true_variable_horizon_history_feature_refit_v13b_fast_preoutcome_frozen_20260929T2150Z.json`
+   - `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_HISTORY_FEATURE_REFIT_V13B_20260929T2150Z.json`
+   - `research_artifacts/aws_state/continue_state_20260929T2150_after_history_feature_refit_v13b.md`
+   - Docs/registry were appended by the script.
+
+7. **State preserved**
+   - Durable supervisor state updated with:
+     - v13b result
+     - budget accounting
+     - new backup blocker
+     - next hypothesis and queue
+     - failure record for v13 timeout and v13b gate failure
+
+Current blocker:
+
+- v13b artifacts are **not yet covered by a verified external backup** in repository-visible state.
+- Backup request exists: `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_HISTORY_FEATURE_REFIT_V13B_20260929T2150Z.json`
+- Per contract, no further scientific simulation/refit should run until this backup is verified.
+
+Next action after backup verification:
+
+1. Inspect v13b raw only as needed to identify the nested false positive and ambiguous neighborhoods.
+2. Freeze v14 as an explicit calibrated risk/terminal-value intervention, not another static feature sweep.
+3. Preferred v14 direction:
+   - uncertainty-aware catastrophic-H10 risk model and continuation-cost/value predictor from deployable observation/history features;
+   - conservative abstention to H15;
+   - nested opened-bank LOBO selection;
+   - no validation64 or sealed test.
+4. If data remain too sparse or ambiguous, run a small targeted development-only boundary acquisition protocol with declared MPC episode/control-step budget before fitting.
+
+
+## 2026-09-29T22:01:48.308750+00:00
+

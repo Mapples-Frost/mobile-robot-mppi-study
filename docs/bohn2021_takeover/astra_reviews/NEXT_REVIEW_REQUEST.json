@@ -1,16 +1,16 @@
 {
-  "request_id": "execution-result:20260930T221310_30f1e04d",
+  "request_id": "execution-result:20260930T225820_a23414de",
   "trigger": "execution_result_handoff",
-  "created": "2026-09-30T22:13:18.984561+00:00",
-  "experiment_id": "20260930T221310_30f1e04d",
+  "created": "2026-09-30T22:58:23.146521+00:00",
+  "experiment_id": "20260930T225820_a23414de",
   "status": "analysis_requested",
-  "purpose": "Execute published solo plan S-BACKUP-RECHECK-STC2H8-current-status-v0c to determine whether an external backup proof postdating S-TC2H8 v0i unit diagnostic exists before any nonzero solver/plant microcontinuation.",
+  "purpose": "Run the published temporary solo task S-VAL64-all-shards-pairwise-summary-v0 to consolidate existing validation64 shard output artifacts into numerical learned-vs-fixed-H summaries and a case43 scan without consuming solver/plant/training/validation/test resources.",
   "execution_status": "complete",
   "question": "Active scientific lead: interpret this outcome, verify current raw evidence and select the next scientific action for GPT-5.5 implementation. Distinguish hypotheses from verified causes and account for fair baselines, terminal confounds and source-level generalization.",
   "evidence_paths": [
-    "research_artifacts/aws_diagnostics/backup_failure_status_capture_s_tc2h8_current_status_v0c_20260930T221311Z/completed.json",
-    "research_artifacts/aws_diagnostics/backup_failure_status_capture_s_tc2h8_current_status_v0c_20260930T221311Z/raw.json",
-    "research_artifacts/aws_diagnostics/backup_failure_status_capture_s_tc2h8_current_status_v0c_20260930T221311Z/summary.md",
-    "research_artifacts/aws_runs/20260930T221310_30f1e04d/registry.json"
+    "research_artifacts/aws_diagnostics/vehicle_validation64_all_shards_pairwise_summary_solo_v0_20260930T225821Z/raw.json",
+    "research_artifacts/aws_diagnostics/vehicle_validation64_all_shards_pairwise_summary_solo_v0_20260930T225821Z/summary.md",
+    "research_artifacts/aws_diagnostics/vehicle_validation64_all_shards_pairwise_summary_solo_v0_20260930T225821Z/completed.json",
+    "research_artifacts/aws_runs/20260930T225820_a23414de/registry.json"
   ]
 }

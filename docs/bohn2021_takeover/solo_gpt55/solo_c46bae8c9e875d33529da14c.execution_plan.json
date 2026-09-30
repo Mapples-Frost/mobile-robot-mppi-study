@@ -1,0 +1,106 @@
+{
+  "schema_version": 1,
+  "request_id": "execution-result:20260930T221310_30f1e04d",
+  "tasks": [
+    {
+      "task_id": "S-VAL64-all-shards-pairwise-summary-v0",
+      "description": "Run a zero-resource consolidation over already-created vehicle validation64 shard outputs. The script reads only existing shard00-11 raw.json and summary.md artifacts, not the validation bank/generator itself, and performs no controller/plant/solver execution, training, refit, new validation episodes, or sealed/final-test access. It will persist aggregate learned-vs-fixed-H numerical summaries, matched fixed-H comparisons and a compact case43 record scan to support the next bounded scientific decision while nonzero source242 microcontinuation remains blocked by the external backup HTTP-422/asset-cap issue.",
+      "script_patterns": [
+        "experiments/bohn2021_aws/vehicle_validation64_all_shards_pairwise_summary_solo_v0.py"
+      ],
+      "split": "diagnostic",
+      "method": "Zero-resource solo validation64 all-shard pairwise summary: read already-created shard00-11 raw.json and summary.md outputs only; no validation bank source opening; no solver/plant/controller execution; no training/refit; no new validation episodes; no sealed/final test; compute learned-vs-fixed-H numerical summaries and case43 compact record scan; persist raw/summary/completed outputs and backup request.",
+      "seeds": [
+        "validation64_existing_outputs_all_shards_no_new_random_seed"
+      ],
+      "config_constraints": {
+        "label_ORIGINAL_vs_IMPROVED": "IMPROVED_development_validation_output_diagnostic_only",
+        "authority_mode": "temporary_user_authorized_solo_self_review",
+        "follows_experiment_id": "20260930T223635_bebb1c92",
+        "follows_task_id": "S-TC2H8-source242-env-tvp-format-repair-v0j-task-id-binding-repair",
+        "reason_for_successor": "v0j repaired the structured task-ID binding but stopped at the inherited pre-resource external-backup gate; no verified post-S-TC2G external backup proof is available, so nonzero solver/plant microcontinuation remains scientifically blocked. A zero-resource consolidation of already-created validation64 outputs can still improve decision quality without accumulating new unrecoverable simulation evidence.",
+        "current_backup_blocker": "research_artifacts/aws_diagnostics/backup_failure_status_capture_s_tc2h8_current_status_v0c_20260930T221311Z/summary.md reports backup failed with GitHub asset upload HTTP 422 and no verified package metadata; v0j failed.json records zero-resource backup dependency failure.",
+        "input_root": "research_artifacts/aws_formal_validation/vehicle_validation64_20260926",
+        "expected_shards": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11
+        ],
+        "allowed_inputs": "only already-created shard raw.json and summary.md outputs under input_root; no validation bank source/generator file may be opened by this task",
+        "script": "experiments/bohn2021_aws/vehicle_validation64_all_shards_pairwise_summary_solo_v0.py",
+        "no_solver_calls": true,
+        "no_plant_steps": true,
+        "no_controller_execution": true,
+        "no_training_no_refit": true,
+        "no_new_validation_episodes": true,
+        "no_validation_bank_content_opening": true,
+        "no_sealed_or_final_test_access": true,
+        "must_not_read_secrets": true,
+        "development_only_not_final_acceptance": true,
+        "validation_outputs_are_development_evidence_not_final_test": true,
+        "case43_scan_is_from_existing_outputs_only": true,
+        "cumulative_S_TC2H_family_usage_before_this_task": {
+          "solver_calls": 9,
+          "plant_steps": 0,
+          "training_steps": 0,
+          "validation_episodes": 0,
+          "test_episodes": 0
+        },
+        "prior_v0j_failure_evidence": [
+          "research_artifacts/aws_runs/20260930T223635_bebb1c92/outcome_receipt.json",
+          "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34z2_source242_microcontinuation_v0j_task_id_binding_repair_20260930T223635Z/failed.json"
+        ]
+      },
+      "training_budget": {
+        "gradient_steps": 0,
+        "selector_refits": 0,
+        "training_steps": 0
+      },
+      "validation_budget": {
+        "new_validation_episodes": 0,
+        "validation_output_artifact_reads": 24,
+        "validation64_bank_opens": 0,
+        "solver_calls": 0,
+        "plant_steps": 0
+      },
+      "test_budget": {
+        "final_test_episodes": 0,
+        "sealed_test_episodes": 0
+      },
+      "resource_limits": {
+        "solver_calls": 0,
+        "plant_steps": 0,
+        "training_steps": 0,
+        "validation_episodes": 0,
+        "test_episodes": 0
+      },
+      "max_attempts": 1,
+      "max_zero_usage_repairs": 0,
+      "timeout_seconds": 900,
+      "dependencies": [],
+      "pass_conditions": {
+        "zero_solver_plant_training_validation_test_resources": true,
+        "all_12_shard_raw_files_read": true,
+        "all_12_shard_summaries_read": true,
+        "existing_validation_outputs_read_only": true,
+        "validation_bank_content_opened": false,
+        "sealed_or_final_test_accessed": false,
+        "aggregates_by_learned_seed_persisted": true,
+        "matched_fixed_h_grid_summary_persisted": true,
+        "case43_validation_development_record_summarized_if_present": true,
+        "outputs_persisted": true,
+        "backup_request_written": true
+      },
+      "continue_without_review": false
+    }
+  ]
+}

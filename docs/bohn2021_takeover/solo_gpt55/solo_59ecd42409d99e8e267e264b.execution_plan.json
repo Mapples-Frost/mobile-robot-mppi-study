@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "request_id": "execution-result:20260930T225820_a23414de",
+  "tasks": [
+    {
+      "task_id": "S-VAL64-learned-collapse-h35-pattern-diagnostic-v0",
+      "description": "Run an existing zero-resource diagnostic over already-created vehicle validation64 outputs to characterize learned-policy collapse and H35-switch/failure patterns after the all-shard pairwise summary showed learned_s0/s1 are constant H25 clones and learned_s2 is worse than its matched fixed-H25 comparator because of one catastrophic validation failure. The task must not open the validation bank/generator, must not run controllers/plants/solvers, must not train/refit, and must not access sealed/final tests. The purpose is to decide whether the next recoverable nonzero experiment should keep debugging the current latency-tree selector or pivot to true variable-dimension controller/value/scenario work once backup is restored.",
+      "script_patterns": [
+        "experiments/bohn2021_aws/vehicle_learned_policy_collapse_diagnostic_v3_full_validation64.py"
+      ],
+      "split": "diagnostic",
+      "method": "Zero-resource learned-policy collapse/H35-pattern diagnostic using existing validation64 output artifacts only; no validation bank source opening; no solver/plant/controller execution; no training/refit; no new validation episodes; no sealed/final test; summarize constant-H25 collapse for learned_s0/s1, learned_s2 H35 usage/failure concentration and implications for next nonzero development experiment.",
+      "seeds": [
+        "validation64_existing_outputs_all_shards_no_new_random_seed"
+      ],
+      "config_constraints": {
+        "label_ORIGINAL_vs_IMPROVED": "IMPROVED_development_validation_output_diagnostic_only",
+        "authority_mode": "temporary_user_authorized_solo_self_review",
+        "follows_experiment_id": "20260930T225820_a23414de",
+        "follows_task_id": "S-VAL64-all-shards-pairwise-summary-v0",
+        "primary_input_summary": "research_artifacts/aws_diagnostics/vehicle_validation64_all_shards_pairwise_summary_solo_v0_20260930T225821Z/summary.md",
+        "primary_input_raw": "research_artifacts/aws_diagnostics/vehicle_validation64_all_shards_pairwise_summary_solo_v0_20260930T225821Z/raw.json",
+        "evidence_motivation": "All-shard summary: learned_s0 and learned_s1 exactly match fixed H25 physically with zero switches; learned_s2 has 64 episodes, 63 successes, one failure, 178 switches, 409 H35 steps, physical mean 628.572 versus matched fixed H25 18.918, decision mean ratio 1.007. Case43 learned_s2 failed with 149 H25 and 1 H35 step while fixed H25 and fixed H35 comparators succeeded.",
+        "allowed_inputs": "already-created validation64 shard output artifacts and the just-created all-shard summary outputs; no validation bank/generator source file may be opened by this task",
+        "script": "experiments/bohn2021_aws/vehicle_learned_policy_collapse_diagnostic_v3_full_validation64.py",
+        "no_solver_calls": true,
+        "no_plant_steps": true,
+        "no_controller_execution": true,
+        "no_training_no_refit": true,
+        "no_new_validation_episodes": true,
+        "no_validation_bank_content_opening": true,
+        "no_sealed_or_final_test_access": true,
+        "must_not_read_secrets": true,
+        "development_only_not_final_acceptance": true,
+        "validation_outputs_are_development_evidence_not_final_test": true,
+        "do_not_repeat_backup_status_metadata_probe": true,
+        "prior_summary_evidence": [
+          "research_artifacts/aws_runs/20260930T225820_a23414de/outcome_receipt.json",
+          "research_artifacts/aws_diagnostics/vehicle_validation64_all_shards_pairwise_summary_solo_v0_20260930T225821Z/summary.md",
+          "research_artifacts/aws_diagnostics/vehicle_validation64_all_shards_pairwise_summary_solo_v0_20260930T225821Z/raw.json"
+        ],
+        "current_backup_blocker": "external backup remains failed with GitHub asset upload HTTP 422; this task is zero-resource and writes a backup request but does not unblock nonzero rollouts"
+      },
+      "training_budget": {
+        "gradient_steps": 0,
+        "selector_refits": 0,
+        "training_steps": 0
+      },
+      "validation_budget": {
+        "new_validation_episodes": 0,
+        "validation_output_artifact_reads": "existing_outputs_only",
+        "validation64_bank_opens": 0,
+        "solver_calls": 0,
+        "plant_steps": 0
+      },
+      "test_budget": {
+        "final_test_episodes": 0,
+        "sealed_test_episodes": 0
+      },
+      "resource_limits": {
+        "solver_calls": 0,
+        "plant_steps": 0,
+        "training_steps": 0,
+        "validation_episodes": 0,
+        "test_episodes": 0
+      },
+      "max_attempts": 1,
+      "max_zero_usage_repairs": 0,
+      "timeout_seconds": 900,
+      "dependencies": [],
+      "pass_conditions": {
+        "zero_solver_plant_training_validation_test_resources": true,
+        "existing_validation_outputs_read_only": true,
+        "validation_bank_content_opened": false,
+        "sealed_or_final_test_accessed": false,
+        "learned_constant_h25_collapse_quantified": true,
+        "learned_s2_h35_usage_and_failure_pattern_quantified": true,
+        "case43_failure_context_preserved": true,
+        "next_nonzero_experiment_implication_recorded": true,
+        "outputs_persisted": true,
+        "backup_request_written_or_existing_backup_blocker_recorded": true
+      },
+      "continue_without_review": false
+    }
+  ]
+}

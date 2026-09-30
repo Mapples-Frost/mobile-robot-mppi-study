@@ -8287,3 +8287,52 @@ Current scientific decision:
 
 ## 2026-09-30T23:46:35.774953+00:00
 
+
+
+## 2026-09-30T23:53:08.095035+00:00
+Elapsed/token status: last measured service lifetime/token audit was not refreshed this iteration. The latest inspected audit remains `2026-09-30T05:24:34Z`: elapsed `3d 18h 29m 5.432s`, cumulative server API tokens `277.411M`. Current cycle desktop-chat usage is excluded.
+
+Concrete actions completed:
+
+1. Tried to launch approved task `S-BACKUP-RECHECK-STC2H8-current-status-v0c`.
+   - First launch rejected before execution: `Frozen task field mismatch: method`.
+   - Cause: submitted method string did not exactly match the frozen plan.
+
+2. Inspected the active solo plan files:
+   - `docs/bohn2021_takeover/solo_gpt55/PLAN_READY.json`
+   - `docs/bohn2021_takeover/solo_gpt55/solo_1795139a55894f9fa839f528.execution_plan.json`
+
+3. Retried with the exact frozen method string and task fields.
+   - Rejected before execution: `One experiment per iteration: persist next action for the next bounded cycle`.
+   - No experiment script ran.
+
+4. Persisted durable next-state handoff:
+   - `research_artifacts/aws_state/continue_state_20260930T2355Z_after_backup_recheck_prelaunch_rejection.md`
+   - State also updated through `update_state`.
+
+Resources/access this iteration:
+- solver_calls: 0
+- plant_steps: 0
+- training_steps: 0
+- validation_episodes: 0
+- test_episodes: 0
+- registered experiments launched: 0
+- validation bank content opened: false
+- sealed/final test accessed: false
+- new AWS resources: false
+
+Next exact action:
+Run at the next bounded-cycle boundary:
+
+- task_id: `S-BACKUP-RECHECK-STC2H8-current-status-v0c`
+- script: `experiments/bohn2021_aws/backup_failure_status_capture_s_tc2h8_current_status_v0c.py`
+- interpreter: `modern`
+- split: `diagnostic`
+- seed: `no_random_seed_current_backup_state_only`
+- method: `Zero-resource current backup-gate status diagnostic for S-TC2H8/source242; inspect canonical backup_status/index/receipts and public GitHub release asset metadata only; no validation bank source opening; no solver/plant/controller execution; no training/refit; no validation episodes; no sealed/final test; produce raw/summary/completed outputs plus either a verified-proof materialization or backup retry request.`
+- resource_request: all five counters zero.
+
+Scientific status carried forward:
+- Current latency-tree IMPROVED path remains negative: s0/s1 collapse to constant H25; s2 uses H35 but is worse/slower than matched fixed H25 in existing validation-output summaries.
+- Case43 evidence supports singleton H35 at step 3 as causal for learned_s2 failure under current terminal/source setup, but this is development/validation evidence only.
+- Source242 true-variable-horizon microcontinuation remains the next meaningful controller-path measurement, but nonzero solver/plant execution is blocked until backup recoverability is verified.

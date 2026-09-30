@@ -1,0 +1,32 @@
+[Unit]
+Description=Claude Opus scientific lead with native read-only evidence tools
+After=network-online.target
+Wants=network-online.target
+RequiresMountsFor=/data/openai-agent
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/data/openai-agent/mobile-robot-mppi-study
+ExecStart=/usr/bin/python3 -u /data/openai-agent/mobile-robot-mppi-study/scripts/research_service/opus_lead.py
+Restart=on-failure
+RestartSec=60
+MemoryHigh=350M
+MemoryMax=500M
+CPUQuota=15%
+Nice=15
+IOSchedulingClass=idle
+TasksMax=32
+UMask=0077
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=read-only
+PrivateTmp=true
+ReadWritePaths=/data/openai-agent/state /data/openai-agent/mobile-robot-mppi-study/docs/bohn2021_takeover/opus_lead
+TimeoutStopSec=30
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

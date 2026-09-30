@@ -1513,3 +1513,8 @@ UTC: 2026-09-30T05:57:42.452614+00:00. Executed Astra-selected Task 1 as develop
 ## v33 bookkeeping preflight
 
 UTC `2026-09-30T07:45:44.815804+00:00`: gate passed `True`; schedule/raw/trace counts `72`/`72`/`72`, trace lines `4013`; zero rollout/solver/training, validation64 and sealed test closed. Artifacts `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v33_bookkeeping_preflight_v0_20260930T074544Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v33_bookkeeping_preflight_v0_20260930T074544Z/raw.json`. Backup required: `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_V33_BOOKKEEPING_PREFLIGHT_20260930T074544Z.json`.
+
+<!-- vehicle-v34c-contract-preflight-v0e-20260930T093751Z -->
+## 2026-09-30 v34c zero-solve objective-basin contract preflight
+
+UTC: 2026-09-30T09:39:32.043254+00:00. Executed Astra Task1 repair/preflight with 24 scheduled cells and 24 controlled intercepts before `mpc.solve`; lower-level solver calls=0, plant steps=0, training/refit=0, validation64=false, sealed test=false. hard_pass=True; vf4_ok=24/24; lterm_ok=24/24; group_failures=0. Artifacts: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34c_contract_preflight_v0e_20260930T093751Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34c_contract_preflight_v0e_20260930T093751Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34c_contract_preflight_v0e_20260930T093751Z/completed.json`. Backup request: `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_V34C_CONTRACT_PREFLIGHT_V0E_20260930T093751Z.json`.

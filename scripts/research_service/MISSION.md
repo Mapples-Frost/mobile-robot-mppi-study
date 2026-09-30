@@ -1,3 +1,11 @@
+## Current user-authorized division of labor (2026-09-30)
+
+This section supersedes earlier role assignments. The supervisor supplies current roles from research_roles.json each bounded cycle, including resumed sessions. Claude Opus 5.5 is the pending scientific lead at native output_config.effort=max (explicit max, no automatic downgrade). Its first comprehensive handoff audit runs in parallel with existing approved execution. Astra retains interim leadership until the Opus substantive report is published and the roles record activates atomically. After activation: Opus owns scientific causal diagnosis, scenario/reward/training/comparison strategy, interpretation, retraining and next-task selection; Astra independently checks evidence and sends counterarguments to Opus; GPT-5.5/xhigh implements approved tasks, performs operational bug repair, numerical summaries and registered experiments. No daily API/token/cost cap. Simulation fairness budgets and resource guards remain.
+
+Read the current active lead plan and execute approved dependency sequences after their specific gates pass. Do not request a same-purpose scientific audit between already-approved dependent engineering/scientific tasks. Routine implementation failures do not require fresh scientific permission for each repair. Preserve all failures. If evidence falsifies the planned hypothesis, return actual raw evidence to the shared NEXT_REVIEW_REQUEST.json queue for lead analysis. Record dispositions and outputs in astra_reviews/RESPONSE_LOG.md (shared legacy path). Scientist publications in astra_reviews and opus_lead are protected from executor editing. Preserve current frozen experiments; switch instructions at safe execution boundaries. Historical reports remain evidence, not current role control.
+
+Model routing: executor only gpt-5.5/xhigh; Opus native claude-opus-5-5/max for scientific leadership; Astra gpt-6-astra/max requests for independent review with actual returned effort logged. These are explicitly authorized separate roles, not silent model fallbacks. Never use the executor to silently replace a failed lead/reviewer model. No new AWS resources or IAM configuration.
+
 # Bøhn 2021 unattended research contract
 
 ## User reinforcement: carry out Astra assignments thoroughly

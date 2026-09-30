@@ -129,7 +129,7 @@ def execute(args):
     script_name=path.name.lower()
     if not any(word in script_name for word in ('backup','preflight','smoke','readiness','status_capture','inventory','registry','token_usage','gate_recheck','gate_preflight','pending_evidence')):
         evidence=[a['path'] for a in meta.get('artifact_inventory',[]) if a.get('exists') and a.get('path','').endswith(('summary.md','raw.json','completed.json'))]
-        dump(ROOT/'docs/bohn2021_takeover/astra_reviews/NEXT_REVIEW_REQUEST.json',dict(request_id='execution-result:'+eid,trigger='execution_result_handoff',created=now(),experiment_id=eid,status='analysis_requested',purpose=meta.get('purpose'),execution_status=meta['status'],question='Astra: interpret this outcome, verify current raw evidence and select the next scientific action for GPT-5.5 implementation. Distinguish hypotheses from verified causes and account for fair baselines, terminal confounds and source-level generalization.',evidence_paths=evidence+[str((dest/'registry.json').relative_to(ROOT))]))
+        dump(ROOT/'docs/bohn2021_takeover/astra_reviews/NEXT_REVIEW_REQUEST.json',dict(request_id='execution-result:'+eid,trigger='execution_result_handoff',created=now(),experiment_id=eid,status='analysis_requested',purpose=meta.get('purpose'),execution_status=meta['status'],question='Active scientific lead: interpret this outcome, verify current raw evidence and select the next scientific action for GPT-5.5 implementation. Distinguish hypotheses from verified causes and account for fair baselines, terminal confounds and source-level generalization.',evidence_paths=evidence+[str((dest/'registry.json').relative_to(ROOT))]))
     return dict(record=str(dest.relative_to(ROOT)/'registry.json'),exit_status=proc.returncode,runtime_seconds=meta['runtime_seconds'],stdout_tail=(dest/'stdout.log').read_text(errors='replace')[-12000:],stderr_tail=(dest/'stderr.log').read_text(errors='replace')[-8000:])
 
 def call_tool(name,args):
@@ -142,8 +142,9 @@ def call_tool(name,args):
         p=safe_path(args['path'])
         if str(p).startswith(str(SERVICE)):raise ValueError('Supervisor code is protected; write research extension scripts elsewhere')
         analyst_root=ROOT/'docs/bohn2021_takeover/astra_reviews'
-        if p.parent==analyst_root and p.name not in ('NEXT_REVIEW_REQUEST.json','RESPONSE_LOG.md'):
-            raise ValueError('Astra publications are protected; executor may only write analysis requests and responses here')
+        opus_root=ROOT/'docs/bohn2021_takeover/opus_lead'
+        if opus_root in p.parents or (analyst_root in p.parents and not (p.parent==analyst_root and p.name in ('NEXT_REVIEW_REQUEST.json','RESPONSE_LOG.md'))):
+            raise ValueError('Analyst publications are protected; use the shared analysis request and RESPONSE_LOG handoff')
         content=args['content']
         if any(s and s in content for s in REDACT):raise ValueError('Secret content forbidden')
         if p.exists():
@@ -197,19 +198,36 @@ def heartbeat():
             except OSError:pass
         time.sleep(30)
 
+def current_roles():
+    roles=load(STATE/'research_roles.json')
+    if roles.get('status')=='active' and roles.get('active_lead')=='claude-opus-5-5':
+        return roles
+    return dict(active_lead='gpt-6-astra',independent_reviewer='gpt-6-astra',executor='gpt-5.5',
+                lead_ready_path='docs/bohn2021_takeover/astra_reviews/ANALYSIS_READY.json',
+                lead_index_path='docs/bohn2021_takeover/astra_reviews/LATEST.md',status=roles.get('status','legacy'))
+
 def awaiting_astra_analysis():
+    # Retain the established function name for recovery compatibility; gate the active lead.
     out=ROOT/'docs/bohn2021_takeover/astra_reviews'
     try:
-        request=load(out/'NEXT_REVIEW_REQUEST.json')
+        roles=current_roles();request=load(out/'NEXT_REVIEW_REQUEST.json')
         if not request.get('request_id'):return False
-        ready=load(out/'ANALYSIS_READY.json')
+        ready=load(safe_path(roles['lead_ready_path']))
         if ready.get('request_id') != request['request_id'] and request['request_id'] not in ready.get('supersedes_request_ids',[]):return True
-        if ready.get('primary_analyst') != 'gpt-6-astra':return True
+        if ready.get('primary_analyst') != roles['active_lead']:return True
         report=safe_path(ready.get('report',''))
         expected=ready.get('report_sha256')
         return not (report.is_file() and expected and hashlib.sha256(report.read_bytes()).hexdigest()==expected)
-    except (OSError,ValueError,TypeError):
+    except (OSError,ValueError,TypeError,KeyError):
         return True
+
+def role_context():
+    roles=current_roles();ready=load(safe_path(roles['lead_ready_path']))
+    result=dict(roles=roles,latest_plan=ready)
+    if ready.get('report'):
+        try:result['plan_content']=redact(safe_path(ready['report']).read_text())[:40000]
+        except (OSError,ValueError):pass
+    return result
 
 def durable_tool_call(item):
     receipt=STATE/'tool_receipts'/(hashlib.sha256(item['call_id'].encode()).hexdigest()+'.json')
@@ -252,8 +270,13 @@ def iteration():
         context=dict(state=state,last_iteration=recent,repository=str(ROOT),available_disk_gb=shutil.disk_usage(BASE).free/1e9,backup=load(STATE/'backup_status.json'))
         items=[dict(role='system',content=(SERVICE/'MISSION.md').read_text()),dict(role='user',content='Continue authorized research with concrete actions. Inspect evidence; preserve state for next iteration. Current supervisor context:\n'+json.dumps(context,default=str)[-28000:])]
         outputs=[];executions=0;start_turn=0;iteration_id=uuid.uuid4().hex;pending=[]
+    # Replace stale saved mission/role instructions while preserving tool receipts and evidence.
+    items[0]=dict(role='system',content=(SERVICE/'MISSION.md').read_text())
+    roles=role_context();role_key=json.dumps([roles['roles'].get('active_lead'),roles['latest_plan'].get('audit_id'),roles['latest_plan'].get('report_sha256')])
+    if live.get('role_context_key')!=role_key:
+        items.append(dict(role='user',content='Current authorized agent roles and scientific plan; supersedes earlier role assignments. Implement approved tasks, operational repairs and measurements. Scientific causal analysis/direction belongs to the active lead; Astra provides independent critique.\n'+json.dumps(roles,ensure_ascii=False)))
     def persist(turn,pending_calls):
-        dump(checkpoint,dict(status='in_progress',iteration_id=iteration_id,turn=turn,items=items,outputs=outputs,executions=executions,pending_calls=pending_calls,updated=now()))
+        dump(checkpoint,dict(status='in_progress',iteration_id=iteration_id,turn=turn,items=items,outputs=outputs,executions=executions,pending_calls=pending_calls,role_context_key=role_key,updated=now()))
     persist(start_turn,pending)
     for turn in range(start_turn,12):
         if pending:
@@ -320,9 +343,9 @@ def main():
             except Exception as backup_error:
                 state=load(STATE/'research_state.json');state.update(phase='infrastructure_diagnosis',backup_error=str(backup_error),next_experiment='Diagnose and repair backup; no new formal experiments until verified');dump(STATE/'research_state.json',state)
             if awaiting_astra_analysis():
-                # No new research direction is delegated to GPT-5.5 while Astra
+                # No new research direction is delegated to GPT-5.5 while the active lead
                 # analyzes it. Keep heartbeat/backups and automatically resume.
-                dump(STATE/'supervisor_status.json',dict(time=now(),phase='awaiting_astra_analysis',executor_role='implementation_and_experiments',api_loop_suspended=True))
+                dump(STATE/'supervisor_status.json',dict(time=now(),phase='awaiting_scientific_lead',active_lead=current_roles()['active_lead'],executor_role='implementation_and_experiments',api_loop_suspended=True))
                 time.sleep(30)
                 continue
             iteration();failures=0

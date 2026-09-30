@@ -7118,3 +7118,79 @@ UTC `2026-09-30T07:45:44.815804+00:00`: gate passed `True`; schedule/raw/trace c
 
 ## 2026-09-30T09:36:43.184189+00:00
 
+<!-- vehicle-v34c-contract-preflight-v0e-20260930T093751Z -->
+## 2026-09-30 v34c zero-solve objective-basin contract preflight
+
+UTC: 2026-09-30T09:39:32.043254+00:00. Executed Astra Task1 repair/preflight with 24 scheduled cells and 24 controlled intercepts before `mpc.solve`; lower-level solver calls=0, plant steps=0, training/refit=0, validation64=false, sealed test=false. hard_pass=True; vf4_ok=24/24; lterm_ok=24/24; group_failures=0. Artifacts: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34c_contract_preflight_v0e_20260930T093751Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34c_contract_preflight_v0e_20260930T093751Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34c_contract_preflight_v0e_20260930T093751Z/completed.json`. Backup request: `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_V34C_CONTRACT_PREFLIGHT_V0E_20260930T093751Z.json`.
+
+
+## 2026-09-30T09:40:43.070119+00:00
+3d 22h 44m since first supervisor event; latest audited server API total_tokens remain ~278.599M from `/data/openai-agent/state/research.sqlite` as of the prior 2026-09-30 05:33/05:34 audit, excluding this desktop conversation.
+
+Concrete action completed:
+
+- Executed Astra Task1 v34c/v0e zero-solve contract preflight.
+  - Experiment: `20260930T093751_899d9b5c`
+  - Script: `experiments/bohn2021_aws/vehicle_true_variable_horizon_v34c_contract_preflight_v0e.py`
+  - Exit status: `0`
+  - Runtime: `102.07s`
+  - Classification: development-only IMPROVED diagnostic, not validation/test.
+
+Verified result:
+
+- `hard_pass: true`
+- Scheduled/intercepted rows: `24/24`
+- Lower-level solver calls: `0`
+- Plant steps: `0`
+- Training/refit: `0`
+- validation64 opened: `false`
+- sealed/final test accessed: `false`
+- env resets after construction: `0`
+- `vf_fun` four-argument rows OK: `24/24`
+- `lterm` rows OK: `24/24`
+- Group failures: `0`
+
+Key contract checks passed for all context/horizon groups:
+
+- Initial primal identical across terminal modes within each initialization.
+- Nonterminal `opt_p` identical across terminal modes and across initializations where required.
+- Canonical and goal-facing initial primal hashes are distinct.
+- Bounds have real names.
+- Numeric shifted TVP conversion/readback metadata recorded.
+- Direct no-reset context reconstruction recorded.
+- Strict zero-solve intercepts confirmed before `mpc.solve`.
+
+Evidence paths:
+
+- `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34c_contract_preflight_v0e_20260930T093751Z/completed.json`
+- `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34c_contract_preflight_v0e_20260930T093751Z/summary.md`
+- `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34c_contract_preflight_v0e_20260930T093751Z/raw.json`
+- `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34c_contract_preflight_v0e_20260930T093751Z/arrays/`
+- `research_artifacts/aws_runs/20260930T093751_899d9b5c/registry.json`
+
+Backup/state:
+
+- Backup request written:
+  - `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_V34C_CONTRACT_PREFLIGHT_V0E_20260930T093751Z.json`
+- Durable state updated via `update_state`.
+- Existing logs already contain v0e entries in:
+  - `docs/bohn2021_takeover/astra_reviews/RESPONSE_LOG.md`
+  - `STATUS.md`
+  - `RESEARCH_LOG.md`
+  - `RESULTS_AUDIT.md`
+  - `EXPERIMENT_REGISTRY.csv`
+
+Current gate:
+
+- Do **not** start the v34 fixed 24-call objective-vs-basin solver probe until an external backup verifies coverage of the v0e source/output arrays/raw/summary/completed/docs/registry/backup request.
+- After backup verification, proceed with Astra Task2: original fixed 24-call objective-vs-basin solver probe, still with:
+  - 0 plant steps
+  - max 24 lower-level solver attempts
+  - no automatic retry/extra guesses
+  - no validation64 or sealed/final test
+  - no selector search/refit/training
+  - no v33 rerun.
+
+
+## 2026-09-30T09:46:51.646044+00:00
+

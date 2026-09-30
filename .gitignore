@@ -8,3 +8,6 @@ research_artifacts/
 source_snapshots/
 
 reviewer.env
+
+# Native lead credentials are always outside the repository
+opus.env

@@ -5535,3 +5535,11 @@ Elapsed service lifetime at write: >84.7 h since 2026-09-26T10:55:29.419331Z. De
 
 ## 2026-09-29T23:46:58.541340+00:00
 
+<!-- vehicle-true-variable-H-probe-telemetry-v18d-20260930T0035Z -->
+## 2026-09-30 vehicle true-variable-H v18d H10 probe-telemetry diagnostic
+
+Elapsed service lifetime at write: >85.1 h since 2026-09-26T10:55:29.419331Z. Development-only IMPROVED offline diagnostic over existing v15 true-H branch traces; no MPC simulation, no validation64/sealed-test access, no gradient training. v18d executes the v18c repaired telemetry diagnostic and fixes the predeclared offline-evaluation cap. rows=24; configs=729; offline_model_evaluations=61249; leave_bank_save=0.004876; leave_bank_bad=2; leave_bank_h10=3; leave_source_save=0.016919; leave_source_bad=2; leave_source_h10=4; best_global=v18_dual_probe_objective_k3_r0.4_g0.0_p20.0_sq1.0 save=0.032141 bad=0 H10=4. Decision: Existing H10 probe telemetry is insufficient for a safe useful selector under strict bank/source splits; prioritize richer terminal-value/risk instrumentation or scenario/source-independent data, not another static threshold sweep.. Artifacts: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_probe_telemetry_v18d_20260930T0035Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_probe_telemetry_v18d_20260930T0035Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_probe_telemetry_v18d_20260930T0035Z/completed.json`. Canonical experiment registry row is written by run_experiment, not by this script.
+
+
+## 2026-09-30T00:00:13.436785+00:00
+

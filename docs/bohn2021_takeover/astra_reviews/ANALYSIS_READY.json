@@ -1,11 +1,9 @@
 {
-  "request_id": "v32-h12-supported-default-h35-diagnostic-20260930T051611Z",
-  "experiment_id": "vehicle_true_variable_horizon_v32_h12_supported_default_h35_diagnostic_v0",
-  "report": "docs/bohn2021_takeover/astra_reviews/20260930T055208Z.md",
-  "completed": "2026-09-30T06:02:47.161382+00:00",
+  "request_id": "v33-terminal-h-cross-causal-probe-20260930T054827Z",
+  "experiment_id": "20260930T054827_b3e91ea1",
+  "report": "docs/bohn2021_takeover/astra_reviews/20260930T060247Z.md",
+  "completed": "2026-09-30T06:13:04.561063+00:00",
   "primary_analyst": "gpt-6-astra",
-  "report_sha256": "f57790a341e4a739543a8d3cb734ce90cd6665c70e6248b91d65c374a5f2dfe2",
-  "supersedes_request_ids": [
-    "experiment:20260930T052434_8369e758"
-  ]
+  "report_sha256": "bbed7c8263302d87205872b0a46eb5916f438439510da28e5b8219295e31b1e4",
+  "supersedes_request_ids": []
 }

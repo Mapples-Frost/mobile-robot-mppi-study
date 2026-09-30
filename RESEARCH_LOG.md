@@ -5982,3 +5982,11 @@ UTC: 2026-09-30T02:32:42.975997+00:00. Metadata-only; no simulation/training/val
 
 ## 2026-09-30T02:35:07.933642+00:00
 
+<!-- vehicle-fixed-h12-primary-confirmation-v27-20260930T0250Z -->
+## 2026-09-30 v27 fixed-H12-primary development confirmation
+
+UTC: 2026-09-30T02:43:28.789811+00:00. Development-only v26b-repaired fixed-H12-primary confirmation completed; validation64 closed, sealed test closed, no training/refit/grid search. Budget 60 episodes / 3502 control steps plus 24 preoutcome selector choices. States=24, H12-beneficial=22, H12-catastrophic/high-cost=0. Fixed H12 save=0.19619167689373251, bad=0, pass5=True; selector save=0.03717074660898639, H counts={'12': 6, '15': 18}, bad=0, pass5=False. Decision: v27 fixed-H12-primary confirmation passes: fixed true H12 remains the stronger simple baseline on this fresh stress-bank batch; do not validate adaptive H12/H15 on this distribution without new scenario-opportunity evidence. Artifacts: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_fixed_h12_primary_confirmation_v27_20260930T0250Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_fixed_h12_primary_confirmation_v27_20260930T0250Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_fixed_h12_primary_confirmation_v27_20260930T0250Z/completed.json`. Backup required before further unique science: `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_V27_FIXED_H12_CONFIRMATION_20260930T0250Z.json`.
+
+
+## 2026-09-30T02:47:02.985398+00:00
+

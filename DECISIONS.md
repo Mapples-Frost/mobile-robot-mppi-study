@@ -1680,3 +1680,8 @@ User explicitly requested English for all three research agents. Applied a share
 
 
 Working-language verification: all three real API smoke calls returned English after receiving a legacy Chinese-report instruction plus the current shared policy. Model pins and effort settings were retained. Synthetic checks invoked no research tools or experiments. Full results: state/working_language_smoke.json.
+
+
+## 20260930T120717Z Astra long-report transport repair
+
+Observed primary long-request timeouts and backup HTTP 524, despite successful short and read-tool calls. Enabled validated Responses SSE reception without changing model, effort, context or scientific gates. 21 offline tests and real backup SSE smoke passed; checkpoint/session retained. No scientific experiment was rerun. Detailed transport provenance: docs/bohn2021_takeover/astra_reviews/ROUTING.md.

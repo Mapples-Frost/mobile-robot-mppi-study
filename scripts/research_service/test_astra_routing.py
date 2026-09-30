@@ -20,6 +20,13 @@ def answer(model='gpt-6-astra', effort='max'):
 class Response(io.BytesIO):
     def __init__(self, data):
         super().__init__(json.dumps(data).encode())
+        self.headers = {'Content-Type':'application/json'}
+
+
+class StreamResponse(io.BytesIO):
+    def __init__(self, events):
+        super().__init__(events.encode('utf-8'))
+        self.headers = {'Content-Type':'text/event-stream'}
 
 
 class RoutingTests(unittest.TestCase):
@@ -155,6 +162,44 @@ class RoutingTests(unittest.TestCase):
         router.success('primary','review',error.observed_at-1)
         self.assertEqual(router.state()['active_endpoint'],'backup')
         self.assertFalse(router.state()['endpoints']['primary']['healthy'])
+
+    def test_stream_completed_preserves_exact_tool_output(self):
+        completed=answer()
+        completed['output']=[dict(type='function_call',call_id='opaque-id',name='read_file',arguments='{"path":"a.py"}')]
+        events=': keepalive\n\nevent: response.created\ndata: '+json.dumps({'type':'response.created','response':{'status':'in_progress'}})+'\n\ndata: '+json.dumps({'type':'response.completed','response':completed})+'\n\n'
+        self.assertEqual(router.parse_stream(StreamResponse(events)),completed)
+
+    def test_stream_does_not_publish_partial_text(self):
+        events='data: '+json.dumps({'type':'response.output_text.delta','delta':'partial report'})+'\n\ndata: [DONE]\n\n'
+        with self.assertRaisesRegex(router.EndpointError,'before response.completed'):
+            router.parse_stream(StreamResponse(events))
+
+    def test_stream_failure_is_not_completion(self):
+        events='data: '+json.dumps({'type':'response.failed','response':{'error':{'message':'upstream failure'}}})+'\n\n'
+        with self.assertRaisesRegex(router.EndpointError,'stream failure'):
+            router.parse_stream(StreamResponse(events))
+
+    def test_stream_malformed_json_rejected(self):
+        with self.assertRaisesRegex(router.EndpointError,'Malformed JSON'):
+            router.parse_stream(StreamResponse('data: broken-json\n\n'))
+
+    def test_stream_handles_multiline_json_and_utf8(self):
+        completed=answer();completed['output'][0]['content'][0]['text']='English output: café'
+        frame=json.dumps({'type':'response.completed','response':completed},ensure_ascii=False,indent=2)
+        events='\n'.join('data: '+line for line in frame.splitlines())+'\n\n'
+        self.assertEqual(router.parse_stream(StreamResponse(events)),completed)
+
+    def test_streamed_request_is_accounted_once_and_keeps_model_pins(self):
+        completed=answer()
+        events='data: '+json.dumps({'type':'response.completed','response':completed})+'\n\n'
+        with patch.object(router.urllib.request,'urlopen',return_value=StreamResponse(events)) as transport:
+            result=router.request(self.body)
+        wire=json.loads(transport.call_args.args[0].data)
+        self.assertTrue(wire['stream']);self.assertEqual(wire['model'],router.MODEL)
+        self.assertEqual(wire['reasoning']['effort'],'max')
+        self.assertEqual(result['output'],completed['output'])
+        self.assertEqual(len(self.rows()),1)
+        self.assertEqual(json.loads(self.rows()[0][3])['total_tokens'],7)
 
 
 if __name__=='__main__': unittest.main()

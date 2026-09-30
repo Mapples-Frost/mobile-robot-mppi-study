@@ -20,3 +20,10 @@ Inspect routing: `cat /data/openai-agent/state/astra_router/status.json` and the
 
 
 Full-context verification on 2026-09-30T11:22:09.600747+00:00: backup accepted the current read-only review context (468577 bytes; provider reported 141451 input tokens), returned completed gpt-6-astra/max with native read-tool calls, in 33.57 seconds. This shadow compatibility output was not executed and did not alter scientific evidence or the production review session. Detailed nonsecret record: state/astra_backup_full_context_smoke.json.
+
+
+## 20260930T120717Z Long-review transport repair
+
+The backup accepted short calls and full-context read-tool calls, but non-streaming final reports repeatedly hit Cloudflare HTTP 524 at the 120-second read window; primary long calls also timed out. Updated the shared transport to request Responses SSE (`stream=true`) following official OpenAI documentation (https://developers.openai.com/api/docs/guides/streaming-responses). The same model, max effort, full context, tool definitions and output budget are preserved. Only a validated full response.completed payload can be published; incomplete streams and partial text fail closed. Per-call stream progress/usage metadata is checkpointed, with existing bounded failover and primary recovery preserved. JSON fallback is accepted only if the endpoint ignores streaming and returns a validated completed object.
+
+21 isolated tests passed, including partial-stream rejection and exact tool-payload/accounting preservation. A real backup SSE smoke returned gpt-6-astra/max completed successfully. Long production-report recovery is being verified separately.

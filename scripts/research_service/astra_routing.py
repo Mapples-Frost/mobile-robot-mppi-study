@@ -152,6 +152,62 @@ def validate(answer):
         raise EndpointError('Incomplete response: ' + str(answer.get('status')))
     return effort
 
+def parse_stream(response, record=lambda event: None, timeout=600):
+    """Accept only a full response.completed payload, never a partial text stream."""
+    began = time.monotonic()
+    pending = []
+    max_event_bytes = 32 * 1024 * 1024
+    pending_bytes = 0
+
+    def dispatch():
+        if not pending:
+            return None
+        payload = '\n'.join(pending)
+        pending.clear()
+        if payload.strip() == '[DONE]':
+            return None
+        try:
+            item = json.loads(payload)
+        except ValueError:
+            raise EndpointError('Malformed JSON in Responses event stream') from None
+        if not isinstance(item, dict):
+            raise EndpointError('Invalid Responses stream event object')
+        record(item)
+        kind = item.get('type')
+        if kind == 'response.completed':
+            answer = item.get('response')
+            validate(answer)
+            return answer
+        if kind in ('error', 'response.failed', 'response.incomplete'):
+            detail = item.get('error') or (item.get('response') or {}).get('error') or item.get('message') or kind
+            raise EndpointError('Responses stream failure: ' + redact(detail)[:1000])
+        return None
+
+    for raw in response:
+        if time.monotonic() - began > timeout:
+            raise EndpointError('Responses stream exceeded per-call wall-time limit')
+        if len(raw) > max_event_bytes:
+            raise EndpointError('Responses stream event exceeded memory limit')
+        try:
+            line = raw.decode('utf-8').rstrip('\r\n')
+        except UnicodeError:
+            raise EndpointError('Invalid UTF-8 in Responses event stream') from None
+        if not line:
+            result = dispatch()
+            pending_bytes = 0
+            if result is not None:
+                return result
+        elif line.startswith('data:'):
+            pending.append(line[5:].lstrip(' '))
+            pending_bytes += len(raw)
+            if pending_bytes > max_event_bytes:
+                raise EndpointError('Responses stream event exceeded memory limit')
+        # SSE comments, event names and sequence IDs do not change output semantics.
+    result = dispatch()
+    if result is not None:
+        return result
+    raise EndpointError('Responses stream ended before response.completed; partial output discarded')
+
 def once(body, endpoint, purpose='review', timeout=600):
     if endpoint not in ('primary', 'backup'):
         raise ValueError('Unknown Astra endpoint')
@@ -188,14 +244,43 @@ def once(body, endpoint, purpose='review', timeout=600):
         save(ROUTE / 'inflight' / (cid + '.json'), dict(call_id=cid, endpoint=endpoint,
              purpose=purpose, pid=os.getpid(), process_start=pathlib.Path('/proc/self/stat').read_text().split()[21], started=now()))
         event('api_started', call_id=cid, endpoint=endpoint, purpose=purpose, requested_effort=EFFORT)
+        wire_body = dict(body, stream=True)
         headers = {'Authorization': 'Bearer ' + cfg['REVIEWER_API_KEY'],
-                   'Content-Type': 'application/json', 'Accept': 'application/json',
+                   'Content-Type': 'application/json', 'Accept': 'text/event-stream',
                    'User-Agent': 'BohnResearchAgent/1.0'}
         request = urllib.request.Request(cfg['REVIEWER_BASE_URL'].rstrip('/') + '/responses',
-                                         data=json.dumps(body).encode(), headers=headers)
+                                         data=json.dumps(wire_body).encode(), headers=headers)
         try:
             with urllib.request.urlopen(request, timeout=timeout) as response:
-                answer = json.load(response)
+                content_type = response.headers.get('Content-Type', '')
+                event('response_headers', call_id=cid, endpoint=endpoint, purpose=purpose,
+                      transport='sse' if 'text/event-stream' in content_type else 'json',
+                      time_to_headers_seconds=time.monotonic()-began)
+                if 'text/event-stream' in content_type:
+                    stream_path = WORK / 'streams' / (cid + '.metadata.jsonl')
+                    stream_path.parent.mkdir(parents=True, exist_ok=True)
+                    last_progress = 0
+                    observed_events = 0
+                    with stream_path.open('w') as log:
+                        def record(item):
+                            nonlocal usage, last_progress, observed_events
+                            observed_events += 1
+                            snapshot = item.get('response')
+                            if isinstance(snapshot, dict) and isinstance(snapshot.get('usage'), dict):
+                                usage = snapshot['usage']
+                            kind = item.get('type')
+                            elapsed = time.monotonic() - began
+                            if observed_events == 1 or elapsed-last_progress >= 5 or kind in ('response.completed','response.failed','response.incomplete','error'):
+                                log.write(json.dumps(dict(time=now(), type=kind, events_seen=observed_events,
+                                           elapsed_seconds=elapsed, usage=usage))+'\n')
+                                log.flush()
+                                last_progress = elapsed
+                                with sqlite3.connect(STATE / 'research.sqlite', timeout=30) as c:
+                                    c.execute('update calls set usage=?,duration=? where id=?', (json.dumps(usage),elapsed,cid))
+                        answer = parse_stream(response, record, timeout=max(1,timeout-(time.monotonic()-began)))
+                else:
+                    # Compatibility with an endpoint that ignores stream=True; completion checks still apply.
+                    answer = json.load(response)
         except urllib.error.HTTPError as error:
             detail = redact(error.read().decode(errors='replace'))[:1400]
             # Payload/parameter mistakes are engineering failures, not endpoint outages.

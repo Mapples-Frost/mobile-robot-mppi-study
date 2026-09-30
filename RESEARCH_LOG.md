@@ -7703,3 +7703,90 @@ UTC: 2026-09-30T15:02:01.493923+00:00. Local task hard_pass `True` with zero sol
 
 ## 2026-09-30T15:38:57.477205+00:00
 
+<!-- vehicle-tc2r2-source242-context-loader-repair-20260930T154029Z -->
+## T-C2R2 source242 context-loader repair
+
+UTC: 2026-09-30T15:40:29.468836+00:00. Local task hard_pass `True` under active Opus plan `20260930T152426Z_847e54`. Resources were zero for solver, plant, training, validation and test. The v34z2 `load_context_and_terminals()` function now builds `source242_slot0_branch_start` directly from `base.v29.build_state_specs()` and `base.find_spec('v27_case09_slot0_early_risk')` and no longer calls `base.load_contexts()` in the patched path. Field-level equality for observed source242 fields was checked against the same base primitives/literals. The probe used a template file plus compile() parse gate before writing and an immediate second idempotence call. Full `base.load_contexts()` output remains intentionally unobserved because the unrelated c13 entry is the defect. Evidence: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34z2_environment_probe_v0_20260930T154029Z/summary.md` and `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34z2_environment_probe_v0_20260930T154029Z/raw.json`. Backup request: `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_T_C2R2_SOURCE242_CONTEXT_LOADER_REPAIR_20260930T154029Z.json`. No validation64 or sealed/final-test data was opened.
+
+
+## 2026-09-30T15:43:34.242387+00:00
+Cumulative service elapsed time since first supervisor event (2026-09-26T10:55:29.419331Z): **4 days 4h45m00s** (~100.75 h). Cumulative server API `total_tokens` from `research.sqlite`: **unavailable/unknown** in this run because the script could not find `research.sqlite` in checked repository locations; this is **not** treated as zero.
+
+Concrete actions completed this iteration:
+
+1. **Verified active lead plan**
+   - Re-read `docs/bohn2021_takeover/opus_lead/PLAN_READY.json`.
+   - Confirmed current active plan remains **Opus `20260930T152426Z_847e54`**.
+   - Read structured plan `docs/bohn2021_takeover/opus_lead/20260930T152426Z_847e54.execution_plan.json`.
+
+2. **Executed approved T-C2R2 repair task**
+   - Ran:
+     - `experiments/bohn2021_aws/vehicle_true_variable_horizon_v34z2_environment_probe_v0.py`
+     - interpreter: **legacy**
+     - task_id: `T-C2R2-source242-context-loader-repair`
+   - Experiment ID: `20260930T154029_56f95ec9`
+   - Exit status: `0`
+   - Scheduler receipt valid.
+   - Coordination: `scientific_acceptance=task_gates_passed`, but this is **local task acceptance only**, not final reproduction acceptance.
+
+3. **T-C2R2 result**
+   - `hard_pass: true`
+   - `repair_verified: true`
+   - All required pass evidence keys are true:
+     - source242 context built without calling `base.load_contexts`
+     - field equality evidence reported
+     - zero solver/plant/training/validation/test usage
+     - exact changed lines stated
+     - parse gate passed before source write
+     - second-run idempotence passed
+   - The source242 context now loads through the direct repaired path.
+   - `base.load_contexts_called: false`
+   - Field equality across the ten required fields passed:
+     - `context_id`
+     - `state_label`
+     - `source`
+     - `case_snapshot`
+     - `branch_step`
+     - `tvp_start_index`
+     - `state`
+     - `previous_input`
+     - `previous_input_source`
+     - `horizons`
+
+4. **Resource and access accounting**
+   - Solver calls: `0`
+   - Plant steps: `0`
+   - Training steps: `0`
+   - Validation episodes: `0`
+   - Test episodes: `0`
+   - validation64 accessed: **false**
+   - sealed/final test accessed: **false**
+   - new AWS resources: **false**
+
+5. **Evidence inspected/preserved**
+   - `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34z2_environment_probe_v0_20260930T154029Z/completed.json`
+   - `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34z2_environment_probe_v0_20260930T154029Z/raw.json`
+   - `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34z2_environment_probe_v0_20260930T154029Z/summary.md`
+   - `research_artifacts/aws_runs/20260930T154029_56f95ec9/registry.json`
+   - `research_artifacts/aws_runs/20260930T154029_56f95ec9/outcome_receipt.json`
+   - `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_T_C2R2_SOURCE242_CONTEXT_LOADER_REPAIR_20260930T154029Z.json`
+
+6. **State/log preservation**
+   - Existing script appended the T-C2R2 result to project logs including `RESPONSE_LOG.md`.
+   - I also persisted durable coordination state via `update_state`.
+
+Important caveat:
+
+- T-C2R2 is an **operational zero-resource repair/pass**, not a solver-bearing objective-contract result.
+- It does **not** determine whether epsilon/slack is negligible at converged MPC iterates.
+- No MPC was constructed and no solver call was made.
+
+Current blocker / next gate:
+
+- A new external backup is required before any more unique science or solver-bearing work.
+- The latest verified backup at cycle start predates this T-C2R2 run.
+- Current T-C2R2 task has `continue_without_review=false`, so I did **not** launch T-C2C or solver-bearing T-C2 from prose alone.
+- Next iteration should:
+  1. verify external backup covering T-C2R2 artifacts/docs/registry/state;
+  2. re-read `PLAN_READY.json`;
+  3. execute the next Opus-published structured task if available.

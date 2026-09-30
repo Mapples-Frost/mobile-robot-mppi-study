@@ -1,9 +1,11 @@
 {
   "request_id": "execution-result:20260930T131908_12b79445",
   "experiment_id": "20260930T131908_12b79445",
-  "report": "docs/bohn2021_takeover/astra_reviews/20260930T132230Z.md",
-  "completed": "2026-09-30T13:31:28.106402+00:00",
+  "report": "docs/bohn2021_takeover/astra_reviews/20260930T133705Z.md",
+  "completed": "2026-09-30T13:50:44.307789+00:00",
   "primary_analyst": "gpt-6-astra",
-  "report_sha256": "717765bdf3de155c227275b10f649d83b57130b6abe9eb8f617e8b06b4179001",
-  "supersedes_request_ids": []
+  "report_sha256": "dc093ecf6a4d90a61665277182af1a326405a9ff07189174cee395bc7aa9fe00",
+  "supersedes_request_ids": [
+    "experiment:20260930T133653_68dd47ea"
+  ]
 }

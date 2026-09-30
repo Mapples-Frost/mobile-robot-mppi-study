@@ -1,0 +1,379 @@
+{
+  "audit_id": "20260930T133705Z",
+  "status": "completed",
+  "started": "2026-09-30T13:37:06.205279+00:00",
+  "turn": 10,
+  "request": {
+    "request_id": "execution-result:20260930T131908_12b79445",
+    "trigger": "execution_result_handoff",
+    "created": "2026-09-30T13:19:10.472406+00:00",
+    "experiment_id": "20260930T131908_12b79445",
+    "status": "analysis_requested",
+    "purpose": "Verify source-level epsilon/slack objective provenance and non-circular reproduction of v34v epsilon deltas before any T-C2 solver-bearing gate; no new solver/plant/training/test access.",
+    "execution_status": "complete",
+    "question": "Active scientific lead: interpret this outcome, verify current raw evidence and select the next scientific action for GPT-5.5 implementation. Distinguish hypotheses from verified causes and account for fair baselines, terminal confounds and source-level generalization.",
+    "evidence_paths": [
+      "research_artifacts/aws_runs/20260930T131908_12b79445/registry.json"
+    ]
+  },
+  "max_turns": 12,
+  "commit_start": "03e9c5224b6d49b63613bfd201032034d52191b0",
+  "dirty_diff_hash": "2ad6cec9410c20bf34662e5212ac507ca18a22ae30bd519a231d108aa5ab0169",
+  "fingerprint": "[null, \"20260930T133653_68dd47ea\", \"idle\", \"cycle_end_state_after_v34x_T_C1_and_v34y_source_preparation\"]",
+  "inspected": [
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34y_receipt_repair_v0_20260930T133653Z/completed.json",
+      "sha256": "02a3f88b0d37bee318ef65448720be50882f27a549c83d5661b68c4083b9d7ab"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34y_receipt_repair_v0_20260930T133653Z/summary.md",
+      "sha256": "03b54284ddabe42d63ee16825ff5f9b5f6324d7f8755e4898ae03290e24030e3"
+    },
+    {
+      "path": "docs/bohn2021_takeover/astra_reviews/20260930T132230Z.md",
+      "sha256": "717765bdf3de155c227275b10f649d83b57130b6abe9eb8f617e8b06b4179001"
+    },
+    {
+      "path": "docs/bohn2021_takeover/astra_reviews/RESPONSE_LOG.md",
+      "sha256": "1891a9657475a20e877ece075932c1b5ea9044a509d78f077cfe8a75e4a40df6"
+    },
+    {
+      "path": "docs/bohn2021_takeover/opus_lead/20260930T131933Z_8873cc.execution_plan.json",
+      "sha256": "6e5fc931578004a4438173a8893f68724b5281392317bb4cda59c0b10a5208ac"
+    },
+    {
+      "path": "research_artifacts/aws_runs/20260930T131908_12b79445/registry.json",
+      "sha256": "bf075aa00a6d5277b4f255ab03c55e025e01c434e6d4bfeda019e31717eedd28"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34y_receipt_repair_v0_20260930T133653Z/raw.json",
+      "sha256": "608b418ae04758c6d60e93e284ed06256e1b437909b9ef47bdcbebdd053d4388"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34y_receipt_repair_v0_20260930T133653Z/corrected_receipt.json",
+      "sha256": "e84519aed7c252ac0b7d0971dd1e35326f3d8d40564f5809a244986750c5fbc1"
+    },
+    {
+      "path": "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34y_receipt_repair_v0.py",
+      "sha256": "21a2e934bfb30343749de9a0273f263259c2d0042e1d7c2431528d36209f8975"
+    },
+    {
+      "path": "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34x_epsilon_provenance_audit_v0.py",
+      "sha256": "2d2f7fe45bca4d9d1b71f58b2a3060dc9a0ef63ab121fd10de35cab2703c2c8e"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34x_epsilon_provenance_audit_v0_20260930T131908Z/epsilon_provenance_per_arm.csv",
+      "sha256": "a9ed358160effcbfecdfce0527b92bd57bebe916d3a7d34936a13d8696b4c61a"
+    },
+    {
+      "path": "STATUS.md",
+      "sha256": "678e97c51c95366b518c13bd723e0534068a4d8b8cdc7fbf45ec3ad15671f5ce"
+    },
+    {
+      "path": "REPRODUCTION_PROTOCOL.md",
+      "sha256": "1dcbf5642dcdd751997b4734bf5d6cc5e85f3b12325b20697c4ae2c28c8fd43e"
+    },
+    {
+      "path": "research_artifacts/aws_runs/20260930T131908_12b79445/registry.json",
+      "sha256": "bf075aa00a6d5277b4f255ab03c55e025e01c434e6d4bfeda019e31717eedd28"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34y_receipt_repair_v0_20260930T133653Z/corrected_receipt.json",
+      "sha256": "e84519aed7c252ac0b7d0971dd1e35326f3d8d40564f5809a244986750c5fbc1"
+    },
+    {
+      "path": "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34y_receipt_repair_v0.py",
+      "sha256": "21a2e934bfb30343749de9a0273f263259c2d0042e1d7c2431528d36209f8975"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34x_epsilon_provenance_audit_v0_20260930T131908Z/completed.json",
+      "sha256": "a9732844fff19523cbd97c2c8c2cf32f05bcc31f8097085814e63cd2f1041545"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34x_epsilon_provenance_audit_v0_20260930T131908Z/raw.json",
+      "sha256": "c0540b523d93105d02b380c27729d4112eb20e0f7b68e74d1cb9141925c45c5e"
+    },
+    {
+      "path": "research_artifacts/bohn2021_reproduction_2026-09-17/sources/do-mpc-horizon/do_mpc/controller.py",
+      "sha256": "97b61401b2cb368240c60db856651141a2d5f9e95c73afe442300003c0d0063a"
+    },
+    {
+      "path": "research_artifacts/bohn2021_reproduction_2026-09-17/sources/do-mpc-horizon/do_mpc/optimizer.py",
+      "sha256": "cc100fb87cf77f5696c55a260c46c6e3d0a61e3fc9d8dde806160573e33f2832"
+    },
+    {
+      "path": "research_artifacts/bohn2021_reproduction_2026-09-17/sources/gym-horizon/gym_let_mpc/controllers.py",
+      "sha256": "a34ea0764caf8bde123bf9e8c7a8316d8dbff454d0cce558bbd84229eb60defc"
+    },
+    {
+      "path": "STATUS.md",
+      "sha256": "678e97c51c95366b518c13bd723e0534068a4d8b8cdc7fbf45ec3ad15671f5ce"
+    },
+    {
+      "path": "REPRODUCTION_PROTOCOL.md",
+      "sha256": "1dcbf5642dcdd751997b4734bf5d6cc5e85f3b12325b20697c4ae2c28c8fd43e"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34u_active_plan_refresh_nonconverged_objective_contract_probe_v0_20260930T125233Z/raw.json",
+      "sha256": "a8bd5314528ee8c951722a12727df1ebabc85c4b885dec1dba62d1c9028a5058"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34u_active_plan_refresh_nonconverged_objective_contract_probe_v0_20260930T125233Z/raw.json",
+      "sha256": "a8bd5314528ee8c951722a12727df1ebabc85c4b885dec1dba62d1c9028a5058"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34u_active_plan_refresh_nonconverged_objective_contract_probe_v0_20260930T125233Z/raw.json",
+      "sha256": "a8bd5314528ee8c951722a12727df1ebabc85c4b885dec1dba62d1c9028a5058"
+    },
+    {
+      "path": "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34_objective_basin_solver_probe_v0.py",
+      "sha256": "0de28bc84e57989dc3be26973e61e7d20ce9740a90d8a6cd19534e1af72e4b03"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v33_terminal_h_cross_causal_probe_v0_20260930T054827Z/raw.json",
+      "sha256": "ef2c497d052aa863d7629aa1c2285b609b1e1f9a12a0f5861c7c4124dd53cb55"
+    },
+    {
+      "path": "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34k_label_accessor_objective_localization_v0.py",
+      "sha256": "30225355ce36f281e09d9f8f65c1d6856706d411ad018cd8ed444099ba71eb38"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34u_active_plan_refresh_nonconverged_objective_contract_probe_v0_20260930T125233Z/cell_metrics.csv",
+      "sha256": "5b75ef50c133cdb2ca8ebdabaf76c9b88039f2f32a6e9cabc1d52a03bf20b290"
+    },
+    {
+      "path": "docs/bohn2021_takeover/opus_lead/20260930T131933Z_8873cc.execution_plan.json",
+      "sha256": "6e5fc931578004a4438173a8893f68724b5281392317bb4cda59c0b10a5208ac"
+    },
+    {
+      "path": "docs/bohn2021_takeover/opus_lead/PLAN_READY.json",
+      "sha256": "d39632262d8dc7c5ce4f8333ba42e105efca9576969b0c5e76384c855f77b166"
+    },
+    {
+      "path": "docs/bohn2021_takeover/astra_reviews/NEXT_REVIEW_REQUEST.json",
+      "sha256": "e364d79fe5c7c20035d8b0cedbd67e8f8dc6bfd583e1365df3b88363b165625e"
+    },
+    {
+      "path": "research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_V34Y_TC1R_RECEIPT_REPAIR_20260930T133653Z.json",
+      "sha256": "e94dde0596db51214db616d4c6ca5b56aaba37291a91c041a5f9dd2148562a57"
+    },
+    {
+      "path": "docs/bohn2021_takeover/opus_lead/20260930T133239Z_8fd7da.md",
+      "sha256": "861e22c2f7701f686814b02b5832ef8ce9cb4adac21a4b79823692d6784bf482"
+    },
+    {
+      "path": "docs/bohn2021_takeover/opus_lead/20260930T133239Z_8fd7da.execution_plan.json",
+      "sha256": "7b47a592c9edd3e49254ba63822c6e5583fd71b62fb219c4e8716242d293c46b"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34u_active_plan_refresh_nonconverged_objective_contract_probe_v0_20260930T125233Z/raw.json",
+      "sha256": "a8bd5314528ee8c951722a12727df1ebabc85c4b885dec1dba62d1c9028a5058"
+    },
+    {
+      "path": "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34_objective_basin_solver_probe_v0.py",
+      "sha256": "0de28bc84e57989dc3be26973e61e7d20ce9740a90d8a6cd19534e1af72e4b03"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34v_eps_objective_localization_postdiagnostic_v0_20260930T130526Z/eps_alias_localization.csv",
+      "sha256": "746334333c6a479b874e6c7ceba166a9f7a8b8728749fdc9d7567cea78df7ef6"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34u_active_plan_refresh_nonconverged_objective_contract_probe_v0_20260930T125233Z/raw.json",
+      "sha256": "a8bd5314528ee8c951722a12727df1ebabc85c4b885dec1dba62d1c9028a5058"
+    },
+    {
+      "path": "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34n_nonconverged_objective_contract_probe_v0.py",
+      "sha256": "26ce183ccdac0e042676b49d3ba0993b90da575c89fab9d4765d9caeb854f61d"
+    },
+    {
+      "path": "experiments/bohn2021_aws/vehicle_true_variable_horizon_matched_parameter_ledger_v0.py",
+      "sha256": "3a5abb4cf02139d56d4e14ac52907af37087c426cdba8bbc097cc31e23ff836e"
+    },
+    {
+      "path": "experiments/bohn2021_aws/vehicle_true_variable_horizon_matched_parameter_ledger_v0.py",
+      "sha256": "3a5abb4cf02139d56d4e14ac52907af37087c426cdba8bbc097cc31e23ff836e"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34u_active_plan_refresh_nonconverged_objective_contract_probe_v0_20260930T125233Z/raw.json",
+      "sha256": "a8bd5314528ee8c951722a12727df1ebabc85c4b885dec1dba62d1c9028a5058"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34l_residual_eps_label_dissection_v0_20260930T105720Z/raw.json",
+      "sha256": "35268dfc814cd9497e3f503aaa0a38fb173fad7e47dd4223f6fe6ca5eb54c66e"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34u_active_plan_refresh_nonconverged_objective_contract_probe_v0_20260930T125233Z/raw.json",
+      "sha256": "a8bd5314528ee8c951722a12727df1ebabc85c4b885dec1dba62d1c9028a5058"
+    },
+    {
+      "path": "docs/bohn2021_takeover/opus_lead/20260930T133239Z_8fd7da.execution_plan.json",
+      "sha256": "7b47a592c9edd3e49254ba63822c6e5583fd71b62fb219c4e8716242d293c46b"
+    },
+    {
+      "path": "docs/bohn2021_takeover/opus_lead/LATEST.md",
+      "sha256": "eca794271a912a63e2b7d53d9176c37e55753cbf0fd94eea81fc8eb52a093040"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34l_residual_eps_label_dissection_v0_20260930T105720Z/raw.json",
+      "sha256": "35268dfc814cd9497e3f503aaa0a38fb173fad7e47dd4223f6fe6ca5eb54c66e"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34g_objective_reconstruction_smoke_v0_20260930T100824Z/raw.json",
+      "sha256": "04e44c0e5c0c8be3aaef44ac8176a028043c57014ffa1e85bb267dbd5c075e1b"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34u_active_plan_refresh_nonconverged_objective_contract_probe_v0_20260930T125233Z/raw.json",
+      "sha256": "a8bd5314528ee8c951722a12727df1ebabc85c4b885dec1dba62d1c9028a5058"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34u_active_plan_refresh_nonconverged_objective_contract_probe_v0_20260930T125233Z/raw.json",
+      "sha256": "a8bd5314528ee8c951722a12727df1ebabc85c4b885dec1dba62d1c9028a5058"
+    },
+    {
+      "path": "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34n_nonconverged_objective_contract_probe_v0.py",
+      "sha256": "26ce183ccdac0e042676b49d3ba0993b90da575c89fab9d4765d9caeb854f61d"
+    },
+    {
+      "path": "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34n_nonconverged_objective_contract_probe_v0.py",
+      "sha256": "26ce183ccdac0e042676b49d3ba0993b90da575c89fab9d4765d9caeb854f61d"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34u_active_plan_refresh_nonconverged_objective_contract_probe_v0_20260930T125233Z/raw.json",
+      "sha256": "a8bd5314528ee8c951722a12727df1ebabc85c4b885dec1dba62d1c9028a5058"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34u_active_plan_refresh_nonconverged_objective_contract_probe_v0_20260930T125233Z/raw.json",
+      "sha256": "a8bd5314528ee8c951722a12727df1ebabc85c4b885dec1dba62d1c9028a5058"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34u_active_plan_refresh_nonconverged_objective_contract_probe_v0_20260930T125233Z/raw.json",
+      "sha256": "a8bd5314528ee8c951722a12727df1ebabc85c4b885dec1dba62d1c9028a5058"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34u_active_plan_refresh_nonconverged_objective_contract_probe_v0_20260930T125233Z/raw.json",
+      "sha256": "a8bd5314528ee8c951722a12727df1ebabc85c4b885dec1dba62d1c9028a5058"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34u_active_plan_refresh_nonconverged_objective_contract_probe_v0_20260930T125233Z/raw.json",
+      "sha256": "a8bd5314528ee8c951722a12727df1ebabc85c4b885dec1dba62d1c9028a5058"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34u_active_plan_refresh_nonconverged_objective_contract_probe_v0_20260930T125233Z/raw.json",
+      "sha256": "a8bd5314528ee8c951722a12727df1ebabc85c4b885dec1dba62d1c9028a5058"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34u_active_plan_refresh_nonconverged_objective_contract_probe_v0_20260930T125233Z/raw.json",
+      "sha256": "a8bd5314528ee8c951722a12727df1ebabc85c4b885dec1dba62d1c9028a5058"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34u_active_plan_refresh_nonconverged_objective_contract_probe_v0_20260930T125233Z/raw.json",
+      "sha256": "a8bd5314528ee8c951722a12727df1ebabc85c4b885dec1dba62d1c9028a5058"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34u_active_plan_refresh_nonconverged_objective_contract_probe_v0_20260930T125233Z/raw.json",
+      "sha256": "a8bd5314528ee8c951722a12727df1ebabc85c4b885dec1dba62d1c9028a5058"
+    }
+  ],
+  "working_language": "en",
+  "working_language_policy": "RESEARCH_WORKING_LANGUAGE_EN_V1",
+  "superseded_request_ids": [
+    "experiment:20260930T133653_68dd47ea"
+  ],
+  "returned_efforts": [
+    "max",
+    "max",
+    "max",
+    "max",
+    "max",
+    "max",
+    "max",
+    "max",
+    "max",
+    "max"
+  ],
+  "endpoint_calls": [
+    {
+      "endpoint": "primary",
+      "purpose": "review",
+      "call_id": "4929e23cf49f47dfbc864f851bf8a8dd",
+      "requested_effort": "max",
+      "returned_effort": "max",
+      "observed_at_epoch": 1790775443.3750188
+    },
+    {
+      "endpoint": "primary",
+      "purpose": "review",
+      "call_id": "004ef0cd60984be7ad0190e6fb01ab7e",
+      "requested_effort": "max",
+      "returned_effort": "max",
+      "observed_at_epoch": 1790775471.031668
+    },
+    {
+      "endpoint": "primary",
+      "purpose": "review",
+      "call_id": "044caa453f424c2aa241f0935490a078",
+      "requested_effort": "max",
+      "returned_effort": "max",
+      "observed_at_epoch": 1790775502.3049636
+    },
+    {
+      "endpoint": "primary",
+      "purpose": "review",
+      "call_id": "4afe108af9e040ac81dd5028ba39e77d",
+      "requested_effort": "max",
+      "returned_effort": "max",
+      "observed_at_epoch": 1790775610.43836
+    },
+    {
+      "endpoint": "primary",
+      "purpose": "review",
+      "call_id": "57209a5c3dbf49ce880a0035834ca172",
+      "requested_effort": "max",
+      "returned_effort": "max",
+      "observed_at_epoch": 1790775757.4026675
+    },
+    {
+      "endpoint": "primary",
+      "purpose": "review",
+      "call_id": "cbb1e1a9819940ecbe08aa26da80cf7b",
+      "requested_effort": "max",
+      "returned_effort": "max",
+      "observed_at_epoch": 1790775786.0603468
+    },
+    {
+      "endpoint": "primary",
+      "purpose": "review",
+      "call_id": "434c6a5f5862413bacbee511765dcf8b",
+      "requested_effort": "max",
+      "returned_effort": "max",
+      "observed_at_epoch": 1790775820.6515815
+    },
+    {
+      "endpoint": "primary",
+      "purpose": "review",
+      "call_id": "5294b430192d430fa478c9b3e9e89393",
+      "requested_effort": "max",
+      "returned_effort": "max",
+      "observed_at_epoch": 1790775856.5615127
+    },
+    {
+      "endpoint": "primary",
+      "purpose": "review",
+      "call_id": "e1b4d0c3ea834c5aadc5ac1717e04ec6",
+      "requested_effort": "max",
+      "returned_effort": "max",
+      "observed_at_epoch": 1790775984.2029529
+    },
+    {
+      "endpoint": "primary",
+      "purpose": "review_final",
+      "call_id": "922fbd7187904f239ef4b3e6f8c59608",
+      "requested_effort": "max",
+      "returned_effort": "max",
+      "observed_at_epoch": 1790776243.6253219
+    }
+  ],
+  "updated": "2026-09-30T13:50:43.802833+00:00",
+  "completed": "2026-09-30T13:50:44.011030+00:00",
+  "commit_end": "327849ee11ec420a784b94ba68b26ac796bc46b0"
+}

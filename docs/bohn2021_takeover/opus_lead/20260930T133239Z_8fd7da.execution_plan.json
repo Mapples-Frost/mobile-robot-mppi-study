@@ -1,0 +1,295 @@
+{
+  "schema_version": 1,
+  "request_id": "execution-result:20260930T131908_12b79445",
+  "tasks": [
+    {
+      "task_id": "T-C1R-OC-epsilon-1a-receipt-repair",
+      "description": "T-C1R zero-solve operational/bookkeeping repair, first-writer-wins preserved. (1) Correct the unsupported v34x headline field: emit a corrected machine-readable receipt setting individual_epsilon_vector_values_serialized_in_v34u_raw=false, with the enumerated evidence that the v34x detector at experiments/bohn2021_aws/vehicle_true_variable_horizon_v34x_epsilon_provenance_audit_v0.py:184 matched any key containing the literal substring 'eps' and its surviving hits are boolean include_eps flags at research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34u_active_plan_refresh_nonconverged_objective_contract_probe_v0_20260930T125233Z/raw.json:12-40, while a literal '_eps' search over that same raw.json returns zero matches. Record the internal contradiction: the same artifact set has completed.json:38 true versus summary.md:40 stating the vector is not serialized; the lead accepts the summary.md:40 limitation text as correct. Do NOT rewrite raw v34x bytes; echo the original digests completed sha256 a9732844fff19523cbd97c2c8c2cf32f05bcc31f8097085814e63cd2f1041545 and raw sha256 c0540b523d93105d02b380c27729d4112eb20e0f7b68e74d1cb9141925c45c5e. Do NOT change the T-C1 source-provenance verdict, which the lead independently upholds. (2) Register the three v34t DR-7 zero-usage failures as preserved operational results with their exact failure strings, including ContractError('active PLAN_READY mismatch: request=execution-result:20260930T120837_e51ace56 sha=bd83471f289b797e23d778d82b1c78c04ae692aa4c538708fd8d0c76837efbc0; expected request=execution-result:20260930T120837_e51ace56 sha=ded62e6413a9ab52c0c2f2ed651e592fe6203bbcb0650ed002beff1e9dd6a2a5') from run 20260930T122045_c8b14921, stating plainly that these were wrapper/plan-identity failures with zero solver calls, not scientific negative results. (3) Append exactly one coverage line per area to the existing handoff-audit coverage record, using these lead-adopted dispositions: ORIGINAL author SAC reconstruction = partially inspected, primary ORIGINAL training logs/checkpoints not yet read by the lead; ORIGINAL vehicle-then-inverted-pendulum pendant (the Bohn second case) = UNINSPECTED this cycle, no pendulum evidence inspected, no pendulum claim made; full v33 rollout matrix = not independently rechecked; v34k registry ID = not independently verified this cycle. Mark hypotheses as hypotheses. (4) Append one line stating the verified parameter-difference count across the four v34u arms (four distinct opt_p_hash values at raw.json:3350/3365 = 7032ac0c47903ccfe27a25accc556b22331ba32247bf1a8b7a95f996cd1fdd5a, :1875/1890 = ca19ce63ea7aa807e66c33f9871022b24e1e7bd1ac0ee3292a82cc0025b52502, :4825/4840 = 9878b3d2235205772b48cf79a3e30d8eedd4e625feb2dc3d758130faa0ea651d, :6300/6315 = fbe488a0e5749ee25682b7f6a963294112b041c31e0340de4214480cab638352) and that cross-arm causal attribution is consequently deferred to T-C3's labelled ledger. No solver, no plant, no env.step/reset after construction, no training, no refit, no validation64, no sealed test. Failure returns to lead.",
+      "script_patterns": [
+        "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34y_tc1_vector_integrity_dr7_v0.py"
+      ],
+      "split": "opened_development_artifacts_only_no_validation64_no_sealed_test",
+      "method": "T-C1R zero-solve operational receipt correction and DR-7 bookkeeping, existing-artifact only",
+      "seeds": [
+        "not_applicable_no_training_seed"
+      ],
+      "config_constraints": {
+        "T_C1_source_provenance_pass_unchanged": true,
+        "corrected_field_name": "individual_epsilon_vector_values_serialized_in_v34u_raw",
+        "corrected_field_value": false,
+        "label_ORIGINAL_vs_IMPROVED": "this whole thread is IMPROVED latency-tree vehicle development; nothing here is ORIGINAL SAC reproduction",
+        "literal_search_string_with_zero_matches": "_eps",
+        "max_zero_usage_repairs_allowed": 3,
+        "no_new_solver_calls": true,
+        "no_rescoring_of_T_C1": true,
+        "original_v34x_completed_sha256": "a9732844fff19523cbd97c2c8c2cf32f05bcc31f8097085814e63cd2f1041545",
+        "original_v34x_raw_sha256": "c0540b523d93105d02b380c27729d4112eb20e0f7b68e74d1cb9141925c45c5e",
+        "preserve_original_raw_json_bytes": true,
+        "scenario_ids": [
+          "source242_slot0_branch_start"
+        ],
+        "verified_distinct_opt_p_hash_count": 4
+      },
+      "training_budget": {
+        "gradient_steps": 0,
+        "selector_refits": 0,
+        "training_steps": 0
+      },
+      "validation_budget": {
+        "env_steps_after_construction": 0,
+        "plant_steps": 0,
+        "solver_calls": 0,
+        "validation64_episodes": 0
+      },
+      "test_budget": {
+        "final_test_episodes": 0,
+        "sealed_test_episodes": 0
+      },
+      "resource_limits": {
+        "solver_calls": 0,
+        "plant_steps": 0,
+        "training_steps": 0,
+        "validation_episodes": 0,
+        "test_episodes": 0
+      },
+      "max_attempts": 2,
+      "max_zero_usage_repairs": 3,
+      "timeout_seconds": 900,
+      "dependencies": [],
+      "pass_conditions": {
+        "corrected_epsilon_vector_field_present_and_false": true,
+        "coverage_lines_for_ORIGINAL_and_pendulum_present": true,
+        "dr7_three_zero_usage_failures_registered": true,
+        "no_new_solver_or_plant_or_training_usage": true,
+        "original_v34x_raw_bytes_preserved": true,
+        "original_v34x_raw_sha256_echoed_exactly": "c0540b523d93105d02b380c27729d4112eb20e0f7b68e74d1cb9141925c45c5e",
+        "receipt_written": true,
+        "verified_opt_p_hash_count_recorded": 4
+      },
+      "continue_without_review": true
+    },
+    {
+      "task_id": "T-C3-matched-parameter-ledger",
+      "description": "Zero-solve labelled parameter-difference ledger over the already-recorded v34u/v34s vectors. This resolves the only blocking comparison-fairness defect before any further solver budget is spent on initialization or basin attribution. Verified starting datum (decisive on its own): the four v34u arms carry FOUR distinct opt_p_hash values, not two. Canonical H12 raw.json:3350 = 7032ac0c47903ccfe27a25accc556b22331ba32247bf1a8b7a95f996cd1fdd5a (context source242_slot0_branch_start, H12, V15_shared); canonical H15 raw.json:1875 = ca19ce63ea7aa807e66c33f9871022b24e1e7bd1ac0ee3292a82cc0025b52502; canonical H35 raw.json:4825 = 9878b3d2235205772b48cf79a3e30d8eedd4e625feb2dc3d758130faa0ea651d; goal_facing H15 raw.json:6300 = fbe488a0e5749ee25682b7f6a963294112b041c31e0340de4214480cab638352. The lead therefore withdraws the earlier cross-arm rationale that rested only on the canonical-H15 versus goal_facing hash pair; the defect is broader than first stated but weaker per pair, because OBSTACLE FORECAST nuisance coordinates are EXPECTED to differ across different context horizons and the four arms are not all the same declared context/horizon. Required work: (a) parse the recorded opt_p vector for every arm, produce a labelled per-entry diff table with source path and value on each arm, and group entries by whether they are nuisance (obstacle TVP forecast/noise seed path at gym_let_mpc/controllers.py:858-865), objective-relevant (goal/reference/terminal coefficient/weight), or structural (bounds, previous_input, scaling, n_horizon); (b) state explicitly and separately whether a matched-parameter comparison is currently possible for (i) the two H15 arms canonical versus goal_facing, and (ii) any pair among the four arms; (c) state clearly that a positive nuisance-difference finding blocks CROSS-ARM causal attribution only, and does not invalidate the WITHIN-CELL objective reconstruction, which is self-consistent per arm; (d) enumerate what must be matched before an initialization-only basin claim becomes admissible. Do NOT re-run the v34t converged diagnostic, do NOT repeat v34k/v34u/v34v/v34x arithmetic, do NOT open validation64, do NOT open the sealed test. Failure or inability to separate nuisance from objective-relevant entries returns to the lead rather than triggering a re-run.",
+      "script_patterns": [
+        "experiments/bohn2021_aws/vehicle_true_variable_horizon_matched_parameter_ledger_v0.py"
+      ],
+      "split": "opened_development_artifacts_only_no_validation64_no_sealed_test",
+      "method": "zero-solve labelled per-entry parameter-diff ledger over existing v34u/v34s recorded vectors",
+      "seeds": [
+        "not_applicable_no_training_seed"
+      ],
+      "config_constraints": {
+        "classification_taxonomy": [
+          "nuisance_obstacle_forecast_or_noise",
+          "objective_relevant",
+          "structural"
+        ],
+        "compared_arm_pairs_required": [
+          [
+            "H15|init=canonical",
+            "H15|init=goal_facing"
+          ]
+        ],
+        "context_id": "source242_slot0_branch_start",
+        "cross_arm_attribution_blocked_if_nuisance_diff_present": true,
+        "known_hash_goal_facing_H15": "fbe488a0e5749ee25682b7f6a963294112b041c31e0340de4214480cab638352",
+        "known_hash_H12_canonical": "7032ac0c47903ccfe27a25accc556b22331ba32247bf1a8b7a95f996cd1fdd5a",
+        "known_hash_H15_canonical": "ca19ce63ea7aa807e66c33f9871022b24e1e7bd1ac0ee3292a82cc0025b52502",
+        "known_hash_H35_canonical": "9878b3d2235205772b48cf79a3e30d8eedd4e625feb2dc3d758130faa0ea651d",
+        "label_ORIGINAL_vs_IMPROVED": "IMPROVED",
+        "no_new_solver_calls": true,
+        "within_cell_reconstruction_not_invalidated_by_nuisance_diff": true,
+        "term_mode": "V15_shared"
+      },
+      "training_budget": {
+        "gradient_steps": 0,
+        "selector_refits": 0,
+        "training_steps": 0
+      },
+      "validation_budget": {
+        "plant_steps": 0,
+        "solver_calls": 0,
+        "validation64_episodes": 0
+      },
+      "test_budget": {
+        "final_test_episodes": 0,
+        "sealed_test_episodes": 0
+      },
+      "resource_limits": {
+        "solver_calls": 0,
+        "plant_steps": 0,
+        "training_steps": 0,
+        "validation_episodes": 0,
+        "test_episodes": 0
+      },
+      "max_attempts": 2,
+      "max_zero_usage_repairs": 3,
+      "timeout_seconds": 900,
+      "dependencies": [],
+      "pass_conditions": {
+        "each_difference_labelled_nuisance_or_objective_relevant_or_structural": true,
+        "explicit_statement_of_whether_matched_basin_comparison_is_possible": true,
+        "no_solver_plant_training_validation_or_test_usage": true,
+        "parameter_diff_table_written_with_paths_and_values": true,
+        "within_cell_validity_stated_separately_from_cross_arm_attribution": true
+      },
+      "continue_without_review": true
+    },
+    {
+      "task_id": "T-C5-OC-epsilon-2-vector-sum-closure",
+      "description": "Zero-solve closure of the one remaining gap in the OC-epsilon-1 provenance claim, using ONLY already-recorded v34u numbers, with no new solver work. Background: v34x's independent-contribution check compared the recorded epsterm_total (79.89232842059124, 101.80331021216188, 256.38529988021594, 109.92914032557572) against paired eps/no-epsilon alias candidate totals; the maximum disagreement was 1.1368683772161603e-13. That is real but it is a CONSISTENCY check among outputs of the SAME accessor code path (mpc.epsterm_fun(acc.eps(k,s)) built before opt_f_num is read, per v34k source line 378/449), NOT an independent recomputation. Additionally the lead verified that all four v34u cells were constructed with effective ipopt.max_iter=1 (raw.json:658/:680, :2133/:2155, :3608/:3630, :5083/:5105, and global :6455) and all four recorded return_status is Maximum_Iterations_Exceeded with unified_return_status SOLVER_RET_LIMITED, so every recorded slack vector is a FIRST-ITERATE artefact, not an optimal slack. Required work: (a) using only recorded values, attempt to reconstruct the epsilon contribution from the individual per-stage quantities actually serialized in v34u raw (eps_nonzero_count and any per-stage slack numbers present) and test the closure sum_k gamma^k * sum_j 1000 * eps_{k,j} against each arm's recorded epsterm_total with gamma = 0.97 from mpc.discount_factor, reporting absolute and relative mismatch per arm against a predeclared independent tolerance of 1e-8 absolute; (b) report honestly and explicitly whether the recorded data are SUFFICIENT for a non-circular recomputation; if they are not, say so plainly and record that sufficiency requires the T-C2 per-stage vector, rather than fabricating a partial sum; (c) test and report the qualitative prediction that a first-iterate truncation with EPSILON LOWER BOUND 0 pushes epsilon toward the full constraint violation, so that eps_nonzero_count equal to the horizon length is what truncation predicts, whereas a converged interior solution would typically leave slack only where the soft margin is genuinely active; state the observed eps_nonzero_count pattern (12 with H12, 15 with H15, 35 with H35, and 15 for the goal_facing H15 arm) against this prediction; (d) explicitly record the resulting limit on generalization: nothing in the existing evidence speaks to slack magnitude at a converged iterate, and the suspicion that the reconstruction was circular is NOT supported given the v34k accessor source ordering, so the issue must not be relabelled as circular. Do NOT open validation64, do NOT open the sealed test, do NOT re-run any solver.",
+      "script_patterns": [
+        "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34y_tc1_vector_integrity_dr7_v0.py"
+      ],
+      "split": "opened_development_artifacts_only_no_validation64_no_sealed_test",
+      "method": "zero-solve independent epsilon-sum closure attempt against recorded v34u per-stage values",
+      "seeds": [
+        "not_applicable_no_training_seed"
+      ],
+      "config_constraints": {
+        "all_four_v34u_cells_effective_ipopt_max_iter": 1,
+        "discount_factor": 0.97,
+        "discount_source": "mpc.discount_factor",
+        "independent_absolute_tolerance": 1e-08,
+        "label_ORIGINAL_vs_IMPROVED": "IMPROVED",
+        "no_fabricated_partial_sums": true,
+        "no_new_solver_calls": true,
+        "observed_eps_nonzero_counts": {
+          "H12": 12,
+          "H15": 15,
+          "H15_goal_facing": 15,
+          "H35": 35
+        },
+        "recorded_epsterm_totals": [
+          79.89232842059124,
+          101.80331021216188,
+          256.38529988021594,
+          109.92914032557572
+        ],
+        "recorded_return_status_all_cells": "Maximum_Iterations_Exceeded",
+        "soft_obstacle_penalty_term_cons": 1000
+      },
+      "training_budget": {
+        "gradient_steps": 0,
+        "selector_refits": 0,
+        "training_steps": 0
+      },
+      "validation_budget": {
+        "plant_steps": 0,
+        "solver_calls": 0,
+        "validation64_episodes": 0
+      },
+      "test_budget": {
+        "final_test_episodes": 0,
+        "sealed_test_episodes": 0
+      },
+      "resource_limits": {
+        "solver_calls": 0,
+        "plant_steps": 0,
+        "training_steps": 0,
+        "validation_episodes": 0,
+        "test_episodes": 0
+      },
+      "max_attempts": 2,
+      "max_zero_usage_repairs": 3,
+      "timeout_seconds": 900,
+      "dependencies": [
+        "T-C1R-OC-epsilon-1a-receipt-repair"
+      ],
+      "pass_conditions": {
+        "data_sufficiency_verdict_stated_without_fabrication": true,
+        "independent_tolerance_1e-8_applied_per_arm": true,
+        "no_solver_plant_training_validation_or_test_usage": true,
+        "observed_eps_nonzero_pattern_compared_to_truncation_prediction": true,
+        "per_arm_closure_mismatch_reported": true
+      },
+      "continue_without_review": true
+    },
+    {
+      "task_id": "T-C2-OC-epsilon-1b-converged-contract-gate",
+      "description": "T-C2: the single most informative measurement still missing in this entire thread, and the only way the current standstill can be broken, is the per-stage slack vector at a CONVERGED iterate at production tolerances. Every existing slack number in this project comes from a solve truncated at one iteration, because all four v34u cells were constructed with effective ipopt.max_iter=1 and returned Maximum_Iterations_Exceeded / SOLVER_RET_LIMITED. Within-cell objective reconstruction is therefore verified and should not be re-litigated. What is NOT established is whether converged optimal slack is zero or positive. This is discriminating and cheap: if converged slack is negligible, the omitted-slack mechanism is confined to truncated iterates and stops constraining deployed-behaviour explanations, and the terminal-opportunity question T-C4 becomes the natural next science; if converged slack is materially positive, the amended reconstruction is permanently required for any converged-objective claim and the objective-contract thread closes as a verified IMPROVED formula amendment with a live methodological consequence. Frozen inputs: opened development context source242_slot0_branch_start ONLY, term_mode V15_shared, goal case.tvp.trajectory_endpoint[61], cells H12/H15/H35 canonical plus H15 goal_facing. IPOPT at PRODUCTION tolerances (max_iter NOT forced to 1) for all four cells, plus EXACTLY ONE forced max_iter=1 truncated control, and that control must be the H12 cell only. Five scheduled low-level solver calls against an existing six-call ceiling. Required per-cell outputs: return_status and unified_return_status, actual iteration count, J_solver, J_recon_historical_noeps, J_recon_full, both relative errors against the predeclared thresholds, direct NLP f evaluated at opt_x_num/opt_p_num compared to opt_f_num, the PERSISTED PER-STAGE EPSILON VECTOR for all k and all j WITH ITS LABEL AND DIMENSION, eps_nonzero_count, per-stage gamma^k*1000*epsilon contributions, the soft-margin quantity 1.5*r_obstacle - d, hard obstacle clearance, and an explicit verdict on whether any epsilon is materially non-zero at convergence. Also report solver_wall_s and whole_decision_get_action_wall_s as mean/median/P95 with n, and state that no truncated cell's timing is a deployable estimate. Predeclared acceptance: converged full-objective relative error <= 1e-6; the H35 1e-5 allowance applies only if H35 is documented non-converged before the run; any converged cell above 1e-4 is a hard defect that stops the task. Branch rules: all four cells converge with relative error <= 1e-6 -> close OC-epsilon-1 as a verified IMPROVED formula amendment, release dependent contract-consumer work, and state the converged-slack verdict either way, because positive converged slack falsifies only the universal zero-slack hypothesis and is NOT a defect; converged miss in 1e-6 to 1e-4 -> record as a SECOND distinct residual source under a new stable ID and do not proceed; any converged cell above 1e-4 -> hard defect, stop, escalate to lead. Negative and null results are first-class outputs and must be preserved verbatim. No plant steps, no env.step/reset after construction, no training, no refit, no validation64, no sealed test.",
+      "script_patterns": [
+        "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34z_converged_contract_gate_v0.py"
+      ],
+      "split": "opened_development_source242_slot0_branch_start_only_no_validation64_no_sealed_test",
+      "method": "A13c-4 bounded converged plus single truncated-control objective-contract gate on the frozen IMPROVED latency-tree vehicle controller",
+      "seeds": [
+        "canonical_solve_no_training_seed",
+        "goal_facing_H15_control_no_training_seed"
+      ],
+      "config_constraints": {
+        "canonical_cells": [
+          "H12",
+          "H15",
+          "H35"
+        ],
+        "context_id": "source242_slot0_branch_start",
+        "default_relative_error_max": 1e-06,
+        "fixed_H_baseline_must_not_be_weakened": true,
+        "forced_max_iter_for_control": 1,
+        "goal_facing_cell": "H15",
+        "goal_source": "case.tvp.trajectory_endpoint[61]",
+        "h35_allowance_condition": "only if H35 is genuinely nonconverged and documented before the run",
+        "h35_forced_nonconverged_relative_error_max": 1e-05,
+        "hard_defect_relative_error_gt": 0.0001,
+        "horizons": [
+          12,
+          15,
+          35
+        ],
+        "label_ORIGINAL_vs_IMPROVED": "IMPROVED",
+        "persist_per_stage_epsilon_vector_required": true,
+        "persist_per_stage_epsilon_vector_with_label_and_dimension": true,
+        "production_tolerances_for_converged_cells": true,
+        "sealed_test_authorized": false,
+        "single_truncated_control_cell": "H12",
+        "soft_constraint_form": "obj_i_distance + 0.5*obj_i_r <= 0 with slack, hard form obj_i_distance <= 0",
+        "soft_obstacle_penalty_term_cons": 1000,
+        "term_mode": "V15_shared",
+        "truncated_control_per_cell": 1
+      },
+      "training_budget": {
+        "gradient_steps": 0,
+        "selector_refits": 0,
+        "training_steps": 0
+      },
+      "validation_budget": {
+        "env_steps_after_construction": 0,
+        "low_level_solver_call_cap": 6,
+        "plant_steps": 0,
+        "validation64_episodes": 0
+      },
+      "test_budget": {
+        "final_test_episodes": 0,
+        "sealed_test_episodes": 0
+      },
+      "resource_limits": {
+        "solver_calls": 6,
+        "plant_steps": 0,
+        "training_steps": 0,
+        "validation_episodes": 0,
+        "test_episodes": 0
+      },
+      "max_attempts": 2,
+      "max_zero_usage_repairs": 3,
+      "timeout_seconds": 1800,
+      "dependencies": [
+        "T-C1R-OC-epsilon-1a-receipt-repair",
+        "T-C3-matched-parameter-ledger",
+        "T-C5-OC-epsilon-2-vector-sum-closure"
+      ],
+      "pass_conditions": {
+        "all_scheduled_cells_completed_or_explicitly_reported_failed": true,
+        "converged_cells_report_return_status_and_iteration_count": true,
+        "converged_optimal_slack_verdict_stated_explicitly": true,
+        "no_plant_steps_or_training_usage": true,
+        "no_validation64_or_sealed_test_usage": true,
+        "per_stage_epsilon_vector_persisted_with_label_and_dimension_for_every_completed_cell": true,
+        "relative_error_reported_per_cell_and_per_formula": true,
+        "timing_reported_as_mean_median_p95_with_n_and_truncation_caveat": true
+      },
+      "continue_without_review": false
+    }
+  ]
+}

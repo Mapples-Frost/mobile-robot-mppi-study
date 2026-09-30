@@ -8126,3 +8126,11 @@ UTC: 2026-09-30T21:12:55.877894+00:00. Metadata-only infrastructure diagnostic; 
 
 ## 2026-09-30T21:15:45.504833+00:00
 
+<!-- s-tc2h8-backup-422-status-capture-v0b-20260930T211710Z -->
+## Corrected S-TC2H8 backup HTTP-422 status capture
+
+UTC: 2026-09-30T21:17:10.287968+00:00. Metadata-only infrastructure diagnostic using canonical supervisor state `state`; resources `{'solver_calls': 0, 'plant_steps': 0, 'training_steps': 0, 'validation_episodes': 0, 'test_episodes': 0}`; no validation64 or sealed/final-test access. Adequate backup for S-TC2H8=`False`; reasons=`["status_is_'failed'_not_verified", 'remaining_changed_files_not_zero_or_missing', 'missing_commit', 'missing_verified_package_metadata']`; status=`failed`; error=`RuntimeError`; message=`Asset upload HTTP 422`; HTTP422=`True`; public release asset count returned=`1000`. Evidence: `research_artifacts/aws_diagnostics/backup_failure_status_capture_s_tc2h8_asset422_v0b_absolute_state_20260930T211710Z/summary.md`, `research_artifacts/aws_diagnostics/backup_failure_status_capture_s_tc2h8_asset422_v0b_absolute_state_20260930T211710Z/raw.json`. Request/proof: `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_REPAIR_AFTER_S_TC2H8_ASSET422_V0B_20260930T211710Z.json`.
+
+
+## 2026-09-30T21:22:18.579890+00:00
+

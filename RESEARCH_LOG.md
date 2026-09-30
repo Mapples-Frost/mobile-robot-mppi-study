@@ -5774,3 +5774,84 @@ UTC: 2026-09-30T01:32:17.706415+00:00. Development-only broader source-independe
 
 ## 2026-09-30T01:39:54.297951+00:00
 
+<!-- vehicle-true-variable-H-h12-adaptivity-opportunity-audit-v24-20260930T0205Z -->
+## 2026-09-30 vehicle H12/H15 adaptivity-opportunity audit v24
+
+UTC: 2026-09-30T01:41:17.634738+00:00. Offline/no-simulation diagnostic over already-opened v19/v21/v23 H12/H15 development rows; no validation64, no sealed test, no training/refit. Fresh source-independent v21+v23 rows: fixed H12 bad=0, pass5=True, decision saving=0.1622243713202727; v19 opened-boundary rows: fixed H12 bad=3, pass5=False, oracle pass5=True; all opened rows: fixed H12 bad=3, oracle pass5=True. Decision: Fixed H12 dominates the fresh source-independent stress-pool rows, while adaptivity is only required by the opened v19 lower-stress mid-late negative cluster. The next experiment should not be another broad fresh support sweep; it should specifically test whether v19-like H12-risk states reproduce in source-independent neighbors selected pre-outcome from H15 traces. Artifacts: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_h12_adaptivity_opportunity_audit_v24_20260930T0205Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_h12_adaptivity_opportunity_audit_v24_20260930T0205Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_h12_adaptivity_opportunity_audit_v24_20260930T0205Z/completed.json`. Backup required before further unique science: `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_H12_ADAPTIVITY_OPPORTUNITY_AUDIT_V24_20260930T0205Z.json`.
+
+
+## 2026-09-30T01:42:50.189616+00:00
+Elapsed service lifetime since first supervisor event: ~86h45m48s (to v24 completion at 2026-09-30T01:41:17Z). Cumulative server API `total_tokens` from `research.sqlite`: unavailable in repository-accessible tools here; I did not infer or treat it as zero.
+
+Concrete actions completed:
+
+1. Read coordination/reviewer handoff requirements:
+   - `docs/bohn2021_takeover/astra_reviews/COORDINATION.md`
+   - `docs/bohn2021_takeover/astra_reviews/LATEST.md`
+   - Confirmed latest Astra report remains `20260929T153837Z`.
+
+2. Executed the previously written v24 offline audit:
+   - Script: `experiments/bohn2021_aws/vehicle_true_variable_horizon_h12_adaptivity_opportunity_audit_v24.py`
+   - Run registry: `research_artifacts/aws_runs/20260930T014117_86f32862/registry.json`
+   - Exit status: `0`
+   - Runtime: ~2.0s
+   - New simulations/control steps/training/refit: `0 / 0 / 0 / 0`
+   - Validation64 opened: `false`
+   - Sealed final test accessed: `false`
+
+3. v24 key result:
+   - Fresh source-independent rows v21+v23:
+     - Rows: `40`
+     - H12 beneficial: `38`
+     - H12 catastrophic: `0`
+     - Fixed H12 decision saving vs H15: `16.22%`
+     - Fixed H12 pass5: `True`
+   - Opened v19 boundary rows:
+     - Repeat-averaged rows: `24`
+     - H12 catastrophic: `3` averaged rows, corresponding to v19’s repeat-level `6`
+     - All catastrophic rows remain concentrated in `fresh_v11/fresh_case05_slot1_mid_late_control`
+     - Fixed H12 pass5: `False`
+     - Oracle H12/H15 pass5: `True`
+   - Combined opened H12/H15 rows:
+     - Fixed H12 bad: `3`, pass5 `False`
+     - Oracle H12/H15 pass5 `True`, decision saving `16.80%`
+
+4. Scientific decision:
+   - Current evidence is mainly a **fixed-H12 compute-saving result** on the fresh stress-pool rows.
+   - Adaptivity is not yet justified broadly; it is only motivated by the localized v19/v11 lower-stress mid-late H12-risk cluster.
+   - Therefore the next useful experiment is not another broad fresh support sweep and not H10 label-density work.
+   - Next discriminating experiment should specifically test whether v19-like H12-risk states reproduce in fresh source-independent source72-neighborhood / lower-stress mid-late states selected pre-outcome from H15 traces.
+
+5. Documents/state updated by v24:
+   - `STATUS.md`
+   - `RESEARCH_LOG.md`
+   - `DECISIONS.md`
+   - `RESULTS_AUDIT.md`
+   - `REPRODUCTION_PROTOCOL.md`
+   - `EXPERIMENT_REGISTRY.csv`
+   - `docs/bohn2021_takeover/astra_reviews/RESPONSE_LOG.md`
+   - Stable Astra IDs preserved through v24 for A4/A6/A7/A8/A11/A12.
+
+6. Main new artifacts:
+   - `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_h12_adaptivity_opportunity_audit_v24_20260930T0205Z/summary.md`
+   - `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_h12_adaptivity_opportunity_audit_v24_20260930T0205Z/raw.json`
+   - `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_h12_adaptivity_opportunity_audit_v24_20260930T0205Z/completed.json`
+   - `research_artifacts/aws_state/continue_state_20260930T0205_after_h12_adaptivity_opportunity_audit_v24.md`
+   - `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_H12_ADAPTIVITY_OPPORTUNITY_AUDIT_V24_20260930T0205Z.json`
+
+7. State preserved for next iteration via `update_state`.
+
+Current blocker / next step:
+
+- Further unique science is backup-gated.
+- Need verified external backup covering v24 source/results/docs/registry/response log/run registry before v25 simulation or refit work.
+- Once backup is verified, next queued experiment is v25 H12-risk-family acquisition:
+  - metadata/H15-trace-only pre-outcome selection,
+  - source72-neighborhood / lower-stress mid-late morphology,
+  - exclude all prior H-outcome sources,
+  - compare fixed H12, fixed H15 and v20b/v22 selector with measured decision/solver timing,
+  - no validation64 or sealed test.
+
+
+## 2026-09-30T01:50:36.668091+00:00
+

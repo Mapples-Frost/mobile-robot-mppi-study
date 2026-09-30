@@ -1,9 +1,9 @@
 {
-  "request_id": "v33-terminal-h-cross-causal-probe-20260930T054827Z",
-  "experiment_id": "20260930T054827_b3e91ea1",
-  "report": "docs/bohn2021_takeover/astra_reviews/20260930T060247Z.md",
-  "completed": "2026-09-30T06:13:04.561063+00:00",
+  "request_id": "execution-result:20260930T063700_1e9ddb9c",
+  "experiment_id": "20260930T063700_1e9ddb9c",
+  "report": "docs/bohn2021_takeover/astra_reviews/20260930T063724Z.md",
+  "completed": "2026-09-30T06:48:35.890969+00:00",
   "primary_analyst": "gpt-6-astra",
-  "report_sha256": "bbed7c8263302d87205872b0a46eb5916f438439510da28e5b8219295e31b1e4",
+  "report_sha256": "9b2cfa101a643087802db1adf70f87fb6271bce7766809fab5c34e1e913c629a",
   "supersedes_request_ids": []
 }

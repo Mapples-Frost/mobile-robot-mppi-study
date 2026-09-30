@@ -1,0 +1,6 @@
+<!-- vehicle-v34c-contract-preflight-gate-constant-failure-20260930T090409Z -->
+## Pending STATUS append: v34c current-Astra gate repair
+
+Registered run `20260930T090408_15cca729` failed before any v34c zero-solve preflight cell: stale inherited v34 gate constants expected Astra request `execution-result:20260930T072503_5188c5c7`, but current authoritative report is `docs/bohn2021_takeover/astra_reviews/20260930T084456Z.md` / request `execution-result:20260930T084409_7dd79362`. Evidence: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34c_contract_preflight_v0_20260930T090409Z/failed.json`. validation64=false; sealed_test=false; solver/plant/training budgets all zero.
+
+Repair prepared but not run due one-experiment-per-iteration limit: `experiments/bohn2021_aws/vehicle_true_variable_horizon_v34c_contract_preflight_v0b.py` sha256 `a4749e2c4760991a68241eac139919a55e9c3969eaa7f5cc537aa0843ac7942d`, patching only current Astra gate constants. Backup requested in `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_V34C_GATE_CONSTANT_REPAIR_20260930T090409Z.json`. Next: run v0b after backup verification; if hard_pass then continue to fixed 24-call objective-vs-basin probe.

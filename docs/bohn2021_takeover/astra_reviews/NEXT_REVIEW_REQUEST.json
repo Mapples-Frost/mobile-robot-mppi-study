@@ -1,34 +1,44 @@
 {
-  "request_id": "v32-h12-supported-default-h35-diagnostic-20260930T051611Z",
-  "created": "2026-09-30T05:18:40+00:00",
+  "request_id": "v33-terminal-h-cross-causal-probe-20260930T054827Z",
+  "created": "2026-09-30T05:57:42.452614+00:00",
   "status": "analysis_requested",
-  "trigger": "v32_branch_neutral_h12_supported_default_h35_diagnostic_after_v31_source_coverage_bounds",
-  "experiment_id": "vehicle_true_variable_horizon_v32_h12_supported_default_h35_diagnostic_v0",
-  "supersedes_request_id": "v31-source-coverage-budget-bounds-20260930T044819Z",
-  "question": "Astra should analyze v29/v30b/v31 plus the new v32 branch-neutral diagnostic and select the next scientific action. v32 suggests the opened data do contain a source-family-stable H12-shortening vs non-H12 signal: H12 if abs_obs_07 <= 0.776202689723 else H35 has LOGO bad_count=1, h_counts H12=6/H15=0/H35=5 and decision_saving_vs_fixed_H35=0.3992505755588043 on the same 11 opened rows, compared with prior v31 two-feature grouped LOGO bad_count=5. The residual bad row is v19_c13 from the single H15 source family, where defaulting to H35 incurs large physical excess; the diagnostic never predicts H15 and is not deployable. Current independent source-family counts remain H12=3, H15=1, H35=1. Decide, with evidence-linked rationale, whether GPT-5.5 should next acquire fresh source-independent H15/H35/H12 triage labels, run a terminal-risk/value refit or training ablation, redesign scenario/comparison protocol, or perform another specified bounded action. This request does not authorize validation64/final-test access or treat v32 as validation evidence.",
-  "evidence_paths": [
-    "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v32_h12_supported_default_h35_diagnostic_v0_20260930T051611Z/summary.md",
-    "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v32_h12_supported_default_h35_diagnostic_v0_20260930T051611Z/raw.json",
-    "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v32_h12_supported_default_h35_diagnostic_v0_20260930T051611Z/completed.json",
-    "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v31_source_budget_bounds_v0_20260930T044819Z/summary.md",
-    "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v31_source_budget_bounds_v0_20260930T044819Z/raw.json",
-    "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v30b_cluster_stability_diagnostic_v31_20260930T0405Z/summary.md",
-    "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v30b_cluster_stability_diagnostic_v31_20260930T0405Z/raw.json",
-    "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_three_way_selector_feature_audit_v30b_fast_20260930T0410Z/summary.md",
-    "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_three_way_selector_feature_audit_v30b_fast_20260930T0410Z/raw.json",
-    "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_success_aware_longer_H_feasibility_probe_v29_20260930T0340Z/summary.md",
-    "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_success_aware_longer_H_feasibility_probe_v29_20260930T0340Z/raw.json",
-    "docs/bohn2021_takeover/astra_reviews/RESPONSE_LOG.md"
-  ],
-  "access_and_budget_note": {
-    "new_simulation_episodes_in_v32": 0,
-    "new_control_steps_in_v32": 0,
-    "new_training_or_gradient_steps_in_v32": 0,
-    "selector_refits_in_v32": 0,
-    "validation64_bank_opened_in_v32": false,
-    "validation64_episodes_in_v32": 0,
-    "sealed_test_accessed_in_v32": false,
-    "sealed_test_episodes_in_v32": 0
+  "primary_analyst_requested": "gpt-6-astra",
+  "trigger": "Astra-selected v33 terminal x H causal cross-probe completed",
+  "experiment_id": "20260930T054827_b3e91ea1",
+  "method": "IMPROVED development terminal x horizon causal cross-probe; not ORIGINAL SAC; not validation/test",
+  "supersedes_request_id": "v32-h12-supported-default-h35-diagnostic-20260930T051611Z",
+  "question": "Analyze the v33 terminal x horizon continuation matrix over six already-opened development states. Verify whether terminal-value contract effects, horizon/geometry effects, or optimization-basin effects best explain source242 rescue and v19_c13 cost anomaly. Select the next bounded scientific action for GPT-5.5 implementation (terminal/value repair, single-state alternate-initialization diagnostics, prospective new-source mechanism confirmation, training/refit, scenario/comparison redesign, or defer), preserving that v33 is development-only and does not authorize validation64 or sealed-test access.",
+  "headline_numeric_evidence": {
+    "episodes": 72,
+    "control_steps": 4013,
+    "training_or_gradient_steps": 0,
+    "selector_refits": 0,
+    "validation64_bank_opened": false,
+    "validation64_episodes": 0,
+    "sealed_test_accessed": false,
+    "sealed_test_episodes": 0,
+    "source242_by_terminal_mode": {
+      "zero": {"states": 2, "H35_safe_count": 2, "H12_safe_count": 0, "H15_safe_count": 0, "best_physical_horizons": {"35": 2}, "fastest_near_best_horizons": {"35": 2}},
+      "V15_shared": {"states": 2, "H35_safe_count": 2, "H12_safe_count": 0, "H15_safe_count": 0, "best_physical_horizons": {"35": 2}, "fastest_near_best_horizons": {"35": 2}},
+      "V35_shared": {"states": 2, "H35_safe_count": 2, "H12_safe_count": 1, "H15_safe_count": 2, "best_physical_horizons": {"35": 2}, "fastest_near_best_horizons": {"12": 1, "15": 1}}
+    },
+    "v19_c13_H35_terminal_effect": {"V35_physical": 64.58471587439642, "V15_physical": 11.169277744886342, "zero_physical": 11.168923987264899, "V35_minus_best_other": 53.415791887131526},
+    "aggregate_safe_counts_by_horizon": {"12": 11, "15": 14, "25": 14, "35": 18},
+    "aggregate_safe_counts_by_terminal_mode": {"zero": 18, "V15_shared": 18, "V35_shared": 21}
   },
-  "operational_note": "v32 outputs and this refreshed Astra request require external backup before unique simulation/refit/training/validation/final-test work. GPT-5.5 may continue reversible integrity/preparation while this analysis is pending but should not select a new substantive branch without a matching or superseding Astra report."
+  "evidence_paths": [
+    "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v33_terminal_h_cross_causal_probe_v0_20260930T054827Z/summary.md",
+    "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v33_terminal_h_cross_causal_probe_v0_20260930T054827Z/raw.json",
+    "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v33_terminal_h_cross_causal_probe_v0_20260930T054827Z/completed.json",
+    "research_artifacts/aws_runs/20260930T054827_b3e91ea1/registry.json",
+    "research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_V33_TERMINAL_H_CROSS_CAUSAL_PROBE_20260930T054827Z.json",
+    "docs/bohn2021_takeover/astra_reviews/RESPONSE_LOG.md",
+    "docs/bohn2021_takeover/astra_reviews/20260930T034449Z.md"
+  ],
+  "implementation_limitations_to_review": [
+    "No optional alternate-initialization single-state solver calls were run in v33.",
+    "Existing runner records first action, accepted objective, solver residuals and warm-start hashes but not full stage/slack/gamma^H V decomposition.",
+    "All six states were already-opened development states; no validation64 or sealed final test was accessed."
+  ],
+  "operational_note": "v33 outputs and this refreshed handoff require external backup via research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_V33_TERMINAL_H_CROSS_CAUSAL_PROBE_20260930T054827Z.json before additional unique simulation/refit/training/validation work."
 }

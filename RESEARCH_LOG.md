@@ -6946,3 +6946,63 @@ Next safe action:
 
 ## 2026-09-30T05:47:07.870074+00:00
 
+<!-- vehicle-true-variable-horizon-v33-terminal-h-cross-causal-probe-v0-20260930T054827Z -->
+## 2026-09-30 v33 terminal × H causal cross-probe
+
+UTC: 2026-09-30T05:57:42.452614+00:00. Executed Astra-selected Task 1 as development-only IMPROVED evidence: terminal contracts zero/V15_shared/V35_shared × H12/H15/H25/H35 on six already-opened branch states. Budget 72 episodes and 4013 control steps; validation64 closed, sealed test closed, no training/refit. Executor numeric readout: {'source242_read': 'at least one short-H source242 rescue appears after terminal swap; terminal contract can change rescue and should be repaired before selector work.', 'c13_read': 'v19_c13 H35 cost anomaly is terminal-sensitive: V35 is materially worse than V15/zero.', 'alternate_initialization_solver_calls_performed': 0, 'alternate_initialization_deferred_reason': 'requires a separate low-level warm-start manipulation path; not needed for the first H x terminal continuation matrix and not executed in v33'}. Source242 summary: {'zero': {'states': 2, 'H35_safe_count': 2, 'H12_safe_count': 0, 'H15_safe_count': 0, 'best_physical_horizons': Counter({'35': 2}), 'fastest_near_best_horizons': Counter({'35': 2})}, 'V15_shared': {'states': 2, 'H35_safe_count': 2, 'H12_safe_count': 0, 'H15_safe_count': 0, 'best_physical_horizons': Counter({'35': 2}), 'fastest_near_best_horizons': Counter({'35': 2})}, 'V35_shared': {'states': 2, 'H35_safe_count': 2, 'H12_safe_count': 1, 'H15_safe_count': 2, 'best_physical_horizons': Counter({'35': 2}), 'fastest_near_best_horizons': Counter({'15': 1, '12': 1})}}. v19_c13 H35 terminal effect: {'V35_physical': 64.58471587439642, 'V15_physical': 11.169277744886342, 'zero_physical': 11.168923987264899, 'V35_minus_best_other': 53.415791887131526, 'read': 'v19_c13 H35 cost anomaly is terminal-sensitive: V35 is materially worse than V15/zero.'}. Artifacts: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v33_terminal_h_cross_causal_probe_v0_20260930T054827Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v33_terminal_h_cross_causal_probe_v0_20260930T054827Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v33_terminal_h_cross_causal_probe_v0_20260930T054827Z/completed.json`. New backup request: `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_V33_TERMINAL_H_CROSS_CAUSAL_PROBE_20260930T054827Z.json`. New Astra request: `v33-terminal-h-cross-causal-probe-20260930T054827Z`.
+
+
+## 2026-09-30T05:59:43.630651+00:00
+Elapsed service lifetime: **3d 19h 02m 13.033s** since `2026-09-26T10:55:29.419331Z` (from v33 completion timestamp).  
+Cumulative server API total_tokens: **latest audited 278.599M** from `/data/openai-agent/state/research.sqlite`; not re-audited after v33 because this iteration used the single allowed `run_experiment` slot. Desktop conversation tokens excluded.
+
+Concrete actions completed:
+
+1. **Verified coordination state**
+   - Read `ANALYSIS_READY.json`, `LATEST.md`, Astra reports `20260930T034449Z.md` and `20260930T054126Z.md`, `COORDINATION.md`, and `RESPONSE_LOG.md`.
+   - Confirmed Astra’s v32 direction: execute terminal × H causal cross-probe before new selector training, threshold sweeps, fresh-label acquisition, validation, or test.
+   - Verified pre-run backup context from supervisor: backup at `2026-09-30T05:47:51.591996+00:00`, commit `e8312dac70d4f94a1a3bf6ceec70dfb6b8749613`, package SHA256 `bbcc24abcb7275c5acbf4a10184075a3c440e20142c03b070640705bb55fbcf7`.
+
+2. **Executed Astra-selected v33 terminal × horizon causal probe**
+   - Experiment ID: `20260930T054827_b3e91ea1`
+   - Script: `experiments/bohn2021_aws/vehicle_true_variable_horizon_v33_terminal_h_cross_causal_probe_v0.py`
+   - Classification: **development IMPROVED diagnostic only**, not ORIGINAL SAC, not validation/test.
+   - Budget used: **72 development episodes**, **4013 control steps**.
+   - No validation64 access, no sealed test access, no gradient training, no selector refit.
+
+3. **Key numerical findings from v33**
+   - **source242 states**
+     - With `zero` terminal: H35 safe on 2/2 states; H12/H15 safe on 0/2.
+     - With `V15_shared`: H35 safe on 2/2; H12/H15 safe on 0/2.
+     - With `V35_shared`: H35 safe on 2/2, H15 safe on 2/2, H12 safe on 1/2.
+   - Executor numeric readout: source242 rescue is not purely “H35 only”; terminal contract can change short-H rescue behavior, so terminal/value-contract issues remain causal candidates.
+   - **v19_c13 H35 anomaly**
+     - H35 + V35 physical cost: `64.58471587439642`
+     - H35 + V15 physical cost: `11.169277744886342`
+     - H35 + zero physical cost: `11.168923987264899`
+     - V35 is materially worse than V15/zero for this row, supporting a terminal-sensitive cost anomaly.
+   - Aggregate safe counts:
+     - By H: H12 `11`, H15 `14`, H25 `14`, H35 `18`
+     - By terminal: zero `18`, V15_shared `18`, V35_shared `21`
+
+4. **Evidence and handoff artifacts**
+   - Summary: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v33_terminal_h_cross_causal_probe_v0_20260930T054827Z/summary.md`
+   - Raw: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v33_terminal_h_cross_causal_probe_v0_20260930T054827Z/raw.json`
+   - Completed: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v33_terminal_h_cross_causal_probe_v0_20260930T054827Z/completed.json`
+   - Registry: `research_artifacts/aws_runs/20260930T054827_b3e91ea1/registry.json`
+   - Backup request: `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_V33_TERMINAL_H_CROSS_CAUSAL_PROBE_20260930T054827Z.json`
+
+5. **Astra handoff preserved**
+   - Refreshed `docs/bohn2021_takeover/astra_reviews/NEXT_REVIEW_REQUEST.json` with request:
+     - `v33-terminal-h-cross-causal-probe-20260930T054827Z`
+   - Updated `RESPONSE_LOG.md`, `STATUS.md`, `RESEARCH_LOG.md`, `DECISIONS.md`, `RESULTS_AUDIT.md`, `REPRODUCTION_PROTOCOL.md`, and `EXPERIMENT_REGISTRY.csv`.
+   - Persisted state via `update_state`.
+
+Current gates / next iteration:
+
+- **External backup is required** before further unique scientific simulation/refit/training/validation:
+  - `REQUEST_BACKUP_AFTER_V33_TERMINAL_H_CROSS_CAUSAL_PROBE_20260930T054827Z.json`
+- **Astra analysis for v33 is pending.**
+  - `ANALYSIS_READY.json` still points to the v32 report, not the new v33 request.
+- Until both gates clear, the next safe work is reversible integrity/preparation only, especially the receipt final-hash/provenance issue Astra identified for v29/v32/v33.
+- Sealed final test remains unopened and unauthorized.

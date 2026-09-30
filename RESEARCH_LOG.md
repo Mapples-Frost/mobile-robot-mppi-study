@@ -6487,3 +6487,12 @@ Current blockers / next safe action:
 - **Astra analysis is still pending** for `v31-cluster-stability-diagnostic-20260930T0405Z`; I did not choose a fresh scientific branch.
 - **Backup needed** for post-04:29 proof/state/request files before any unique simulation, refit, training, validation64 access, or final-test work.
 - Next iteration should first check for a matching/superseding `ANALYSIS_READY.json`; if present, verify the linked Astra report against raw evidence and execute its plan after backup. If still absent, continue only reversible integrity/preparation work.
+
+<!-- vehicle_true_variable_horizon_v31_0436_backup_astra_recheck_v0-20260930T043931Z -->
+## 2026-09-30 v31 04:36 backup/Astra gate recheck
+
+UTC: 2026-09-30T04:39:31.989213+00:00. Metadata-only/reversible; no simulation/control/training/refit/validation64/sealed-test access. Service elapsed `3d 17h 44m 2.570s`; server API total_tokens `unknown (research.sqlite not found in checked locations)`. User-context backup `2026-09-30T04:36:20.681764+00:00` / commit `a035b38e4a01581045c745ee3956f4c8c4e2414f` / package SHA256 `59ebb7023f5ce9a1b4a3bcef37ba47af5c21e22aa1055af83226635fef8477b5` is materialized at `research_artifacts/aws_backup_proofs/backup_proof_20260930T043620_from_user_context_after_0429_state.json` and covers known pre-04:36 artifacts=`True`. Current Astra request `v31-cluster-stability-diagnostic-20260930T0405Z`; ANALYSIS_READY present/matching=`False`. New outputs from this audit require backup request `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_V31_0436_BACKUP_ASTRA_RECHECK_20260930T043931Z.json` before unique science. Evidence status remains: v29/v30b/v31 are development/opened-row diagnostics only; v31 shows source-family coverage insufficiency, not a deployable selector or reproduction claim. Next action: Astra analysis remains pending for v31. Do not select a fresh scientific branch. Continue only reversible integrity/preparation work until a matching/superseding ANALYSIS_READY.json arrives and post-04:36 metadata outputs are backed up.
+
+
+## 2026-09-30T04:41:23.402313+00:00
+

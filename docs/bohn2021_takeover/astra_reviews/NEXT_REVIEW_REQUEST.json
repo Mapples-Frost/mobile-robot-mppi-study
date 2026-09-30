@@ -1,16 +1,16 @@
 {
-  "request_id": "execution-result:20260930T165402_24158110",
+  "request_id": "execution-result:20260930T170151_8bc84941",
   "trigger": "execution_result_handoff",
-  "created": "2026-09-30T16:54:48.853130+00:00",
-  "experiment_id": "20260930T165402_24158110",
+  "created": "2026-09-30T17:02:39.912001+00:00",
+  "experiment_id": "20260930T170151_8bc84941",
   "status": "analysis_requested",
-  "purpose": "Run the repaired S-TC2G development-only H15 initialization-basin triage after the zero-resource source242 goal extraction failure, preserving prior T-C2 anchors and measuring up to three blend initializations without plant/training/validation/test access.",
+  "purpose": "S-TC2H development-only source242 fixed-H microcontinuation after T-C2G, comparing H12/H15/H35 closed-loop behavior under V15_shared and canonical/default initialization without validation64 or sealed/final test access.",
   "execution_status": "complete",
   "question": "Active scientific lead: interpret this outcome, verify current raw evidence and select the next scientific action for GPT-5.5 implementation. Distinguish hypotheses from verified causes and account for fair baselines, terminal confounds and source-level generalization.",
   "evidence_paths": [
-    "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34z2_h15_initialization_basin_triage_v0_20260930T165402Z/completed.json",
-    "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34z2_h15_initialization_basin_triage_v0_20260930T165402Z/raw.json",
-    "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34z2_h15_initialization_basin_triage_v0_20260930T165402Z/summary.md",
-    "research_artifacts/aws_runs/20260930T165402_24158110/registry.json"
+    "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34z2_source242_microcontinuation_v0_20260930T170151Z/completed.json",
+    "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34z2_source242_microcontinuation_v0_20260930T170151Z/raw.json",
+    "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34z2_source242_microcontinuation_v0_20260930T170151Z/summary.md",
+    "research_artifacts/aws_runs/20260930T170151_8bc84941/registry.json"
   ]
 }

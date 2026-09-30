@@ -1,13 +1,16 @@
 {
-  "request_id": "execution-result:20260930T174529_511acbfb",
+  "request_id": "execution-result:20260930T175410_221187e7",
   "trigger": "execution_result_handoff",
-  "created": "2026-09-30T17:45:31.832993+00:00",
-  "experiment_id": "20260930T174529_511acbfb",
+  "created": "2026-09-30T17:54:56.950981+00:00",
+  "experiment_id": "20260930T175410_221187e7",
   "status": "analysis_requested",
-  "purpose": "Execute the active solo S-TC2H5 operational prerequisite-schema repair and same opened-development source242 fixed-H microcontinuation. This tests whether the nested 2x1 action-payload repair can now advance the plant for H12/H15/H35 with V15_shared terminal mode, after accepting the actual S-TC2G completed-marker schema and verifying backup recency before resources.",
-  "execution_status": "failed",
+  "purpose": "Execute approved S-TC2H6 source242 microcontinuation once backup proof covering v0g source and active solo plan is materialized, to determine whether the repaired nested action payload permits actual plant advancement for H12/H15/H35 without controller/environment exceptions.",
+  "execution_status": "complete",
   "question": "Active scientific lead: interpret this outcome, verify current raw evidence and select the next scientific action for GPT-5.5 implementation. Distinguish hypotheses from verified causes and account for fair baselines, terminal confounds and source-level generalization.",
   "evidence_paths": [
-    "research_artifacts/aws_runs/20260930T174529_511acbfb/registry.json"
+    "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34z2_source242_microcontinuation_v0g_backup_proof_materialization_rerun_20260930T175410Z/completed.json",
+    "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34z2_source242_microcontinuation_v0g_backup_proof_materialization_rerun_20260930T175410Z/raw.json",
+    "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34z2_source242_microcontinuation_v0g_backup_proof_materialization_rerun_20260930T175410Z/summary.md",
+    "research_artifacts/aws_runs/20260930T175410_221187e7/registry.json"
   ]
 }

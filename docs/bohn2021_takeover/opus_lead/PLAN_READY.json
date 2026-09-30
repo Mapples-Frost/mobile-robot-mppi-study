@@ -1,13 +1,13 @@
 {
-  "request_id": "execution-result:20260930T130525_b585d5b0",
-  "experiment_id": "20260930T130525_b585d5b0",
+  "request_id": "execution-result:20260930T131908_12b79445",
+  "experiment_id": "20260930T131908_12b79445",
   "primary_analyst": "claude-opus-5-5",
-  "report": "docs/bohn2021_takeover/opus_lead/20260930T130507Z_6f3456.md",
-  "report_sha256": "d600ffca526977daac9169b97fe7b5ae1bff18befeb9428b93b9d2e590d8c276",
-  "completed": "2026-09-30T13:10:33.052863+00:00",
-  "supersedes_request_ids": [
-    "execution-result:20260930T125233_d07565d9",
-    "v34v-eps-objective-localization-20260930T130526Z"
-  ],
-  "audit_id": "20260930T130507Z_6f3456"
+  "report": "docs/bohn2021_takeover/opus_lead/20260930T131933Z_8873cc.md",
+  "report_sha256": "9f484573f892d9a12bcf6ee40a112d3a12e482acc095cd3f36fcd0f1eab55a0d",
+  "completed": "2026-09-30T13:32:39.395732+00:00",
+  "supersedes_request_ids": [],
+  "audit_id": "20260930T131933Z_8873cc",
+  "execution_plan": "docs/bohn2021_takeover/opus_lead/20260930T131933Z_8873cc.execution_plan.json",
+  "execution_plan_sha256": "6e5fc931578004a4438173a8893f68724b5281392317bb4cda59c0b10a5208ac",
+  "execution_contract_version": 1
 }

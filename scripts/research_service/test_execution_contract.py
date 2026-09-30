@@ -110,7 +110,7 @@ class ContractTests(unittest.TestCase):
 
     def test_passing_task_gate_is_not_reproduction_acceptance(self):
         d = self.outcome(self.start(), used=dict(self.zero, solver_calls=4))
-        self.assertEqual(d['handoff'], 'preauthorized_continuation'); self.assertEqual(d['scientific_acceptance'], 'task_gates_passed')
+        self.assertEqual(d['handoff'], 'plan_completed_review'); self.assertEqual(d['scientific_acceptance'], 'task_gates_passed')
         with self.assertRaises(ValueError): self.start('duplicate')
 
     def test_overrun_requires_review_and_is_accounted(self):

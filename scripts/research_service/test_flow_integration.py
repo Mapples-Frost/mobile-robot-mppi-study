@@ -1,5 +1,6 @@
 """Isolated scheduler integration; subprocesses only write synthetic zero-usage receipts."""
 import json
+import copy
 import pathlib
 import subprocess
 import sys
@@ -15,6 +16,8 @@ import opus_lead as lead
 
 class IntegrationTests(ContractTests):
     def test_real_scheduler_launch_receipt_glob_and_no_duplicate_handoff(self):
+        dependent=copy.deepcopy(self.task);dependent.update(task_id='C0',dependencies=['B6'])
+        self.plan['tasks'].append(dependent);self.ready=self.publish(self.plan)
         source = '''import pathlib, execution_contract as ec
 ROOT=pathlib.Path(__file__).resolve().parents[1]
 ec.runtime_snapshot(ROOT)

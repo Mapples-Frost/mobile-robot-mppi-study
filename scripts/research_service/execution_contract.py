@@ -74,7 +74,7 @@ def validate_plan(plan):
             raise ValueError('Bounded script patterns required')
         for pattern in patterns:
             if not isinstance(pattern, str) or not pattern.startswith('experiments/') or '..' in pattern or not pattern.endswith('.py') or any(x in pattern.rsplit('/', 1)[0] for x in '*?[') or len(pattern.rsplit('/', 1)[-1].split('*')[0]) < 12:
-                raise ValueError('Script scope must be a specific experiment stem')
+                raise ValueError('Task ' + tid + ': script_patterns must be repository-relative Python paths such as experiments/bohn2021_aws/specific_diagnostic_v0*.py; bare filenames/stems are not paths. Received: ' + str(pattern))
         for field in ('config_constraints', 'training_budget', 'validation_budget', 'test_budget', 'pass_conditions'):
             if not isinstance(task[field], dict):
                 raise ValueError('Object required: ' + field)
@@ -182,6 +182,7 @@ def authorize(root, state, ready, args, eid, snapshot_path):
         if any(used[k] + request[k] > task['resource_limits'][k] for k in UNITS):
             raise ValueError('Cumulative task resource allowance exceeded')
         snapshot = dict(schema_version=VERSION, ready=ready, task=task, experiment_id=eid,
+                        plan_task_ids=[t['task_id'] for t in plan['tasks']],
                         script=args['script'], script_sha256=hashlib.sha256(repo_path(root, args['script']).read_bytes()).hexdigest(),
                         resource_request=request, execution_args_sha256=digest(args))
         snapshot['snapshot_sha256'] = digest(snapshot)
@@ -200,6 +201,8 @@ def verify_snapshot(root, path, expected_request=None):
     plan = plan_from_ready(root, ready)
     if plan is None or snapshot['task'] not in plan['tasks']:
         raise ValueError('Snapshot task missing from lead publication')
+    if snapshot.get('plan_task_ids') != [t['task_id'] for t in plan['tasks']]:
+        raise ValueError('Snapshot task sequence differs from lead publication')
     if expected_request is not None and expected_request != ready['request_id']:
         raise ValueError('Snapshot expected request mismatch')
     if hashlib.sha256(repo_path(root, snapshot['script']).read_bytes()).hexdigest() != snapshot['script_sha256']:
@@ -258,4 +261,9 @@ def finish(state, snapshot, receipt_path, exit_status):
     with ledger(state) as c:
         c.execute('update attempts set status=?,actual=?,passed=?,repair=? where eid=?',
                   (decision['handoff'], json.dumps(actual) if actual is not None else None, int(passed), int(repair), eid))
+        if decision['handoff'] == 'preauthorized_continuation':
+            completed = {r[0] for r in c.execute('select distinct task from attempts where plan=? and passed=1', (snapshot['ready']['execution_plan_sha256'],))}
+            if set(snapshot['plan_task_ids']).issubset(completed):
+                decision['handoff'] = 'plan_completed_review'
+                c.execute('update attempts set status=? where eid=?', (decision['handoff'], eid))
     return decision

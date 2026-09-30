@@ -58,7 +58,9 @@ Successful automatic continuation additionally requires nonempty lead-defined pa
 conditions and `continue_without_review=true`. Dependency launches verify the passed
 prerequisite in the ledger. Scripts should not unconditionally create another review
 request: let the scheduler decide from the validated receipt. Independent new scientific
-questions still require the lead. New plans are explicit reauthorization; cumulative
+questions still require the lead. When all tasks in the approved plan pass, the scheduler
+automatically requests the next lead analysis instead of leaving an empty execution queue.
+New plans are explicit reauthorization; cumulative
 cross-plan usage is supplied to Opus and must remain disclosed.
 
 Wildcard artifact inventory now expands matching files/directories and attaches newly

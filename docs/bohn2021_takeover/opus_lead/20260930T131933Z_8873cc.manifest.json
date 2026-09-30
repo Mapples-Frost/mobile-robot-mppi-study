@@ -1,0 +1,150 @@
+{
+  "status": "completed",
+  "audit_id": "20260930T131933Z_8873cc",
+  "started": "2026-09-30T13:19:33.075378+00:00",
+  "turn": 18,
+  "max_turns": 32,
+  "first_cycle": false,
+  "supplemental_audit_request_id": "20260930-comprehensive-handoff-missing-raw-training-audit",
+  "request": {
+    "request_id": "execution-result:20260930T131908_12b79445",
+    "trigger": "execution_result_handoff",
+    "created": "2026-09-30T13:19:10.472406+00:00",
+    "experiment_id": "20260930T131908_12b79445",
+    "status": "analysis_requested",
+    "purpose": "Verify source-level epsilon/slack objective provenance and non-circular reproduction of v34v epsilon deltas before any T-C2 solver-bearing gate; no new solver/plant/training/test access.",
+    "execution_status": "complete",
+    "question": "Active scientific lead: interpret this outcome, verify current raw evidence and select the next scientific action for GPT-5.5 implementation. Distinguish hypotheses from verified causes and account for fair baselines, terminal confounds and source-level generalization.",
+    "evidence_paths": [
+      "research_artifacts/aws_runs/20260930T131908_12b79445/registry.json"
+    ]
+  },
+  "commit_start": "bc7672f358258b9aa1ea216a55df76ee818a600e",
+  "inspected": [
+    {
+      "path": "docs/bohn2021_takeover/opus_lead/LATEST.md",
+      "sha256": "9a540e51f89d5fde999a71d5c00e121b474a381964347689a91e003ed767efab"
+    },
+    {
+      "path": "docs/bohn2021_takeover/opus_lead/PLAN_READY.json",
+      "sha256": "4377d9b376ed0bbc2810adb8d534bf91e6c7a0d0ee2210bfae60b1c908100e25"
+    },
+    {
+      "path": "docs/bohn2021_takeover/astra_reviews/LATEST.md",
+      "sha256": "609f9392ed0bdf36842894eeb2506bf675dba859adc9af10ef43774c5de00aa3"
+    },
+    {
+      "path": "docs/bohn2021_takeover/opus_lead/20260930T130507Z_6f3456.md",
+      "sha256": "d600ffca526977daac9169b97fe7b5ae1bff18befeb9428b93b9d2e590d8c276"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34x_epsilon_provenance_audit_v0_20260930T131908Z/summary.md",
+      "sha256": "469e412b5ca3a1e02e979f3e9fe42f5a34b51958ffbca397ec7d551ff12138b4"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34x_epsilon_provenance_audit_v0_20260930T131908Z/completed.json",
+      "sha256": "a9732844fff19523cbd97c2c8c2cf32f05bcc31f8097085814e63cd2f1041545"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34x_epsilon_provenance_audit_v0_20260930T131908Z/epsilon_provenance_per_arm.csv",
+      "sha256": "a9ed358160effcbfecdfce0527b92bd57bebe916d3a7d34936a13d8696b4c61a"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34x_epsilon_provenance_audit_v0_20260930T131908Z/raw.json",
+      "sha256": "c0540b523d93105d02b380c27729d4112eb20e0f7b68e74d1cb9141925c45c5e"
+    },
+    {
+      "path": "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34x_epsilon_provenance_audit_v0.py",
+      "sha256": "2d2f7fe45bca4d9d1b71f58b2a3060dc9a0ef63ab121fd10de35cab2703c2c8e"
+    },
+    {
+      "path": "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34x_epsilon_provenance_audit_v0.py",
+      "sha256": "2d2f7fe45bca4d9d1b71f58b2a3060dc9a0ef63ab121fd10de35cab2703c2c8e"
+    },
+    {
+      "path": "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34x_epsilon_provenance_audit_v0.py",
+      "sha256": "2d2f7fe45bca4d9d1b71f58b2a3060dc9a0ef63ab121fd10de35cab2703c2c8e"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34x_epsilon_provenance_audit_v0_20260930T131908Z/raw.json",
+      "sha256": "c0540b523d93105d02b380c27729d4112eb20e0f7b68e74d1cb9141925c45c5e"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34x_epsilon_provenance_audit_v0_20260930T131908Z/raw.json",
+      "sha256": "c0540b523d93105d02b380c27729d4112eb20e0f7b68e74d1cb9141925c45c5e"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34x_epsilon_provenance_audit_v0_20260930T131908Z/raw.json",
+      "sha256": "c0540b523d93105d02b380c27729d4112eb20e0f7b68e74d1cb9141925c45c5e"
+    },
+    {
+      "path": "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34x_epsilon_provenance_audit_v0.py",
+      "sha256": "2d2f7fe45bca4d9d1b71f58b2a3060dc9a0ef63ab121fd10de35cab2703c2c8e"
+    },
+    {
+      "path": "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34x_epsilon_provenance_audit_v0.py",
+      "sha256": "2d2f7fe45bca4d9d1b71f58b2a3060dc9a0ef63ab121fd10de35cab2703c2c8e"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34u_active_plan_refresh_nonconverged_objective_contract_probe_v0_20260930T125233Z/raw.json",
+      "sha256": "a8bd5314528ee8c951722a12727df1ebabc85c4b885dec1dba62d1c9028a5058"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34u_active_plan_refresh_nonconverged_objective_contract_probe_v0_20260930T125233Z/raw.json",
+      "sha256": "a8bd5314528ee8c951722a12727df1ebabc85c4b885dec1dba62d1c9028a5058"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34u_active_plan_refresh_nonconverged_objective_contract_probe_v0_20260930T125233Z/raw.json",
+      "sha256": "a8bd5314528ee8c951722a12727df1ebabc85c4b885dec1dba62d1c9028a5058"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34u_active_plan_refresh_nonconverged_objective_contract_probe_v0_20260930T125233Z/completed.json",
+      "sha256": "dae18b3ff154a452cc1112471ae101c5a4260242086277c59dbf510250c185d6"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34u_active_plan_refresh_nonconverged_objective_contract_probe_v0_20260930T125233Z/completed.json",
+      "sha256": "dae18b3ff154a452cc1112471ae101c5a4260242086277c59dbf510250c185d6"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34u_active_plan_refresh_nonconverged_objective_contract_probe_v0_20260930T125233Z/raw.json",
+      "sha256": "a8bd5314528ee8c951722a12727df1ebabc85c4b885dec1dba62d1c9028a5058"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34u_active_plan_refresh_nonconverged_objective_contract_probe_v0_20260930T125233Z/completed.json",
+      "sha256": "dae18b3ff154a452cc1112471ae101c5a4260242086277c59dbf510250c185d6"
+    },
+    {
+      "path": "docs/bohn2021_takeover/astra_reviews/20260930T130446Z.md",
+      "sha256": "77b3d0b213e6cbd8304082949f1255a3a47c161f9edd64445636b35b0a8ed7e5"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34u_active_plan_refresh_nonconverged_objective_contract_probe_v0_20260930T125233Z/raw.json",
+      "sha256": "a8bd5314528ee8c951722a12727df1ebabc85c4b885dec1dba62d1c9028a5058"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34u_active_plan_refresh_nonconverged_objective_contract_probe_v0_20260930T125233Z/cell_metrics.csv",
+      "sha256": "5b75ef50c133cdb2ca8ebdabaf76c9b88039f2f32a6e9cabc1d52a03bf20b290"
+    },
+    {
+      "path": "research_artifacts/bohn2021_reproduction_2026-09-17/sources/gym-horizon/gym_let_mpc/controllers.py",
+      "sha256": "a34ea0764caf8bde123bf9e8c7a8316d8dbff454d0cce558bbd84229eb60defc"
+    },
+    {
+      "path": "research_artifacts/bohn2021_reproduction_2026-09-17/sources/gym-horizon/gym_let_mpc/controllers.py",
+      "sha256": "a34ea0764caf8bde123bf9e8c7a8316d8dbff454d0cce558bbd84229eb60defc"
+    },
+    {
+      "path": "research_artifacts/bohn2021_reproduction_2026-09-17/sources/do-mpc-horizon/do_mpc/controller.py",
+      "sha256": "97b61401b2cb368240c60db856651141a2d5f9e95c73afe442300003c0d0063a"
+    }
+  ],
+  "superseded_request_ids": [],
+  "cross_review_id": "20260930T130446Z",
+  "working_language": "en",
+  "working_language_policy": "RESEARCH_WORKING_LANGUAGE_EN_V1",
+  "registry_context_experiment_id": "20260930T131908_12b79445",
+  "updated": "2026-09-30T13:32:39.316304+00:00",
+  "bounded_continuations": 1,
+  "completed": "2026-09-30T13:32:39.326949+00:00",
+  "commit_end": "7bd671bad158f229f997519e3c61242ef4faf57c"
+}

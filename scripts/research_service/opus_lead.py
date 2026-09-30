@@ -130,6 +130,7 @@ PLAN_FIELDS = ('task_id','description','script_patterns','split','method','seeds
 PLAN_PROPERTIES = {k:{'type':'object'} for k in ('config_constraints','training_budget','validation_budget','test_budget','pass_conditions')}
 PLAN_PROPERTIES.update({k:{'type':'string'} for k in ('task_id','description','split','method')})
 PLAN_PROPERTIES.update({k:{'type':'array','items':{'type':'string'}} for k in ('script_patterns','seeds','dependencies')})
+PLAN_PROPERTIES['script_patterns']['items'].update(pattern=r'^experiments/(?:[^*?\[]+/)*[^/]+\.py$',description='Full repository-relative Python path or narrow filename glob, e.g. experiments/bohn2021_aws/vehicle_diagnostic_v0*.py. Never a bare filename/stem.')
 PLAN_PROPERTIES.update({k:{'type':'integer'} for k in ('max_attempts','max_zero_usage_repairs','timeout_seconds')})
 PLAN_PROPERTIES['continue_without_review']={'type':'boolean'}
 PLAN_PROPERTIES['resource_limits']={'type':'object','properties':{k:{'type':'integer','minimum':0} for k in execution_contract.UNITS},'required':list(execution_contract.UNITS),'additionalProperties':False}

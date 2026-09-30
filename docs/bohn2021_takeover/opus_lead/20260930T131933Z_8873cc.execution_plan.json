@@ -1,0 +1,266 @@
+{
+  "request_id": "execution-result:20260930T131908_12b79445",
+  "schema_version": 1,
+  "tasks": [
+    {
+      "config_constraints": {
+        "T_C1_source_provenance_pass_unchanged": true,
+        "corrected_field_value": false,
+        "label_ORIGINAL_vs_IMPROVED": "this whole thread is IMPROVED latency-tree vehicle development; nothing here is ORIGINAL SAC reproduction",
+        "max_zero_usage_repairs_allowed": 3,
+        "no_new_solver_calls": true,
+        "no_rescoring_of_T_C1": true,
+        "original_v34x_completed_sha256": "a9732844fff19523cbd97c2c8c2cf32f05bcc31f8097085814e63cd2f1041545",
+        "original_v34x_raw_sha256": "c0540b523d93105d02b380c27729d4112eb20e0f7b68e74d1cb9141925c45c5e",
+        "preserve_original_raw_json_bytes": true,
+        "scenario_ids": [
+          "source242_slot0_branch_start"
+        ]
+      },
+      "continue_without_review": true,
+      "dependencies": [],
+      "description": "Operational receipt repair only, zero new science. Fix the v34x over-claim and record ORIGINAL/pendulum coverage status. (1) The v34x completed.json headline field 'individual_epsilon_vector_values_serialized_in_v34u_raw': true is unsupported: the detector at experiments/bohn2021_aws/vehicle_true_variable_horizon_v34x_epsilon_provenance_audit_v0.py:184 matches any key containing the literal substring 'eps', so the only surviving hits are boolean include_eps flags (raw.json:275-278 etc.); the script's own note_on_vector_values (line 353) and summary.md:40 already state the per-stage _eps vector was NOT serialized. Emit a corrected machine-readable receipt setting that field false, keep raw v34x bytes unchanged, and echo the original raw.json digest c0540b523d93105d02b380c27729d4112eb20e0f7b68e74d1cb9141925c45c5e so no prior artifact is rewritten. Do not recompute, do not re-solve, do not alter the T-C1 pass verdict. (2) Append one coverage line per unverified area to the existing handoff-audit coverage record: ORIGINAL author SAC reconstruction = partially inspected, primary training/checkpoint evidence not yet read by the lead; ORIGINAL vehicle-then-inverted-pendulum pendant = UNINSPECTED this cycle; full v33 rollout matrix = not independently rechecked. Mark hypotheses as hypotheses. No solver, no plant, no env.step/reset, no training, no validation64, no sealed test.",
+      "max_attempts": 2,
+      "max_zero_usage_repairs": 3,
+      "method": "T-C1R zero-solve operational receipt correction, existing-artifact only",
+      "pass_conditions": {
+        "corrected_epsilon_vector_field_present_and_false": true,
+        "coverage_lines_for_ORIGINAL_and_pendulum_present": true,
+        "no_new_solver_or_plant_or_training_usage": true,
+        "original_v34x_raw_bytes_preserved": true,
+        "original_v34x_raw_sha256_echoed_exactly": "c0540b523d93105d02b380c27729d4112eb20e0f7b68e74d1cb9141925c45c5e",
+        "receipt_written": true
+      },
+      "resource_limits": {
+        "plant_steps": 0,
+        "solver_calls": 0,
+        "test_episodes": 0,
+        "training_steps": 0,
+        "validation_episodes": 0
+      },
+      "script_patterns": [
+        "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34y_receipt_repair_v0.py"
+      ],
+      "seeds": [
+        "not_applicable_no_training_seed"
+      ],
+      "split": "opened_development_artifacts_only_no_validation64_no_sealed_test",
+      "task_id": "T-C1R-OC-epsilon-1a-receipt-repair",
+      "test_budget": {
+        "final_test_episodes": 0,
+        "sealed_test_episodes": 0
+      },
+      "timeout_seconds": 600,
+      "training_budget": {
+        "gradient_steps": 0,
+        "selector_refits": 0,
+        "training_steps": 0
+      },
+      "validation_budget": {
+        "env_steps_after_construction": 0,
+        "plant_steps": 0,
+        "solver_calls": 0,
+        "validation64_episodes": 0
+      }
+    },
+    {
+      "config_constraints": {
+        "canonical_cells": [
+          "H12",
+          "H15",
+          "H35"
+        ],
+        "context_id": "source242_slot0_branch_start",
+        "declare_all_optional_cells_before_execution": true,
+        "default_relative_error_max": 1e-06,
+        "fixed_H_baseline_must_not_be_weakened": true,
+        "forced_max_iter_for_control": 1,
+        "goal_facing_cell": "H15",
+        "goal_source": "case.tvp.trajectory_endpoint[61]",
+        "h35_allowance_condition": "only if H35 is genuinely nonconverged and documented before the run",
+        "h35_forced_nonconverged_relative_error_max": 1e-05,
+        "hard_defect_relative_error_gt": 0.0001,
+        "horizons": [
+          12,
+          15,
+          35
+        ],
+        "label_ORIGINAL_vs_IMPROVED": "IMPROVED",
+        "persist_per_stage_epsilon_vector_required": true,
+        "production_tolerances_for_converged_cells": true,
+        "sealed_test_authorized": false,
+        "soft_constraint_form": "obj_i_distance + 0.5*obj_i_r <= 0 with slack, hard form obj_i_distance <= 0",
+        "soft_obstacle_penalty_term_cons": 1000,
+        "term_mode": "V15_shared",
+        "truncated_control_per_cell": 1
+      },
+      "continue_without_review": true,
+      "dependencies": [
+        "T-C1R-OC-epsilon-1a-receipt-repair"
+      ],
+      "description": "A13c-4: decisive bounded gate for the epsilon objective-contract amendment. Hypothesis: the full source-defined objective J = sum_k gamma^k * (lterm + epsterm) + rterm + terminal_vf, with epsterm_fun(_eps)=sum(penalty_term_cons*epsilon) and penalty_term_cons=1000 for the TTAHMPC soft obstacle constraints, reproduces the captured NLP objective to <=1e-6 relative at a CONVERGED iterate, not only at truncated iterates. The single most informative number still missing in this thread is the per-stage slack vector _eps at the converged point, because positive optimal slack is possible whenever 1.5*r_obstacle - d > 0 (author softening at gym_let_mpc/controllers.py:831 and :838 with cost 1000; do-mpc controller.py:1093 adds the discounted epsterm at every stage), so Solve_Succeeded does NOT imply epsterm_total ~ 0. Frozen inputs: opened development context source242_slot0_branch_start only, term V15_shared, cells H12/H15/H35 canonical plus H15 goal_facing, IPOPT at production tolerances (max_iter NOT forced to 1) for the converged cells, plus exactly one forced max_iter=1 truncated control per cell in the same run under one source hash. Required outputs per cell: return_status, actual iteration count, J_solver, J_recon_three_component (historical formula), J_recon_full, both relative errors against the predeclared thresholds, direct NLP f at opt_x_num/opt_p_num compared to opt_f_num, and the persisted per-stage epsilon vector (all k, all j) with eps_nonzero_count and per-stage gamma^k*1000*epsilon contributions, soft-margin violation 1.5*r - d, hard obstacle clearance, and an explicit verdict on whether any epsilon is materially non-zero at convergence. Report solver_wall_s and whole_decision_get_action_wall_s as mean/median/P95 with n, and state that any truncated cell's timing is NOT a deployable estimate. Predeclared acceptance: converged full-objective relative error <= 1e-6 (H35 may use the already-declared 1e-5 allowance only if H35 is documented non-converged before the run); any converged cell > 1e-4 is a hard defect and stops the task. Branch rules: converged full-objective <=1e-6 -> close OC-epsilon-1 as a verified IMPROVED formula amendment and release dependent contract-consumer work; converged miss 1e-6 to 1e-4 -> record as a SECOND distinct residual source under a new ID and do not proceed; converged cell > 1e-4 -> hard defect, stop, escalate. Correction to earlier branch text: a converged cell with positive slack falsifies only the 'slack is always ~0 at convergence' hypothesis; it does NOT reopen the already-verified omitted-slack mechanism and must not be classified as a new defect. Keep ORIGINAL/IMPROVED labels distinct: the slack term is source-documented author behavior, not an IMPROVED-only addition. No plant steps, no env.step/reset after construction, no training, no refit, no validation64, no sealed test.",
+      "max_attempts": 2,
+      "max_zero_usage_repairs": 3,
+      "method": "A13c-4 bounded converged plus truncated objective-contract gate on the frozen IMPROVED latency-tree vehicle controller",
+      "pass_conditions": {
+        "all_scheduled_cells_completed_or_explicitly_reported_failed": true,
+        "converged_cells_report_return_status_and_iteration_count": true,
+        "no_plant_steps_or_training_usage": true,
+        "no_validation64_or_sealed_test_usage": true,
+        "per_stage_epsilon_vector_persisted_for_every_completed_cell": true,
+        "relative_error_reported_per_cell_and_per_formula": true,
+        "timing_reported_as_mean_median_p95_with_n_and_truncation_caveat": true
+      },
+      "resource_limits": {
+        "plant_steps": 0,
+        "solver_calls": 6,
+        "test_episodes": 0,
+        "training_steps": 0,
+        "validation_episodes": 0
+      },
+      "script_patterns": [
+        "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34z_converged_contract_gate_v0.py"
+      ],
+      "seeds": [
+        "canonical_solve_no_training_seed",
+        "goal_facing_H15_control_no_training_seed"
+      ],
+      "split": "opened_development_source242_slot0_branch_start_only_no_validation64_no_sealed_test",
+      "task_id": "T-C2-OC-epsilon-1b-converged-contract-gate",
+      "test_budget": {
+        "final_test_episodes": 0,
+        "sealed_test_episodes": 0
+      },
+      "timeout_seconds": 1800,
+      "training_budget": {
+        "gradient_steps": 0,
+        "selector_refits": 0,
+        "training_steps": 0
+      },
+      "validation_budget": {
+        "env_steps_after_construction": 0,
+        "low_level_solver_call_cap": 6,
+        "plant_steps": 0,
+        "validation64_episodes": 0
+      }
+    },
+    {
+      "config_constraints": {
+        "compared_arms": [
+          "H15|init=canonical",
+          "H15|init=goal_facing"
+        ],
+        "context_id": "source242_slot0_branch_start",
+        "known_hash_canonical": "7032ac0c47903ccfe27a25accc556b22331ba32247bf1a8b7a95f996cd1fdd5a",
+        "known_hash_goal_facing": "fbe488a0e5749ee25682b7f6a963294112b041c31e0340de4214480cab638352",
+        "label_ORIGINAL_vs_IMPROVED": "IMPROVED",
+        "matching_is_prerequisite_for_basin_claims": true,
+        "no_new_solver_calls": true,
+        "term_mode": "V15_shared"
+      },
+      "continue_without_review": true,
+      "dependencies": [],
+      "description": "A11/A6 comparison-fairness prerequisite, zero solver calls. Hypothesis: for the same declared context source242_slot0_branch_start, term V15_shared, H15, the canonical and goal_facing arms do not share identical solver-entry parameters, so between-arm behavioural differences cannot be attributed to initialization alone. Verified starting datum: the recorded opt_p_hash differs between the two arms (canonical 7032ac0c47903ccfe27a25accc556b22331ba32247bf1a8b7a95f996cd1fdd5a at v34u raw.json:3350 and :3365; goal_facing fbe488a0e5749ee25682b7f6a963294112b041c31e0340de4214480cab638352 at raw.json:6315). Produce a labelled per-parameter diff: obstacle TVP coordinates, reference/goal entries, bounds, previous_input, scaling, and the derived reset/noise seed path used by gym_let_mpc/controllers.py:858-865. Classify each differing entry as nuisance (obstacle forecast/noise), objective-relevant, or structural. Acceptance: every differing parameter is labelled with source path and value on both arms, and the report states plainly whether matched-parameter basin comparison is currently possible; if any nuisance difference is present, basin attribution is BLOCKED until the comparison is rebuilt on matched parameters. Falsification: no difference found after exhaustively enumerating the parameter vector -> basin attribution becomes admissible. Do not open validation64, do not open the sealed test, do not re-run the v34t converged diagnostic, do not repeat v34k/v34u/v34v/v34x arithmetic.",
+      "max_attempts": 2,
+      "max_zero_usage_repairs": 3,
+      "method": "zero-solve labelled parameter-diff ledger over existing v34u/v34s recorded vectors",
+      "pass_conditions": {
+        "each_difference_labelled_nuisance_or_objective_relevant_or_structural": true,
+        "explicit_statement_of_whether_matched_basin_comparison_is_possible": true,
+        "no_solver_plant_training_validation_or_test_usage": true,
+        "parameter_diff_table_written_with_paths_and_values": true
+      },
+      "resource_limits": {
+        "plant_steps": 0,
+        "solver_calls": 0,
+        "test_episodes": 0,
+        "training_steps": 0,
+        "validation_episodes": 0
+      },
+      "script_patterns": [
+        "experiments/bohn2021_aws/vehicle_true_variable_horizon_matched_parameter_ledger_v0.py"
+      ],
+      "seeds": [
+        "not_applicable_no_training_seed"
+      ],
+      "split": "opened_development_artifacts_only_no_validation64_no_sealed_test",
+      "task_id": "T-C3-matched-parameter-ledger",
+      "test_budget": {
+        "final_test_episodes": 0,
+        "sealed_test_episodes": 0
+      },
+      "timeout_seconds": 900,
+      "training_budget": {
+        "gradient_steps": 0,
+        "selector_refits": 0,
+        "training_steps": 0
+      },
+      "validation_budget": {
+        "plant_steps": 0,
+        "solver_calls": 0,
+        "validation64_episodes": 0
+      }
+    },
+    {
+      "config_constraints": {
+        "fixed_H_values_of_interest": [
+          12,
+          15,
+          35
+        ],
+        "label_ORIGINAL_vs_IMPROVED_required_per_arm": true,
+        "no_new_paid_infrastructure": true,
+        "no_new_rollouts": true,
+        "no_new_solver_calls": true,
+        "required_at_least_three_training_seeds_remains_unmet": true,
+        "terminal_modes_of_interest": [
+          "zero",
+          "V15_shared"
+        ]
+      },
+      "continue_without_review": true,
+      "dependencies": [],
+      "description": "A6 strong-fixed-H and terminal-opportunity ledger, zero solver calls, no new rollouts. Hypothesis: the reported adaptive-horizon benefit is not established against a properly tuned strong fixed-H baseline, and terminal-competitive fixed-H alternatives (H35 with zero terminal, H35 with V15_shared) remain live competitors. Use only already-written artifacts: reconstruct from primary records which fixed-H arms were actually run, with which per-H terminal treatment, which budgets and which seeds, and whether the per-H terminal opportunity was granted equally across H. Required outputs: a per-H fixed-H ledger (arm, terminal mode, seed, budget, reported outcome, evidence path), an explicit reconciliation of the remaining opened-context solver-call ledger (distinguish calls actually spent from calls merely budgeted, and state the reconciled remainder), and a list of every config element still missing before a strong fair fixed-H claim can be made. Acceptance: every fixed-H arm cited is traceable to a primary artifact path; no arm is asserted from narrative alone; each arm is marked ORIGINAL or IMPROVED. Falsification: if a tuned fixed-H arm already matches the adaptive result under matched compute, the adaptive-opportunity claim is weakened and must be reported as such. Do not run new rollouts, do not open validation64, do not open the sealed test.",
+      "max_attempts": 2,
+      "max_zero_usage_repairs": 3,
+      "method": "zero-solve primary-record ledger for fixed-H fairness and terminal opportunity",
+      "pass_conditions": {
+        "fixedH_ledger_written_with_primary_artifact_paths": true,
+        "missing_config_elements_enumerated": true,
+        "no_solver_plant_training_validation_or_test_usage": true,
+        "per_H_terminal_treatment_and_budget_stated": true,
+        "solver_call_ledger_reconciled_with_explicit_remainder": true
+      },
+      "resource_limits": {
+        "plant_steps": 0,
+        "solver_calls": 0,
+        "test_episodes": 0,
+        "training_steps": 0,
+        "validation_episodes": 0
+      },
+      "script_patterns": [
+        "experiments/bohn2021_aws/vehicle_true_variable_horizon_fixedH_terminal_opportunity_ledger_v0.py"
+      ],
+      "seeds": [
+        "not_applicable_no_training_seed"
+      ],
+      "split": "opened_development_artifacts_only_no_validation64_no_sealed_test",
+      "task_id": "T-C4-fixedH-terminal-opportunity-ledger",
+      "test_budget": {
+        "final_test_episodes": 0,
+        "sealed_test_episodes": 0
+      },
+      "timeout_seconds": 900,
+      "training_budget": {
+        "gradient_steps": 0,
+        "selector_refits": 0,
+        "training_steps": 0
+      },
+      "validation_budget": {
+        "plant_steps": 0,
+        "solver_calls": 0,
+        "validation64_episodes": 0
+      }
+    }
+  ]
+}

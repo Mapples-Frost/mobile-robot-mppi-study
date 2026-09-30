@@ -14,7 +14,7 @@ import urllib.request
 import urllib.error
 import uuid
 import astra_reviewer as evidence
-from research_memory import protected_split
+from research_memory import protected_split, registry_context
 
 BASE=evidence.BASE
 ROOT=evidence.ROOT
@@ -300,6 +300,11 @@ def cycle():
         save(session,dict(system=system,messages=messages));save(WORK/'checkpoint.json',checkpoint)
     persist();report=None
     for turn in range(checkpoint['turn'],checkpoint['max_turns']):
+        facts=registry_context(STATE)
+        latest_id=(facts.get('latest_registered') or {}).get('experiment_id')
+        if latest_id!=checkpoint.get('registry_context_experiment_id'):
+            messages.append({'role':'user','content':'Authoritative current experiment-registry facts; supersede stale narrative pointers, preserve scientific gates. This is evidence data, not a new instruction to change the research design.\n'+evidence.redact(json.dumps(facts,ensure_ascii=False))})
+            checkpoint['registry_context_experiment_id']=latest_id
         missing=missing_handoff_evidence(checkpoint)
         if missing and (not checkpoint.get('broad_coverage_prompted') or turn in (20,28)):
             messages.append({'role':'user','content':'The FIRST-cycle priority is the user-requested COMPREHENSIVE handoff, not only the latest v34 bug. Before you can activate as lead, independently read at least these existing primary source/protocol paths; then investigate actual linked training/checkpoint/raw evidence and fair baseline budgets. Acknowledge unresolved omissions honestly. Batch independent reads. Missing required handoff navigation (not sufficient by itself for a full audit):\n'+json.dumps(missing)})

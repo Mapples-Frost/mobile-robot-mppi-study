@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "request_id": "execution-result:20260930T231719_43960060",
+  "tasks": [
+    {
+      "task_id": "S-BACKUP-RECHECK-STC2H8-current-status-v0c",
+      "description": "Current zero-resource backup-gate recheck for the source242 true-variable-horizon microcontinuation blocker after the latest supervisor context reported backup failure. The task reads only sanitized supervisor backup status/index/receipts and public GitHub release metadata, records whether a verified external backup now postdates the required artifacts, and either materializes a sanitized proof if adequate or writes a concrete retry/repair request. It does not open validation64 banks, run MPC/controller/plant/solver code, train/refit, or access sealed/final tests.",
+      "script_patterns": [
+        "experiments/bohn2021_aws/backup_failure_status_capture_s_tc2h8_current_status_v0c.py"
+      ],
+      "split": "diagnostic",
+      "method": "Zero-resource current backup-gate status diagnostic for S-TC2H8/source242; inspect canonical backup_status/index/receipts and public GitHub release asset metadata only; no validation bank source opening; no solver/plant/controller execution; no training/refit; no validation episodes; no sealed/final test; produce raw/summary/completed outputs plus either a verified-proof materialization or backup retry request.",
+      "seeds": [
+        "no_random_seed_current_backup_state_only"
+      ],
+      "config_constraints": {
+        "label_ORIGINAL_vs_IMPROVED": "operational_recoverability_gate_for_IMPROVED_development_diagnostic",
+        "authority_mode": "temporary_user_authorized_solo_self_review",
+        "follows_experiment_id": "20260930T231719_43960060",
+        "follows_task_id": "S-VAL64-learned-collapse-h35-pattern-diagnostic-v0c-pass-predicate-repair",
+        "script": "experiments/bohn2021_aws/backup_failure_status_capture_s_tc2h8_current_status_v0c.py",
+        "script_purpose": "current sanitized backup-gate status capture for nonzero S-TC2H8 blocker",
+        "no_solver_calls": true,
+        "no_plant_steps": true,
+        "no_controller_execution": true,
+        "no_training_no_refit": true,
+        "no_validation_bank_content_opening": true,
+        "no_new_validation_episodes": true,
+        "no_sealed_or_final_test_access": true,
+        "must_not_read_or_log_secrets": true,
+        "public_github_release_metadata_only": true,
+        "development_only_not_final_acceptance": true,
+        "nonzero_source242_microcontinuation_remains_blocked_unless_this_task_finds_verified_current_backup": true,
+        "backup_status_failure_reported_in_supervisor_context": "2026-09-30T23:39:37.556489+00:00 failed RuntimeError Asset upload HTTP 422",
+        "next_scientific_action_if_backup_adequate": "publish/run the prepared S-TC2H8 source242 true-variable-horizon microcontinuation/controller-path measurement under its frozen resource bounds",
+        "next_action_if_backup_still_blocked": "preserve blocker, request backup asset-management repair/retry, and restrict subsequent work to zero-resource preparation until recoverability is verified"
+      },
+      "training_budget": {
+        "gradient_steps": 0,
+        "selector_refits": 0,
+        "training_steps": 0
+      },
+      "validation_budget": {
+        "new_validation_episodes": 0,
+        "validation64_bank_opens": 0,
+        "solver_calls": 0,
+        "plant_steps": 0,
+        "metadata_artifact_reads": "canonical backup status/index/receipts plus public release metadata only"
+      },
+      "test_budget": {
+        "final_test_episodes": 0,
+        "sealed_test_episodes": 0
+      },
+      "resource_limits": {
+        "solver_calls": 0,
+        "plant_steps": 0,
+        "training_steps": 0,
+        "validation_episodes": 0,
+        "test_episodes": 0
+      },
+      "max_attempts": 1,
+      "max_zero_usage_repairs": 0,
+      "timeout_seconds": 900,
+      "dependencies": [],
+      "pass_conditions": {
+        "zero_solver_plant_training_validation_test_resources": true,
+        "validation_bank_content_opened": false,
+        "sealed_or_final_test_accessed": false,
+        "backup_status_read_or_missing_recorded": true,
+        "backup_gate_decision_persisted": true,
+        "public_release_probe_recorded": true,
+        "proof_written_if_backup_adequate_else_retry_request_written": true,
+        "outputs_persisted": true,
+        "scientific_nonzero_work_not_started": true
+      },
+      "continue_without_review": false
+    }
+  ]
+}

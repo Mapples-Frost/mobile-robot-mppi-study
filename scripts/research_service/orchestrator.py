@@ -75,6 +75,7 @@ def execute(args):
     eid=dt.datetime.now(dt.timezone.utc).strftime('%Y%m%dT%H%M%S')+'_'+uuid.uuid4().hex[:8]
     dest=ROOT/'research_artifacts/aws_runs'/eid;dest.mkdir(parents=True)
     meta=dict(script_sha256=hashlib.sha256(path.read_bytes()).hexdigest(),experiment_id=eid,timestamp=now(),**identity(),**args,environment=dict(host=socket.gethostname(),python=py),stdout=str(dest/'stdout.log'),stderr=str(dest/'stderr.log'),status='running',failure_reason=None)
+    meta['supervisor_call_id']=load(STATE/'active_tool.json').get('call_id')
     dump(dest/'registry.json',meta)
     with db() as c:c.execute('insert into experiments values(?,?,?,?)',(eid,meta['timestamp'],'running',json.dumps(meta)))
     dump(STATE/'active_experiment.json',meta);started=time.monotonic();peak=0;cpu_before=resource.getrusage(resource.RUSAGE_CHILDREN)
@@ -175,7 +176,7 @@ def api(items, force_state=False):
     req=urllib.request.Request(SECRET['OPENAI_BASE_URL'].rstrip('/')+'/responses',data=json.dumps(body).encode(),headers={'Authorization':'Bearer '+SECRET['OPENAI_API_KEY'],'Content-Type':'application/json'})
     cid=uuid.uuid4().hex;started=time.monotonic();usage={};status='error'
     try:
-        with urllib.request.urlopen(req,timeout=240) as r:answer=json.load(r)
+        with urllib.request.urlopen(req,timeout=900) as r:answer=json.load(r)
         usage=answer.get('usage',{});status=answer.get('status','unknown')
         if not str(answer.get('model','')).startswith('gpt-5.5'):raise RuntimeError('Unexpected returned model; no fallback permitted')
         return answer
@@ -210,43 +211,80 @@ def awaiting_astra_analysis():
     except (OSError,ValueError,TypeError):
         return True
 
+def durable_tool_call(item):
+    receipt=STATE/'tool_receipts'/(hashlib.sha256(item['call_id'].encode()).hexdigest()+'.json')
+    previous=load(receipt)
+    if previous.get('status')=='complete':return previous['result']
+    # A completed/interrupted registered experiment must never be launched a second
+    # time because its model-facing response was lost during a supervisor restart.
+    if item['name']=='run_experiment':
+        with db() as c:
+            row=c.execute("select id,status,metadata from experiments where json_extract(metadata,'$.supervisor_call_id')=? order by timestamp desc limit 1",(item['call_id'],)).fetchone()
+        if row:
+            eid,status,metadata=row;meta=json.loads(metadata)
+            result=dict(record='research_artifacts/aws_runs/'+eid+'/registry.json',exit_status=meta.get('exit_status'),runtime_seconds=meta.get('runtime_seconds'),recovered_registered_status=status,replayed_without_execution=True)
+            for key in ('stdout','stderr'):
+                path=meta.get(key)
+                if path:
+                    log=safe_path(path)
+                    if log.exists():result[key+'_tail']=redact(log.read_text(errors='replace')[-12000:])
+            dump(receipt,dict(call_id=item['call_id'],name=item['name'],status='complete',result=result,time=now()))
+            return result
+    dump(receipt,dict(call_id=item['call_id'],name=item['name'],status='pending',time=now()))
+    dump(STATE/'active_tool.json',dict(call_id=item['call_id'],name=item['name'],time=now()))
+    try:result=call_tool(item['name'],json.loads(item['arguments']))
+    except Exception as e:
+        result={'error':type(e).__name__,'message':redact(str(e))[:2000]}
+        event('tool_error',name=item['name'],error=result)
+    dump(receipt,dict(call_id=item['call_id'],name=item['name'],status='complete',result=result,time=now()))
+    return result
+
 def iteration():
-    state=load(STATE/'research_state.json');recent=load(STATE/'last_iteration.json')
-    if 'last_completed_experiment' in state:
-        old=state['last_completed_experiment'];state['last_completed_experiment']={k:old.get(k) for k in ('experiment_id','status','purpose','exit_status','stdout','stderr','runtime_seconds')}
-    if recent:
-        recent['tool_tail']=[dict(call_id=x.get('call_id'),output=x.get('output','')[-2000:]) for x in recent.get('tool_tail',[])]
-    context=dict(state=state,last_iteration=recent,repository=str(ROOT),available_disk_gb=shutil.disk_usage(BASE).free/1e9,backup=load(STATE/'backup_status.json'))
-    items=[dict(role='system',content=(SERVICE/'MISSION.md').read_text()),dict(role='user',content='Continue authorized research with concrete actions. Inspect evidence; preserve state for next iteration. Current supervisor context:\n'+json.dumps(context,default=str)[-28000:])]
-    outputs=[];executions=0
-    for turn in range(12):
-        if turn==10:items.append(dict(role='user',content='Two calls remain in this bounded cycle. Prefer a concrete bounded diagnostic now if inputs suffice. Avoid re-reading evidence already inspected.'))
-        if turn==11:items.append(dict(role='user',content='Final call of this cycle: use update_state to persist a concise cumulative research memory: findings with paths, files already inspected, precise next action, hypothesis, queue and unresolved issues. Do not mark research complete merely because this cycle ends. Next cycle must continue instead of repeating this audit.'))
-        answer=api(items,force_state=(turn==11));calls=[]
-        for output in answer.get('output',[]):
-            if output['type']=='function_call':items.append({k:output[k] for k in ('type','call_id','name','arguments')})
-            elif output['type']=='message':items.append(dict(role='assistant',content=''.join(c.get('text','') for c in output.get('content',[]))))
-        for item in answer.get('output',[]):
-            if item['type']=='function_call':calls.append(item)
-            elif item['type']=='message':
-                outputs.append(''.join(c.get('text','') for c in item.get('content',[])))
-        if not calls:break
-        # Multiple proposed tools execute sequentially, never concurrent experiments.
-        for item in calls:
-            try:
-                if item['name']=='run_experiment':
-                    if executions>=1:raise ValueError('One experiment per iteration: persist next action for the next bounded cycle')
-                result=call_tool(item['name'],json.loads(item['arguments']))
+    checkpoint=STATE/'active_iteration.json';live=load(checkpoint)
+    if live.get('status')=='in_progress':
+        items=live['items'];outputs=live['outputs'];executions=live['executions'];start_turn=live['turn']
+        iteration_id=live['iteration_id'];pending=live.get('pending_calls',[])
+    else:
+        state=load(STATE/'research_state.json');recent=load(STATE/'last_iteration.json')
+        if 'last_completed_experiment' in state:
+            old=state['last_completed_experiment'];state['last_completed_experiment']={k:old.get(k) for k in ('experiment_id','status','purpose','exit_status','stdout','stderr','runtime_seconds')}
+        if recent:recent['tool_tail']=[dict(call_id=x.get('call_id'),output=x.get('output','')[-2000:]) for x in recent.get('tool_tail',[])]
+        context=dict(state=state,last_iteration=recent,repository=str(ROOT),available_disk_gb=shutil.disk_usage(BASE).free/1e9,backup=load(STATE/'backup_status.json'))
+        items=[dict(role='system',content=(SERVICE/'MISSION.md').read_text()),dict(role='user',content='Continue authorized research with concrete actions. Inspect evidence; preserve state for next iteration. Current supervisor context:\n'+json.dumps(context,default=str)[-28000:])]
+        outputs=[];executions=0;start_turn=0;iteration_id=uuid.uuid4().hex;pending=[]
+    def persist(turn,pending_calls):
+        dump(checkpoint,dict(status='in_progress',iteration_id=iteration_id,turn=turn,items=items,outputs=outputs,executions=executions,pending_calls=pending_calls,updated=now()))
+    persist(start_turn,pending)
+    for turn in range(start_turn,12):
+        if pending:
+            calls=pending;pending=[]
+        else:
+            if turn==10:items.append(dict(role='user',content='Two calls remain in this bounded cycle. Prefer a concrete bounded diagnostic now if inputs suffice. Avoid re-reading evidence already inspected.'))
+            if turn==11:items.append(dict(role='user',content='Final call of this cycle: use update_state to persist a concise cumulative research memory: findings with paths, files already inspected, precise next action, hypothesis, queue and unresolved issues. Do not mark research complete merely because this cycle ends. Next cycle must continue instead of repeating this audit.'))
+            persist(turn,[])
+            answer=api(items,force_state=(turn==11));calls=[]
+            for output in answer.get('output',[]):
+                if output['type']=='function_call':
+                    items.append({k:output[k] for k in ('type','call_id','name','arguments')});calls.append(output)
+                elif output['type']=='message':
+                    message=''.join(c.get('text','') for c in output.get('content',[]));items.append(dict(role='assistant',content=message));outputs.append(message)
+            persist(turn,calls)
+            if not calls:break
+        for index,item in enumerate(calls):
+            if item['name']=='run_experiment' and executions>=1:
+                result={'error':'ValueError','message':'One experiment per iteration: persist next action for the next bounded cycle'}
+            else:
+                result=durable_tool_call(item)
                 if item['name']=='run_experiment':executions+=1
-            except Exception as e:result={'error':type(e).__name__,'message':redact(str(e))[:2000]};event('tool_error',name=item['name'],error=result)
             text=redact(json.dumps(result,default=str))[:30000]
             items.append(dict(type='function_call_output',call_id=item['call_id'],output=text))
             event('tool',name=item['name'],arguments={k:v for k,v in json.loads(item['arguments']).items() if k!='content'},result_summary=text[:2000])
+            remaining=calls[index+1:];persist(turn if remaining else turn+1,remaining)
     record=dict(time=now(),outputs=outputs,tool_tail=[x for x in items if x.get('type')=='function_call_output'][-4:])
     record['inspected_files']=[json.loads(x['arguments']).get('path') for x in items if x.get('type')=='function_call' and x.get('name')=='read_file']
-    archive=STATE/'iterations'/(dt.datetime.now(dt.timezone.utc).strftime('%Y%m%dT%H%M%S')+'.json');dump(archive,items)
-    dump(STATE/'last_iteration.json',record)
+    archive=STATE/'iterations'/(iteration_id+'.json');dump(archive,items);dump(STATE/'last_iteration.json',record)
     with (ROOT/'RESEARCH_LOG.md').open('a') as f:f.write('\n\n## '+now()+'\n'+redact('\n'.join(outputs))+'\n')
+    dump(checkpoint,dict(status='completed',iteration_id=iteration_id,updated=now()))
 
 def housekeeping():
     # Stable commit and upload handled separately; no API calls or training overlap.

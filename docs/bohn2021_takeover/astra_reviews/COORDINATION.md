@@ -22,3 +22,7 @@ Executor automatically creates an evidence-linked analysis request after substan
 ## Thorough investigation reinforcement 2026-09-30
 
 Apply SCIENTIFIC_LEAD_AUTHORIZATION_20260930.md. Astra issues precise tasks; GPT-5.5 executes and returns complete evidence. Approved dependent tasks need no duplicate scientific-direction approval when the stated gates pass.
+
+## Executor timeout recovery 2026-09-30
+
+Successful tool reads and writes now have persistent receipts and bounded-cycle contexts are saved after each tool result. API timeouts resume the same cycle with prior evidence. Registered experiment call IDs prevent replaying a completed/interrupted experiment solely because a model-facing tool response was lost. The executor request timeout is 900 seconds to allow long code-generation/reasoning responses; GPT-5.5/xhigh and the scientific plan are unchanged. Verified with simulated timeout/resumption and registered-experiment replay tests.

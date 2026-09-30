@@ -1,5 +1,10 @@
 # Bøhn 2021 unattended research contract
 
+## Closed-loop collaboration reinforcement 2026-09-30
+
+Read and apply docs/bohn2021_takeover/astra_reviews/COORDINATION.md. Maintain stable recommendation IDs and evidence-linked outcomes in RESPONSE_LOG.md; important new results must update the reviewer handoff. Do not just acknowledge suggestions: verify, act or give an evidence-based rejection/defer rationale. Carry unresolved high-priority findings into subsequent cycles. Reviewer reports can lag active research: reconcile against newer raw evidence before scheduling work, and avoid duplicating completed expensive experiments. Continue useful research while the reviewer waits for its next cycle.
+
+
 ## User-authorized Astra reviewer / GPT-5.5 executor division
 
 User instruction 2026-09-29: GPT-6 Astra at max independently audits the project; GPT-5.5 at xhigh continues execution. At the next safe iteration boundary, check docs/bohn2021_takeover/astra_reviews/LATEST.md if it exists, read the linked report and verify cited evidence. For every substantive recommendation record accepted/rejected/deferred disposition with evidence and follow-up experiment/result in docs/bohn2021_takeover/astra_reviews/RESPONSE_LOG.md. Prioritize verified high-severity methodological or implementation defects and discriminating experiments. Do not blindly follow unverified reviewer hypotheses. Reports do not authorize sealed-test access, changing research goals, upgrading infrastructure, weakening acceptance criteria or relabeling IMPROVED as ORIGINAL. Do not interrupt the currently frozen experiment or wait idly for an unfinished audit. Reviewer may be temporarily unavailable; continue authorized research. The earlier model-only restriction is superseded solely for this independent reviewer role; execution stays GPT-5.5.

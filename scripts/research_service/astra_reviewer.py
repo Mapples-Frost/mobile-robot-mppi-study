@@ -247,6 +247,12 @@ def cycle():
         initial={'state':call_tool('state_snapshot',{}),'snapshot':audit,
                  'navigation':{d:call_tool('list_files',{'path':d})
                    for d in ('.','experiments/bohn2021_reproduction','experiments/bohn2021_aws','docs/bohn2021_takeover')}}
+        initial['coordination_handoff'] = {}
+        for name in ('COORDINATION.md', 'LATEST.md', 'RESPONSE_LOG.md'):
+            handoff = OUT / name
+            if handoff.exists():
+                initial['coordination_handoff'][name] = read_file(str(handoff.relative_to(ROOT)), 1, 350)
+        items.append(dict(role='user',content='Follow-up coordination is essential: read the prior report, executor dispositions and newly cited raw evidence. Verify fixes rather than repeating stale findings; retain stable recommendation IDs and identify up to three most informative next actions. Read further handoff lines with tools if truncated.'))
         items.append(dict(role='user',content='Perform comprehensive independent audit. Start from this navigation; read primary evidence, not only summaries.\n'+json.dumps(initial,ensure_ascii=False)))
     session=WORK/'sessions'/(audit['audit_id']+'.json')
     save(WORK/'checkpoint.json',audit)

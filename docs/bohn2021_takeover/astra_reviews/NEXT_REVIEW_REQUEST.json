@@ -1,13 +1,13 @@
 {
-  "request_id": "execution-result:20260930T105719_a0cd3d48",
+  "request_id": "execution-result:20260930T111305_5a8be004",
   "trigger": "execution_result_handoff",
-  "created": "2026-09-30T10:57:48.086110+00:00",
-  "experiment_id": "20260930T105719_a0cd3d48",
+  "created": "2026-09-30T11:13:40.116025+00:00",
+  "experiment_id": "20260930T111305_5a8be004",
   "status": "analysis_requested",
-  "purpose": "Execute Opus-approved A13b zero-solve diagnostic: dissect v34k objective residual, eps/rterm paths, raw_live_label_match semantics and max_colloc truncation before any A13c solver calls or 23-call objective-vs-basin probe.",
+  "purpose": "Execute Opus-approved A13c-2 residual attribution gate: terminal dtype, finite-difference/KKT scale, and direct NLP/multiplier checks without solver calls or plant rollouts.",
   "execution_status": "complete",
   "question": "Active scientific lead: interpret this outcome, verify current raw evidence and select the next scientific action for GPT-5.5 implementation. Distinguish hypotheses from verified causes and account for fair baselines, terminal confounds and source-level generalization.",
   "evidence_paths": [
-    "research_artifacts/aws_runs/20260930T105719_a0cd3d48/registry.json"
+    "research_artifacts/aws_runs/20260930T111305_5a8be004/registry.json"
   ]
 }

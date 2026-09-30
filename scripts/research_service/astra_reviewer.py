@@ -8,6 +8,7 @@ import json
 import os
 import pathlib
 import re
+import signal
 import sqlite3
 import subprocess
 import sys
@@ -16,6 +17,7 @@ import urllib.request
 import urllib.error
 import uuid
 from research_memory import registry_context
+import astra_routing
 
 BASE = pathlib.Path('/data/openai-agent')
 ROOT = BASE / 'mobile-robot-mppi-study'
@@ -196,38 +198,10 @@ def api(items, final=False):
               max_output_tokens=24000)
     if not final:
         body['tools']=TOOLS
-    request=urllib.request.Request(SECRETS['REVIEWER_BASE_URL'].rstrip('/')+'/responses',
-        data=json.dumps(body).encode(),headers={'Authorization':'Bearer '+SECRETS['REVIEWER_API_KEY'],
-                                               'Content-Type':'application/json'})
-    cid=uuid.uuid4().hex; began=time.monotonic(); usage={}; status='error'; actual_effort='unverified'
-    try:
-        with urllib.request.urlopen(request,timeout=600) as r:
-            answer=json.load(r)
-        save(WORK/'responses'/(cid+'.json'),answer)
-        usage=answer.get('usage',{})
-        status=answer.get('status','unknown')
-        returned=answer.get('model','')
-        if returned != MODEL and not returned.startswith(MODEL+'-'):
-            status='model_mismatch'
-            raise RuntimeError('Returned model mismatch; fallback prohibited')
-        echoed=answer.get('reasoning',{}).get('effort')
-        actual_effort=echoed or 'unverified'
-        if actual_effort not in ('max','xhigh'):
-            status='effort_mismatch'
-            raise RuntimeError('Unexpected effort below verified provider capability: '+actual_effort)
-        if actual_effort != EFFORT:
-            event('provider_effort_mapping',requested=EFFORT,returned=actual_effort,call_id=cid)
-        if status != 'completed':
-            raise RuntimeError('Incomplete model response: '+status)
-        return answer
-    except urllib.error.HTTPError as e:
-        raise RuntimeError('API_HTTP_%s: %s' % (e.code,redact(e.read().decode(errors='replace'))[:1200])) from None
-    finally:
-        elapsed=time.monotonic()-began
-        with sqlite3.connect(STATE/'research.sqlite', timeout=30) as c:
-            c.execute('insert into calls values(?,?,?,?,?,?,?)',
-                      (cid,now(),MODEL,actual_effort,status,json.dumps(usage),elapsed))
-        event('api',call_id=cid,model=MODEL,requested_effort=EFFORT,returned_effort=actual_effort,status=status,usage=usage,duration=elapsed)
+    answer=astra_routing.request(body, purpose='review_final' if final else 'review')
+    route=answer['_research_route']
+    event('api_routed',model=MODEL,**route)
+    return answer
 
 def fingerprint():
     active=load(STATE/'active_experiment.json')
@@ -339,8 +313,9 @@ def cycle():
         answer=api(items,final)
         # A successful API turn breaks a consecutive failure streak even if the
         # whole multi-turn review has not yet completed.
-        save(WORK/'retry_state.json',dict(consecutive_failures=0,last_success=now()))
+        save(WORK/'retry_state.json',dict(consecutive_failures=0,last_success=now(),routing_enabled=True))
         audit.setdefault('returned_efforts',[]).append(answer.get('reasoning',{}).get('effort','unverified'))
+        audit.setdefault('endpoint_calls',[]).append(answer.get('_research_route',{}))
         save(WORK/'responses'/(audit['audit_id']+'-%02d.json'%turn),answer)
         calls=[]; texts=[]
         for item in answer.get('output',[]):
@@ -413,20 +388,26 @@ def main():
     WORK.mkdir(parents=True,exist_ok=True);OUT.mkdir(parents=True,exist_ok=True)
     lock=(WORK/'worker.lock').open('a')
     fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
+    signal.signal(signal.SIGTERM, lambda *_: sys.exit(0))
     for p in (BASE/'.secrets').glob('*'):
         if p.is_file():
             for line in p.read_text(errors='replace').splitlines():
                 value=line.split('=',1)[-1].strip()
                 if len(value)>=16:
                     REDACTIONS.append(value)
-    SECRETS=dict(x.split('=',1) for x in (BASE/'.secrets/reviewer.env').read_text().splitlines() if '=' in x)
     retry=load(WORK/'retry_state.json');failure=int(retry.get('consecutive_failures',0))
+    # One-time migration: a primary-only failure streak does not describe the newly verified backup.
+    if not retry.get('routing_enabled'):
+        save(WORK/'retry_state_archives'/('before_router_'+dt.datetime.now(dt.timezone.utc).strftime('%Y%m%dT%H%M%SZ')+'.json'),retry)
+        retry=dict(consecutive_failures=0,routing_enabled=True,migrated=now())
+        save(WORK/'retry_state.json',retry);failure=0
+    astra_routing.start_monitor()
     if failure and retry.get('last_failure'):
         # Service reloads must preserve the provider cooldown instead of forcing another request.
         next_retry=dt.datetime.fromisoformat(retry['last_failure']).timestamp()+min(1800,30*2**min(failure,6))
         remaining=max(0,next_retry-time.time())
         save(WORK/'status.json',{**load(WORK/'status.json'),'next_retry_utc':dt.datetime.fromtimestamp(next_retry,dt.timezone.utc).isoformat(),'cooldown_preserved_on_restart':True})
-        if remaining:time.sleep(remaining)
+        if remaining:astra_routing.wait_retry(remaining)
     while True:
         if dt.datetime.now(dt.timezone.utc)>=dt.datetime(2026,10,25,8,tzinfo=dt.timezone.utc):
             save(WORK/'status.json',dict(status='expiry_archive_only',updated=now()));return
@@ -441,12 +422,12 @@ def main():
             cycle();failure=0
         except Exception as e:
             failure=int(load(WORK/'retry_state.json').get('consecutive_failures',0))+1
-            save(WORK/'retry_state.json',dict(consecutive_failures=failure,last_failure=now()))
+            save(WORK/'retry_state.json',dict(consecutive_failures=failure,last_failure=now(),routing_enabled=True))
             message=redact(str(e))[:1500]
             event('error',error_type=type(e).__name__,message=message,consecutive_failures=failure)
             save(WORK/'status.json',dict(status='retry_backoff',updated=now(),message=message,consecutive_failures=failure))
             # Finite retries per group; persisted diagnostic cooldown, no alternate models.
-            time.sleep(min(1800,30*2**min(failure,6)))
+            astra_routing.wait_retry(min(1800,30*2**min(failure,6)))
 
 if __name__=='__main__':
     main()

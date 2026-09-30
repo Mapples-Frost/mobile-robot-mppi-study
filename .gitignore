@@ -11,3 +11,6 @@ reviewer.env
 
 # Native lead credentials are always outside the repository
 opus.env
+
+# Backup Astra credentials stay outside version control
+astra_backup.env

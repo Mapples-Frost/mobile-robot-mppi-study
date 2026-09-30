@@ -7257,3 +7257,105 @@ UTC: 2026-09-30T10:57:46.062710+00:00. Ran Opus A13b as a zero-solve/zero-plant 
 
 ## 2026-09-30T11:11:48.042145+00:00
 
+<!-- vehicle-v34m-residual-attribution-20260930T111306Z -->
+## v34m/A13c-2 residual attribution diagnostic
+
+UTC: 2026-09-30T11:13:39.386810+00:00. Ran Opus A13c-2 exactly as a zero-solve/zero-plant diagnostic over already-opened v34g/v34k/v34l arrays. Budgets: solver_calls=0, plant_steps=0, env_reset/env_step after construction=0/0, training/refit=0, validation64=0, sealed_test=0. G1_status=pass_bounded_below_reconstruction_tolerance; classification=T1a_rejects_terminal_float32_rounding_as_primary_cause;T1b_T1c_dual_constraint_residual_scale_too_small_under_l1_bound;T1c_direct_NLP_objective_unavailable; solver=1430.3365593819267; reconstructed=1430.3369249968853; residual=0.0003656149585822277; rel=2.556146357191739e-07. T1a terminal dtype max delta=5.8778497962208576e-06 (fraction 0.016076611906180843). T1b evaluated 222 variables; gradient norms={'linf': 13.074425775600155, 'l1': 346.0502503072462, 'l2': 65.34689557491295, 'median_abs': 0.0}; solver tail={'iter_count': 29, 'return_status': 'Solve_Succeeded', 'success': True, 'final_inf_pr': 5.805181218299149e-15, 'final_inf_du': 4.6819050273051035e-11, 'final_d_norm': 0.00011613534214666175, 'last_objective_delta': 6.821210263296962e-13, 'final_obj': 1430.3365593819267, 'penultimate_obj': 1430.3365593819274}. T1c direct NLP objective rel error=None; lam_g dual scale={'constraint_residual': 8.612633157188794e-09, 'bound_residual': 0.0, 'lam_g_max_abs_times_constraint_residual': 5.834206856280009e-07, 'lam_g_l1_times_constraint_residual': 1.0032964973905207e-05, 'over_residual_max_abs_bound': 0.001595724332205593, 'over_residual_l1_bound': 0.02744134160377568}; constraint-only Lagrangian FD available=False. Evidence: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34m_residual_attribution_v0_20260930T111306Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34m_residual_attribution_v0_20260930T111306Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34m_residual_attribution_v0_20260930T111306Z/completed.json`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34m_residual_attribution_v0_20260930T111306Z/fd_top_gradients.csv`. Backup request: `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_V34M_RESIDUAL_ATTRIBUTION_20260930T111306Z.json`.
+
+
+## 2026-09-30T11:14:37.847429+00:00
+Elapsed since first supervisor event: **~4d 0h 18m 10s** at v34m completion. Cumulative server API total_tokens: **~278.599M latest audited as of 2026-09-30T05:33/05:34 UTC**; not re-audited this cycle; desktop conversation usage excluded.
+
+Executed one bounded experiment this iteration, per one-experiment-per-iteration rule.
+
+## Concrete action completed
+
+Ran Opus-approved **A13c-2 / v34m residual attribution diagnostic**:
+
+- Script: `experiments/bohn2021_aws/vehicle_true_variable_horizon_v34m_residual_attribution_v0.py`
+- Registry: `research_artifacts/aws_runs/20260930T111305_5a8be004/registry.json`
+- Output:
+  - `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34m_residual_attribution_v0_20260930T111306Z/completed.json`
+  - `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34m_residual_attribution_v0_20260930T111306Z/summary.md`
+  - `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34m_residual_attribution_v0_20260930T111306Z/raw.json`
+  - `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34m_residual_attribution_v0_20260930T111306Z/fd_top_gradients.csv`
+
+## Budget / access confirmation
+
+The diagnostic preserved the intended gate boundaries:
+
+- Solver calls: **0**
+- Plant steps: **0**
+- Env reset/step after construction: **0 / 0**
+- Training / gradient steps: **0**
+- Selector refits: **0**
+- Validation64 episodes: **0**
+- Sealed/final test episodes: **0**
+- `sealed_test_accessed=false`
+- `validation64_bank_opened=false`
+
+## Main v34m evidence
+
+A13c-2 completed with:
+
+- `hard_pass=true`
+- `G1_pass=true`
+- `G1_status=pass_bounded_below_reconstruction_tolerance`
+
+Key numeric results:
+
+- Solver objective: `1430.3365593819267`
+- Reconstructed objective: `1430.3369249968853`
+- Absolute residual: `0.0003656149585822277`
+- Relative reconstruction error: `2.556146357191739e-07`
+
+Residual attribution checks:
+
+- **T1a terminal dtype:** max terminal dtype delta `5.8778497962208576e-06`, only `0.016076611906180843` of residual → terminal float32/dtype effects too small to explain residual.
+- **T1b finite-difference/KKT scale:** evaluated `222 / 222` variables; reconstruction gradient norms `linf=13.0744`, `l1=346.0503`, `l2=65.3469`. Ipopt final objective delta over residual was `1.87e-09`; final primal infeasibility × grad-L1 over residual was `5.49e-09`.
+- **T1c direct NLP/multipliers:** direct symbolic NLP objective was unavailable via tried public fields; lam_g available with size `273`, but `lam_g_l1 * constraint_residual` covered only `0.02744` of residual. Direct NLP closure therefore was not obtained, but the residual remains below the predeclared `1e-6` relative reconstruction tolerance.
+
+Classification recorded:
+
+`T1a_rejects_terminal_float32_rounding_as_primary_cause;T1b_T1c_dual_constraint_residual_scale_too_small_under_l1_bound;T1c_direct_NLP_objective_unavailable`
+
+## Documentation / state preservation
+
+The script appended the v34m result to:
+
+- `STATUS.md`
+- `RESEARCH_LOG.md`
+- `DECISIONS.md`
+- `RESULTS_AUDIT.md`
+- `REPRODUCTION_PROTOCOL.md`
+- `docs/bohn2021_takeover/astra_reviews/RESPONSE_LOG.md`
+
+It also wrote:
+
+- `docs/bohn2021_takeover/astra_reviews/NEXT_REVIEW_REQUEST.json`
+- `research_artifacts/aws_state/continue_state_20260930T111306Z_after_v34m_residual_attribution.md`
+- `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_V34M_RESIDUAL_ATTRIBUTION_20260930T111306Z.json`
+
+I also persisted supervisor state via `update_state`.
+
+## Current blocker / next gate
+
+A new backup request now exists and must be externally verified before more unique science:
+
+`research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_V34M_RESIDUAL_ATTRIBUTION_20260930T111306Z.json`
+
+Next authorized step, after backup verification, is **A13c-3**:
+
+- ≤6 low-level solver attempts
+- Same opened development cell
+- H values: `12`, `15`, `35`
+- Include at least two forced non-converged / near-off-optimal low-iteration solves
+- Report reconstruction consistency and alias-group separation
+- Predeclared pass: all relative reconstruction errors ≤ `1e-6`; H35 may use predeclared ≤ `1e-5` only if documented before run
+- Any > `1e-4` is a hard objective-contract defect
+- Still no validation64, sealed/final test, training, selector refit, or Task-C 23-call continuation until G0/G1/G2 are all satisfied.
+
+
+## 20260930T111727Z Astra primary-preferred backup routing
+
+User authorized backup Astra endpoint, keeping primary preference. Installed same-model/max two-endpoint router with persistent health checks and checkpoint-preserving retries. 11 isolated tests and backup native tool/continuation smoke passed. No scientific method, split, experiment budget or acceptance criterion changed. Details: docs/bohn2021_takeover/astra_reviews/ROUTING.md. Secrets excluded from Git and research evidence.

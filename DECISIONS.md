@@ -1677,3 +1677,6 @@ UTC: 2026-09-30T11:54:49.381404+00:00. Executed Opus T-B1 with zero solver calls
 ## 20260930T115754Z English working-language migration
 
 User explicitly requested English for all three research agents. Applied a shared language policy to fresh and resumed model calls; replaced Chinese-report instructions in Opus/Astra. Kept historical evidence, signed native blocks, identifiers, frozen protocols and hashes intact. No scientific method, split, budget or acceptance rule changed. Native-block/tool-history continuity checks passed. Details: docs/bohn2021_takeover/WORKING_LANGUAGE.md.
+
+
+Working-language verification: all three real API smoke calls returned English after receiving a legacy Chinese-report instruction plus the current shared policy. Model pins and effort settings were retained. Synthetic checks invoked no research tools or experiments. Full results: state/working_language_smoke.json.

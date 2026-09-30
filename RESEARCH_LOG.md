@@ -7977,3 +7977,72 @@ UTC: 2026-09-30T17:54:10.908841+00:00. Development-only source242 microcontinuat
 
 ## 2026-09-30T18:40:28.883396+00:00
 
+
+
+## 2026-09-30T18:45:08.565817+00:00
+Elapsed service lifetime since 2026-09-26T10:55:29Z is about 4 days 7 h 51 min. Cumulative server API token total is tracked by supervisor storage and was not recomputed in this bounded tool cycle.
+
+Concrete actions completed this cycle:
+
+- Inspected the active solo plan and the S-TC2H7 first-attempt evidence.
+- Verified that S-TC2H7 first attempt (`20260930T183432_519fde37`) was a zero-resource engineering failure:
+  - `solver_calls=0`
+  - `plant_steps=0`
+  - `training_steps=0`
+  - `validation_episodes=0`
+  - `test_episodes=0`
+  - no validation64 or sealed/final test access.
+- Confirmed the failure cause:
+  - `AttributeError: module 'vehicle_true_variable_horizon_v34z2_source242_microcontinuation_v0' has no attribute 'terminal_for_mode'`
+  - This was a wrapper/module-reference bug, not control-performance evidence.
+- Inspected current v0h source and verified the repair is present:
+  - terminal selection now uses `gate.MODULES["base"]` as `model_base`;
+  - the intended high-level environment interface repair remains `env.step([H])`;
+  - H grid remains `[12,15,35]`;
+  - terminal mode remains `V15_shared`;
+  - source242/goal61 and validation/test restrictions remain unchanged.
+- Attempted to launch the approved task, but:
+  1. First launch was rejected pre-execution because `config.repair_scope` did not exactly match the frozen plan string.
+  2. Second launch used the exact frozen `repair_scope`, but the scheduler blocked it with the one-experiment-per-iteration guard.
+- Therefore no experiment script ran this cycle and no scientific resources were consumed.
+
+Resource accounting for this cycle:
+
+- New solver calls: 0
+- New plant steps: 0
+- Training steps: 0
+- Validation episodes: 0
+- Test episodes: 0
+- validation64 accessed: false
+- sealed/final test accessed: false
+- new AWS/IAM/infrastructure resources: false
+
+State preserved:
+
+- Wrote continuation note:
+  - `research_artifacts/aws_state/continue_state_20260930T1846Z_after_stc2h7_scheduler_validation.md`
+  - SHA256: `d6e49f563b99b10698ba87e815d79dd44a54064e595802aac1a348a548879180`
+- Persisted structured state via `update_state`.
+
+Next exact action for the next bounded cycle:
+
+Run the active approved task:
+
+- Task ID: `S-TC2H7-source242-high-level-env-step-repair-v0`
+- Script: `experiments/bohn2021_aws/vehicle_true_variable_horizon_v34z2_source242_microcontinuation_v0h_highlevel_env_step_repair.py`
+- Interpreter: `legacy`
+- Split: `opened_development_source242_slot0_branch_start_microcontinuation_high_level_env_step_no_validation64_no_sealed_test`
+- Resource request:
+  - `solver_calls=180`
+  - `plant_steps=180`
+  - `training_steps=0`
+  - `validation_episodes=0`
+  - `test_episodes=0`
+
+Important operational note: copy `config_constraints` exactly from `docs/bohn2021_takeover/solo_gpt55/solo_25786ccf00a7a2f6f1961fea.execution_plan.json`; do not paraphrase frozen strings, especially `repair_scope`.
+
+No validation64 or sealed/final test was opened. Research is not complete.
+
+
+## 2026-09-30T18:51:42.824805+00:00
+

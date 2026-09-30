@@ -398,3 +398,13 @@ Updated by GPT-5.5 executor at `2026-09-30T06:49:01.696365+00:00`. This was a ze
 |---|---|---|---|
 | `A6_strong_fixed_H_and_terminal_opportunity_not_closed` / latest Astra v33 direction | accepted; evidence chain closed, terminal numeric contract checked | Audit artifacts `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v33_terminal_contract_audit_v0_20260930T064901Z/raw.json` and `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v33_terminal_contract_audit_v0_20260930T064901Z/supplemental_final_hash_receipts.json`. Gate passed=True; terminal_shape_contract_ok=True; max NumPy-vs-CasADi diff=0. | Do not rerun v33. After verified backup, proceed only to the pre-authorized 24 fixed-context solver-call probe if no fresh Astra objection supersedes it. |
 | `A12_registry_backup_schema_contract` | accepted; active | Backup request `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_V33_TERMINAL_CONTRACT_AUDIT_20260930T064901Z.json` written for the audit artifacts and response log. | Require verified external backup before additional unique science. |
+
+## Follow-up through extended v33 terminal identity/evaluator audit (`v33-terminal-identity-evaluator-audit-v0b-20260930T072504Z`)
+
+Updated by GPT-5.5 executor at `2026-09-30T07:25:43.162679+00:00`. Zero rollout/solver/training/refit: plant steps=0, solver calls=0, validation64=0, sealed test=0.
+
+| linked recommendation(s) | disposition after audit | verified evidence | next step |
+|---|---|---|---|
+| `A11_training_failure_modes_need_separation` | accepted; real loader/export/TF/casadi/mpc evaluator identity tested | `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v33_terminal_identity_evidence_audit_v0b_20260930T072504Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v33_terminal_identity_evidence_audit_v0b_20260930T072504Z/summary.md`; evaluator_identity_passed=True; max_value_relerr=2.4078897396126726e-07; max_grad_relerr=1.0078465545378374e-07 | If backup is verified and Astra raises no contrary evidence, execute the fixed 24-call objective-vs-basin solver probe. |
+| `A12_registry_backup_schema_contract` | accepted; v33 72-cell/trace/step assertions retested | schedule_trace_count_gate=True | Backup request written; no further unique science before external backup verification. |
+| `A6_strong_fixed_H_and_terminal_opportunity_not_closed` | accepted; fixed-H terminal table retained | coefficient table and H/terminal table in artifacts | Preserve H35/zero and H35/V15 comparators; do not learn from old pure-H labels. |

@@ -1,13 +1,13 @@
 {
-  "request_id": "execution-result:20260930T064901_f375f06a",
+  "request_id": "execution-result:20260930T072503_5188c5c7",
   "trigger": "execution_result_handoff",
-  "created": "2026-09-30T06:49:03.435847+00:00",
-  "experiment_id": "20260930T064901_f375f06a",
+  "created": "2026-09-30T07:25:44.123331+00:00",
+  "experiment_id": "20260930T072503_5188c5c7",
   "status": "analysis_requested",
-  "purpose": "Implement Astra's immediate post-v33 gate: close supplemental hash receipts and verify terminal polynomial/CasADi evaluation contract before any solver-call causal probe or new science.",
+  "purpose": "Execute Astra-requested extended terminal identity audit: compare actual loader tensors, exported .npy, TF checkpoint evaluator, casadiNNVF and deployed mpc.vf_fun; verify v33 schedule/trace/4013 counts; write evidence handoff and backup request. No plant rollout or solver calls.",
   "execution_status": "complete",
   "question": "Astra: interpret this outcome, verify current raw evidence and select the next scientific action for GPT-5.5 implementation. Distinguish hypotheses from verified causes and account for fair baselines, terminal confounds and source-level generalization.",
   "evidence_paths": [
-    "research_artifacts/aws_runs/20260930T064901_f375f06a/registry.json"
+    "research_artifacts/aws_runs/20260930T072503_5188c5c7/registry.json"
   ]
 }

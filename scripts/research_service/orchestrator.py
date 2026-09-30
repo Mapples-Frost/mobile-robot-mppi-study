@@ -123,6 +123,12 @@ def execute(args):
     if state['consecutive_failures']>=5:state['phase']='diagnosis'
     dump(STATE/'research_state.json',state)
     event('experiment',experiment_id=eid,status=meta['status'],runtime_seconds=meta['runtime_seconds'])
+    # Automatically hand off substantive outcomes, including failures. GPT-5.5
+    # cannot skip the primary analyst merely by forgetting to write a request.
+    script_name=path.name.lower()
+    if not any(word in script_name for word in ('backup','preflight','smoke','readiness','status_capture','inventory','registry','token_usage','gate_recheck','gate_preflight','pending_evidence')):
+        evidence=[a['path'] for a in meta.get('artifact_inventory',[]) if a.get('exists') and a.get('path','').endswith(('summary.md','raw.json','completed.json'))]
+        dump(ROOT/'docs/bohn2021_takeover/astra_reviews/NEXT_REVIEW_REQUEST.json',dict(request_id='execution-result:'+eid,trigger='execution_result_handoff',created=now(),experiment_id=eid,status='analysis_requested',purpose=meta.get('purpose'),execution_status=meta['status'],question='Astra: interpret this outcome, verify current raw evidence and select the next scientific action for GPT-5.5 implementation. Distinguish hypotheses from verified causes and account for fair baselines, terminal confounds and source-level generalization.',evidence_paths=evidence+[str((dest/'registry.json').relative_to(ROOT))]))
     return dict(record=str(dest.relative_to(ROOT)/'registry.json'),exit_status=proc.returncode,runtime_seconds=meta['runtime_seconds'],stdout_tail=(dest/'stdout.log').read_text(errors='replace')[-12000:],stderr_tail=(dest/'stderr.log').read_text(errors='replace')[-8000:])
 
 def call_tool(name,args):
@@ -196,7 +202,7 @@ def awaiting_astra_analysis():
         request=load(out/'NEXT_REVIEW_REQUEST.json')
         if not request.get('request_id'):return False
         ready=load(out/'ANALYSIS_READY.json')
-        if ready.get('request_id') != request['request_id']:return True
+        if ready.get('request_id') != request['request_id'] and request['request_id'] not in ready.get('supersedes_request_ids',[]):return True
         if ready.get('primary_analyst') != 'gpt-6-astra':return True
         report=safe_path(ready.get('report',''))
         expected=ready.get('report_sha256')

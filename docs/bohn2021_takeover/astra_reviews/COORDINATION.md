@@ -14,3 +14,7 @@ User reinforced on 2026-09-30: the agents must cooperate through evidence and ou
 ## Role correction 2026-09-30
 
 Astra is the primary scientific analyst and direction selector. GPT-5.5 executes the scientific plan and performs necessary numerical/implementation/operational checks. Meaningful new results trigger focused Astra analysis immediately, bypassing the six-hour broad-audit interval. NEXT_REVIEW_REQUEST.json and ANALYSIS_READY.json explicitly connect the requested evidence to its returned report. Frozen experiments finish normally; useful work within an approved plan continues while analysis is pending.
+
+## Event wait reliability update 2026-09-30
+
+Executor automatically creates an evidence-linked analysis request after substantive experiment outcomes, including failures. During a pending request the supervisor maintains heartbeat/backups and waits for a matching/superseding Astra report, instead of generating repetitive metadata-only API cycles. Resumption checks report SHA-256 and primary analyst identity. Successful reviewer API turns reset the consecutive-error backoff count; updated requests are adopted within the running focused analysis. These are scheduling/recovery controls, not API/token budgets.

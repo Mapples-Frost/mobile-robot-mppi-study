@@ -378,7 +378,7 @@ def cycle():
                                  handled_manual_request_id=req.get('request_id') if req.get('trigger')!='new_substantive_result' else prior_status.get('handled_manual_request_id')))
     save(WORK/'review_cursor.json',load(WORK/'status.json'))
     if req:
-        save(OUT/'ANALYSIS_READY.json',dict(request_id=req['request_id'],experiment_id=req.get('experiment_id'),report=str((OUT/report_name).relative_to(ROOT)),completed=now(),primary_analyst=MODEL,report_sha256=hashlib.sha256(text.encode()).hexdigest()))
+        save(OUT/'ANALYSIS_READY.json',dict(request_id=req['request_id'],experiment_id=req.get('experiment_id'),report=str((OUT/report_name).relative_to(ROOT)),completed=now(),primary_analyst=MODEL,report_sha256=hashlib.sha256(text.encode()).hexdigest(),supersedes_request_ids=list(dict.fromkeys(audit.get('superseded_request_ids',[])+([prior_status.get('handled_manual_request_id')] if req.get('trigger')=='new_substantive_result' and prior_status.get('handled_manual_request_id') else [])))))
     event('review_completed',audit_id=audit['audit_id'],report=report_name)
 
 def main():

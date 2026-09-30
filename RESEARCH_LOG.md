@@ -6120,3 +6120,11 @@ UTC: 2026-09-30T03:22:13.345024+00:00. Development-only identical-state H12/H15/
 
 ## 2026-09-30T03:42:40.605472+00:00
 
+<!-- vehicle-three-way-selector-feature-audit-v30b-fast-20260930T0410Z -->
+## 2026-09-30 v30b three-way selector feature/separability audit
+
+UTC: 2026-09-30T03:46:34.079983+00:00. Analysis-only over v29; validation64 closed, sealed test closed, simulations=0, control_steps=0, training/refit=0. This supersedes the failed v30 brute-force analysis attempt, which timed out with exit_status=-15 and no scientific outputs. On the 11 opened v29 states, success-sensitive bad rows: fixed H12=5, fixed H15=2, fixed H25=4, fixed H35=4, oracle fastest-safe H12/H15/H35=0. Two-threshold feature rule: in-sample bad=0, LOO bad=1, LOO saving vs fixed H35=48.30% if safety holds. Decision: Oracle triage opportunity is real on v29, but the simple deployable feature rule did not pass leave-one-out. After backup, acquire more pre-outcome source-independent labels or run a bounded terminal-risk/value refit before validating any selector. Artifacts: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_three_way_selector_feature_audit_v30b_fast_20260930T0410Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_three_way_selector_feature_audit_v30b_fast_20260930T0410Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_three_way_selector_feature_audit_v30b_fast_20260930T0410Z/completed.json`. Backup required before further unique science: `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_V30B_THREE_WAY_SELECTOR_FEATURE_AUDIT_20260930T0410Z.json`.
+
+
+## 2026-09-30T03:49:58.631315+00:00
+

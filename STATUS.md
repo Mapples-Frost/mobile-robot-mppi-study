@@ -1436,3 +1436,35 @@ UTC: 2026-09-30T05:16:11.288834+00:00. Development analysis only; no simulation/
 ## 2026-09-30 v32 gate preflight/state preservation
 
 UTC: 2026-09-30T05:20:39.377935+00:00. Metadata-only/reversible; no simulation/control/training/refit/validation64/sealed-test access. Service elapsed `3d 18h 25m 9.959s`; server API total_tokens `unknown (sqlite present but no total_tokens-like column found)`. Verified current Astra request `v32-h12-supported-default-h35-diagnostic-20260930T051611Z` has `12` evidence paths with missing=`[]`. ANALYSIS_READY matching current=`False`. Backup request `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_V32_NEXT_REVIEW_REFRESH_20260930T051840Z.json` present=`True` and files present=`True`, but latest verified backup candidate `{'path': 'current_supervisor_context', 'time': '2026-09-30T05:15:38.012838+00:00', 'status': 'verified', 'remaining_changed_files': 0, 'commit': 'f2227d24fada4c7e7ba5fb3e7cbe060b47457cc1', 'package_sha256': '081ce0831d187e40aa419262e36ff7a7fcd2a08208a2fc45e7b1196b36f9e876', 'package_ok': True}` is after request time=`False` and files-after-backup count=`16`, so v32 backup gate clear=`False`. V32 digest remains opened-development only: counts `{'12': 3, '15': 1, '35': 1}`, H12/H35 LOGO bad `1`, saving vs fixed H35 `0.3992505755588043`. Next: await backup plus matching Astra report before unique science; if Astra appears, read/verify/report dispositions.
+
+<!-- api_token_usage_audit_v0-20260930T052434Z -->
+## 2026-09-30 API token usage audit
+
+UTC: 2026-09-30T05:24:34.851424+00:00. Metadata-only operational audit; no simulation/control/training/refit/validation64/sealed-test access. Service elapsed `3d 18h 29m 5.432s`. Server API total_tokens status: `277,410,897 (277.411M) from calls.usage.total_tokens`. Details: `research_artifacts/aws_diagnostics/api_token_usage_audit_v0_20260930T052434Z/raw.json`. Backup request: `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_API_TOKEN_USAGE_AUDIT_20260930T052434Z.json`.
+
+# v32/token backup + Astra gate recheck
+
+UTC: `2026-09-30T05:29:01.564790+00:00`. Metadata-only operational check; no simulations, no control steps, no selector refit, no training, no validation64 bank access and no sealed-test access.
+
+## Required status-line values
+- Service lifetime elapsed since `2026-09-26T10:55:29.419331Z`: `3d 18h 33m 32.145s`.
+- Cumulative server API total_tokens from research.sqlite: `277,902,212 (277.902M) from calls.usage.total_tokens`; desktop conversation tokens excluded.
+
+## Gate findings
+- Materialized prompt-supplied verified backup proof: `research_artifacts/aws_backup_proofs/backup_proof_20260930T052356_from_user_context_after_v32_pre_token_audit.json`.
+- Current Astra request: `v32-h12-supported-default-h35-diagnostic-20260930T051611Z`; ANALYSIS_READY exists=`False`, matches current=`False`.
+- Backup request `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_V32_H12_SUPPORTED_DEFAULT_H35_DIAGNOSTIC_20260930T051611Z.json`: clear=`False`; best_candidate_time=`2026-09-30T05:23:56.296257+00:00`; missing=0; files_after_backup=3.
+- Backup request `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_V32_NEXT_REVIEW_REFRESH_20260930T051840Z.json`: clear=`False`; best_candidate_time=`2026-09-30T05:23:56.296257+00:00`; missing=0; files_after_backup=3.
+- Backup request `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_V32_GATE_PREFLIGHT_STATE_20260930T052039Z.json`: clear=`False`; best_candidate_time=`2026-09-30T05:23:56.296257+00:00`; missing=0; files_after_backup=3.
+- Backup request `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_API_TOKEN_USAGE_AUDIT_SOURCE_20260930T0522Z.json`: clear=`False`; best_candidate_time=`2026-09-30T05:23:56.296257+00:00`; missing=0; files_after_backup=3.
+- Backup request `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_API_TOKEN_USAGE_AUDIT_20260930T052434Z.json`: clear=`False`; best_candidate_time=`2026-09-30T05:23:56.296257+00:00`; missing=0; files_after_backup=9.
+
+## Current decision
+- Unique scientific simulation/refit/training/validation/final-test work remains blocked: token-audit backup clear=`False`, Astra current report ready=`False`.
+- Continue only reversible integrity/preparation until a later verified backup covers this recheck/token-audit output and a matching/superseding Astra report is available.
+
+## Preserved scientific constraints
+- v29/v30b/v31/v32 remain opened-development diagnostics only, not validation/test/reproduction/deployed-speed evidence.
+- v32 suggests an H12-vs-non-H12 signal but leaves the single H15-family residual unresolved; Astra remains scientific lead for branch selection.
+- Sealed final test remains unopened and unauthorized.
+

@@ -7863,3 +7863,65 @@ UTC: 2026-09-30T17:10:33.229916+00:00. Development-only source242 microcontinuat
 
 ## 2026-09-30T17:12:15.404748+00:00
 
+
+
+## 2026-09-30T17:16:17.634421+00:00
+
+
+
+## 2026-09-30T17:19:53.260191+00:00
+Elapsed since first supervisor event (2026-09-26T10:55:29Z): ~4 days 6h 22m. Cumulative server API `total_tokens`: unavailable from the exposed tools in this turn; I did not read `research.sqlite`, and I will not invent a value.
+
+Concrete actions completed this cycle:
+
+1. Inspected the active solo plan and confirmed the only authorized task:
+   - `S-TC2H2-source242-nested-action-payload-repair-v0`
+   - Script: `experiments/bohn2021_aws/vehicle_true_variable_horizon_v34z2_source242_microcontinuation_v0c_nested_payload_repair.py`
+   - No validation64 or sealed/final-test access authorized.
+
+2. Inspected the v0c repair source.
+   - The wrapper implements the intended one-variable operational repair:
+     - changes `env.step` action payload to a numeric 2x1 array `[[u_omega], [u_s]]`;
+     - preserves source242, goal source, horizons `[12, 15, 35]`, `V15_shared`, initialization/objective, and no training/test access.
+
+3. Attempted to run the authorized task.
+   - First attempt was rejected before script execution:
+     - `ValueError: Missing frozen config field: latest_verified_external_backup_before_plan_from_supervisor_context`
+   - I corrected the config and attempted relaunch.
+   - Second attempt was rejected before script execution by the scheduler:
+     - `ValueError: One experiment per iteration: persist next action for the next bounded cycle`
+
+4. Resource/access accounting for this cycle:
+   - solver_calls: 0
+   - plant_steps: 0
+   - training_steps: 0
+   - validation_episodes: 0
+   - test_episodes: 0
+   - validation64 accessed: false
+   - sealed/final test accessed: false
+   - new AWS resources: false
+
+5. Persisted continuation state:
+   - `research_artifacts/aws_state/continue_state_20260930T1718Z_after_stc2h2_scheduler_rejection.md`
+   - SHA256: `b0fd7a9cc279948e23007ed14779e2a7e18c350a51e6e58199c9dd8c3cb0deec`
+   - Also persisted supervisor state via `update_state`.
+
+Next exact action for the next bounded cycle:
+
+Run the same active authorized task once, with the full frozen config copied from:
+
+- `docs/bohn2021_takeover/solo_gpt55/solo_831ee5ecd021b5e22d8570e7.execution_plan.json`
+
+including the previously omitted field:
+
+```json
+"latest_verified_external_backup_before_plan_from_supervisor_context": {
+  "time": "2026-09-30T17:13:02.977013+00:00",
+  "status": "verified",
+  "remaining_changed_files": 0,
+  "commit": "7ecff76e70108fef54883aee7623318cd5aef845",
+  "package_sha256": "94d5331e76c3187489f49dd0d3c4683d861a02387f89aa2d6dc747402411596f"
+}
+```
+
+No new scientific result was produced in this cycle; the current active plan remains valid.

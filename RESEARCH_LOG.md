@@ -6849,3 +6849,96 @@ Next safe action:
 2. Check for matching/superseding Astra `ANALYSIS_READY.json` for `v32-h12-supported-default-h35-diagnostic-20260930T051611Z`.
 3. If both gates clear, read and verify Astra’s report, update `RESPONSE_LOG.md`, then implement Astra’s selected plan.
 4. If either gate remains absent, continue only reversible integrity/preparation; do not start fresh labels, refit/training, scenario redesign, validation, or final test.
+
+<!-- vehicle_true_variable_horizon_v32_postbackup_astra_state_recheck_v1-20260930T053333Z -->
+# v32 post-backup / Astra state recheck
+
+UTC: `2026-09-30T05:33:33.166784+00:00`. Metadata-only integrity/handoff check; no simulations, no control steps, no selector refits, no training, no validation64 access and no sealed-test access.
+
+## Required status-line values
+- Service lifetime elapsed since `2026-09-26T10:55:29.419331Z`: `3d 18h 38m 3.747s`.
+- Cumulative server API total_tokens from research.sqlite: `278,598,709 (278.599M) from calls.usage.total_tokens`; desktop conversation tokens excluded.
+
+## Backup gate
+- Materialized prompt-supplied verified backup proof: `research_artifacts/aws_backup_proofs/backup_proof_20260930T053041_from_user_context_after_v32_token_gate_recheck.json`.
+- Latest backup candidate: `{'path': 'research_artifacts/aws_backup_proofs/backup_proof_20260930T053041_from_user_context_after_v32_token_gate_recheck.json', 'time': '2026-09-30T05:30:41.005783+00:00', 'status': 'verified', 'remaining_changed_files': 0, 'commit': '2ff567eeaced865b54be46711d4eb9853a832156', 'package_sha256': '1ef95bdbb2e9d77eed32706a471f06983fd4eda26f60305898b82d14709501af', 'package_verification': 'github_server_sha256', 'package_ok': True}`.
+- Prior v32/API-token backup requests checked: `6`; all clear=`True`.
+  - `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_API_TOKEN_USAGE_AUDIT_20260930T052434Z.json` clear=`True`; best_time=`2026-09-30T05:30:41.005783+00:00`; missing=0; files_after_backup=0
+  - `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_API_TOKEN_USAGE_AUDIT_SOURCE_20260930T0522Z.json` clear=`True`; best_time=`2026-09-30T05:30:41.005783+00:00`; missing=0; files_after_backup=0
+  - `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_V32_GATE_PREFLIGHT_STATE_20260930T052039Z.json` clear=`True`; best_time=`2026-09-30T05:30:41.005783+00:00`; missing=0; files_after_backup=0
+  - `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_V32_H12_SUPPORTED_DEFAULT_H35_DIAGNOSTIC_20260930T051611Z.json` clear=`True`; best_time=`2026-09-30T05:30:41.005783+00:00`; missing=0; files_after_backup=0
+  - `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_V32_NEXT_REVIEW_REFRESH_20260930T051840Z.json` clear=`True`; best_time=`2026-09-30T05:30:41.005783+00:00`; missing=0; files_after_backup=0
+  - `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_V32_TOKEN_BACKUP_ASTRA_GATE_RECHECK_20260930T052901Z.json` clear=`True`; best_time=`2026-09-30T05:30:41.005783+00:00`; missing=0; files_after_backup=0
+
+## Astra gate
+- Current request: `v32-h12-supported-default-h35-diagnostic-20260930T051611Z`; matches expected=`True`.
+- ANALYSIS_READY exists=`False`; matches current=`False`.
+- LATEST.md still old 20260929 report marker=`True`.
+
+## Evidence digest rechecked
+- v31/v32 family counts: v31 `{'12': 3, '15': 1, '35': 1}`, v32 `{'12': 3, '15': 1, '35': 1}`.
+- v32 H12-if-low-abs_obs_07 else H35 LOGO bad_count=`1`, h_counts=`{'12': 6, '15': 0, '35': 5}`, decision saving vs fixed H35=`0.3992505755588043`.
+- v32 residual bad rows: `[{'base_state_id': 'v15c13_false_positive_center_fresh_v11_fresh_case05_slot1_mid_late_control_step045_off_0', 'best_safe_physical': 11.368420858363953, 'category': 'v19_h12_only_failure_h15_safe', 'family_group': 'v19_case05_H15_risk_family', 'oracle_h': 15, 'physical_constraint_cost': 64.58471587439642, 'predicted_horizon': 35, 'reason': 'large_physical_excess_vs_best_safe', 'state_label': 'v19_c13'}]`.
+
+## Decision
+- Prior backup gate appears clear from the prompt-supplied 05:30:41 verified backup, but current unique scientific work remains blocked because Astra analysis for v32 is not ready.
+- v29/v30b/v31/v32 remain opened-development diagnostics only; do not claim validation/test/reproduction/deployed-speed/deployable-selector success.
+- This metadata recheck output itself requires a later verified external backup before unique scientific work.
+- Sealed final test remains unopened and unauthorized.
+
+
+## 2026-09-30T05:34:13.318407+00:00
+3d 18h 38m 3.747s since first supervisor event; cumulative server API total_tokens are 278.599M from `/data/openai-agent/state/research.sqlite` (`calls.usage.total_tokens`), excluding this desktop conversation.
+
+Concrete actions completed:
+- Wrote and ran a metadata-only post-backup/Astra gate recheck:
+  - Experiment: `20260930T053332_07ab2871`
+  - Script: `experiments/bohn2021_aws/vehicle_true_variable_horizon_v32_postbackup_astra_state_recheck_v1.py`
+  - Summary: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v32_postbackup_astra_state_recheck_v1_20260930T053333Z/summary.md`
+  - Raw: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v32_postbackup_astra_state_recheck_v1_20260930T053333Z/raw.json`
+  - Completed: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v32_postbackup_astra_state_recheck_v1_20260930T053333Z/completed.json`
+- Materialized the prompt-supplied verified backup claim:
+  - `research_artifacts/aws_backup_proofs/backup_proof_20260930T053041_from_user_context_after_v32_token_gate_recheck.json`
+  - Backup time: `2026-09-30T05:30:41.005783+00:00`
+  - Commit: `2ff567eeaced865b54be46711d4eb9853a832156`
+  - Package SHA256: `1ef95bdbb2e9d77eed32706a471f06983fd4eda26f60305898b82d14709501af`
+- Rechecked outstanding v32/API-token backup requests:
+  - 6 prior requests checked.
+  - All 6 are clear against the 05:30:41 verified backup.
+- Rechecked Astra handoff:
+  - Current request remains `v32-h12-supported-default-h35-diagnostic-20260930T051611Z`.
+  - `ANALYSIS_READY.json` is still absent.
+  - `LATEST.md` still points to the old 20260929 report, which predates v29–v32 and is not current analysis.
+- Updated durable state via `update_state`, `STATUS.md`, `RESEARCH_LOG.md`, and `docs/bohn2021_takeover/astra_reviews/RESPONSE_LOG.md`.
+
+Access/budget this iteration:
+- New simulation episodes: 0
+- New control steps: 0
+- Training/gradient steps: 0
+- Selector refits: 0
+- Validation64 bank opened: false
+- Sealed test accessed: false
+- Run experiments: 1 successful, 0 failed
+
+Scientific evidence preserved:
+- v31/v32 family counts remain `H12=3, H15=1, H35=1`.
+- v32 opened-development diagnostic remains:
+  - Rule: H12 if low `abs_obs_07`, else H35.
+  - LOGO bad_count: 1
+  - Horizon counts: `H12=6, H15=0, H35=5`
+  - Decision saving vs fixed H35 on opened rows: 39.925%
+  - Residual bad row: `v19_c13`, oracle H15 but predicted H35, with large physical excess.
+- This remains development-only evidence, not validation/test/reproduction/deployed-speed/deployable-selector evidence.
+
+Current gates:
+- Prior v32/API-token backup gate is now clear.
+- The new 05:33 metadata recheck outputs themselves require a later verified external backup:
+  - `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_V32_POSTBACKUP_ASTRA_STATE_RECHECK_20260930T053333Z.json`
+- Astra v32 analysis is still pending.
+- Therefore unique scientific simulation/refit/training/validation/final-test work remains blocked for now.
+
+Next safe action:
+1. Check for a verified backup covering the 05:33 recheck outputs and log updates.
+2. Check for matching/superseding Astra `ANALYSIS_READY.json` for `v32-h12-supported-default-h35-diagnostic-20260930T051611Z`.
+3. If both gates clear, read and verify Astra’s report, update `RESPONSE_LOG.md`, then implement Astra’s selected plan.
+4. If either gate remains absent, continue only reversible integrity/preparation; do not choose a new scientific branch independently.

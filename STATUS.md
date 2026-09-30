@@ -1468,3 +1468,38 @@ UTC: `2026-09-30T05:29:01.564790+00:00`. Metadata-only operational check; no sim
 - v32 suggests an H12-vs-non-H12 signal but leaves the single H15-family residual unresolved; Astra remains scientific lead for branch selection.
 - Sealed final test remains unopened and unauthorized.
 
+<!-- vehicle_true_variable_horizon_v32_postbackup_astra_state_recheck_v1-20260930T053333Z -->
+# v32 post-backup / Astra state recheck
+
+UTC: `2026-09-30T05:33:33.166784+00:00`. Metadata-only integrity/handoff check; no simulations, no control steps, no selector refits, no training, no validation64 access and no sealed-test access.
+
+## Required status-line values
+- Service lifetime elapsed since `2026-09-26T10:55:29.419331Z`: `3d 18h 38m 3.747s`.
+- Cumulative server API total_tokens from research.sqlite: `278,598,709 (278.599M) from calls.usage.total_tokens`; desktop conversation tokens excluded.
+
+## Backup gate
+- Materialized prompt-supplied verified backup proof: `research_artifacts/aws_backup_proofs/backup_proof_20260930T053041_from_user_context_after_v32_token_gate_recheck.json`.
+- Latest backup candidate: `{'path': 'research_artifacts/aws_backup_proofs/backup_proof_20260930T053041_from_user_context_after_v32_token_gate_recheck.json', 'time': '2026-09-30T05:30:41.005783+00:00', 'status': 'verified', 'remaining_changed_files': 0, 'commit': '2ff567eeaced865b54be46711d4eb9853a832156', 'package_sha256': '1ef95bdbb2e9d77eed32706a471f06983fd4eda26f60305898b82d14709501af', 'package_verification': 'github_server_sha256', 'package_ok': True}`.
+- Prior v32/API-token backup requests checked: `6`; all clear=`True`.
+  - `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_API_TOKEN_USAGE_AUDIT_20260930T052434Z.json` clear=`True`; best_time=`2026-09-30T05:30:41.005783+00:00`; missing=0; files_after_backup=0
+  - `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_API_TOKEN_USAGE_AUDIT_SOURCE_20260930T0522Z.json` clear=`True`; best_time=`2026-09-30T05:30:41.005783+00:00`; missing=0; files_after_backup=0
+  - `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_V32_GATE_PREFLIGHT_STATE_20260930T052039Z.json` clear=`True`; best_time=`2026-09-30T05:30:41.005783+00:00`; missing=0; files_after_backup=0
+  - `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_V32_H12_SUPPORTED_DEFAULT_H35_DIAGNOSTIC_20260930T051611Z.json` clear=`True`; best_time=`2026-09-30T05:30:41.005783+00:00`; missing=0; files_after_backup=0
+  - `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_V32_NEXT_REVIEW_REFRESH_20260930T051840Z.json` clear=`True`; best_time=`2026-09-30T05:30:41.005783+00:00`; missing=0; files_after_backup=0
+  - `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_V32_TOKEN_BACKUP_ASTRA_GATE_RECHECK_20260930T052901Z.json` clear=`True`; best_time=`2026-09-30T05:30:41.005783+00:00`; missing=0; files_after_backup=0
+
+## Astra gate
+- Current request: `v32-h12-supported-default-h35-diagnostic-20260930T051611Z`; matches expected=`True`.
+- ANALYSIS_READY exists=`False`; matches current=`False`.
+- LATEST.md still old 20260929 report marker=`True`.
+
+## Evidence digest rechecked
+- v31/v32 family counts: v31 `{'12': 3, '15': 1, '35': 1}`, v32 `{'12': 3, '15': 1, '35': 1}`.
+- v32 H12-if-low-abs_obs_07 else H35 LOGO bad_count=`1`, h_counts=`{'12': 6, '15': 0, '35': 5}`, decision saving vs fixed H35=`0.3992505755588043`.
+- v32 residual bad rows: `[{'base_state_id': 'v15c13_false_positive_center_fresh_v11_fresh_case05_slot1_mid_late_control_step045_off_0', 'best_safe_physical': 11.368420858363953, 'category': 'v19_h12_only_failure_h15_safe', 'family_group': 'v19_case05_H15_risk_family', 'oracle_h': 15, 'physical_constraint_cost': 64.58471587439642, 'predicted_horizon': 35, 'reason': 'large_physical_excess_vs_best_safe', 'state_label': 'v19_c13'}]`.
+
+## Decision
+- Prior backup gate appears clear from the prompt-supplied 05:30:41 verified backup, but current unique scientific work remains blocked because Astra analysis for v32 is not ready.
+- v29/v30b/v31/v32 remain opened-development diagnostics only; do not claim validation/test/reproduction/deployed-speed/deployable-selector success.
+- This metadata recheck output itself requires a later verified external backup before unique scientific work.
+- Sealed final test remains unopened and unauthorized.

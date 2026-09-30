@@ -134,6 +134,9 @@ def call_tool(name,args):
     if name=='write_file':
         p=safe_path(args['path'])
         if str(p).startswith(str(SERVICE)):raise ValueError('Supervisor code is protected; write research extension scripts elsewhere')
+        analyst_root=ROOT/'docs/bohn2021_takeover/astra_reviews'
+        if p.parent==analyst_root and p.name not in ('NEXT_REVIEW_REQUEST.json','RESPONSE_LOG.md'):
+            raise ValueError('Astra publications are protected; executor may only write analysis requests and responses here')
         content=args['content']
         if any(s and s in content for s in REDACT):raise ValueError('Secret content forbidden')
         if p.exists():
@@ -186,6 +189,20 @@ def heartbeat():
                 with socket.socket(socket.AF_UNIX,socket.SOCK_DGRAM) as s:s.connect(address.replace('@','\0',1));s.sendall(b'WATCHDOG=1')
             except OSError:pass
         time.sleep(30)
+
+def awaiting_astra_analysis():
+    out=ROOT/'docs/bohn2021_takeover/astra_reviews'
+    try:
+        request=load(out/'NEXT_REVIEW_REQUEST.json')
+        if not request.get('request_id'):return False
+        ready=load(out/'ANALYSIS_READY.json')
+        if ready.get('request_id') != request['request_id']:return True
+        if ready.get('primary_analyst') != 'gpt-6-astra':return True
+        report=safe_path(ready.get('report',''))
+        expected=ready.get('report_sha256')
+        return not (report.is_file() and expected and hashlib.sha256(report.read_bytes()).hexdigest()==expected)
+    except (OSError,ValueError,TypeError):
+        return True
 
 def iteration():
     state=load(STATE/'research_state.json');recent=load(STATE/'last_iteration.json')
@@ -258,6 +275,12 @@ def main():
             try:housekeeping()
             except Exception as backup_error:
                 state=load(STATE/'research_state.json');state.update(phase='infrastructure_diagnosis',backup_error=str(backup_error),next_experiment='Diagnose and repair backup; no new formal experiments until verified');dump(STATE/'research_state.json',state)
+            if awaiting_astra_analysis():
+                # No new research direction is delegated to GPT-5.5 while Astra
+                # analyzes it. Keep heartbeat/backups and automatically resume.
+                dump(STATE/'supervisor_status.json',dict(time=now(),phase='awaiting_astra_analysis',executor_role='implementation_and_experiments',api_loop_suspended=True))
+                time.sleep(30)
+                continue
             iteration();failures=0
             dump(STATE/'supervisor_status.json',dict(time=now(),phase='between_iterations',api_calls_today=usage_today()[0]))
             time.sleep(5)

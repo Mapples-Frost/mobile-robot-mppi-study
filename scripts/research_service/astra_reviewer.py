@@ -304,7 +304,16 @@ def cycle():
             items.append(dict(role='user',content='Focused-analysis checkpoint: use current raw/code evidence; diagnose causal explanations and prescribe precise next action. Avoid broad stale re-audits.'))
         elif turn==12:
             items.append(dict(role='user',content='Mid-audit checkpoint: ensure coverage of original method, pendulum, fair baselines, raw data, and concrete training/code rather than only the latest selector.'))
+        latest_request=load(OUT/'NEXT_REVIEW_REQUEST.json')
+        if audit.get('request') and latest_request.get('request_id') and latest_request['request_id'] != audit['request'].get('request_id'):
+            audit.setdefault('superseded_request_ids',[]).append(audit['request']['request_id'])
+            audit['request']=latest_request
+            items.append(dict(role='user',content='Updated evidence handoff supersedes the earlier request. Analyze this latest request in the current cycle, verify its cited raw/code, and state exactly which requests/results are covered. Do not restart broad historical auditing merely because inputs changed. Latest handoff:\n'+redact(json.dumps(latest_request,ensure_ascii=False))))
+            save(session,items);save(WORK/'checkpoint.json',audit)
         answer=api(items,final)
+        # A successful API turn breaks a consecutive failure streak even if the
+        # whole multi-turn review has not yet completed.
+        save(WORK/'retry_state.json',dict(consecutive_failures=0,last_success=now()))
         audit.setdefault('returned_efforts',[]).append(answer.get('reasoning',{}).get('effort','unverified'))
         save(WORK/'responses'/(audit['audit_id']+'-%02d.json'%turn),answer)
         calls=[]; texts=[]
@@ -384,7 +393,7 @@ def main():
                 if len(value)>=16:
                     REDACTIONS.append(value)
     SECRETS=dict(x.split('=',1) for x in (BASE/'.secrets/reviewer.env').read_text().splitlines() if '=' in x)
-    failure=int(load(WORK/'status.json').get('consecutive_failures',0))
+    failure=int(load(WORK/'retry_state.json').get('consecutive_failures',0))
     while True:
         if dt.datetime.now(dt.timezone.utc)>=dt.datetime(2026,10,25,8,tzinfo=dt.timezone.utc):
             save(WORK/'status.json',dict(status='expiry_archive_only',updated=now()));return
@@ -395,7 +404,8 @@ def main():
         try:
             cycle();failure=0
         except Exception as e:
-            failure+=1
+            failure=int(load(WORK/'retry_state.json').get('consecutive_failures',0))+1
+            save(WORK/'retry_state.json',dict(consecutive_failures=failure,last_failure=now()))
             message=redact(str(e))[:1500]
             event('error',error_type=type(e).__name__,message=message,consecutive_failures=failure)
             save(WORK/'status.json',dict(status='retry_backoff',updated=now(),message=message,consecutive_failures=failure))

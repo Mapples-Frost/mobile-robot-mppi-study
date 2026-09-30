@@ -1,0 +1,8 @@
+{
+  "request_id": "v32-h12-supported-default-h35-diagnostic-20260930T051611Z",
+  "experiment_id": "vehicle_true_variable_horizon_v32_h12_supported_default_h35_diagnostic_v0",
+  "report": "docs/bohn2021_takeover/astra_reviews/20260930T034449Z.md",
+  "completed": "2026-09-30T05:41:24.553798+00:00",
+  "primary_analyst": "gpt-6-astra",
+  "report_sha256": "1a3af04f6952523eab64e8cbbb4bcbd2e72225fb1876dd4d37b8aa296771c6e7"
+}

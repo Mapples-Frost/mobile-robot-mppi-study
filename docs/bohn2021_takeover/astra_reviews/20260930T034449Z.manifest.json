@@ -1,0 +1,282 @@
+{
+  "audit_id": "20260930T034449Z",
+  "status": "completed",
+  "started": "2026-09-30T03:44:49.133747+00:00",
+  "turn": 8,
+  "request": {
+    "request_id": "v32-h12-supported-default-h35-diagnostic-20260930T051611Z",
+    "created": "2026-09-30T05:18:40+00:00",
+    "status": "analysis_requested",
+    "trigger": "v32_branch_neutral_h12_supported_default_h35_diagnostic_after_v31_source_coverage_bounds",
+    "experiment_id": "vehicle_true_variable_horizon_v32_h12_supported_default_h35_diagnostic_v0",
+    "supersedes_request_id": "v31-source-coverage-budget-bounds-20260930T044819Z",
+    "question": "Astra should analyze v29/v30b/v31 plus the new v32 branch-neutral diagnostic and select the next scientific action. v32 suggests the opened data do contain a source-family-stable H12-shortening vs non-H12 signal: H12 if abs_obs_07 <= 0.776202689723 else H35 has LOGO bad_count=1, h_counts H12=6/H15=0/H35=5 and decision_saving_vs_fixed_H35=0.3992505755588043 on the same 11 opened rows, compared with prior v31 two-feature grouped LOGO bad_count=5. The residual bad row is v19_c13 from the single H15 source family, where defaulting to H35 incurs large physical excess; the diagnostic never predicts H15 and is not deployable. Current independent source-family counts remain H12=3, H15=1, H35=1. Decide, with evidence-linked rationale, whether GPT-5.5 should next acquire fresh source-independent H15/H35/H12 triage labels, run a terminal-risk/value refit or training ablation, redesign scenario/comparison protocol, or perform another specified bounded action. This request does not authorize validation64/final-test access or treat v32 as validation evidence.",
+    "evidence_paths": [
+      "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v32_h12_supported_default_h35_diagnostic_v0_20260930T051611Z/summary.md",
+      "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v32_h12_supported_default_h35_diagnostic_v0_20260930T051611Z/raw.json",
+      "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v32_h12_supported_default_h35_diagnostic_v0_20260930T051611Z/completed.json",
+      "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v31_source_budget_bounds_v0_20260930T044819Z/summary.md",
+      "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v31_source_budget_bounds_v0_20260930T044819Z/raw.json",
+      "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v30b_cluster_stability_diagnostic_v31_20260930T0405Z/summary.md",
+      "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v30b_cluster_stability_diagnostic_v31_20260930T0405Z/raw.json",
+      "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_three_way_selector_feature_audit_v30b_fast_20260930T0410Z/summary.md",
+      "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_three_way_selector_feature_audit_v30b_fast_20260930T0410Z/raw.json",
+      "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_success_aware_longer_H_feasibility_probe_v29_20260930T0340Z/summary.md",
+      "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_success_aware_longer_H_feasibility_probe_v29_20260930T0340Z/raw.json",
+      "docs/bohn2021_takeover/astra_reviews/RESPONSE_LOG.md"
+    ],
+    "access_and_budget_note": {
+      "new_simulation_episodes_in_v32": 0,
+      "new_control_steps_in_v32": 0,
+      "new_training_or_gradient_steps_in_v32": 0,
+      "selector_refits_in_v32": 0,
+      "validation64_bank_opened_in_v32": false,
+      "validation64_episodes_in_v32": 0,
+      "sealed_test_accessed_in_v32": false,
+      "sealed_test_episodes_in_v32": 0
+    },
+    "operational_note": "v32 outputs and this refreshed Astra request require external backup before unique simulation/refit/training/validation/final-test work. GPT-5.5 may continue reversible integrity/preparation while this analysis is pending but should not select a new substantive branch without a matching or superseding Astra report."
+  },
+  "max_turns": 12,
+  "commit_start": "4512f6e36ec90cbdf5cc9f8b4e5795cc97195a89",
+  "dirty_diff_hash": "767aaef9d4b2ad5630334fa1f1c013d68a8ddba88a72ae2c98a2013a544be89e",
+  "fingerprint": "[\"20260930T034418_4b80347d\", null, \"running\", \"post-v30-timeout_backup-gated_v30b-ready\"]",
+  "inspected": [
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_success_aware_longer_H_feasibility_probe_v29_20260930T0340Z/summary.md",
+      "sha256": "a08d4439ae3957d88d61ab84f26fda13ceac69d43ecf99e4826486b45a8f2cd9"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_success_aware_longer_H_feasibility_probe_v29_20260930T0340Z/completed.json",
+      "sha256": "35486c435fbeaf76f07460c22f26837fd6b9806666b1d778d57c5df193c6bb77"
+    },
+    {
+      "path": "docs/bohn2021_takeover/astra_reviews/20260929T153837Z.md",
+      "sha256": "c22291382519d4da417272a178cff749a23914c360c1ec63dcb4f39a35f92f6a"
+    },
+    {
+      "path": "docs/bohn2021_takeover/astra_reviews/RESPONSE_LOG.md",
+      "sha256": "f747fb507e940eb7703e00b5050537ed249ef0bda8737c7ad419a51e5055dff7"
+    },
+    {
+      "path": "STATUS.md",
+      "sha256": "320cad64e26a5d0a51191a0b564e46ca4eaf74833e86e612701dae861c9a803d"
+    },
+    {
+      "path": "REPRODUCTION_PROTOCOL.md",
+      "sha256": "300539551eee9774f1c6fb4aaddcec828c637f3765c76edd043a3ba99f9463ca"
+    },
+    {
+      "path": "research_artifacts/aws_runs/20260930T032734_52f6627b/registry.json",
+      "sha256": "559726720c44bd92b09dca85dca7b705e4be82d3c21058065537c3d4503fe6f1"
+    },
+    {
+      "path": "docs/bohn2021_takeover/astra_reviews/RESPONSE_LOG.md",
+      "sha256": "f747fb507e940eb7703e00b5050537ed249ef0bda8737c7ad419a51e5055dff7"
+    },
+    {
+      "path": "experiments/bohn2021_aws/vehicle_true_variable_horizon_success_aware_longer_H_feasibility_probe_v29.py",
+      "sha256": "988b01d097fcf9690c5497fda20a9c5e595ca45ba7ebe4ff1c171cb03c138411"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_success_aware_longer_H_feasibility_probe_v29_20260930T0340Z/raw.json",
+      "sha256": "62817a9373dcc02d79b39bb08c1bfc01bf1e7b242221edc743f06e83c6651a73"
+    },
+    {
+      "path": "research_artifacts/aws_runs/20260930T032734_52f6627b/registry.json",
+      "sha256": "559726720c44bd92b09dca85dca7b705e4be82d3c21058065537c3d4503fe6f1"
+    },
+    {
+      "path": "experiments/bohn2021_aws/vehicle_true_variable_horizon_success_aware_longer_H_feasibility_probe_v29.py",
+      "sha256": "988b01d097fcf9690c5497fda20a9c5e595ca45ba7ebe4ff1c171cb03c138411"
+    },
+    {
+      "path": "experiments/bohn2021_aws/vehicle_true_variable_horizon_three_way_selector_feature_audit_v30b_fast.py",
+      "sha256": "4f76623f8cee9a1eba1e2c66fcbb04c27e91ceb23549617c98c11523c62bd0af"
+    },
+    {
+      "path": "experiments/bohn2021_aws/vehicle_true_variable_horizon_v30b_cluster_stability_diagnostic_v31.py",
+      "sha256": "ff509ceb4d50fceaa8e111473d62d744cf36a76ad7d85753bbfa18b04fa61b0d"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_three_way_selector_feature_audit_v30b_fast_20260930T0410Z/summary.md",
+      "sha256": "0a8e4506023f56a2d6a05a3bd741f30475d806741d33369bb334730960cf5473"
+    },
+    {
+      "path": "research_artifacts/aws_runs/20260930T032734_52f6627b/registry.json",
+      "sha256": "559726720c44bd92b09dca85dca7b705e4be82d3c21058065537c3d4503fe6f1"
+    },
+    {
+      "path": "EXPERIMENT_REGISTRY.csv",
+      "sha256": "2878ec1a55716ea153abe234fcefbf0ffa6be26ffc229e55f69b106970eb528d"
+    },
+    {
+      "path": "research_artifacts/aws_runs/20260930T032734_52f6627b/stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "research_artifacts/aws_runs/20260930T032734_52f6627b/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_success_aware_longer_H_feasibility_probe_v29_20260930T0340Z/terminal_sources.json",
+      "sha256": "d9cbeb4106c7c715ca357d9f301a917930020bcd28128b5fb0194915dd7c4553"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v30b_cluster_stability_diagnostic_v31_20260930T0405Z/raw.json",
+      "sha256": "4aec4774aa217eed6bcf312255099074a210f190ae176e6a527dc6bb393861d0"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v32_h12_supported_default_h35_diagnostic_v0_20260930T051611Z/raw.json",
+      "sha256": "77801858646c03c191ed748bef7dafd5210f2eaaae8961effdfddf28e6b56b08"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_success_aware_longer_H_feasibility_probe_v29_20260930T0340Z/episodes/exec9000_v29_000_v27_case09_slot0_early_risk_H35_trueH35/summary.json",
+      "sha256": "19c2874fcd81bba2d4d1ba00209fb7d9f994ed243584f266d658ce99813cc817"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_success_aware_longer_H_feasibility_probe_v29_20260930T0340Z/episodes/exec9001_v29_001_v27_case09_slot0_early_risk_H12_trueH12/summary.json",
+      "sha256": "2b46bb6aa9850d42845121823706a73dd03817d29205b58884b478b65901de63"
+    },
+    {
+      "path": "experiments/bohn2021_reproduction/configure.py",
+      "sha256": "d3f1ea24c946c18e182ee97d0d58b4a2d7aa3316491ab33dac251d0773721bb5"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/pendulum_inventory_metadata/raw.json",
+      "sha256": "8e423cfeee708ea62c0caa219e17cac0f87b54befd7b911cbdd677b2ae883f15"
+    },
+    {
+      "path": "experiments/bohn2021_reproduction/SOURCE_MAP.md",
+      "sha256": "c4c1851e0219521f9ac86369cab62456ea803ed1e170519a149723f81b3f57f7"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_success_aware_longer_H_feasibility_probe_v29_20260930T0340Z/raw.json",
+      "sha256": "62817a9373dcc02d79b39bb08c1bfc01bf1e7b242221edc743f06e83c6651a73"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v30b_cluster_stability_diagnostic_v31_20260930T0405Z/raw.json",
+      "sha256": "4aec4774aa217eed6bcf312255099074a210f190ae176e6a527dc6bb393861d0"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v32_h12_supported_default_h35_diagnostic_v0_20260930T051611Z/raw.json",
+      "sha256": "77801858646c03c191ed748bef7dafd5210f2eaaae8961effdfddf28e6b56b08"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_success_aware_longer_H_feasibility_probe_v29_20260930T0340Z/episodes/exec9001_v29_001_v27_case09_slot0_early_risk_H12_trueH12/trace.jsonl",
+      "sha256": "6fab06e320162efc16b80452f1085dfd1fa5e81cf07aad0cbc19228498a7fd05"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_success_aware_longer_H_feasibility_probe_v29_20260930T0340Z/episodes/exec9000_v29_000_v27_case09_slot0_early_risk_H35_trueH35/trace.jsonl",
+      "sha256": "2208c41634f0da23b73dc3b101ceab301425841be8db88d2ddc6483ffa359bed"
+    },
+    {
+      "path": "experiments/bohn2021_aws/vehicle_true_variable_horizon_case5_smoke_v0_runner.py",
+      "sha256": "1f7101bb336e0ee5028ed44dd0c9bc89bedaf3b02fa7f3187fc1eaef265005f9"
+    },
+    {
+      "path": "experiments/bohn2021_aws/vehicle_terminal_objective_source_audit_v0.py",
+      "sha256": "72ffa385b31b98c4bc7b6883e379ed69c056263452b8d11a223b5baa24fe4e5c"
+    },
+    {
+      "path": "experiments/bohn2021_reproduction/runtime.py",
+      "sha256": "15d083e7b4b9db311a95e35541819620cf547ad9e1642821144f82e13b9186d1"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/pendulum_inventory_metadata/raw.json",
+      "sha256": "8e423cfeee708ea62c0caa219e17cac0f87b54befd7b911cbdd677b2ae883f15"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_three_way_selector_feature_audit_v30b_fast_20260930T0410Z/raw.json",
+      "sha256": "f8ad34b335beb6f6d4b4f44cfc85a74691f51ccfd63ac7d57e7efa5a8f379639"
+    },
+    {
+      "path": "experiments/bohn2021_aws/vehicle_true_variable_horizon_v32_h12_supported_default_h35_diagnostic_v0.py",
+      "sha256": "03545a947105054d917eb3bc7a2440acaa3aa3cded923f1dae9e455dd4638c41"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v32_h12_supported_default_h35_diagnostic_v0_20260930T051611Z/completed.json",
+      "sha256": "eefa85fa92993ad3548de33bb3bee74a6b2e7f0b49def7b0cd26cfad629eb16e"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v32_h12_supported_default_h35_diagnostic_v0_20260930T051611Z/summary.md",
+      "sha256": "50849f7d521a818a7778297bfaf486c7df34457856ee2c6afc6261b788450ce2"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v31_source_budget_bounds_v0_20260930T044819Z/raw.json",
+      "sha256": "5c33a4f0f398167a2087c8f7ce75c30caf6bac4600ad873d1093d64c147a6301"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v31_source_budget_bounds_v0_20260930T044819Z/summary.md",
+      "sha256": "62f716765287c97e91f50bb3edcdd3401831aceb13d9b6fa360e7972bb3635b6"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v30b_cluster_stability_diagnostic_v31_20260930T0405Z/summary.md",
+      "sha256": "25d90049e0c8aab01164c0715615c3f2b093bc894bdc638a0e17331bdd317c93"
+    },
+    {
+      "path": "experiments/bohn2021_aws/vehicle_true_variable_horizon_case5_smoke_v0_runner.py",
+      "sha256": "1f7101bb336e0ee5028ed44dd0c9bc89bedaf3b02fa7f3187fc1eaef265005f9"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v30b_cluster_stability_diagnostic_v31_20260930T0405Z/raw.json",
+      "sha256": "4aec4774aa217eed6bcf312255099074a210f190ae176e6a527dc6bb393861d0"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_terminal_objective_source_audit_v0_20260928T1830Z/summary.md",
+      "sha256": "46ef32e33924fdc92a7f3188ce794eb742b00ce78d13ff60ca11d0f3091d2eee"
+    },
+    {
+      "path": "research_artifacts/bohn2021_reproduction_2026-09-17/sources/gym-horizon/gym_let_mpc/controllers.py",
+      "sha256": "a34ea0764caf8bde123bf9e8c7a8316d8dbff454d0cce558bbd84229eb60defc"
+    },
+    {
+      "path": "research_artifacts/bohn2021_reproduction_2026-09-17/sources/do-mpc-horizon/do_mpc/controller.py",
+      "sha256": "97b61401b2cb368240c60db856651141a2d5f9e95c73afe442300003c0d0063a"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_success_aware_longer_H_feasibility_probe_v29_20260930T0340Z/raw.json",
+      "sha256": "62817a9373dcc02d79b39bb08c1bfc01bf1e7b242221edc743f06e83c6651a73"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v30b_cluster_stability_diagnostic_v31_20260930T0405Z/raw.json",
+      "sha256": "4aec4774aa217eed6bcf312255099074a210f190ae176e6a527dc6bb393861d0"
+    },
+    {
+      "path": "docs/bohn2021_takeover/astra_reviews/NEXT_REVIEW_REQUEST.json",
+      "sha256": "7d15926317f2ac44cce07708e2d54530a27ec3785fba15aa091749a59402310a"
+    },
+    {
+      "path": "docs/bohn2021_takeover/astra_reviews/LATEST.md",
+      "sha256": "cf2fc0647c970bdcd81e5e70d91148bcfac9016fcf0bbaca2c718c67bfd4c6aa"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_three_way_selector_feature_audit_v30b_fast_20260930T0410Z/raw.json",
+      "sha256": "f8ad34b335beb6f6d4b4f44cfc85a74691f51ccfd63ac7d57e7efa5a8f379639"
+    },
+    {
+      "path": "research_artifacts/aws_runs/20260930T031546_10af9f9c/registry.json",
+      "sha256": "de441f5184628d7b95cbf0371d152f0a4d12f89577de859014140470fa5b22af"
+    },
+    {
+      "path": "research_artifacts/bohn2021_reproduction_2026-09-17/results/paper_exact_grid_2026-09-23/vehicle_fixed_h35/manifest.json",
+      "sha256": "90c2273e0cd343ecf723a6596ee2637c275278d893091441fb8756d736536513"
+    }
+  ],
+  "returned_efforts": [
+    "max",
+    "max",
+    "max",
+    "max",
+    "max",
+    "max",
+    "max",
+    "max"
+  ],
+  "updated": "2026-09-30T05:41:23.965907+00:00",
+  "superseded_request_ids": [
+    "v30b-feature-separability-followup-20260930T0350Z"
+  ],
+  "completed": "2026-09-30T05:41:24.256543+00:00",
+  "commit_end": "96be16e5ea00f0e99ecb6e946854917362dd6a81"
+}

@@ -1,0 +1,63 @@
+{
+  "status": "completed",
+  "audit_id": "20260930T105748Z_5ca3ae",
+  "started": "2026-09-30T10:57:48.662921+00:00",
+  "turn": 8,
+  "max_turns": 16,
+  "first_cycle": false,
+  "supplemental_audit_request_id": "20260930-comprehensive-handoff-missing-raw-training-audit",
+  "request": {
+    "request_id": "execution-result:20260930T105719_a0cd3d48",
+    "trigger": "execution_result_handoff",
+    "created": "2026-09-30T10:57:48.086110+00:00",
+    "experiment_id": "20260930T105719_a0cd3d48",
+    "status": "analysis_requested",
+    "purpose": "Execute Opus-approved A13b zero-solve diagnostic: dissect v34k objective residual, eps/rterm paths, raw_live_label_match semantics and max_colloc truncation before any A13c solver calls or 23-call objective-vs-basin probe.",
+    "execution_status": "complete",
+    "question": "Active scientific lead: interpret this outcome, verify current raw evidence and select the next scientific action for GPT-5.5 implementation. Distinguish hypotheses from verified causes and account for fair baselines, terminal confounds and source-level generalization.",
+    "evidence_paths": [
+      "research_artifacts/aws_runs/20260930T105719_a0cd3d48/registry.json"
+    ]
+  },
+  "commit_start": "57768d5238f732f5ad16629d76e0b8223ecaf24e",
+  "inspected": [
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34l_residual_eps_label_dissection_v0_20260930T105720Z/summary.md",
+      "sha256": "7a669d5a8d0f2100ee2c9c76064ffd0f6f17d78257fca8bd7b5acadccb8e7445"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34l_residual_eps_label_dissection_v0_20260930T105720Z/stage_by_k.csv",
+      "sha256": "22024ec4d6eaac174443154b2fdefddd53dbeb4c386230b2b0fcb2c880d18d1e"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34k_label_accessor_objective_localization_v0_20260930T104148Z/summary.md",
+      "sha256": "8b14e6d86f21385dd02431b219bf31c2f822faf656e191d218b12129fa6391ba"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34l_residual_eps_label_dissection_v0_20260930T105720Z/completed.json",
+      "sha256": "6c5b864a424ef2b1bcbdf620053dd97a470d2b57f9c5caf29599e46ddc37ad2d"
+    },
+    {
+      "path": "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34l_residual_eps_label_dissection_v0.py",
+      "sha256": "3da193541ef622cb6fea4a2bd396760cc84c833c708632bb06ba1d03b502a719"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34k_label_accessor_objective_localization_v0_20260930T104148Z/candidate_residuals.csv",
+      "sha256": "a3682923f8e7ee4ddfd36ce2836177636d22d841730bcd226cc8bda9f4a40c81"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34k_label_accessor_objective_localization_v0_20260930T104148Z/candidate_residuals.csv",
+      "sha256": "a3682923f8e7ee4ddfd36ce2836177636d22d841730bcd226cc8bda9f4a40c81"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34l_residual_eps_label_dissection_v0_20260930T105720Z/raw.json",
+      "sha256": "35268dfc814cd9497e3f503aaa0a38fb173fad7e47dd4223f6fe6ca5eb54c66e"
+    }
+  ],
+  "superseded_request_ids": [],
+  "cross_review_id": "20260930T084456Z",
+  "registry_context_experiment_id": "20260930T105719_a0cd3d48",
+  "updated": "2026-09-30T11:05:41.770949+00:00",
+  "completed": "2026-09-30T11:05:41.776098+00:00",
+  "commit_end": "a994d1cf6abd1a5b6be2a3446b1652bd846a500f"
+}

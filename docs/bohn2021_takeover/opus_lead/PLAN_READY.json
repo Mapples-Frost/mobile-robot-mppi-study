@@ -1,10 +1,10 @@
 {
-  "request_id": "execution-result:20260930T104147_c9faadcc",
-  "experiment_id": "20260930T104147_c9faadcc",
+  "request_id": "execution-result:20260930T105719_a0cd3d48",
+  "experiment_id": "20260930T105719_a0cd3d48",
   "primary_analyst": "claude-opus-5-5",
-  "report": "docs/bohn2021_takeover/opus_lead/20260930T104228Z_96cbf7.md",
-  "report_sha256": "f078602ff045367cb2c27b14aa605edff81ac0c075501fd987f138a1335104b3",
-  "completed": "2026-09-30T10:52:48.648374+00:00",
+  "report": "docs/bohn2021_takeover/opus_lead/20260930T105748Z_5ca3ae.md",
+  "report_sha256": "ae5db8822d0d7ff886ddd406d2667ab8df516f2271f134652328b0e93a5ff0b1",
+  "completed": "2026-09-30T11:05:41.841887+00:00",
   "supersedes_request_ids": [],
-  "audit_id": "20260930T104228Z_96cbf7"
+  "audit_id": "20260930T105748Z_5ca3ae"
 }

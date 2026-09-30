@@ -232,6 +232,27 @@ def fingerprint():
     return json.dumps([active.get('experiment_id'),active.get('last_experiment'),
                        active.get('status'),load(STATE/'research_state.json').get('phase')])
 
+def pending_request():
+    previous=load(WORK/'review_cursor.json')
+    manual=load(OUT/'NEXT_REVIEW_REQUEST.json')
+    if manual.get('request_id') and manual['request_id'] != previous.get('handled_manual_request_id'):
+        return manual
+    # Automatically notice substantive completed work; infrastructure and preflights
+    # do not manufacture scientific review cycles.
+    with sqlite3.connect('file:'+str(STATE/'research.sqlite')+'?mode=ro',uri=True) as c:
+        rows=c.execute("select id,metadata from experiments where status in ('complete','failed') order by timestamp desc limit 40").fetchall()
+    for eid,metadata in rows:
+        meta=json.loads(metadata);name=pathlib.Path(meta.get('script','')).name.lower()
+        if any(word in name for word in ('backup','preflight','smoke','readiness','status_capture','inventory','registry')):
+            continue
+        if eid == previous.get('reviewed_experiment_id'):
+            return {}
+        artifacts=[a.get('path') for a in meta.get('artifact_inventory',[]) if a.get('exists') and a.get('path','').endswith(('summary.md','raw.json','completed.json'))]
+        return dict(request_id='experiment:'+eid,experiment_id=eid,trigger='new_substantive_result',
+                    question='Interpret the latest scientific result and choose the next most informative action for GPT-5.5 execution; verify newer evidence before repeating older advice.',
+                    purpose=meta.get('purpose'),status=meta.get('status'),evidence_paths=artifacts)
+    return {}
+
 def cycle():
     checkpoint=load(WORK/'checkpoint.json')
     if checkpoint.get('status') == 'in_progress':
@@ -239,7 +260,8 @@ def cycle():
         items=load(WORK/'sessions'/ (audit['audit_id']+'.json'), [])
     else:
         audit_id=dt.datetime.now(dt.timezone.utc).strftime('%Y%m%dT%H%M%SZ')
-        audit=dict(audit_id=audit_id,status='in_progress',started=now(),turn=0,
+        request=pending_request()
+        audit=dict(audit_id=audit_id,status='in_progress',started=now(),turn=0,request=request,max_turns=12 if request else 24,
                    commit_start=git('rev-parse','HEAD'),
                    dirty_diff_hash=hashlib.sha256(git('diff','--binary','HEAD').encode()).hexdigest(),
                    fingerprint=fingerprint(),inspected=[])
@@ -253,20 +275,33 @@ def cycle():
             if handoff.exists():
                 initial['coordination_handoff'][name] = read_file(str(handoff.relative_to(ROOT)), 1, 350)
         items.append(dict(role='user',content='Follow-up coordination is essential: read the prior report, executor dispositions and newly cited raw evidence. Verify fixes rather than repeating stale findings; retain stable recommendation IDs and identify up to three most informative next actions. Read further handoff lines with tools if truncated.'))
+        if request:
+            initial['scientific_analysis_request']=request
+            items.append(dict(role='user',content='The user corrected the division of labor: YOU Astra lead causal scientific analysis and the next research direction. GPT-5.5 handles implementation, numerical summaries, controlled experiments and operational bug repair. This is an event-triggered focused analysis, not a repeat of the full project audit. First inspect current requested evidence, separate verified causes from hypotheses, consider terminal-value confounds and strong baselines, and prescribe up to three concrete execution tasks with frozen budget/splits and falsifiable criteria. New results can supersede old advice. No sealed-test access. Explicitly identify covered experiment IDs and remaining evidence gaps.'))
+            for path in request.get('evidence_paths',[])[:5]:
+                if path.endswith(('summary.md','completed.json')):
+                    try:
+                        evidence=read_file(path,1,250)
+                        initial.setdefault('requested_primary_evidence',[]).append(evidence)
+                        audit['inspected'].append(dict(path=evidence['path'],sha256=evidence['sha256']))
+                    except (ValueError,OSError):
+                        pass
         items.append(dict(role='user',content='Perform comprehensive independent audit. Start from this navigation; read primary evidence, not only summaries.\n'+json.dumps(initial,ensure_ascii=False)))
     session=WORK/'sessions'/(audit['audit_id']+'.json')
     save(WORK/'checkpoint.json',audit)
     save(session,items)
     report=None
-    for turn in range(audit['turn'],24):
+    for turn in range(audit['turn'],audit.get('max_turns',24)):
         # Bounded context, always preserving prompt and already verified findings in retained messages.
         if len(json.dumps(items)) > 600000:
             items.append(dict(role='user',content='Context budget reached. Produce the evidence-grounded report now, explicitly noting uninspected areas.'))
             final=True
         else:
-            final=(turn==23)
+            final=(turn==audit.get('max_turns',24)-1)
         if final:
             items.append(dict(role='user',content='Final turn of this bounded audit. Produce the complete Chinese audit report now, with evidence citations and prioritized execution tasks. No tool calls. State omissions honestly.'))
+        elif turn==6 and audit.get('request'):
+            items.append(dict(role='user',content='Focused-analysis checkpoint: use current raw/code evidence; diagnose causal explanations and prescribe precise next action. Avoid broad stale re-audits.'))
         elif turn==12:
             items.append(dict(role='user',content='Mid-audit checkpoint: ensure coverage of original method, pendulum, fair baselines, raw data, and concrete training/code rather than only the latest selector.'))
         answer=api(items,final)
@@ -302,7 +337,7 @@ def cycle():
                                      unique_files=len({x['path'] for x in audit['inspected']}),updated=now()))
         if not calls and texts:
             candidate='\n\n'.join(texts)
-            if len(candidate)>1500 and len({x['path'] for x in audit['inspected']})>=(8 if final else 20) and (turn>=16 or final):
+            if len(candidate)>1500 and len({x['path'] for x in audit['inspected']})>=((4 if audit.get('request') else 8) if final else 20) and (turn>=16 or final):
                 report=candidate
                 break
             if final:
@@ -325,9 +360,16 @@ def cycle():
     index='# Latest independent Astra review\n\nReport: docs/bohn2021_takeover/astra_reviews/'+report_name+'\n\nRead this report and relevant evidence at the next safe research boundary. Record recommendation IDs, accepted/rejected/deferred disposition, evidence, experiment IDs, and outcome in RESPONSE_LOG.md in this directory. Do not silently treat reviewer hypotheses as facts. Preserve active frozen experiments and sealed tests. GPT-5.5 remains the execution agent.\n'
     temp=OUT/'LATEST.md.tmp';temp.write_text(index);temp.replace(OUT/'LATEST.md')
     save(WORK/'checkpoint.json',audit)
+    req=audit.get('request',{})
+    prior_status=load(WORK/'review_cursor.json')
     save(WORK/'status.json',dict(status='completed',audit_id=audit['audit_id'],report=str(OUT/report_name),
                                  updated=now(),next_review_after=time.time()+21600,
-                                 fingerprint=audit['fingerprint']))
+                                 fingerprint=audit['fingerprint'],request_id=req.get('request_id'),
+                                 reviewed_experiment_id=req.get('experiment_id',prior_status.get('reviewed_experiment_id')),
+                                 handled_manual_request_id=req.get('request_id') if req.get('trigger')=='user_role_correction' else prior_status.get('handled_manual_request_id')))
+    save(WORK/'review_cursor.json',load(WORK/'status.json'))
+    if req:
+        save(OUT/'ANALYSIS_READY.json',dict(request_id=req['request_id'],experiment_id=req.get('experiment_id'),report=str((OUT/report_name).relative_to(ROOT)),completed=now(),primary_analyst=MODEL))
     event('review_completed',audit_id=audit['audit_id'],report=report_name)
 
 def main():
@@ -347,9 +389,9 @@ def main():
         if dt.datetime.now(dt.timezone.utc)>=dt.datetime(2026,10,25,8,tzinfo=dt.timezone.utc):
             save(WORK/'status.json',dict(status='expiry_archive_only',updated=now()));return
         state=load(WORK/'status.json')
-        if state.get('status')=='completed':
+        if state.get('status')=='completed' and not pending_request():
             if time.time()<state.get('next_review_after',0) or fingerprint()==state.get('fingerprint'):
-                time.sleep(60);continue
+                time.sleep(30);continue
         try:
             cycle();failure=0
         except Exception as e:

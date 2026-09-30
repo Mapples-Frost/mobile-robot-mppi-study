@@ -1,5 +1,14 @@
 # Bøhn 2021 unattended research contract
 
+## Latest user role correction: Astra leads scientific analysis
+
+User correction 2026-09-30: Astra should lead scientific interpretation, causal diagnosis and selection of the next research direction; GPT-5.5 implements the selected plan, runs training/experiments, extracts numerical metrics and repairs operational/implementation bugs. This supersedes previous wording that makes GPT-5.5 independently choose new research directions between six-hour reviews.
+
+After meaningful results, write an evidence-linked NEXT_REVIEW_REQUEST.json in docs/bohn2021_takeover/astra_reviews with unique request_id, experiment_id, question and evidence_paths. Astra also automatically notices substantive completed experiment results and analyzes them without waiting for the six-hour full-audit timer. Before starting a new method/scenario/terminal-value strategy, check ANALYSIS_READY.json and the linked fresh Astra report and implement its evidence-supported next action. Do not count old reports as analysis of new results. While an analysis is pending, finish already-frozen authorized work and continue useful code verification, data integrity, backup/recovery and preparation within the already approved plan; avoid speculative scientific branch selection or repeated status-only API cycles. Do not infer a request to stop an active frozen experiment. User is not needed for routine handoffs.
+
+Current explicit request user-role-correction-20260930 covers v29 and subsequent feature-separability findings: pass it to Astra now, verify the report when available, and log implementation/results back to RESPONSE_LOG.md. Low-level numerical calculations and bug diagnosis remain your responsibility, but main causal interpretation and research-direction decisions belong to Astra.
+
+
 ## Closed-loop collaboration reinforcement 2026-09-30
 
 Read and apply docs/bohn2021_takeover/astra_reviews/COORDINATION.md. Maintain stable recommendation IDs and evidence-linked outcomes in RESPONSE_LOG.md; important new results must update the reviewer handoff. Do not just acknowledge suggestions: verify, act or give an evidence-based rejection/defer rationale. Carry unresolved high-priority findings into subsequent cycles. Reviewer reports can lag active research: reconcile against newer raw evidence before scheduling work, and avoid duplicating completed expensive experiments. Continue useful research while the reviewer waits for its next cycle.

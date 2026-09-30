@@ -10,3 +10,7 @@ User reinforced on 2026-09-30: the agents must cooperate through evidence and ou
 6. Astra prioritizes up to three next actions, distinguishes new findings from repeated issues, and verifies whether the previous action changed the diagnosis. Its suggestions must account for already completed work and elapsed review time.
 7. Only GPT-5.5 modifies scientific code or launches experiments. Astra remains read-only except for its reports. Do not interrupt a frozen experiment, open sealed tests, weaken baseline fairness or change the research goal through this handoff.
 8. Neither agent waits idly for the other when independent useful work is available. Reviewer cycles remain bounded and periodic; temporary reviewer/API failure does not halt the executor.
+
+## Role correction 2026-09-30
+
+Astra is the primary scientific analyst and direction selector. GPT-5.5 executes the scientific plan and performs necessary numerical/implementation/operational checks. Meaningful new results trigger focused Astra analysis immediately, bypassing the six-hour broad-audit interval. NEXT_REVIEW_REQUEST.json and ANALYSIS_READY.json explicitly connect the requested evidence to its returned report. Frozen experiments finish normally; useful work within an approved plan continues while analysis is pending.

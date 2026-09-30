@@ -1,0 +1,12 @@
+{
+  "request_id": "user-role-correction-20260930",
+  "trigger": "user_role_correction",
+  "created": "2026-09-30T03:42:33.325556+00:00",
+  "experiment_id": "20260930T032734_52f6627b",
+  "question": "Astra should now lead analysis: interpret v29 H12/H15/H25/H35 evidence and the subsequent deployable-feature separability result; diagnose horizon versus matched-terminal confounds, assess fair fixed-H comparators and specify the next controlled experiment or necessary training. GPT-5.5 executes your plan.",
+  "evidence_paths": [
+    "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_success_aware_longer_H_feasibility_probe_v29_20260930T0340Z/summary.md",
+    "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_success_aware_longer_H_feasibility_probe_v29_20260930T0340Z/completed.json",
+    "research_artifacts/aws_runs/20260930T032734_52f6627b/registry.json"
+  ]
+}

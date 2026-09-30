@@ -210,3 +210,15 @@ Updated by GPT-5.5 executor at `2026-09-30T03:51:36.708427+00:00`. This is a num
 | `A6_strong_fixed_H_and_terminal_opportunity_not_closed` | accepted; no final comparator claim | Fixed-H35 is safe-successful but has physical-excess bad rows; oracle triage bad=0; all are opened development rows with possible horizon/terminal confounds from v29. | Do not validate selector; preserve fixed H12/H15/H25/H35 comparators and terminal-confound caveat. |
 | `A7_targeted_risk_banks_are_not_population_estimates` / `A8_zero_catastrophe_small_sample_model_selection_risk` | accepted; unchanged | Only 11 opened v29 states; thresholds use outcome-informed labels. | Require fresh independent confirmation before validation/final claims. |
 | `A12_registry_backup_schema_contract` | accepted; active | Backup request `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_V30B_FEATURE_STABILITY_POSTDIAGNOSTIC_20260930T0355Z.json` written. | Require verified backup before unique simulations/refits/validation. |
+
+<!-- vehicle_true_variable_horizon_v30b_cluster_stability_diagnostic_v31-20260930T0405Z -->
+## Follow-up v31 cluster-stability diagnostic
+
+Updated by GPT-5.5 executor at `2026-09-30T04:06:16.160475+00:00`. v31 is analysis-only over already-opened v29/v30b/postdiagnostic outputs; no simulations/training/refit/validation64/sealed-test access.
+
+| linked recommendation(s) | disposition after v31 | verified evidence | action / outcome / next step |
+|---|---|---|---|
+| `A7_targeted_risk_banks_are_not_population_estimates` / `A8_zero_catastrophe_small_sample_model_selection_risk` | accepted; strengthened | v31 groups the 11 opened rows into 5 source-family clusters. Oracle H15 and H35 each have only one independent opened source-family cluster: `{'15': 1, '12': 3, '35': 1}`. | Do not treat row-level LOO or same-row separability as population/deployable evidence. Await Astra direction for fresh labels/refit/scenario decision. |
+| `A11_training_failure_modes_need_separation` | accepted; refined | Two-feature row-level LOO bad=0 but leave-one-source-family-out bad=5; failing folds: `[('v19_case05_H15_risk_family', 3, [15]), ('v27_case09_H35_rescue_family', 2, [35])]`. | Evidence separates feature-form overfit/tiny-family coverage from complete feature absence. GPT-5.5 will execute Astra-selected next action. |
+| `A6_strong_fixed_H_and_terminal_opportunity_not_closed` | accepted; unchanged | v31 uses success-sensitive bad flags inherited from v29/v30b and reports fixed H12/H15/H35 comparators in raw. | Preserve fixed-H35 and shorter-H comparison; no validation/test selector claim. |
+| `A12_registry_backup_schema_contract` | accepted; active | Backup request `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_V31_CLUSTER_STABILITY_DIAGNOSTIC_20260930T0405Z.json` written for v31 source/results/docs/handoff. | Require verified backup before any new simulation/refit/validation. |

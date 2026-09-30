@@ -6211,3 +6211,157 @@ UTC: 2026-09-30T03:59:35.067037+00:00. Metadata-only gate status completed; no s
 
 ## 2026-09-30T04:04:17.901544+00:00
 
+<!-- vehicle_true_variable_horizon_v30b_cluster_stability_diagnostic_v31-20260930T0405Z -->
+## 2026-09-30 v31 cluster-stability diagnostic
+
+UTC: 2026-09-30T04:06:16.160475+00:00. Analysis-only over already-opened development artifacts; no simulations/control/training/refit/validation64/sealed-test access. Row-level two-feature LOO bad=0, but leave-one-source-family-out bad=5 with non-default oracle H15/H35 represented by one source-family each. This is not deployable validation; it is evidence for Astra's pending direction choice. Artifacts: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v30b_cluster_stability_diagnostic_v31_20260930T0405Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v30b_cluster_stability_diagnostic_v31_20260930T0405Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v30b_cluster_stability_diagnostic_v31_20260930T0405Z/completed.json`. Backup request: `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_V31_CLUSTER_STABILITY_DIAGNOSTIC_20260930T0405Z.json`.
+
+
+## 2026-09-30T04:07:31.557516+00:00
+Elapsed service lifetime since first supervisor event: **3d 17h 10m 46.741s** at v31 completion (`2026-09-30T04:06:16.160475Z`). Cumulative server API `total_tokens`: **unavailable via repository tools this cycle; not treated as zero**. Desktop conversation tokens excluded.
+
+Concrete actions completed this iteration:
+
+1. **Verified coordination/evidence context**
+   - Read `COORDINATION.md`, current `NEXT_REVIEW_REQUEST.json`, `LATEST.md`, and prior postdiagnostic state.
+   - Confirmed **no `ANALYSIS_READY.json`** was present before/after the action, so no fresh Astra report was available for v29/v30b/v31.
+
+2. **Materialized pre-run backup proof from supervisor context**
+   - Wrote:
+     - `research_artifacts/aws_backup_proofs/backup_proof_20260930T040506_from_user_context_after_v31_source_before_v31_run.json`
+   - This proof covers repository state through the v31 source before execution, **not v31 outputs**.
+
+3. **Ran v31 cluster-stability diagnostic**
+   - Script:
+     - `experiments/bohn2021_aws/vehicle_true_variable_horizon_v30b_cluster_stability_diagnostic_v31.py`
+   - Run registry:
+     - `research_artifacts/aws_runs/20260930T040615_4f9729e6/registry.json`
+   - Runtime: **6.01 s**
+   - Classification: **development analysis only**
+   - New simulations/control steps/training/refits/validation64/sealed-test access: **0 / 0 / 0 / 0 / false / false**
+
+4. **v31 verified result**
+   - Outputs:
+     - `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v30b_cluster_stability_diagnostic_v31_20260930T0405Z/summary.md`
+     - `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v30b_cluster_stability_diagnostic_v31_20260930T0405Z/raw.json`
+     - `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v30b_cluster_stability_diagnostic_v31_20260930T0405Z/completed.json`
+   - Headline:
+     - 11 opened rows collapse to **5 source-family groups**.
+     - Oracle-label family counts: **H12=3**, **H15=1**, **H35=1**.
+     - Two-feature in-sample rule: **0 bad rows**, **50.57%** decision saving vs fixed H35 on opened rows.
+     - Two-feature row-level LOO: **0 bad rows**, **50.57%** saving vs fixed H35.
+     - Leave-one-source-family-out: **5 bad rows**, nominal **19.75%** saving, not a valid speed claim.
+     - Failing grouped folds:
+       - `v19_case05_H15_risk_family`: 3 bad rows, held-out class H15 missing from training.
+       - `v27_case09_H35_rescue_family`: 2 bad rows, held-out class H35 missing from training.
+
+5. **Scientific status preserved**
+   - Execution-level conclusion only: the opened rows contain feature signal, but H15/H35 regimes are represented by too few independent source families for deployable/model-selection claims.
+   - No validation64 or sealed final test was opened.
+   - No reproduction or speed claim is supported.
+
+6. **Astra handoff updated**
+   - Updated:
+     - `docs/bohn2021_takeover/astra_reviews/NEXT_REVIEW_REQUEST.json`
+   - New request id:
+     - `v31-cluster-stability-diagnostic-20260930T0405Z`
+   - Updated:
+     - `docs/bohn2021_takeover/astra_reviews/RESPONSE_LOG.md`
+   - Request asks Astra to choose the next scientific direction among fresh source-independent triage labels, terminal-risk/value refit/training, or scenario/comparison redesign/stratification.
+
+7. **State preserved**
+   - Wrote:
+     - `research_artifacts/aws_state/continue_state_20260930T0407_after_v31_executor_state.md`
+   - Persisted structured state with `update_state`.
+
+Current blocker:
+
+- **Post-v31 external backup is not yet verified.**
+- v31 wrote backup request:
+  - `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_V31_CLUSTER_STABILITY_DIAGNOSTIC_20260930T0405Z.json`
+- Until a verified backup covers v31 outputs/docs/state/registry/response log, I should not run new simulations, refits, training, validation64, or sealed-test work.
+
+Next iteration queue:
+
+1. Verify/obtain post-v31 external backup.
+2. Check `docs/bohn2021_takeover/astra_reviews/ANALYSIS_READY.json`.
+3. If Astra has returned a matching/superseding report, read it and execute the selected plan.
+4. If Astra is still pending, continue only reversible integrity/preparation work within the already approved scope.
+
+<!-- vehicle_true_variable_horizon_v31_backup_astra_gate_status_v0-20260930T0415Z -->
+## 2026-09-30 v31 backup/Astra gate status
+
+UTC: 2026-09-30T04:10:28.271978+00:00. Metadata-only gate status completed; no simulation/control/training/refit/validation64/sealed-test access. Adequate v31 backup=`False` with reasons=`['backup_status_not_verified_or_missing', 'remaining_changed_files_not_zero_or_missing', 'missing_backup_commit', 'missing_verified_package_metadata', 'backup_time_predates_v31_artifacts_or_unparseable']`. Astra ready for current request `v31-cluster-stability-diagnostic-20260930T0405Z`=`False`. Next action: Obtain verified external backup covering v31 outputs/handoff/state/registry before any new simulation/refit/validation. Continue only reversible integrity checks if needed.. Artifacts: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v31_backup_astra_gate_status_v0_20260930T0415Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v31_backup_astra_gate_status_v0_20260930T0415Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v31_backup_astra_gate_status_v0_20260930T0415Z/completed.json`.
+
+
+## 2026-09-30T04:11:30.203922+00:00
+Elapsed service lifetime since first supervisor event: **3d 17h 14m 58.853s** at `2026-09-30T04:10:28.271978Z`. Cumulative server API `total_tokens`: **unavailable via repository tools this cycle; not treated as zero**. Desktop conversation tokens excluded.
+
+Concrete actions completed:
+
+1. **Checked current evidence/coordination state**
+   - Confirmed `docs/bohn2021_takeover/astra_reviews/ANALYSIS_READY.json` is still absent.
+   - Current `NEXT_REVIEW_REQUEST.json` remains:
+     - `v31-cluster-stability-diagnostic-20260930T0405Z`
+   - Latest old Astra report still predates v29/v30b/v31 and was not treated as analysis of new results.
+
+2. **Created and ran a metadata-only v31 backup/Astra gate status script**
+   - Script:
+     - `experiments/bohn2021_aws/vehicle_true_variable_horizon_v31_backup_astra_gate_status_v0.py`
+   - Run registry:
+     - `research_artifacts/aws_runs/20260930T041028_4dccdd03/registry.json`
+   - Runtime: **2.01 s**
+   - Classification: **metadata-only backup/Astra gate; no simulations, no control steps, no training, no selector refit, no validation64, no sealed test**
+
+3. **Verified gate result**
+   - Outputs:
+     - `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v31_backup_astra_gate_status_v0_20260930T0415Z/summary.md`
+     - `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v31_backup_astra_gate_status_v0_20260930T0415Z/raw.json`
+     - `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v31_backup_astra_gate_status_v0_20260930T0415Z/completed.json`
+     - `research_artifacts/aws_state/continue_state_20260930T0415Z_after_v31_backup_astra_gate_status.md`
+   - Backup gate outcome:
+     - `adequate_v31_backup = false`
+     - Reasons:
+       - `backup_status_not_verified_or_missing`
+       - `remaining_changed_files_not_zero_or_missing`
+       - `missing_backup_commit`
+       - `missing_verified_package_metadata`
+       - `backup_time_predates_v31_artifacts_or_unparseable`
+   - New backup request written:
+     - `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_V31_BACKUP_ASTRA_GATE_STATUS_20260930T0415Z.json`
+
+4. **Astra gate outcome**
+   - `ANALYSIS_READY.json`: **not present**
+   - No matching/superseding Astra report for:
+     - `v31-cluster-stability-diagnostic-20260930T0405Z`
+   - Therefore I did **not** select a new scientific branch among fresh source labels, selector/value refit, or scenario redesign.
+
+5. **Scientific evidence preserved**
+   - v31 remains development-only evidence:
+     - 11 opened rows collapse to 5 source-family groups.
+     - H12 has 3 source-family groups; H15 and H35 each have only 1.
+     - Row-level LOO can separate opened rows, but leave-one-source-family-out fails with 5 bad rows.
+   - No deployable selector, validation, reproduction, or speed claim is supported.
+
+6. **Budgets/access this iteration**
+   - New development simulation episodes: **0**
+   - New control steps: **0**
+   - New training/gradient steps: **0**
+   - Selector refits: **0**
+   - Validation64 opened: **false**
+   - Sealed test accessed: **false**
+
+7. **State persisted**
+   - Structured state updated via `update_state`.
+   - Current blockers and next queue preserved.
+
+Current blocker:
+
+- A verified external backup after v31/gate-status outputs is still required before any new simulation, selector refit, training, validation64 access, or final-test work.
+
+Next safe queue:
+
+1. Verify/obtain external backup covering v31 outputs, gate-status outputs, updated docs/state/registry, and backup requests.
+2. Re-check `docs/bohn2021_takeover/astra_reviews/ANALYSIS_READY.json`.
+3. If Astra returns a matching/superseding report, read it and implement its selected plan.
+4. If Astra remains pending, continue only reversible integrity/preparation work; do not independently choose a new scientific direction.

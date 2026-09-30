@@ -1,0 +1,88 @@
+{
+  "request_id": "execution-result:20260930T154029_56f95ec9",
+  "schema_version": 1,
+  "tasks": [
+    {
+      "task_id": "S-TC2C-source242-converged-contract-preflight-wrapper-v0",
+      "description": "TEMPORARY GPT-5.5 SOLO SELF-REVIEW / ZERO-SOLVER OPERATIONAL REPAIR AND PREFLIGHT. Prior structured attempt 20260930T160435_3df287be for Opus task T-C2C failed before scientific outcome with ValueError: Snapshot expected request mismatch at execution_contract.runtime_snapshot(ROOT, expected_request=EXPECTED_REQUEST), consumed zero solver/plant/training/validation/test resources, and did not open validation64 or sealed/final test. The frozen v34z2 gate source must remain unchanged at sha256 66dbf84e4a7917d824152cae1cac4da77c51efff576cd4775e8cd1be29dbcc97. This task runs a wrapper script that verifies the same source hash, imports the real gate module, updates only the in-memory EXPECTED_REQUEST/TASK_ID binding to match the active structured solo snapshot, then calls the real gate functions in the intended T-C2C order: load_modules(), install_nlpsol_patch(), load_context_and_terminals(), and prepare_cell(..., for_presolve_only=True) for every frozen SOLVE_ORDER arm, then stops before controller.get_action(), mpc.solve(), any low-level solver call, env.reset(), env.step(), training/refit, validation64 access, or sealed/final-test access. The wrapper does not edit the v34z2 gate source or any runner source. Because prepare_cell constructs the pre-solve MPC/NLP objects required by the real gate chain, this corrected solo plan explicitly allows pre-solve MPC/NLP construction while forbidding any optimization solve or plant rollout. REQUIRED OUTPUTS: raw evidence proving source242 context was built without base.load_contexts, terminal grid horizon keys with H15 present, complete inert_intervention_gate result, per-arm assignments_attempted/assignments_succeeded/numeric_readback_count/numeric_readback_all_successful/production_max_iter_not_forced_to_1/truncated_max_iter_forced_to_1/pre_opt_x_hash/pre_opt_p_hash, intended-primal presence and H15 canonical-vs-goal-facing distinctness checks, zero resource counters, validation64=false, sealed/final-test=false, and a structured outcome receipt with pass condition keys. If the preflight fails, preserve raw evidence and do not run solver-bearing T-C2 in this cycle.",
+      "script_patterns": [
+        "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34z2_converged_contract_preflight_v0.py"
+      ],
+      "split": "opened_development_source242_slot0_branch_start_only_no_validation64_no_sealed_test",
+      "method": "zero-solver wrapper preflight of the frozen v34z2 T-C2 gate: verify hash, load modules, terminal grid, source242 context and prepare all planned arms, stopping before controller action or low-level solve",
+      "seeds": [
+        "canonical_solve_no_training_seed"
+      ],
+      "config_constraints": {
+        "label_ORIGINAL_vs_IMPROVED": "IMPROVED",
+        "authority_mode": "temporary_user_authorized_solo_self_review",
+        "no_change_to_frozen_scientific_contract": true,
+        "prior_failure_experiment_id": "20260930T160435_3df287be",
+        "prior_failure_zero_resource_snapshot_request_mismatch": true,
+        "wrapped_gate_path": "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34z2_converged_contract_gate_v0.py",
+        "accepted_v34z2_sha256": "66dbf84e4a7917d824152cae1cac4da77c51efff576cd4775e8cd1be29dbcc97",
+        "do_not_modify_wrapped_gate_source": true,
+        "in_memory_expected_request_binding_only": true,
+        "context_id": "source242_slot0_branch_start",
+        "terminal_mode": "V15_shared",
+        "goal_source": "case.tvp.trajectory_endpoint[61]",
+        "planned_arms_frozen": [
+          "H12_canonical",
+          "H15_canonical",
+          "H15_goal_facing",
+          "H35_canonical",
+          "H12_truncated_max_iter_1"
+        ],
+        "distinct_H15_intended_primals_required": true,
+        "pre_solve_mpc_nlp_construction_allowed": true,
+        "stop_before_controller_get_action": true,
+        "stop_before_first_low_level_solver_call": true,
+        "abort_if_any_solver_call_occurs": true,
+        "fail_closed_on_inert_intervention_failure": true,
+        "report_pre_opt_x_and_opt_p_hash_per_arm": true,
+        "do_not_settle_epsilon_closure_here": true,
+        "do_not_assert_physical_performance": true,
+        "no_solver_calls": true,
+        "no_plant_steps": true,
+        "no_env_step_or_reset_after_construction": true,
+        "no_training_no_refits": true,
+        "no_validation64_access": true,
+        "no_sealed_or_final_test_access": true,
+        "no_new_paid_infrastructure": true,
+        "no_aws_iam_or_scheduler_change": true
+      },
+      "training_budget": {
+        "gradient_steps": 0,
+        "selector_refits": 0,
+        "training_steps": 0
+      },
+      "validation_budget": {
+        "env_steps_after_construction": 0,
+        "plant_steps": 0,
+        "solver_calls": 0,
+        "validation64_episodes": 0
+      },
+      "test_budget": {
+        "final_test_episodes": 0,
+        "sealed_test_episodes": 0
+      },
+      "resource_limits": {
+        "solver_calls": 0,
+        "plant_steps": 0,
+        "training_steps": 0,
+        "validation_episodes": 0,
+        "test_episodes": 0
+      },
+      "max_attempts": 2,
+      "max_zero_usage_repairs": 1,
+      "timeout_seconds": 900,
+      "dependencies": [],
+      "pass_conditions": {
+        "preflight_chain_verified": true,
+        "no_solver_plant_training_validation_or_test_usage": true,
+        "inert_intervention_gate_evaluated_and_reported": true
+      },
+      "continue_without_review": false
+    }
+  ]
+}

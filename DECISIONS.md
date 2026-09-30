@@ -1685,3 +1685,8 @@ Working-language verification: all three real API smoke calls returned English a
 ## 20260930T120717Z Astra long-report transport repair
 
 Observed primary long-request timeouts and backup HTTP 524, despite successful short and read-tool calls. Enabled validated Responses SSE reception without changing model, effort, context or scientific gates. 21 offline tests and real backup SSE smoke passed; checkpoint/session retained. No scientific experiment was rerun. Detailed transport provenance: docs/bohn2021_takeover/astra_reviews/ROUTING.md.
+
+<!-- vehicle-v34s-loader-gate-20260930T120837Z -->
+## v34r/T-B2 zero-solve loader gate
+
+UTC: 2026-09-30T12:09:26.199268+00:00. Ran the Opus-authorized loader gate after v34q G-GOAL. Only goal extraction changed from v34o, using the v34q/v34c-v0c saved reference/trajectory endpoint source; v34o previous_input scalarization is unchanged. Budget: solver_calls=0, plant/env steps=0, training/refit=0, validation64=0, sealed_test=0. passed=True; checks=6; exceptions=0; previous_input_hashes_match_expected=True; u0_norm_range=[0.0, 6.207418404744988]. Evidence: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34s_loader_gate_v0_20260930T120837Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34s_loader_gate_v0_20260930T120837Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34s_loader_gate_v0_20260930T120837Z/completed.json`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34s_loader_gate_v0_20260930T120837Z/previous_input_normalization.csv`. Backup request before A13c-3 solver calls: `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_V34S_LOADER_GATE_20260930T120837Z.json`.

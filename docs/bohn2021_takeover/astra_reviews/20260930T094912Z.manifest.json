@@ -1,0 +1,307 @@
+{
+  "audit_id": "20260930T094912Z",
+  "status": "completed",
+  "started": "2026-09-30T09:49:12.177894+00:00",
+  "turn": 12,
+  "request": {
+    "request_id": "execution-result:20260930T115434_d4836078",
+    "trigger": "execution_result_handoff",
+    "created": "2026-09-30T11:54:50.427401+00:00",
+    "experiment_id": "20260930T115434_d4836078",
+    "status": "analysis_requested",
+    "purpose": "Opus T-B1 zero-solve enumeration of authoritative saved-case goal source after v34o goal extraction gate failed; no solver/plant/training/validation/test access",
+    "execution_status": "complete",
+    "question": "Active scientific lead: interpret this outcome, verify current raw evidence and select the next scientific action for GPT-5.5 implementation. Distinguish hypotheses from verified causes and account for fair baselines, terminal confounds and source-level generalization.",
+    "evidence_paths": [
+      "research_artifacts/aws_runs/20260930T115434_d4836078/registry.json"
+    ]
+  },
+  "max_turns": 12,
+  "commit_start": "8587adf19bb6c7c3bbbb1a14394551dcbbc80a9e",
+  "dirty_diff_hash": "76924071d8d64e63fcf70e35f6b26b7a12e903b3e1dcebcfb72f360341f88887",
+  "fingerprint": "[null, \"20260930T094857_bf0b0af1\", \"idle\", \"v34 objective-vs-basin Task2 preparation; research not complete\"]",
+  "inspected": [
+    {
+      "path": "docs/bohn2021_takeover/astra_reviews/LATEST.md",
+      "sha256": "2eaabfee484561d457e9dfe003ba3d781b366e658ddd8753c0edaa7cb99acdee"
+    },
+    {
+      "path": "docs/bohn2021_takeover/astra_reviews/RESPONSE_LOG.md",
+      "sha256": "79746ace563c0932d6662b8207df98e134962496ce731ddfd5a3c90d7ff2f1ca"
+    },
+    {
+      "path": "research_artifacts/aws_runs/20260930T105719_a0cd3d48/registry.json",
+      "sha256": "0e6f047968384f301617af35353df0a33d63861ecaf989c87c5ac7d89d574c50"
+    },
+    {
+      "path": "research_artifacts/aws_runs/20260930T105719_a0cd3d48/registry.json",
+      "sha256": "0e6f047968384f301617af35353df0a33d63861ecaf989c87c5ac7d89d574c50"
+    },
+    {
+      "path": "research_artifacts/aws_runs/20260930T105719_a0cd3d48/registry.json",
+      "sha256": "0e6f047968384f301617af35353df0a33d63861ecaf989c87c5ac7d89d574c50"
+    },
+    {
+      "path": "research_artifacts/aws_runs/20260930T105719_a0cd3d48/registry.json",
+      "sha256": "0e6f047968384f301617af35353df0a33d63861ecaf989c87c5ac7d89d574c50"
+    },
+    {
+      "path": "research_artifacts/aws_runs/20260930T105719_a0cd3d48/registry.json",
+      "sha256": "0e6f047968384f301617af35353df0a33d63861ecaf989c87c5ac7d89d574c50"
+    },
+    {
+      "path": "research_artifacts/aws_runs/20260930T105719_a0cd3d48/registry.json",
+      "sha256": "0e6f047968384f301617af35353df0a33d63861ecaf989c87c5ac7d89d574c50"
+    },
+    {
+      "path": "research_artifacts/aws_runs/20260930T105719_a0cd3d48/stdout.log",
+      "sha256": "5c07f4f72b6ab763951a25a90eee6030843e3f5730bb95d374a9554961837836"
+    },
+    {
+      "path": "research_artifacts/aws_runs/20260930T105719_a0cd3d48/stderr.log",
+      "sha256": "4f2abbae735fa43d6be7d4563c0b8673959ac55839bf29b60aa0b1146a99e8ac"
+    },
+    {
+      "path": "docs/bohn2021_takeover/astra_reviews/RESPONSE_LOG.md",
+      "sha256": "79746ace563c0932d6662b8207df98e134962496ce731ddfd5a3c90d7ff2f1ca"
+    },
+    {
+      "path": "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34l_residual_eps_label_dissection_v0.py",
+      "sha256": "3da193541ef622cb6fea4a2bd396760cc84c833c708632bb06ba1d03b502a719"
+    },
+    {
+      "path": "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34l_residual_eps_label_dissection_v0.py",
+      "sha256": "3da193541ef622cb6fea4a2bd396760cc84c833c708632bb06ba1d03b502a719"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34l_residual_eps_label_dissection_v0_20260930T105720Z/raw.json",
+      "sha256": "35268dfc814cd9497e3f503aaa0a38fb173fad7e47dd4223f6fe6ca5eb54c66e"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34l_residual_eps_label_dissection_v0_20260930T105720Z/summary.md",
+      "sha256": "7a669d5a8d0f2100ee2c9c76064ffd0f6f17d78257fca8bd7b5acadccb8e7445"
+    },
+    {
+      "path": "docs/bohn2021_takeover/opus_lead/PLAN_READY.json",
+      "sha256": "9666300cb1fa5ba8068a72a0b15380c887425c2a6e75f5e319d33750c8a4a5fa"
+    },
+    {
+      "path": "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34k_label_accessor_objective_localization_v0.py",
+      "sha256": "30225355ce36f281e09d9f8f65c1d6856706d411ad018cd8ed444099ba71eb38"
+    },
+    {
+      "path": "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34k_label_accessor_objective_localization_v0.py",
+      "sha256": "30225355ce36f281e09d9f8f65c1d6856706d411ad018cd8ed444099ba71eb38"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34l_residual_eps_label_dissection_v0_20260930T105720Z/raw.json",
+      "sha256": "35268dfc814cd9497e3f503aaa0a38fb173fad7e47dd4223f6fe6ca5eb54c66e"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34l_residual_eps_label_dissection_v0_20260930T105720Z/raw.json",
+      "sha256": "35268dfc814cd9497e3f503aaa0a38fb173fad7e47dd4223f6fe6ca5eb54c66e"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34l_residual_eps_label_dissection_v0_20260930T105720Z/raw.json",
+      "sha256": "35268dfc814cd9497e3f503aaa0a38fb173fad7e47dd4223f6fe6ca5eb54c66e"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34g_objective_reconstruction_smoke_v0_20260930T100824Z/summary.md",
+      "sha256": "eb1bd210873f9d52d9c779b2e4b0993ac79545a500bbb2701af9e22538534f5a"
+    },
+    {
+      "path": "docs/bohn2021_takeover/opus_lead/LATEST.md",
+      "sha256": "6d27a5acf816143c40c69cca67e92f9eaab93acc271f870d72545daf3c3232f7"
+    },
+    {
+      "path": "docs/bohn2021_takeover/astra_reviews/RESPONSE_LOG.md",
+      "sha256": "83219b72d2c1508207a1ae752d438764900a2da7210395302659ada122448ee9"
+    },
+    {
+      "path": "research_artifacts/aws_runs/20260930T111305_5a8be004/registry.json",
+      "sha256": "db22fcae062fda7e7591502db1f7f1726a77b62c5e9c85367417fd641eea65cd"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34m_residual_attribution_v0_20260930T111306Z/summary.md",
+      "sha256": "6b2b3202f402fd47345fe3a9a0922d8b582859ee57e3367e67f5d966056aa1ae"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34m_residual_attribution_v0_20260930T111306Z/raw.json",
+      "sha256": "91b5b36f47e6b0e1150ad74607785329abbae285277e50bd3909b239f68de34a"
+    },
+    {
+      "path": "research_artifacts/aws_runs/20260930T111305_5a8be004/stdout.log",
+      "sha256": "87291b32c51c4b99c3cf96ef8d890a1224350ca7d72e6c72fa323dbdc5fc6755"
+    },
+    {
+      "path": "research_artifacts/aws_runs/20260930T111305_5a8be004/stderr.log",
+      "sha256": "0de85c988c96f72e2a0d980a66075fba3d8a887ef903dd0fefd5324025063f76"
+    },
+    {
+      "path": "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34m_residual_attribution_v0.py",
+      "sha256": "e4245c20294be7ae90d26a642eeab8bf00929b1364f719a85764463d38001ca6"
+    },
+    {
+      "path": "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34m_residual_attribution_v0.py",
+      "sha256": "e4245c20294be7ae90d26a642eeab8bf00929b1364f719a85764463d38001ca6"
+    },
+    {
+      "path": "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34m_residual_attribution_v0.py",
+      "sha256": "e4245c20294be7ae90d26a642eeab8bf00929b1364f719a85764463d38001ca6"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34m_residual_attribution_v0_20260930T111306Z/completed.json",
+      "sha256": "95c1de94fb93325bc2d8e6c3e247b0bb98889bd19128b992a0082ffa6fa1d473"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34m_residual_attribution_v0_20260930T111306Z/fd_top_gradients.csv",
+      "sha256": "00033f1c6ca16dd0116d8e6fda9e731b956f951ebd2a55317b507770785c0b70"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34m_residual_attribution_v0_20260930T111306Z/raw.json",
+      "sha256": "91b5b36f47e6b0e1150ad74607785329abbae285277e50bd3909b239f68de34a"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34m_residual_attribution_v0_20260930T111306Z/raw.json",
+      "sha256": "91b5b36f47e6b0e1150ad74607785329abbae285277e50bd3909b239f68de34a"
+    },
+    {
+      "path": "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34i_objective_contract_localization_v0.py",
+      "sha256": "a138f5fbfb89c9c619c1dffbd61946021f22edfe1558575a53b2d5ad813366ed"
+    },
+    {
+      "path": "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34i_objective_contract_localization_v0.py",
+      "sha256": "a138f5fbfb89c9c619c1dffbd61946021f22edfe1558575a53b2d5ad813366ed"
+    },
+    {
+      "path": "docs/bohn2021_takeover/astra_reviews/NEXT_REVIEW_REQUEST.json",
+      "sha256": "d6331de84b99fadd28a567e285c134e15346d73e059bc6011b3b621bb50677f7"
+    },
+    {
+      "path": "docs/bohn2021_takeover/opus_lead/20260930T111341Z_dd0c10.md",
+      "sha256": "c2c7fa3a1c5b4e3e01d28dfeb4c92f36e54ca6b68926a0375a36f7490347c56a"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34m_residual_attribution_v0_20260930T111306Z/raw.json",
+      "sha256": "91b5b36f47e6b0e1150ad74607785329abbae285277e50bd3909b239f68de34a"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34m_residual_attribution_v0_20260930T111306Z/raw.json",
+      "sha256": "91b5b36f47e6b0e1150ad74607785329abbae285277e50bd3909b239f68de34a"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34m_residual_attribution_v0_20260930T111306Z/raw.json",
+      "sha256": "91b5b36f47e6b0e1150ad74607785329abbae285277e50bd3909b239f68de34a"
+    },
+    {
+      "path": "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34m_residual_attribution_v0.py",
+      "sha256": "e4245c20294be7ae90d26a642eeab8bf00929b1364f719a85764463d38001ca6"
+    },
+    {
+      "path": "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34i_objective_contract_localization_v0.py",
+      "sha256": "a138f5fbfb89c9c619c1dffbd61946021f22edfe1558575a53b2d5ad813366ed"
+    },
+    {
+      "path": "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34i_objective_contract_localization_v0.py",
+      "sha256": "a138f5fbfb89c9c619c1dffbd61946021f22edfe1558575a53b2d5ad813366ed"
+    },
+    {
+      "path": "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34m_residual_attribution_v0.py",
+      "sha256": "e4245c20294be7ae90d26a642eeab8bf00929b1364f719a85764463d38001ca6"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34m_residual_attribution_v0_20260930T111306Z/raw.json",
+      "sha256": "91b5b36f47e6b0e1150ad74607785329abbae285277e50bd3909b239f68de34a"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34m_residual_attribution_v0_20260930T111306Z/raw.json",
+      "sha256": "91b5b36f47e6b0e1150ad74607785329abbae285277e50bd3909b239f68de34a"
+    },
+    {
+      "path": "docs/bohn2021_takeover/opus_lead/20260930T111341Z_dd0c10.md",
+      "sha256": "c2c7fa3a1c5b4e3e01d28dfeb4c92f36e54ca6b68926a0375a36f7490347c56a"
+    }
+  ],
+  "superseded_request_ids": [
+    "execution-result:20260930T094857_bf0b0af1",
+    "execution-result:20260930T101852_6b9c3451",
+    "execution-result:20260930T104147_c9faadcc",
+    "execution-result:20260930T105719_a0cd3d48",
+    "execution-result:20260930T111305_5a8be004",
+    "execution-result:20260930T112938_862dec3e",
+    "execution-result:20260930T114327_085d17fb"
+  ],
+  "returned_efforts": [
+    "max",
+    "max",
+    "max",
+    "max",
+    "max",
+    "max",
+    "max",
+    "max",
+    "max",
+    "max",
+    "max",
+    "max"
+  ],
+  "updated": "2026-09-30T12:12:34.014125+00:00",
+  "endpoint_calls": [
+    {
+      "endpoint": "primary",
+      "purpose": "review",
+      "call_id": "a7cf655752d04d578d6746ef96141b3e",
+      "requested_effort": "max",
+      "returned_effort": "max"
+    },
+    {
+      "endpoint": "primary",
+      "purpose": "review",
+      "call_id": "3a4b1123920a42958cfbffdb1b425c79",
+      "requested_effort": "max",
+      "returned_effort": "max"
+    },
+    {
+      "endpoint": "primary",
+      "purpose": "review",
+      "call_id": "3f9da4703c464b2181392dc5a6021a5f",
+      "requested_effort": "max",
+      "returned_effort": "max"
+    },
+    {
+      "endpoint": "primary",
+      "purpose": "review",
+      "call_id": "174bccc6789540a59fa6f6c4bd2f825c",
+      "requested_effort": "max",
+      "returned_effort": "max"
+    },
+    {
+      "endpoint": "primary",
+      "purpose": "review",
+      "call_id": "9f622aff11b14284b8b62ebea9f1a177",
+      "requested_effort": "max",
+      "returned_effort": "max",
+      "observed_at_epoch": 1790767335.7992806
+    },
+    {
+      "endpoint": "primary",
+      "purpose": "review",
+      "call_id": "4b8ce86fb962487eb15d376ef7203fee",
+      "requested_effort": "max",
+      "returned_effort": "max",
+      "observed_at_epoch": 1790767409.8599517
+    },
+    {
+      "endpoint": "primary",
+      "purpose": "review_final",
+      "call_id": "8cff7cdd49cb45808ffa534bb35fd216",
+      "requested_effort": "max",
+      "returned_effort": "max",
+      "observed_at_epoch": 1790770353.930414
+    }
+  ],
+  "working_language": "en",
+  "working_language_policy": "RESEARCH_WORKING_LANGUAGE_EN_V1",
+  "completed": "2026-09-30T12:12:34.305191+00:00",
+  "commit_end": "e5312bfa90cc3d66a66f43d96d9527ff9f40b1b0"
+}

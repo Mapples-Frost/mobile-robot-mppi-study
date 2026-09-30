@@ -1,12 +1,35 @@
 {
-  "request_id": "user-role-correction-20260930",
-  "trigger": "user_role_correction",
-  "created": "2026-09-30T03:42:33.325556+00:00",
-  "experiment_id": "20260930T032734_52f6627b",
-  "question": "Astra should now lead analysis: interpret v29 H12/H15/H25/H35 evidence and the subsequent deployable-feature separability result; diagnose horizon versus matched-terminal confounds, assess fair fixed-H comparators and specify the next controlled experiment or necessary training. GPT-5.5 executes your plan.",
+  "request_id": "v30b-feature-separability-followup-20260930T0350Z",
+  "trigger": "meaningful_result_after_user_role_correction",
+  "created": "2026-09-30T03:50:00.000000+00:00",
+  "experiment_id": "20260930T034418_4b80347d",
+  "status": "analysis_requested",
+  "question": "Astra should lead the scientific interpretation and select the next research direction after v29/v30b. Please interpret the v29 identical-state H12/H15/H25/H35 success-aware evidence and v30b feature separability result: oracle H12/H15/H35 triage is safe and saves ~50.57% vs fixed H35 on 11 opened states, but a simple two-threshold deployable feature rule has 1 leave-one-out bad row despite ~48.30% nominal saving. Diagnose horizon-vs-terminal confounds, fair fixed-H comparators including fixed H12/H15/H25/H35, absolute success/safety semantics, and whether GPT-5.5 should next (a) acquire fresh source-independent pre-outcome triage labels, (b) run a bounded terminal-risk/value refit or training ablation, or (c) redesign/stratify scenarios/comparisons. Execution should not open validation64 or sealed test unless you explicitly state a gate is met; current evidence is development-only. The v30 feature audit timed out and has no raw result. Treat this as a failed execution, not completed evidence; decide whether targeted implementation repair or another scientific diagnostic is appropriate.",
   "evidence_paths": [
     "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_success_aware_longer_H_feasibility_probe_v29_20260930T0340Z/summary.md",
+    "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_success_aware_longer_H_feasibility_probe_v29_20260930T0340Z/raw.json",
     "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_success_aware_longer_H_feasibility_probe_v29_20260930T0340Z/completed.json",
-    "research_artifacts/aws_runs/20260930T032734_52f6627b/registry.json"
-  ]
+    "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_three_way_selector_feature_audit_v30b_fast_20260930T0410Z/summary.md",
+    "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_three_way_selector_feature_audit_v30b_fast_20260930T0410Z/raw.json",
+    "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_three_way_selector_feature_audit_v30b_fast_20260930T0410Z/completed.json",
+    "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_three_way_selector_feature_audit_v30_20260930T0355Z/failed_timeout_posthoc.md",
+    "research_artifacts/aws_runs/20260930T034418_4b80347d/registry.json",
+    "docs/bohn2021_takeover/astra_reviews/RESPONSE_LOG.md"
+  ],
+  "constraints": {
+    "validation64_bank_opened_by_v29_v30b": false,
+    "sealed_test_accessed_by_v29_v30b": false,
+    "new_training_or_gradient_steps_by_v29_v30b": 0,
+    "v30b_new_simulation_episodes": 0,
+    "v30b_new_control_steps": 0,
+    "backup_required_before_more_unique_science": true,
+    "current_backup_request": "research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_V30B_THREE_WAY_SELECTOR_FEATURE_AUDIT_20260930T0410Z.json"
+  },
+  "latest_execution_status": {
+    "experiment_id": "20260930T032734_52f6627b",
+    "status": "failed",
+    "exit_status": -15,
+    "failure_reason": "wall_or_log_volume_limit",
+    "raw_result_present": false
+  }
 }

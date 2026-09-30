@@ -384,7 +384,7 @@ def main():
                 if len(value)>=16:
                     REDACTIONS.append(value)
     SECRETS=dict(x.split('=',1) for x in (BASE/'.secrets/reviewer.env').read_text().splitlines() if '=' in x)
-    failure=0
+    failure=int(load(WORK/'status.json').get('consecutive_failures',0))
     while True:
         if dt.datetime.now(dt.timezone.utc)>=dt.datetime(2026,10,25,8,tzinfo=dt.timezone.utc):
             save(WORK/'status.json',dict(status='expiry_archive_only',updated=now()));return

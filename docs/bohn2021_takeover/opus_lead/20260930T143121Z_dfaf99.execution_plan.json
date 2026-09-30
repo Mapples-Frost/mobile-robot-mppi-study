@@ -1,0 +1,289 @@
+{
+  "request_id": "execution-failure:T-C3-startup-repair:20260930T135213_97b8a1ff",
+  "schema_version": 1,
+  "tasks": [
+    {
+      "config_constraints": {
+        "attribute_must_resolve_not_fail": true,
+        "do_mpc_import_verified_in_launch_interpreter": true,
+        "fix_prefers_direct_provider_module_import": true,
+        "import_only_verification_no_solver_call": true,
+        "label_ORIGINAL_vs_IMPROVED": "IMPROVED",
+        "no_aws_iam_or_scheduler_change": true,
+        "no_change_to_frozen_scientific_contract": true,
+        "no_env_step_or_reset_after_construction": true,
+        "no_new_paid_infrastructure": true,
+        "no_plant_steps": true,
+        "no_refits": true,
+        "no_sealed_or_final_test_access": true,
+        "no_solver_calls": true,
+        "no_training": true,
+        "no_validation64_access": true,
+        "preserve_vendored_do_mpc_source_tree": true,
+        "prefer_existing_interpreter_over_new_environment": true,
+        "record_exact_launcher_or_import_change": true,
+        "verified_provider_module": "vehicle_stress_scenario_opportunity_probe_v1_runner"
+      },
+      "continue_without_review": true,
+      "dependencies": [],
+      "description": "T-C2R (AMENDED): bounded ZERO-USAGE operational repair of the T-C2 launch path. It now covers TWO stacked, distinct, non-scientific defects found by direct inspection of consecutive zero-usage T-C2 launch failures. Prior approved precondition P3 (failure path genuinely exercised) is ALREADY SATISFIED in the v34z2 script at experiments/bohn2021_aws/vehicle_true_variable_horizon_v34z2_converged_contract_gate_v0.py lines 285-303, and P1 (distinct script identity) at line 891, and P2 (digest encoding from contiguous float64 bytes) at line 161 - do NOT redo or re-audit these. DEFECT 1 (OBSERVED, NOW RESOLVED): the 20260930T143813_cd837da9 launch died at v34z2 line 333 with ModuleNotFoundError: No module named 'do_mpc' (evidence research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34z2_converged_contract_gate_v0_20260930T143814Z/failed.json, sha256 39532afe77725592d772ede626972a830d38fa86e5a20db6a2bab227b90f81a0). The subsequent 20260930T144148_12c26dcc launch (failed.json sha256 8029f3b8ccc9ccea0b80ee807f6bc05836de30434baff7e494ce41ac28cc49e3) got PAST line 333, proving do_mpc is now importable and Defect 1 is resolved. Defect 1 therefore requires NO further action beyond RECORDING which interpreter/PYTHONPATH shim later made it importable, so the fix is durable; do not re-diagnose it from scratch. DEFECT 2 (CURRENT, UNRESOLVED - THIS IS THE ACTUAL BLOCKER): the fully-credentialed launch 20260930T144148_12c26dcc failed at v34z2 line 831 inside load_context_and_terminals() with AttributeError: module 'vehicle_stress_v1d_trace_selected_terminal_stable_opportunity_v0_runner' has no attribute 'TERMINAL_SOURCE_PROTOCOL'. VERIFIED MECHANISM: v34z2 line 281 binds 'import vehicle_stress_v1d_trace_selected_terminal_stable_opportunity_v0_runner as stage1_runner'; line 826 sets stage1 = MODULES['stage1_runner']; line 831 then reads stage1.TERMINAL_SOURCE_PROTOCOL and line 839 reads it again. But that v1d module does NOT define TERMINAL_SOURCE_PROTOCOL at module level and does NOT define load_terminal_grid either (searched: 0 module-level matches for each). Instead the v1d runner at its own lines 967-968 calls stage1_runner.TERMINAL_SOURCE_PROTOCOL and stage1_runner.load_terminal_grid, where its local stage1_runner comes from its own import_legacy_modules() (its line 303-304 delegating to v1c). The genuine provider is experiments/bohn2021_aws/vehicle_stress_scenario_opportunity_probe_v1_runner.py, which defines TERMINAL_SOURCE_PROTOCOL at line 63 (= ROOT/research_artifacts/aws_protocols/vehicle_stress_scenario_opportunity_probe_v0_frozen_20260928.json) and load_terminal_grid at line 760. So v34z2 is querying an intermediate wrapper for an attribute that only its nested dependency exports. REQUIRED FIX (choose the MINIMAL one and justify it): prefer importing the true provider module directly, e.g. 'import vehicle_stress_scenario_opportunity_probe_v1_runner as stage1_runner' at line 281 - the v34z2 module already put experiments/bohn2021_aws on sys.path at lines 272-274, so this is a one-line change to the correct name. Acceptable alternative: resolve the provider through the wrapper's own helper (v1c.import_legacy_modules(), which returns (base_smoke, stage1_runner, fixed_base)) as the v1d and v1c runners already do. Do NOT copy the constant's literal value into v34z2, do NOT invent a new path, do NOT modify vehicle_stress_scenario_opportunity_probe_v1_runner.py, vehicle_stress_v1c_*.py or vehicle_stress_v1d_*.py, and do NOT change any scientific constant, tolerance, scenario ID, split, method, seed string or budget. VERIFICATION: after the fix, an import-only check must show that the corrected stage1_runner binding exposes BOTH TERMINAL_SOURCE_PROTOCOL and load_terminal_grid as real module attributes, and that read_json(TERMINAL_SOURCE_PROTOCOL) opens an existing file. Importing modules is permitted and expected; constructing an MPC, calling a solver, or stepping the plant is NOT. FORBIDDEN: any solver call, any env.step/reset after construction, any plant step, any training or refit, any validation64 access, any sealed/final test access, any new paid infrastructure, any AWS/IAM/scheduler change. Do NOT re-run T-C5, T-C3R or T-C1R, and do NOT reopen the closed epsilon-sufficiency or T-C3-startup questions. Outputs: machine-readable JSON recording both defects, the exact line changed, the corrected module binding, the import-only verification result for TERMINAL_SOURCE_PROTOCOL and load_terminal_grid, the do_mpc import status and module path, and an honest statement of anything not determined. This task authorizes no scientific measurement and makes no scientific claim.",
+      "max_attempts": 3,
+      "max_zero_usage_repairs": 3,
+      "method": "bounded zero-usage dependency-attribute and import-path repair restoring the frozen IMPROVED latency-tree vehicle controller launch path",
+      "pass_conditions": {
+        "corrected_stage1_binding_exposes_protocol_and_grid_loader": true,
+        "do_mpc_import_verified_in_launch_interpreter": true,
+        "exact_import_change_stated_explicitly": true,
+        "no_solver_plant_training_validation_or_test_usage": true
+      },
+      "resource_limits": {
+        "plant_steps": 0,
+        "solver_calls": 0,
+        "test_episodes": 0,
+        "training_steps": 0,
+        "validation_episodes": 0
+      },
+      "script_patterns": [
+        "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34z2_environment_probe_v0.py"
+      ],
+      "seeds": [
+        "not_applicable_no_training_seed"
+      ],
+      "split": "environment_diagnostic_only_no_solver_no_validation64_no_sealed_test",
+      "task_id": "T-C2R-env-import-repair",
+      "test_budget": {
+        "final_test_episodes": 0,
+        "sealed_test_episodes": 0
+      },
+      "timeout_seconds": 900,
+      "training_budget": {
+        "gradient_steps": 0,
+        "selector_refits": 0,
+        "training_steps": 0
+      },
+      "validation_budget": {
+        "env_steps_after_construction": 0,
+        "plant_steps": 0,
+        "solver_calls": 0,
+        "validation64_episodes": 0
+      }
+    },
+    {
+      "config_constraints": {
+        "all_four_production_cells_max_iter_forced": false,
+        "converged_hard_defect_relative_error_gt": 0.0001,
+        "converged_relative_error_max": 1e-06,
+        "digest_encoding_must_be_float64_tobytes_not_json": true,
+        "discount_factor": 0.97,
+        "discount_source": "mpc.discount_factor",
+        "do_mpc_import_verified_before_launch": true,
+        "failure_path_must_be_exercised_not_synthetic": true,
+        "goal_path": "case.tvp.trajectory_endpoint[61]",
+        "h35_nonconverged_allowance_relative_error_max": 1e-05,
+        "h35_nonconverged_allowance_requires_pre_run_documentation": true,
+        "historical_v34u_solver_calls_disclosed_not_inherited": 4,
+        "inert_intervention_is_hard_failure": true,
+        "label_ORIGINAL_vs_IMPROVED": "IMPROVED",
+        "no_sealed_or_final_test_access": true,
+        "no_validation64_access": true,
+        "numeric_readback_of_intended_primals_required": true,
+        "persist_per_stage_epsilon_vector_with_label_and_dimension": true,
+        "require_distinct_H15_pre_solve_state": true,
+        "require_nonzero_assignments_succeeded_all_arms": true,
+        "scenario_ids": [
+          "source242_slot0_branch_start"
+        ],
+        "shared_ceiling_is_accounted_not_inherited": true,
+        "single_seed_string_per_launch_no_concatenation": true,
+        "single_truncated_control_cell": "H12_canonical",
+        "soft_obstacle_penalty_term_cons": 1000,
+        "solver_calls_cap_ceiling": 6,
+        "solver_calls_scheduled": 5,
+        "term_mode": "V15_shared",
+        "v34z_is_tc5_source_and_must_not_be_repurposed": true
+      },
+      "continue_without_review": true,
+      "dependencies": [
+        "T-C2R-env-import-repair"
+      ],
+      "description": "T-C2: the per-stage slack vector at a CONVERGED iterate at production tolerances, with full prospective capture. Prior gates are CLOSED and are NOT re-declared as intra-plan dependencies: T-C3R closed via run 20260930T141339_1f8fda70 (exit0, valid receipt, task_gates_passed) and T-C5 closed via run 20260930T141917_2d7f4abc (exit0, valid receipt, task_gates_passed). Cumulative ACTUAL solver usage on this thread remains ZERO across all attempts, including both failed T-C2 launches 20260930T143813_cd837da9 and 20260930T144148_12c26dcc, each of which recorded solver=0/plant=0/training=0/validation=0/test=0. The 6-call allowance is therefore untouched. LEAD RULING ON THE ALLOCATION CONTRADICTION: the shared ceiling is ACCOUNTED, NOT INHERITED. resource_limits stand at solver_calls=6 as this task's own per-task allowance; 5 calls are scheduled; one call is headroom. The four historical v34u truncated calls are DISCLOSED for the record and do NOT reduce this allowance. Do NOT raise the ceiling to absorb history; do NOT lower your own allowance; do NOT treat a successful reservation as proof of compliance with any cross-plan pool. THE SCRIPT IS ALREADY WRITTEN AND MUST NOT BE REWRITTEN, REPURPOSED OR COPIED FROM THE T-C5 SOURCE except for the single dependency-binding repair authorized under T-C2R. The v34z T-C5 source must NOT be repurposed for this task; its main() implements T-C5's artifact-only measurement, and its data-sufficiency verdict must not be re-run or reopened. NEW PRECONDITION: this task depends on T-C2R-env-import-repair; launch only after the corrected stage1_runner binding is verified to expose TERMINAL_SOURCE_PROTOCOL and load_terminal_grid, and after 'import do_mpc' is verified. SEED RULE: pass EXACTLY ONE seed string per launch, copied verbatim from this task's seeds list. Do NOT concatenate seed strings with '+' - a concatenated string was already rejected by the scheduler as 'Seed outside approved task scope'. The run covers all production cells and the single truncated control internally, so one approved seed string suffices per launch. Two approved seed strings exist; if both are to be exercised, they are separate launches, each charged against this task's allowance. Frozen inputs: opened development context source242_slot0_branch_start ONLY, term_mode V15_shared, goal case.tvp.trajectory_endpoint[61], cells H12/H15/H35 canonical plus H15 goal_facing; IPOPT at PRODUCTION tolerances (max_iter NOT forced to 1) for all four cells, plus EXACTLY ONE forced max_iter=1 truncated control, and that control must be H12 only. MANDATORY PRE-LAUNCH SETUP ASSERTIONS, reported as pass/fail facts: (a) each arm records a real pre-solve opt_x_hash; (b) assignments_succeeded is NONZERO on every arm; (c) NUMERIC READBACK of the intended primal values is required, not merely nonzero assignment counts, and numeric readback of intended parameter values where applicable; (d) the H15 canonical versus goal_facing pair is matched on effective parameters, terminal coefficients, bounds, scaling, previous input and dual initialization, with declared per-entry differences recorded for anything unmatchable; (e) the two H15 arms must NOT both enter from identical pre-solve state. HARD GATE: if any arm records assignments_attempted=0 or assignments_succeeded=0, or the two H15 arms enter with identical pre-solve opt_x_hash AND identical opt_p_hash, or numeric readback does not show the intended distinct primals, the run is an INERT-INTERVENTION FAILURE: record it, spend no further calls, return to lead, and produce no initialization-sensitivity claim. This gate exists because all four historical v34u arms recorded assignments_attempted=0 and assignments_succeeded=0 with pre-solve opt_x_hash 5b251505436d130331c07e9ebb9f06c5fbd90f60fe734f07dad6f175148921b7 identical for the two H15 arms, while the wrapper still returned success. If the gate trips, the initialization-sensitivity question stays OPEN and must not be reported as resolved. Required per-cell outputs: return_status and unified_return_status, actual iteration count, J_solver, J_recon_historical_noeps, J_recon_full and both relative errors against predeclared thresholds, direct NLP f evaluated at returned opt_x_num/opt_p_num compared to opt_f_num, the PERSISTED PER-STAGE EPSILON VECTOR for all k and all j WITH LABEL AND DIMENSION, eps_nonzero_count at the individual-variable level, per-stage gamma^k*1000*epsilon contributions, the soft-margin quantity 1.5*r_obstacle - d at the actual constraint-enforcement nodes, hard obstacle clearance, effective tolerances, convergence residuals, and an explicit verdict on whether any epsilon is materially non-zero at convergence. Also report solver_wall_s and whole_decision_get_action_wall_s as mean/median/P95 with n, and state that no truncated cell's timing is a deployable estimate. REPORTING CAVEAT TO CARRY FORWARD: T-C5's completed result is a data-availability assessment, NOT a passed numerical identity; its 1e-8 tolerance was specified but not evaluable because no individual epsilon vectors existed in v34u. Do not present T-C5's negative sufficiency verdict as a T-C2 result, and do not reopen it. Predeclared acceptance: converged full-objective relative error <= 1e-6; the H35 1e-5 allowance applies only if H35 is documented non-converged BEFORE the run; any converged cell above 1e-4 is a hard defect that stops the task; independent epsilon replay uses the standing 1e-8 absolute tolerance. Branch rules: all four cells converge <= 1e-6 -> close OC-epsilon-1 as a verified IMPROVED formula amendment, release dependent contract-consumer work, and state the converged-slack verdict either way, because positive converged active-margin slack falsifies only the universal zero-slack hypothesis and is NOT a defect and is consistent with the v34l zero-epsilon H15 record; converged miss in 1e-6 to 1e-4 -> record as a SECOND distinct residual source under a new stable ID and do not proceed; any converged cell above 1e-4 -> hard defect, stop, escalate to lead. SCOPE LIMIT: this gate cannot determine whether terminal treatment explains earlier H-dependent outcomes; A6_strong_fixed_H_and_terminal_opportunity_not_closed remains open and is not addressed here. Negative and null results are first-class outputs and must be preserved verbatim. No plant steps, no env.step/reset after construction, no training, no refit, no validation64, no sealed test.",
+      "max_attempts": 2,
+      "max_zero_usage_repairs": 2,
+      "method": "A13c-4 bounded converged plus single truncated-control objective-contract gate with full prospective capture on the frozen IMPROVED latency-tree vehicle controller",
+      "pass_conditions": {
+        "converged_cells_reported_with_relative_errors": true,
+        "inert_intervention_gate_evaluated_and_reported": true,
+        "no_plant_training_validation_or_test_usage": true,
+        "numeric_readback_reported_for_intended_primals": true,
+        "per_stage_epsilon_vector_persisted_with_label_and_dimension": true,
+        "solver_and_whole_decision_timing_reported_with_n": true
+      },
+      "resource_limits": {
+        "plant_steps": 0,
+        "solver_calls": 6,
+        "test_episodes": 0,
+        "training_steps": 0,
+        "validation_episodes": 0
+      },
+      "script_patterns": [
+        "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34z2_converged_contract_gate_v0.py"
+      ],
+      "seeds": [
+        "canonical_solve_no_training_seed",
+        "goal_facing_H15_control_no_training_seed"
+      ],
+      "split": "opened_development_source242_slot0_branch_start_only_no_validation64_no_sealed_test",
+      "task_id": "T-C2-OC-epsilon-1b-converged-contract-gate",
+      "test_budget": {
+        "final_test_episodes": 0,
+        "sealed_test_episodes": 0
+      },
+      "timeout_seconds": 1800,
+      "training_budget": {
+        "gradient_steps": 0,
+        "selector_refits": 0,
+        "training_steps": 0
+      },
+      "validation_budget": {
+        "env_steps_after_construction": 0,
+        "plant_steps": 0,
+        "solver_calls": 5,
+        "validation64_episodes": 0
+      }
+    },
+    {
+      "config_constraints": {
+        "both_timing_readings_reconciled_and_labelled": true,
+        "distinguish_whole_decision_wall_sum_from_solver_time_sum": true,
+        "h12_included": true,
+        "h35_terminal_alternatives_included": [
+          "zero_terminal",
+          "V15_shared"
+        ],
+        "label_ORIGINAL_vs_IMPROVED": "IMPROVED",
+        "no_new_solver_calls": true,
+        "no_plant_steps": true,
+        "no_refits": true,
+        "no_sealed_or_final_test_access": true,
+        "no_training": true,
+        "no_validation64_access": true,
+        "oracle_is_not_deployed_policy": true,
+        "physical_cost_and_timing_reported_separately": true,
+        "repeated_branches_not_independent_cases": true,
+        "scenario_ids": [
+          "v19_c13"
+        ],
+        "selected_donors_are_not_three_seed_confirmation": true
+      },
+      "continue_without_review": true,
+      "dependencies": [],
+      "description": "T-C4 zero-resource ledger over already-opened development artifacts: join existing fixed-H and terminal-treatment results to absolute success counts, failure counts, physical cost, decision timing, training provenance and search budgets. Addresses A6_strong_fixed_H_and_terminal_opportunity_not_closed, A7_targeted_risk_banks_are_not_population_estimates and A8_zero_catastrophe_small_sample_model_selection_risk. This task was knowingly absent from plan 20260930T135811Z_8f32d0 and was authorized by the lead as the next zero-resource scientific item; it is re-declared here to preserve that authorization and must not be treated as an automatic insertion by the executor. Prior prerequisite gates T-C1R, T-C3R and T-C5 are closed and are NOT declared as intra-plan dependencies. The script experiments/bohn2021_aws/vehicle_fixedh_terminal_opportunity_ledger_v0.py DOES NOT EXIST YET and must be written by the executor before launch; writing it is authorized implementation work and consumes no scientific resources. MANDATORY PRIMARY-VERIFICATION NOTE: the two v33 v19_c13 H35 episode figures below were reported to the lead by an independent reviewer and are RESTATED here as claims to be verified against the episode records, NOT as independently confirmed numbers. Two readings of the same two episodes agree on physical cost but differ on the timing measure, and BOTH readings must be reported rather than one selected: physical/constraint cost 64.58471587439642 for V35_shared over 31 steps versus 11.169277744886342 for V15_shared over 29 steps in both readings; recorded decision-time sum 3.736528287176043 s versus 5.068593478004914 s per one reading, while a second reading reports solver-time sum 3.335993220738601 s versus 4.638596607081126 s. Determine which quantity each number actually is from the episode records themselves and label them accordingly instead of conflating them; if the numbers cannot be reproduced from the records, say so explicitly rather than adopting them. These two episodes share identical recorded branch state and initial observation with no solver-failure steps, so terminal-dependent outcomes HAVE been measured; unresolved is whether objective preference, local solver basins, or an unmatched condition explains them. Required: include fixed H12 and the relevant H35/zero-terminal and H35/V15_shared alternatives; distinguish repeated branch combinations from independent source cases and from independent training seeds; report physical-performance conclusions separately from timing conclusions; state explicitly where fairness evidence is missing rather than imputing it. Physical cost and latency must remain SEPARATE endpoints and no population runtime ranking may be inferred. Frozen scope: existing development artifacts only. Reject as failures: treating a development oracle choice as a deployed policy, treating relative improvement against a failing comparator as absolute success, and presenting selected terminal donors as three-seed confirmation. No solver, no plant, no env.step/reset after construction, no training, no refit, no validation64, no sealed test.",
+      "max_attempts": 2,
+      "max_zero_usage_repairs": 2,
+      "method": "zero-solve join of existing opened fixed-H and terminal-treatment development results into an absolute-outcome and fairness-gap ledger",
+      "pass_conditions": {
+        "comparator_rows_traceable_to_source_paths": true,
+        "missing_fairness_evidence_stated_explicitly": true,
+        "no_solver_plant_training_validation_or_test_usage": true,
+        "physical_performance_and_timing_conclusions_separate": true,
+        "training_provenance_and_budgets_recorded_per_row": true
+      },
+      "resource_limits": {
+        "plant_steps": 0,
+        "solver_calls": 0,
+        "test_episodes": 0,
+        "training_steps": 0,
+        "validation_episodes": 0
+      },
+      "script_patterns": [
+        "experiments/bohn2021_aws/vehicle_fixedh_terminal_opportunity_ledger_v0.py"
+      ],
+      "seeds": [
+        "not_applicable_no_training_seed"
+      ],
+      "split": "opened_development_artifacts_only_no_validation64_no_sealed_test",
+      "task_id": "T-C4-fixedH-terminal-opportunity-ledger",
+      "test_budget": {
+        "final_test_episodes": 0,
+        "sealed_test_episodes": 0
+      },
+      "timeout_seconds": 900,
+      "training_budget": {
+        "gradient_steps": 0,
+        "selector_refits": 0,
+        "training_steps": 0
+      },
+      "validation_budget": {
+        "env_steps_after_construction": 0,
+        "plant_steps": 0,
+        "solver_calls": 0,
+        "validation64_episodes": 0
+      }
+    },
+    {
+      "config_constraints": {
+        "classify_complete_failed_interrupted_reusable": true,
+        "count_available_independent_training_seeds": true,
+        "distinguish_gradient_training_from_parameter_search": true,
+        "ec2_deadline_utc": "2026-10-25T10:30:00Z",
+        "label_ORIGINAL_vs_IMPROVED_per_row": true,
+        "no_new_paid_infrastructure": true,
+        "no_plant_steps": true,
+        "no_sealed_or_final_test_access": true,
+        "no_solver_calls": true,
+        "no_training_or_refit": true,
+        "no_validation64_access": true,
+        "pendulum_inventory_is_metadata_only_not_performance_evidence": true,
+        "prior_validation_and_test_exposure_must_be_reconstructed_not_assumed_pristine": true,
+        "report_missing_original_configs_honestly": true,
+        "state_which_evidence_is_UNINSPECTED": true
+      },
+      "continue_without_review": true,
+      "dependencies": [],
+      "description": "T-C6 zero-resource read-only inventory of the reproduction side of the project, authorized because the EC2 allocation expires 2026-10-25 18:30 Asia/Shanghai (2026-10-25T10:30:00Z) and the reproduction path has not been started while the objective-contract thread consumed this session. This is an inventory and feasibility task, NOT a training task and NOT a restarted experiment. Re-declared to preserve authorization from plan 20260930T141043Z_49ac6c. The script experiments/bohn2021_aws/vehicle_reproduction_campaign_inventory_v0.py DOES NOT EXIST YET and must be written by the executor before launch; writing it is authorized implementation work and consumes no scientific resources. THIS TASK IS THE DESIGNATED REMEDY FOR THE LONGEST-STANDING COVERAGE GAP IN THIS THREAD: no cycle to date, including the lead's and the independent reviewer's, has inspected the ORIGINAL author SAC training artifacts or the vehicle-then-inverted-pendulum pendant. Both may be partially or wholly UNINSPECTED and must be reported as such rather than implied to have been covered. Required: over already-opened development artifacts and written records only, enumerate which ORIGINAL-SAC and current-vehicle checkpoints, training logs, configurations, seeds, and split manifests actually exist; distinguish real gradient training from parameter search; classify each as complete, failed, interrupted, or reusable with the evidence path justifying the label; state which of the three required independent training seeds are genuinely available. Known starting evidence to VERIFY rather than adopt: STATUS.md records a 2026-09-26 metadata-only pendulum inventory in which pendulum_s0 is a completed training artifact (selected g1_c10, 66 completed markers), pendulum_s1 is a stale/interrupted threshold-reference run (episodes 1 of expected 12, PID 1694525 dead, 1 tmp file), and pendulum_s2 is absent/unstarted at train root; that inventory is metadata-only and is NOT control-performance evidence, and the partial pendulum_s1 work must be counted as interrupted budget rather than spliced into timing objectives. Independently verify current pendulum status rather than adopting that summary. Reconstruct, from protocols and manifests WITHOUT opening sealed or final-test data, what validation and test exposure has already occurred historically, so that previously observed validation or test data is never later mistaken for fresh independent final evidence. Output must list per row the ORIGINAL versus IMPROVED labeling, and what additional work would still be required for a multi-seed, strong-fair-fixed-H, independent-final-test reproduction. Report honestly if original configs or test data are missing rather than assuming they exist, and mark as UNINSPECTED anything not actually opened, naming it explicitly. FORBIDDEN: restarting any frozen active experiment, opening validation64, opening the sealed/final test, any training or refit, any solver or plant call, and any new paid infrastructure. This task does not gate T-C2 or T-C4 and adds no approval gate to them.",
+      "max_attempts": 2,
+      "max_zero_usage_repairs": 2,
+      "method": "zero-solve read-only reproduction-campaign inventory over existing artifacts, checkpoint metadata, protocols and written records",
+      "pass_conditions": {
+        "ORIGINAL_vs_IMPROVED_labeling_present_per_row": true,
+        "available_independent_training_seeds_counted_honestly": true,
+        "coverage_table_produced_with_evidence_paths": true,
+        "historical_validation_and_test_exposure_reconstructed_without_opening_sealed_data": true,
+        "no_solver_plant_training_validation_or_test_usage": true,
+        "remaining_work_for_multiseed_strong_fixedH_and_final_test_enumerated": true,
+        "UNINSPECTED_areas_named_explicitly": true
+      },
+      "resource_limits": {
+        "plant_steps": 0,
+        "solver_calls": 0,
+        "test_episodes": 0,
+        "training_steps": 0,
+        "validation_episodes": 0
+      },
+      "script_patterns": [
+        "experiments/bohn2021_aws/vehicle_reproduction_campaign_inventory_v0.py"
+      ],
+      "seeds": [
+        "not_applicable_no_training_seed"
+      ],
+      "split": "opened_development_artifacts_only_no_validation64_no_sealed_test",
+      "task_id": "T-C6-reproduction-campaign-inventory",
+      "test_budget": {
+        "final_test_episodes": 0,
+        "sealed_test_episodes": 0
+      },
+      "timeout_seconds": 900,
+      "training_budget": {
+        "gradient_steps": 0,
+        "selector_refits": 0,
+        "training_steps": 0
+      },
+      "validation_budget": {
+        "env_steps_after_construction": 0,
+        "plant_steps": 0,
+        "solver_calls": 0,
+        "validation64_episodes": 0
+      }
+    }
+  ]
+}

@@ -278,7 +278,7 @@ def load_modules() -> None:
     import vehicle_true_variable_horizon_v34k_label_accessor_objective_localization_v0 as kacc  # type: ignore
     import vehicle_true_variable_horizon_v34u_active_plan_refresh_nonconverged_objective_contract_probe_v0 as v34u  # type: ignore
     import vehicle_true_variable_horizon_v34q_goal_source_enumeration_v0 as v34q  # type: ignore
-    import vehicle_stress_v1d_trace_selected_terminal_stable_opportunity_v0_runner as stage1_runner  # type: ignore
+    import vehicle_stress_scenario_opportunity_probe_v1_runner as stage1_runner  # type: ignore
     MODULES.update(np=np, ca=ca, base=base, kacc=kacc, v34u=v34u, v34q=v34q, stage1_runner=stage1_runner)
 
 

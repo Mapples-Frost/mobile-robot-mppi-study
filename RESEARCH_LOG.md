@@ -7629,3 +7629,61 @@ Wait for or verify external backup covering T-C5 artifacts and updated logs befo
 
 ## 2026-09-30T14:51:27.595305+00:00
 
+<!-- vehicle-tc2r-env-import-repair-20260930T145547Z -->
+## T-C2R zero-usage environment/import repair
+
+UTC: 2026-09-30T14:55:47.616953+00:00. Local task hard_pass `True` under active Opus plan `20260930T143121Z_dfaf99`. Resources were zero for solver, plant, training, validation and test. The v34z2 stage1 binding now imports `vehicle_stress_scenario_opportunity_probe_v1_runner` directly as `stage1_runner`; the previous intermediate wrapper binding `vehicle_stress_v1d_trace_selected_terminal_stable_opportunity_v0_runner` was removed from that import site. `do_mpc` is importable in the launch interpreter. Evidence: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34z2_environment_probe_v0_20260930T145547Z/summary.md` and `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34z2_environment_probe_v0_20260930T145547Z/raw.json`. This is an operational repair only, not a scientific objective-contract result. Backup request: `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_T_C2R_ENV_IMPORT_REPAIR_20260930T145547Z.json`.
+
+
+## 2026-09-30T14:56:45.363514+00:00
+Cumulative elapsed service lifetime: ~100.0 hours since 2026-09-26T10:55:29.419331Z, measured at the T-C2R run time 2026-09-30T14:55:47Z. Cumulative server API `total_tokens`: unavailable/unknown from the repository-side audit because `research.sqlite` was not found in checked locations; desktop conversation usage is excluded.
+
+Completed concrete action: executed approved structured task `T-C2R-env-import-repair`.
+
+Key result:
+- Run: `20260930T145547_6aaff44c`
+- Script: `experiments/bohn2021_aws/vehicle_true_variable_horizon_v34z2_environment_probe_v0.py`
+- Exit status: `0`
+- Scheduler/contract result: `preauthorized_continuation`, `task_gates_passed`
+- Actual resources: solver `0`, plant `0`, training `0`, validation `0`, test `0`
+- No validation64 access, no sealed/final-test access, no new AWS resources.
+
+What was repaired:
+- The T-C2 v34z2 source import at line 281 was changed from the intermediate wrapper:
+  - `vehicle_stress_v1d_trace_selected_terminal_stable_opportunity_v0_runner`
+- to the verified provider:
+  - `vehicle_stress_scenario_opportunity_probe_v1_runner`
+- This corrected `stage1_runner` so it exposes both `TERMINAL_SOURCE_PROTOCOL` and callable `load_terminal_grid`.
+
+Verified evidence:
+- `do_mpc` import works in the legacy launch interpreter via the repository-local shim.
+- v34z2 now binds `MODULES["stage1_runner"]` to `vehicle_stress_scenario_opportunity_probe_v1_runner`.
+- The terminal protocol file exists and opens.
+- This was import-only verification: no MPC construction, no solver call, no plant step, no training/refit.
+
+Primary artifacts:
+- `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34z2_environment_probe_v0_20260930T145547Z/completed.json`
+- `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34z2_environment_probe_v0_20260930T145547Z/raw.json`
+- `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34z2_environment_probe_v0_20260930T145547Z/summary.md`
+- `research_artifacts/aws_runs/20260930T145547_6aaff44c/outcome_receipt.json`
+- Backup request: `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_T_C2R_ENV_IMPORT_REPAIR_20260930T145547Z.json`
+
+State preservation:
+- Updated durable state via `update_state`.
+- Updated project logs/docs with marker `vehicle-tc2r-env-import-repair-20260930T145547Z`.
+- Archived the pre-repair v34z2 source under:
+  - `research_artifacts/source_archives/vehicle_true_variable_horizon_v34z2_environment_probe_v0_20260930T145547Z/...pre_tc2r.76ef4e0e....py`
+
+Next gated action:
+1. Wait for/verify supervisor external backup covering T-C2R source changes, evidence, registry, docs, and state.
+2. Re-read active `PLAN_READY.json` and execution plan at the next safe cycle.
+3. If unchanged and backup is verified, launch T-C2 with exactly one approved seed string (`canonical_solve_no_training_seed`), resource request `{solver_calls: 5, plant_steps: 0, training_steps: 0, validation_episodes: 0, test_episodes: 0}`, and all frozen active-plan constraints.
+
+<!-- vehicle-tc4-fixedh-terminal-opportunity-ledger-20260930T150201Z -->
+## T-C4 fixed-H/terminal opportunity ledger
+
+UTC: 2026-09-30T15:02:01.493923+00:00. Local task hard_pass `True` with zero solver/plant/training/validation/test resources. Evidence: `research_artifacts/aws_diagnostics/vehicle_fixedh_terminal_opportunity_ledger_v0_20260930T150201Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_fixedh_terminal_opportunity_ledger_v0_20260930T150201Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_fixedh_terminal_opportunity_ledger_v0_20260930T150201Z/comparator_rows.csv`. The v19_c13 H35 timing discrepancy is reconciled as whole-decision wall sum versus solver-time sum; physical performance and latency remain separate endpoints. Backup request: `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_T_C4_FIXEDH_TERMINAL_OPPORTUNITY_LEDGER_20260930T150201Z.json`.
+
+
+## 2026-09-30T15:03:04.495504+00:00
+

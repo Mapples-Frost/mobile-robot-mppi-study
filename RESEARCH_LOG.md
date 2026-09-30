@@ -7379,3 +7379,11 @@ UTC: 2026-09-30T11:44:14.255007+00:00. Implemented T-A60 operational repair in a
 
 ## 2026-09-30T11:45:25.723431+00:00
 
+<!-- vehicle-v34q-goal-source-enumeration-20260930T115434Z -->
+## v34q/T-B1 zero-solve goal-source enumeration
+
+UTC: 2026-09-30T11:54:49.381404+00:00. Executed Opus T-B1 with zero solver calls, zero plant/env steps, no training/refit, validation64=0, sealed_test=0. G-GOAL_pass=True. Authoritative source resolved to `vehicle_true_variable_horizon_v34c_contract_preflight_v0c.robust_extract_goal_xy -> _trajectory_endpoint` via the actual v34g->v34f->v34d->v34c/v0e/v0c construction chain; per-context goals: {'source242_slot0_branch_start': {'x': 13.799046655781384, 'y': -12.47182069272842, 'source': 'case.tvp.trajectory_endpoint[61]'}, 'v19_c13_step1_after_V15_H35_common_state': {'x': 22.511477439575383, 'y': 3.6157134133513167, 'source': 'case.tvp.trajectory_endpoint[75]'}}. Object `obj_*` endpoints and trajectory endpoints are enumerated in `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34q_goal_source_enumeration_v0_20260930T115434Z/goal_candidates.csv`; `obj_*` endpoints are non-authoritative because the verified construction path does not read them as goal. v34o registry artifact-inventory false-negative recorded=True. Evidence: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34q_goal_source_enumeration_v0_20260930T115434Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34q_goal_source_enumeration_v0_20260930T115434Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34q_goal_source_enumeration_v0_20260930T115434Z/recursive_key_inventory.csv`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34q_goal_source_enumeration_v0_20260930T115434Z/goal_candidates.csv`. Backup request: `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_V34Q_GOAL_SOURCE_ENUMERATION_20260930T115434Z.json`. Next if G-GOAL_pass remains true: run v34r zero-solve loader gate preserving v34o previous-input scalarization hashes exactly; do not spend A13c-3 solver calls until post-v34r backup is verified.
+
+
+## 2026-09-30T11:56:41.129739+00:00
+

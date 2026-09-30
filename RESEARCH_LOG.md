@@ -5555,3 +5555,107 @@ Elapsed service lifetime at write: >85.3 h since 2026-09-26T10:55:29.419331Z. De
 
 ## 2026-09-30T00:34:01.261120+00:00
 
+<!-- vehicle-true-variable-H-h12-h15-selector-refit-v20b-fast-20260930T0100Z -->
+## 2026-09-30 vehicle true-variable-H v20 H12/H15 selector/refit
+
+Elapsed service lifetime at write: >85.7 h since 2026-09-26T10:55:29.419331Z. Development-only IMPROVED offline H12/H15 selector/refit over v19 opened boundary rows; no MPC simulation, validation64, sealed test, or gradient training. rows=24; positives=21; catastrophics=3; configs=1728; selector_refit_evaluations=153805; strict_bank_save=0.052056, bad=0, H12=7, pass5=True; strict_source_save=0.072057, bad=0, H12=9, pass5=True; decision: v20b H12/H15 conservative selector passes both strict opened bank and source nested >=5% zero-catastrophe gates, but the single held-out negative source is protected by a no-cat-training uncertainty fallback. Next do not validate yet: freeze source-independent H12-negative acquisition and an online overhead smoke to test whether this safety rule generalizes beyond one negative cluster.. Artifacts: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_h12_h15_selector_refit_v20b_fast_20260930T0100Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_h12_h15_selector_refit_v20b_fast_20260930T0100Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_h12_h15_selector_refit_v20b_fast_20260930T0100Z/completed.json`. Backup required before further unique science: `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_H12_H15_SELECTOR_REFIT_V20B_FAST_20260930T0100Z.json`.
+
+
+## 2026-09-30T00:37:45.463791+00:00
+累计服务寿命：约 85.7 h（自 2026-09-26T10:55:29.419331Z 起）；累计服务器 API total_tokens（research.sqlite，不含本桌面对话）：当前 API 工具上下文不可读，未伪造，下一轮若有 supervisor/sqlite 上下文需补读后以 M/B tokens 报告。单次实验运行时间：80.06 s。
+
+本轮已完成一个具体实验并持久化状态：
+
+## 已执行
+
+运行：
+
+`experiments/bohn2021_aws/vehicle_true_variable_horizon_h12_h15_selector_refit_v20b_fast.py`
+
+- run registry: `research_artifacts/aws_runs/20260930T003516_9eb2ad62/registry.json`
+- exit status: 0
+- runtime: 80.055 s
+- 类型：development-only IMPROVED H12/H15 offline selector/refit runtime repair
+- 无 MPC 仿真、无 validation64、无 sealed test、无梯度训练
+- 使用已验证备份 commit：`a8713ed1eda0cc6388926564fd026a454ba7729a`
+
+## 关键结果
+
+v20b 修复了 v20 超时问题，仅改变缓存/计算方式，不改变科学假设、输入、严格 split 或门槛。
+
+在 v19 opened-development H12/H15 boundary rows 上：
+
+- rows: 24
+- H12 beneficial rows: 21
+- H12 catastrophic/high-cost rows: 3
+- fixed H12 vs H15:
+  - decision saving: 14.32%
+  - solver saving: 15.87%
+  - bad rows: 3
+
+严格 nested CV：
+
+- leave-bank nested:
+  - decision saving: 5.21%
+  - solver saving: 5.70%
+  - catastrophic false positives: 0
+  - H12 choices: 7
+  - physical gate: true
+  - pass5: true
+
+- leave-source nested:
+  - decision saving: 7.21%
+  - solver saving: 7.91%
+  - catastrophic false positives: 0
+  - H12 choices: 9
+  - physical gate: true
+  - pass5: true
+
+解释：这是第一个在当前 opened boundary 机制数据上同时通过 strict leave-bank/source ≥5% 且零灾难 H12 的 H12/H15 selector 结果，但它仍然不是 validation-ready，因为唯一 H12-catastrophic source 是 `fresh_v11/fresh_case05_slot1_mid_late_control`，其 held-out 安全主要依赖 “outer training fold 无 catastrophic examples => uncertainty fallback to H15”。这不能证明 source-independent 风险泛化。
+
+## 已检查/保存的证据
+
+主要产物：
+
+- summary: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_h12_h15_selector_refit_v20b_fast_20260930T0100Z/summary.md`
+- raw: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_h12_h15_selector_refit_v20b_fast_20260930T0100Z/raw.json`
+- completed: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_h12_h15_selector_refit_v20b_fast_20260930T0100Z/completed.json`
+- protocol: `research_artifacts/aws_protocols/vehicle_true_variable_horizon_h12_h15_selector_refit_v20b_fast_preoutcome_frozen_20260930T0100Z.json`
+- continue state: `research_artifacts/aws_state/continue_state_20260930T0100_after_h12_h15_selector_refit_v20b_fast.md`
+- backup request: `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_H12_H15_SELECTOR_REFIT_V20B_FAST_20260930T0100Z.json`
+
+脚本已更新：
+
+- `STATUS.md`
+- `RESEARCH_LOG.md`
+- `DECISIONS.md`
+- `RESULTS_AUDIT.md`
+- `REPRODUCTION_PROTOCOL.md`
+- `EXPERIMENT_REGISTRY.csv`
+
+并已通过 `update_state` 持久化下一步状态。
+
+## 当前门控/阻塞
+
+本轮后检查：
+
+`research_artifacts/aws_backup_proofs/backup_proof_20260930*`
+
+结果为空。  
+因此 v20b 新产物尚无 post-v20b verified external backup proof。
+
+结论：在备份验证前，不应继续运行新的唯一科学实验或新仿真。sealed test 仍关闭且未授权；validation64 未被本轮打开。
+
+## 下一轮优先动作
+
+1. 先检查/等待 supervisor 产生覆盖 v20b artifacts 的 verified external backup proof。
+2. 备份通过后，不直接进 validation。应冻结并运行 v21 development-only source-independent H12 negative/support acquisition：
+   - 预注册新的 fresh sources/cases；
+   - 主要比较 H12/H15；
+   - 目标是检验 v20b 安全性是否能跨 source 泛化，而不是只靠单一 negative-source uncertainty fallback。
+3. 若 acquisition 受限，则次优是做在线 overhead smoke，测量 deployable selector feature+decision overhead；但当前信息价值更高的是 source-independent H12 negative/support 数据获取。
+4. 继续保持 ORIGINAL/IMPROVED 区分：v20b 是 IMPROVED，不是 ORIGINAL SAC；无 final-test 或正式复现成功声明。
+
+
+## 2026-09-30T00:42:30.730008+00:00
+

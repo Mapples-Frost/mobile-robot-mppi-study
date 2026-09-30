@@ -1,0 +1,161 @@
+{
+  "status": "completed",
+  "audit_id": "20260930T135811Z_8f32d0",
+  "started": "2026-09-30T13:58:11.376271+00:00",
+  "turn": 9,
+  "max_turns": 16,
+  "first_cycle": false,
+  "supplemental_audit_request_id": "20260930-comprehensive-handoff-missing-raw-training-audit",
+  "request": {
+    "request_id": "execution-failure:T-C3-startup-repair:20260930T135213_97b8a1ff",
+    "created_utc": "2026-09-30T13:52:13Z",
+    "requested_reviewer_role": "active_lead_claude-opus-5-5_with_astra_independent_critique_if_needed",
+    "experiment_id": "20260930T135213_97b8a1ff",
+    "task_id": "T-C3-matched-parameter-ledger",
+    "active_plan": {
+      "plan_ready": "docs/bohn2021_takeover/opus_lead/PLAN_READY.json",
+      "execution_plan": "docs/bohn2021_takeover/opus_lead/20260930T133239Z_8fd7da.execution_plan.json",
+      "request_id": "execution-result:20260930T131908_12b79445",
+      "execution_plan_sha256": "7b47a592c9edd3e49254ba63822c6e5583fd71b62fb219c4e8716242d293c46b"
+    },
+    "question": "T-C3 failed before script-level receipt creation because of a startup Path/% precedence TypeError. The failure used zero solver/plant/training/validation/test resources and did not open validation64 or sealed/final test. The source has been repaired but cannot be treated as a completed task. Please decide whether to authorize a bounded zero-resource rerun/repair of T-C3 under the structured contract, or publish an amended plan if the current ledger's missing receipt blocks automatic retry.",
+    "evidence_paths": [
+      "research_artifacts/aws_runs/20260930T135213_97b8a1ff/registry.json",
+      "research_artifacts/aws_runs/20260930T135213_97b8a1ff/stderr.log",
+      "research_artifacts/aws_runs/20260930T135213_97b8a1ff/stdout.log",
+      "research_artifacts/aws_runs/20260930T135213_97b8a1ff/cpu_samples.jsonl",
+      "research_artifacts/aws_runs/20260930T135213_97b8a1ff/cloudwatch_snapshot.json",
+      "experiments/bohn2021_aws/vehicle_true_variable_horizon_matched_parameter_ledger_v0.py",
+      "research_artifacts/aws_state/continue_state_20260930T135213Z_after_tc3_startup_failure.md",
+      "research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_T_C3_STARTUP_FAILURE_AND_REPAIR_20260930T135213Z.json"
+    ],
+    "observed_failure": {
+      "exit_status": 1,
+      "coordination_handoff": "lead_review",
+      "receipt_valid": false,
+      "receipt_error": "outcome_receipt.json missing because the script crashed before calling execution_contract.record_outcome",
+      "stderr_tail": "TypeError: unsupported operand type(s) for %: 'PosixPath' and 'tuple'",
+      "root_cause": "run_dir construction used ROOT / 'research_artifacts/aws_diagnostics/%s_%s' % (NAME, stamp), so Python applied % to a PosixPath rather than to the string segment."
+    },
+    "repair_written_not_executed": {
+      "path": "experiments/bohn2021_aws/vehicle_true_variable_horizon_matched_parameter_ledger_v0.py",
+      "sha256_after_write_file": "aaa65acb10b7104a31ac41fcfd3896455d6a13b4d9e3625119afe53697263613",
+      "repair_summary": "Changed run_dir construction to ROOT / 'research_artifacts' / 'aws_diagnostics' / ('%s_%s' % (NAME, stamp)); retained zero-solve scope, snapshot verification, conservative hash-only insufficiency reporting, and pass_evidence-controlled task acceptance.",
+      "execution_status": "not_executed_this_cycle_due_one_experiment_guard_and_missing_receipt_lead_review_state"
+    },
+    "resource_counters": {
+      "solver_calls": 0,
+      "plant_steps": 0,
+      "training_steps": 0,
+      "validation_episodes": 0,
+      "test_episodes": 0,
+      "validation64_accessed": false,
+      "sealed_test_accessed": false,
+      "new_aws_resources": false
+    },
+    "executor_recommendation": "After backup verification, rerun repaired T-C3 with the same zero-resource request if the active lead confirms the structured ledger may treat this as an operational retry; otherwise wait for an amended structured plan. Do not proceed to T-C5 or T-C2 until T-C3 has a valid task receipt/pass or the lead changes dependencies."
+  },
+  "commit_start": "dd64c272a9068f63e3e71cc2fe43164d2d539d5d",
+  "inspected": [
+    {
+      "path": "research_artifacts/aws_runs/20260930T135213_97b8a1ff/stderr.log",
+      "sha256": "1c3509739084c71ad450bb69dc5a492a384ae2dc9a27c56c10b786ed2e0c0584"
+    },
+    {
+      "path": "research_artifacts/aws_state/continue_state_20260930T135213Z_after_tc3_startup_failure.md",
+      "sha256": "403692101286a4131a737bbe76fe4ad33914b36469dc2f6a01b8409133a98b18"
+    },
+    {
+      "path": "research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_T_C3_STARTUP_FAILURE_AND_REPAIR_20260930T135213Z.json",
+      "sha256": "73d4967e9e7d48e37cdaea7f880209e4fe442e9f3167df7c38d7d878fc7eecf6"
+    },
+    {
+      "path": "docs/bohn2021_takeover/opus_lead/20260930T133239Z_8fd7da.execution_plan.json",
+      "sha256": "7b47a592c9edd3e49254ba63822c6e5583fd71b62fb219c4e8716242d293c46b"
+    },
+    {
+      "path": "experiments/bohn2021_aws/vehicle_true_variable_horizon_matched_parameter_ledger_v0.py",
+      "sha256": "aaa65acb10b7104a31ac41fcfd3896455d6a13b4d9e3625119afe53697263613"
+    },
+    {
+      "path": "experiments/bohn2021_aws/vehicle_true_variable_horizon_matched_parameter_ledger_v0.py",
+      "sha256": "aaa65acb10b7104a31ac41fcfd3896455d6a13b4d9e3625119afe53697263613"
+    },
+    {
+      "path": "research_artifacts/aws_runs/20260930T135213_97b8a1ff/stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/bohn2021_takeover/opus_lead/20260930T133239Z_8fd7da.execution_plan.json",
+      "sha256": "7b47a592c9edd3e49254ba63822c6e5583fd71b62fb219c4e8716242d293c46b"
+    },
+    {
+      "path": "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34y_tc1_vector_integrity_dr7_v0.py",
+      "sha256": "eac880b539ed0c71e6a5fade1c873344b6b3a5ad4d90ec0d6d21e82d37487cdb"
+    },
+    {
+      "path": "docs/bohn2021_takeover/opus_lead/PLAN_READY.json",
+      "sha256": "322cafd75b31e866c90c0dd2e31cfb3e048a9eeaa9a5d0cd21d70b60653fc81c"
+    },
+    {
+      "path": "docs/bohn2021_takeover/astra_reviews/20260930T135044Z.md",
+      "sha256": "2410db80fcde8dad4b4b88c55e2328055f0cf1fb2a78ca7db655084d0e583dd9"
+    },
+    {
+      "path": "docs/bohn2021_takeover/opus_lead/20260930T135044Z_cdfb03.execution_plan.json",
+      "sha256": "158060a00c3dc623b5c35ba6ad412f629f5d62e998741d30e170e29f07c832e6"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34u_active_plan_refresh_nonconverged_objective_contract_probe_v0_20260930T125233Z/raw.json",
+      "sha256": "a8bd5314528ee8c951722a12727df1ebabc85c4b885dec1dba62d1c9028a5058"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34u_active_plan_refresh_nonconverged_objective_contract_probe_v0_20260930T125233Z/raw.json",
+      "sha256": "a8bd5314528ee8c951722a12727df1ebabc85c4b885dec1dba62d1c9028a5058"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34u_active_plan_refresh_nonconverged_objective_contract_probe_v0_20260930T125233Z/raw.json",
+      "sha256": "a8bd5314528ee8c951722a12727df1ebabc85c4b885dec1dba62d1c9028a5058"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34l_residual_eps_label_dissection_v0_20260930T105720Z/raw.json",
+      "sha256": "35268dfc814cd9497e3f503aaa0a38fb173fad7e47dd4223f6fe6ca5eb54c66e"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34u_active_plan_refresh_nonconverged_objective_contract_probe_v0_20260930T125233Z/raw.json",
+      "sha256": "a8bd5314528ee8c951722a12727df1ebabc85c4b885dec1dba62d1c9028a5058"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34u_active_plan_refresh_nonconverged_objective_contract_probe_v0_20260930T125233Z/raw.json",
+      "sha256": "a8bd5314528ee8c951722a12727df1ebabc85c4b885dec1dba62d1c9028a5058"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34u_active_plan_refresh_nonconverged_objective_contract_probe_v0_20260930T125233Z/raw.json",
+      "sha256": "a8bd5314528ee8c951722a12727df1ebabc85c4b885dec1dba62d1c9028a5058"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34u_active_plan_refresh_nonconverged_objective_contract_probe_v0_20260930T125233Z/raw.json",
+      "sha256": "a8bd5314528ee8c951722a12727df1ebabc85c4b885dec1dba62d1c9028a5058"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34u_active_plan_refresh_nonconverged_objective_contract_probe_v0_20260930T125233Z/raw.json",
+      "sha256": "a8bd5314528ee8c951722a12727df1ebabc85c4b885dec1dba62d1c9028a5058"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34g_objective_reconstruction_smoke_v0_20260930T100824Z/raw.json",
+      "sha256": "04e44c0e5c0c8be3aaef44ac8176a028043c57014ffa1e85bb267dbd5c075e1b"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34u_active_plan_refresh_nonconverged_objective_contract_probe_v0_20260930T125233Z/raw.json",
+      "sha256": "a8bd5314528ee8c951722a12727df1ebabc85c4b885dec1dba62d1c9028a5058"
+    }
+  ],
+  "superseded_request_ids": [],
+  "cross_review_id": "20260930T135044Z",
+  "working_language": "en",
+  "working_language_policy": "RESEARCH_WORKING_LANGUAGE_EN_V1",
+  "registry_context_experiment_id": "20260930T135213_97b8a1ff",
+  "updated": "2026-09-30T14:06:13.174304+00:00",
+  "completed": "2026-09-30T14:06:13.185085+00:00",
+  "commit_end": "d0ec683969f3d44e5d1ed617c7d7f9fbc14b8dc2"
+}

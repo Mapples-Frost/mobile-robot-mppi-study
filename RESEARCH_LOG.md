@@ -5671,3 +5671,11 @@ v20b 修复了 v20 超时问题，仅改变缓存/计算方式，不改变科学
 
 ## 2026-09-30T01:00:18.087677+00:00
 
+<!-- vehicle-true-variable-H-h12-h15-source-independent-acquisition-v21-20260930T0130Z -->
+## 2026-09-30 vehicle true-variable-H H12/H15 source-independent acquisition v21
+
+UTC: 2026-09-30T01:06:32.171731+00:00. Development-only source-independent H12/H15 acquisition completed: 40 episodes, 1962 control steps, validation64 closed, sealed test closed, no training/refit. States=16, H12-beneficial=15, H12-catastrophic/high-cost=0, fixed-H12 decision saving vs H15=0.15049729897916866, oracle decision saving=0.16474542892945737. Decision: fresh source-independent fixed H12 itself passes the H15-referenced 5% safety/physical gate on this development batch; next measure online selector overhead and treat fixed H12 as a strong baseline. Artifacts: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_h12_h15_source_independent_acquisition_v21_20260930T0130Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_h12_h15_source_independent_acquisition_v21_20260930T0130Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_h12_h15_source_independent_acquisition_v21_20260930T0130Z/completed.json`. Backup required before further unique science: `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_V21_SOURCE_INDEPENDENT_H12_H15_ACQUISITION_20260930T010632.171731+0000.json`.
+
+
+## 2026-09-30T01:09:44.735225+00:00
+

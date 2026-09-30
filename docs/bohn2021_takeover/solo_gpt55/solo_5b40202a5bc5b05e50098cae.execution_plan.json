@@ -1,0 +1,110 @@
+{
+  "request_id": "execution-result:20260930T170151_8bc84941",
+  "schema_version": 1,
+  "tasks": [
+    {
+      "task_id": "S-TC2H-source242-fixedH-microcontinuation-v0",
+      "description": "TEMPORARY GPT-5.5 SOLO SELF-REVIEW / OPERATIONAL REPAIR AND RERUN OF S-TC2H. The first S-TC2H attempt solved the first MPC decision for H12, H15, and H35 on source242 but advanced zero plant steps because env.step raised KeyError(0) for every arm. Raw trace shows the controller action was recorded as a name-keyed mapping {'u_omega', 'u_s'} while the legacy environment path indexes actions positionally as action[0], action[1]. This task uses the already-written action-payload repair wrapper, which preserves the v0 scientific setup and only adapts the control payload to an ordered [u_omega, u_s] vector before env.step. It reruns the same opened-development source242 fixed-H microcontinuation: H in [12,15,35], terminal mode V15_shared, canonical/default initialization, no goal-facing initialization, no training/refit, no validation64, no sealed/final test. The task must preserve the prior v0 failed evidence and report whether closed-loop plant steps, costs, safety, solver statuses, and timing are actually obtained. This remains development-only IMPROVED instrumentation, not ORIGINAL reproduction, population validation, or final acceptance.",
+      "script_patterns": [
+        "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34z2_source242_microcontinuation_v0b_action_payload_repair.py"
+      ],
+      "split": "opened_development_source242_slot0_branch_start_microcontinuation_action_payload_repair_no_validation64_no_sealed_test",
+      "method": "three-arm source242 fixed-H closed-loop microcontinuation rerun after action-payload repair, H=[12,15,35], V15_shared terminal held fixed, canonical/default warm-start, max 60 plant steps per arm, full cost/safety/solver/timing traces",
+      "seeds": [
+        "source242_branch_deterministic_no_training_seed"
+      ],
+      "config_constraints": {
+        "label_ORIGINAL_vs_IMPROVED": "IMPROVED",
+        "authority_mode": "temporary_user_authorized_solo_self_review",
+        "operational_repair_only": true,
+        "repair_scope": "adapt controller action payload from name-keyed mapping to ordered legacy-env [u_omega,u_s] vector; do not change horizons, terminal mode, source242 context, objective, cost, training, validation/test access, or scientific acceptance rules",
+        "previous_attempt_experiment_id": "20260930T170151_8bc84941",
+        "previous_attempt_summary": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34z2_source242_microcontinuation_v0_20260930T170151Z/summary.md",
+        "previous_attempt_raw": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34z2_source242_microcontinuation_v0_20260930T170151Z/raw.json",
+        "previous_attempt_finding": "all three first decisions Solve_Succeeded but env.step raised KeyError(0), with 3 solver calls and 0 plant steps; therefore no closed-loop control/cost conclusion is available from v0",
+        "action_payload_repair_source": "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34z2_source242_microcontinuation_v0b_action_payload_repair.py",
+        "action_payload_repair_source_sha256_before_run": "d36a2d7a426ccfcf9292dc4f3f7129a5b36057383890d3aa63b764a792bb5315",
+        "latest_verified_external_backup_before_run_from_supervisor_context": {
+          "time": "2026-09-30T17:06:13.535750+00:00",
+          "status": "verified",
+          "remaining_changed_files": 0,
+          "commit": "9ed93832735e3005913ff1e3454e9aefd5d92dc5",
+          "package_sha256": "b8b91fa88e266a1a3a00e8ddd4f01e842e4b1b9322bca1199f6263bcc48375f0"
+        },
+        "prior_T_C2_completed": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34z2_converged_contract_gate_v0_20260930T163737Z/completed.json",
+        "prior_S_TC2G_completed": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34z2_h15_initialization_basin_triage_v0_20260930T165402Z/completed.json",
+        "post_S_TC2G_backup_required_before_solver_or_plant_steps": true,
+        "microcontinuation_source_context": "source242_slot0_branch_start",
+        "goal_source_required": "case.tvp.trajectory_endpoint[61]",
+        "horizon_grid": [
+          12,
+          15,
+          35
+        ],
+        "terminal_mode_for_all_arms": "V15_shared",
+        "max_steps_per_arm": 60,
+        "arm_count": 3,
+        "plant_step_cap": 180,
+        "solver_call_cap": 180,
+        "ordinary_deployment_style_warm_start_after_first_action": true,
+        "first_action_initialization": "canonical_zero_control_only_if_explicit_initial_primal_is_required",
+        "forbid_goal_facing_initialization": true,
+        "report_physical_control_constraint_total_costs": true,
+        "report_success_constraint_solver_failure_accounting": true,
+        "report_solver_and_whole_decision_timing": true,
+        "report_per_step_solver_status_iterations": true,
+        "report_context_and_prefix_hashes": true,
+        "development_only_not_validation_not_final": true,
+        "no_training_no_refits": true,
+        "no_validation64_access": true,
+        "no_sealed_or_final_test_access": true,
+        "no_new_paid_infrastructure": true,
+        "cumulative_S_TC2H_family_usage_before_this_rerun": {
+          "solver_calls": 3,
+          "plant_steps": 0,
+          "training_steps": 0,
+          "validation_episodes": 0,
+          "test_episodes": 0
+        }
+      },
+      "training_budget": {
+        "gradient_steps": 0,
+        "selector_refits": 0,
+        "training_steps": 0
+      },
+      "validation_budget": {
+        "opened_development_branch_episodes": 3,
+        "max_plant_steps": 180,
+        "solver_calls": 180,
+        "validation64_episodes": 0
+      },
+      "test_budget": {
+        "final_test_episodes": 0,
+        "sealed_test_episodes": 0
+      },
+      "resource_limits": {
+        "solver_calls": 180,
+        "plant_steps": 180,
+        "training_steps": 0,
+        "validation_episodes": 0,
+        "test_episodes": 0
+      },
+      "max_attempts": 1,
+      "max_zero_usage_repairs": 0,
+      "timeout_seconds": 3600,
+      "dependencies": [],
+      "pass_conditions": {
+        "source242_microcontinuation_completed": true,
+        "prior_T_C2_and_S_TC2G_failures_preserved": true,
+        "backup_verified_before_solver_or_plant_steps": true,
+        "all_three_horizon_arms_attempted_or_budget_cap_reported": true,
+        "per_step_cost_safety_solver_timing_traces_persisted": true,
+        "context_source242_goal61_identity_verified": true,
+        "no_training_validation64_or_test_usage": true,
+        "plant_steps_at_most_180": true,
+        "solver_calls_at_most_180": true
+      },
+      "continue_without_review": false
+    }
+  ]
+}

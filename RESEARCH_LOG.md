@@ -7209,3 +7209,11 @@ Artifacts: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34
 
 ## 2026-09-30T10:04:10.250376+00:00
 
+<!-- vehicle-v34g-objective-reconstruction-smoke-20260930T100824Z -->
+## v34g one-cell objective-reconstruction smoke
+
+UTC: 2026-09-30T10:08:59.178066+00:00. Opus Task B executed one fixed-context solver call for `source242_slot0_branch_start|H15|V15_shared|canonical`. hard_pass=False; J_solver=1430.3365593819267; reconstructed=1429.8850674111343; relative_error=0.0003156543596896532; residual={'constraint_residual': None, 'bound_residual': None}; solver_status={'return_status': 'Solve_Succeeded', 'success': True, 'iterations': 29, 'solver_exception': None}. Budgets: solver_calls=1, plant_steps=0, env_reset_calls=0, training/refit=0, validation64=false, sealed_test=false. Artifacts: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34g_objective_reconstruction_smoke_v0_20260930T100824Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34g_objective_reconstruction_smoke_v0_20260930T100824Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34g_objective_reconstruction_smoke_v0_20260930T100824Z/completed.json`. Backup request: `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_V34G_OBJECTIVE_RECONSTRUCTION_SMOKE_20260930T100824Z.json`.
+
+
+## 2026-09-30T10:09:50.604670+00:00
+

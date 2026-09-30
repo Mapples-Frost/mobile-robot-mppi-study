@@ -1,13 +1,48 @@
 {
-  "request_id": "execution-result:20260930T094857_bf0b0af1",
-  "trigger": "execution_result_handoff",
-  "created": "2026-09-30T09:48:59.874699+00:00",
-  "experiment_id": "20260930T094857_bf0b0af1",
-  "status": "analysis_requested",
-  "purpose": "Execute the approved 24-call low-level solver diagnostic to separate terminal-objective preference from initialization/basin effects after hard-passed 0-solve v34c/v0e preflight and verified external backup.",
-  "execution_status": "failed",
-  "question": "Active scientific lead: interpret this outcome, verify current raw evidence and select the next scientific action for GPT-5.5 implementation. Distinguish hypotheses from verified causes and account for fair baselines, terminal confounds and source-level generalization.",
+  "access_flags": {
+    "plant_steps": 0,
+    "sealed_test_accessed": false,
+    "training_or_refit": 0,
+    "validation64_bank_opened": false
+  },
+  "active_lead_report": "docs/bohn2021_takeover/opus_lead/20260930T094740Z_3d9a1e.md",
+  "active_lead_report_sha256": "efb65f58271438a4eb3331cae954373b554185f375525f6162e7628ceac5f840",
+  "budget_actual": {
+    "arms": 1,
+    "env_reset_calls": 0,
+    "new_training_or_gradient_steps": 0,
+    "plant_steps": 0,
+    "sealed_test_episodes": 0,
+    "selector_refits": 0,
+    "solver_calls": 1,
+    "validation64_episodes": 0
+  },
+  "created": "2026-09-30T10:08:59.178066+00:00",
   "evidence_paths": [
-    "research_artifacts/aws_runs/20260930T094857_bf0b0af1/registry.json"
-  ]
+    "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34g_objective_reconstruction_smoke_v0_20260930T100824Z/summary.md",
+    "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34g_objective_reconstruction_smoke_v0_20260930T100824Z/raw.json",
+    "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34g_objective_reconstruction_smoke_v0_20260930T100824Z/completed.json",
+    "docs/bohn2021_takeover/opus_lead/20260930T094740Z_3d9a1e.md",
+    "docs/bohn2021_takeover/astra_reviews/RESPONSE_LOG.md"
+  ],
+  "experiment_id": "vehicle_true_variable_horizon_v34g_objective_reconstruction_smoke_v0",
+  "gate": {
+    "J_reconstructed_stage_plus_terminal": 1429.8850674111343,
+    "J_solver": 1430.3365593819267,
+    "failure_reasons": [
+      "residual_gate_failed_non_none_and_le_1e-5",
+      "objective_reconstruction_relative_error_gate_failed_le_1e-6"
+    ],
+    "hard_pass": false,
+    "relative_error_vs_solver": 0.0003156543596896532,
+    "residual": {
+      "bound_residual": null,
+      "constraint_residual": null
+    }
+  },
+  "operational_note": "Post-smoke backup required via research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_V34G_OBJECTIVE_RECONSTRUCTION_SMOKE_20260930T100824Z.json before additional unique solver/scientific work.",
+  "question": "Review the Task B one-cell objective reconstruction smoke. If hard_pass is false, diagnose objective/residual reconstruction before any remaining solver calls. If hard_pass is true, the next dependent task is the fixed objective-vs-basin probe after backup; preserve no validation64/sealed-test access.",
+  "request_id": "v34g-objective-reconstruction-smoke-20260930T100824Z",
+  "status": "gate_failed_requires_objective_localization",
+  "trigger": "v34g one-cell objective reconstruction smoke completed"
 }

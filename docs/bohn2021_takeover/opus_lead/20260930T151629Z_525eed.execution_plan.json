@@ -1,0 +1,224 @@
+{
+  "schema_version": 1,
+  "request_id": "execution-failure:T-C3-startup-repair:20260930T135213_97b8a1ff",
+  "tasks": [
+    {
+      "task_id": "T-C2R2-source242-context-loader-repair",
+      "description": "AMENDED zero-usage operational repair superseding T-C2R for the CURRENT T-C2 blocker DEFECT 3 (OBSERVED, UNRESOLVED). The request-predicate T-C3 startup TypeError is CLOSED and must NOT be reprocessed: T-C3R run 20260930T141339_1f8fda70 already completed with a valid zero-resource hard-pass receipt (research_artifacts/aws_runs/20260930T141339_1f8fda70/outcome_receipt.json; summary research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_matched_parameter_ledger_v0_20260930T141339Z/summary.md; hard_pass=true, all opt_p_num=0). Do NOT rerun T-C3, T-C3R, T-C1R or T-C5 and do NOT reopen the epsilon-sufficiency or T-C3-startup questions. DEFECT 3 EVIDENCE: run 20260930T150458_b5f74aa4 failed at experiments/bohn2021_aws/vehicle_true_variable_horizon_v34z2_converged_contract_gate_v0.py line 833 with TypeError: float() argument must be a string or a number, not 'list' (research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34z2_converged_contract_gate_v0_20260930T150458Z/failed.json, sha256 5bbb86a0625f2b76ec236a84c1597d331a7ab8370579586e47c58d354d6161b3). The T-C2 launch DIED BEFORE its first low-level solver call: main() line 894 calls load_context_and_terminals() -> line 833 base.load_contexts() -> experiments/bohn2021_aws/vehicle_true_variable_horizon_v34_objective_basin_solver_probe_v0.py line 338 {'previous_input': {k: float(v) for k, v in (c13_step0.get('input') or {}).items()}}. The c13 previous_input schema can contain list-valued control entries and cannot be cast to float. v34z2 line 834 filters for context_id=='source242_slot0_branch_start' and NEVER consumes the c13 context. REQUIRED FIX (minimal, in v34z2 load_context_and_terminals ONLY): construct the source242 context directly from base-provided primitives instead of calling base.load_contexts(). Read base.v29.build_state_specs() and base.find_spec('v27_case09_slot0_early_risk') and build the SAME dict the base loader builds at experiments/bohn2021_aws/vehicle_true_variable_horizon_v34_objective_basin_solver_probe_v0.py lines 317-329: context_id='source242_slot0_branch_start', state_label='v27_case09_slot0_early_risk', source='v29/v33 selected branch state, original branch start', case_snapshot=copy.deepcopy(spec['case_snapshot']), branch_step=int(spec['branch_step']), tvp_start_index=int(spec['branch_step']), state=base.state_clean(spec['branch_previous_state']), previous_input={'u_omega':0.0,'u_s':0.0}, previous_input_source='Astra-specified v33 branch-reset zero-input semantics', horizons=[15,35]. Do NOT modify base.load_contexts, do NOT edit vehicle_true_variable_horizon_v34_objective_basin_solver_probe_v0.py, do NOT change any scientific constant/tolerance/scenario ID/split/method/seed/budget, do NOT invent a c13 schema coercion. Optional but preferred: a light binding check (inspect.signature/hasattr on base.v29.build_state_specs and base.find_spec) is permitted; constructing an MPC, calling a solver, or stepping the plant is NOT. MANDATORY VERIFICATION OUTPUT: a JSON record that (a) proves by CONSTRUCTION-FIELD EQUALITY, not merely absence of an exception, that the locally built source242 context equals base.load_contexts()'s source242 entry in every observed field (context_id, state_label, source, branch_step, tvp_start_index, state, previous_input, previous_input_source, horizons), EXCEPT that field-by-field equality of the c13-derived entry cannot be observed because constructing it is the defect; (b) states the exact line range changed; (c) confirms do_mpc importable in the launch interpreter; (d) honestly states anything not determined. If field equality cannot be demonstrated, raise and report instead of claiming success. FORBIDDEN: any solver call, any env.step/reset after construction, any plant step, any training/refit, any validation64 access, any sealed/final test access, new paid infrastructure, AWS/IAM/scheduler change. Outputs: machine-readable JSON plus the exact not-determined statement.",
+      "script_patterns": [
+        "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34z2_environment_probe_v0.py"
+      ],
+      "split": "environment_diagnostic_only_no_solver_no_validation64_no_sealed_test",
+      "method": "bounded zero-usage source242-context construction repair replacing the eager base.load_contexts() call that fails on the unrelated c13 previous_input schema",
+      "seeds": [
+        "not_applicable_no_training_seed"
+      ],
+      "config_constraints": {
+        "label_ORIGINAL_vs_IMPROVED": "IMPROVED",
+        "no_change_to_frozen_scientific_contract": true,
+        "no_plant_steps": true,
+        "no_solver_calls": true,
+        "no_training": true,
+        "no_refits": true,
+        "no_env_step_or_reset_after_construction": true,
+        "no_validation64_access": true,
+        "no_sealed_or_final_test_access": true,
+        "no_new_paid_infrastructure": true,
+        "no_aws_iam_or_scheduler_change": true,
+        "do_not_modify_vehicle_true_variable_horizon_v34_objective_basin_solver_probe_v0": true,
+        "do_not_rerun_T_C3_T_C3R_T_C1R_T_C5": true,
+        "construct_source242_context_from_base_v29_build_state_specs_and_find_spec": true,
+        "context_must_equal_base_source242_field_by_field": true,
+        "import_only_verification_no_solver_call": true,
+        "do_mpc_import_verified_in_launch_interpreter": true
+      },
+      "training_budget": {
+        "gradient_steps": 0,
+        "selector_refits": 0,
+        "training_steps": 0
+      },
+      "validation_budget": {
+        "env_steps_after_construction": 0,
+        "plant_steps": 0,
+        "solver_calls": 0,
+        "validation64_episodes": 0
+      },
+      "test_budget": {
+        "final_test_episodes": 0,
+        "sealed_test_episodes": 0
+      },
+      "resource_limits": {
+        "solver_calls": 0,
+        "plant_steps": 0,
+        "training_steps": 0,
+        "validation_episodes": 0,
+        "test_episodes": 0
+      },
+      "max_attempts": 2,
+      "max_zero_usage_repairs": 1,
+      "timeout_seconds": 600,
+      "dependencies": [],
+      "pass_conditions": {
+        "source242_context_built_without_calling_base_load_contexts": true,
+        "field_equality_evidence_reported_or_failure_raised": true,
+        "no_solver_plant_training_validation_or_test_usage": true,
+        "exact_lines_changed_stated_explicitly": true
+      },
+      "continue_without_review": true
+    },
+    {
+      "task_id": "T-C2C-context-identity-preflight",
+      "description": "Zero-resource pre-launch preflight consumed as the FIRST step of the T-C2CEPHAL launch path, designed so that the T-C2 gate can spend its five solver calls only after the context loader and the match-enforcement logic are proven correct. PURPOSE: the previous three T-C2 attempts all consumed ZERO solver calls because the failure occurred before line 925. This preflight must run BEFORE any low-level solver call and must FAIL LOUDLY if any of the following is not true: (1) the source242 context used by the gate is identical in every observed field to the entry base.load_contexts() would produce for context_id=='source242_slot0_branch_start' (compare context_id, state_label, source, branch_step, tvp_start_index, state, previous_input, previous_input_source, horizons; have the T-C2R2 repair supply the canonical reference if available, otherwise reconstruct from base.v29.build_state_specs() and base.find_spec('v27_case09_slot0_early_risk') and report the comparison basis explicitly); (2) the setup gate MUST REQUIRE parameter identity, not merely REPORT hashes: for the H15 canonical vs goal_facing pair, an inequality of pre-solve opt_p_hash must be an EXPLICIT FAILURE of the match requirement rather than a benign reported fact; for the H12 production vs H12 truncated control, inputs must be matched except the declared max_iter setting; (3) capture_mpc_state must persist COMPLETE LABELLED opt_x and opt_p arrays (variable names, order, dtype, dimension) for entering and returned states, not only hashes and dimensions, so a later unmatched-input localization is possible; (4) per-cell results must be flushed to disk after EACH cell so that a later accessor failure cannot lose already-completed solver evidence; (5) the epsilon-sum versus epsterm_total comparison must be an executed check at the standing 1e-8 absolute tolerance when the persisted per-stage per-variable epsilon vectors are available, and must report UNAVAILABLE (not PASS) when they are absent. Output a JSON preflight record with each of (1)-(5) as boolean plus the comparison basis and any not-determined statement. FORBIDDEN: any solver call, any env.step/reset, any plant step, training/refit, validation64, sealed/final test, new paid infrastructure, AWS/IAM/scheduler change.",
+      "script_patterns": [
+        "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34z2_converged_contract_gate_v0.py"
+      ],
+      "split": "opened_development_source242_slot0_branch_start_only_no_validation64_no_sealed_test",
+      "method": "zero-resource pre-launch identity and capture-completeness preflight for the T-C2 objective-contract gate",
+      "seeds": [
+        "canonical_solve_no_training_seed"
+      ],
+      "config_constraints": {
+        "label_ORIGINAL_vs_IMPROVED": "IMPROVED",
+        "scenario_ids": [
+          "source242_slot0_branch_start"
+        ],
+        "term_mode": "V15_shared",
+        "goal_path": "case.tvp.trajectory_endpoint[61]",
+        "no_validation64_access": true,
+        "no_sealed_or_final_test_access": true,
+        "no_plant_steps": true,
+        "no_solver_calls": true,
+        "no_training": true,
+        "no_refits": true,
+        "h15_match_requires_parameter_identity_not_only_reported_hashes": true,
+        "h12_production_vs_truncated_matched_except_max_iter": true,
+        "persist_complete_labelled_opt_x_and_opt_p_arrays": true,
+        "flush_cell_results_after_each_cell": true,
+        "epsilon_sum_vs_epsterm_total_executed_or_reported_unavailable": true,
+        "eps_replay_abs_tolerance": 1e-08
+      },
+      "training_budget": {
+        "gradient_steps": 0,
+        "selector_refits": 0,
+        "training_steps": 0
+      },
+      "validation_budget": {
+        "env_steps_after_construction": 0,
+        "plant_steps": 0,
+        "solver_calls": 0,
+        "validation64_episodes": 0
+      },
+      "test_budget": {
+        "final_test_episodes": 0,
+        "sealed_test_episodes": 0
+      },
+      "resource_limits": {
+        "solver_calls": 0,
+        "plant_steps": 0,
+        "training_steps": 0,
+        "validation_episodes": 0,
+        "test_episodes": 0
+      },
+      "max_attempts": 2,
+      "max_zero_usage_repairs": 1,
+      "timeout_seconds": 900,
+      "dependencies": [
+        "T-C2R2-source242-context-loader-repair"
+      ],
+      "pass_conditions": {
+        "context_identity_verified_against_base_source242": true,
+        "h15_parameter_match_required_not_merely_reported": true,
+        "complete_labelled_opt_x_opt_p_capture_implemented": true,
+        "per_cell_flush_implemented": true,
+        "no_solver_plant_training_validation_or_test_usage": true
+      },
+      "continue_without_review": true
+    },
+    {
+      "task_id": "T-C2-OC-epsilon-1b-converged-contract-gate",
+      "description": "T-C2 REAUTHORIZED (amended, not a free retry): the per-stage slack vector at a CONVERGED iterate at production tolerances with full prospective capture, on the frozen IMPROVED latency-tree vehicle controller. CUMULATIVE ACTUAL solver usage on this thread is ZERO across all five prior attempts (20260930T143813_cd837da9 solver=0, 20260930T144148_12c26dcc solver=0, 20260930T150458_b5f74aa4 solver=0, plus the earlier gated attempts), each dying before line 925. LEAD RULING: the six-call ceiling is ACCOUNTED, NOT INHERITED. This task's own resource_limits stand at solver_calls=5; the four historical v34u truncated calls are DISCLOSED for the record and do NOT reduce this allowance. Do NOT raise the ceiling, do NOT lower your own allowance. DECLARED-BUDGET CAUTION: prior registry entries show validation_budget.solver_calls=5 as a DECLARED reservation while coordination.actual_resources.solver_calls=0 was the MEASURED use; report measured actual_resources, and state explicitly for run 20260930T150458_b5f74aa4 whether any solver was actually invoked given that its 46.04 s elapsed time precedes line 925. DO NOT rediagnose resolved defects: do_mpc importability (Defect 1) and the stage1_runner attribute binding (Defect 2) are CLOSED. PRECONDITION: launched only after T-C2R2 and T-C2C both pass; the T-C2C preflight (context identity, H15 parameter-match enforcement, complete labelled opt_x/opt_p capture, per-cell flush, epsilon-sum execution) is a REQUIRED internal precondition of this launch and must run before the first low-level solver call. SEED RULE: pass EXACTLY ONE seed string per launch, copied verbatim from this task's seeds list; do NOT concatenate with '+'. Two approved seed strings exist; if both are exercised they are separate launches each charged to this allowance; one launch covers all production cells and the single truncated control internally. Frozen inputs: opened development context source242_slot0_branch_start ONLY, term_mode V15_shared, goal case.tvp.trajectory_endpoint[61], cells H12/H15/H35 canonical plus H15 goal_facing; IPOPT at PRODUCTION tolerances (max_iter NOT forced to 1) for all four cells, plus EXACTLY ONE forced max_iter=1 truncated control and that control must be H12 ONLY. MANDATORY PRE-LAUNCH SETUP ASSERTIONS reported as pass/fail facts: (a) each arm records a real pre-solve opt_x_hash AND a persisted labelled opt_x array; (b) assignments_succeeded NONZERO on every arm; (c) NUMERIC READBACK of intended primal and parameter values, not merely nonzero assignment counts; (d) the H15 canonical vs goal_facing pair MATCHED on effective parameters, terminal coefficients, bounds, scaling, previous input and dual initialization, with per-entry differences recorded for anything unmatchable, and a pre-solve opt_p_hash INEQUALITY treated as an explicit match FAILURE; (e) the two H15 arms must NOT enter from identical pre-solve state. HARD GATE: if any arm records assignments_attempted=0 or assignments_succeeded=0, or the two H15 arms enter with identical pre-solve opt_x_hash AND identical opt_p_hash, or numeric readback does not show the intended distinct primals, the run is an INERT-INTERVENTION FAILURE: record it, spend no further calls, return to lead, produce no initialization-sensitivity claim. Predeclared acceptance: converged full-objective relative error <=1e-6 for ALL FOUR production cells; the H35 1e-5 allowance applies ONLY if H35 is DOCUMENTED NON-CONVERGED before the run, and a nonconverged H35 exception must NOT be used to declare all-four-converged closure; any converged cell above 1e-4 is a HARD DEFECT that stops the task; the executed epsilon-sum vs epsterm_total check uses the standing 1e-8 absolute tolerance. Required per-cell outputs: return_status and unified_return_status, actual iteration count, J_solver, J_recon_historical_noeps, J_recon_full and both relative errors against predeclared thresholds, direct NLP f at returned opt_x_num/opt_p_num vs opt_f_num, the PERSISTED PER-STAGE PER-VARIABLE EPSILON VECTOR for all k and j WITH LABEL AND DIMENSION, eps_nonzero_count at the individual-variable level, per-stage gamma^k*1000*epsilon contributions, the soft-margin quantity 1.5*r_obstacle - d at the ACTUAL constraint-enforcement nodes, hard obstacle clearance, effective tolerances, convergence residuals, and an explicit verdict on whether any epsilon is materially non-zero at convergence; solver_wall_s and whole_decision_get_action_wall_s as mean/median/P95 with n, stating that no truncated cell's timing is a deployable estimate. Branch rules: all four cells converge <=1e-6 -> close OC-epsilon-1 as a verified IMPROVED formula amendment and state the converged-slack verdict either way (positive converged active-margin slack falsifies only the universal zero-slack hypothesis and is NOT a defect); converged miss in 1e-6 to 1e-4 -> record as a SECOND distinct residual source under a new stable ID and do not proceed; any converged cell above 1e-4 -> hard defect, stop, escalate to lead. REPORTING CAVEAT: T-C5's result is a DATA-AVAILABILITY assessment (verdict INSUFFICIENT), NOT a passed numerical identity; its 1e-8 tolerance was specified but not evaluable; do not present it as a T-C2 result and do not reopen it. SCOPE LIMIT: this gate cannot determine whether terminal treatment explains earlier H-dependent outcomes; A6_strong_fixed_H_and_terminal_opportunity_not_closed remains open. Negative and null results are first-class and must be preserved verbatim. No plant steps, no env.step/reset after construction, no training, no refit, no validation64, no sealed test.",
+      "script_patterns": [
+        "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34z2_converged_contract_gate_v0.py"
+      ],
+      "split": "opened_development_source242_slot0_branch_start_only_no_validation64_no_sealed_test",
+      "method": "A13c-4 bounded converged plus single truncated-control objective-contract gate with full prospective capture on the frozen IMPROVED latency-tree vehicle controller",
+      "seeds": [
+        "canonical_solve_no_training_seed",
+        "goal_facing_H15_control_no_training_seed"
+      ],
+      "config_constraints": {
+        "label_ORIGINAL_vs_IMPROVED": "IMPROVED",
+        "scenario_ids": [
+          "source242_slot0_branch_start"
+        ],
+        "term_mode": "V15_shared",
+        "goal_path": "case.tvp.trajectory_endpoint[61]",
+        "single_truncated_control_cell": "H12_canonical",
+        "all_four_production_cells_max_iter_forced": false,
+        "converged_relative_error_max": 1e-06,
+        "h35_nonconverged_allowance_relative_error_max": 1e-05,
+        "h35_nonconverged_allowance_requires_pre_run_documentation": true,
+        "converged_hard_defect_relative_error_gt": 0.0001,
+        "eps_replay_abs_tolerance": 1e-08,
+        "solver_calls_cap_ceiling": 6,
+        "solver_calls_scheduled": 5,
+        "shared_ceiling_is_accounted_not_inherited": true,
+        "historical_v34u_solver_calls_disclosed_not_inherited": 4,
+        "require_nonzero_assignments_succeeded_all_arms": true,
+        "require_distinct_H15_pre_solve_state": true,
+        "h15_pre_solve_opt_p_hash_inequality_is_match_failure": true,
+        "h12_production_vs_truncated_matched_except_max_iter": true,
+        "persist_complete_labelled_opt_x_and_opt_p_arrays": true,
+        "persist_per_stage_epsilon_vector_with_label_and_dimension": true,
+        "flush_cell_results_after_each_cell": true,
+        "epsilon_sum_vs_epsterm_total_executed_or_reported_unavailable": true,
+        "numeric_readback_of_intended_primals_required": true,
+        "discount_factor": 0.97,
+        "discount_source": "mpc.discount_factor",
+        "soft_obstacle_penalty_term_cons": 1000,
+        "no_validation64_access": true,
+        "no_sealed_or_final_test_access": true,
+        "single_seed_string_per_launch_no_concatenation": true,
+        "do_not_rerun_T_C5_or_reopen_epsilon_sufficiency": true
+      },
+      "training_budget": {
+        "gradient_steps": 0,
+        "selector_refits": 0,
+        "training_steps": 0
+      },
+      "validation_budget": {
+        "env_steps_after_construction": 0,
+        "plant_steps": 0,
+        "solver_calls": 5,
+        "validation64_episodes": 0
+      },
+      "test_budget": {
+        "final_test_episodes": 0,
+        "sealed_test_episodes": 0
+      },
+      "resource_limits": {
+        "solver_calls": 5,
+        "plant_steps": 0,
+        "training_steps": 0,
+        "validation_episodes": 0,
+        "test_episodes": 0
+      },
+      "max_attempts": 3,
+      "max_zero_usage_repairs": 3,
+      "timeout_seconds": 1800,
+      "dependencies": [
+        "T-C2R2-source242-context-loader-repair",
+        "T-C2C-context-identity-preflight"
+      ],
+      "pass_conditions": {
+        "converged_cells_reported_with_relative_errors": true,
+        "inert_intervention_gate_evaluated_and_reported": true,
+        "no_plant_training_validation_or_test_usage": true,
+        "numeric_readback_reported_for_intended_primals": true,
+        "per_stage_epsilon_vector_persisted_with_label_and_dimension": true,
+        "solver_and_whole_decision_timing_reported_with_n": true
+      },
+      "continue_without_review": true
+    }
+  ]
+}

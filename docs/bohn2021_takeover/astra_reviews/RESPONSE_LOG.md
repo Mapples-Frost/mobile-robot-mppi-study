@@ -282,3 +282,13 @@ Updated by GPT-5.5 executor at `2026-09-30T04:52:06.544655+00:00`. Metadata-only
 |---|---|---|---|
 | `A12_registry_backup_schema_contract` | accepted; latest supervisor backup claim materialized, but local temporal consistency decides whether it clears unique-science gate | Proof `research_artifacts/aws_backup_proofs/backup_proof_20260930T044752_from_user_context_after_v31_source_budget_bounds.json` records commit `aa4fba19cba24fa6447df8dc43d2b16bfde4e2bd`, package SHA256 `5a200a111a3cf587527f2ca4116331591ffc9218c581ce928add7140e19fdbc8`, request files present=`True`, temporal consistency=`False`, prior gate cleared by local check=`False`. | New request `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_V31_0447_BACKUP_ASTRA_GATE_RECHECK_20260930T045206Z.json` covers this metadata run. Do not run unique simulation/refit/training/validation/final-test work unless backup gate is explicitly clear. |
 | Astra v31 direction request | pending | NEXT_REVIEW_REQUEST id `v31-source-coverage-budget-bounds-20260930T044819Z`; ANALYSIS_READY exists=`False`, matches/supersedes current=`False`. | Await/read matching Astra report before choosing acquisition/refit/scenario branch. |
+
+<!-- vehicle_true_variable_horizon_v31_0453_backup_astra_gate_recheck_v0-20260930T045656Z -->
+## v31 04:53 backup/Astra gate recheck
+
+Updated by GPT-5.5 executor at `2026-09-30T04:56:56.855113+00:00`. Metadata-only; no simulations, no control steps, no selector refits, no training, no validation64 access and no sealed-test access.
+
+| linked recommendation(s) | disposition | verified evidence | action / outcome / next step |
+|---|---|---|---|
+| `A12_registry_backup_schema_contract` | accepted; latest supervisor backup claim materialized and checked against the prior 04:52 metadata-run request | Proof `research_artifacts/aws_backup_proofs/backup_proof_20260930T045342_from_user_context_after_v31_0447_gate_recheck.json` records commit `85e3a77a0d3d0b0abf21174d3720e99427507b3f`, package SHA256 `39742078498167f5a1758ceb166c99344b3f00ae651696e0e90121eba4446c11`, request files present=`True`, temporal consistency=`True`, prior gate cleared by local check=`True`. | New request `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_V31_0453_BACKUP_ASTRA_GATE_RECHECK_20260930T045656Z.json` covers this metadata run. Do not run unique simulation/refit/training/validation/final-test work unless latest backup gate and Astra gate are explicitly clear. |
+| Astra v31 direction request | pending | NEXT_REVIEW_REQUEST id `v31-source-coverage-budget-bounds-20260930T044819Z`; ANALYSIS_READY exists=`False`, matches/supersedes current=`False`. | Await/read matching Astra report before choosing acquisition/refit/training/scenario branch. |

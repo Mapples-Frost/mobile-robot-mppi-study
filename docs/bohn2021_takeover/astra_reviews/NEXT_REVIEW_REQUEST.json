@@ -1,44 +1,13 @@
 {
-  "request_id": "v33-terminal-h-cross-causal-probe-20260930T054827Z",
-  "created": "2026-09-30T05:57:42.452614+00:00",
+  "request_id": "execution-result:20260930T063700_1e9ddb9c",
+  "trigger": "execution_result_handoff",
+  "created": "2026-09-30T06:37:02.250927+00:00",
+  "experiment_id": "20260930T063700_1e9ddb9c",
   "status": "analysis_requested",
-  "primary_analyst_requested": "gpt-6-astra",
-  "trigger": "Astra-selected v33 terminal x H causal cross-probe completed",
-  "experiment_id": "20260930T054827_b3e91ea1",
-  "method": "IMPROVED development terminal x horizon causal cross-probe; not ORIGINAL SAC; not validation/test",
-  "supersedes_request_id": "v32-h12-supported-default-h35-diagnostic-20260930T051611Z",
-  "question": "Analyze the v33 terminal x horizon continuation matrix over six already-opened development states. Verify whether terminal-value contract effects, horizon/geometry effects, or optimization-basin effects best explain source242 rescue and v19_c13 cost anomaly. Select the next bounded scientific action for GPT-5.5 implementation (terminal/value repair, single-state alternate-initialization diagnostics, prospective new-source mechanism confirmation, training/refit, scenario/comparison redesign, or defer), preserving that v33 is development-only and does not authorize validation64 or sealed-test access.",
-  "headline_numeric_evidence": {
-    "episodes": 72,
-    "control_steps": 4013,
-    "training_or_gradient_steps": 0,
-    "selector_refits": 0,
-    "validation64_bank_opened": false,
-    "validation64_episodes": 0,
-    "sealed_test_accessed": false,
-    "sealed_test_episodes": 0,
-    "source242_by_terminal_mode": {
-      "zero": {"states": 2, "H35_safe_count": 2, "H12_safe_count": 0, "H15_safe_count": 0, "best_physical_horizons": {"35": 2}, "fastest_near_best_horizons": {"35": 2}},
-      "V15_shared": {"states": 2, "H35_safe_count": 2, "H12_safe_count": 0, "H15_safe_count": 0, "best_physical_horizons": {"35": 2}, "fastest_near_best_horizons": {"35": 2}},
-      "V35_shared": {"states": 2, "H35_safe_count": 2, "H12_safe_count": 1, "H15_safe_count": 2, "best_physical_horizons": {"35": 2}, "fastest_near_best_horizons": {"12": 1, "15": 1}}
-    },
-    "v19_c13_H35_terminal_effect": {"V35_physical": 64.58471587439642, "V15_physical": 11.169277744886342, "zero_physical": 11.168923987264899, "V35_minus_best_other": 53.415791887131526},
-    "aggregate_safe_counts_by_horizon": {"12": 11, "15": 14, "25": 14, "35": 18},
-    "aggregate_safe_counts_by_terminal_mode": {"zero": 18, "V15_shared": 18, "V35_shared": 21}
-  },
+  "purpose": "Implement Astra's immediate gate after v33: close evidence hashes and verify terminal polynomial NumPy/CasADi contract before any fixed-context solver-call probe or training.",
+  "execution_status": "complete",
+  "question": "Astra: interpret this outcome, verify current raw evidence and select the next scientific action for GPT-5.5 implementation. Distinguish hypotheses from verified causes and account for fair baselines, terminal confounds and source-level generalization.",
   "evidence_paths": [
-    "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v33_terminal_h_cross_causal_probe_v0_20260930T054827Z/summary.md",
-    "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v33_terminal_h_cross_causal_probe_v0_20260930T054827Z/raw.json",
-    "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v33_terminal_h_cross_causal_probe_v0_20260930T054827Z/completed.json",
-    "research_artifacts/aws_runs/20260930T054827_b3e91ea1/registry.json",
-    "research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_V33_TERMINAL_H_CROSS_CAUSAL_PROBE_20260930T054827Z.json",
-    "docs/bohn2021_takeover/astra_reviews/RESPONSE_LOG.md",
-    "docs/bohn2021_takeover/astra_reviews/20260930T034449Z.md"
-  ],
-  "implementation_limitations_to_review": [
-    "No optional alternate-initialization single-state solver calls were run in v33.",
-    "Existing runner records first action, accepted objective, solver residuals and warm-start hashes but not full stage/slack/gamma^H V decomposition.",
-    "All six states were already-opened development states; no validation64 or sealed final test was accessed."
-  ],
-  "operational_note": "v33 outputs and this refreshed handoff require external backup via research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_V33_TERMINAL_H_CROSS_CAUSAL_PROBE_20260930T054827Z.json before additional unique simulation/refit/training/validation work."
+    "research_artifacts/aws_runs/20260930T063700_1e9ddb9c/registry.json"
+  ]
 }

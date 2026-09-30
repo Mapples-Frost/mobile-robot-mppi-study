@@ -1,0 +1,81 @@
+{
+  "status": "completed",
+  "audit_id": "20260930T122115Z_5681e8",
+  "started": "2026-09-30T12:21:15.670396+00:00",
+  "turn": 7,
+  "max_turns": 16,
+  "first_cycle": false,
+  "supplemental_audit_request_id": "20260930-comprehensive-handoff-missing-raw-training-audit",
+  "request": {
+    "request_id": "execution-result:20260930T122045_c8b14921",
+    "trigger": "execution_result_handoff",
+    "created": "2026-09-30T12:20:47.563802+00:00",
+    "experiment_id": "20260930T122045_c8b14921",
+    "status": "analysis_requested",
+    "purpose": "Execute Opus-approved T-B5/T-B3 A13c-3 wrapper after v34s loader gate: verify repaired strict previous_input and saved-trajectory goal binding, spend at most six low-level solver attempts to test objective reconstruction under forced low-iteration/nonconverged solves, record timing and 16-candidate alias metrics without plant rollout or test access.",
+    "execution_status": "failed",
+    "question": "Active scientific lead: interpret this outcome, verify current raw evidence and select the next scientific action for GPT-5.5 implementation. Distinguish hypotheses from verified causes and account for fair baselines, terminal confounds and source-level generalization.",
+    "evidence_paths": [
+      "research_artifacts/aws_runs/20260930T122045_c8b14921/registry.json"
+    ]
+  },
+  "commit_start": "6e332c6f5f5536dc6d5a7bc6e13471dfb8c3ad14",
+  "inspected": [
+    {
+      "path": "research_artifacts/aws_runs/20260930T122045_c8b14921/registry.json",
+      "sha256": "5f739b6008cc3c3a0e06369679ea86f7884db49a58603f5c598ebb895a23aedf"
+    },
+    {
+      "path": "docs/bohn2021_takeover/opus_lead/PLAN_READY.json",
+      "sha256": "323a1911c1d4ac7b12c5df1397b114683a37df2b268ed08d7c37d72e02c83457"
+    },
+    {
+      "path": "docs/bohn2021_takeover/opus_lead/LATEST.md",
+      "sha256": "91ace21f7b51dcfbcbc9e6f63db26a0f88d456f3d16b230b194d0c4ba1b06ac1"
+    },
+    {
+      "path": "docs/bohn2021_takeover/opus_lead/20260930T121504Z_2c2500.md",
+      "sha256": "bd83471f289b797e23d778d82b1c78c04ae692aa4c538708fd8d0c76837efbc0"
+    },
+    {
+      "path": "research_artifacts/aws_runs/20260930T122045_c8b14921/registry.json",
+      "sha256": "5f739b6008cc3c3a0e06369679ea86f7884db49a58603f5c598ebb895a23aedf"
+    },
+    {
+      "path": "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34t_nonconverged_objective_contract_probe_v0.py",
+      "sha256": "11890d26bfd1ee49e53f6002da4a936affc52e3ee1b02542eaa3919bdbf87f35"
+    },
+    {
+      "path": "research_artifacts/aws_runs/20260930T122045_c8b14921/registry.json",
+      "sha256": "5f739b6008cc3c3a0e06369679ea86f7884db49a58603f5c598ebb895a23aedf"
+    },
+    {
+      "path": "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34t_nonconverged_objective_contract_probe_v0.py",
+      "sha256": "11890d26bfd1ee49e53f6002da4a936affc52e3ee1b02542eaa3919bdbf87f35"
+    },
+    {
+      "path": "docs/bohn2021_takeover/astra_reviews/NEXT_REVIEW_REQUEST.json",
+      "sha256": "bafd0637d386bb257ea0a95feae3f3257460903f0ef22461fb126bd9cd72c885"
+    },
+    {
+      "path": "docs/bohn2021_takeover/astra_reviews/20260930T094912Z.md",
+      "sha256": "0a61fdc6e1777227fdf46f0162094daac2f3bb9a219f51f618372e2f154f9183"
+    },
+    {
+      "path": "research_artifacts/aws_runs/20260930T122045_c8b14921/registry.json",
+      "sha256": "5f739b6008cc3c3a0e06369679ea86f7884db49a58603f5c598ebb895a23aedf"
+    },
+    {
+      "path": "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34n_nonconverged_objective_contract_probe_v0.py",
+      "sha256": "26ce183ccdac0e042676b49d3ba0993b90da575c89fab9d4765d9caeb854f61d"
+    }
+  ],
+  "superseded_request_ids": [],
+  "cross_review_id": "20260930T094912Z",
+  "working_language": "en",
+  "working_language_policy": "RESEARCH_WORKING_LANGUAGE_EN_V1",
+  "registry_context_experiment_id": "20260930T122045_c8b14921",
+  "updated": "2026-09-30T12:27:02.408136+00:00",
+  "completed": "2026-09-30T12:27:02.414127+00:00",
+  "commit_end": "0b77f490dfa0feac5a4591a0ae676c39416345ec"
+}

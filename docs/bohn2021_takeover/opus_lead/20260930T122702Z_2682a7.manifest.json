@@ -1,0 +1,85 @@
+{
+  "status": "completed",
+  "audit_id": "20260930T122702Z_2682a7",
+  "started": "2026-09-30T12:27:02.458432+00:00",
+  "turn": 6,
+  "max_turns": 16,
+  "first_cycle": false,
+  "supplemental_audit_request_id": "20260930-comprehensive-handoff-missing-raw-training-audit",
+  "request": {
+    "request_id": "execution-result:20260930T122045_c8b14921",
+    "trigger": "execution_result_handoff",
+    "created": "2026-09-30T12:20:47.563802+00:00",
+    "experiment_id": "20260930T122045_c8b14921",
+    "status": "analysis_requested",
+    "purpose": "Execute Opus-approved T-B5/T-B3 A13c-3 wrapper after v34s loader gate: verify repaired strict previous_input and saved-trajectory goal binding, spend at most six low-level solver attempts to test objective reconstruction under forced low-iteration/nonconverged solves, record timing and 16-candidate alias metrics without plant rollout or test access.",
+    "execution_status": "failed",
+    "question": "Active scientific lead: interpret this outcome, verify current raw evidence and select the next scientific action for GPT-5.5 implementation. Distinguish hypotheses from verified causes and account for fair baselines, terminal confounds and source-level generalization.",
+    "evidence_paths": [
+      "research_artifacts/aws_runs/20260930T122045_c8b14921/registry.json"
+    ]
+  },
+  "commit_start": "0b77f490dfa0feac5a4591a0ae676c39416345ec",
+  "inspected": [
+    {
+      "path": "research_artifacts/aws_runs/20260930T122045_c8b14921/registry.json",
+      "sha256": "5f739b6008cc3c3a0e06369679ea86f7884db49a58603f5c598ebb895a23aedf"
+    },
+    {
+      "path": "docs/bohn2021_takeover/opus_lead/PLAN_READY.json",
+      "sha256": "417e11688a898ba02c12ca5b7388340704e2eca1d9eef5e19ddbe2847eae09a8"
+    },
+    {
+      "path": "docs/bohn2021_takeover/astra_reviews/LATEST.md",
+      "sha256": "8fcd25681f6aa870804cf375b745f43bf8bf844e40974caab1bd18d7159b6b2b"
+    },
+    {
+      "path": "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34t_nonconverged_objective_contract_probe_v0.py",
+      "sha256": "11890d26bfd1ee49e53f6002da4a936affc52e3ee1b02542eaa3919bdbf87f35"
+    },
+    {
+      "path": "docs/bohn2021_takeover/astra_reviews/20260930T121234Z.md",
+      "sha256": "7e2abd75d159b26a2c919a6149771a54640b2bc7dd6658aae6b02fad1cbc6461"
+    },
+    {
+      "path": "docs/bohn2021_takeover/opus_lead/LATEST.md",
+      "sha256": "4d5bf2236f98c40ce5434f734ee12acf77318f9860ae83ee4f685ef6063ae60d"
+    },
+    {
+      "path": "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34t_nonconverged_objective_contract_probe_v0.py",
+      "sha256": "11890d26bfd1ee49e53f6002da4a936affc52e3ee1b02542eaa3919bdbf87f35"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34t_nonconverged_objective_contract_probe_v0_20260930T122045Z/failed.json",
+      "sha256": "be2b07e2dcb5953dfc6f7a9a1226a385aeb3d54a6c7e78b89a0a26cb9137e1cd"
+    },
+    {
+      "path": "docs/bohn2021_takeover/opus_lead/20260930T122115Z_5681e8.md",
+      "sha256": "9ae7262188effeab065352f485dd833146bae8acb47d70dfdfba9a4f2a072f10"
+    },
+    {
+      "path": "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34n_nonconverged_objective_contract_probe_v0.py",
+      "sha256": "26ce183ccdac0e042676b49d3ba0993b90da575c89fab9d4765d9caeb854f61d"
+    },
+    {
+      "path": "docs/bohn2021_takeover/opus_lead/PLAN_READY.json",
+      "sha256": "417e11688a898ba02c12ca5b7388340704e2eca1d9eef5e19ddbe2847eae09a8"
+    },
+    {
+      "path": "docs/bohn2021_takeover/astra_reviews/NEXT_REVIEW_REQUEST.json",
+      "sha256": "bafd0637d386bb257ea0a95feae3f3257460903f0ef22461fb126bd9cd72c885"
+    },
+    {
+      "path": "docs/bohn2021_takeover/opus_lead/20260930T122115Z_5681e8.md",
+      "sha256": "9ae7262188effeab065352f485dd833146bae8acb47d70dfdfba9a4f2a072f10"
+    }
+  ],
+  "superseded_request_ids": [],
+  "cross_review_id": "20260930T121234Z",
+  "working_language": "en",
+  "working_language_policy": "RESEARCH_WORKING_LANGUAGE_EN_V1",
+  "registry_context_experiment_id": "20260930T122045_c8b14921",
+  "updated": "2026-09-30T12:31:02.615950+00:00",
+  "completed": "2026-09-30T12:31:02.621907+00:00",
+  "commit_end": "0b77f490dfa0feac5a4591a0ae676c39416345ec"
+}

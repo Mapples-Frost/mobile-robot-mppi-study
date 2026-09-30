@@ -1,13 +1,23 @@
 #!/usr/bin/env python3
-"""v34t / T-B5+T-B3 active-plan non-converged objective-contract probe.
+"""v34t / T-B5''+T-B3 active-plan non-converged objective-contract probe.
 
-Prepared after v34s/T-B4 passed. This wrapper preserves the v34n bounded
-low-iteration solver-contract design while binding the two operational repairs
-required by the active Opus plan sequence:
+Prepared after v34s/T-B4 passed. This repaired wrapper preserves the v34n
+bounded low-iteration solver-contract design while binding the two operational
+repairs required by the active Opus plan sequence:
 
 * v34o strict previous_input scalarization and fail-loud _u0 setup;
 * v34s/v34q authoritative saved trajectory endpoint goal extraction, with
-  endpoint index == round(reference.traj_steps)-1.
+  endpoint index == round(reference.traj_steps)-1;
+* v34t-post-123137 strict numeric TVP scalarization before controller.get_action,
+  because raw saved obj_* TVP cells may be dicts (e.g. {true/forecast}) and the
+  obstacle-noise controller expects numeric arrays.
+
+T-B5'' repair: do not pin a rotating PLAN_READY report hash as a source
+constant. Instead, require an explicit --expected-plan-request and verify that
+the *live* PLAN_READY record is internally self-consistent: its report exists,
+hashes to report_sha256, is named by LATEST.md, and contains the literal task
+authorization token A13c3_off_solution_objective_contract. The verified live
+plan is then recorded in run_started/raw artifacts.
 
 It also evaluates the 16 v34k previously-passing objective alias candidates at
 each solved point, records timing summaries, and keeps the inherited SOLVE_CAP=6.
@@ -18,14 +28,16 @@ training, or selector refit is allowed.
 from __future__ import annotations
 
 import argparse
+import copy
 import csv
 import datetime as dt
 import glob
+import hashlib
 import json
 import math
 import sys
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence
+from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
 
 import numpy as np
 
@@ -42,10 +54,13 @@ import vehicle_true_variable_horizon_v34s_loader_gate_v0 as v34s  # noqa:E402
 
 NAME = "vehicle_true_variable_horizon_v34t_nonconverged_objective_contract_probe_v0"
 STAMP = dt.datetime.now(dt.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-# Current activated lead plan supplied by the supervisor/user context.
-OPUS_REPORT = ROOT / "docs/bohn2021_takeover/opus_lead/20260930T120929Z_f87f2b.md"
-OPUS_REPORT_SHA = "ded62e6413a9ab52c0c2f2ed651e592fe6203bbcb0650ed002beff1e9dd6a2a5"
-OPUS_REQUEST = "execution-result:20260930T120837_e51ace56"
+# Live-plan values are derived from PLAN_READY inside patched_verify_gates. These
+# globals are updated there and then copied into v34n before raw output is written.
+OPUS_REPORT = ROOT / "docs/bohn2021_takeover/opus_lead/PLAN_READY_DERIVED_AT_RUNTIME.md"
+OPUS_REPORT_SHA = "PLAN_READY_DERIVED_AT_RUNTIME"
+OPUS_REQUEST = "PLAN_READY_DERIVED_AT_RUNTIME"
+EXPECTED_PLAN_REQUEST: Optional[str] = None
+TASK_AUTHORIZATION_TOKEN = "A13c3_off_solution_objective_contract"
 # Immediate predecessor plan that authorized the v34s loader-gate artifact used below.
 PREDECESSOR_OPUS_REPORT = ROOT / "docs/bohn2021_takeover/opus_lead/20260930T115516Z_8330f5.md"
 PREDECESSOR_OPUS_REPORT_SHA = "3acada362e46ec94b6a21c9738e076a2c95ca8db7be95369a560969d3f7eb474"
@@ -54,6 +69,12 @@ V34M_DONE = ROOT / "research_artifacts/aws_diagnostics/vehicle_true_variable_hor
 V34N_FAILED = ROOT / "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34n_nonconverged_objective_contract_probe_v0_20260930T112938Z/failed.json"
 V34K_GLOB = str(ROOT / "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34k_label_accessor_objective_localization_v0_*/candidate_residuals.csv")
 MAIN_CANDIDATE_ID = v34n.FORMULA_SPEC["candidate_id"]
+PRECOMMITTED_OBJECTIVE_THRESHOLDS = {
+    "default_relative_error_max": 1e-6,
+    "h35_forced_nonconverged_relative_error_max": 1e-5,
+    "hard_defect_relative_error_gt": 1e-4,
+    "h35_allowance_applies_only_when_horizon_35_and_forced_nonconverged_or_near_offoptimal": True,
+}
 
 
 class ContractError(RuntimeError):
@@ -83,6 +104,10 @@ def sha256(path: Path) -> str:
     return v34n.sha256(path)
 
 
+def canonical_hash(value: Any) -> str:
+    return hashlib.sha256(json.dumps(v34n.clean(value), sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False).encode("utf-8")).hexdigest()
+
+
 def parse_time(value: Any) -> Optional[dt.datetime]:
     if not isinstance(value, str) or not value:
         return None
@@ -95,6 +120,92 @@ def parse_time(value: Any) -> Optional[dt.datetime]:
     return t.astimezone(dt.timezone.utc)
 
 
+def tvp_scalar(value: Any) -> Tuple[Optional[float], str]:
+    """Extract one finite scalar from saved TVP cells, preserving a rule label."""
+    if isinstance(value, Mapping):
+        for key in ("true", "value", "actual", "forecast"):
+            if key in value:
+                out, subrule = tvp_scalar(value.get(key))
+                if out is not None:
+                    return out, f"mapping.{key}->{subrule}"
+        return None, "mapping_without_true_value_actual_or_forecast"
+    if isinstance(value, (list, tuple)):
+        if len(value) == 1:
+            out, subrule = tvp_scalar(value[0])
+            return out, f"singleton_sequence->{subrule}"
+        return None, f"sequence_len_{len(value)}_not_singleton"
+    try:
+        a = np.asarray(value, dtype=float).reshape(-1)
+    except Exception as exc:
+        return None, f"numeric_conversion_failed:{type(exc).__name__}"
+    if a.size != 1:
+        return None, f"numeric_size_{int(a.size)}_not_singleton"
+    out = float(a[0])
+    if not math.isfinite(out):
+        return None, "nonfinite_scalar"
+    return out, "numeric_singleton"
+
+
+def numericize_shifted_tvp(shifted: Mapping[str, Any]) -> Tuple[Dict[str, List[float]], Dict[str, Any]]:
+    numeric: Dict[str, List[float]] = {}
+    meta: Dict[str, Any] = {"channels": {}, "channel_count": 0, "conversion": "strict_scalarize_saved_tvp_cells_before_controller_get_action"}
+    for name, values in shifted.items():
+        if isinstance(values, (list, tuple)):
+            seq = list(values)
+        else:
+            seq = [values]
+        out_values: List[float] = []
+        rule_counts: Dict[str, int] = {}
+        first_rule: Optional[str] = None
+        for i, cell in enumerate(seq):
+            val, rule = tvp_scalar(cell)
+            if val is None:
+                raise ContractError(f"shifted_tvp[{name!r}][{i}] is not a finite scalar under strict TVP numericization: rule={rule} raw_type={type(cell).__name__}")
+            out_values.append(float(val))
+            first_rule = first_rule or rule
+            rule_counts[rule] = rule_counts.get(rule, 0) + 1
+        numeric[str(name)] = out_values
+        meta["channels"][str(name)] = {
+            "length": len(out_values),
+            "first": out_values[0] if out_values else None,
+            "last": out_values[-1] if out_values else None,
+            "first_rule": first_rule,
+            "rule_counts": rule_counts,
+        }
+    meta["channel_count"] = len(numeric)
+    meta["numeric_hash"] = canonical_hash(numeric)
+    return numeric, meta
+
+
+def configure_context_no_reset_strict_numeric_tvp(env: Any, context: Mapping[str, Any], h: int) -> Dict[str, Any]:
+    """Preserve v34o/v34s loader semantics, then numericize TVP for get_action.
+
+    The v34s zero-solve loader gate only inspected controller setup. The first
+    T-B3 attempt reached get_action and exposed that raw saved obj_* TVP entries
+    are dict-valued, while the obstacle-noise controller expects numeric arrays.
+    This operational patch converts each saved TVP cell to one finite scalar via
+    the same priority used by v34q (true/value/actual/forecast), fails loud on
+    non-scalar cells, and then replaces both env TVP storage and ctrl._tvp_data.
+    """
+    meta = v34o.configure_context_no_reset_strict(env, context, h)
+    shifted = meta.get("shifted_tvp")
+    if not isinstance(shifted, Mapping):
+        raise ContractError("v34o configure_context_no_reset_strict did not return shifted_tvp mapping")
+    numeric, conversion = numericize_shifted_tvp(shifted)
+    if hasattr(env.control_system, "tvps"):
+        for name, values in numeric.items():
+            if name in env.control_system.tvps:
+                env.control_system.tvps[name].values = copy.deepcopy(values)
+    ctrl = env.control_system.controller
+    ctrl._tvp_data = copy.deepcopy(numeric)
+    if hasattr(ctrl, "obj_data"):
+        ctrl.obj_data = None
+    meta["shifted_tvp_raw_hash"] = canonical_hash(shifted)
+    meta["shifted_tvp_numeric_conversion"] = conversion
+    meta["shifted_tvp"] = numeric
+    return meta
+
+
 def latest_completed(pattern: str, label: str) -> Path:
     paths = [Path(p) for p in sorted(glob.glob(pattern))]
     if not paths:
@@ -104,6 +215,60 @@ def latest_completed(pattern: str, label: str) -> Path:
 
 def latest_v34s_completed() -> Path:
     return latest_completed(str(ROOT / "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34s_loader_gate_v0_*/completed.json"), "v34s/T-B4")
+
+
+def live_plan_consistency(expected_request: str) -> Dict[str, Any]:
+    """Verify active PLAN_READY/LATEST consistency without a stale hash pin."""
+    ready = read_json(v34n.PLAN_READY)
+    request = str(ready.get("request_id") or "")
+    if request != expected_request:
+        raise ContractError(f"active PLAN_READY request mismatch: request={request}; expected={expected_request}")
+    report_field = ready.get("report")
+    if not isinstance(report_field, str) or not report_field:
+        raise ContractError("active PLAN_READY lacks a report path")
+    report_path = Path(report_field)
+    if not report_path.is_absolute():
+        report_path = ROOT / report_path
+    if not report_path.exists():
+        raise ContractError("active PLAN_READY report missing: " + rel(report_path))
+    declared_sha = str(ready.get("report_sha256") or "")
+    actual_sha = sha256(report_path)
+    if actual_sha != declared_sha:
+        raise ContractError(f"active PLAN_READY report sha mismatch: actual={actual_sha} declared={declared_sha}")
+    report_text = report_path.read_text(encoding="utf-8", errors="replace")
+    if TASK_AUTHORIZATION_TOKEN not in report_text:
+        raise ContractError(f"active Opus report lacks required task authorization token {TASK_AUTHORIZATION_TOKEN!r}")
+    latest_text = v34n.OPUS_LATEST.read_text(encoding="utf-8", errors="replace") if v34n.OPUS_LATEST.exists() else ""
+    report_rel = rel(report_path)
+    if report_rel not in latest_text and str(report_path) not in latest_text:
+        raise ContractError("Opus LATEST.md does not point to active PLAN_READY report")
+    return {
+        "expected_plan_request_cli": expected_request,
+        "required_task_authorization_token": TASK_AUTHORIZATION_TOKEN,
+        "task_authorization_token_present": True,
+        "request_id": request,
+        "report": report_rel,
+        "report_sha256": declared_sha,
+        "report_sha256_actual": actual_sha,
+        "report_exists": True,
+        "latest_contains_report": True,
+        "plan_ready_path": rel(v34n.PLAN_READY),
+        "latest_path": rel(v34n.OPUS_LATEST),
+        "completed": ready.get("completed"),
+        "audit_id": ready.get("audit_id"),
+        "primary_analyst": ready.get("primary_analyst"),
+    }
+
+
+def bind_live_plan(plan_info: Mapping[str, Any]) -> None:
+    """Copy verified live-plan identity into this wrapper and the delegated v34n module."""
+    global OPUS_REPORT, OPUS_REPORT_SHA, OPUS_REQUEST
+    OPUS_REPORT = ROOT / str(plan_info["report"])
+    OPUS_REPORT_SHA = str(plan_info["report_sha256"])
+    OPUS_REQUEST = str(plan_info["request_id"])
+    v34n.OPUS_REPORT = OPUS_REPORT
+    v34n.OPUS_REPORT_SHA = OPUS_REPORT_SHA
+    v34n.OPUS_REQUEST = OPUS_REQUEST
 
 
 def extract_v34n_float_list_call_site(failed: Mapping[str, Any]) -> Dict[str, Any]:
@@ -130,23 +295,22 @@ def extract_v34n_float_list_call_site(failed: Mapping[str, Any]) -> Dict[str, An
 
 
 def patched_verify_gates(args: argparse.Namespace) -> Dict[str, Any]:
-    for p in [v34n.PLAN_READY, OPUS_REPORT, V34M_DONE, V34N_FAILED]:
+    if EXPECTED_PLAN_REQUEST is None:
+        raise ContractError("--expected-plan-request was not bound before verify_gates")
+    for p in [v34n.PLAN_READY, V34M_DONE, V34N_FAILED]:
         if not p.exists():
             raise ContractError("missing prerequisite " + rel(p))
-    ready = read_json(v34n.PLAN_READY)
-    if ready.get("request_id") != OPUS_REQUEST or ready.get("report_sha256") != OPUS_REPORT_SHA:
-        raise ContractError(f"active PLAN_READY mismatch: request={ready.get('request_id')} sha={ready.get('report_sha256')}; expected request={OPUS_REQUEST} sha={OPUS_REPORT_SHA}")
-    if sha256(OPUS_REPORT) != OPUS_REPORT_SHA:
-        raise ContractError("active Opus report sha mismatch")
-    latest_text = v34n.OPUS_LATEST.read_text(encoding="utf-8", errors="replace") if v34n.OPUS_LATEST.exists() else ""
-    if rel(OPUS_REPORT) not in latest_text:
-        raise ContractError("Opus LATEST.md does not point to active report")
+    plan_info = live_plan_consistency(EXPECTED_PLAN_REQUEST)
+    bind_live_plan(plan_info)
     v34m = read_json(V34M_DONE)
     if v34m.get("hard_pass") is not True:
         raise ContractError("v34m predecessor did not hard_pass")
     v34n_fail = read_json(V34N_FAILED)
     if int(v34n_fail.get("new_solver_calls_recorded", 0)) != 0:
         raise ContractError("v34n predecessor unexpectedly spent solver calls")
+    call_site = extract_v34n_float_list_call_site(v34n_fail)
+    if call_site.get("call_site_verified") is not True:
+        raise ContractError("v34n float(list) call site was not verified from failed.json traceback")
     s_path = latest_v34s_completed()
     s_done = read_json(s_path)
     if s_done.get("hard_pass") is not True or s_done.get("passed") is not True:
@@ -171,17 +335,18 @@ def patched_verify_gates(args: argparse.Namespace) -> Dict[str, Any]:
         "packages_this_run": [{"sha256": args.backup_package_sha256, "verification": "user_context_verified_backup", "bytes": int(args.backup_package_bytes)}],
         "source": "supervisor_user_context_current_prompt",
         "purpose": "gate v34t/A13c-3 <=6 low-level solver objective-contract probe after v34s loader gate",
+        "active_plan_self_consistency": plan_info,
+        "orphan_receipt_reconciliation": "No v34t backup proof was written by the stale-pin failed v34t run because it failed before backup proof creation; this proof belongs to the repaired run.",
     }
     proof_path = v34n.BACKUP_REQUEST.parent / f"backup_proof_{v34n.STAMP}_from_user_context_before_v34t_a13c3_probe.json"
     write_json(proof_path, proof)
-    call_site = extract_v34n_float_list_call_site(v34n_fail)
-    if call_site.get("call_site_verified") is not True:
-        raise ContractError("v34n float(list) call site was not verified from failed.json traceback")
     return {
         "active_lead_plan_ready": rel(v34n.PLAN_READY),
-        "active_lead_report": rel(OPUS_REPORT),
-        "active_lead_report_sha256": OPUS_REPORT_SHA,
-        "active_lead_request": OPUS_REQUEST,
+        "active_lead_report": plan_info["report"],
+        "active_lead_report_sha256": plan_info["report_sha256"],
+        "active_lead_request": plan_info["request_id"],
+        "plan_self_consistency": plan_info,
+        "precommitted_objective_contract_thresholds": PRECOMMITTED_OBJECTIVE_THRESHOLDS,
         "predecessor_lead_report_for_v34s": rel(PREDECESSOR_OPUS_REPORT),
         "predecessor_lead_report_sha256_for_v34s": PREDECESSOR_OPUS_REPORT_SHA,
         "predecessor_lead_request_for_v34s": PREDECESSOR_OPUS_REQUEST,
@@ -443,6 +608,7 @@ def install_augmented_formula_analyze_and_outputs() -> None:
             "alias_group_main_ranks_by_cell": [s.get("main_rank_by_relative_error") for s in alias_summaries],
             "alias_group_best_candidate_ids_by_cell": [s.get("best_candidate_id") for s in alias_summaries],
             "alias_group_relative_error_spans_by_cell": [s.get("relative_error_span") for s in alias_summaries],
+            "precommitted_objective_contract_thresholds": PRECOMMITTED_OBJECTIVE_THRESHOLDS,
         })
         # Preserve the original objective-contract pass value but make the
         # low-iteration, actual non-convergence/off-optimal status and alias-report
@@ -474,6 +640,7 @@ def install_augmented_formula_analyze_and_outputs() -> None:
             f"- Main-candidate ranks by cell: `{h.get('alias_group_main_ranks_by_cell')}`.",
             f"- Best candidate IDs by cell: `{h.get('alias_group_best_candidate_ids_by_cell')}`.",
             f"- Relative-error spans by cell: `{h.get('alias_group_relative_error_spans_by_cell')}`.",
+            f"- Precommitted thresholds: `{h.get('precommitted_objective_contract_thresholds')}`.",
             f"- CSV: `{rel(alias_csv)}`.",
             "",
         ]
@@ -504,15 +671,21 @@ def patch_module_identity_and_contracts() -> None:
     v34n._CURRENT_ARM_ID = None
     v34n._TOTAL_SOLVER_CALLS = 0
     v34n.base.load_contexts = v34o.load_contexts_strict
-    v34n.base.configure_context_no_reset = v34o.configure_context_no_reset_strict
+    v34n.base.configure_context_no_reset = configure_context_no_reset_strict_numeric_tvp
     v34n.base.extract_goal_xy = v34s.strict_authoritative_goal_xy
     v34n.verify_gates = patched_verify_gates  # type: ignore[assignment]
     install_augmented_formula_analyze_and_outputs()
 
 
 def run(argv: Optional[Sequence[str]] = None) -> int:
+    global EXPECTED_PLAN_REQUEST
+    raw_args = list(sys.argv[1:] if argv is None else argv)
+    pre = argparse.ArgumentParser(add_help=False)
+    pre.add_argument("--expected-plan-request", required=True)
+    ns, remaining = pre.parse_known_args(raw_args)
+    EXPECTED_PLAN_REQUEST = str(ns.expected_plan_request)
     patch_module_identity_and_contracts()
-    return v34n.run(argv)
+    return v34n.run(remaining)
 
 
 if __name__ == "__main__":

@@ -7410,3 +7410,11 @@ UTC: 2026-09-30T12:09:26.199268+00:00. Ran the Opus-authorized loader gate after
 
 ## 2026-09-30T12:22:55.159636+00:00
 
+<!-- vehicle-v34t-a13c3-nonconverged-objective-contract-20260930T123137Z -->
+## v34n/A13c-3 non-converged objective-contract probe
+
+UTC: 2026-09-30T12:32:24.415252+00:00. Ran active-Opus A13c-3 as a bounded development-only solver-contract diagnostic: new low-level solver calls=0/6, plant_steps=0, env_step_after_construction=0, training/refit=0, validation64=0, sealed_test=0. G2_pass=False; hard_objective_contract_defect=False; forced_nonconverged_or_near_offoptimal_cells=0/4; direct_nlp_eval_available_cells=0; alias_branch_separation_observed=False; canonical_abs_residual_over_terminal_range=[None, None]. Evidence: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34t_nonconverged_objective_contract_probe_v0_20260930T123137Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34t_nonconverged_objective_contract_probe_v0_20260930T123137Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34t_nonconverged_objective_contract_probe_v0_20260930T123137Z/completed.json`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34t_nonconverged_objective_contract_probe_v0_20260930T123137Z/cell_metrics.csv`. Backup request: `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_V34T_NONCONVERGED_OBJECTIVE_CONTRACT_PROBE_20260930T123137Z.json`.
+
+
+## 2026-09-30T12:35:57.444674+00:00
+

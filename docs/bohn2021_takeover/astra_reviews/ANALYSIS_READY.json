@@ -1,17 +1,11 @@
 {
-  "request_id": "execution-result:20260930T115434_d4836078",
-  "experiment_id": "20260930T115434_d4836078",
-  "report": "docs/bohn2021_takeover/astra_reviews/20260930T094912Z.md",
-  "completed": "2026-09-30T12:12:34.516175+00:00",
+  "request_id": "execution-result:20260930T122045_c8b14921",
+  "experiment_id": "20260930T122045_c8b14921",
+  "report": "docs/bohn2021_takeover/astra_reviews/20260930T121234Z.md",
+  "completed": "2026-09-30T12:25:09.707813+00:00",
   "primary_analyst": "gpt-6-astra",
-  "report_sha256": "0a61fdc6e1777227fdf46f0162094daac2f3bb9a219f51f618372e2f154f9183",
+  "report_sha256": "7e2abd75d159b26a2c919a6149771a54640b2bc7dd6658aae6b02fad1cbc6461",
   "supersedes_request_ids": [
-    "execution-result:20260930T094857_bf0b0af1",
-    "execution-result:20260930T101852_6b9c3451",
-    "execution-result:20260930T104147_c9faadcc",
-    "execution-result:20260930T105719_a0cd3d48",
-    "execution-result:20260930T111305_5a8be004",
-    "execution-result:20260930T112938_862dec3e",
-    "execution-result:20260930T114327_085d17fb"
+    "execution-result:20260930T120837_e51ace56"
   ]
 }

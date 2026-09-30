@@ -1,0 +1,304 @@
+{
+  "audit_id": "20260930T084456Z",
+  "status": "completed",
+  "started": "2026-09-30T08:44:56.095456+00:00",
+  "turn": 10,
+  "request": {
+    "request_id": "execution-result:20260930T084409_7dd79362",
+    "trigger": "execution_result_handoff",
+    "created": "2026-09-30T08:44:44.167182+00:00",
+    "experiment_id": "20260930T084409_7dd79362",
+    "status": "analysis_requested",
+    "purpose": "Astra Task2: fixed 24-call objective-vs-basin solver probe separating terminal objective ranking from warm-start/basin effects after Task1+backup gates.",
+    "execution_status": "failed",
+    "question": "Astra: interpret this outcome, verify current raw evidence and select the next scientific action for GPT-5.5 implementation. Distinguish hypotheses from verified causes and account for fair baselines, terminal confounds and source-level generalization.",
+    "evidence_paths": [
+      "research_artifacts/aws_runs/20260930T084409_7dd79362/registry.json"
+    ]
+  },
+  "max_turns": 12,
+  "commit_start": "b8fa8c8833928415a9d549b321fd58e43cfbb0b5",
+  "dirty_diff_hash": "0a501072b0035c27514e4bd206dd424ee9aeb5a7e71ffa9f6984adc46a77d140",
+  "fingerprint": "[null, \"20260930T084409_7dd79362\", \"idle\", \"end_of_bounded_cycle_after_v34_task2_script_written_not_run\"]",
+  "inspected": [
+    {
+      "path": "docs/bohn2021_takeover/astra_reviews/20260930T072558Z.md",
+      "sha256": "c2cdc17ade124ba25d7d0ede80c3f6452c06bfcadaf1a957f87c564e3d2173b2"
+    },
+    {
+      "path": "docs/bohn2021_takeover/astra_reviews/RESPONSE_LOG.md",
+      "sha256": "96d320356687ac58cee1e82bdef2f218a2fc4d7535b689f4478a7e08b8c01f4f"
+    },
+    {
+      "path": "research_artifacts/aws_runs/20260930T084409_7dd79362/registry.json",
+      "sha256": "98b68f61a0a7af53c85671a0fd18328eaf0522e8faec74573f2bf66e8cdaf1f6"
+    },
+    {
+      "path": "STATUS.md",
+      "sha256": "0fa82a09cfe8a1ef6edf34888aa30eb7139f20c34dd452e15b003c722d7d4112"
+    },
+    {
+      "path": "REPRODUCTION_PROTOCOL.md",
+      "sha256": "ffb9f57194360443cdd95ca8fa02e87793b19843f78c25d6f62078c8751d459c"
+    },
+    {
+      "path": "docs/bohn2021_takeover/astra_reviews/20260930T072558Z.md",
+      "sha256": "c2cdc17ade124ba25d7d0ede80c3f6452c06bfcadaf1a957f87c564e3d2173b2"
+    },
+    {
+      "path": "docs/bohn2021_takeover/astra_reviews/RESPONSE_LOG.md",
+      "sha256": "96d320356687ac58cee1e82bdef2f218a2fc4d7535b689f4478a7e08b8c01f4f"
+    },
+    {
+      "path": "research_artifacts/aws_runs/20260930T084409_7dd79362/registry.json",
+      "sha256": "98b68f61a0a7af53c85671a0fd18328eaf0522e8faec74573f2bf66e8cdaf1f6"
+    },
+    {
+      "path": "research_artifacts/aws_runs/20260930T084409_7dd79362/stderr.log",
+      "sha256": "d041e2a202813056f325ace00496fce649eab17a28158fd18f3a5cbf02d8f7df"
+    },
+    {
+      "path": "research_artifacts/aws_runs/20260930T084409_7dd79362/stdout.log",
+      "sha256": "dd6c321bb78440b4f00fdabb71ca4678e80750c6b10e4a82b51737b3869e0546"
+    },
+    {
+      "path": "STATUS.md",
+      "sha256": "0fa82a09cfe8a1ef6edf34888aa30eb7139f20c34dd452e15b003c722d7d4112"
+    },
+    {
+      "path": "REPRODUCTION_PROTOCOL.md",
+      "sha256": "ffb9f57194360443cdd95ca8fa02e87793b19843f78c25d6f62078c8751d459c"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34_objective_basin_solver_probe_v0_20260930T084410Z/failed.json",
+      "sha256": "47399b0be8a051a2b8edbfad40cf7d03876bafd31719ecd0290097ea706d6c75"
+    },
+    {
+      "path": "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34_objective_basin_solver_probe_v0.py",
+      "sha256": "0de28bc84e57989dc3be26973e61e7d20ce9740a90d8a6cd19534e1af72e4b03"
+    },
+    {
+      "path": "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34_objective_basin_solver_probe_v0.py",
+      "sha256": "0de28bc84e57989dc3be26973e61e7d20ce9740a90d8a6cd19534e1af72e4b03"
+    },
+    {
+      "path": "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34_objective_basin_solver_probe_v0.py",
+      "sha256": "0de28bc84e57989dc3be26973e61e7d20ce9740a90d8a6cd19534e1af72e4b03"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v33_bookkeeping_preflight_v0_20260930T074544Z/raw.json",
+      "sha256": "8a7e1e575becec349dd9ebf31deace3c64dc312cabb301532e827880225ff454"
+    },
+    {
+      "path": "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34_objective_basin_solver_probe_v0.py",
+      "sha256": "0de28bc84e57989dc3be26973e61e7d20ce9740a90d8a6cd19534e1af72e4b03"
+    },
+    {
+      "path": "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34_objective_basin_solver_probe_v0.py",
+      "sha256": "0de28bc84e57989dc3be26973e61e7d20ce9740a90d8a6cd19534e1af72e4b03"
+    },
+    {
+      "path": "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34_objective_basin_solver_probe_v0.py",
+      "sha256": "0de28bc84e57989dc3be26973e61e7d20ce9740a90d8a6cd19534e1af72e4b03"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v33_terminal_h_cross_causal_probe_v0_20260930T054827Z/episodes/exec33046_v33_046_v19_c13_V15_shared_H35_trueH35/trace.jsonl",
+      "sha256": "f25c597bda8725833c4a02b291992ce01421217292930de3f7f2e7fe0705b562"
+    },
+    {
+      "path": "experiments/bohn2021_aws/vehicle_true_variable_horizon_v33_bookkeeping_preflight_v0.py",
+      "sha256": "dcd072c25fdc8a69c23124360923d9549af6e1e50be90e54ac0e75659878f928"
+    },
+    {
+      "path": "research_artifacts/bohn2021_reproduction_2026-09-17/sources/gym-horizon/gym_let_mpc/controllers.py",
+      "sha256": "a34ea0764caf8bde123bf9e8c7a8316d8dbff454d0cce558bbd84229eb60defc"
+    },
+    {
+      "path": "experiments/bohn2021_reproduction/SOURCE_MAP.md",
+      "sha256": "c4c1851e0219521f9ac86369cab62456ea803ed1e170519a149723f81b3f57f7"
+    },
+    {
+      "path": "research_artifacts/bohn2021_reproduction_2026-09-17/sources/gym-horizon/gym_let_mpc/controllers.py",
+      "sha256": "a34ea0764caf8bde123bf9e8c7a8316d8dbff454d0cce558bbd84229eb60defc"
+    },
+    {
+      "path": "research_artifacts/bohn2021_reproduction_2026-09-17/sources/do-mpc-horizon/do_mpc/controller.py",
+      "sha256": "97b61401b2cb368240c60db856651141a2d5f9e95c73afe442300003c0d0063a"
+    },
+    {
+      "path": "research_artifacts/bohn2021_reproduction_2026-09-17/sources/do-mpc-horizon/do_mpc/controller.py",
+      "sha256": "97b61401b2cb368240c60db856651141a2d5f9e95c73afe442300003c0d0063a"
+    },
+    {
+      "path": "research_artifacts/bohn2021_reproduction_2026-09-17/sources/do-mpc-horizon/do_mpc/controller.py",
+      "sha256": "97b61401b2cb368240c60db856651141a2d5f9e95c73afe442300003c0d0063a"
+    },
+    {
+      "path": "experiments/bohn2021_aws/vehicle_true_variable_horizon_v33_bookkeeping_preflight_v0.py",
+      "sha256": "dcd072c25fdc8a69c23124360923d9549af6e1e50be90e54ac0e75659878f928"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v33_bookkeeping_preflight_v0_20260930T074544Z/terminal_parameters_with_bias.csv",
+      "sha256": "032255ed527650c9f4cca0aacc7374e056b98e32b524cafcddc0afc9d6f95896"
+    },
+    {
+      "path": "experiments/bohn2021_aws/vehicle_true_variable_horizon_case5_smoke_v0_runner.py",
+      "sha256": "1f7101bb336e0ee5028ed44dd0c9bc89bedaf3b02fa7f3187fc1eaef265005f9"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v33_bookkeeping_preflight_v0_20260930T074544Z/raw.json",
+      "sha256": "8a7e1e575becec349dd9ebf31deace3c64dc312cabb301532e827880225ff454"
+    },
+    {
+      "path": "experiments/bohn2021_aws/vehicle_true_variable_horizon_case5_smoke_v0_runner.py",
+      "sha256": "1f7101bb336e0ee5028ed44dd0c9bc89bedaf3b02fa7f3187fc1eaef265005f9"
+    },
+    {
+      "path": "research_artifacts/bohn2021_reproduction_2026-09-17/sources/gym-horizon/gym_let_mpc/utils.py",
+      "sha256": "64e0002000f84e12c1799ff0c050ec8dbc25aa41dfe4184fc2558c50fa43fc22"
+    },
+    {
+      "path": "research_artifacts/bohn2021_reproduction_2026-09-17/sources/do-mpc-horizon/do_mpc/optimizer.py",
+      "sha256": "cc100fb87cf77f5696c55a260c46c6e3d0a61e3fc9d8dde806160573e33f2832"
+    },
+    {
+      "path": "experiments/bohn2021_aws/vehicle_true_variable_horizon_success_aware_longer_H_feasibility_probe_v29.py",
+      "sha256": "988b01d097fcf9690c5497fda20a9c5e595ca45ba7ebe4ff1c171cb03c138411"
+    },
+    {
+      "path": "experiments/bohn2021_aws/vehicle_true_variable_horizon_v33_terminal_identity_evidence_audit_v0b.py",
+      "sha256": "257dbea326f26fc4c1904153abbdb31b698537c545a6038fb58496781e4b07e5"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v33_bookkeeping_preflight_v0_20260930T074544Z/terminal_parameters_with_bias.csv",
+      "sha256": "032255ed527650c9f4cca0aacc7374e056b98e32b524cafcddc0afc9d6f95896"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v33_terminal_identity_evidence_audit_v0b_20260930T072504Z/terminal_coefficients.csv",
+      "sha256": "40a18dae1d34d89028053ab66001c09a1540fc09ac1af792dd3bc77b4e3e663b"
+    },
+    {
+      "path": "research_artifacts/bohn2021_reproduction_2026-09-17/sources/stable-baselines-horizon/stable_baselines/sac/sac.py",
+      "sha256": "acb779424b1e9378bc7e306ee305a096c2e15e0ae519f41604ba4665831443d4"
+    },
+    {
+      "path": "research_artifacts/aws_runs/20260930T054827_b3e91ea1/stdout.log",
+      "sha256": "9c9e8882ef43a3dc846d359ebb49a7a57a464837765809e05ab144255a810103"
+    },
+    {
+      "path": "research_artifacts/bohn2021_reproduction_2026-09-17/sources/do-mpc-horizon/do_mpc/optimizer.py",
+      "sha256": "cc100fb87cf77f5696c55a260c46c6e3d0a61e3fc9d8dde806160573e33f2832"
+    },
+    {
+      "path": "experiments/bohn2021_aws/vehicle_true_variable_horizon_success_aware_longer_H_feasibility_probe_v29.py",
+      "sha256": "988b01d097fcf9690c5497fda20a9c5e595ca45ba7ebe4ff1c171cb03c138411"
+    },
+    {
+      "path": "experiments/bohn2021_aws/vehicle_true_variable_horizon_v33_terminal_identity_evidence_audit_v0b.py",
+      "sha256": "257dbea326f26fc4c1904153abbdb31b698537c545a6038fb58496781e4b07e5"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v33_terminal_h_cross_causal_probe_v0_20260930T054827Z/selected_state_manifest.json",
+      "sha256": "34a8d81078e054d53edac2f25d98bf901eb4dd35dda59c1cbadb5d02abb43fed"
+    },
+    {
+      "path": "experiments/bohn2021_aws/vehicle_stress_v1d_trace_selected_terminal_stable_opportunity_v0_runner.py",
+      "sha256": "a87238378a265745d9b9294a3a81c1334ec5978bad59de4f084d4d824b4065cd"
+    },
+    {
+      "path": "experiments/bohn2021_aws/vehicle_stress_scenario_stage2_continuation_v0_runner.py",
+      "sha256": "13a8964098ec309825e63f7bef1479e2227efc48805ce1c5452d1e671e790605"
+    },
+    {
+      "path": "experiments/bohn2021_reproduction/runtime.py",
+      "sha256": "15d083e7b4b9db311a95e35541819620cf547ad9e1642821144f82e13b9186d1"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v33_bookkeeping_preflight_v0_20260930T074544Z/v33_schedule_raw_trace_join.csv",
+      "sha256": "befc8928ee856e3fda501dcace491426710c9bac2cc74880f9edd6df0da406ca"
+    },
+    {
+      "path": "experiments/bohn2021_aws/vehicle_stress_v1d_trace_selected_terminal_stable_opportunity_v0_runner.py",
+      "sha256": "a87238378a265745d9b9294a3a81c1334ec5978bad59de4f084d4d824b4065cd"
+    },
+    {
+      "path": "experiments/bohn2021_aws/vehicle_true_variable_horizon_success_aware_longer_H_feasibility_probe_v29.py",
+      "sha256": "988b01d097fcf9690c5497fda20a9c5e595ca45ba7ebe4ff1c171cb03c138411"
+    },
+    {
+      "path": "research_artifacts/bohn2021_reproduction_2026-09-17/sources/gym-horizon/gym_let_mpc/let_mpc.py",
+      "sha256": "bec06eb6d2c5b66740c2c99a24a6e9eb306a12b5bbae05ff67794aa705e34c7b"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v33_terminal_h_cross_causal_probe_v0_20260930T054827Z/selected_state_manifest.json",
+      "sha256": "34a8d81078e054d53edac2f25d98bf901eb4dd35dda59c1cbadb5d02abb43fed"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v33_terminal_identity_evidence_audit_v0b_20260930T072504Z/raw.json",
+      "sha256": "0d118dbf1520f7a8a70845f1bc80504c4d7ac3fceff43522efc2a90a2c3b0cc2"
+    },
+    {
+      "path": "experiments/bohn2021_aws/vehicle_true_variable_horizon_v33_bookkeeping_preflight_v0.py",
+      "sha256": "dcd072c25fdc8a69c23124360923d9549af6e1e50be90e54ac0e75659878f928"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v33_bookkeeping_preflight_v0_20260930T074544Z/completed.json",
+      "sha256": "c051c0e07b29aa270af26b6d20bf6dc4d1774c3376766215be19bcaef9584426"
+    },
+    {
+      "path": "research_artifacts/bohn2021_reproduction_2026-09-17/sources/do-mpc-horizon/do_mpc/controller.py",
+      "sha256": "97b61401b2cb368240c60db856651141a2d5f9e95c73afe442300003c0d0063a"
+    },
+    {
+      "path": "research_artifacts/bohn2021_reproduction_2026-09-17/sources/gym-horizon/gym_let_mpc/let_mpc.py",
+      "sha256": "bec06eb6d2c5b66740c2c99a24a6e9eb306a12b5bbae05ff67794aa705e34c7b"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v33_terminal_identity_evidence_audit_v0b_20260930T072504Z/raw.json",
+      "sha256": "0d118dbf1520f7a8a70845f1bc80504c4d7ac3fceff43522efc2a90a2c3b0cc2"
+    },
+    {
+      "path": "experiments/bohn2021_aws/vehicle_stress_v1c_terminal_stable_label_density_probe_v0_runner.py",
+      "sha256": "264a7a5b07932b0f3eecf4614921ecca6b72824aa7b9116e78e984314f8b8086"
+    },
+    {
+      "path": "experiments/bohn2021_aws/vehicle_stress_scenario_opportunity_probe_v1_runner.py",
+      "sha256": "6d27ee176f858f3f6172dcdb5488a33db9ed9d543e458a0797f1e56fbfaf8aa2"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34_objective_basin_solver_probe_v0_20260930T084410Z/run_started.json",
+      "sha256": "16dd48712ffdfcdec8beff8314bc3fd2fbc2df83108e48ba2186e756b0633327"
+    },
+    {
+      "path": "EXPERIMENT_REGISTRY.csv",
+      "sha256": "3340d20c0fb3778e858fc5654f2a5620530e1b0272f63273f5af5744e26ce0b3"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/pendulum_inventory_metadata/raw.json",
+      "sha256": "8e423cfeee708ea62c0caa219e17cac0f87b54befd7b911cbdd677b2ae883f15"
+    },
+    {
+      "path": "experiments/bohn2021_aws/vehicle_true_variable_horizon_success_aware_longer_H_feasibility_probe_v29.py",
+      "sha256": "988b01d097fcf9690c5497fda20a9c5e595ca45ba7ebe4ff1c171cb03c138411"
+    },
+    {
+      "path": "experiments/bohn2021_aws/vehicle_stage2_terminal_objective_smoke_v0.py",
+      "sha256": "69b3323a0e17b9b7312e160a071fdbb2834c8293741b2348a8701d3fac8f72b6"
+    }
+  ],
+  "returned_efforts": [
+    "max",
+    "max",
+    "max",
+    "max",
+    "max",
+    "max",
+    "max",
+    "max",
+    "max",
+    "max"
+  ],
+  "updated": "2026-09-30T08:55:34.099359+00:00",
+  "completed": "2026-09-30T08:55:34.387971+00:00",
+  "commit_end": "6360f5c7c5685159014d1d0838ba79f76dc0d557"
+}

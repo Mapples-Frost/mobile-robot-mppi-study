@@ -1,0 +1,87 @@
+{
+  "status": "completed",
+  "audit_id": "20260930T111341Z_dd0c10",
+  "started": "2026-09-30T11:13:41.861967+00:00",
+  "turn": 11,
+  "max_turns": 16,
+  "first_cycle": false,
+  "supplemental_audit_request_id": "20260930-comprehensive-handoff-missing-raw-training-audit",
+  "request": {
+    "request_id": "execution-result:20260930T111305_5a8be004",
+    "trigger": "execution_result_handoff",
+    "created": "2026-09-30T11:13:40.116025+00:00",
+    "experiment_id": "20260930T111305_5a8be004",
+    "status": "analysis_requested",
+    "purpose": "Execute Opus-approved A13c-2 residual attribution gate: terminal dtype, finite-difference/KKT scale, and direct NLP/multiplier checks without solver calls or plant rollouts.",
+    "execution_status": "complete",
+    "question": "Active scientific lead: interpret this outcome, verify current raw evidence and select the next scientific action for GPT-5.5 implementation. Distinguish hypotheses from verified causes and account for fair baselines, terminal confounds and source-level generalization.",
+    "evidence_paths": [
+      "research_artifacts/aws_runs/20260930T111305_5a8be004/registry.json"
+    ]
+  },
+  "commit_start": "29333f24e30d61da415ffd1847b3a51b27aeb428",
+  "inspected": [
+    {
+      "path": "research_artifacts/aws_runs/20260930T111305_5a8be004/registry.json",
+      "sha256": "db22fcae062fda7e7591502db1f7f1726a77b62c5e9c85367417fd641eea65cd"
+    },
+    {
+      "path": "research_artifacts/aws_runs/20260930T111305_5a8be004/registry.json",
+      "sha256": "db22fcae062fda7e7591502db1f7f1726a77b62c5e9c85367417fd641eea65cd"
+    },
+    {
+      "path": "research_artifacts/aws_runs/20260930T111305_5a8be004/registry.json",
+      "sha256": "db22fcae062fda7e7591502db1f7f1726a77b62c5e9c85367417fd641eea65cd"
+    },
+    {
+      "path": "research_artifacts/aws_runs/20260930T111305_5a8be004/registry.json",
+      "sha256": "db22fcae062fda7e7591502db1f7f1726a77b62c5e9c85367417fd641eea65cd"
+    },
+    {
+      "path": "research_artifacts/aws_runs/20260930T111305_5a8be004/registry.json",
+      "sha256": "db22fcae062fda7e7591502db1f7f1726a77b62c5e9c85367417fd641eea65cd"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34m_residual_attribution_v0_20260930T111306Z/completed.json",
+      "sha256": "95c1de94fb93325bc2d8e6c3e247b0bb98889bd19128b992a0082ffa6fa1d473"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34m_residual_attribution_v0_20260930T111306Z/summary.md",
+      "sha256": "6b2b3202f402fd47345fe3a9a0922d8b582859ee57e3367e67f5d966056aa1ae"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34m_residual_attribution_v0_20260930T111306Z/raw.json",
+      "sha256": "91b5b36f47e6b0e1150ad74607785329abbae285277e50bd3909b239f68de34a"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34m_residual_attribution_v0_20260930T111306Z/fd_top_gradients.csv",
+      "sha256": "00033f1c6ca16dd0116d8e6fda9e731b956f951ebd2a55317b507770785c0b70"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34m_residual_attribution_v0_20260930T111306Z/raw.json",
+      "sha256": "91b5b36f47e6b0e1150ad74607785329abbae285277e50bd3909b239f68de34a"
+    },
+    {
+      "path": "docs/bohn2021_takeover/astra_reviews/NEXT_REVIEW_REQUEST.json",
+      "sha256": "d6331de84b99fadd28a567e285c134e15346d73e059bc6011b3b621bb50677f7"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34m_residual_attribution_v0_20260930T111306Z/raw.json",
+      "sha256": "91b5b36f47e6b0e1150ad74607785329abbae285277e50bd3909b239f68de34a"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34m_residual_attribution_v0_20260930T111306Z/raw.json",
+      "sha256": "91b5b36f47e6b0e1150ad74607785329abbae285277e50bd3909b239f68de34a"
+    },
+    {
+      "path": "docs/bohn2021_takeover/opus_lead/20260930T105748Z_5ca3ae.md",
+      "sha256": "ae5db8822d0d7ff886ddd406d2667ab8df516f2271f134652328b0e93a5ff0b1"
+    }
+  ],
+  "superseded_request_ids": [],
+  "cross_review_id": "20260930T084456Z",
+  "registry_context_experiment_id": "20260930T105719_a0cd3d48",
+  "updated": "2026-09-30T11:19:21.339434+00:00",
+  "completed": "2026-09-30T11:19:21.346563+00:00",
+  "commit_end": "8c471311a5203ca67cf5e45d9f4864dac5b1199e"
+}

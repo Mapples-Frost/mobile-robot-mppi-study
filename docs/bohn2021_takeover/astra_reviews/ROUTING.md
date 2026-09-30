@@ -13,7 +13,7 @@ Both routes request the same gpt-6-astra model, reasoning.effort=max, stateless 
 
 Only the independent reviewer uses this router. Opus remains scientific lead and GPT-5.5 remains executor. Review session, inspected file hashes and tools remain checkpointed; no scientific experiment or sealed test is rerun as part of routing.
 
-Verification: authenticated backup model catalog and response smoke passed; native tool call plus stateless tool-result continuation passed with max; 11 isolated offline tests cover primary preference, failover, recovery, failed probes, unchanged body, model/effort pins, bounded attempts, accounting, secret redaction, and recovery races.
+Verification: authenticated backup model catalog and response smoke passed; native tool call plus stateless tool-result continuation passed with max; 15 isolated offline tests cover primary preference, failover, recovery, failed probes, unchanged body, model/effort pins, bounded attempts, accounting, secret redaction, and recovery races, incomplete HTTP bodies, invalid JSON response shapes, and stale observation ordering.
 
 Run offline checks: `python3 -m unittest discover -s scripts/research_service -p test_astra_routing.py -v`.
 Inspect routing: `cat /data/openai-agent/state/astra_router/status.json` and the nonsecret events.jsonl in that directory. Do not cat the credential files.

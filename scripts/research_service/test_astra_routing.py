@@ -1,5 +1,6 @@
 """Isolated failover tests: no remote calls, no production state or credentials."""
 import io
+import http.client
 import json
 import pathlib
 import sqlite3
@@ -129,6 +130,31 @@ class RoutingTests(unittest.TestCase):
         router.failure('primary',router.EndpointError('error '+self.fake_secret))
         for name in ['status.json','events.jsonl']:
             self.assertNotIn(self.fake_secret,(router.ROUTE/name).read_text())
+
+    def test_incomplete_http_body_is_an_endpoint_outage(self):
+        with patch.object(router.urllib.request,'urlopen',side_effect=[http.client.IncompleteRead(b'partial'),Response(answer())]) as transport:
+            result=router.request(self.body)
+        self.assertEqual(result['_research_route']['endpoint'],'backup')
+        self.assertEqual(transport.call_count,2)
+
+    def test_malformed_response_is_rejected_and_rerouted(self):
+        with patch.object(router.urllib.request,'urlopen',side_effect=[Response([]),Response(answer())]):
+            result=router.request(self.body)
+        self.assertEqual(result['_research_route']['endpoint'],'backup')
+
+    def test_stale_failure_cannot_undo_newer_primary_recovery(self):
+        error=router.EndpointError('older transport failure')
+        router.success('primary','primary_recovery_probe',error.observed_at+1)
+        router.failure('primary',error)
+        self.assertEqual(router.state()['active_endpoint'],'primary')
+        self.assertTrue(router.state()['endpoints']['primary']['healthy'])
+
+    def test_stale_success_cannot_undo_newer_primary_failure(self):
+        error=router.EndpointError('newer transport failure')
+        router.failure('primary',error)
+        router.success('primary','review',error.observed_at-1)
+        self.assertEqual(router.state()['active_endpoint'],'backup')
+        self.assertFalse(router.state()['endpoints']['primary']['healthy'])
 
 
 if __name__=='__main__': unittest.main()

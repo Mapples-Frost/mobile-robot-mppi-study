@@ -3,6 +3,7 @@ import contextlib
 import datetime as dt
 import email.utils
 import fcntl
+import http.client
 import json
 import os
 import pathlib
@@ -81,15 +82,21 @@ class EndpointError(RuntimeError):
         super().__init__(redact(message))
         self.retryable = retryable
         self.retry_after = retry_after
+        self.observed_at = time.time()
 
 class EndpointBusy(EndpointError):
     """Local serialization is not evidence of a provider outage."""
 
 def failure(endpoint, error):
+    observed_at = getattr(error, 'observed_at', time.time())
     with state_lock():
         s = load(ROUTE / 'status.json', default_state())
         d = s.setdefault('endpoints', {}).setdefault(endpoint, {})
+        if d.get('last_success_epoch', 0) > observed_at:
+            event('stale_failure_ignored', endpoint=endpoint)
+            return
         d.update(healthy=False, last_failure=now(), last_error=redact(error)[:1400],
+                 last_failure_epoch=observed_at,
                  consecutive_failures=d.get('consecutive_failures', 0) + 1)
         if endpoint == 'primary':
             s['active_endpoint'] = 'backup'
@@ -98,13 +105,17 @@ def failure(endpoint, error):
         save(ROUTE / 'status.json', s)
     event('endpoint_failure', endpoint=endpoint, error=str(error), retryable=getattr(error, 'retryable', True))
 
-def success(endpoint, purpose):
+def success(endpoint, purpose, observed_at=None):
+    observed_at = time.time() if observed_at is None else observed_at
     recovered = False
     with state_lock():
         s = load(ROUTE / 'status.json', default_state())
         previous = s.get('active_endpoint', 'primary')
-        s.setdefault('endpoints', {}).setdefault(endpoint, {}).update(
-            healthy=True, last_success=now(), last_success_epoch=time.time(), consecutive_failures=0)
+        d = s.setdefault('endpoints', {}).setdefault(endpoint, {})
+        if d.get('last_failure_epoch', 0) > observed_at:
+            event('stale_success_ignored', endpoint=endpoint)
+            return
+        d.update(healthy=True, last_success=now(), last_success_epoch=observed_at, consecutive_failures=0)
         if endpoint == 'primary':
             s['active_endpoint'] = 'primary'
             s['next_primary_probe_epoch'] = time.time() + IDLE_PRIMARY_PROBE_SECONDS
@@ -128,10 +139,13 @@ def retry_after_seconds(value):
             return 0
 
 def validate(answer):
-    returned = answer.get('model', '')
+    if not isinstance(answer, dict):
+        raise EndpointError('Invalid response JSON object')
+    returned = str(answer.get('model', ''))
     if returned != MODEL and not returned.startswith(MODEL + '-'):
         raise EndpointError('Returned model mismatch; no model fallback allowed')
-    effort = (answer.get('reasoning') or {}).get('effort')
+    reasoning = answer.get('reasoning') or {}
+    effort = reasoning.get('effort') if isinstance(reasoning, dict) else None
     if effort not in ('max', 'xhigh'):
         raise EndpointError('Returned effort below verified capability: ' + str(effort))
     if answer.get('status') != 'completed':
@@ -189,12 +203,15 @@ def once(body, endpoint, purpose='review', timeout=600):
             raise EndpointError('API_HTTP_' + str(error.code) + ': ' + detail,
                                 retryable=recoverable,
                                 retry_after=retry_after_seconds(error.headers.get('Retry-After'))) from None
-        except (urllib.error.URLError, TimeoutError, OSError, ValueError) as error:
+        except (urllib.error.URLError, TimeoutError, OSError, ValueError, http.client.HTTPException) as error:
             raise EndpointError(type(error).__name__ + ': ' + redact(error)[:1000]) from None
-        usage = answer.get('usage') or {}
+        usage = answer.get('usage') or {} if isinstance(answer, dict) else {}
+        if not isinstance(usage, dict):
+            usage = {}
         actual_effort = validate(answer)
         answer['_research_route'] = dict(endpoint=endpoint, purpose=purpose, call_id=cid,
-                                         requested_effort=EFFORT, returned_effort=actual_effort)
+                                         requested_effort=EFFORT, returned_effort=actual_effort,
+                                         observed_at_epoch=time.time())
         save(WORK / 'responses' / (cid + '.json'), answer)
         status = 'completed'
         return answer
@@ -232,7 +249,7 @@ def request(body, purpose='review'):
                 raise
             failure(endpoint, error)
             continue
-        success(endpoint, purpose)
+        success(endpoint, purpose, answer['_research_route']['observed_at_epoch'])
         return answer
     raise EndpointError('Both Astra endpoints unavailable: ' + ' | '.join(errors))
 
@@ -256,7 +273,7 @@ def probe_primary():
     except EndpointError as error:
         failure('primary', error)
         return False
-    success('primary', 'primary_recovery_probe')
+    success('primary', 'primary_recovery_probe', answer['_research_route']['observed_at_epoch'])
     return True
 
 def monitor():

@@ -9,5 +9,8 @@
   "question": "Astra: interpret this outcome, verify current raw evidence and select the next scientific action for GPT-5.5 implementation. Distinguish hypotheses from verified causes and account for fair baselines, terminal confounds and source-level generalization.",
   "evidence_paths": [
     "research_artifacts/aws_runs/20260930T072503_5188c5c7/registry.json"
-  ]
+  ],
+  "user_reinforcement": "docs/bohn2021_takeover/astra_reviews/SCIENTIFIC_LEAD_AUTHORIZATION_20260930.md",
+  "user_instruction": "Investigate thoroughly; assign GPT-5.5 any routine scientifically necessary work within the authorized scope. Execute existing approved dependent tasks when gates pass; avoid redundant equivalent audit loops.",
+  "user_instruction_updated": "2026-09-30T07:43:01.603870+00:00"
 }

@@ -1,0 +1,9 @@
+# User reinforcement: thorough Astra investigation and concrete execution
+
+User instruction on 2026-09-30: Astra must investigate thoroughly and may assign GPT-5.5 whatever routine work is scientifically necessary.
+
+Astra owns causal analysis and research direction. Investigate the terminal-value/objective/solver evidence carefully, consider competing explanations and contradictory results, and identify the smallest informative controlled intervention. Give GPT-5.5 precise evidence-linked tasks with hypothesis, frozen inputs/splits, budget, required raw outputs and acceptance/failure rules. Tasks can include code inspection/repair, additional controls, objective decomposition, solver diagnostics, training/value refit, scenario or comparison revisions where evidence warrants. Do not limit causes to the initially suggested categories.
+
+GPT-5.5 implements and runs the assigned work, preserves failures and raw evidence, and returns results/questions to Astra. Routine reversible work within the existing research scope does not need another user confirmation. A clear Astra plan may authorize multiple dependent tasks: execute its already-approved continuation when its stated gates pass, rather than inserting redundant same-purpose audits or seeking another report for an unchanged direction. Stop at a genuine failed gate and return the missing evidence or failure.
+
+Thoroughness means discriminating causes and checking the implementation/evidence, not endlessly repeating equivalent audits. Do not assume training is broken because terminal coefficients look unusual; do not assume success from one control setting or mined cases. Preserve fair fixed-H baselines, actual timing, source-level independence, ORIGINAL/IMPROVED labeling, sealed tests, all negative evidence, bounded actions/recovery, external backups and the existing limits on paid resources or irreversible operations. No daily API/token cap is authorized.

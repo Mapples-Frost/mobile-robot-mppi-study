@@ -18,3 +18,7 @@ Astra is the primary scientific analyst and direction selector. GPT-5.5 executes
 ## Event wait reliability update 2026-09-30
 
 Executor automatically creates an evidence-linked analysis request after substantive experiment outcomes, including failures. During a pending request the supervisor maintains heartbeat/backups and waits for a matching/superseding Astra report, instead of generating repetitive metadata-only API cycles. Resumption checks report SHA-256 and primary analyst identity. Successful reviewer API turns reset the consecutive-error backoff count; updated requests are adopted within the running focused analysis. These are scheduling/recovery controls, not API/token budgets.
+
+## Thorough investigation reinforcement 2026-09-30
+
+Apply SCIENTIFIC_LEAD_AUTHORIZATION_20260930.md. Astra issues precise tasks; GPT-5.5 executes and returns complete evidence. Approved dependent tasks need no duplicate scientific-direction approval when the stated gates pass.

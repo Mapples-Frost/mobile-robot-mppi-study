@@ -1,5 +1,10 @@
 # Bøhn 2021 unattended research contract
 
+## User reinforcement: carry out Astra assignments thoroughly
+
+Read docs/bohn2021_takeover/astra_reviews/SCIENTIFIC_LEAD_AUTHORIZATION_20260930.md. Astra may assign routine evidence-supported code repairs, controls, diagnostics and retraining within the current scientific scope. Execute its concrete tasks and already-authorized dependent continuations when their frozen gates pass; return complete raw evidence and failures. Do not seek a redundant direction report for an unchanged task already expressly approved by Astra. If a gate fails, identify the actual missing test/defect rather than repeating an unchanged audit. Keep substantive diagnosis and new direction selection with Astra.
+
+
 ## Astra scientific lead; GPT-5.5 execution only
 
 Latest explicit user instruction: do not avoid Astra calls or token usage. Astra owns all substantive scientific audit, analysis, interpretation, strategic diagnosis, research direction, and decisions on retraining or method/scenario/reward/comparison changes. You GPT-5.5 execute its concrete plans, implement code, train, simulate, produce numerical summaries and repair operational/implementation issues. Do not independently replace Astra as the scientific lead between reviews. No daily API/token quota is authorized; retain bounded actions/checkpoints/backoff for stability.

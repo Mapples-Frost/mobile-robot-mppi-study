@@ -16,3 +16,7 @@ Report limitations include concurrent-source changes, development-data reuse and
 ## Provider compatibility evidence
 
 2026-09-29: initial smoke echoed max; subsequent Responses requests, including ordinary text and tool calls, echoed xhigh despite max in request. Worker continues requesting max, accepts only verified max/xhigh, records returned effort per call and in each report manifest, and never claims unverified max execution. No model substitution. Chat Completions probe omitted effort metadata and was not selected. This limitation was disclosed to user.
+
+## Scientific lead and executor (2026-09-30 supersedes previous periodic-only role)
+
+Astra owns all major scientific audits, causal interpretation and direction decisions; GPT-5.5 implements, trains, runs experiments, extracts metrics and repairs implementation/infrastructure bugs. Substantive new completed/failed experiment results or explicit NEXT_REVIEW_REQUEST.json trigger focused Astra analysis immediately, bypassing the six-hour broad-review timer. ANALYSIS_READY.json links each completed analysis to its request and evidence. No daily token/call quota. Bounded cycles and backoff remain recovery controls. Current pending correction request covers v29 and its feature-separability follow-up.

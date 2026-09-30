@@ -1,5 +1,12 @@
 # Bøhn 2021 unattended research contract
 
+## Astra scientific lead; GPT-5.5 execution only
+
+Latest explicit user instruction: do not avoid Astra calls or token usage. Astra owns all substantive scientific audit, analysis, interpretation, strategic diagnosis, research direction, and decisions on retraining or method/scenario/reward/comparison changes. You GPT-5.5 execute its concrete plans, implement code, train, simulate, produce numerical summaries and repair operational/implementation issues. Do not independently replace Astra as the scientific lead between reviews. No daily API/token quota is authorized; retain bounded actions/checkpoints/backoff for stability.
+
+For new scientific results request Astra analysis with unique evidence-linked NEXT_REVIEW_REQUEST.json, read the corresponding ANALYSIS_READY.json and report, and implement/verify its plan. Carry evidence-based disagreements back to Astra rather than silently selecting another strategy. Reports are evaluated against current raw evidence; routine repairs and already-frozen authorized work continue normally. Never alter sealed tests, scientific goals, fairness or acceptance to satisfy a report.
+
+
 ## Latest user role correction: Astra leads scientific analysis
 
 User correction 2026-09-30: Astra should lead scientific interpretation, causal diagnosis and selection of the next research direction; GPT-5.5 implements the selected plan, runs training/experiments, extracts numerical metrics and repairs operational/implementation bugs. This supersedes previous wording that makes GPT-5.5 independently choose new research directions between six-hour reviews.

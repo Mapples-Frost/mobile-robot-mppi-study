@@ -5683,3 +5683,90 @@ UTC: 2026-09-30T01:06:32.171731+00:00. Development-only source-independent H12/H
 
 ## 2026-09-30T01:17:10.641390+00:00
 
+<!-- vehicle-h12-h15-online-overhead-v22-20260930T0125Z -->
+## 2026-09-30 v22 H12/H15 online-overhead diagnostic
+
+UTC: 2026-09-30T01:19:07.174133+00:00. Development-only IMPROVED analysis; no new MPC simulation, no validation64 access, no sealed-test access, no training/refit. Inputs were v20b and v21 opened-development artifacts backed up by supervisor commit `7677039b1e7c718e07b5ea1c011b09cb4b794c6c`.
+
+Measured Python in-memory history feature + selector overhead over 20000 repetitions: mean 0.001956693s, median 0.001802578s, p95 0.002653475s. v21 fixed H12 remains a strong baseline: 15.05% decision saving vs H15, zero bad, physical gate=True. The v20b history selector trained on v19 chose {'12': 9, '15': 7} on v21 and achieved 5.41% overhead-adjusted branch saving, zero bad. The combined development proxy (v19 strict-source CV choices + v21 v19-trained selector) achieved 6.50% saving, zero bad=True, pass5=True; combined fixed H12 still failed safety/physical due to v19 negatives (bad=3, physical gate=False).
+
+Decision: Selector overhead is negligible at branch scale and the combined development proxy passes vs H15 while fixed H12 remains unsafe on v19 negatives; however v21-only fixed H12 outperforms/equals the selector as a simple baseline, so the next experiment should broaden fresh confirmation with fixed H12/H15/selector all predeclared before any validation.
+
+Artifacts: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_h12_h15_online_overhead_v22_20260930T0125Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_h12_h15_online_overhead_v22_20260930T0125Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_h12_h15_online_overhead_v22_20260930T0125Z/completed.json`. Backup requested: `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_H12_H15_ONLINE_OVERHEAD_V22_20260930T0125Z.json`.
+
+
+## 2026-09-30T01:20:25.722125+00:00
+Elapsed service lifetime: **311,018 s / 86.39 h** since `2026-09-26T10:55:29.419331Z` as of the v22 artifact timestamp. Cumulative server API `total_tokens` from supervisor `research.sqlite`: **unavailable from repository tools** (`research.sqlite` not found in `.`, `research_artifacts/`, or `state/`; v22 raw recorded `null`), so I am reporting it as **unknown, not zero**.
+
+Concrete actions completed this iteration:
+
+1. **Inspected coordination/reviewer state**
+   - Read `docs/bohn2021_takeover/astra_reviews/COORDINATION.md`.
+   - Confirmed `LATEST.md` still points to `20260929T153837Z`.
+   - Verified `RESPONSE_LOG.md` already had v21 follow-up and was updated by the v22 script with stable Astra IDs.
+
+2. **Ran v22 overhead/baseline diagnostic**
+   - Script: `experiments/bohn2021_aws/vehicle_true_variable_horizon_h12_h15_online_overhead_v22.py`
+   - Run registry: `research_artifacts/aws_runs/20260930T011826_0aa46fe4/registry.json`
+   - Classification: development-only IMPROVED diagnostic.
+   - No MPC simulation, no validation64, no sealed test, no training/refit.
+   - Budget: `20,000` selector microbenchmark repetitions.
+
+3. **Key v22 evidence**
+   - Python in-memory history feature + selector overhead:
+     - mean: `0.001956693 s`
+     - median: `0.001802578 s`
+     - p95: `0.002653475 s`
+   - v21-only fixed H12:
+     - decision saving vs H15: `15.05%`
+     - bad/catastrophic rows: `0`
+     - physical gate: `True`
+   - v21-only v20b/v22 history selector:
+     - H counts: `{'12': 9, '15': 7}`
+     - overhead-adjusted decision saving vs H15: `5.41%`
+     - bad rows: `0`
+   - Combined v19 strict-source proxy + v21 selector:
+     - H counts: `{'12': 18, '15': 22}`
+     - overhead-adjusted decision saving vs H15: `6.50%`
+     - bad rows: `0`
+     - pass5: `True`
+   - Combined fixed H12:
+     - decision saving vs H15: `14.61%`
+     - bad rows: `3`
+     - physical gate: `False`
+     - bad source remains `fresh_v11/fresh_case05_slot1_mid_late_control`.
+
+4. **Scientific decision**
+   - Selector micro-overhead does **not** erase the branch-level development gain.
+   - However, fixed true H12 is now a **strong baseline** on v21-like fresh rows and must be treated as primary comparator.
+   - Current adaptive value is safety against known v19 H12-negative states while retaining net saving, not superiority over fixed H12 on every fresh subset.
+   - No validation/final-test claim is justified; all v19/v21/v22 evidence remains opened development evidence.
+
+5. **Artifacts updated/preserved**
+   - Summary: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_h12_h15_online_overhead_v22_20260930T0125Z/summary.md`
+   - Raw: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_h12_h15_online_overhead_v22_20260930T0125Z/raw.json`
+   - Completed: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_h12_h15_online_overhead_v22_20260930T0125Z/completed.json`
+   - Protocol: `research_artifacts/aws_protocols/vehicle_true_variable_horizon_h12_h15_online_overhead_v22_preanalysis_frozen_20260930T0125Z.json`
+   - Continue state: `research_artifacts/aws_state/continue_state_20260930T0125_after_h12_h15_online_overhead_v22.md`
+   - Backup request: `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_H12_H15_ONLINE_OVERHEAD_V22_20260930T0125Z.json`
+   - Updated docs/registry include `STATUS.md`, `RESEARCH_LOG.md`, `DECISIONS.md`, `RESULTS_AUDIT.md`, `REPRODUCTION_PROTOCOL.md`, `EXPERIMENT_REGISTRY.csv`, and Astra `RESPONSE_LOG.md`.
+
+6. **Current blocker**
+   - Backup gate is active before more unique science.
+   - I checked `research_artifacts/aws_backup_proofs/backup_proof_20260930*`; no post-v22 proof was present.
+   - Need verified external backup covering v22 source/results/docs/state/registry/response log and the backup request before running v23.
+
+7. **Next preserved action**
+   - After verified v22 backup: freeze a broader source-independent H12/H15/selector confirmation (`v23`) with fixed H12, fixed H15, and the v20b/v22 history selector all predeclared.
+   - No validation64 or sealed test.
+   - If new H12 negatives appear: pivot to richer terminal-risk/value refit or bounded training rather than another static sweep.
+   - If fixed H12 remains broadly safe and dominates: treat fixed H12 as the main baseline/result and reassess adaptivity/scenario opportunity rather than forcing switching.
+
+<!-- vehicle-true-variable-H-h12-h15-broader-confirmation-v23-20260930T0145Z -->
+## 2026-09-30 vehicle true-variable-H H12/H15 broader confirmation v23
+
+UTC: 2026-09-30T01:32:17.706415+00:00. Development-only broader source-independent H12/H15/selector confirmation completed after verified post-v22 backup. No validation64, no sealed test, no training/refit. Budget 60 episodes / 2832 control steps plus 24 preoutcome selector decisions. States=24, H12-beneficial=23, H12-catastrophic/high-cost=0. Fixed H12 save=0.17080323994754293, bad=0, pass5=True; selector save=0.08455613439452371, H counts={'12': 11, '15': 13}, bad=0, pass5=True. Decision: v23 fixed H12 is safe and faster than the selector on this broader fresh batch; fixed H12 must be the primary simple baseline and adaptivity is not yet justified for this stress distribution.. Artifacts: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_h12_h15_broader_confirmation_v23_20260930T0145Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_h12_h15_broader_confirmation_v23_20260930T0145Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_h12_h15_broader_confirmation_v23_20260930T0145Z/completed.json`. Backup required before further unique science: `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_H12_H15_BROADER_CONFIRMATION_V23_20260930T0145Z.json`.
+
+
+## 2026-09-30T01:32:57.912915+00:00
+

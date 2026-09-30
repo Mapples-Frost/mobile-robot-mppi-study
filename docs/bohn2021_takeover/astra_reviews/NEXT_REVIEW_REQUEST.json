@@ -1,28 +1,34 @@
 {
-  "access_and_budget_note": {
-    "new_control_steps": 0,
-    "new_simulation_episodes": 0,
-    "new_training_or_gradient_steps": 0,
-    "sealed_test_accessed": false,
-    "sealed_test_episodes": 0,
-    "selector_refits": 0,
-    "validation64_bank_opened": false,
-    "validation64_episodes": 0
-  },
-  "created": "2026-09-30T04:48:19.103132+00:00",
+  "request_id": "v32-h12-supported-default-h35-diagnostic-20260930T051611Z",
+  "created": "2026-09-30T05:18:40+00:00",
+  "status": "analysis_requested",
+  "trigger": "v32_branch_neutral_h12_supported_default_h35_diagnostic_after_v31_source_coverage_bounds",
+  "experiment_id": "vehicle_true_variable_horizon_v32_h12_supported_default_h35_diagnostic_v0",
+  "supersedes_request_id": "v31-source-coverage-budget-bounds-20260930T044819Z",
+  "question": "Astra should analyze v29/v30b/v31 plus the new v32 branch-neutral diagnostic and select the next scientific action. v32 suggests the opened data do contain a source-family-stable H12-shortening vs non-H12 signal: H12 if abs_obs_07 <= 0.776202689723 else H35 has LOGO bad_count=1, h_counts H12=6/H15=0/H35=5 and decision_saving_vs_fixed_H35=0.3992505755588043 on the same 11 opened rows, compared with prior v31 two-feature grouped LOGO bad_count=5. The residual bad row is v19_c13 from the single H15 source family, where defaulting to H35 incurs large physical excess; the diagnostic never predicts H15 and is not deployable. Current independent source-family counts remain H12=3, H15=1, H35=1. Decide, with evidence-linked rationale, whether GPT-5.5 should next acquire fresh source-independent H15/H35/H12 triage labels, run a terminal-risk/value refit or training ablation, redesign scenario/comparison protocol, or perform another specified bounded action. This request does not authorize validation64/final-test access or treat v32 as validation evidence.",
   "evidence_paths": [
+    "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v32_h12_supported_default_h35_diagnostic_v0_20260930T051611Z/summary.md",
+    "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v32_h12_supported_default_h35_diagnostic_v0_20260930T051611Z/raw.json",
+    "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v32_h12_supported_default_h35_diagnostic_v0_20260930T051611Z/completed.json",
     "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v31_source_budget_bounds_v0_20260930T044819Z/summary.md",
     "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v31_source_budget_bounds_v0_20260930T044819Z/raw.json",
-    "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v31_source_budget_bounds_v0_20260930T044819Z/completed.json",
-    "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v31_label_coverage_lower_bound_v0_20260930T044251Z/raw.json",
+    "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v30b_cluster_stability_diagnostic_v31_20260930T0405Z/summary.md",
     "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v30b_cluster_stability_diagnostic_v31_20260930T0405Z/raw.json",
+    "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_three_way_selector_feature_audit_v30b_fast_20260930T0410Z/summary.md",
+    "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_three_way_selector_feature_audit_v30b_fast_20260930T0410Z/raw.json",
+    "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_success_aware_longer_H_feasibility_probe_v29_20260930T0340Z/summary.md",
+    "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_success_aware_longer_H_feasibility_probe_v29_20260930T0340Z/raw.json",
     "docs/bohn2021_takeover/astra_reviews/RESPONSE_LOG.md"
   ],
-  "experiment_id": "vehicle_true_variable_horizon_v31_source_budget_bounds_v0",
-  "operational_note": "Post-diagnostic outputs and this refreshed request require external backup before unique simulation/refit/training/validation/final-test work.",
-  "question": "Astra should incorporate this source-coverage budget/identifiability diagnostic into the v29/v30b/v31 direction decision. It quantifies that current independent source-family counts are H12=3, H15=1, H35=1; same-family extra rows cannot repair grouped-CV class presence; if Astra chooses fresh source-independent triage-label acquisition, the lower bound is +1 H15-like and +1 H35-like independent family for basic LOGO class presence (6 H12/H15/H35 rollout episodes or 8 if H25 is included), or +2 each for a three-source stability target. Decide whether acquisition, terminal-risk/value refit/training, or scenario/comparison redesign is the next scientific action. GPT-5.5 should not treat this as branch selection or validation.",
-  "request_id": "v31-source-coverage-budget-bounds-20260930T044819Z",
-  "status": "analysis_requested",
-  "supersedes_request_id": "v31-label-coverage-lower-bound-20260930T044251Z",
-  "trigger": "source_coverage_budget_bounds_after_v31_label_coverage_lower_bound"
+  "access_and_budget_note": {
+    "new_simulation_episodes_in_v32": 0,
+    "new_control_steps_in_v32": 0,
+    "new_training_or_gradient_steps_in_v32": 0,
+    "selector_refits_in_v32": 0,
+    "validation64_bank_opened_in_v32": false,
+    "validation64_episodes_in_v32": 0,
+    "sealed_test_accessed_in_v32": false,
+    "sealed_test_episodes_in_v32": 0
+  },
+  "operational_note": "v32 outputs and this refreshed Astra request require external backup before unique simulation/refit/training/validation/final-test work. GPT-5.5 may continue reversible integrity/preparation while this analysis is pending but should not select a new substantive branch without a matching or superseding Astra report."
 }

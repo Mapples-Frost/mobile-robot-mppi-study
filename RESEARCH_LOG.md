@@ -6660,3 +6660,70 @@ UTC: 2026-09-30T05:12:19.416907+00:00. Branch-neutral metadata analysis only; no
 
 ## 2026-09-30T05:14:51.976435+00:00
 
+<!-- vehicle_true_variable_horizon_v32_h12_supported_default_h35_diagnostic_v0-20260930T051611Z -->
+## 2026-09-30 v32 H12-supported/H35-default diagnostic
+
+UTC: 2026-09-30T05:16:11.288834+00:00. Development analysis only; no simulation/control/training/refit/validation64/sealed-test access. Service elapsed `3d 18h 20m 41.870s`; server API total_tokens `unknown (research.sqlite not found in checked locations)`. On the same opened v29/v30b/v31 rows, a diagnostic rule H12 if `abs_obs_07 <= 0.776202689723` else H35 gave LOGO bad_count `1`, h_counts `{'12': 6, '15': 0, '35': 5}`, decision_sum_s `34.244503`, saving vs fixed H35 `0.399251`. Residual bad rows `[('v19_c13', 'v19_case05_H15_risk_family', 15, 35, 'large_physical_excess_vs_best_safe')]`. Interpretation: opened data contain source-family-supported H12-shortening signal, but H15 remains unsupported; not validation/final evidence and not a branch decision. Backup request `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_V32_H12_SUPPORTED_DEFAULT_H35_DIAGNOSTIC_20260930T051611Z.json`. Astra gate matching=`False` for `v31-source-coverage-budget-bounds-20260930T044819Z`.
+
+
+## 2026-09-30T05:18:12.073763+00:00
+3d 18h 20m 41.870s elapsed since first supervisor event (2026-09-26T10:55:29.419331Z). Server API total_tokens remain unknown because `research.sqlite` was not found; desktop conversation tokens excluded.
+
+Concrete actions completed:
+
+1. Checked Astra coordination state:
+   - `ANALYSIS_READY.json` is still absent.
+   - `LATEST.md` still points to old report `20260929T153837Z.md`, which predates v29/v30b/v31/v32 and is not current analysis for these findings.
+
+2. Ran the prepared branch-neutral v32 diagnostic:
+   - Experiment: `20260930T051611_9f01149d`
+   - Script: `experiments/bohn2021_aws/vehicle_true_variable_horizon_v32_h12_supported_default_h35_diagnostic_v0.py`
+   - Classification: development analysis only.
+   - No simulations, no control steps, no selector refits, no training, no validation64 access, no sealed-test access.
+
+3. v32 numerical finding:
+   - Diagnostic rule: `H12 if abs_obs_07 <= 0.776202689723 else H35`
+   - It deliberately never predicts H15, so it is not deployable as a three-way selector.
+   - On opened v29/v30b/v31 rows:
+     - LOGO bad_count: `1`
+     - horizon counts: `H12=6, H15=0, H35=5`
+     - decision_sum_s: `34.244503`
+     - decision saving vs fixed H35: `39.9251%`
+   - Residual bad row:
+     - `v19_c13`, family `v19_case05_H15_risk_family`, oracle H15, predicted H35, reason `large_physical_excess_vs_best_safe`.
+   - Same opened-row comparators:
+     - Fixed H35: bad_count `4`, decision_sum_s `57.002972`
+     - Oracle H12/H15/H35: bad_count `0`, decision_sum_s `28.177248`
+
+4. Interpretation limits preserved:
+   - v32 suggests there is a source-family-supported H12-vs-non-H12 shortening signal, so v31’s grouped-CV failure was not total feature absence.
+   - H15 remains under-supported and unresolved.
+   - Current independent source-family counts remain `H12=3, H15=1, H35=1`.
+   - This is not validation evidence, not final-test evidence, not a reproduction/speed claim, and not a branch decision.
+
+5. Refreshed Astra handoff:
+   - Wrote new `docs/bohn2021_takeover/astra_reviews/NEXT_REVIEW_REQUEST.json`
+   - New request id: `v32-h12-supported-default-h35-diagnostic-20260930T051611Z`
+   - It supersedes v31 request `v31-source-coverage-budget-bounds-20260930T044819Z`.
+   - It asks Astra to choose the next scientific action: fresh source-independent labels vs terminal-risk/value refit/training vs scenario/comparison redesign vs another specified bounded action.
+
+6. Updated/preserved state:
+   - v32 outcomes were logged into `RESPONSE_LOG.md`, `STATUS.md`, `RESEARCH_LOG.md`, `DECISIONS.md`, `RESULTS_AUDIT.md`, `REPRODUCTION_PROTOCOL.md`, and `EXPERIMENT_REGISTRY.csv`.
+   - Wrote backup request:
+     - `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_V32_NEXT_REVIEW_REFRESH_20260930T051840Z.json`
+
+Current blockers before unique science:
+- Need verified external backup covering v32 outputs and refreshed Astra request.
+- Need matching/superseding Astra analysis for request `v32-h12-supported-default-h35-diagnostic-20260930T051611Z` before selecting a substantive new scientific branch.
+
+Next safe action:
+- At next iteration, check for backup proof covering `REQUEST_BACKUP_AFTER_V32_NEXT_REVIEW_REFRESH_20260930T051840Z.json`, then check `ANALYSIS_READY.json`. If Astra report is available, verify cited evidence, update `RESPONSE_LOG.md`, and implement Astra’s selected plan.
+
+<!-- vehicle_true_variable_horizon_v32_gate_preflight_state_v0-20260930T052039Z -->
+## 2026-09-30 v32 gate preflight/state preservation
+
+UTC: 2026-09-30T05:20:39.377935+00:00. Metadata-only/reversible; no simulation/control/training/refit/validation64/sealed-test access. Service elapsed `3d 18h 25m 9.959s`; server API total_tokens `unknown (sqlite present but no total_tokens-like column found)`. Verified current Astra request `v32-h12-supported-default-h35-diagnostic-20260930T051611Z` has `12` evidence paths with missing=`[]`. ANALYSIS_READY matching current=`False`. Backup request `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_V32_NEXT_REVIEW_REFRESH_20260930T051840Z.json` present=`True` and files present=`True`, but latest verified backup candidate `{'path': 'current_supervisor_context', 'time': '2026-09-30T05:15:38.012838+00:00', 'status': 'verified', 'remaining_changed_files': 0, 'commit': 'f2227d24fada4c7e7ba5fb3e7cbe060b47457cc1', 'package_sha256': '081ce0831d187e40aa419262e36ff7a7fcd2a08208a2fc45e7b1196b36f9e876', 'package_ok': True}` is after request time=`False` and files-after-backup count=`16`, so v32 backup gate clear=`False`. V32 digest remains opened-development only: counts `{'12': 3, '15': 1, '35': 1}`, H12/H35 LOGO bad `1`, saving vs fixed H35 `0.3992505755588043`. Next: await backup plus matching Astra report before unique science; if Astra appears, read/verify/report dispositions.
+
+
+## 2026-09-30T05:23:11.390851+00:00
+

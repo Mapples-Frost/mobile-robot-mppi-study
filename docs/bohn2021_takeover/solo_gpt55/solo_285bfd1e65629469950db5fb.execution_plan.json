@@ -1,0 +1,72 @@
+{
+  "request_id": "execution-result:20260930T162146_e10680cb",
+  "schema_version": 1,
+  "tasks": [
+    {
+      "task_id": "T-C4R-c13-terminal-treatment-matrix-reconciliation",
+      "description": "TEMPORARY GPT-5.5 SOLO SELF-REVIEW / ZERO-RESOURCE PRIMARY-EVIDENCE LEDGER REBUILD. The just-completed S-TC2C2 preflight passed with a valid zero-resource receipt and backup was reported verified at 2026-09-30T16:24:54Z, but solver-bearing T-C2 still requires a solo-compatible request-binding wrapper before it can be launched safely. To avoid another metadata-only pause while staying inside development split isolation, run the already frozen T-C4R diagnostic now. Required work is the same bounded primary-evidence reconciliation previously approved: join the frozen twelve v19_c13 fixed-H/terminal-treatment development rows against their primary episode summary.json files and fill per row success, termination, steps, steps_metered, physical_constraint_cost, total_cost, constraint, solver_failure_steps, initial_failed_steps, final_failed_steps, and whichever solver and whole-decision timing fields the primary source actually contains. A field may be left null only when no primary source contains it, and each filled value must name the source path. Report separately total rows, independent source states versus branch repeats from one state, source_candidate_index values, and that these are opened development artifacts from one state rather than independent training seeds or final validation. Preserve the verified timing distinction: whole-decision wall time is not solver-time sum, and the failed V35 episode can have lower mean decision time, so timing alone cannot establish acceptable control. Report absolute success/failure before relative cost or timing. Do not recompute, re-simulate, re-select terminals, add rows, add donors, construct an MPC, call a solver, take plant steps, train/refit, open validation64, or open sealed/final test.",
+      "script_patterns": [
+        "experiments/bohn2021_aws/vehicle_fixedh_terminal_opportunity_ledger_v0.py"
+      ],
+      "split": "opened_development_artifacts_only_no_validation64_no_sealed_test",
+      "method": "zero-solve bounded primary-summary join completing the twelve v19_c13 fixed-H by terminal-treatment ledger rows with outcome, termination, cost and timing fields recovered from existing episode summary evidence",
+      "seeds": [
+        "not_applicable_no_training_seed"
+      ],
+      "config_constraints": {
+        "label_ORIGINAL_vs_IMPROVED": "IMPROVED",
+        "authority_mode": "temporary_user_authorized_solo_self_review",
+        "no_change_to_frozen_scientific_contract": true,
+        "row_set_frozen_to_existing_twelve_v19_c13_rows": true,
+        "do_not_add_or_reselect_rows": true,
+        "do_not_add_or_reselect_terminal_donors": true,
+        "report_absolute_success_before_relative_cost_or_time": true,
+        "separate_source_states_branch_repeats_and_training_seeds": true,
+        "preserve_verified_timing_field_distinction": true,
+        "null_only_when_no_primary_source_contains_field": true,
+        "name_source_path_per_filled_value": true,
+        "known_reference_state": "v19_c13 branch_state theta=0.4484628235999271 x=13.265087662399235 y=2.725292661785182",
+        "opened_primary_episode_root": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v33_terminal_h_cross_causal_probe_v0_20260930T054827Z/episodes",
+        "no_mpc_construction": true,
+        "no_solver_calls": true,
+        "no_plant_steps": true,
+        "no_training_no_refits": true,
+        "no_validation64_access": true,
+        "no_sealed_or_final_test_access": true,
+        "no_new_paid_infrastructure": true,
+        "do_not_rerun_T_C3_T_C3R_T_C1R_T_C5": true
+      },
+      "training_budget": {
+        "gradient_steps": 0,
+        "selector_refits": 0,
+        "training_steps": 0
+      },
+      "validation_budget": {
+        "env_steps_after_construction": 0,
+        "plant_steps": 0,
+        "solver_calls": 0,
+        "validation64_episodes": 0
+      },
+      "test_budget": {
+        "final_test_episodes": 0,
+        "sealed_test_episodes": 0
+      },
+      "resource_limits": {
+        "solver_calls": 0,
+        "plant_steps": 0,
+        "training_steps": 0,
+        "validation_episodes": 0,
+        "test_episodes": 0
+      },
+      "max_attempts": 1,
+      "max_zero_usage_repairs": 1,
+      "timeout_seconds": 600,
+      "dependencies": [],
+      "pass_conditions": {
+        "primary_rows_reconciled": true,
+        "no_solver_plant_training_validation_or_test_usage": true
+      },
+      "continue_without_review": false
+    }
+  ]
+}

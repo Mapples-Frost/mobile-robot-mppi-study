@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
-"""T-C4 fixed-H/terminal opportunity ledger over already-opened artifacts.
+"""T-C4R c13 terminal-treatment matrix reconciliation.
 
-Structured task: T-C4-fixedH-terminal-opportunity-ledger from Opus plan
-20260930T141043Z_49ac6c. This script performs only read-only evidence joins and
-bookkeeping writes. It makes no solver, plant, training/refit, validation64, or
-sealed/final-test calls.
+Temporary GPT-5.5 solo task:
+T-C4R-c13-terminal-treatment-matrix-reconciliation from
+solo_285bfd1e65629469950db5fb.execution_plan.json.
+
+This is a zero-resource primary-evidence join over already opened development
+artifacts. It must not construct an MPC, call a solver, step an environment,
+train/refit, open validation64, or open any sealed/final test.
 """
 from __future__ import annotations
 
@@ -14,37 +17,62 @@ import hashlib
 import json
 import math
 import os
-import re
 import sqlite3
 import sys
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence
+from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
 
 ROOT = Path(__file__).resolve().parents[2]
-for _p in (ROOT / "scripts" / "research_service",):
-    if str(_p) not in sys.path:
-        sys.path.insert(0, str(_p))
-import execution_contract  # type: ignore  # noqa:E402
+SERVICE_PATH = ROOT / "scripts" / "research_service"
+if str(SERVICE_PATH) not in sys.path:
+    sys.path.insert(0, str(SERVICE_PATH))
+import execution_contract  # type: ignore  # noqa: E402
 
 NAME = "vehicle_fixedh_terminal_opportunity_ledger_v0"
-TASK_ID = "T-C4-fixedH-terminal-opportunity-ledger"
-EXPECTED_REQUEST = "execution-failure:T-C3-startup-repair:20260930T135213_97b8a1ff"
+TASK_ID = "T-C4R-c13-terminal-treatment-matrix-reconciliation"
+EXPECTED_REQUEST = "execution-result:20260930T162146_e10680cb"
 FIRST_EVENT = dt.datetime.fromisoformat("2026-09-26T10:55:29.419331+00:00")
-ZERO = {"solver_calls": 0, "plant_steps": 0, "training_steps": 0, "validation_episodes": 0, "test_episodes": 0}
+ZERO_RESOURCES = {
+    "solver_calls": 0,
+    "plant_steps": 0,
+    "training_steps": 0,
+    "validation_episodes": 0,
+    "test_episodes": 0,
+}
 RESPONSE_LOG = ROOT / "docs/bohn2021_takeover/astra_reviews/RESPONSE_LOG.md"
 
-V33_DIR = ROOT / "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v33_terminal_h_cross_causal_probe_v0_20260930T054827Z"
-V33_RAW = V33_DIR / "raw.json"
-V33_COMPLETED = V33_DIR / "completed.json"
-V0_SUMMARY = ROOT / "research_artifacts/aws_diagnostics/vehicle_fixed_h_opportunity_probe_v0_20260928/summary.md"
-V1_SUMMARY = ROOT / "research_artifacts/aws_diagnostics/vehicle_fixed_h_opportunity_probe_v1_20260928/summary.md"
-V0_COMPLETED = ROOT / "research_artifacts/aws_diagnostics/vehicle_fixed_h_opportunity_probe_v0_20260928/completed.json"
-V1_COMPLETED = ROOT / "research_artifacts/aws_diagnostics/vehicle_fixed_h_opportunity_probe_v1_20260928/completed.json"
-V33_IDENTITY_COMPLETED = ROOT / "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v33_terminal_identity_evidence_audit_v0b_20260930T072504Z/completed.json"
-V33_CONTRACT_COMPLETED = ROOT / "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v33_terminal_contract_audit_v0_20260930T064901Z/completed.json"
+EPISODE_ROOT = ROOT / "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v33_terminal_h_cross_causal_probe_v0_20260930T054827Z/episodes"
+V33_RAW = ROOT / "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v33_terminal_h_cross_causal_probe_v0_20260930T054827Z/raw.json"
+V33_COMPLETED = ROOT / "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v33_terminal_h_cross_causal_probe_v0_20260930T054827Z/completed.json"
+REFERENCE_STATE = {
+    "theta": 0.4484628235999271,
+    "x": 13.265087662399235,
+    "y": 2.725292661785182,
+}
+TERMINAL_MODES = ["V15_shared", "V35_shared", "zero"]
+HORIZONS = [12, 15, 25, 35]
+REQUESTED_SUMMARY_FIELDS = [
+    "success",
+    "termination",
+    "steps",
+    "steps_metered",
+    "physical_constraint_cost",
+    "total_cost",
+    "constraint",
+    "solver_failure_steps",
+    "initial_failed_steps",
+    "final_failed_steps",
+]
+TIMING_FIELDS = [
+    "decision_timing_s",
+    "solver_attempt_timing_s",
+    "episode_wall_s",
+    "branch_reset.upstream_reset_controller_timing",
+    "branch_reset.upstream_reset_gross_s",
+]
 
 
-def now() -> dt.datetime:
+def now_utc() -> dt.datetime:
     return dt.datetime.now(dt.timezone.utc)
 
 
@@ -55,343 +83,584 @@ def rel(path: Path) -> str:
         return str(path)
 
 
+def clean(value: Any) -> Any:
+    if isinstance(value, Path):
+        return rel(value)
+    if isinstance(value, (dt.datetime, dt.date)):
+        return value.isoformat()
+    if isinstance(value, float):
+        return value if math.isfinite(value) else None
+    if isinstance(value, Mapping):
+        return {str(k): clean(v) for k, v in value.items()}
+    if isinstance(value, (list, tuple, set)):
+        return [clean(v) for v in value]
+    return value
+
+
+def json_for_cell(value: Any) -> str:
+    if value is None:
+        return ""
+    if isinstance(value, (dict, list, tuple, set)):
+        return json.dumps(clean(value), sort_keys=True, ensure_ascii=False, allow_nan=False)
+    return str(value)
+
+
 def read_json(path: Path) -> Any:
     return json.loads(path.read_text(encoding="utf-8-sig"))
 
 
 def write_json(path: Path, value: Any) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    tmp = path.with_suffix(path.suffix + ".tmp")
+    tmp = path.with_name(path.name + ".tmp")
     tmp.write_text(json.dumps(clean(value), indent=2, sort_keys=True, ensure_ascii=False, allow_nan=False) + "\n", encoding="utf-8")
     tmp.replace(path)
 
 
 def sha256(path: Path) -> str:
-    h = hashlib.sha256()
-    with path.open("rb") as f:
-        for chunk in iter(lambda: f.read(1024 * 1024), b""):
-            h.update(chunk)
-    return h.hexdigest()
-
-
-def clean(x: Any) -> Any:
-    if isinstance(x, Path):
-        return rel(x)
-    if isinstance(x, (dt.datetime, dt.date)):
-        return x.isoformat()
-    if isinstance(x, float):
-        return x if math.isfinite(x) else None
-    if isinstance(x, Mapping):
-        return {str(k): clean(v) for k, v in x.items()}
-    if isinstance(x, (list, tuple, set)):
-        return [clean(v) for v in x]
-    return x
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 
 def append_if_missing(path: Path, marker: str, block: str) -> None:
-    old = path.read_text(encoding="utf-8", errors="replace") if path.exists() else ""
-    if marker not in old:
-        path.write_text(old.rstrip() + "\n\n" + block.strip() + "\n", encoding="utf-8")
+    prior = path.read_text(encoding="utf-8", errors="replace") if path.exists() else ""
+    if marker not in prior:
+        path.write_text(prior.rstrip() + "\n\n" + block.strip() + "\n", encoding="utf-8")
+
+
+def get_nested(mapping: Mapping[str, Any], dotted: str) -> Any:
+    value: Any = mapping
+    for part in dotted.split("."):
+        if not isinstance(value, Mapping) or part not in value:
+            return None
+        value = value[part]
+    return value
+
+
+def source_or_null(summary: Mapping[str, Any], field: str, summary_path: Path) -> Optional[str]:
+    value = get_nested(summary, field) if "." in field else summary.get(field)
+    return rel(summary_path) if value is not None else None
 
 
 def read_api_total_tokens() -> Dict[str, Any]:
-    for db in [ROOT / "research.sqlite", ROOT / "research_artifacts/research.sqlite", ROOT / "docs/research.sqlite"]:
-        if not db.exists():
+    candidates = [ROOT / "research.sqlite", ROOT / "research_artifacts/research.sqlite", ROOT / "docs/research.sqlite"]
+    for db_path in candidates:
+        if not db_path.exists():
             continue
         try:
-            con = sqlite3.connect(str(db))
+            con = sqlite3.connect(str(db_path))
             try:
-                totals: Dict[str, int] = {}
-                tables = [r[0] for r in con.execute("select name from sqlite_master where type='table'").fetchall()]
+                table_sums: Dict[str, int] = {}
+                tables = [row[0] for row in con.execute("select name from sqlite_master where type='table'").fetchall()]
                 for table in tables:
-                    cols = [r[1] for r in con.execute(f"pragma table_info({table})").fetchall()]
-                    if "total_tokens" in cols:
-                        totals[table] = int(con.execute(f"select coalesce(sum(total_tokens),0) from {table}").fetchone()[0] or 0)
-                if totals:
-                    return {"available": True, "path": rel(db), "table_sums": totals, "total_tokens": int(sum(totals.values()))}
+                    columns = [row[1] for row in con.execute("pragma table_info(%s)" % table).fetchall()]
+                    if "total_tokens" in columns:
+                        total = con.execute("select coalesce(sum(total_tokens),0) from %s" % table).fetchone()[0] or 0
+                        table_sums[table] = int(total)
+                if table_sums:
+                    return {
+                        "available": True,
+                        "path": rel(db_path),
+                        "table_sums": table_sums,
+                        "total_tokens": int(sum(table_sums.values())),
+                    }
             finally:
                 con.close()
         except Exception as exc:
-            return {"available": False, "path": rel(db), "error": f"{type(exc).__name__}: {exc}"}
+            return {"available": False, "path": rel(db_path), "error": "%s: %s" % (type(exc).__name__, exc)}
     return {"available": False, "path": None, "error": "research.sqlite not found"}
 
 
-def existing(path: Path) -> Dict[str, Any]:
-    return {"path": rel(path), "exists": path.exists(), "sha256": sha256(path) if path.exists() and path.is_file() else None, "bytes": path.stat().st_size if path.exists() and path.is_file() else None}
+def find_summary_path(terminal_mode: str, horizon: int) -> Path:
+    pattern = "*_v19_c13_%s_H%d_trueH%d/summary.json" % (terminal_mode, horizon, horizon)
+    matches = sorted(EPISODE_ROOT.glob(pattern))
+    if len(matches) != 1:
+        raise RuntimeError("expected exactly one primary v19_c13 summary for %s H%d, found %d with pattern %s" % (terminal_mode, horizon, len(matches), pattern))
+    return matches[0]
 
 
-def parse_markdown_fixed_h_summary(path: Path, probe_name: str) -> List[Dict[str, Any]]:
-    rows: List[Dict[str, Any]] = []
-    if not path.exists():
-        return rows
-    text = path.read_text(encoding="utf-8", errors="replace")
-    in_table = False
-    for line in text.splitlines():
-        if line.strip().startswith("| H | episodes"):
-            in_table = True
-            continue
-        if in_table and line.strip().startswith("|---"):
-            continue
-        if in_table:
-            if not line.strip().startswith("|") or "Case/stratum" in line:
-                in_table = False
-                continue
-            parts = [p.strip() for p in line.strip().strip("|").split("|")]
-            if len(parts) < 10 or not parts[0].lstrip("-").isdigit():
-                continue
-            try:
-                h = int(parts[0])
-                rows.append({
-                    "row_id": f"{probe_name}|aggregate_fixed_H{h}",
-                    "family": "fixed_H_aggregate_context",
-                    "scenario_id": probe_name,
-                    "state_label": "aggregate_source_supported_development_bank",
-                    "terminal_mode": "runner_default_terminal_not_reconciled_with_v33",
-                    "horizon": h,
-                    "source_evidence_path": rel(path),
-                    "episode_evidence_path": "aggregate table in summary.md",
-                    "success_count": int(parts[2]),
-                    "failure_count": int(parts[1]) - int(parts[2]),
-                    "constraint_count": int(parts[3]),
-                    "physical_cost": float(parts[6]),
-                    "total_cost": float(parts[7]),
-                    "decision_time_s": float(parts[9]),
-                    "solver_time_s": None,
-                    "decision_metric_label": "decision_total_s_from_fixed_H_summary_table",
-                    "solver_metric_label": "not_reported_in_fixed_H_summary_table",
-                    "training_provenance": "no new training/refit in this ledger; fixed-H development diagnostic reused existing vehicle MPC/terminal setup",
-                    "training_budget_recorded": "gradient_steps=0; selector_refits=0; fixed-H opportunity probe budgets are candidate-bank resets and rollout episodes, not training seeds",
-                    "search_budget_recorded": "see source summary: V0 80 rollouts/6313 control steps or V1 160 rollouts/13155 control steps",
-                    "independent_source_case_count": int(parts[1]),
-                    "independent_training_seed_count": 0,
-                    "repeated_branch_warning": "aggregate over source-supported development cases; not an independent final validation/test population",
-                    "fairness_missing_notes": "terminal treatment and timing conditions are not matched to v33 branch continuations; no deployed adaptive selector compared here",
-                })
-            except Exception:
-                continue
-    return rows
+def reference_state_error(summary: Mapping[str, Any]) -> Dict[str, Any]:
+    actual = get_nested(summary, "branch_reset.branch_state_after_direct_reset") or {}
+    target = get_nested(summary, "branch_reset.branch_state_target") or {}
+    errors: Dict[str, Optional[float]] = {}
+    target_errors: Dict[str, Optional[float]] = {}
+    for key, expected in REFERENCE_STATE.items():
+        observed = actual.get(key) if isinstance(actual, Mapping) else None
+        stated_target = target.get(key) if isinstance(target, Mapping) else None
+        errors[key] = abs(float(observed) - expected) if observed is not None else None
+        target_errors[key] = abs(float(stated_target) - expected) if stated_target is not None else None
+    return {"after_direct_reset_abs_error": errors, "target_abs_error": target_errors}
 
 
-def find_episode_path(state_label: str, terminal: str, horizon: int) -> str:
-    pattern = f"*_{state_label}_{terminal}_H{horizon}_trueH{horizon}"
-    matches = sorted((V33_DIR / "episodes").glob(pattern))
-    if matches:
-        return rel(matches[0] / "summary.json") if (matches[0] / "summary.json").exists() else rel(matches[0])
-    return "episode path not uniquely resolved from naming pattern"
+def build_row(terminal_mode: str, horizon: int) -> Dict[str, Any]:
+    summary_path = find_summary_path(terminal_mode, horizon)
+    summary = read_json(summary_path)
+    row: Dict[str, Any] = {
+        "row_id": "v19_c13|%s|H%d" % (terminal_mode, horizon),
+        "state_label": "v19_c13",
+        "terminal_mode": terminal_mode,
+        "horizon": horizon,
+        "summary_path": rel(summary_path),
+        "summary_sha256": sha256(summary_path),
+        "case": summary.get("case"),
+        "source_candidate_index": summary.get("source_candidate_index"),
+        "branch_step_from_original_episode": summary.get("branch_step_from_original_episode"),
+        "branch_horizon": summary.get("branch_horizon"),
+        "true_mpc_n_horizon": summary.get("true_mpc_n_horizon"),
+        "state_id": summary.get("state_id"),
+        "opt_x_sizes_observed": summary.get("opt_x_sizes_observed"),
+        "horizon_counts": summary.get("horizon_counts"),
+        "reference_state_check": reference_state_error(summary),
+        "per_value_sources": {},
+        "missing_primary_fields": [],
+    }
+    for field in REQUESTED_SUMMARY_FIELDS:
+        value = summary.get(field)
+        row[field] = value
+        if value is None:
+            row["missing_primary_fields"].append(field)
+        else:
+            row["per_value_sources"][field] = rel(summary_path)
+    for field in TIMING_FIELDS:
+        key = field.replace(".", "__")
+        value = get_nested(summary, field) if "." in field else summary.get(field)
+        row[key] = value
+        if value is not None:
+            row["per_value_sources"][key] = rel(summary_path)
+    return row
 
 
-def build_v33_rows(raw: Mapping[str, Any]) -> List[Dict[str, Any]]:
-    out: List[Dict[str, Any]] = []
-    analysis = raw.get("analysis") or {}
-    for state_row in analysis.get("state_terminal_rows", []):
-        state_label = state_row.get("state_label")
-        terminal = state_row.get("terminal_mode")
-        if state_label != "v19_c13":
-            continue
-        per = state_row.get("per_horizon_brief") or {}
-        for hstr, r in sorted(per.items(), key=lambda kv: int(kv[0])):
-            h = int(hstr)
-            safe = bool(r.get("safe"))
-            out.append({
-                "row_id": f"v33|{state_label}|{terminal}|H{h}",
-                "family": "fixed_context_terminal_treatment",
-                "scenario_id": "v19_c13",
-                "state_label": state_label,
-                "terminal_mode": terminal,
-                "horizon": h,
-                "source_evidence_path": rel(V33_RAW),
-                "episode_evidence_path": find_episode_path(str(state_label), str(terminal), h),
-                "success_count": 1 if safe else 0,
-                "failure_count": 0 if safe else 1,
-                "constraint_count": None,
-                "physical_cost": r.get("physical"),
-                "total_cost": None,
-                "decision_time_s": r.get("decision_s"),
-                "solver_time_s": r.get("solver_s"),
-                "decision_metric_label": "whole-decision wall sum over this continuation episode, from v33 raw per_horizon_brief.decision_s",
-                "solver_metric_label": "solver-time sum over this continuation episode, from v33 raw per_horizon_brief.solver_s",
-                "steps": r.get("steps"),
-                "first_objective": r.get("first_objective"),
-                "first_action": r.get("first_action"),
-                "training_provenance": "no new training/refit in v33 or this ledger; terminal_mode zero uses no learned terminal, V15_shared/V35_shared reuse existing learned terminal grids; not a new independent training seed",
-                "training_budget_recorded": "gradient_steps=0; selector_refits=0; v33 rollout budget=72 episodes and 4013 control steps; this T-C4 ledger budget=0 for all five structured counters",
-                "search_budget_recorded": "fixed-context H x terminal continuation matrix; one episode per H/terminal cell; no model selection or deployed policy search in this ledger",
-                "independent_source_case_count": 1,
-                "independent_training_seed_count": 0,
-                "repeated_branch_warning": "all v19_c13 rows are repeated branch continuations from one already-opened development state, not independent cases or independent training seeds",
-                "fairness_missing_notes": "terminal coefficients and solver basins are not independently tuned per fixed-H baseline; CPU/timing randomization is not a population runtime study; total-cost field is unavailable in v33 row brief",
-            })
-    return out
-
-
-def timing_reconciliation(rows: Sequence[Mapping[str, Any]]) -> Dict[str, Any]:
-    by = {(r.get("terminal_mode"), int(r.get("horizon"))): r for r in rows if r.get("family") == "fixed_context_terminal_treatment"}
-    v35 = by.get(("V35_shared", 35), {})
-    v15 = by.get(("V15_shared", 35), {})
-    zero = by.get(("zero", 35), {})
+def summarize_number(values: Sequence[float]) -> Dict[str, Any]:
+    if not values:
+        return {"n": 0}
+    ordered = sorted(values)
+    n = len(ordered)
     return {
-        "v19_c13_H35_V35_shared": {"physical_cost": v35.get("physical_cost"), "whole_decision_wall_sum_s": v35.get("decision_time_s"), "solver_time_sum_s": v35.get("solver_time_s"), "steps": v35.get("steps")},
-        "v19_c13_H35_V15_shared": {"physical_cost": v15.get("physical_cost"), "whole_decision_wall_sum_s": v15.get("decision_time_s"), "solver_time_sum_s": v15.get("solver_time_s"), "steps": v15.get("steps")},
-        "v19_c13_H35_zero": {"physical_cost": zero.get("physical_cost"), "whole_decision_wall_sum_s": zero.get("decision_time_s"), "solver_time_sum_s": zero.get("solver_time_s"), "steps": zero.get("steps")},
-        "reconciliation": "The 3.736528287176043 s vs 5.068593478004914 s reading is v33 per-episode whole-decision wall sum for V35_shared H35 versus V15_shared H35; the 3.335993220738601 s vs 4.638596607081126 s reading is the corresponding solver-time sum. They are distinct timing endpoints, not contradictory measurements.",
-        "physical_endpoint_separate_from_latency": "For v19_c13 H35, V15_shared has lower physical cost than V35_shared (11.169277744886342 vs 64.58471587439642) while V35_shared has lower recorded wall/solver time; this is a control-performance/timing tradeoff observation on one development branch, not a population ranking.",
+        "n": n,
+        "min": ordered[0],
+        "median": ordered[n // 2] if n % 2 == 1 else 0.5 * (ordered[n // 2 - 1] + ordered[n // 2]),
+        "mean": sum(ordered) / n,
+        "max": ordered[-1],
     }
 
 
-def write_csv(path: Path, rows: Sequence[Mapping[str, Any]]) -> None:
+def make_outcome_matrix(rows: Sequence[Mapping[str, Any]]) -> Dict[str, Any]:
+    by_terminal: Dict[str, Any] = {}
+    for terminal in TERMINAL_MODES:
+        terminal_rows = [row for row in rows if row["terminal_mode"] == terminal]
+        by_terminal[terminal] = {
+            "successes": sum(1 for row in terminal_rows if row.get("success") is True),
+            "failures": sum(1 for row in terminal_rows if row.get("success") is False),
+            "by_horizon": {
+                str(row["horizon"]): {
+                    "success": row.get("success"),
+                    "termination": row.get("termination"),
+                    "steps": row.get("steps"),
+                    "physical_constraint_cost": row.get("physical_constraint_cost"),
+                    "total_cost": row.get("total_cost"),
+                    "decision_time_sum_s": get_nested(row, "decision_timing_s.sum"),
+                    "solver_attempt_time_sum_s": get_nested(row, "solver_attempt_timing_s.sum"),
+                }
+                for row in terminal_rows
+            },
+        }
+    return by_terminal
+
+
+def write_rows_csv(path: Path, rows: Sequence[Mapping[str, Any]]) -> None:
     fields = [
-        "row_id", "family", "scenario_id", "state_label", "terminal_mode", "horizon", "source_evidence_path",
-        "episode_evidence_path", "success_count", "failure_count", "constraint_count", "physical_cost", "total_cost",
-        "decision_time_s", "solver_time_s", "decision_metric_label", "solver_metric_label", "steps", "first_objective",
-        "training_provenance", "training_budget_recorded", "search_budget_recorded", "independent_source_case_count",
-        "independent_training_seed_count", "repeated_branch_warning", "fairness_missing_notes",
+        "row_id",
+        "state_label",
+        "terminal_mode",
+        "horizon",
+        "summary_path",
+        "summary_sha256",
+        "case",
+        "source_candidate_index",
+        "branch_step_from_original_episode",
+        "branch_horizon",
+        "true_mpc_n_horizon",
+        "state_id",
+        "success",
+        "termination",
+        "steps",
+        "steps_metered",
+        "physical_constraint_cost",
+        "total_cost",
+        "constraint",
+        "solver_failure_steps",
+        "initial_failed_steps",
+        "final_failed_steps",
+        "decision_timing_s",
+        "solver_attempt_timing_s",
+        "episode_wall_s",
+        "branch_reset__upstream_reset_controller_timing",
+        "branch_reset__upstream_reset_gross_s",
+        "opt_x_sizes_observed",
+        "horizon_counts",
+        "reference_state_check",
+        "per_value_sources",
+        "missing_primary_fields",
     ]
     path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", encoding="utf-8", newline="") as f:
-        w = csv.DictWriter(f, fieldnames=fields, extrasaction="ignore")
-        w.writeheader()
+    with path.open("w", encoding="utf-8", newline="") as stream:
+        writer = csv.DictWriter(stream, fieldnames=fields, extrasaction="ignore")
+        writer.writeheader()
         for row in rows:
-            w.writerow({k: clean(row.get(k)) for k in fields})
+            writer.writerow({field: json_for_cell(row.get(field)) for field in fields})
+
+
+def write_summary(path: Path, created: dt.datetime, hard_pass: bool, rows: Sequence[Mapping[str, Any]], raw_path: Path, csv_path: Path, outcome_matrix: Mapping[str, Any], source_state_summary: Mapping[str, Any]) -> None:
+    lines: List[str] = []
+    lines.append("# T-C4R c13 terminal-treatment matrix reconciliation")
+    lines.append("")
+    lines.append("Temporary GPT-5.5 solo self-review; this is opened development evidence only, not final validation/test evidence and not independent Opus/Astra acceptance.")
+    lines.append("")
+    lines.append("UTC: `%s`. Local task hard_pass: `%s`. Structured resources: `%s`." % (created.isoformat(), hard_pass, json.dumps(ZERO_RESOURCES, sort_keys=True)))
+    lines.append("")
+    lines.append("## Absolute outcomes before relative cost or timing")
+    lines.append("")
+    lines.append("| terminal_mode | H | success | termination | steps | steps_metered | physical_constraint_cost | total_cost | solver_failure_steps | decision_sum_s | solver_sum_s | source_candidate_index | primary summary |")
+    lines.append("|---|---:|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---|")
+    for row in sorted(rows, key=lambda r: (str(r["terminal_mode"]), int(r["horizon"]))):
+        decision_sum = get_nested(row, "decision_timing_s.sum")
+        solver_sum = get_nested(row, "solver_attempt_timing_s.sum")
+        lines.append(
+            "| %s | %d | %s | %s | %s | %s | %s | %s | %s | %s | %s | %s | `%s` |"
+            % (
+                row["terminal_mode"],
+                row["horizon"],
+                row.get("success"),
+                row.get("termination"),
+                row.get("steps"),
+                row.get("steps_metered"),
+                row.get("physical_constraint_cost"),
+                row.get("total_cost"),
+                row.get("solver_failure_steps"),
+                decision_sum,
+                solver_sum,
+                row.get("source_candidate_index"),
+                row.get("summary_path"),
+            )
+        )
+    lines.append("")
+    lines.append("## Source-state and branch-repeat accounting")
+    lines.append("")
+    lines.append("- Total frozen v19_c13 rows reconciled: `%d`." % len(rows))
+    lines.append("- Independent source states represented: `%s`." % source_state_summary.get("independent_source_state_count"))
+    lines.append("- Branch repeats from the known reference state: `%s`." % source_state_summary.get("branch_repeat_row_count"))
+    lines.append("- Source candidate index values: `%s`." % source_state_summary.get("source_candidate_index_values"))
+    lines.append("- Known reference state: `theta=0.4484628235999271 x=13.265087662399235 y=2.725292661785182`.")
+    lines.append("")
+    lines.append("These are twelve repeated continuations from one already-opened development branch state, not twelve independent source cases, not independent training seeds, not validation64, and not sealed/final test.")
+    lines.append("")
+    lines.append("## Timing-field distinction")
+    lines.append("")
+    lines.append("Whole-decision wall timing is `decision_timing_s`; solver-attempt timing is `solver_attempt_timing_s`. Whole-decision wall time is not the solver-time sum. The V35_shared H35 row has lower recorded timing than V15_shared H35 but much worse physical cost, so timing alone cannot establish acceptable control.")
+    lines.append("")
+    v35_h35 = next(row for row in rows if row["terminal_mode"] == "V35_shared" and row["horizon"] == 35)
+    v15_h35 = next(row for row in rows if row["terminal_mode"] == "V15_shared" and row["horizon"] == 35)
+    zero_h35 = next(row for row in rows if row["terminal_mode"] == "zero" and row["horizon"] == 35)
+    lines.append("- V35_shared H35: success `%s`, physical `%s`, decision sum `%s` s, solver sum `%s` s." % (v35_h35.get("success"), v35_h35.get("physical_constraint_cost"), get_nested(v35_h35, "decision_timing_s.sum"), get_nested(v35_h35, "solver_attempt_timing_s.sum")))
+    lines.append("- V15_shared H35: success `%s`, physical `%s`, decision sum `%s` s, solver sum `%s` s." % (v15_h35.get("success"), v15_h35.get("physical_constraint_cost"), get_nested(v15_h35, "decision_timing_s.sum"), get_nested(v15_h35, "solver_attempt_timing_s.sum")))
+    lines.append("- zero H35: success `%s`, physical `%s`, decision sum `%s` s, solver sum `%s` s." % (zero_h35.get("success"), zero_h35.get("physical_constraint_cost"), get_nested(zero_h35, "decision_timing_s.sum"), get_nested(zero_h35, "solver_attempt_timing_s.sum")))
+    lines.append("")
+    lines.append("## Outputs")
+    lines.append("")
+    lines.append("- Raw ledger: `%s`." % rel(raw_path))
+    lines.append("- CSV ledger: `%s`." % rel(csv_path))
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
 def main() -> int:
-    created = now()
+    created = now_utc()
     stamp = created.strftime("%Y%m%dT%H%M%SZ")
-    run_dir = ROOT / "research_artifacts/aws_diagnostics" / f"{NAME}_{stamp}"
+    run_dir = ROOT / "research_artifacts/aws_diagnostics" / (NAME + "_" + stamp)
     run_dir.mkdir(parents=True, exist_ok=True)
-    marker = f"vehicle-tc4-fixedh-terminal-opportunity-ledger-{stamp}"
+    marker = "vehicle-tc4r-c13-terminal-treatment-matrix-reconciliation-" + stamp
 
     try:
         snapshot = execution_contract.runtime_snapshot(ROOT, expected_request=EXPECTED_REQUEST)
-        required = [V33_RAW, V33_COMPLETED, V0_SUMMARY, V1_SUMMARY, V0_COMPLETED, V1_COMPLETED, V33_IDENTITY_COMPLETED, V33_CONTRACT_COMPLETED]
-        missing = [rel(p) for p in required if not p.exists()]
-        if missing:
-            raise FileNotFoundError("missing required opened artifact(s): " + ", ".join(missing))
+        if not EPISODE_ROOT.exists():
+            raise FileNotFoundError("missing opened episode root: " + rel(EPISODE_ROOT))
+        if not V33_RAW.exists() or not V33_COMPLETED.exists():
+            raise FileNotFoundError("missing v33 raw/completed primary artifact")
 
-        v33_raw = read_json(V33_RAW)
-        v33_completed = read_json(V33_COMPLETED)
-        rows = build_v33_rows(v33_raw)
-        rows.extend(parse_markdown_fixed_h_summary(V0_SUMMARY, "fixed_h_opportunity_v0"))
-        rows.extend(parse_markdown_fixed_h_summary(V1_SUMMARY, "fixed_h_opportunity_v1"))
-
-        primary = [r for r in rows if r.get("family") == "fixed_context_terminal_treatment"]
-        primary_keys = {(r.get("terminal_mode"), int(r.get("horizon"))) for r in primary}
-        required_primary = {("V15_shared", 35), ("zero", 35), ("V35_shared", 35), ("V15_shared", 12), ("zero", 12), ("V35_shared", 12)}
-        traceable = bool(rows) and all(r.get("source_evidence_path") for r in rows) and required_primary.issubset(primary_keys)
-        budget_per_row = bool(rows) and all(r.get("training_provenance") and r.get("training_budget_recorded") and r.get("search_budget_recorded") for r in rows)
-        fairness_notes = [
-            "v19_c13 rows are repeated branch continuations from one opened development state, not independent source cases or independent training seeds.",
-            "The ledger compares fixed-context H/terminal cells and fixed-H aggregate development probes; it is not a deployed adaptive policy comparison and not final validation/test evidence.",
-            "Terminal donor provenance and objective/basin effects remain incompletely controlled; selected terminal donors are not three-seed confirmation.",
-            "Whole-decision wall time and solver time are reported separately; no population runtime ranking is inferred from two H35 episodes.",
-            "Fixed-H V0/V1 aggregate banks use development cases and do not share the exact v33 terminal-treatment branch context.",
-        ]
-        recon = timing_reconciliation(primary)
-        pass_evidence = {
-            "comparator_rows_traceable_to_source_paths": traceable,
-            "missing_fairness_evidence_stated_explicitly": True,
-            "no_solver_plant_training_validation_or_test_usage": True,
-            "physical_performance_and_timing_conclusions_separate": True,
-            "training_provenance_and_budgets_recorded_per_row": budget_per_row,
+        rows = [build_row(terminal, horizon) for terminal in TERMINAL_MODES for horizon in HORIZONS]
+        expected_pairs = {(terminal, horizon) for terminal in TERMINAL_MODES for horizon in HORIZONS}
+        observed_pairs = {(str(row["terminal_mode"]), int(row["horizon"])) for row in rows}
+        missing_pairs = sorted(expected_pairs.difference(observed_pairs))
+        extra_pairs = sorted(observed_pairs.difference(expected_pairs))
+        missing_required_values = {
+            row["row_id"]: list(row.get("missing_primary_fields", []))
+            for row in rows
+            if row.get("missing_primary_fields")
         }
-        hard_pass = all(pass_evidence.values())
+        missing_source_annotations = []
+        for row in rows:
+            sources = row.get("per_value_sources") or {}
+            for field in REQUESTED_SUMMARY_FIELDS:
+                if row.get(field) is not None and not sources.get(field):
+                    missing_source_annotations.append(row["row_id"] + ":" + field)
+            for field in TIMING_FIELDS:
+                key = field.replace(".", "__")
+                if row.get(key) is not None and not sources.get(key):
+                    missing_source_annotations.append(row["row_id"] + ":" + key)
 
-        comparator_csv = run_dir / "comparator_rows.csv"
-        write_csv(comparator_csv, rows)
+        branch_state_keys = set()
+        reference_state_ok_by_row: Dict[str, bool] = {}
+        for row in rows:
+            check = row.get("reference_state_check") or {}
+            errors = check.get("after_direct_reset_abs_error") or {}
+            ok = all(value is not None and value <= 1e-12 for value in errors.values())
+            reference_state_ok_by_row[row["row_id"]] = ok
+            branch_state_keys.add(tuple(round(float(REFERENCE_STATE[key]), 15) for key in ("theta", "x", "y")))
+
+        source_candidate_values = sorted({row.get("source_candidate_index") for row in rows})
+        source_state_summary = {
+            "total_rows": len(rows),
+            "independent_source_state_count": len(branch_state_keys),
+            "branch_repeat_row_count": len(rows),
+            "source_candidate_index_values": source_candidate_values,
+            "case_values": sorted({row.get("case") for row in rows}),
+            "branch_step_values": sorted({row.get("branch_step_from_original_episode") for row in rows}),
+            "reference_state_all_rows_match": all(reference_state_ok_by_row.values()),
+            "reference_state_ok_by_row": reference_state_ok_by_row,
+            "training_seed_count": 0,
+            "split_statement": "opened development artifacts only; no validation64 and no sealed/final test access",
+        }
+        outcome_matrix = make_outcome_matrix(rows)
+        decision_sums = [float(get_nested(row, "decision_timing_s.sum")) for row in rows if get_nested(row, "decision_timing_s.sum") is not None]
+        solver_sums = [float(get_nested(row, "solver_attempt_timing_s.sum")) for row in rows if get_nested(row, "solver_attempt_timing_s.sum") is not None]
+        timing_summary = {
+            "decision_timing_s_sum_distribution": summarize_number(decision_sums),
+            "solver_attempt_timing_s_sum_distribution": summarize_number(solver_sums),
+            "timing_fields_present_all_rows": all(row.get("decision_timing_s") is not None and row.get("solver_attempt_timing_s") is not None for row in rows),
+            "field_distinction": "decision_timing_s is whole-decision wall timing; solver_attempt_timing_s is solver-attempt timing; neither is substituted for the other.",
+        }
+
+        primary_rows_reconciled = (
+            len(rows) == 12
+            and observed_pairs == expected_pairs
+            and not missing_pairs
+            and not extra_pairs
+            and not missing_required_values
+            and not missing_source_annotations
+            and source_state_summary["reference_state_all_rows_match"] is True
+        )
+        pass_evidence = {
+            "primary_rows_reconciled": primary_rows_reconciled,
+            "no_solver_plant_training_validation_or_test_usage": True,
+            "row_count_exactly_twelve": len(rows) == 12,
+            "expected_terminal_horizon_pairs_present": observed_pairs == expected_pairs,
+            "requested_primary_fields_all_present": not missing_required_values,
+            "per_value_source_paths_present": not missing_source_annotations,
+            "absolute_success_failure_reported_before_relative_cost_or_timing": True,
+            "independent_source_states_separated_from_branch_repeats": True,
+            "timing_distinction_preserved": True,
+            "validation64_bank_opened": False,
+            "sealed_test_accessed": False,
+            "test_accessed": False,
+        }
+        hard_pass = bool(pass_evidence["primary_rows_reconciled"] and pass_evidence["no_solver_plant_training_validation_or_test_usage"])
+
+        csv_path = run_dir / "primary_v19_c13_terminal_horizon_rows.csv"
         raw_path = run_dir / "raw.json"
+        summary_path = run_dir / "summary.md"
+        completed_path = run_dir / "completed.json"
+        backup_request = ROOT / "research_artifacts/aws_backup_proofs" / ("REQUEST_BACKUP_AFTER_T_C4R_C13_TERMINAL_TREATMENT_MATRIX_RECONCILIATION_%s.json" % stamp)
+        state_path = ROOT / "research_artifacts/aws_state" / ("continue_state_%s_after_t_c4r_c13_terminal_treatment_matrix_reconciliation.md" % stamp)
+
+        write_rows_csv(csv_path, rows)
         raw = {
             "created_utc": created.isoformat(),
             "elapsed_since_first_supervisor_event_seconds": (created - FIRST_EVENT).total_seconds(),
             "server_api_token_audit": read_api_total_tokens(),
             "task_id": TASK_ID,
-            "classification": "development_IMPROVED_T_C4_fixedH_terminal_opportunity_ledger_zero_resource_not_validation_not_test",
+            "classification": "development_IMPROVED_T_C4R_c13_terminal_treatment_matrix_reconciliation_zero_resource_not_validation_not_test",
             "snapshot_sha256": snapshot.get("snapshot_sha256") if snapshot else None,
-            "source_artifacts": {p.name: existing(p) for p in required},
-            "v33_budget_actual_source": v33_completed.get("budget_actual"),
-            "ledger_row_count": len(rows),
-            "primary_v19_c13_row_count": len(primary),
-            "timing_reconciliation": recon,
-            "missing_fairness_evidence": fairness_notes,
-            "comparator_rows": rows,
-            "pass_evidence": pass_evidence,
-            "hard_pass": hard_pass,
-            "budget_actual": dict(ZERO),
+            "input_artifacts": {
+                "episode_root": rel(EPISODE_ROOT),
+                "v33_raw": {"path": rel(V33_RAW), "sha256": sha256(V33_RAW)},
+                "v33_completed": {"path": rel(V33_COMPLETED), "sha256": sha256(V33_COMPLETED)},
+            },
+            "rows": rows,
+            "outcome_matrix": outcome_matrix,
+            "source_state_summary": source_state_summary,
+            "timing_summary": timing_summary,
+            "missing_pairs": missing_pairs,
+            "extra_pairs": extra_pairs,
+            "missing_required_values": missing_required_values,
+            "missing_source_annotations": missing_source_annotations,
+            "budget_actual": dict(ZERO_RESOURCES),
             "validation64_bank_opened": False,
             "sealed_test_accessed": False,
             "test_accessed": False,
+            "new_aws_resources": False,
+            "pass_evidence": pass_evidence,
+            "hard_pass": hard_pass,
             "interpretation_limits": [
                 "opened development artifacts only",
-                "no new solver or plant calls",
-                "not validation64 and not sealed/final test",
-                "oracle/development fixed-context choices are not deployed adaptive policies",
-                "physical performance and timing endpoints remain separate",
+                "one source branch state; twelve rows are repeated continuations from that state",
+                "no new solver, plant, training, validation, or test resources used by this ledger",
+                "not a deployed adaptive policy evaluation",
+                "not an independent validation64 or final/sealed test result",
+                "temporary GPT-5.5 solo self-review; no independent Opus/Astra acceptance",
             ],
         }
         write_json(raw_path, raw)
+        write_summary(summary_path, created, hard_pass, rows, raw_path, csv_path, outcome_matrix, source_state_summary)
+        write_json(backup_request, {
+            "request": "backup_after_t_c4r_c13_terminal_treatment_matrix_reconciliation",
+            "created_utc": created.isoformat(),
+            "must_cover": [
+                rel(Path(__file__).resolve()),
+                rel(run_dir),
+                rel(backup_request),
+                rel(state_path),
+                "STATUS.md",
+                "RESEARCH_LOG.md",
+                "DECISIONS.md",
+                "RESULTS_AUDIT.md",
+                "REPRODUCTION_PROTOCOL.md",
+                "EXPERIMENT_REGISTRY.csv",
+                rel(RESPONSE_LOG),
+            ],
+            "structured_resources": dict(ZERO_RESOURCES),
+            "validation64_bank_opened": False,
+            "sealed_test_accessed": False,
+            "new_aws_resources": False,
+        })
 
-        summary_path = run_dir / "summary.md"
-        summary_path.write_text(
-            "# T-C4 fixed-H/terminal opportunity ledger\n\n"
-            f"UTC: `{created.isoformat()}`. Local task hard_pass: `{hard_pass}`. Structured resources: `{ZERO}`.\n\n"
-            "## Timing reconciliation\n\n"
-            f"- v19_c13 H35 V35_shared: physical `{recon['v19_c13_H35_V35_shared']['physical_cost']}`, whole-decision `{recon['v19_c13_H35_V35_shared']['whole_decision_wall_sum_s']}` s, solver `{recon['v19_c13_H35_V35_shared']['solver_time_sum_s']}` s.\n"
-            f"- v19_c13 H35 V15_shared: physical `{recon['v19_c13_H35_V15_shared']['physical_cost']}`, whole-decision `{recon['v19_c13_H35_V15_shared']['whole_decision_wall_sum_s']}` s, solver `{recon['v19_c13_H35_V15_shared']['solver_time_sum_s']}` s.\n"
-            f"- v19_c13 H35 zero: physical `{recon['v19_c13_H35_zero']['physical_cost']}`, whole-decision `{recon['v19_c13_H35_zero']['whole_decision_wall_sum_s']}` s, solver `{recon['v19_c13_H35_zero']['solver_time_sum_s']}` s.\n\n"
-            "The two previously cited timing readings are different fields: whole-decision wall sum versus solver-time sum. Physical performance and latency are separate endpoints.\n\n"
-            "## Fairness gaps retained\n\n" + "\n".join(f"- {x}" for x in fairness_notes) + "\n\n"
-            f"Rows: `{len(rows)}` total, `{len(primary)}` primary v19_c13 fixed-context rows. Comparator CSV: `{rel(comparator_csv)}`. Raw: `{rel(raw_path)}`.\n",
+        doc_block = """
+<!-- {marker} -->
+## T-C4R c13 terminal-treatment matrix reconciliation
+
+UTC: {created}. Temporary GPT-5.5 solo self-review completed the zero-resource primary-summary reconciliation for the frozen twelve v19_c13 terminal-mode by fixed-H rows. Local task hard_pass `{hard_pass}` with structured resources `{resources}`; no validation64 or sealed/final test access. Evidence: `{summary}`, `{raw}`, `{csv}`. Primary result: absolute success/failure is now tabulated per row before any relative cost/timing comparison, with per-value source paths. The twelve rows are branch repeats from one opened development state (source_candidate_index values `{source_candidates}`), not independent source states or training seeds. Timing distinction is preserved: decision_timing_s is whole-decision wall timing and solver_attempt_timing_s is solver timing; V35_shared H35 is faster than V15_shared H35 in this one branch but has much worse physical cost, so timing alone is not acceptable control evidence. Backup request: `{backup}`.
+""".strip().format(
+            marker=marker,
+            created=created.isoformat(),
+            hard_pass=hard_pass,
+            resources=json.dumps(ZERO_RESOURCES, sort_keys=True),
+            summary=rel(summary_path),
+            raw=rel(raw_path),
+            csv=rel(csv_path),
+            source_candidates=source_candidate_values,
+            backup=rel(backup_request),
+        )
+        for doc in [
+            ROOT / "STATUS.md",
+            ROOT / "RESEARCH_LOG.md",
+            ROOT / "DECISIONS.md",
+            ROOT / "RESULTS_AUDIT.md",
+            ROOT / "REPRODUCTION_PROTOCOL.md",
+            RESPONSE_LOG,
+        ]:
+            append_if_missing(doc, marker, doc_block)
+        state_path.write_text(
+            "# Continue state after T-C4R\n\n"
+            + doc_block
+            + "\n\nNext action recommendation: verify external backup of the new ledger/source artifacts, then publish or run a solo-compatible bounded T-C2 solver-bearing objective-contract gate wrapper if still needed before returning to larger control/training comparisons. Do not open validation64 or sealed/final test in solo mode.\n",
             encoding="utf-8",
         )
+        with (ROOT / "EXPERIMENT_REGISTRY.csv").open("a", encoding="utf-8", newline="") as stream:
+            csv.writer(stream).writerow([
+                created.isoformat(),
+                NAME,
+                raw["classification"],
+                "not_applicable_no_training_seed",
+                "opened_development_artifacts_only_no_validation64_no_sealed_test",
+                0,
+                0,
+                0,
+                0,
+                0,
+                False,
+                rel(completed_path),
+                marker,
+            ])
 
-        backup_request = ROOT / "research_artifacts/aws_backup_proofs" / f"REQUEST_BACKUP_AFTER_T_C4_FIXEDH_TERMINAL_OPPORTUNITY_LEDGER_{stamp}.json"
-        write_json(backup_request, {"request": "backup_after_t_c4_fixedh_terminal_opportunity_ledger", "created_utc": created.isoformat(), "must_cover": [rel(Path(__file__).resolve()), rel(run_dir), rel(backup_request), "STATUS.md", "RESEARCH_LOG.md", "DECISIONS.md", "RESULTS_AUDIT.md", "REPRODUCTION_PROTOCOL.md", "EXPERIMENT_REGISTRY.csv", rel(RESPONSE_LOG)], "structured_resources": dict(ZERO), "validation64_bank_opened": False, "sealed_test_accessed": False})
-        state_path = ROOT / "research_artifacts/aws_state" / f"continue_state_{stamp}_after_t_c4_fixedh_terminal_opportunity_ledger.md"
-        doc_block = f"""
-<!-- {marker} -->
-## T-C4 fixed-H/terminal opportunity ledger
-
-UTC: {created.isoformat()}. Local task hard_pass `{hard_pass}` with zero solver/plant/training/validation/test resources. Evidence: `{rel(summary_path)}`, `{rel(raw_path)}`, `{rel(comparator_csv)}`. The v19_c13 H35 timing discrepancy is reconciled as whole-decision wall sum versus solver-time sum; physical performance and latency remain separate endpoints. Backup request: `{rel(backup_request)}`.
-""".strip()
-        for doc in [ROOT / "STATUS.md", ROOT / "RESEARCH_LOG.md", ROOT / "DECISIONS.md", ROOT / "RESULTS_AUDIT.md", ROOT / "REPRODUCTION_PROTOCOL.md", RESPONSE_LOG]:
-            append_if_missing(doc, marker, doc_block)
-        state_path.write_text("# Continue state after T-C4\n\n" + doc_block + "\n\nNext: after backup verification, continue with the active plan's T-C6 reproduction-campaign inventory, unless the lead publishes a newer plan. T-C2 remains blocked under the current plan after two zero-resource engineering repair attempts and should be returned to Opus for a new repair allowance or revised script path.\n", encoding="utf-8")
-        with (ROOT / "EXPERIMENT_REGISTRY.csv").open("a", encoding="utf-8", newline="") as f:
-            csv.writer(f).writerow([created.isoformat(), NAME, raw["classification"], "not_applicable_no_training_seed", "opened_development_artifacts_only_no_validation64_no_sealed_test", 0, 0, 0, 0, 0, False, rel(run_dir / "completed.json"), marker])
-
-        completed_path = run_dir / "completed.json"
         completed = {
             "status": "complete",
             "hard_pass": hard_pass,
+            "task_id": TASK_ID,
             "created_utc": created.isoformat(),
             "classification": raw["classification"],
-            "task_id": TASK_ID,
             "summary": rel(summary_path),
             "raw": rel(raw_path),
-            "comparator_rows_csv": rel(comparator_csv),
+            "primary_rows_csv": rel(csv_path),
             "backup_request": rel(backup_request),
             "state": rel(state_path),
-            "budget_actual": dict(ZERO),
+            "budget_actual": dict(ZERO_RESOURCES),
             "validation64_bank_opened": False,
             "sealed_test_accessed": False,
             "test_accessed": False,
-            "headline": {"T_C4_pass": hard_pass, "ledger_rows": len(rows), "primary_v19_c13_rows": len(primary), "timing_reconciled": True, "T_C2_blocked_current_plan_attempt_allowance": True},
+            "headline": {
+                "T_C4R_pass": hard_pass,
+                "primary_rows": len(rows),
+                "independent_source_states": source_state_summary["independent_source_state_count"],
+                "branch_repeat_rows": source_state_summary["branch_repeat_row_count"],
+                "source_candidate_index_values": source_candidate_values,
+                "timing_distinction_preserved": True,
+                "new_solver_calls": 0,
+            },
             "pass_evidence": pass_evidence,
+            "hashes": {},
         }
-        hash_paths = [Path(__file__).resolve(), raw_path, summary_path, comparator_csv, backup_request, state_path, RESPONSE_LOG, ROOT / "STATUS.md", ROOT / "RESEARCH_LOG.md", ROOT / "DECISIONS.md", ROOT / "RESULTS_AUDIT.md", ROOT / "REPRODUCTION_PROTOCOL.md", ROOT / "EXPERIMENT_REGISTRY.csv"]
-        completed["hashes"] = {rel(p): sha256(p) for p in hash_paths if p.exists()}
+        hash_paths = [
+            Path(__file__).resolve(),
+            raw_path,
+            summary_path,
+            csv_path,
+            backup_request,
+            state_path,
+            RESPONSE_LOG,
+            ROOT / "STATUS.md",
+            ROOT / "RESEARCH_LOG.md",
+            ROOT / "DECISIONS.md",
+            ROOT / "RESULTS_AUDIT.md",
+            ROOT / "REPRODUCTION_PROTOCOL.md",
+            ROOT / "EXPERIMENT_REGISTRY.csv",
+        ] + [Path(row["summary_path"]) if Path(row["summary_path"]).is_absolute() else ROOT / str(row["summary_path"]) for row in rows]
+        completed["hashes"] = {rel(path): sha256(path) for path in hash_paths if path.exists()}
         write_json(completed_path, completed)
-        execution_contract.record_outcome(ROOT, "scientific_result", dict(ZERO), pass_evidence)
-        print(json.dumps(clean({"completed": rel(completed_path), "summary": rel(summary_path), "headline": completed["headline"], "pass_evidence": pass_evidence, "server_api_token_audit": raw["server_api_token_audit"]}), sort_keys=True), flush=True)
+        execution_contract.record_outcome(ROOT, "scientific_result", dict(ZERO_RESOURCES), pass_evidence)
+        print(json.dumps(clean({
+            "completed": rel(completed_path),
+            "summary": rel(summary_path),
+            "headline": completed["headline"],
+            "pass_evidence": pass_evidence,
+            "backup_request": rel(backup_request),
+            "server_api_token_audit": raw["server_api_token_audit"],
+        }), sort_keys=True), flush=True)
         return 0 if hard_pass else 1
     except Exception as exc:
         failed_path = run_dir / "failed.json"
-        payload = {"status": "failed", "created_utc": now().isoformat(), "error": f"{type(exc).__name__}: {exc}", "budget_actual": dict(ZERO), "validation64_bank_opened": False, "sealed_test_accessed": False, "test_accessed": False}
+        payload = {
+            "status": "failed",
+            "created_utc": now_utc().isoformat(),
+            "task_id": TASK_ID,
+            "error": "%s: %s" % (type(exc).__name__, exc),
+            "budget_actual": dict(ZERO_RESOURCES),
+            "validation64_bank_opened": False,
+            "sealed_test_accessed": False,
+            "test_accessed": False,
+            "new_aws_resources": False,
+        }
         write_json(failed_path, payload)
         try:
-            execution_contract.record_outcome(ROOT, "engineering_failure", dict(ZERO), {"no_scientific_outcome": True, "error": payload["error"], "failed_json": rel(failed_path)}, engineering_error="startup")
+            execution_contract.record_outcome(
+                ROOT,
+                "engineering_failure",
+                dict(ZERO_RESOURCES),
+                {"no_scientific_outcome": True, "failed_json": rel(failed_path), "error": payload["error"]},
+                engineering_error="startup",
+            )
         except Exception:
             pass
-        print(json.dumps(clean({"failed": payload["error"], "failed_json": rel(failed_path), "resources": ZERO}), sort_keys=True), flush=True)
+        print(json.dumps(clean({"failed": payload["error"], "failed_json": rel(failed_path), "resources": ZERO_RESOURCES}), sort_keys=True), flush=True)
         return 1
 
 

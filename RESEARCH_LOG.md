@@ -7815,3 +7815,15 @@ UTC: 2026-09-30T16:21:46.574673+00:00. Task hard_pass `True`; gate source hash m
 
 ## 2026-09-30T16:24:06.734800+00:00
 
+
+
+## 2026-09-30T16:28:31.293540+00:00
+
+<!-- vehicle-tc4r-c13-terminal-treatment-matrix-reconciliation-20260930T163205Z -->
+## T-C4R c13 terminal-treatment matrix reconciliation
+
+UTC: 2026-09-30T16:32:05.524537+00:00. Temporary GPT-5.5 solo self-review completed the zero-resource primary-summary reconciliation for the frozen twelve v19_c13 terminal-mode by fixed-H rows. Local task hard_pass `True` with structured resources `{"plant_steps": 0, "solver_calls": 0, "test_episodes": 0, "training_steps": 0, "validation_episodes": 0}`; no validation64 or sealed/final test access. Evidence: `research_artifacts/aws_diagnostics/vehicle_fixedh_terminal_opportunity_ledger_v0_20260930T163205Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_fixedh_terminal_opportunity_ledger_v0_20260930T163205Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_fixedh_terminal_opportunity_ledger_v0_20260930T163205Z/primary_v19_c13_terminal_horizon_rows.csv`. Primary result: absolute success/failure is now tabulated per row before any relative cost/timing comparison, with per-value source paths. The twelve rows are branch repeats from one opened development state (source_candidate_index values `[72]`), not independent source states or training seeds. Timing distinction is preserved: decision_timing_s is whole-decision wall timing and solver_attempt_timing_s is solver timing; V35_shared H35 is faster than V15_shared H35 in this one branch but has much worse physical cost, so timing alone is not acceptable control evidence. Backup request: `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_T_C4R_C13_TERMINAL_TREATMENT_MATRIX_RECONCILIATION_20260930T163205Z.json`.
+
+
+## 2026-09-30T16:34:44.457913+00:00
+

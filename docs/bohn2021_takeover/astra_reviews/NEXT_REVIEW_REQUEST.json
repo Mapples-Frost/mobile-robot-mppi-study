@@ -1,16 +1,16 @@
 {
-  "request_id": "execution-result:20260930T230144_d2f598e3",
+  "request_id": "execution-result:20260930T231001_7a710056",
   "trigger": "execution_result_handoff",
-  "created": "2026-09-30T23:01:46.696761+00:00",
-  "experiment_id": "20260930T230144_d2f598e3",
+  "created": "2026-09-30T23:10:04.268016+00:00",
+  "experiment_id": "20260930T231001_7a710056",
   "status": "analysis_requested",
-  "purpose": "Run approved solo task S-VAL64-learned-collapse-h35-pattern-diagnostic-v0 over already-created vehicle validation64 output artifacts only, quantifying extracted-policy collapse and learned_s2 H35/failure pattern without solver, plant, training, new validation episodes, or sealed/final test access.",
-  "execution_status": "complete",
+  "purpose": "Repair the structured coordination receipt for the approved zero-resource learned-collapse/H35-pattern diagnostic after the prior idempotent early-exit omitted BOHN_OUTCOME_RECEIPT; preserve existing validation-output findings without opening validation bank or consuming solver/plant/training/test resources.",
+  "execution_status": "failed",
   "question": "Active scientific lead: interpret this outcome, verify current raw evidence and select the next scientific action for GPT-5.5 implementation. Distinguish hypotheses from verified causes and account for fair baselines, terminal confounds and source-level generalization.",
   "evidence_paths": [
-    "research_artifacts/aws_diagnostics/vehicle_learned_policy_collapse_diagnostic_20260927_v3_full_validation64/raw.json",
-    "research_artifacts/aws_diagnostics/vehicle_learned_policy_collapse_diagnostic_20260927_v3_full_validation64/summary.md",
-    "research_artifacts/aws_diagnostics/vehicle_learned_policy_collapse_diagnostic_20260927_v3_full_validation64/completed.json",
-    "research_artifacts/aws_runs/20260930T230144_d2f598e3/registry.json"
+    "research_artifacts/aws_diagnostics/vehicle_learned_policy_collapse_diagnostic_v3_receipt_repair_solo_v0_20260930T231002Z/raw.json",
+    "research_artifacts/aws_diagnostics/vehicle_learned_policy_collapse_diagnostic_v3_receipt_repair_solo_v0_20260930T231002Z/summary.md",
+    "research_artifacts/aws_diagnostics/vehicle_learned_policy_collapse_diagnostic_v3_receipt_repair_solo_v0_20260930T231002Z/completed.json",
+    "research_artifacts/aws_runs/20260930T231001_7a710056/registry.json"
   ]
 }

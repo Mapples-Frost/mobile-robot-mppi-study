@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "request_id": "execution-result:20260930T231001_7a710056",
+  "tasks": [
+    {
+      "task_id": "S-VAL64-learned-collapse-h35-pattern-diagnostic-v0c-pass-predicate-repair",
+      "description": "Repair the zero-resource v0b receipt-repair local pass predicate. The v0b run wrote a valid structured receipt and all scientific/safety evidence values matched the plan, but the script computed completed.passed with all(evidence.values()), incorrectly treating expected-false safety values such as validation_bank_content_opened=false and sealed_or_final_test_accessed=false as failure, causing exit status 2 and lead_review handoff. This task reads only the already-created v0b receipt-repair artifacts and run receipt, verifies each evidence key against the expected true/false value, writes a corrected artifact set and structured outcome receipt, and does not open validation banks or use solver/plant/training/final-test resources.",
+      "script_patterns": [
+        "experiments/bohn2021_aws/vehicle_learned_policy_collapse_diagnostic_v3_receipt_repair_solo_v0c.py"
+      ],
+      "split": "diagnostic",
+      "method": "Zero-resource pass-predicate repair for the learned-policy collapse/H35-pattern receipt repair; reads existing v0b receipt-repair artifacts and run receipt only; verifies expected false safety flags correctly; no validation bank source opening; no solver/plant/controller execution; no training/refit; no new validation episodes; no sealed/final test; preserve s0/s1 constant-H25 collapse, s2 H35 usage/failure context and next nonzero implication.",
+      "seeds": [
+        "validation64_existing_outputs_all_shards_no_new_random_seed"
+      ],
+      "config_constraints": {
+        "label_ORIGINAL_vs_IMPROVED": "IMPROVED_development_validation_output_diagnostic_only",
+        "authority_mode": "temporary_user_authorized_solo_self_review",
+        "follows_experiment_id": "20260930T231001_7a710056",
+        "follows_task_id": "S-VAL64-learned-collapse-h35-pattern-diagnostic-v0b-receipt-repair",
+        "receipt_repair_for_false_failed_pass_predicate": true,
+        "primary_input_raw": "research_artifacts/aws_diagnostics/vehicle_learned_policy_collapse_diagnostic_v3_receipt_repair_solo_v0_20260930T231002Z/raw.json",
+        "primary_input_summary": "research_artifacts/aws_diagnostics/vehicle_learned_policy_collapse_diagnostic_v3_receipt_repair_solo_v0_20260930T231002Z/summary.md",
+        "primary_input_completed": "research_artifacts/aws_diagnostics/vehicle_learned_policy_collapse_diagnostic_v3_receipt_repair_solo_v0_20260930T231002Z/completed.json",
+        "primary_input_run_receipt": "research_artifacts/aws_runs/20260930T231001_7a710056/outcome_receipt.json",
+        "script": "experiments/bohn2021_aws/vehicle_learned_policy_collapse_diagnostic_v3_receipt_repair_solo_v0c.py",
+        "script_sha256": "21e7aec5f98995938d604434c9fa325e3556b7e17779a9b9dbf5fe85b5e7b407",
+        "expected_false_flags_are_pass_conditions": true,
+        "no_solver_calls": true,
+        "no_plant_steps": true,
+        "no_controller_execution": true,
+        "no_training_no_refit": true,
+        "no_new_validation_episodes": true,
+        "no_validation_bank_content_opening": true,
+        "no_sealed_or_final_test_access": true,
+        "must_not_read_secrets": true,
+        "development_only_not_final_acceptance": true,
+        "validation_outputs_are_development_evidence_not_final_test": true,
+        "prior_failure_preserved": "20260930T231001_7a710056 exit2 because completed.passed used all(evidence.values()) despite a valid structured receipt and all expected evidence values matching the plan",
+        "current_backup_blocker": "external backup remains failed/timeout with prior HTTP 422 context; this zero-resource task writes a backup request but does not unblock nonzero rollouts"
+      },
+      "training_budget": {
+        "gradient_steps": 0,
+        "selector_refits": 0,
+        "training_steps": 0
+      },
+      "validation_budget": {
+        "new_validation_episodes": 0,
+        "validation_output_artifact_reads": "existing_v0b_outputs_only",
+        "validation64_bank_opens": 0,
+        "solver_calls": 0,
+        "plant_steps": 0
+      },
+      "test_budget": {
+        "final_test_episodes": 0,
+        "sealed_test_episodes": 0
+      },
+      "resource_limits": {
+        "solver_calls": 0,
+        "plant_steps": 0,
+        "training_steps": 0,
+        "validation_episodes": 0,
+        "test_episodes": 0
+      },
+      "max_attempts": 1,
+      "max_zero_usage_repairs": 0,
+      "timeout_seconds": 900,
+      "dependencies": [],
+      "pass_conditions": {
+        "zero_solver_plant_training_validation_test_resources": true,
+        "existing_validation_outputs_read_only": true,
+        "validation_bank_content_opened": false,
+        "sealed_or_final_test_accessed": false,
+        "learned_constant_h25_collapse_quantified": true,
+        "learned_s2_h35_usage_and_failure_pattern_quantified": true,
+        "case43_failure_context_preserved": true,
+        "next_nonzero_experiment_implication_recorded": true,
+        "outputs_persisted": true,
+        "backup_request_written_or_existing_backup_blocker_recorded": true,
+        "prior_v0b_completed_passed_false_due_expected_false_flags": true,
+        "corrected_pass_predicate_applied": true
+      },
+      "continue_without_review": false
+    }
+  ]
+}

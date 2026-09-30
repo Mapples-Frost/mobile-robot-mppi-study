@@ -8190,3 +8190,75 @@ UTC: 2026-09-30T22:13:11.008678+00:00. Metadata-only current backup-state rechec
 
 ## 2026-09-30T23:05:51.417119+00:00
 
+<!-- vehicle-learned-collapse-v3-receipt-repair-solo-v0-research-log -->
+### Learned-policy collapse/H35-pattern receipt repair solo v0 (2026-09-30T23:10:02.256855+00:00)
+
+- Zero-resource structured receipt repair for the approved collapse diagnostic after run `20260930T230144_d2f598e3` exited from pre-existing completed artifacts without writing an outcome receipt.
+- Inputs read: `research_artifacts/aws_diagnostics/vehicle_learned_policy_collapse_diagnostic_20260927_v3_full_validation64/completed.json`, `research_artifacts/aws_diagnostics/vehicle_learned_policy_collapse_diagnostic_20260927_v3_full_validation64/raw.json`, `research_artifacts/aws_diagnostics/vehicle_validation64_all_shards_pairwise_summary_solo_v0_20260930T225821Z/raw.json`. Validation bank/generator content was not opened; no solver/plant/training/refit/new validation episodes/sealed test.
+- Preserved conclusions: s0/s1 are structurally H25-only with zero policy/trace mismatches; s2 uses H35 on 409/5014 stored steps with zero policy/trace mismatches, but all-shard validation shows physical mean 628.572 vs matched fixed H25 18.918 and case43 failure with horizon counts {25:149, 35:1} while fixed H25/H35 comparators succeed.
+- Decision: current latency-tree selector is negative development evidence; next nonzero work, after backup recoverability, should continue source242 true-variable-horizon microcontinuation/controller-path measurement or its direct repair rather than another unchanged latency-tree validation sweep.
+- Artifacts: `research_artifacts/aws_diagnostics/vehicle_learned_policy_collapse_diagnostic_v3_receipt_repair_solo_v0_20260930T231002Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_learned_policy_collapse_diagnostic_v3_receipt_repair_solo_v0_20260930T231002Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_learned_policy_collapse_diagnostic_v3_receipt_repair_solo_v0_20260930T231002Z/completed.json`.
+
+
+## 2026-09-30T23:13:17.934065+00:00
+Cumulative service lifetime: ~106.4 hours since 2026-09-26T10:55:29Z. Cumulative server API tokens: available in supervisor registry, not re-read in this bounded cycle.
+
+Progress this iteration:
+
+- Ran approved task `S-VAL64-learned-collapse-h35-pattern-diagnostic-v0b-receipt-repair`.
+- Registered experiment: `20260930T231001_7a710056`.
+- Resources consumed: `solver_calls=0`, `plant_steps=0`, `training_steps=0`, `validation_episodes=0`, `test_episodes=0`.
+- No validation bank/generator content was opened.
+- No sealed/final test was accessed.
+- Structured receipt was valid, but local task acceptance failed with `exit_status=2` because the script incorrectly computed `completed.passed = all(evidence.values())`; this treats expected-false safety fields (`validation_bank_content_opened=false`, `sealed_or_final_test_accessed=false`) as failure. This is an operational pass-predicate bug, not a new scientific failure.
+
+Evidence preserved:
+
+- `learned_s0`: structurally constant H25, zero non-H25 steps, zero policy/trace mismatches.
+- `learned_s1`: structurally constant H25, zero non-H25 steps, zero policy/trace mismatches.
+- `learned_s2`: uses H25/H35, 409 non-H25 stored validation steps, zero policy/trace mismatches.
+- `learned_s2` is worse than matched fixed H25 on all-shard validation-output summary:
+  - learned_s2 physical mean: `628.5722400459813`
+  - matched fixed H25 physical mean: `18.918036777140095`
+  - decision-time ratio learned_s2 / H25: `1.007119556538841`
+- Case43 remains preserved as negative development/validation evidence:
+  - learned_s2 failed: 150 steps, horizon counts `{25:149, 35:1}`, physical cost `39125.923106760194`
+  - fixed H25 and fixed H35 comparators succeeded in 96 steps.
+
+Artifacts:
+
+- `research_artifacts/aws_runs/20260930T231001_7a710056/registry.json`
+- `research_artifacts/aws_runs/20260930T231001_7a710056/outcome_receipt.json`
+- `research_artifacts/aws_diagnostics/vehicle_learned_policy_collapse_diagnostic_v3_receipt_repair_solo_v0_20260930T231002Z/raw.json`
+- `research_artifacts/aws_diagnostics/vehicle_learned_policy_collapse_diagnostic_v3_receipt_repair_solo_v0_20260930T231002Z/summary.md`
+- `research_artifacts/aws_diagnostics/vehicle_learned_policy_collapse_diagnostic_v3_receipt_repair_solo_v0_20260930T231002Z/completed.json`
+- backup request written:
+  - `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_LEARNED_COLLAPSE_RECEIPT_REPAIR_SOLO_V0_20260930T231002Z.json`
+
+Repair prepared and published:
+
+- New solo plan published: `solo_baf78d23634e44e6aa8100b2`
+- Next authorized task:
+  - `S-VAL64-learned-collapse-h35-pattern-diagnostic-v0c-pass-predicate-repair`
+- New script written:
+  - `experiments/bohn2021_aws/vehicle_learned_policy_collapse_diagnostic_v3_receipt_repair_solo_v0c.py`
+  - SHA256: `21e7aec5f98995938d604434c9fa325e3556b7e17779a9b9dbf5fe85b5e7b407`
+- This v0c task verifies evidence values against expected true/false pass conditions instead of using `all(evidence.values())`.
+
+Could not launch v0c in this same bounded iteration because the scheduler enforced: `One experiment per iteration: persist next action for the next bounded cycle`.
+
+State preserved via `update_state`. Next iteration should run exactly:
+
+- task_id: `S-VAL64-learned-collapse-h35-pattern-diagnostic-v0c-pass-predicate-repair`
+- script: `experiments/bohn2021_aws/vehicle_learned_policy_collapse_diagnostic_v3_receipt_repair_solo_v0c.py`
+- interpreter: `modern`
+- split: `diagnostic`
+- seed: `validation64_existing_outputs_all_shards_no_new_random_seed`
+- resources: all five counters zero.
+
+Current scientific decision:
+
+- Treat the current latency-tree selector as negative IMPROVED development/validation-output evidence.
+- Do not spend nonzero resources on another unchanged latency-tree validation sweep.
+- Once external backup recoverability is restored, resume the source242 true-variable-horizon microcontinuation/controller-path measurement or its direct operational repair.
+- No ORIGINAL success, no final-test access, and no independent acceptance are claimed in solo mode.

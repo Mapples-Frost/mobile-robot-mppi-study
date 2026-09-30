@@ -18,6 +18,7 @@ import urllib.error
 import uuid
 from research_memory import registry_context
 import astra_routing
+import working_language
 
 BASE = pathlib.Path('/data/openai-agent')
 ROOT = BASE / 'mobile-robot-mppi-study'
@@ -69,7 +70,7 @@ including original implementations/pendulum; do not spend all turns on latest se
 All file reads are recorded with hashes; paths including sealed/final-test data are blocked.
 If something is inaccessible, document it; never try alternate spelling to bypass the boundary.
 Before concluding revisit earlier findings against contradictory evidence.
-Write final report in Chinese, technical identifiers unchanged. Include:
+Write final report in English, technical identifiers unchanged. Include:
 - evidence coverage and omissions;
 - severity-ranked verified findings with paths/lines and impact;
 - competing explanations and how to distinguish them;
@@ -194,7 +195,7 @@ TOOLS = [
 ]
 
 def api(items, final=False):
-    body=dict(model=MODEL,reasoning={'effort':EFFORT},input=items,store=False,
+    body=dict(model=MODEL,reasoning={'effort':EFFORT},input=working_language.responses_input(items),store=False,
               max_output_tokens=24000)
     if not final:
         body['tools']=TOOLS
@@ -277,6 +278,9 @@ def cycle():
                         pass
         items.append(dict(role='user',content='Perform comprehensive independent audit. Start from this navigation; read primary evidence, not only summaries.\n'+json.dumps(initial,ensure_ascii=False)))
     current_role=role_context()
+    items=working_language.responses_input(items)
+    audit['working_language']='en'
+    audit['working_language_policy']=working_language.POLICY_ID
     current_role['registry_evidence']=registry_context(STATE)
     # Archive prior retry context; replace duplicated role notices rather than growing them on each failed attempt.
     if any(isinstance(x.get('content'),str) and x['content'].startswith('Current authoritative role-control context') for x in items):
@@ -295,7 +299,7 @@ def cycle():
         else:
             final=(turn==audit.get('max_turns',24)-1)
         if final:
-            items.append(dict(role='user',content='Final turn of this bounded audit. Produce the complete Chinese audit report now, with evidence citations and prioritized execution tasks. No tool calls. State omissions honestly.'))
+            items.append(dict(role='user',content='Final turn of this bounded audit. Produce the complete English audit report now, with evidence citations and prioritized execution tasks. No tool calls. State omissions honestly.'))
         elif turn==6 and audit.get('request'):
             items.append(dict(role='user',content='Focused-analysis checkpoint: use current raw/code evidence; diagnose causal explanations and prescribe precise next action. Avoid broad stale re-audits.'))
         elif turn==12:

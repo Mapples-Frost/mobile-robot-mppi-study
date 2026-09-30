@@ -26,6 +26,7 @@ ROLES=STATE/'research_roles.json'
 MODEL='claude-opus-5-5'
 EFFORT='max'
 SECRET={}
+import working_language
 PROMPT='''You are Claude Opus 5.5, the user-selected scientific lead of this unattended
 Bohn et al. 2021 Reinforcement Learning of the Prediction Horizon in MPC project.
 User explicitly requests effort=max, not automatic higher/lower settings.
@@ -75,7 +76,7 @@ Do not ask the absent user for routine steps. Genuine changes of research goal, 
 user-only credentials/data, irreversible data loss or a major scientific fork can need user input.
 
 No daily API/token quota; bounds are recovery controls. Preserve signed native thinking blocks
-and tool results. Finish each bounded cycle with a substantive Chinese report and an actionable
+and tool results. Finish each bounded cycle with a substantive English report and an actionable
 execution plan (priority tasks, dependencies and gates). Do not declare reproduction success
 without multiple seeds, strong fair fixed-H, independent final test and actual runtime evidence.
 This is advisory/development evidence until the full final acceptance is actually achieved.
@@ -159,6 +160,7 @@ def parse_stream(response,on_event=None):
     return message
 
 def api(system,messages,final=False):
+    system=working_language.system_text(system)
     body={'model':MODEL,'max_tokens':65536,'thinking':{'type':'adaptive'},
           'output_config':{'effort':EFFORT},'system':system,'messages':messages,
           'stream':True,'cache_control':{'type':'ephemeral'}}
@@ -295,6 +297,9 @@ def cycle():
                         cross_review_id=load(STATE/'astra_cross_review.json').get('review_id'))
         system=PROMPT
         messages=[{'role':'user','content':initial_context(first)}]
+    system=working_language.system_text(system)
+    checkpoint['working_language']='en'
+    checkpoint['working_language_policy']=working_language.POLICY_ID
     session=WORK/'sessions'/(checkpoint['audit_id']+'.json')
     def persist():
         save(session,dict(system=system,messages=messages));save(WORK/'checkpoint.json',checkpoint)
@@ -332,7 +337,7 @@ def cycle():
             persist()
         final=(turn==checkpoint['max_turns']-1 or len(json.dumps(messages))>900000)
         if final:
-            messages.append({'role':'user','content':'Final bounded turn. Produce the substantive Chinese report and concrete execution plan now. Distinguish covered evidence, omissions, verified findings and hypotheses. Explicitly authorize useful dependent task sequences when prior gates pass; no tools.'})
+            messages.append({'role':'user','content':'Final bounded turn. Produce the substantive English report and concrete execution plan now. Distinguish covered evidence, omissions, verified findings and hypotheses. Explicitly authorize useful dependent task sequences when prior gates pass; no tools.'})
         elif turn in (10,20):
             messages.append({'role':'user','content':'Check coverage and progress: prioritize unresolved scientific/implementation causes and concrete discriminating next tasks; do not repeat already-verified audits. Ensure ORIGINAL and pendulum evidence are honestly covered or marked uninspected in the handoff.'})
         persist()

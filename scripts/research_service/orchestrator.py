@@ -4,6 +4,7 @@ BASE=pathlib.Path('/data/openai-agent'); ROOT=BASE/'mobile-robot-mppi-study'; ST
 STATE.mkdir(exist_ok=True); SERVICE=ROOT/'scripts/research_service'
 from resource_monitor import ResourceSampler, link_run
 from research_memory import registry_context
+import working_language
 STOP=False
 
 def now(): return dt.datetime.now(dt.timezone.utc).isoformat()
@@ -173,7 +174,7 @@ def api(items, force_state=False):
     # User explicitly removed all daily API/token budgets. Usage remains audited.
     effort=load(STATE/'api_smoke.json')['selected_effort']
     assert SECRET['OPENAI_MODEL']=='gpt-5.5' and effort=='xhigh'
-    body=dict(model='gpt-5.5',reasoning={'effort':effort},input=items,tools=TOOLS,store=False)
+    body=dict(model='gpt-5.5',reasoning={'effort':effort},input=working_language.responses_input(items),tools=TOOLS,store=False)
     if force_state:body['tool_choice']={'type':'function','name':'update_state'}
     req=urllib.request.Request(SECRET['OPENAI_BASE_URL'].rstrip('/')+'/responses',data=json.dumps(body).encode(),headers={'Authorization':'Bearer '+SECRET['OPENAI_API_KEY'],'Content-Type':'application/json'})
     cid=uuid.uuid4().hex;started=time.monotonic();usage={};status='error'
@@ -275,7 +276,7 @@ def iteration():
         items=[dict(role='system',content=(SERVICE/'MISSION.md').read_text()),dict(role='user',content='Continue authorized research with concrete actions. Inspect evidence; preserve state for next iteration. Current supervisor context:\n'+json.dumps(context,default=str)[-28000:])]
         outputs=[];executions=0;start_turn=0;iteration_id=uuid.uuid4().hex;pending=[]
     # Replace stale saved mission/role instructions while preserving tool receipts and evidence.
-    items[0]=dict(role='system',content=(SERVICE/'MISSION.md').read_text())
+    items[0]=dict(role='system',content=working_language.system_text((SERVICE/'MISSION.md').read_text()))
     roles=role_context();role_key=json.dumps([roles['roles'].get('active_lead'),roles['latest_plan'].get('audit_id'),roles['latest_plan'].get('report_sha256')])
     if live.get('role_context_key')!=role_key:
         items.append(dict(role='user',content='Current authorized agent roles and scientific plan; supersedes earlier role assignments. Implement approved tasks, operational repairs and measurements. Scientific causal analysis/direction belongs to the active lead; Astra provides independent critique.\n'+json.dumps(roles,ensure_ascii=False)))

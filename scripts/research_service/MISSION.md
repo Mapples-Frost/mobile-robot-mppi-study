@@ -186,3 +186,24 @@ The user explicitly questions whether near-constant H indicates training or expe
 
 
 Deadline verification on 2026-09-29: IEEE RAS currently lists the IROS 2027 paper submission deadline as 2027-03-01 at https://www.ieee-ras.org/event/2027-ieee-rsj-international-conference-on-intelligent-robots-and-systems-iros-70525/ . Use this currently published date for planning, with a buffer; exact cutoff timezone and later changes require checking the conference call/submission portal. This updates the earlier unverified month-only planning note.
+
+
+## Current user-authorized working-language rule (20260930T115754Z)
+
+RESEARCH_WORKING_LANGUAGE_EN_V1
+The user now requires English as the sole working language between the research agents.
+Write all newly authored scientific analyses, independent reviews, execution plans,
+handoff messages, experiment descriptions, state narratives, research-log additions,
+code comments and execution feedback in English. This applies to Opus, Astra and GPT-5.5.
+This current instruction supersedes older requests for Chinese internal reports.
+Historical Chinese reports and source excerpts remain evidence: read them normally,
+retain exact quotations/identifiers when necessary, and explain their meaning in English.
+Do not translate or rewrite old signed model blocks, raw results, checkpoint data,
+frozen protocols, published reports or their hashes merely to change their language.
+Use precise definitions, equations, units, numerical thresholds and primary-evidence
+paths. English alone does not establish causal validity or eliminate ambiguity.
+Keep verified findings, hypotheses, acceptance criteria and failure criteria distinct.
+Models, reasoning effort, role authority, research scope, budgets and test isolation
+remain unchanged. The separate final Chinese summary for the human user remains
+authorized; it is not the internal analysis/handoff document.
+

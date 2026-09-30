@@ -5543,3 +5543,11 @@ Elapsed service lifetime at write: >85.1 h since 2026-09-26T10:55:29.419331Z. De
 
 ## 2026-09-30T00:00:13.436785+00:00
 
+<!-- vehicle-true-variable-H-intermediate-h12-boundary-v19-20260930T0015Z -->
+## 2026-09-30 vehicle true-variable-H v19 intermediate H12 boundary acquisition
+
+Elapsed service lifetime at write: >85.3 h since 2026-09-26T10:55:29.419331Z. Development-only paired true-H12/H15 run on the 24 v15 boundary candidates; no validation64/sealed-test access, no selector refit/search, no gradient training. Budget actual: 96 episodes, 4434 control steps. Fixed H12 vs H15: decision saving=0.1432193357727001, solver saving=0.15865718235683493, physical delta=566.3996689048843 (tolerance 96.0), catastrophic_H12=6, beneficial_H12=42, fixed_pass5=False. Oracle H12/H15 decision saving=0.15723702644285859, physical delta=-1.2650899319502855, value5=True. Decision: True-H12 still has localized catastrophic/high-cost rows, but an oracle H12/H15 switch has >=5% measured decision saving with physical gate; next freeze an H12/H15 selector/refit using strict bank/source splits rather than more H10 sweeps.. Artifacts: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_intermediate_h12_boundary_v19_20260930T0015Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_intermediate_h12_boundary_v19_20260930T0015Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_intermediate_h12_boundary_v19_20260930T0015Z/completed.json`.
+
+
+## 2026-09-30T00:15:12.216941+00:00
+

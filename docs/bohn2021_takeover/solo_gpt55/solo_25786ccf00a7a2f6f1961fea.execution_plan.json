@@ -1,0 +1,134 @@
+{
+  "schema_version": 1,
+  "request_id": "execution-result:20260930T175410_221187e7",
+  "tasks": [
+    {
+      "task_id": "S-TC2H7-source242-high-level-env-step-repair-v0",
+      "description": "TEMPORARY GPT-5.5 SOLO SELF-REVIEW / ONE-VARIABLE HIGH-LEVEL ENVIRONMENT-STEP INTERFACE REPAIR. S-TC2H6/v0g preserved the source242_slot0_branch_start context, goal case.tvp.trajectory_endpoint[61], H=[12,15,35], V15_shared terminal mode and canonical initialization; it spent 3 solver calls and 0 plant steps. All three first MPC decisions returned Solve_Succeeded, but every subsequent env.step raised TypeError(\"'float' object is not subscriptable\") because the runner pre-solved controller.get_action and then passed the returned low-level control into LetMPCEnv.step. The retained gym-horizon LetMPCEnv.step expects the high-level agent action mpc_horizon and internally calls ControlSystem.step -> controller.get_action -> simulator.make_step. This v0h wrapper changes only that interface layer: it calls env.step([H]) and instruments the internal MPC solve, while preserving the exact source242 context, goal source, horizons, V15_shared terminal mode, objective, cost accounting, initialization, training/refit state, validation64 access, sealed/final-test access, and resource caps. It requires preservation of the v0g three-solver/zero-plant failure and a verified external-backup proof after the v0h source plus active solo plan before any solver or plant resources. If that backup gate is not visible, the correct outcome is a zero-resource dependency failure; if it is visible, strict pass requires actual plant transitions in all three arms and no env/controller exceptions.",
+      "script_patterns": [
+        "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34z2_source242_microcontinuation_v0h_highlevel_env_step_repair.py"
+      ],
+      "split": "opened_development_source242_slot0_branch_start_microcontinuation_high_level_env_step_no_validation64_no_sealed_test",
+      "method": "source242 fixed-H closed-loop microcontinuation using LetMPCEnv.step high-level mpc_horizon action; H=[12,15,35], V15_shared terminal held fixed, canonical initialization, max 60 plant steps per arm, internal solver instrumentation, full cost/safety/solver/timing traces",
+      "seeds": [
+        "source242_branch_deterministic_no_training_seed"
+      ],
+      "config_constraints": {
+        "label_ORIGINAL_vs_IMPROVED": "IMPROVED",
+        "authority_mode": "temporary_user_authorized_solo_self_review",
+        "operational_repair_only": true,
+        "repair_scope": "replace the incorrect low-level-control call to LetMPCEnv.step with the high-level mpc_horizon action env.step([H]) while instrumenting the internal controller/MPC solve; preserve v0g backup-proof materialization, v0f S-TC2G headline.hard_pass schema repair, v0e backup-recency safeguards, v0d task-id/evidence-key repair, and all prior failed evidence; do not change horizons, terminal mode, source242 context, goal source, objective, costs, training/refit, validation/test access, or scientific acceptance rules",
+        "previous_attempt_experiment_id": "20260930T175410_221187e7",
+        "previous_attempt_raw": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34z2_source242_microcontinuation_v0g_backup_proof_materialization_rerun_20260930T175410Z/raw.json",
+        "previous_attempt_receipt": "research_artifacts/aws_runs/20260930T175410_221187e7/outcome_receipt.json",
+        "previous_attempt_finding": "v0g pre-resource gates passed and each H arm solved one MPC decision successfully, but all three env.step calls failed before plant transition with TypeError(\"'float' object is not subscriptable\"); actual resources were solver_calls=3, plant_steps=0, training_steps=0, validation_episodes=0, test_episodes=0",
+        "repair_source": "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34z2_source242_microcontinuation_v0h_highlevel_env_step_repair.py",
+        "repair_source_sha256_at_plan_publication": "4911623754d932baf500643f5ea252542049b1ce6c7f47641650c3ad8b10232b",
+        "latest_verified_external_backup_before_plan_from_supervisor_context": {
+          "time": "2026-09-30T18:26:37.631896+00:00",
+          "status": "verified",
+          "remaining_changed_files": 0,
+          "commit": "4d91f70a805f6fa12eaf74f3d265dc5bc5cb880f",
+          "package_sha256": "fdeecbff635f3359a6ccdd0079b663989886f0b5cc5fb77d45e549416bc7cf7a",
+          "release": "https://github.com/Mapples-Frost/mobile-robot-mppi-study/releases/tag/bohn-aws-evidence-20260926"
+        },
+        "materialized_backup_proof_181255": "research_artifacts/aws_backup_proofs/BACKUP_VERIFIED_FROM_SUPERVISOR_CONTEXT_20260930T181255Z.json",
+        "materialized_backup_proof_181255_sha256_expected": "a46a4a03655dee0149ee3c69dfe5ed2711527f7d965e20f47687fb993442717a",
+        "require_verified_external_backup_after_v0g_failure_backup181255_v0h_source_and_active_plan_before_solver_or_plant_steps": true,
+        "microcontinuation_source_context": "source242_slot0_branch_start",
+        "goal_source_required": "case.tvp.trajectory_endpoint[61]",
+        "horizon_grid": [
+          12,
+          15,
+          35
+        ],
+        "terminal_mode_for_all_arms": "V15_shared",
+        "max_steps_per_arm": 60,
+        "arm_count": 3,
+        "plant_step_cap": 180,
+        "solver_call_cap": 180,
+        "strict_scientific_pass_requires_actual_plant_transitions": true,
+        "strict_scientific_pass_requires_no_env_or_controller_exceptions": true,
+        "ordinary_deployment_style_warm_start_after_first_action": true,
+        "first_action_initialization": "canonical_zero_control_only_if_explicit_initial_primal_is_required",
+        "forbid_goal_facing_initialization": true,
+        "report_physical_control_constraint_total_costs": true,
+        "report_success_constraint_solver_failure_accounting": true,
+        "report_solver_and_whole_decision_timing": true,
+        "report_per_step_solver_status_iterations": true,
+        "report_context_and_prefix_hashes": true,
+        "development_only_not_validation_not_final": true,
+        "no_training_no_refits": true,
+        "no_validation64_access": true,
+        "no_sealed_or_final_test_access": true,
+        "no_new_paid_infrastructure": true,
+        "cumulative_S_TC2H_family_usage_before_this_task": {
+          "solver_calls": 9,
+          "plant_steps": 0,
+          "training_steps": 0,
+          "validation_episodes": 0,
+          "test_episodes": 0
+        }
+      },
+      "training_budget": {
+        "gradient_steps": 0,
+        "selector_refits": 0,
+        "training_steps": 0
+      },
+      "validation_budget": {
+        "opened_development_branch_episodes": 3,
+        "max_plant_steps": 180,
+        "solver_calls": 180,
+        "validation64_episodes": 0
+      },
+      "test_budget": {
+        "final_test_episodes": 0,
+        "sealed_test_episodes": 0
+      },
+      "resource_limits": {
+        "solver_calls": 180,
+        "plant_steps": 180,
+        "training_steps": 0,
+        "validation_episodes": 0,
+        "test_episodes": 0
+      },
+      "max_attempts": 2,
+      "max_zero_usage_repairs": 1,
+      "timeout_seconds": 3600,
+      "dependencies": [],
+      "pass_conditions": {
+        "source242_microcontinuation_completed": true,
+        "prior_T_C2_and_S_TC2G_failures_preserved": true,
+        "prior_T_C2_and_S_TC2H_failures_preserved": true,
+        "S_TC2H5_zero_resource_failure_preserved": true,
+        "S_TC2H6_three_solver_zero_plant_interface_failure_preserved": true,
+        "materialized_supervisor_context_backup_proof_preserved": true,
+        "materialized_181255_backup_proof_preserved": true,
+        "backup_verified_before_solver_or_plant_steps": true,
+        "backup_verified_after_v0b_before_solver_or_plant_steps": true,
+        "backup_verified_after_v0c_failure_and_v0d_source_before_solver_or_plant_steps": true,
+        "backup_verified_after_v0d_failure_and_v0e_source_and_plan_before_solver_or_plant_steps": true,
+        "backup_verified_after_v0e_failure_and_v0f_source_and_plan_before_solver_or_plant_steps": true,
+        "backup_verified_after_v0f_failure_and_v0g_source_and_plan_before_solver_or_plant_steps": true,
+        "backup_verified_after_S_TC2H5_zero_resource_failure_and_materialized_proof_before_solver_or_plant_steps": true,
+        "backup_verified_after_v0g_failure_backup181255_v0h_source_and_plan_before_solver_or_plant_steps": true,
+        "stc2g_hard_pass_schema_repaired": true,
+        "all_three_horizon_arms_attempted_or_budget_cap_reported": true,
+        "per_step_cost_safety_solver_timing_traces_persisted": true,
+        "context_source242_goal61_identity_verified": true,
+        "task_id_binding_repaired": true,
+        "receipt_evidence_key_aliases_added": true,
+        "backup_gate_recency_repaired": true,
+        "nested_2x1_action_payload_repair_inherited": true,
+        "high_level_env_step_interface_repair_applied": true,
+        "source242_microcontinuation_produced_plant_transitions": true,
+        "all_three_horizon_arms_advanced_at_least_one_plant_step": true,
+        "no_env_or_controller_exceptions_in_attempted_arms": true,
+        "no_training_validation64_or_test_usage": true,
+        "plant_steps_at_most_180": true,
+        "solver_calls_at_most_180": true
+      },
+      "continue_without_review": false
+    }
+  ]
+}

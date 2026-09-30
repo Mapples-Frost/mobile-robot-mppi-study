@@ -1,0 +1,20 @@
+{
+  "publication_arguments_sha256": "acaf1f6723d98eda924e38dd2f39ea45028245e8a88a511a27e4224de2dea1f9",
+  "ready": {
+    "request_id": "execution-result:20260930T175410_221187e7",
+    "primary_analyst": "gpt-5.5",
+    "authority_mode": "temporary_user_authorized_solo",
+    "user_authorization": "docs/bohn2021_takeover/solo_gpt55/ROLE_OVERRIDE_20260930T160907Z.json",
+    "user_authorization_sha256": "056fd245e4c221b7bb6142feb0ce60a65edea13b3b8b15f2c8e584ef44ee6356",
+    "report": "docs/bohn2021_takeover/solo_gpt55/solo_25786ccf00a7a2f6f1961fea.md",
+    "report_sha256": "a6ab81e1a157b1170c40d75394d99afca14aa895b09997b7a5b8f8e34753fe8f",
+    "execution_plan": "docs/bohn2021_takeover/solo_gpt55/solo_25786ccf00a7a2f6f1961fea.execution_plan.json",
+    "execution_plan_sha256": "0f58252d121bc00069960e9fe913bd80bc62e7a42cf28d16b671e641d6273c0f",
+    "execution_contract_version": 1,
+    "audit_id": "solo_25786ccf00a7a2f6f1961fea",
+    "completed": "2026-09-30T18:31:43.026089+00:00",
+    "independent_audit_passed": false
+  },
+  "created": "2026-09-30T18:31:43.027214+00:00",
+  "previous_reference": "docs/bohn2021_takeover/solo_gpt55/PLAN_READY.json"
+}

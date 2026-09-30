@@ -1,0 +1,216 @@
+{
+  "request_id": "execution-failure:T-C3-startup-repair:20260930T135213_97b8a1ff",
+  "schema_version": 1,
+  "tasks": [
+    {
+      "task_id": "T-C2-OC-epsilon-1b-converged-contract-gate",
+      "description": "T-C2: the per-stage slack vector at a CONVERGED iterate at production tolerances, with full prospective capture. Prior gates are CLOSED and are not re-declared as intra-plan dependencies: T-C3R closed via run 20260930T141339_1f8fda70 (exit0, valid receipt, task_gates_passed) and T-C5 closed via run 20260930T141917_2d7f4abc (exit0, task_gates_passed). Cumulative actual solver usage on this thread to date is ZERO. LEAD RULING ON THE ALLOCATION CONTRADICTION raised by review 20260930T141408Z: the shared ceiling is ACCOUNTED, NOT INHERITED. resource_limits stand at solver_calls=6 as T-C2's own per-task allowance; 5 calls are scheduled; one call is headroom. The four historical v34u truncated calls are DISCLOSED in config_constraints for the record and do NOT reduce this allowance. Do NOT raise the ceiling to absorb history; do NOT lower your own allowance; do NOT treat a successful reservation as proof of compliance with any cross-plan pool. MANDATORY SOURCE PRECONDITIONS, accepted from review 20260930T141408Z and to be completed INSIDE this task before any solver call is spent: (P1) the v34z file is T-C5's source and must NOT be repurposed; write this gate as a new distinct script. (P2) If any parameter-vector digest validation is reused, correct the encoding first: the historical opt_p_hash is computed from contiguous float64 bytes (hashlib.sha256(np.ascontiguousarray(a, dtype=np.float64).tobytes()).hexdigest() at experiments/bohn2021_aws/vehicle_true_variable_horizon_v34_objective_basin_solver_probe_v0.py:164), NOT from canonical JSON, so a JSON-hash comparison is a latent false-negative and must not be used as an equality test. (P3) A pre-launch self-test that only writes and rereads a synthetic JSON payload does NOT satisfy failure-path resilience; the failure path must be exercised, and an invalid authorization must remain a FAILURE rather than being bypassed to manufacture a receipt. Frozen inputs: opened development context source242_slot0_branch_start ONLY, term_mode V15_shared, goal case.tvp.trajectory_endpoint[61], cells H12/H15/H35 canonical plus H15 goal_facing; IPOPT at PRODUCTION tolerances (max_iter NOT forced to 1) for all four cells, plus EXACTLY ONE forced max_iter=1 truncated control, and that control must be H12 only. MANDATORY PRE-LAUNCH SETUP ASSERTIONS, reported as pass/fail facts: (a) each arm records a real pre-solve opt_x_hash; (b) assignments_succeeded is NONZERO on every arm; (c) NUMERIC READBACK of the intended primal values is required, not merely nonzero assignment counts, and numeric readback of intended parameter values where applicable; (d) the H15 canonical versus goal_facing pair is matched on effective parameters, terminal coefficients, bounds, scaling, previous input and dual initialization, with declared per-entry differences recorded for anything unmatchable; (e) the two H15 arms must NOT both enter from identical pre-solve state. HARD GATE: if any arm records assignments_attempted=0 or assignments_succeeded=0, or the two H15 arms enter with identical pre-solve opt_x_hash AND identical opt_p_hash, or numeric readback does not show the intended distinct primals, the run is an INERT-INTERVENTION FAILURE: record it, spend no further calls, return to lead, and produce no initialization-sensitivity claim. This gate exists because all four v34u arms recorded assignments_attempted=0 and assignments_succeeded=0 with pre-solve opt_x_hash 5b251505436d130331c07e9ebb9f06c5fbd90f60fe734f07dad6f175148921b7 identical at raw.json:3366 and :6316 for the two H15 arms, and the wrapper still returned success. Required per-cell outputs: return_status and unified_return_status, actual iteration count, J_solver, J_recon_historical_noeps, J_recon_full and both relative errors against predeclared thresholds, direct NLP f evaluated at returned opt_x_num/opt_p_num compared to opt_f_num, the PERSISTED PER-STAGE EPSILON VECTOR for all k and all j WITH LABEL AND DIMENSION, eps_nonzero_count at the individual-variable level, per-stage gamma^k*1000*epsilon contributions, the soft-margin quantity 1.5*r_obstacle - d at the actual constraint-enforcement nodes, hard obstacle clearance, effective tolerances, convergence residuals, and an explicit verdict on whether any epsilon is materially non-zero at convergence. Also report solver_wall_s and whole_decision_get_action_wall_s as mean/median/P95 with n, and state that no truncated cell's timing is a deployable estimate. Predeclared acceptance: converged full-objective relative error <= 1e-6; the H35 1e-5 allowance applies only if H35 is documented non-converged BEFORE the run; any converged cell above 1e-4 is a hard defect that stops the task; independent epsilon replay uses the standing 1e-8 absolute tolerance. Branch rules: all four cells converge <= 1e-6 -> close OC-epsilon-1 as a verified IMPROVED formula amendment, release dependent contract-consumer work, and state the converged-slack verdict either way, because positive converged active-margin slack falsifies only the universal zero-slack hypothesis and is NOT a defect and is consistent with the v34l zero-epsilon H15 record; converged miss in 1e-6 to 1e-4 -> record as a SECOND distinct residual source under a new stable ID and do not proceed; any converged cell above 1e-4 -> hard defect, stop, escalate to lead. SCOPE LIMIT: this gate cannot determine whether terminal treatment explains earlier H-dependent outcomes; A6_strong_fixed_H_and_terminal_opportunity_not_closed remains open and is not addressed here. Negative and null results are first-class outputs and must be preserved verbatim. No plant steps, no env.step/reset after construction, no training, no refit, no validation64, no sealed test.",
+      "script_patterns": [
+        "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34z2_converged_contract_gate_v0.py"
+      ],
+      "split": "opened_development_source242_slot0_branch_start_only_no_validation64_no_sealed_test",
+      "method": "A13c-4 bounded converged plus single truncated-control objective-contract gate with full prospective capture on the frozen IMPROVED latency-tree vehicle controller",
+      "seeds": [
+        "canonical_solve_no_training_seed",
+        "goal_facing_H15_control_no_training_seed"
+      ],
+      "config_constraints": {
+        "all_four_production_cells_max_iter_forced": false,
+        "converged_hard_defect_relative_error_gt": 0.0001,
+        "converged_relative_error_max": 1e-06,
+        "digest_encoding_must_be_float64_tobytes_not_json": true,
+        "discount_factor": 0.97,
+        "discount_source": "mpc.discount_factor",
+        "failure_path_must_be_exercised_not_synthetic": true,
+        "goal_path": "case.tvp.trajectory_endpoint[61]",
+        "h35_nonconverged_allowance_relative_error_max": 1e-05,
+        "h35_nonconverged_allowance_requires_pre_run_documentation": true,
+        "historical_v34u_solver_calls_disclosed_not_inherited": 4,
+        "inert_intervention_is_hard_failure": true,
+        "label_ORIGINAL_vs_IMPROVED": "IMPROVED",
+        "no_sealed_or_final_test_access": true,
+        "no_validation64_access": true,
+        "numeric_readback_of_intended_primals_required": true,
+        "persist_per_stage_epsilon_vector_with_label_and_dimension": true,
+        "require_distinct_H15_pre_solve_state": true,
+        "require_nonzero_assignments_succeeded_all_arms": true,
+        "scenario_ids": [
+          "source242_slot0_branch_start"
+        ],
+        "shared_ceiling_is_accounted_not_inherited": true,
+        "single_truncated_control_cell": "H12_canonical",
+        "soft_obstacle_penalty_term_cons": 1000,
+        "solver_calls_cap_ceiling": 6,
+        "solver_calls_scheduled": 5,
+        "term_mode": "V15_shared",
+        "v34z_is_tc5_source_and_must_not_be_repurposed": true
+      },
+      "training_budget": {
+        "gradient_steps": 0,
+        "selector_refits": 0,
+        "training_steps": 0
+      },
+      "validation_budget": {
+        "env_steps_after_construction": 0,
+        "plant_steps": 0,
+        "solver_calls": 5,
+        "validation64_episodes": 0
+      },
+      "test_budget": {
+        "final_test_episodes": 0,
+        "sealed_test_episodes": 0
+      },
+      "resource_limits": {
+        "solver_calls": 6,
+        "plant_steps": 0,
+        "training_steps": 0,
+        "validation_episodes": 0,
+        "test_episodes": 0
+      },
+      "max_attempts": 2,
+      "max_zero_usage_repairs": 2,
+      "timeout_seconds": 1800,
+      "dependencies": [],
+      "pass_conditions": {
+        "converged_cells_reported_with_relative_errors": true,
+        "inert_intervention_gate_evaluated_and_reported": true,
+        "no_plant_training_validation_or_test_usage": true,
+        "numeric_readback_reported_for_intended_primals": true,
+        "per_stage_epsilon_vector_persisted_with_label_and_dimension": true,
+        "solver_and_whole_decision_timing_reported_with_n": true
+      },
+      "continue_without_review": true
+    },
+    {
+      "task_id": "T-C4-fixedH-terminal-opportunity-ledger",
+      "description": "T-C4 zero-resource ledger over already-opened development artifacts: join existing fixed-H and terminal-treatment results to absolute success counts, failure counts, physical cost, decision timing, training provenance and search budgets. Addresses A6_strong_fixed_H_and_terminal_opportunity_not_closed, A7_targeted_risk_banks_are_not_population_estimates and A8_zero_catastrophe_small_sample_model_selection_risk. This task is knowingly NOT in the live plan 20260930T135811Z_8f32d0; it is hereby authorized by the lead as the next zero-resource scientific item and must not be treated as an automatic insertion by the executor. Prior prerequisite gates T-C1R and T-C5 are closed and are NOT declared as intra-plan dependencies. Required: include fixed H12 and the relevant H35/zero-terminal and H35/V15_shared alternatives; distinguish repeated branch combinations from independent source cases and from independent training seeds; report physical-performance conclusions separately from timing conclusions; state explicitly where fairness evidence is missing rather than imputing it. Two independent readings of the same two v33 v19_c13 H35 episodes agree on physical cost but differ on the timing measure, and BOTH readings must be reported rather than one selected: physical/constraint cost 64.58471587439642 for V35_shared over 31 steps versus 11.169277744886342 for V15_shared over 29 steps in both readings; recorded decision-time sum 3.736528287176043 s versus 5.068593478004914 s per one reading, while a second reading reports solver-time sum 3.335993220738601 s versus 4.638596607081126 s. Determine from the episode records which quantity each number actually is (whole-decision wall sum versus solver-time sum) and label them accordingly instead of conflating them. These two episodes share identical recorded branch state and initial observation with no solver-failure steps, so terminal-dependent outcomes HAVE been measured; unresolved is whether objective preference, local solver basins, or an unmatched condition explains them. Physical cost and latency must remain SEPARATE endpoints and no population runtime ranking may be inferred. Frozen scope: existing development artifacts only. Reject as failures: treating a development oracle choice as a deployed policy, treating relative improvement against a failing comparator as absolute success, and presenting selected terminal donors as three-seed confirmation. No solver, no plant, no env.step/reset after construction, no training, no refit, no validation64, no sealed test.",
+      "script_patterns": [
+        "experiments/bohn2021_aws/vehicle_fixedh_terminal_opportunity_ledger_v0.py"
+      ],
+      "split": "opened_development_artifacts_only_no_validation64_no_sealed_test",
+      "method": "zero-solve join of existing opened fixed-H and terminal-treatment development results into an absolute-outcome and fairness-gap ledger",
+      "seeds": [
+        "not_applicable_no_training_seed"
+      ],
+      "config_constraints": {
+        "both_timing_readings_reconciled_and_labelled": true,
+        "distinguish_whole_decision_wall_sum_from_solver_time_sum": true,
+        "h12_included": true,
+        "h35_terminal_alternatives_included": [
+          "zero_terminal",
+          "V15_shared"
+        ],
+        "label_ORIGINAL_vs_IMPROVED": "IMPROVED",
+        "no_new_solver_calls": true,
+        "no_plant_steps": true,
+        "no_refits": true,
+        "no_sealed_or_final_test_access": true,
+        "no_training": true,
+        "no_validation64_access": true,
+        "oracle_is_not_deployed_policy": true,
+        "physical_cost_and_timing_reported_separately": true,
+        "repeated_branches_not_independent_cases": true,
+        "scenario_ids": [
+          "v19_c13"
+        ],
+        "selected_donors_are_not_three_seed_confirmation": true
+      },
+      "training_budget": {
+        "gradient_steps": 0,
+        "selector_refits": 0,
+        "training_steps": 0
+      },
+      "validation_budget": {
+        "env_steps_after_construction": 0,
+        "plant_steps": 0,
+        "solver_calls": 0,
+        "validation64_episodes": 0
+      },
+      "test_budget": {
+        "final_test_episodes": 0,
+        "sealed_test_episodes": 0
+      },
+      "resource_limits": {
+        "solver_calls": 0,
+        "plant_steps": 0,
+        "training_steps": 0,
+        "validation_episodes": 0,
+        "test_episodes": 0
+      },
+      "max_attempts": 2,
+      "max_zero_usage_repairs": 2,
+      "timeout_seconds": 900,
+      "dependencies": [],
+      "pass_conditions": {
+        "comparator_rows_traceable_to_source_paths": true,
+        "missing_fairness_evidence_stated_explicitly": true,
+        "no_solver_plant_training_validation_or_test_usage": true,
+        "physical_performance_and_timing_conclusions_separate": true,
+        "training_provenance_and_budgets_recorded_per_row": true
+      },
+      "continue_without_review": true
+    },
+    {
+      "task_id": "T-C6-reproduction-campaign-inventory",
+      "description": "T-C6 zero-resource read-only inventory of the reproduction side of the project, authorized because the EC2 allocation expires 2026-10-25 18:30 Asia/Shanghai (2026-10-25T10:30:00Z) and the reproduction path has not been started while the objective-contract thread consumed this session. This is an inventory and feasibility task, NOT a training task and NOT a restarted experiment. Required: over already-opened development artifacts and written records only, enumerate which original-SAC and current-vehicle checkpoints, training logs, configurations, seeds, and split manifests actually exist; distinguish real gradient training from parameter search; classify each as complete, failed, interrupted, or reusable with the evidence path justifying the label; state which of the three required independent training seeds are genuinely available. Reconstruct, from protocols and manifests WITHOUT opening sealed or final-test data, what validation and test exposure has already occurred historically, so that previously observed validation or test data is never later mistaken for fresh independent final evidence. Output must list per row the ORIGINAL versus IMPROVED labeling, and what additional work would still be required for a multi-seed, strong-fair-fixed-H, independent-final-test reproduction. Report honestly if original configs or test data are missing rather than assuming they exist. FORBIDDEN: restarting any frozen active experiment, opening validation64, opening the sealed/final test, any training or refit, any solver or plant call, and any new paid infrastructure. This task does not gate T-C2 or T-C4 and adds no approval gate to them.",
+      "script_patterns": [
+        "experiments/bohn2021_aws/vehicle_reproduction_campaign_inventory_v0.py"
+      ],
+      "split": "opened_development_artifacts_only_no_validation64_no_sealed_test",
+      "method": "zero-solve read-only reproduction-campaign inventory over existing artifacts, checkpoint metadata, protocols and written records",
+      "seeds": [
+        "not_applicable_no_training_seed"
+      ],
+      "config_constraints": {
+        "classify_complete_failed_interrupted_reusable": true,
+        "count_available_independent_training_seeds": true,
+        "distinguish_gradient_training_from_parameter_search": true,
+        "ec2_deadline_utc": "2026-10-25T10:30:00Z",
+        "label_ORIGINAL_vs_IMPROVED_per_row": true,
+        "no_new_paid_infrastructure": true,
+        "no_plant_steps": true,
+        "no_sealed_or_final_test_access": true,
+        "no_solver_calls": true,
+        "no_training_or_refit": true,
+        "no_validation64_access": true,
+        "prior_validation_and_test_exposure_must_be_reconstructed_not_assumed_pristine": true,
+        "report_missing_original_configs_honestly": true
+      },
+      "training_budget": {
+        "gradient_steps": 0,
+        "selector_refits": 0,
+        "training_steps": 0
+      },
+      "validation_budget": {
+        "env_steps_after_construction": 0,
+        "plant_steps": 0,
+        "solver_calls": 0,
+        "validation64_episodes": 0
+      },
+      "test_budget": {
+        "final_test_episodes": 0,
+        "sealed_test_episodes": 0
+      },
+      "resource_limits": {
+        "solver_calls": 0,
+        "plant_steps": 0,
+        "training_steps": 0,
+        "validation_episodes": 0,
+        "test_episodes": 0
+      },
+      "max_attempts": 2,
+      "max_zero_usage_repairs": 2,
+      "timeout_seconds": 900,
+      "dependencies": [],
+      "pass_conditions": {
+        "ORIGINAL_vs_IMPROVED_labeling_present_per_row": true,
+        "available_independent_training_seeds_counted_honestly": true,
+        "coverage_table_produced_with_evidence_paths": true,
+        "historical_validation_and_test_exposure_reconstructed_without_opening_sealed_data": true,
+        "no_solver_plant_training_validation_or_test_usage": true,
+        "remaining_work_for_multiseed_strong_fixedH_and_final_test_enumerated": true
+      },
+      "continue_without_review": true
+    }
+  ]
+}

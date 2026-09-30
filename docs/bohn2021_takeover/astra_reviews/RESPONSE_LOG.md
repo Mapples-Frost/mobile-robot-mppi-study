@@ -173,3 +173,15 @@ Updated by GPT-5.5 executor at `2026-09-30T03:04:16.008112+00:00`. v28 is analys
 | `A11_training_failure_modes_need_separation` | accepted; training deferred with a discriminating trigger | Current evidence does not show that a richer selector is the bottleneck on fresh feasible rows; it shows mixed scenario/comparison failure modes. | Pivot to terminal-risk/value refit only if the v29 feasibility/feature audit shows separable H12-only opportunity not captured by fixed H12/longer fixed-H baselines. |
 | `A7_targeted_risk_banks_are_not_population_estimates` / `A8_zero_catastrophe_small_sample_model_selection_risk` | accepted; unchanged | All v28 inputs are opened development/stress-pool artifacts, not validation64/population/final-test evidence. | Keep scope development-only; require fresh independent confirmation before final testing. |
 | `A12_registry_backup_schema_contract` | accepted; active | v28 wrote new source/audit/protocol/docs/state/registry and backup request `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_V28_SUCCESS_AWARE_SCENARIO_COMPARISON_AUDIT_20260930T0315Z.json`. | Require verified external backup covering v27 postdiagnostic and v28 before v29 simulation or other unique science. |
+
+## Follow-up through v29 success-aware longer-H feasibility probe
+
+Updated by GPT-5.5 executor at `2026-09-30T03:22:13.345024+00:00`. v29 did not access validation64 or sealed test and performed no training/refit.
+
+| linked recommendation(s) | disposition after v29 | verified evidence | action / outcome / next step |
+|---|---|---|---|
+| `A13_both_fail_rows_must_not_count_as_successful_fixed_H12_pass` | accepted; directly tested | v29 ran H12/H15/H25/H35 on source242 both-fail states and records absolute safe/no-safe rows before timing aggregation. Source242 longer-H rescues: 2. | Continue success-sensitive accounting; failed rows are not speed evidence. |
+| `A6_strong_fixed_H_and_terminal_opportunity_not_closed` | accepted; expanded fixed-H comparison | v29 includes H25/H35 matched fixed-H terminals where available plus H12/H15, on identical saved states. | If longer H rescues or dominates, broaden fixed-H comparator/scenario design before any adaptive validation. |
+| `A11_training_failure_modes_need_separation` | accepted; conditional | v19 H12-only failures reproduced=3; controls fastest H12=6. | Pivot to terminal-risk/value refit only if per-state v29 evidence shows separable adaptive opportunity not dominated by fixed longer H. |
+| `A7_targeted_risk_banks_are_not_population_estimates` / `A8_zero_catastrophe_small_sample_model_selection_risk` | accepted; unchanged | v29 is selected opened development/stress-pool evidence only. | Require fresh independent confirmation before validation/final-test claims. |
+| `A12_registry_backup_schema_contract` | accepted; active | v29 wrote new source/results/docs/state/registry and backup request `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_V29_SUCCESS_AWARE_LONGER_H_PROBE_20260930T0340Z.json`. | Require verified backup before more unique simulations/refits/validation. |

@@ -6108,3 +6108,11 @@ UTC: 2026-09-30T03:04:16.008112+00:00. Analysis-only development audit completed
 
 ## 2026-09-30T03:13:22.088319+00:00
 
+<!-- vehicle-success-aware-longer-H-feasibility-v29-20260930T0340Z -->
+## 2026-09-30 v29 success-aware longer-H feasibility probe
+
+UTC: 2026-09-30T03:22:13.345024+00:00. Development-only identical-state H12/H15/H25/H35 probe completed; validation64 closed, sealed test closed, no training/refit. Budget 44 episodes / 2557 control steps. Source242 H12/H15 both-fail rows rescued by H25/H35=2; v19 H12-only failures reproduced=3; no-safe states=0; safe controls fastest H12=6. Decision: Longer fixed-H rescues at least one source242 H12/H15 both-fail row; broaden fixed-H/scenario comparison before any adaptive selector validation. Artifacts: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_success_aware_longer_H_feasibility_probe_v29_20260930T0340Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_success_aware_longer_H_feasibility_probe_v29_20260930T0340Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_success_aware_longer_H_feasibility_probe_v29_20260930T0340Z/completed.json`. Backup required before further unique science: `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_V29_SUCCESS_AWARE_LONGER_H_PROBE_20260930T0340Z.json`.
+
+
+## 2026-09-30T03:25:50.122213+00:00
+

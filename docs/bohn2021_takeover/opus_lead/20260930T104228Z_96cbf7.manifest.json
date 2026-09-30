@@ -1,0 +1,119 @@
+{
+  "status": "completed",
+  "audit_id": "20260930T104228Z_96cbf7",
+  "started": "2026-09-30T10:42:28.261368+00:00",
+  "turn": 16,
+  "max_turns": 16,
+  "first_cycle": false,
+  "supplemental_audit_request_id": "20260930-comprehensive-handoff-missing-raw-training-audit",
+  "request": {
+    "request_id": "execution-result:20260930T104147_c9faadcc",
+    "trigger": "execution_result_handoff",
+    "created": "2026-09-30T10:42:16.082310+00:00",
+    "experiment_id": "20260930T104147_c9faadcc",
+    "status": "analysis_requested",
+    "purpose": "Execute Opus-approved A13 continuation T-style zero-solve diagnostic after v34i partial-struct indexing failure: assemble values from full labels, test label-accessor gate, G-E objective reconstruction, and G-F residual alias without spending remaining Task-C solver calls.",
+    "execution_status": "complete",
+    "question": "Active scientific lead: interpret this outcome, verify current raw evidence and select the next scientific action for GPT-5.5 implementation. Distinguish hypotheses from verified causes and account for fair baselines, terminal confounds and source-level generalization.",
+    "evidence_paths": [
+      "research_artifacts/aws_runs/20260930T104147_c9faadcc/registry.json"
+    ]
+  },
+  "commit_start": "57184fbfdca2c08d01ac6600c265f234411f98b7",
+  "inspected": [
+    {
+      "path": "research_artifacts/aws_runs/20260930T104147_c9faadcc/registry.json",
+      "sha256": "fcdc7d70bccb61bf1e199a7019ccc3d1f67ce54a2cc4177b547688a0ab356b03"
+    },
+    {
+      "path": "docs/bohn2021_takeover/opus_lead/LATEST.md",
+      "sha256": "913ecdf2c480bf0230c0572ab4d42b617f03a6d8f4920407dc7b4f4979a1b678"
+    },
+    {
+      "path": "docs/bohn2021_takeover/opus_lead/PLAN_READY.json",
+      "sha256": "cf616fd4e9f70984ff3026f1b75ac4d9ec4bbe00f8d677d20409c1ec851eb13b"
+    },
+    {
+      "path": "research_artifacts/aws_runs/20260930T104147_c9faadcc/registry.json",
+      "sha256": "fcdc7d70bccb61bf1e199a7019ccc3d1f67ce54a2cc4177b547688a0ab356b03"
+    },
+    {
+      "path": "docs/bohn2021_takeover/opus_lead/20260930T103334Z_44f4af.md",
+      "sha256": "7fb49cf299921224dd64e6b045f971141f6a7b9db740a6f73e71343d9a9e07fc"
+    },
+    {
+      "path": "research_artifacts/aws_runs/20260930T104147_c9faadcc/registry.json",
+      "sha256": "fcdc7d70bccb61bf1e199a7019ccc3d1f67ce54a2cc4177b547688a0ab356b03"
+    },
+    {
+      "path": "research_artifacts/aws_runs/20260930T104147_c9faadcc/stdout.log",
+      "sha256": "0488afaa987ca7b99c55636ec2b51941b9312b4c76827cbdbdd0be8d00aa786c"
+    },
+    {
+      "path": "research_artifacts/aws_runs/20260930T104147_c9faadcc/stderr.log",
+      "sha256": "f7f8ad5c36c449e3885f311c90ebdb33a90a965bb4db31283450c2b8565707ef"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34k_label_accessor_objective_localization_v0_20260930T104148Z/summary.md",
+      "sha256": "8b14e6d86f21385dd02431b219bf31c2f822faf656e191d218b12129fa6391ba"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34k_label_accessor_objective_localization_v0_20260930T104148Z/candidate_residuals.csv",
+      "sha256": "a3682923f8e7ee4ddfd36ce2836177636d22d841730bcd226cc8bda9f4a40c81"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34k_label_accessor_objective_localization_v0_20260930T104148Z/raw.json",
+      "sha256": "b9a657c6e64af913f3ba6395b11bf33af407853b9fe62f871b9f30c46e87ba70"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34k_label_accessor_objective_localization_v0_20260930T104148Z/completed.json",
+      "sha256": "799e305dea887f258a9bc4d8e5b515d61e1d670c2d83c4c4813643a9800386f1"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34k_label_accessor_objective_localization_v0_20260930T104148Z/raw.json",
+      "sha256": "b9a657c6e64af913f3ba6395b11bf33af407853b9fe62f871b9f30c46e87ba70"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34k_label_accessor_objective_localization_v0_20260930T104148Z/raw.json",
+      "sha256": "b9a657c6e64af913f3ba6395b11bf33af407853b9fe62f871b9f30c46e87ba70"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34k_label_accessor_objective_localization_v0_20260930T104148Z/raw.json",
+      "sha256": "b9a657c6e64af913f3ba6395b11bf33af407853b9fe62f871b9f30c46e87ba70"
+    },
+    {
+      "path": "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34k_label_accessor_objective_localization_v0.py",
+      "sha256": "30225355ce36f281e09d9f8f65c1d6856706d411ad018cd8ed444099ba71eb38"
+    },
+    {
+      "path": "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34k_label_accessor_objective_localization_v0.py",
+      "sha256": "30225355ce36f281e09d9f8f65c1d6856706d411ad018cd8ed444099ba71eb38"
+    },
+    {
+      "path": "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34k_label_accessor_objective_localization_v0.py",
+      "sha256": "30225355ce36f281e09d9f8f65c1d6856706d411ad018cd8ed444099ba71eb38"
+    },
+    {
+      "path": "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34k_label_accessor_objective_localization_v0.py",
+      "sha256": "30225355ce36f281e09d9f8f65c1d6856706d411ad018cd8ed444099ba71eb38"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34k_label_accessor_objective_localization_v0_20260930T104148Z/raw.json",
+      "sha256": "b9a657c6e64af913f3ba6395b11bf33af407853b9fe62f871b9f30c46e87ba70"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34k_label_accessor_objective_localization_v0_20260930T104148Z/raw.json",
+      "sha256": "b9a657c6e64af913f3ba6395b11bf33af407853b9fe62f871b9f30c46e87ba70"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34k_label_accessor_objective_localization_v0_20260930T104148Z/raw.json",
+      "sha256": "b9a657c6e64af913f3ba6395b11bf33af407853b9fe62f871b9f30c46e87ba70"
+    }
+  ],
+  "superseded_request_ids": [],
+  "cross_review_id": "20260930T084456Z",
+  "updated": "2026-09-30T10:52:48.612045+00:00",
+  "registry_context_experiment_id": "20260930T104147_c9faadcc",
+  "completed": "2026-09-30T10:52:48.620443+00:00",
+  "commit_end": "0de71acd36dc8895f21937c9cd39e27c38ff8466"
+}

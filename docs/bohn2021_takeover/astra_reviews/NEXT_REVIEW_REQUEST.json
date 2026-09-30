@@ -1,16 +1,16 @@
 {
-  "request_id": "execution-result:20260930T163737_45b3d5d7",
+  "request_id": "execution-result:20260930T165402_24158110",
   "trigger": "execution_result_handoff",
-  "created": "2026-09-30T16:38:41.631677+00:00",
-  "experiment_id": "20260930T163737_45b3d5d7",
+  "created": "2026-09-30T16:54:48.853130+00:00",
+  "experiment_id": "20260930T165402_24158110",
   "status": "analysis_requested",
-  "purpose": "Execute the user-authorized temporary GPT-5.5 solo T-C2 objective-contract gate wrapper on opened development source242 only, after zero-resource preflight and T-C4R passed, to obtain bounded solver-bearing evidence without plant/training/validation/test access.",
+  "purpose": "Run the repaired S-TC2G development-only H15 initialization-basin triage after the zero-resource source242 goal extraction failure, preserving prior T-C2 anchors and measuring up to three blend initializations without plant/training/validation/test access.",
   "execution_status": "complete",
   "question": "Active scientific lead: interpret this outcome, verify current raw evidence and select the next scientific action for GPT-5.5 implementation. Distinguish hypotheses from verified causes and account for fair baselines, terminal confounds and source-level generalization.",
   "evidence_paths": [
-    "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34z2_converged_contract_gate_v0_20260930T163737Z/completed.json",
-    "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34z2_converged_contract_gate_v0_20260930T163737Z/raw.json",
-    "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34z2_converged_contract_gate_v0_20260930T163737Z/summary.md",
-    "research_artifacts/aws_runs/20260930T163737_45b3d5d7/registry.json"
+    "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34z2_h15_initialization_basin_triage_v0_20260930T165402Z/completed.json",
+    "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34z2_h15_initialization_basin_triage_v0_20260930T165402Z/raw.json",
+    "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34z2_h15_initialization_basin_triage_v0_20260930T165402Z/summary.md",
+    "research_artifacts/aws_runs/20260930T165402_24158110/registry.json"
   ]
 }

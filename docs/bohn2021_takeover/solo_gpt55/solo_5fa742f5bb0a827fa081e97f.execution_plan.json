@@ -1,0 +1,96 @@
+{
+  "request_id": "execution-result:20260930T165402_24158110",
+  "schema_version": 1,
+  "tasks": [
+    {
+      "task_id": "S-TC2H-source242-fixedH-microcontinuation-v0",
+      "description": "TEMPORARY GPT-5.5 SOLO SELF-REVIEW / OPENED-DEVELOPMENT SOURCE242 CLOSED-LOOP MICROCONTINUATION AFTER T-C2G. T-C2 proved the repaired v34z2 objective contract for converged canonical H12/H15/H35 source242 single decisions; S-TC2G then showed H15 V15_shared initialization-basin brittleness: alpha=0.25 between canonical and goal-facing converged with zero slack, while alpha=0.50, alpha=0.75 and the prior alpha=1.0 goal-facing anchor returned Infeasible_Problem_Detected with large slack/epsilon penalties but exact full objective reconstruction. The next useful bounded action is to stop spending solver calls on metadata-only gate refinements and obtain a small actual control/timing comparison from the same opened development branch. After verifying an external backup covering S-TC2G source/artifacts/docs/registry/state, implement and run a closed-loop branch microcontinuation on source242_slot0_branch_start using only the opened development case: arms H in [12,15,35], terminal mode V15_shared held fixed to match the objective-contract gate, ordinary deployment-style controller warm-start after the first action, canonical/zero-control first-iteration initialization only if an explicit initial primal must be set, and no goal-facing initialization. Each arm runs from the identical branch state and shifted TVP for at most 60 plant steps or until success/constraint/terminal/failure. Record per-step state/control, physical/control/constraint/total cost components, success and constraint flags, initial/final/step solver failures, solver return statuses/iterations, actual solver wall time, whole-decision wall time including controller overhead, first-control hashes, terminal/value metadata, and prefix/source context hashes. Stop immediately on validation64/sealed-test access, non-source242 context mismatch, hidden env reset that changes the branch state, or budget cap. This is development evidence only and cannot establish population validation, final acceptance, or a fair fixed-H result; it only tests whether the repaired source242 setup produces meaningful closed-loop differences under the objective-contract-safe initialization regime.",
+      "script_patterns": [
+        "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34z2_source242_microcontinuation_v0.py"
+      ],
+      "split": "opened_development_source242_slot0_branch_start_microcontinuation_no_validation64_no_sealed_test",
+      "method": "three-arm source242 fixed-H closed-loop microcontinuation with H=[12,15,35], V15_shared terminal held fixed, canonical/default warm-start, max 60 plant steps per arm, full cost/safety/solver/timing traces",
+      "seeds": [
+        "source242_branch_deterministic_no_training_seed"
+      ],
+      "config_constraints": {
+        "label_ORIGINAL_vs_IMPROVED": "IMPROVED",
+        "authority_mode": "temporary_user_authorized_solo_self_review",
+        "no_change_to_frozen_scientific_contract": true,
+        "diagnostic_reason": "S-TC2G localized the previous H15_goal_facing failure to an aggressive-initialization basin; obtain actual closed-loop source242 control/timing evidence under canonical/default deployment warm-start before larger validation/training decisions.",
+        "prior_T_C2_completed": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34z2_converged_contract_gate_v0_20260930T163737Z/completed.json",
+        "prior_T_C2_cell_metrics": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34z2_converged_contract_gate_v0_20260930T163737Z/cell_metrics.csv",
+        "prior_S_TC2G_completed": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34z2_h15_initialization_basin_triage_v0_20260930T165402Z/completed.json",
+        "prior_S_TC2G_raw": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34z2_h15_initialization_basin_triage_v0_20260930T165402Z/raw.json",
+        "prior_S_TC2G_cell_metrics": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34z2_h15_initialization_basin_triage_v0_20260930T165402Z/cell_metrics.csv",
+        "post_S_TC2G_backup_required_before_solver_or_plant_steps": true,
+        "backup_request_to_cover_before_run": "research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_S_TC2G_H15_INITIALIZATION_BASIN_TRIAGE_20260930T165402Z.json",
+        "wrapped_gate_source": "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34z2_converged_contract_gate_v0.py",
+        "expected_wrapped_gate_sha256": "66dbf84e4a7917d824152cae1cac4da77c51efff576cd4775e8cd1be29dbcc97",
+        "microcontinuation_source_context": "source242_slot0_branch_start",
+        "goal_source_required": "case.tvp.trajectory_endpoint[61]",
+        "horizon_grid": [
+          12,
+          15,
+          35
+        ],
+        "terminal_mode_for_all_arms": "V15_shared",
+        "max_steps_per_arm": 60,
+        "arm_count": 3,
+        "plant_step_cap": 180,
+        "solver_call_cap": 180,
+        "ordinary_deployment_style_warm_start_after_first_action": true,
+        "first_action_initialization": "canonical_zero_control_only_if_explicit_initial_primal_is_required",
+        "forbid_goal_facing_initialization": true,
+        "report_physical_control_constraint_total_costs": true,
+        "report_success_constraint_solver_failure_accounting": true,
+        "report_solver_and_whole_decision_timing": true,
+        "report_per_step_solver_status_iterations": true,
+        "report_context_and_prefix_hashes": true,
+        "development_only_not_validation_not_final": true,
+        "no_training_no_refits": true,
+        "no_validation64_access": true,
+        "no_sealed_or_final_test_access": true,
+        "no_new_paid_infrastructure": true
+      },
+      "training_budget": {
+        "gradient_steps": 0,
+        "selector_refits": 0,
+        "training_steps": 0
+      },
+      "validation_budget": {
+        "opened_development_branch_episodes": 3,
+        "max_plant_steps": 180,
+        "solver_calls": 180,
+        "validation64_episodes": 0
+      },
+      "test_budget": {
+        "final_test_episodes": 0,
+        "sealed_test_episodes": 0
+      },
+      "resource_limits": {
+        "solver_calls": 180,
+        "plant_steps": 180,
+        "training_steps": 0,
+        "validation_episodes": 0,
+        "test_episodes": 0
+      },
+      "max_attempts": 2,
+      "max_zero_usage_repairs": 1,
+      "timeout_seconds": 3600,
+      "dependencies": [],
+      "pass_conditions": {
+        "source242_microcontinuation_completed": true,
+        "prior_T_C2_and_S_TC2G_failures_preserved": true,
+        "backup_verified_before_solver_or_plant_steps": true,
+        "all_three_horizon_arms_attempted_or_budget_cap_reported": true,
+        "per_step_cost_safety_solver_timing_traces_persisted": true,
+        "context_source242_goal61_identity_verified": true,
+        "no_training_validation64_or_test_usage": true,
+        "plant_steps_at_most_180": true,
+        "solver_calls_at_most_180": true
+      },
+      "continue_without_review": false
+    }
+  ]
+}

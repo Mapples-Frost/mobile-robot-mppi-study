@@ -7839,3 +7839,11 @@ UTC: 2026-09-30T16:37:37.735258+00:00. Local task hard_pass `False`; new solver 
 
 ## 2026-09-30T16:50:27.508042+00:00
 
+<!-- vehicle-tc2g-h15-initialization-basin-triage-20260930T165402Z -->
+## S-TC2G H15 initialization-basin triage
+
+UTC: 2026-09-30T16:54:02.815458+00:00. Local task hard_pass `True`; solver calls `3`/3; plant/training/validation/test all zero. Alpha statuses: `[{'alpha': 0.25, 'status': 'Solve_Succeeded', 'iterations': 107, 'J_solver': 1422.3746236498023, 'rel_full': 2.570463550663463e-07, 'eps_abs_sum': 0.0, 'eps_weighted_sum': 0.0}, {'alpha': 0.5, 'status': 'Infeasible_Problem_Detected', 'iterations': 120, 'J_solver': 6589.712438817528, 'rel_full': 0.0, 'eps_abs_sum': 7.2770837697664215, 'eps_weighted_sum': 5300.201416223033}, {'alpha': 0.75, 'status': 'Infeasible_Problem_Detected', 'iterations': 64, 'J_solver': 5906.007322297752, 'rel_full': 1.539948483198098e-16, 'eps_abs_sum': 6.121200385897304, 'eps_weighted_sum': 4691.872407377639}]`. Evidence: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34z2_h15_initialization_basin_triage_v0_20260930T165402Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34z2_h15_initialization_basin_triage_v0_20260930T165402Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34z2_h15_initialization_basin_triage_v0_20260930T165402Z/cell_metrics.csv`. Backup request: `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_S_TC2G_H15_INITIALIZATION_BASIN_TRIAGE_20260930T165402Z.json`. This is opened-development IMPROVED self-review evidence only, not validation or final-test evidence.
+
+
+## 2026-09-30T16:59:31.108005+00:00
+

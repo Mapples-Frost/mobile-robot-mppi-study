@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 """S-TC2G H15 initialization-basin triage for v34z2 source242.
 
-Temporary GPT-5.5 solo plan task S-TC2G-h15-initialization-basin-triage-v0.
+Temporary GPT-5.5 solo task S-TC2G-h15-initialization-basin-triage-v0.
 Development-only diagnostic: opened source242 H15 V15_shared, no plant rollout,
-no training/refit, no validation64, no sealed/final test. The script solves at
-most three production H15 cells initialized by convex blends between the prior
-T-C2 canonical zero-control initialization and the prior T-C2 goal-facing
-initialization. Alpha=0 and alpha=1 are anchors from T-C2 and are not rerun.
+no training/refit, no validation64, no sealed/final test. This repaired version
+keeps the authorized goal source fixed to case.tvp.trajectory_endpoint[61] while
+building the same no-env-reset source242 controller context.
 """
 from __future__ import annotations
 
+import copy
 import csv
 import datetime as dt
 import hashlib
@@ -48,9 +48,11 @@ ALPHAS = [0.25, 0.50, 0.75]
 HORIZON = 15
 TERMINAL_MODE = "V15_shared"
 EXPECTED_GATE_SHA256 = "66dbf84e4a7917d824152cae1cac4da77c51efff576cd4775e8cd1be29dbcc97"
-EXPECTED_BACKUP_COMMIT_FROM_SUPERVISOR_CONTEXT = "248d0c4dcd723a406290ac9c9f2070141d85b002"
-EXPECTED_BACKUP_TIME_FROM_SUPERVISOR_CONTEXT = "2026-09-30T16:43:07.727241+00:00"
-EXPECTED_BACKUP_PACKAGE_SHA256_FROM_SUPERVISOR_CONTEXT = "6d50f2bd3782ec7e02791b987c9d38b845ab5b71cf553bebc21df9896917c140"
+# Latest supervisor-verified backup at this cycle start. It covers the prior T-C2
+# solver evidence before this repaired S-TC2G source edit and any new solver calls.
+EXPECTED_BACKUP_COMMIT_FROM_SUPERVISOR_CONTEXT = "9cdc5e8a1dc40c857e47a402e4a7063af751d385"
+EXPECTED_BACKUP_TIME_FROM_SUPERVISOR_CONTEXT = "2026-09-30T16:51:16.221945+00:00"
+EXPECTED_BACKUP_PACKAGE_SHA256_FROM_SUPERVISOR_CONTEXT = "f53067485f724f7cd618c9f824fbe057af123c82858abf534185acda769161bf"
 PRIOR_DONE = ROOT / "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34z2_converged_contract_gate_v0_20260930T163737Z/completed.json"
 PRIOR_RAW = ROOT / "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34z2_converged_contract_gate_v0_20260930T163737Z/raw.json"
 PRIOR_CSV = ROOT / "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34z2_converged_contract_gate_v0_20260930T163737Z/cell_metrics.csv"
@@ -143,7 +145,14 @@ def arr_hash(value: Any) -> Optional[str]:
 
 
 def timing_summary(values: Sequence[Any]) -> Dict[str, Any]:
-    vals = [float(v) for v in values if v is not None and math.isfinite(float(v))]
+    vals = []
+    for v in values:
+        try:
+            f = float(v)
+        except Exception:
+            continue
+        if math.isfinite(f):
+            vals.append(f)
     if not vals:
         return {"n": 0, "mean_s": None, "median_s": None, "p95_s": None, "min_s": None, "max_s": None}
     vals_sorted = sorted(vals)
@@ -195,15 +204,7 @@ def read_api_total_tokens() -> Dict[str, Any]:
 
 
 def verify_backup_before_solver() -> Dict[str, Any]:
-    """Verify the prior T-C2 evidence is covered by the latest supervisor backup.
-
-    The external release proof itself is supplied by the supervisor context for this
-    cycle. Locally, before any solve, we verify that the current git HEAD is the
-    backed commit (or has that commit as an ancestor) and that the prior T-C2
-    evidence files are clean relative to that repository state. The new triage
-    script can be uncommitted; the gate concerns preservation of the prior unique
-    solver evidence before spending new solver calls.
-    """
+    """Verify prior T-C2 evidence is externally backed before new solver calls."""
     head = run_git(["rev-parse", "HEAD"])
     ancestor = run_git(["merge-base", "--is-ancestor", EXPECTED_BACKUP_COMMIT_FROM_SUPERVISOR_CONTEXT, "HEAD"])
     prior_paths = [rel(PRIOR_DONE), rel(PRIOR_RAW), rel(PRIOR_CSV), rel(GATE_SOURCE)]
@@ -230,7 +231,7 @@ def verify_backup_before_solver() -> Dict[str, Any]:
         "prior_paths_present": present,
         "prior_paths_git_status_porcelain": status,
         "prior_path_hashes": hashes,
-        "new_script_may_be_unbacked_until_post_run_backup_request": True,
+        "repaired_triage_script_may_be_unbacked_until_post_run_backup_request": True,
     }
 
 
@@ -269,29 +270,43 @@ def blend_label(alpha: float) -> str:
     return "H15_blend_alpha_%s" % (str(alpha).replace(".", "p"))
 
 
-def blended_profiles(context_meta: Mapping[str, Any], h: int, alpha: float) -> Tuple[List[Dict[str, float]], List[Dict[str, float]], Dict[str, Any]]:
-    state = gate.numeric_state_dict_from_meta(context_meta)
-    canonical_states, canonical_controls = gate.zero_guess(state, h)
-    goal_states, goal_controls = gate.predicted_unicycle(state, float(context_meta["goal_x"]), float(context_meta["goal_y"]), h, float(gate.finite_float(getattr(context_meta.get("mpc_object", None), "t_step", None), 0.1) or 0.1))
-    # The context_meta does not carry the MPC object; use the historical T-C2 rule
-    # with t_step=0.1 unless the controller exposes a different value in prepare.
-    blended_states: List[Dict[str, float]] = []
-    blended_controls: List[Dict[str, float]] = []
-    for cs, gs in zip(canonical_states, goal_states):
-        blended_states.append({k: float((1.0 - alpha) * cs[k] + alpha * gs[k]) for k in cs})
-    for cu, gu in zip(canonical_controls, goal_controls):
-        blended_controls.append({k: float((1.0 - alpha) * cu[k] + alpha * gu[k]) for k in cu})
-    meta = {
-        "alpha": alpha,
-        "canonical_profile_hash": canonical_hash({"states": canonical_states, "controls": canonical_controls}),
-        "goal_facing_profile_hash": canonical_hash({"states": goal_states, "controls": goal_controls}),
-        "blended_profile_hash": canonical_hash({"states": blended_states, "controls": blended_controls}),
-        "first_three_canonical_controls": canonical_controls[:3],
-        "first_three_goal_facing_controls": goal_controls[:3],
-        "first_three_blended_controls": blended_controls[:3],
-        "first_three_blended_states": blended_states[:3],
+def configure_context_source242_goal61(base: Any, env: Any, context: Mapping[str, Any], h: int) -> Tuple[Dict[str, Any], Dict[str, Any], Dict[str, Any]]:
+    """Call base.configure_context_no_reset but force the authorized source242 goal.
+
+    The previous S-TC2G attempt failed before any solver call because the generic
+    base.extract_goal_xy could not reconstruct source242's goal from the case/TVP.
+    T-C2's scientific contract already fixes the authoritative goal to
+    case.tvp.trajectory_endpoint[61]. This local patch only supplies that same
+    goal to the no-reset context builder; it does not read validation64/test data
+    and it does not use observation heuristics.
+    """
+    original = getattr(base, "extract_goal_xy", None)
+    forced_goal = gate.goal_endpoint_61(context["case_snapshot"])
+
+    def _forced_extract_goal_xy(case: Mapping[str, Any], shifted: Mapping[str, Any]) -> Tuple[float, float, str]:
+        got = gate.goal_endpoint_61(case)
+        if abs(float(got["goal_x"]) - float(forced_goal["goal_x"])) > 1e-12 or abs(float(got["goal_y"]) - float(forced_goal["goal_y"])) > 1e-12:
+            raise TriageError("forced source242 goal changed during configure_context_no_reset")
+        return float(got["goal_x"]), float(got["goal_y"]), str(got["source"])
+
+    setattr(base, "extract_goal_xy", _forced_extract_goal_xy)
+    try:
+        meta = base.configure_context_no_reset(env, context, h)
+    finally:
+        if original is not None:
+            setattr(base, "extract_goal_xy", original)
+    meta = dict(meta)
+    meta["goal_x"] = float(forced_goal["goal_x"])
+    meta["goal_y"] = float(forced_goal["goal_y"])
+    meta["goal_source"] = forced_goal["source"]
+    meta["goal_endpoint_index"] = int(forced_goal["endpoint_index"])
+    repair_meta = {
+        "source242_goal_loader_repair_applied": True,
+        "reason": "generic base.extract_goal_xy failed on source242; authorized goal is case.tvp.trajectory_endpoint[61]",
+        "observation_heuristic_used": False,
+        "forced_goal": forced_goal,
     }
-    return blended_states, blended_controls, meta
+    return meta, forced_goal, repair_meta
 
 
 def set_blended_initial_guess(mpc: Any, env: Any, context_meta: Mapping[str, Any], alpha: float, h: int) -> Dict[str, Any]:
@@ -410,17 +425,12 @@ def prepare_blend_cell(alpha: float, context: Mapping[str, Any], terminals: Mapp
     env = base.create_env(h, terminal)
     ctrl = env.control_system.controller
     mpc = ctrl.mpc
-    context_meta = base.configure_context_no_reset(env, context, h)
+    context_meta, goal, context_repair_meta = configure_context_source242_goal61(base, env, context, h)
     scalar_tvp = gate.scalarize_tvp(context_meta["shifted_tvp"])
     context_meta["shifted_tvp"] = scalar_tvp
-    goal = gate.goal_endpoint_61(context["case_snapshot"])
-    context_meta["goal_x"] = goal["goal_x"]
-    context_meta["goal_y"] = goal["goal_y"]
-    context_meta["goal_source"] = goal["source"]
-    context_meta["goal_endpoint_index"] = goal["endpoint_index"]
     ctrl.goal_x = goal["goal_x"]
     ctrl.goal_y = goal["goal_y"]
-    ctrl._tvp_data = json.loads(json.dumps(clean(scalar_tvp)))
+    ctrl._tvp_data = copy.deepcopy(scalar_tvp)
     v34u.install_tta_hmpc_presolve_obj_guard()
     init_meta = set_blended_initial_guess(mpc, env, context_meta, alpha, h)
     pre = gate.capture_mpc_state(mpc)
@@ -437,6 +447,7 @@ def prepare_blend_cell(alpha: float, context: Mapping[str, Any], terminals: Mapp
         "alpha": alpha,
         "solve_mode": "production",
         "goal": goal,
+        "context_repair_meta": context_repair_meta,
         "context_meta_no_shifted_tvp": {k: v for k, v in context_meta.items() if k != "shifted_tvp"},
         "initialization_meta": init_meta,
         "pre_solve_state_after_initialization": pre,
@@ -506,7 +517,7 @@ def write_failure(run_dir: Path, created: dt.datetime, error: str, used: Mapping
     write_json(failed_path, payload)
     try:
         if dependency_zero and all(int(v) == 0 for v in used.values()):
-            execution_contract.record_outcome(ROOT, "engineering_failure", dict(used), {"no_scientific_outcome": True, "backup_verified_before_solver_calls_or_zero_usage_dependency_failure": True, "failed_json": rel(failed_path), "error": error}, engineering_error="dependency")
+            execution_contract.record_outcome(ROOT, "engineering_failure", dict(used), {"no_scientific_outcome": True, "backup_verified_before_solver_calls_or_zero_usage_dependency_failure": True, "failed_json": rel(failed_path), "error": error}, engineering_error="dependency_or_zero_usage_repair")
         else:
             evidence = {
                 "h15_initialization_basin_triage_completed": False,
@@ -622,6 +633,7 @@ def main() -> int:
             "prior_T_C2_anchor_evidence": prior,
             "backup_verification_before_solver_calls": backup,
             "load_meta": load_meta,
+            "source242_goal_loader_repair": "Patched base.extract_goal_xy only during context reconstruction to return gate.goal_endpoint_61(case), avoiding the failed generic reconstruction and refusing observation heuristics.",
             "alpha_grid_report": alpha_grid_report,
             "setup_records": setup_records,
             "cell_results": cell_results,
@@ -660,6 +672,8 @@ def main() -> int:
             "",
             "Development-only IMPROVED diagnostic on opened source242 H15 V15_shared. No plant rollout, training/refit, validation64, or sealed/final test was used.",
             "",
+            "Repair note: source242 context reconstruction patched the generic goal extractor only during configure_context_no_reset to use the predeclared authoritative goal `case.tvp.trajectory_endpoint[61]`; no observation heuristic was used.",
+            "",
             "Prior anchors were preserved from T-C2 and not rerun: alpha=0 canonical was `Solve_Succeeded`; alpha=1 goal-facing was `Infeasible_Problem_Detected` with large epsilon/slack penalty.",
             "",
             "Executed blend statuses:",
@@ -682,7 +696,7 @@ def main() -> int:
         for doc in DOCS_TO_APPEND:
             append_if_missing(doc, marker, doc_block)
         state_path.parent.mkdir(parents=True, exist_ok=True)
-        state_path.write_text("# Continue state after S-TC2G\n\n" + doc_block + "\n\nNext: inspect raw outcomes and publish the next bounded solo plan before further solver/control/training work because this task has continue_without_review=false.\n", encoding="utf-8")
+        state_path.write_text("# Continue state after S-TC2G\n\n" + doc_block + "\n\nNext: inspect raw outcomes and publish the next bounded solo plan before further solver/control/training work because this task has continue_without_review=false. Verify external backup for the listed request before further unique scientific evidence.\n", encoding="utf-8")
         with (ROOT / "EXPERIMENT_REGISTRY.csv").open("a", encoding="utf-8", newline="") as stream:
             csv.writer(stream).writerow([created.isoformat(), NAME, raw["classification"], "canonical_solve_no_training_seed", "opened_development_source242_H15_only_no_validation64_no_sealed_test", gate.RESOURCE_USAGE["solver_calls"], 0, 0, 0, 0, False, rel(completed_path), marker])
         completed = {

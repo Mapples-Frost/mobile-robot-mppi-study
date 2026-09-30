@@ -7450,3 +7450,11 @@ UTC: 2026-09-30T13:05:26.092980+00:00. Ran a zero-solve postdiagnostic over v34u
 
 ## 2026-09-30T13:17:48.488781+00:00
 
+<!-- vehicle-v34x-epsilon-provenance-audit-20260930T131908Z -->
+## v34x / T-C1 epsilon provenance audit
+
+UTC: 2026-09-30T13:19:08.518769+00:00. Zero-solve source/artifact provenance audit. Budget: solver=0, plant/env.step/reset-after-construction=0, training/refit=0, validation64=0, sealed/final test=0. Active Opus plan `execution-result:20260930T130525_b585d5b0` verified=True. T-C1_pass=True; source_identity_pass=True; independent epsilon-contribution reproduction=4/4; full individual epsilon vectors serialized in v34u raw=True. Evidence: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34x_epsilon_provenance_audit_v0_20260930T131908Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34x_epsilon_provenance_audit_v0_20260930T131908Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34x_epsilon_provenance_audit_v0_20260930T131908Z/epsilon_provenance_per_arm.csv`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34x_epsilon_provenance_audit_v0_20260930T131908Z/completed.json`. Backup request: `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_V34X_EPSILON_PROVENANCE_AUDIT_20260930T131908Z.json`. Next safe action if plan remains unchanged and backup is verified: run T-C2 bounded converged objective-contract gate and explicitly serialize per-stage epsilon values; do not open validation64 or sealed test.
+
+
+## 2026-09-30T13:23:35.661926+00:00
+

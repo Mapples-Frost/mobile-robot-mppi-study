@@ -1015,3 +1015,8 @@ UTC: 2026-09-30T02:15:08.178820+00:00. Offline audit and protocol freeze only; n
 ## 2026-09-30 vehicle v26b fixed-H12 audit repair
 
 UTC: 2026-09-30T02:22:19.269520+00:00. Offline correction only; no simulation, no validation64, no sealed test. v26's parser omitted v19/v21 schemas, so v26's before-evidence table/risk bound was incomplete. Corrected fresh v21+v23+v25: n=56, H12_bad=0, fixed_H12 decision saving=0.1695502100120484, pass5=True. Corrected all opened v19+v21+v23+v25: n=80, H12_bad=3, fixed_H12 pass5=False; v19 counterevidence remains. Repaired protocol amendment `research_artifacts/aws_protocols/vehicle_true_variable_horizon_fixed_h12_primary_diagnostic_v26b_repair_corrected_fixed_H12_primary_confirmation_amendment_20260930T0235Z.json` preserves v26 selected source indices [107, 53, 217, 190, 134, 30, 94, 108, 148, 242, 151, 195]. Backup request `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_V26B_REPAIR_20260930T0235Z.json`.
+
+<!-- vehicle-fixed-h12-primary-v27-preflight-20260930T0240Z -->
+## 2026-09-30 v27 fixed-H12-primary preflight
+
+UTC: 2026-09-30T02:32:42.975997+00:00. Metadata-only; no simulation/training/validation/test. v26b protocol integrity checks passed=True. Corrected fresh evidence remains n=56, H12_bad=0, fixed_H12_save=16.96%, pass5=True; all-opened evidence remains n=80, H12_bad=3, pass5=False. Adequate post-v26b backup present=True; input sufficient for unique simulation now=True. Next action: run repaired fixed-H12-primary 60-episode development confirmation. Backup request `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_V27_PREFLIGHT_20260930T0240Z.json`.

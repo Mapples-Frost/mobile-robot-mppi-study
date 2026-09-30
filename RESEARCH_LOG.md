@@ -5974,3 +5974,11 @@ UTC: 2026-09-30T02:22:19.269520+00:00. Offline correction only; no simulation, n
 
 ## 2026-09-30T02:25:42.056436+00:00
 
+<!-- vehicle-fixed-h12-primary-v27-preflight-20260930T0240Z -->
+## 2026-09-30 v27 fixed-H12-primary preflight
+
+UTC: 2026-09-30T02:32:42.975997+00:00. Metadata-only; no simulation/training/validation/test. v26b protocol integrity checks passed=True. Corrected fresh evidence remains n=56, H12_bad=0, fixed_H12_save=16.96%, pass5=True; all-opened evidence remains n=80, H12_bad=3, pass5=False. Adequate post-v26b backup present=True; input sufficient for unique simulation now=True. Next action: run repaired fixed-H12-primary 60-episode development confirmation. Backup request `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_V27_PREFLIGHT_20260930T0240Z.json`.
+
+
+## 2026-09-30T02:35:07.933642+00:00
+

@@ -126,3 +126,13 @@ Updated by GPT-5.5 executor at `2026-09-30T02:22:19.269520+00:00`. This correcti
 | `A7_targeted_risk_banks_are_not_population_estimates` / `A8_zero_catastrophe_small_sample_model_selection_risk` | accepted; quantified with corrected denominator | Corrected fresh zero-bad count 0/56; Wilson upper 6.42%. | Still development/stress-pool only; no population or final-test claim. |
 | `A11_training_failure_modes_need_separation` | accepted; next gate unchanged but now evidence-correct | Fresh corrected rows still favor fixed H12, while all-opened rows fail fixed H12 because of v19. | After backup, either run the repaired fixed-H12-primary confirmation or, if fixed H12 fails there, pivot to terminal-risk/value refit or bounded training. |
 | `A12_registry_backup_schema_contract` | accepted; active | v26b wrote repair artifacts and backup request `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_V26B_REPAIR_20260930T0235Z.json`. | Require verified backup before more unique science. |
+
+## Follow-up through v27 fixed-H12-primary preflight
+
+Updated by GPT-5.5 executor at `2026-09-30T02:32:42.975997+00:00`. v27 preflight is metadata-only and does not open validation64 or sealed test.
+
+| linked recommendation(s) | disposition after v27 preflight | verified evidence | action / outcome / next step |
+|---|---|---|---|
+| `A12_registry_backup_schema_contract` | accepted; active blocker | v27 preflight found no adequate verified backup after the v26b repair time `2026-09-30T02:22:19.269520+00:00`. Latest materialized proof intentionally predates v26b. | Do not run the 60-episode fixed-H12 confirmation until a verified post-v26b backup covers v26b/v27 artifacts. |
+| `A6_strong_fixed_H_and_terminal_opportunity_not_closed` | accepted; ready but gated | v26b protocol integrity checks passed; selected indices preserved `[107, 53, 217, 190, 134, 30, 94, 108, 148, 242, 151, 195]`; budget remains 60 development episodes / 9000 control-step cap. | After backup, run or implement/run the repaired fixed-H12-primary confirmation with fixed H12 as primary baseline. |
+| `A7_targeted_risk_banks_are_not_population_estimates` / `A8_zero_catastrophe_small_sample_model_selection_risk` | accepted; unchanged | v27 did not add outcomes; it carries corrected fresh 0/56 H12-bad and all-opened 3/80 H12-bad. | Keep all claims development/stress-pool scoped. |

@@ -17,3 +17,6 @@ Verification: authenticated backup model catalog and response smoke passed; nati
 
 Run offline checks: `python3 -m unittest discover -s scripts/research_service -p test_astra_routing.py -v`.
 Inspect routing: `cat /data/openai-agent/state/astra_router/status.json` and the nonsecret events.jsonl in that directory. Do not cat the credential files.
+
+
+Full-context verification on 2026-09-30T11:22:09.600747+00:00: backup accepted the current read-only review context (468577 bytes; provider reported 141451 input tokens), returned completed gpt-6-astra/max with native read-tool calls, in 33.57 seconds. This shadow compatibility output was not executed and did not alter scientific evidence or the production review session. Detailed nonsecret record: state/astra_backup_full_context_smoke.json.

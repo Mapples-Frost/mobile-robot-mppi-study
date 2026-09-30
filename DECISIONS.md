@@ -1657,3 +1657,8 @@ UTC: 2026-09-30T11:13:39.386810+00:00. Ran Opus A13c-2 exactly as a zero-solve/z
 ## 20260930T111727Z Astra primary-preferred backup routing
 
 User authorized backup Astra endpoint, keeping primary preference. Installed same-model/max two-endpoint router with persistent health checks and checkpoint-preserving retries. 11 isolated tests and backup native tool/continuation smoke passed. No scientific method, split, experiment budget or acceptance criterion changed. Details: docs/bohn2021_takeover/astra_reviews/ROUTING.md. Secrets excluded from Git and research evidence.
+
+
+### Astra routing follow-up verification
+
+15 isolated tests passed after adding malformed-response, incomplete-transport and stale-health-observation coverage. Backup also passed current full-review-context compatibility at gpt-6-astra/max. Production still prefers primary and resumed the existing review. No shadow tool calls or scientific experiments were executed.

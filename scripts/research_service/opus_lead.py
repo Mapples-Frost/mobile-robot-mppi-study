@@ -212,6 +212,8 @@ def request_now():
 
 def pending():
     cursor=load(WORK/'cursor.json');request=request_now();cross=load(STATE/'astra_cross_review.json')
+    supplemental=load(STATE/'opus_audit_request.json')
+    if supplemental.get('request_id') and supplemental['request_id']!=cursor.get('supplemental_audit_request_id'):return True
     if not cursor.get('initial_handoff_completed'):return True
     if request['request_id']!=cursor.get('request_id'):return True
     if cross.get('review_id') and cross['review_id']!=cursor.get('cross_review_id'):return True
@@ -224,6 +226,7 @@ def initial_context(first):
              'status':call_tool('state_snapshot',{}),
              'cross_review_index':'docs/bohn2021_takeover/astra_reviews/LATEST.md',
              'cross_review_handoff':load(STATE/'astra_cross_review.json'),
+             'supplemental_audit_request':load(STATE/'opus_audit_request.json'),
              'executor_responses':'docs/bohn2021_takeover/astra_reviews/RESPONSE_LOG.md'}
     if first:context['audit_instruction']='Start your own primary-code/raw-evidence pass; then compare Astra findings. Complete a broad handoff audit and concrete prioritized execution plan.'
     else:context['audit_instruction']='Focus on current outcomes and unresolved causes. Avoid re-auditing already verified contracts or inventing additional same-purpose gates.'
@@ -251,7 +254,7 @@ def publish(checkpoint,report,messages):
                     request_path=str(REQUEST.relative_to(ROOT)),activated=previous_roles.get('activated',now()),handoff_audit=previous_roles.get('handoff_audit',audit_id),latest_plan=audit_id))
     save(STATE/'pending_model_role_change.json',dict(status='activated',model=MODEL,requested_effort=EFFORT,activated=now(),handoff_audit=load(ROLES).get('handoff_audit')))
     save(WORK/'cursor.json',dict(initial_handoff_completed=True,request_id=request['request_id'],
-         cross_review_id=checkpoint.get('cross_review_id'),completed=now(),audit_id=audit_id))
+         cross_review_id=checkpoint.get('cross_review_id'),supplemental_audit_request_id=checkpoint.get('supplemental_audit_request_id'),completed=now(),audit_id=audit_id))
     save(WORK/'checkpoint.json',checkpoint)
     save(WORK/'status.json',dict(status='completed',audit_id=audit_id,report=ready['report'],updated=now()))
     event('plan_published',audit_id=audit_id,request_id=request['request_id'],initial_handoff=checkpoint.get('first_cycle'))
@@ -280,10 +283,13 @@ def cycle():
         state=load(WORK/'sessions'/(checkpoint['audit_id']+'.json'))
         messages=state['messages'];system=state['system']
     else:
-        first=not load(WORK/'cursor.json').get('initial_handoff_completed')
+        prior_cursor=load(WORK/'cursor.json')
+        first=not prior_cursor.get('initial_handoff_completed')
+        supplemental=load(STATE/'opus_audit_request.json')
+        new_supplemental=bool(supplemental.get('request_id') and supplemental['request_id']!=prior_cursor.get('supplemental_audit_request_id'))
         audit_id=dt.datetime.now(dt.timezone.utc).strftime('%Y%m%dT%H%M%SZ')+'_'+uuid.uuid4().hex[:6]
         checkpoint=dict(status='in_progress',audit_id=audit_id,started=now(),turn=0,
-                        max_turns=32 if first else 16,first_cycle=first,request=request_now(),
+                        max_turns=32 if (first or new_supplemental) else 16,first_cycle=first,supplemental_audit_request_id=supplemental.get('request_id'),request=request_now(),
                         commit_start=evidence.git('rev-parse','HEAD'),inspected=[],superseded_request_ids=[],
                         cross_review_id=load(STATE/'astra_cross_review.json').get('review_id'))
         system=PROMPT

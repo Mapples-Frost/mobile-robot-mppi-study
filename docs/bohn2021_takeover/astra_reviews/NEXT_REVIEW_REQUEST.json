@@ -1,13 +1,13 @@
 {
-  "request_id": "execution-result:20260930T174001_60886d30",
+  "request_id": "execution-result:20260930T174529_511acbfb",
   "trigger": "execution_result_handoff",
-  "created": "2026-09-30T17:40:03.710170+00:00",
-  "experiment_id": "20260930T174001_60886d30",
+  "created": "2026-09-30T17:45:31.832993+00:00",
+  "experiment_id": "20260930T174529_511acbfb",
   "status": "analysis_requested",
-  "purpose": "Execute approved S-TC2H4 v0e operational backup-gate recency repair and source242 fixed-H microcontinuation, preserving development-only split and strict no-validation64/no-sealed-test guards.",
+  "purpose": "Execute the active solo S-TC2H5 operational prerequisite-schema repair and same opened-development source242 fixed-H microcontinuation. This tests whether the nested 2x1 action-payload repair can now advance the plant for H12/H15/H35 with V15_shared terminal mode, after accepting the actual S-TC2G completed-marker schema and verifying backup recency before resources.",
   "execution_status": "failed",
   "question": "Active scientific lead: interpret this outcome, verify current raw evidence and select the next scientific action for GPT-5.5 implementation. Distinguish hypotheses from verified causes and account for fair baselines, terminal confounds and source-level generalization.",
   "evidence_paths": [
-    "research_artifacts/aws_runs/20260930T174001_60886d30/registry.json"
+    "research_artifacts/aws_runs/20260930T174529_511acbfb/registry.json"
   ]
 }

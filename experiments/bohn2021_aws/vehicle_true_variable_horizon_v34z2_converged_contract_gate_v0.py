@@ -830,15 +830,42 @@ def load_context_and_terminals() -> Tuple[Mapping[str, Any], Mapping[int, Any], 
         pass
     term_protocol = read_json(stage1.TERMINAL_SOURCE_PROTOCOL)
     terminals, terminal_receipts = stage1.load_terminal_grid(term_protocol["terminal_grid_readiness_reused_from_v1"])
-    contexts = base.load_contexts()
-    matches = [c for c in contexts if str(c.get("context_id")) == "source242_slot0_branch_start"]
-    if len(matches) != 1:
-        raise ContractError("could not uniquely locate opened source242_slot0_branch_start context")
+
+    # T-C2R2 source242 loader repair. The opened source242 context is built
+    # from the same primitive state specification and literals used by the base
+    # source242 entry, without invoking the broader context list builder.
+    specs = base.v29.build_state_specs()
+    spec = base.find_spec("v27_case09_slot0_early_risk", specs)
+    context = {
+        "context_id": "source242_slot0_branch_start",
+        "state_label": "v27_case09_slot0_early_risk",
+        "source": "v29/v33 selected branch state, original branch start",
+        "case_snapshot": copy.deepcopy(spec["case_snapshot"]),
+        "branch_step": int(spec["branch_step"]),
+        "tvp_start_index": int(spec["branch_step"]),
+        "state": base.state_clean(spec["branch_previous_state"]),
+        "previous_input": {"u_omega": 0.0, "u_s": 0.0},
+        "previous_input_source": "Astra-specified v33 branch-reset zero-input semantics",
+        "horizons": [15, 35],
+    }
     if 15 not in terminals:
         raise ContractError("terminal grid lacks V15")
-    return matches[0], terminals, {"terminal_protocol": rel(stage1.TERMINAL_SOURCE_PROTOCOL), "terminal_receipts": clean({str(k): v for k, v in terminal_receipts.items()}), "context_id": "source242_slot0_branch_start"}
-
-
+    return context, terminals, {
+        "terminal_protocol": rel(stage1.TERMINAL_SOURCE_PROTOCOL),
+        "terminal_receipts": clean({str(k): v for k, v in terminal_receipts.items()}),
+        "context_id": "source242_slot0_branch_start",
+        "context_construction": {
+            "source242_context_built_without_calling_base_load_contexts": True,
+            "base_load_contexts_called": False,
+            "reference_primitives": [
+                "base.v29.build_state_specs()",
+                "base.find_spec('v27_case09_slot0_early_risk', specs)",
+                "base.state_clean(spec['branch_previous_state'])",
+            ],
+            "mirrors_base_load_contexts_source_lines": "vehicle_true_variable_horizon_v34_objective_basin_solver_probe_v0.py:317-329",
+            "not_determined": "Full base.load_contexts output is not constructed here because the unrelated c13 entry is the observed loader defect; equality is established for the source242 fields by using the same primitives and literals as the base source242 entry.",
+        },
+    }
 def write_failure(run_dir: Optional[Path], created: dt.datetime, error: str, used: Mapping[str, int], evidence: Optional[Mapping[str, Any]] = None, engineering: bool = False) -> int:
     if run_dir is None:
         run_dir = ROOT / "research_artifacts" / "aws_diagnostics" / f"{NAME}_failure_{created.strftime('%Y%m%dT%H%M%SZ')}"

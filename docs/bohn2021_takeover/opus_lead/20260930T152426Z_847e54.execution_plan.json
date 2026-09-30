@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "request_id": "execution-result:20260930T152354_85fe2ce6",
+  "tasks": [
+    {
+      "task_id": "T-C2R2-source242-context-loader-repair",
+      "description": "REPAIR THE REPAIR SCRIPT, NOT THE SCIENCE. Verified cause of the failed run 20260930T152354_85fe2ce6: the probe script experiments/bohn2021_aws/vehicle_true_variable_horizon_v34z2_environment_probe_v0.py (sha256 dc110e083d5b7089c1f9f0344c3cde6e0b48b8dd2b7dd90baa17d8d0af7c476c) does not parse. stderr.log line 3: SyntaxError: unterminated string literal (detected at line 255), from the inline expression \"base.find_spec(\\\\\\\"v27_case09_slot0_early_risk\\\", \" in new_func inside the dict literal at line 255. The escape sequence closes the opening quote after v27_case09_slot0_early_risk, leaving the trailing \", \" unterminated. Consequence: stdout.log is 0 bytes, exit_status=1, runtime 2.01 s, cpu_seconds 0.026, and the run never reached patch_v34z2_loader(); therefore v34z2 line 833 still reads 'contexts = base.load_contexts()' and DEFECT 3 is UNCHANGED. Evidence: research_artifacts/aws_runs/20260930T152354_85fe2ce6/{stderr.log,stdout.log,registry.json}; source hash experiments/.../vehicle_true_variable_horizon_v34z2_converged_contract_gate_v0.py = 88018315934403c0b4fa875bd33c166063853a595f896575acac23f40822e1d7, unchanged and currently unpatched (read of line 833). REQUIRED WORK, all zero-resource: (1) Remove the quoting hazard structurally: stop assembling NEW_FUNCTION as a triple-quoted string literal containing nested escaped quotes. Store the replacement loader body in a separate template file under research_artifacts/source_archives/ (or a .txt template next to the probe) and load it with Path.read_text; the template must contain no triple-quoted strings and no backslash-escaped double quotes. (2) Replace the failing inline membership test at line 255 with a marker-substring check on a module-level constant (for example FIND_SPEC_MARKER = 'find_spec(\"v27_case09_slot0_early_risk\"') and report 'base.find_spec(\"' + 'v27_case09_slot0_early_risk' + '\"' in new_func, or better report the marker presence directly so no nested quoting exists in the probe source at all. (3) Add a PARSE GATE before any file mutation and before any heavy import: compile the candidate replacement function text with compile(...) and compile the full candidate patched file text with compile(...); if either raises SyntaxError, write failed.json with the offending line and abort WITHOUT writing to v34z2. This parse gate is the acceptance-critical addition; it is what turned a 1-line typo into a wasted cycle. (4) Keep the existing idempotence branch (lines 213-225) and the pre-replacement archive write to research_artifacts/source_archives/ (a directory already exists at .../vehicle_true_variable_horizon_v34z2_environment_probe_v0_20260930T145547Z). (5) Keep the existing monkeypatch proof: temporarily replace base.load_contexts with a function that records the call and raises ContractError, confirm the patched v34z2.load_context_and_terminals() still returns the source242 context and that base_load_contexts_called is False, then restore. (6) Report field-by-field equality for context_id, state_label, source, case_snapshot, branch_step, tvp_start_index, state, previous_input, previous_input_source, horizons against an independently reconstructed reference built from base.v29.build_state_specs() and base.find_spec('v27_case09_slot0_early_risk'), mirroring the base source line 317-329 entry exactly. Do NOT weaken the equality evidence requirement; if any field mismatches, fail closed. DO NOT call any solver, do not construct an MPC, do not call env.step or env.reset after construction, do not train or refit, do not open validation64, do not touch sealed/final test. Do not modify experiments/bohn2021_aws/vehicle_true_variable_horizon_v34_objective_basin_solver_probe_v0.py. Do not modify experiments/bohn2021_aws/vehicle_true_variable_horizon_v34z2_converged_contract_gate_v0.py other than through the single load_context_and_terminals replacement. Emit outcome receipt evidence keys repair_verified and pass_evidence so the dependent T-C2C task can proceed without a further review cycle.",
+      "script_patterns": [
+        "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34z2_environment_probe_v0.py"
+      ],
+      "split": "environment_diagnostic_only_no_solver_no_validation64_no_sealed_test",
+      "method": "bounded zero-usage parse-gated source242 context-loader repair: template-file loader replacement, compile() gate before any source write, monkeypatched base.load_contexts to prove non-invocation, field-by-field identity evidence against base.v29 primitives",
+      "seeds": [
+        "not_applicable_no_training_seed"
+      ],
+      "config_constraints": {
+        "label_ORIGINAL_vs_IMPROVED": "IMPROVED",
+        "no_change_to_frozen_scientific_contract": true,
+        "context_id": "source242_slot0_branch_start",
+        "terminal_mode": "V15_shared",
+        "goal_source": "case.tvp.trajectory_endpoint[61]",
+        "parse_gate_compile_before_any_source_write": true,
+        "loader_template_external_file_no_nested_quotes": true,
+        "template_must_contain_no_triple_quoted_strings": true,
+        "no_nested_escaped_double_quotes_in_probe_source": true,
+        "pre_replacement_archive_write_required": true,
+        "idempotent_second_run_required": true,
+        "base_load_contexts_monkeypatch_non_invocation_proof_required": true,
+        "field_equality_all_ten_observed_fields_required": true,
+        "fail_closed_on_any_field_mismatch": true,
+        "do_not_modify_base_load_contexts_or_c13_schema": true,
+        "do_not_modify_vehicle_true_variable_horizon_v34_objective_basin_solver_probe_v0": true,
+        "single_function_replacement_only_in_v34z2": true,
+        "no_mpc_construction": true,
+        "no_solver_calls": true,
+        "no_plant_steps": true,
+        "no_env_step_or_reset_after_construction": true,
+        "no_training_no_refits": true,
+        "no_validation64_access": true,
+        "no_sealed_or_final_test_access": true,
+        "no_new_paid_infrastructure": true,
+        "no_aws_iam_or_scheduler_change": true,
+        "do_not_rerun_T_C3_T_C3R_T_C1R_T_C5": true,
+        "do_not_rerun_T_C4_ledger": true
+      },
+      "training_budget": {
+        "gradient_steps": 0,
+        "selector_refits": 0,
+        "training_steps": 0
+      },
+      "validation_budget": {
+        "env_steps_after_construction": 0,
+        "plant_steps": 0,
+        "solver_calls": 0,
+        "validation64_episodes": 0
+      },
+      "test_budget": {
+        "final_test_episodes": 0,
+        "sealed_test_episodes": 0
+      },
+      "resource_limits": {
+        "solver_calls": 0,
+        "plant_steps": 0,
+        "training_steps": 0,
+        "validation_episodes": 0,
+        "test_episodes": 0
+      },
+      "max_attempts": 2,
+      "max_zero_usage_repairs": 1,
+      "timeout_seconds": 600,
+      "dependencies": [],
+      "pass_conditions": {
+        "repair_verified": true,
+        "pass_evidence": {
+          "source242_context_built_without_calling_base_load_contexts": true,
+          "field_equality_evidence_reported_or_failure_raised": true,
+          "no_solver_plant_training_validation_or_test_usage": true,
+          "exact_lines_changed_stated_explicitly": true,
+          "parse_gate_compile_passed_before_source_write": true,
+          "second_run_idempotent": true
+        }
+      },
+      "continue_without_review": false
+    }
+  ]
+}

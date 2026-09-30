@@ -1,0 +1,72 @@
+{
+  "status": "completed",
+  "audit_id": "20260930T130507Z_6f3456",
+  "started": "2026-09-30T13:05:07.868693+00:00",
+  "turn": 7,
+  "max_turns": 16,
+  "first_cycle": false,
+  "supplemental_audit_request_id": "20260930-comprehensive-handoff-missing-raw-training-audit",
+  "request": {
+    "request_id": "execution-result:20260930T130525_b585d5b0",
+    "trigger": "execution_result_handoff",
+    "created": "2026-09-30T13:05:28.094126+00:00",
+    "experiment_id": "20260930T130525_b585d5b0",
+    "status": "analysis_requested",
+    "purpose": "Execute the pre-written v34v zero-solve postdiagnostic over v34u artifacts to formalize whether the forced-nonconverged objective residual is localized to the omitted epsilon/slack objective component; no solver/plant/validation/test/training access.",
+    "execution_status": "complete",
+    "question": "Active scientific lead: interpret this outcome, verify current raw evidence and select the next scientific action for GPT-5.5 implementation. Distinguish hypotheses from verified causes and account for fair baselines, terminal confounds and source-level generalization.",
+    "evidence_paths": [
+      "research_artifacts/aws_runs/20260930T130525_b585d5b0/registry.json"
+    ]
+  },
+  "commit_start": "424059f0016c2a5a6f08c584feb2217e813b9dec",
+  "inspected": [
+    {
+      "path": "research_artifacts/aws_runs/20260930T125233_d07565d9/registry.json",
+      "sha256": "5ca474c7b308af21b5e95d35a6d6b6c975534c16c1b80ee0ba5fb4283829102e"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34t_nonconverged_objective_contract_probe_v0_20260930T123137Z/completed.json",
+      "sha256": "bae47416ed64f9f7878b7b84839f744974115752dcd9487af6c5e2365d2a1f09"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34t_nonconverged_objective_contract_probe_v0_20260930T123137Z/cell_metrics.csv",
+      "sha256": "a4783fcd443a199ae86ea293342423a3d03bb481557224c81658b69d5bf8f75d"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34u_active_plan_refresh_nonconverged_objective_contract_probe_v0_20260930T125233Z/cell_metrics.csv",
+      "sha256": "5b75ef50c133cdb2ca8ebdabaf76c9b88039f2f32a6e9cabc1d52a03bf20b290"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34v_eps_objective_localization_postdiagnostic_v0_20260930T130526Z/eps_alias_localization.csv",
+      "sha256": "746334333c6a479b874e6c7ceba166a9f7a8b8728749fdc9d7567cea78df7ef6"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34u_active_plan_refresh_nonconverged_objective_contract_probe_v0_20260930T125233Z/completed.json",
+      "sha256": "dae18b3ff154a452cc1112471ae101c5a4260242086277c59dbf510250c185d6"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34u_active_plan_refresh_nonconverged_objective_contract_probe_v0_20260930T125233Z/completed.json",
+      "sha256": "dae18b3ff154a452cc1112471ae101c5a4260242086277c59dbf510250c185d6"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34v_eps_objective_localization_postdiagnostic_v0_20260930T130526Z/summary.md",
+      "sha256": "c63e1c191ca38f932eb12503fa55b0ee0b733e548b5ccb625bdcafd723d1bf47"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34u_active_plan_refresh_nonconverged_objective_contract_probe_v0_20260930T125233Z/completed.json",
+      "sha256": "dae18b3ff154a452cc1112471ae101c5a4260242086277c59dbf510250c185d6"
+    }
+  ],
+  "superseded_request_ids": [
+    "execution-result:20260930T125233_d07565d9",
+    "v34v-eps-objective-localization-20260930T130526Z"
+  ],
+  "cross_review_id": "20260930T124329Z",
+  "working_language": "en",
+  "working_language_policy": "RESEARCH_WORKING_LANGUAGE_EN_V1",
+  "registry_context_experiment_id": "20260930T130525_b585d5b0",
+  "updated": "2026-09-30T13:10:33.020920+00:00",
+  "completed": "2026-09-30T13:10:33.026459+00:00",
+  "commit_end": "424059f0016c2a5a6f08c584feb2217e813b9dec"
+}

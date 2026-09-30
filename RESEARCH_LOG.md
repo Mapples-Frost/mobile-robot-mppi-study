@@ -7438,3 +7438,11 @@ UTC: 2026-09-30T12:53:19.224080+00:00. Ran active-Opus A13c-3 as a bounded devel
 
 ## 2026-09-30T12:56:43.198313+00:00
 
+<!-- vehicle-v34v-eps-objective-localization-20260930T130526Z -->
+## v34v epsilon/slack objective-localization postdiagnostic
+
+UTC: 2026-09-30T13:05:26.092980+00:00. Ran a zero-solve postdiagnostic over v34u A13c-3 artifacts. Budget: new solver calls=0, plant/env.step=0, training/refit=0, validation64=0, sealed test=0. Diagnostic_pass=True; input v34u remains G2_pass=False and hard_pass=False. Constructor binding passed in all cells and effective max_iter=1 captures=4; direct NLP f/g available cells=4/4; forced nonconverged/off-optimal cells=4/4. Frozen no-eps relative-error range=[0.06500957174548197, 0.08532323732921333]; best eps-including relative-error max=6.053469705578955e-16; max |abs_residual - eps_delta|=1.8189894035458565e-12. Evidence: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34v_eps_objective_localization_postdiagnostic_v0_20260930T130526Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34v_eps_objective_localization_postdiagnostic_v0_20260930T130526Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34v_eps_objective_localization_postdiagnostic_v0_20260930T130526Z/eps_alias_localization.csv`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34v_eps_objective_localization_postdiagnostic_v0_20260930T130526Z/completed.json`. Backup request: `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_V34V_EPS_OBJECTIVE_LOCALIZATION_20260930T130526Z.json`. Next: active-lead disposition is required before amending formula or spending Task-C solver calls.
+
+
+## 2026-09-30T13:11:45.630088+00:00
+

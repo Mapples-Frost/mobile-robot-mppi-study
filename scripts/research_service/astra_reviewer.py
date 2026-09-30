@@ -15,6 +15,7 @@ import time
 import urllib.request
 import urllib.error
 import uuid
+from research_memory import registry_context
 
 BASE = pathlib.Path('/data/openai-agent')
 ROOT = BASE / 'mobile-robot-mppi-study'
@@ -171,6 +172,7 @@ def call_tool(name, args):
         for f in ('research_state.json','active_experiment.json','backup_status.json','supervisor_status.json'):
             d=load(STATE/f)
             result[f]={k:v for k,v in d.items() if k in keys}
+        result['registry_evidence']=registry_context(STATE)
         return json.loads(redact(json.dumps(result)))
     raise ValueError('Unknown tool')
 
@@ -301,6 +303,11 @@ def cycle():
                         pass
         items.append(dict(role='user',content='Perform comprehensive independent audit. Start from this navigation; read primary evidence, not only summaries.\n'+json.dumps(initial,ensure_ascii=False)))
     current_role=role_context()
+    current_role['registry_evidence']=registry_context(STATE)
+    # Archive prior retry context; replace duplicated role notices rather than growing them on each failed attempt.
+    if any(isinstance(x.get('content'),str) and x['content'].startswith('Current authoritative role-control context') for x in items):
+        save(WORK/'retry_context_archives'/(audit['audit_id']+'-'+uuid.uuid4().hex[:8]+'.json'),items)
+        items=[x for x in items if not (isinstance(x.get('content'),str) and x['content'].startswith('Current authoritative role-control context'))]
     items.append(dict(role='user',content='Current authoritative role-control context, superseding any earlier assignment in this resumed session:\n'+json.dumps(current_role,ensure_ascii=False)))
     session=WORK/'sessions'/(audit['audit_id']+'.json')
     save(WORK/'checkpoint.json',audit)
@@ -413,7 +420,13 @@ def main():
                 if len(value)>=16:
                     REDACTIONS.append(value)
     SECRETS=dict(x.split('=',1) for x in (BASE/'.secrets/reviewer.env').read_text().splitlines() if '=' in x)
-    failure=int(load(WORK/'retry_state.json').get('consecutive_failures',0))
+    retry=load(WORK/'retry_state.json');failure=int(retry.get('consecutive_failures',0))
+    if failure and retry.get('last_failure'):
+        # Service reloads must preserve the provider cooldown instead of forcing another request.
+        next_retry=dt.datetime.fromisoformat(retry['last_failure']).timestamp()+min(1800,30*2**min(failure,6))
+        remaining=max(0,next_retry-time.time())
+        save(WORK/'status.json',{**load(WORK/'status.json'),'next_retry_utc':dt.datetime.fromtimestamp(next_retry,dt.timezone.utc).isoformat(),'cooldown_preserved_on_restart':True})
+        if remaining:time.sleep(remaining)
     while True:
         if dt.datetime.now(dt.timezone.utc)>=dt.datetime(2026,10,25,8,tzinfo=dt.timezone.utc):
             save(WORK/'status.json',dict(status='expiry_archive_only',updated=now()));return

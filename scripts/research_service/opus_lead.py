@@ -14,6 +14,7 @@ import urllib.request
 import urllib.error
 import uuid
 import astra_reviewer as evidence
+from research_memory import protected_split
 
 BASE=evidence.BASE
 ROOT=evidence.ROOT
@@ -100,7 +101,7 @@ def recent_experiments(limit=8):
         rows=c.execute('select id,status,metadata from experiments order by timestamp desc limit ?',(max(1,min(15,int(limit))),)).fetchall()
     for eid,status,metadata in rows:
         d=json.loads(metadata)
-        if any(x in str(d.get('split','')).lower() for x in ('sealed','final_test')):continue
+        if protected_split(d):continue
         keys=('script','purpose','method','seed','split','exit_status','failure_reason','runtime_seconds',
               'training_budget','validation_budget','test_budget','artifact_inventory')
         item={k:d.get(k) for k in keys};item.update(experiment_id=eid,status=status)

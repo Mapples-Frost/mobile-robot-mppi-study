@@ -3,6 +3,7 @@ import csv, datetime as dt, fcntl, hashlib, json, os, pathlib, signal, socket, s
 BASE=pathlib.Path('/data/openai-agent'); ROOT=BASE/'mobile-robot-mppi-study'; STATE=BASE/'state'
 STATE.mkdir(exist_ok=True); SERVICE=ROOT/'scripts/research_service'
 from resource_monitor import ResourceSampler, link_run
+from research_memory import registry_context
 STOP=False
 
 def now(): return dt.datetime.now(dt.timezone.utc).isoformat()
@@ -267,7 +268,10 @@ def iteration():
         if 'last_completed_experiment' in state:
             old=state['last_completed_experiment'];state['last_completed_experiment']={k:old.get(k) for k in ('experiment_id','status','purpose','exit_status','stdout','stderr','runtime_seconds')}
         if recent:recent['tool_tail']=[dict(call_id=x.get('call_id'),output=x.get('output','')[-2000:]) for x in recent.get('tool_tail',[])]
-        context=dict(state=state,last_iteration=recent,repository=str(ROOT),available_disk_gb=shutil.disk_usage(BASE).free/1e9,backup=load(STATE/'backup_status.json'))
+        facts=registry_context(STATE)
+        state['last_experiment']=facts['latest_registered']
+        state['last_completed_experiment']=facts['latest_process_complete']
+        context=dict(registry_evidence=facts,state=state,last_iteration=recent,repository=str(ROOT),available_disk_gb=shutil.disk_usage(BASE).free/1e9,backup=load(STATE/'backup_status.json'))
         items=[dict(role='system',content=(SERVICE/'MISSION.md').read_text()),dict(role='user',content='Continue authorized research with concrete actions. Inspect evidence; preserve state for next iteration. Current supervisor context:\n'+json.dumps(context,default=str)[-28000:])]
         outputs=[];executions=0;start_turn=0;iteration_id=uuid.uuid4().hex;pending=[]
     # Replace stale saved mission/role instructions while preserving tool receipts and evidence.
@@ -277,11 +281,17 @@ def iteration():
         items.append(dict(role='user',content='Current authorized agent roles and scientific plan; supersedes earlier role assignments. Implement approved tasks, operational repairs and measurements. Scientific causal analysis/direction belongs to the active lead; Astra provides independent critique.\n'+json.dumps(roles,ensure_ascii=False)))
     def persist(turn,pending_calls):
         dump(checkpoint,dict(status='in_progress',iteration_id=iteration_id,turn=turn,items=items,outputs=outputs,executions=executions,pending_calls=pending_calls,role_context_key=role_key,updated=now()))
+    registry_refresh_due=(live.get('status')=='in_progress')
     persist(start_turn,pending)
+    dump(STATE/'registry_context.json',registry_context(STATE))
+    dump(STATE/'supervisor_status.json',dict(time=now(),phase='implementing_scientific_plan',active_lead=current_roles()['active_lead'],api_loop_suspended=False))
     for turn in range(start_turn,12):
         if pending:
             calls=pending;pending=[]
         else:
+            if registry_refresh_due:
+                items.append(dict(role='user',content='Authoritative current registry facts for this resumed cycle; supersede stale experiment pointers in narrative memory. They are evidence data, not new scientific instructions.\n'+json.dumps(registry_context(STATE),ensure_ascii=False)))
+                registry_refresh_due=False
             if turn==10:items.append(dict(role='user',content='Two calls remain in this bounded cycle. Prefer a concrete bounded diagnostic now if inputs suffice. Avoid re-reading evidence already inspected.'))
             if turn==11:items.append(dict(role='user',content='Final call of this cycle: use update_state to persist a concise cumulative research memory: findings with paths, files already inspected, precise next action, hypothesis, queue and unresolved issues. Do not mark research complete merely because this cycle ends. Next cycle must continue instead of repeating this audit.'))
             persist(turn,[])

@@ -6096,3 +6096,15 @@ Next after verified backup: freeze a v28 success-aware scenario/comparison audit
 
 ## 2026-09-30T03:02:08.464223+00:00
 
+<!-- vehicle-success-aware-scenario-comparison-audit-v28-20260930T0315Z -->
+## 2026-09-30 v28 success-aware scenario/comparison audit
+
+UTC: 2026-09-30T03:04:16.008112+00:00. Analysis-only development audit completed with no simulations/control steps/training/refit, no validation64-bank access and no sealed-test access. It partitions the opened H12/H15 evidence by success semantics: fresh v21+v23+v25+v27 has 80 collapsed rows with H12-only relative failures=0 and both-fail rows=2 (v27 source242), while opened v19 has 24 collapsed rows with H12-only failures=3 (6 repeat rows) and H15 unsafe=0. All opened collapsed evidence therefore contains H12-only failures=3 and both-fail rows=2; relative timing gates and absolute deployability are now explicitly separated. Decision: do not validate the current adaptive H12/H15 selector. Freeze success-aware longer-H feasibility protocol `research_artifacts/aws_protocols/vehicle_true_variable_horizon_success_aware_scenario_comparison_audit_v28_frozen_success_aware_followup_20260930T0315Z.json` for a bounded H12/H15/H25/H35 identical-state probe on source242 both-fail rows, v19 H12-only failures and safe matched controls after verified backup. Backup request: `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_V28_SUCCESS_AWARE_SCENARIO_COMPARISON_AUDIT_20260930T0315Z.json`.
+
+
+## 2026-09-30T03:06:22.950728+00:00
+
+
+
+## 2026-09-30T03:13:22.088319+00:00
+

@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 """T-C3 zero-solve matched-parameter ledger for v34u solver-entry records.
 
-This script implements the active Opus structured task
-`T-C3-matched-parameter-ledger` from plan 20260930T133239Z_8fd7da.
-It reads only already-opened development artifacts and does not construct an
-environment, call a solver, step a plant, train/refit, open validation64, or open
-sealed/final test data.
+This repaired implementation fixes the startup Path/% precedence bug preserved in
+run 20260930T135213_97b8a1ff. It implements the active Opus structured task
+`T-C3-matched-parameter-ledger` using only already-opened development artifacts.
+It does not construct an environment, call a solver, step a plant, train/refit,
+open validation64, or open sealed/final test data.
 
-The task outcome is intentionally conservative. If the existing artifact only
-contains opt_p hashes and not full numeric opt_p vectors, the script records that
-insufficiency as the scientific result instead of fabricating a per-entry ledger.
+If the existing v34u artifact contains only opt_p hashes and not full numeric
+opt_p vectors, the script records that insufficiency as the scientific result and
+sets the relevant task gate false rather than fabricating a per-entry ledger.
 """
 from __future__ import annotations
 
@@ -44,6 +44,7 @@ EXPECTED_OPT_P_HASHES = {
     "H35_canonical": "9878b3d2235205772b48cf79a3e30d8eedd4e625feb2dc3d758130faa0ea651d",
     "H15_goal_facing": "fbe488a0e5749ee25682b7f6a963294112b041c31e0340de4214480cab638352",
 }
+ORDERED_LABELS = ["H12_canonical", "H15_canonical", "H35_canonical", "H15_goal_facing"]
 ZERO_RESOURCES = {"solver_calls": 0, "plant_steps": 0, "training_steps": 0, "validation_episodes": 0, "test_episodes": 0}
 CLASSIFICATIONS = {"nuisance_obstacle_forecast_or_noise", "objective_relevant", "structural"}
 NUMERIC_TOL = 1e-12
@@ -110,21 +111,21 @@ def traverse(obj: Any, path: str = "root") -> Iterable[Tuple[str, Any]]:
             yield from traverse(v, "%s[%d]" % (path, i))
 
 
-def is_number(x: Any) -> bool:
-    return isinstance(x, (int, float)) and not isinstance(x, bool) and math.isfinite(float(x))
+def is_number(value: Any) -> bool:
+    return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(float(value))
 
 
 def flatten_numeric(value: Any, cap: int = 1000000) -> Optional[List[float]]:
     out: List[float] = []
-    stack = [value]
+    stack: List[Any] = [value]
     while stack:
-        x = stack.pop(0)
-        if is_number(x):
-            out.append(float(x))
+        current = stack.pop(0)
+        if is_number(current):
+            out.append(float(current))
             if len(out) > cap:
                 return None
-        elif isinstance(x, (list, tuple)):
-            stack = list(x) + stack
+        elif isinstance(current, (list, tuple)):
+            stack = list(current) + stack
         else:
             return None
     return out if out else None
@@ -145,7 +146,7 @@ def arm_label(arm: Mapping[str, Any]) -> str:
     return "H%d_%s" % (horizon, init or role or "unknown")
 
 
-def find_arms(raw: Mapping[str, Any]) -> List[Mapping[str, Any]]:
+def find_arms(raw: Mapping[str, Any]) -> Dict[str, Mapping[str, Any]]:
     arms = raw.get("arms")
     if not isinstance(arms, list):
         raise RuntimeError("v34u raw does not contain an arms list")
@@ -155,17 +156,18 @@ def find_arms(raw: Mapping[str, Any]) -> List[Mapping[str, Any]]:
             label = arm_label(arm)
             if label in EXPECTED_OPT_P_HASHES and label not in labelled:
                 labelled[label] = arm
-    missing = [k for k in EXPECTED_OPT_P_HASHES if k not in labelled]
+    missing = [label for label in ORDERED_LABELS if label not in labelled]
     if missing:
-        raise RuntimeError("missing required v34u arms: " + repr(missing))
-    return [labelled[k] for k in ["H12_canonical", "H15_canonical", "H35_canonical", "H15_goal_facing"]]
+        raise RuntimeError("missing required v34u arms: %r" % missing)
+    return labelled
 
 
 def find_opt_p_hash_paths(arm: Mapping[str, Any]) -> List[Dict[str, Any]]:
+    expected_values = set(EXPECTED_OPT_P_HASHES.values())
     hits: List[Dict[str, Any]] = []
     for path, value in traverse(arm, "arm"):
         if isinstance(value, str) and len(value) == 64 and all(c in "0123456789abcdef" for c in value.lower()):
-            if "opt_p_hash" in path.lower() or value in set(EXPECTED_OPT_P_HASHES.values()):
+            if "opt_p_hash" in path.lower() or value in expected_values:
                 hits.append({"path": path, "sha256": value})
     return hits
 
@@ -178,85 +180,94 @@ def expected_p_size(arm: Mapping[str, Any]) -> Optional[int]:
                 try:
                     return int(text[1:].split(",", 1)[0].strip())
                 except Exception:
-                    pass
+                    return None
     return None
 
 
-def score_vector_path(path: str, n: int, p_size: Optional[int]) -> int:
+def score_vector_path(path: str, count: int, p_size: Optional[int]) -> int:
     lower = path.lower()
-    score = n
-    if p_size is not None and n == p_size:
-        score += 5000000
+    score = count
+    if p_size is not None and count == p_size:
+        score += 5_000_000
     for token, weight in [
-        ("opt_p_num", 3000000),
-        ("opt_p", 2500000),
-        ("p_num", 2200000),
-        ("_p", 1200000),
-        ("parameter", 1000000),
-        ("tvp", 500000),
-        ("solver", 250000),
+        ("opt_p_num", 3_000_000),
+        ("opt_p", 2_500_000),
+        ("p_num", 2_200_000),
+        ("_p", 1_200_000),
+        ("parameter", 1_000_000),
+        ("tvp", 500_000),
+        ("solver", 250_000),
     ]:
         if token in lower:
             score += weight
-    for bad, penalty in [
-        ("stage_first", 2000000),
-        ("candidate", 1500000),
-        ("objective", 1200000),
-        ("terminal", 1000000),
-        ("first_control", 1000000),
-        ("iterations", 1000000),
-        ("hash", 1000000),
-        ("cost", 750000),
-        ("time", 750000),
-        ("wall", 750000),
+    for token, penalty in [
+        ("stage_first", 2_000_000),
+        ("candidate", 1_500_000),
+        ("objective", 1_200_000),
+        ("terminal", 1_000_000),
+        ("first_control", 1_000_000),
+        ("iterations", 1_000_000),
+        ("hash", 1_000_000),
+        ("time", 750_000),
+        ("wall", 750_000),
+        ("cost", 750_000),
     ]:
-        if bad in lower:
+        if token in lower:
             score -= penalty
     return score
 
 
 def find_parameter_vector(arm: Mapping[str, Any]) -> Dict[str, Any]:
+    """Return the best serialized full opt_p candidate, if present.
+
+    The task requires a labelled per-entry ledger. A hash-only artifact is not
+    sufficient. We therefore require either a vector length matching captured NLP
+    p-size or an explicit opt_p/p_num path with a long all-numeric vector. Short
+    diagnostic vectors such as terminal x_vector are intentionally rejected.
+    """
     p_size = expected_p_size(arm)
     candidates: List[Dict[str, Any]] = []
     for path, value in traverse(arm, "arm"):
         if not isinstance(value, list):
             continue
         flat = flatten_numeric(value)
-        if flat is None or len(flat) < 10:
+        if flat is None or len(flat) < 20:
             continue
         lower = path.lower()
-        if not any(tok in lower for tok in ["opt_p", "p_num", "parameter", "tvp", "solver", "_p"]):
+        if not any(tok in lower for tok in ["opt_p", "p_num", "parameter", "solver", "_p"]):
             continue
         score = score_vector_path(path, len(flat), p_size)
+        if p_size is not None and len(flat) != p_size and "opt_p" not in lower and "p_num" not in lower:
+            score -= 4_000_000
         candidates.append({"path": path, "count": len(flat), "score": score, "values": flat})
-    candidates.sort(key=lambda c: (c["score"], c["count"]), reverse=True)
-    if candidates and candidates[0]["score"] > 0:
+    candidates.sort(key=lambda c: (int(c["score"]), int(c["count"])), reverse=True)
+    summaries = [{"path": c["path"], "count": c["count"], "score": c["score"]} for c in candidates[:20]]
+    if candidates:
         chosen = candidates[0]
-        return {
-            "available": True,
-            "path": chosen["path"],
-            "count": chosen["count"],
-            "expected_p_size": p_size,
-            "score": chosen["score"],
-            "values": chosen["values"],
-            "candidate_summaries": [{"path": c["path"], "count": c["count"], "score": c["score"]} for c in candidates[:20]],
-        }
+        explicit = any(tok in str(chosen["path"]).lower() for tok in ["opt_p", "p_num"])
+        size_match = p_size is not None and int(chosen["count"]) == p_size
+        if (explicit or size_match) and int(chosen["score"]) > 0:
+            return {
+                "available": True,
+                "path": chosen["path"],
+                "count": chosen["count"],
+                "expected_p_size": p_size,
+                "score": chosen["score"],
+                "values": chosen["values"],
+                "candidate_summaries": summaries,
+            }
     return {
         "available": False,
-        "reason": "No full numeric opt_p vector candidate was serialized under this arm; only hashes and metadata may be present.",
+        "reason": "No full numeric opt_p vector was serialized under this arm; hash-only evidence cannot support a per-entry ledger.",
         "expected_p_size": p_size,
-        "candidate_summaries": [{"path": c["path"], "count": c["count"], "score": c["score"]} for c in candidates[:20]],
+        "candidate_summaries": summaries,
     }
-
-
-def label_for_index(index: int, fallback_prefix: str = "opt_p") -> str:
-    return "%s[%d]" % (fallback_prefix, index)
 
 
 def classify_parameter(label: str, path: str, delta: Optional[float], dimension_mismatch: bool = False) -> Tuple[str, str]:
     text = (label + " " + path).lower()
     if dimension_mismatch:
-        return "structural", "Vector length or n_horizon differs; this is a structural solver-entry mismatch."
+        return "structural", "Vector length or horizon-dependent nlp p-size differs; this is a structural solver-entry mismatch."
     if any(tok in text for tok in ["obj_", "obstacle", "obs", "noise", "forecast", "r_obstacle", "distance"]):
         return "nuisance_obstacle_forecast_or_noise", "Obstacle/TVP/noise-related entry; it blocks pure initialization-basin attribution even if expected across horizons."
     if any(tok in text for tok in ["goal", "reference", "trajectory", "target", "terminal", "weight", "coefficient", "hend"]):
@@ -281,14 +292,20 @@ def write_failure(run_dir: Path, message: str, snapshot: Optional[Mapping[str, A
         "classification": "engineering_failure_zero_resource_before_scientific_outcome",
         "created_utc": now_utc().isoformat(),
         "error": message,
-        "traceback_tail": traceback.format_exc().splitlines()[-8:],
+        "traceback_tail": traceback.format_exc().splitlines()[-12:],
         "budget_actual": dict(ZERO_RESOURCES),
         "validation64_bank_opened": False,
         "sealed_test_accessed": False,
         "test_accessed": False,
     })
     if snapshot is not None:
-        execution_contract.record_outcome(ROOT, "engineering_failure", dict(ZERO_RESOURCES), {"no_scientific_outcome": True, "error": message, "failed_json": rel(failed)}, engineering_error=engineering_error)
+        execution_contract.record_outcome(
+            ROOT,
+            "engineering_failure",
+            dict(ZERO_RESOURCES),
+            {"no_scientific_outcome": True, "error": message, "failed_json": rel(failed)},
+            engineering_error=engineering_error,
+        )
     print(json.dumps({"failed": message, "failed_json": rel(failed), "resources": ZERO_RESOURCES}, sort_keys=True), flush=True)
     return 1
 
@@ -296,13 +313,14 @@ def write_failure(run_dir: Path, message: str, snapshot: Optional[Mapping[str, A
 def main() -> int:
     created = now_utc()
     stamp = created.strftime("%Y%m%dT%H%M%SZ")
-    run_dir = ROOT / "research_artifacts/aws_diagnostics/%s_%s" % (NAME, stamp)
+    run_dir = ROOT / "research_artifacts" / "aws_diagnostics" / ("%s_%s" % (NAME, stamp))
     run_dir.mkdir(parents=True, exist_ok=True)
     marker = "vehicle-tc3-matched-parameter-ledger-%s" % stamp
 
     try:
         snapshot = execution_contract.runtime_snapshot(ROOT, expected_request=EXPECTED_REQUEST)
     except Exception as exc:
+        # If the snapshot itself cannot be verified, there is no safe contract receipt.
         return write_failure(run_dir, "structured execution snapshot verification failed: %s: %s" % (type(exc).__name__, exc), None, "authorization")
     if snapshot is None:
         return write_failure(run_dir, "missing structured execution snapshot", None, "authorization")
@@ -312,25 +330,29 @@ def main() -> int:
             return write_failure(run_dir, "missing v34u raw/completed input", snapshot, "missing_file")
 
         raw_artifact = read_json(V34U_RAW)
-        arms = find_arms(raw_artifact)
-        labels = [arm_label(a) for a in arms]
-        arm_by_label = dict(zip(labels, arms))
+        arm_by_label = find_arms(raw_artifact)
+        labels = list(ORDERED_LABELS)
         hashes_by_label: Dict[str, List[Dict[str, Any]]] = {label: find_opt_p_hash_paths(arm_by_label[label]) for label in labels}
         vector_by_label: Dict[str, Dict[str, Any]] = {label: find_parameter_vector(arm_by_label[label]) for label in labels}
 
         arm_summary_path = run_dir / "opt_p_arm_summary.csv"
         with arm_summary_path.open("w", encoding="utf-8", newline="") as f:
-            writer = csv.DictWriter(f, fieldnames=["arm_label", "arm_id", "horizon", "initialization", "expected_hash", "expected_hash_found", "hash_paths", "vector_available", "vector_path", "vector_count", "expected_p_size", "vector_reason"])
+            writer = csv.DictWriter(f, fieldnames=[
+                "arm_label", "arm_id", "horizon", "initialization", "expected_hash",
+                "expected_hash_found", "hash_paths", "vector_available", "vector_path",
+                "vector_count", "expected_p_size", "vector_reason",
+            ])
             writer.writeheader()
             for label in labels:
+                arm = arm_by_label[label]
                 vec = vector_by_label[label]
                 hashes = hashes_by_label[label]
                 expected_hash = EXPECTED_OPT_P_HASHES[label]
                 writer.writerow({
                     "arm_label": label,
-                    "arm_id": arm_by_label[label].get("arm_id"),
-                    "horizon": arm_by_label[label].get("horizon"),
-                    "initialization": arm_by_label[label].get("initialization"),
+                    "arm_id": arm.get("arm_id"),
+                    "horizon": arm.get("horizon"),
+                    "initialization": arm.get("initialization"),
                     "expected_hash": expected_hash,
                     "expected_hash_found": any(h.get("sha256") == expected_hash for h in hashes),
                     "hash_paths": ";".join("%s=%s" % (h.get("path"), h.get("sha256")) for h in hashes),
@@ -343,17 +365,14 @@ def main() -> int:
 
         diff_rows: List[Dict[str, Any]] = []
         pair_statements: Dict[str, Dict[str, Any]] = {}
-        all_values_available_for_required_pairs = True
+        full_vectors_available_for_all_pairs = True
         for a, b in pairwise(labels):
             va = vector_by_label[a]
             vb = vector_by_label[b]
             pair = "%s__vs__%s" % (a, b)
-            expected_hash_a = EXPECTED_OPT_P_HASHES[a]
-            expected_hash_b = EXPECTED_OPT_P_HASHES[b]
-            hashes_differ = expected_hash_a != expected_hash_b
+            hashes_differ = EXPECTED_OPT_P_HASHES[a] != EXPECTED_OPT_P_HASHES[b]
             if not (va.get("available") and vb.get("available")):
-                all_values_available_for_required_pairs = False
-                cls, reason = classify_parameter("opt_p_hash_only", "hash-only", None, dimension_mismatch=False)
+                full_vectors_available_for_all_pairs = False
                 diff_rows.append({
                     "pair": pair,
                     "index": "NA",
@@ -362,24 +381,26 @@ def main() -> int:
                     "arm_b": b,
                     "arm_a_path": ";".join(h.get("path", "") for h in hashes_by_label[a]),
                     "arm_b_path": ";".join(h.get("path", "") for h in hashes_by_label[b]),
-                    "arm_a_value": "",
-                    "arm_b_value": "",
-                    "delta_b_minus_a": "",
+                    "arm_a_value": EXPECTED_OPT_P_HASHES[a],
+                    "arm_b_value": EXPECTED_OPT_P_HASHES[b],
+                    "delta_b_minus_a": "hash_diff=%s" % hashes_differ,
                     "abs_delta": "",
                     "relative_delta": "",
-                    "classification_primary": "objective_relevant" if hashes_differ else cls,
-                    "classification_reason": "Only opt_p hashes are recorded, not full numeric vectors; hashes differ=%s, so per-entry attribution is not possible from this artifact." % hashes_differ,
+                    "classification_primary": "objective_relevant" if hashes_differ else "structural",
+                    "classification_reason": "Only opt_p hashes are recorded, not full numeric vectors; per-entry attribution is not possible from this artifact.",
                 })
                 pair_statements[pair] = {
                     "matched_parameter_comparison_possible": False,
                     "reason": "Full numeric opt_p vectors are not serialized for one or both arms; hash-only evidence cannot support an initialization-only basin attribution.",
                     "hashes_differ": hashes_differ,
+                    "full_numeric_opt_p_vectors_available": False,
                 }
                 continue
+
             values_a = list(va["values"])
             values_b = list(vb["values"])
             if len(values_a) != len(values_b):
-                cls, reason = classify_parameter("opt_p_dimension", "%s vs %s" % (va.get("path"), vb.get("path")), None, dimension_mismatch=True)
+                cls, reason = classify_parameter("opt_p_vector_dimension", "%s | %s" % (va.get("path"), vb.get("path")), None, dimension_mismatch=True)
                 diff_rows.append({
                     "pair": pair,
                     "index": "dimension",
@@ -396,15 +417,22 @@ def main() -> int:
                     "classification_primary": cls,
                     "classification_reason": reason,
                 })
-                pair_statements[pair] = {"matched_parameter_comparison_possible": False, "reason": "Numeric vectors have different lengths; this is a structural mismatch.", "hashes_differ": hashes_differ}
+                pair_statements[pair] = {
+                    "matched_parameter_comparison_possible": False,
+                    "reason": "Numeric opt_p vectors have different lengths; this is a structural mismatch.",
+                    "hashes_differ": hashes_differ,
+                    "full_numeric_opt_p_vectors_available": True,
+                    "differing_entry_count": "dimension_mismatch",
+                }
                 continue
+
             diff_count = 0
             for i, (x, y) in enumerate(zip(values_a, values_b)):
                 delta = y - x
                 if abs(delta) <= NUMERIC_TOL:
                     continue
                 diff_count += 1
-                label = label_for_index(i)
+                label = "opt_p[%d]" % i
                 cls, reason = classify_parameter(label, "%s | %s" % (va.get("path"), vb.get("path")), delta)
                 diff_rows.append({
                     "pair": pair,
@@ -424,13 +452,18 @@ def main() -> int:
                 })
             pair_statements[pair] = {
                 "matched_parameter_comparison_possible": diff_count == 0 and not hashes_differ,
-                "reason": "Full vectors compared; differing entries=%d; hashes_differ=%s." % (diff_count, hashes_differ),
+                "reason": "Full numeric opt_p vectors compared; differing entries=%d; hashes_differ=%s." % (diff_count, hashes_differ),
                 "hashes_differ": hashes_differ,
+                "full_numeric_opt_p_vectors_available": True,
                 "differing_entry_count": diff_count,
             }
 
         diff_csv = run_dir / "parameter_diff_table.csv"
-        fields = ["pair", "index", "parameter_label", "arm_a", "arm_b", "arm_a_path", "arm_b_path", "arm_a_value", "arm_b_value", "delta_b_minus_a", "abs_delta", "relative_delta", "classification_primary", "classification_reason"]
+        fields = [
+            "pair", "index", "parameter_label", "arm_a", "arm_b", "arm_a_path",
+            "arm_b_path", "arm_a_value", "arm_b_value", "delta_b_minus_a",
+            "abs_delta", "relative_delta", "classification_primary", "classification_reason",
+        ]
         with diff_csv.open("w", encoding="utf-8", newline="") as f:
             writer = csv.DictWriter(f, fieldnames=fields)
             writer.writeheader()
@@ -441,8 +474,8 @@ def main() -> int:
         h15_statement = pair_statements.get(h15_pair_key, {"matched_parameter_comparison_possible": False, "reason": "H15 pair not evaluated"})
         any_pair_possible = any(v.get("matched_parameter_comparison_possible") is True for v in pair_statements.values())
         all_known_hashes_found = all(any(h.get("sha256") == EXPECTED_OPT_P_HASHES[label] for h in hashes_by_label[label]) for label in labels)
-        every_row_labelled = all(str(r.get("classification_primary")) in CLASSIFICATIONS for r in diff_rows)
-        per_entry_values_available = all_values_available_for_required_pairs and all("hash_only" not in str(r.get("parameter_label", "")) for r in diff_rows)
+        every_row_labelled = bool(diff_rows) and all(str(r.get("classification_primary")) in CLASSIFICATIONS for r in diff_rows)
+        per_entry_values_available = full_vectors_available_for_all_pairs and all("hash_only" not in str(r.get("parameter_label", "")) for r in diff_rows)
 
         within_cell_statement = (
             "Within-cell objective reconstruction is not invalidated by cross-arm opt_p differences: each cell's reconstruction compares the solver objective and reconstructed objective within that arm's own recorded opt_x/opt_p context. The ledger only governs cross-arm causal attribution, especially any initialization-only basin claim."
@@ -468,10 +501,7 @@ def main() -> int:
             "h15_canonical_vs_goal_facing_matched_parameter_comparison_possible": h15_statement.get("matched_parameter_comparison_possible") is True,
             "h15_canonical_vs_goal_facing_statement": h15_statement,
             "any_pair_among_four_matched_parameter_comparison_possible": any_pair_possible,
-            "matched_parameter_comparison_possible_statement": {
-                "H15_canonical_vs_goal_facing": h15_statement,
-                "any_pair_among_four": any_pair_possible,
-            },
+            "matched_parameter_comparison_possible_statement": {"H15_canonical_vs_goal_facing": h15_statement, "any_pair_among_four": any_pair_possible},
             "within_cell_validity_statement": within_cell_statement,
             "cross_arm_attribution_limit_statement": cross_arm_statement,
             "data_sufficiency_for_per_entry_ledger": per_entry_values_available,
@@ -482,6 +512,7 @@ def main() -> int:
         }
         raw_path = run_dir / "raw.json"
         write_json(raw_path, result)
+
         summary_path = run_dir / "summary.md"
         summary_path.write_text(
             "# T-C3 matched-parameter ledger\n\n"
@@ -501,7 +532,7 @@ def main() -> int:
             encoding="utf-8",
         )
 
-        backup_request = ROOT / "research_artifacts/aws_backup_proofs" / ("REQUEST_BACKUP_AFTER_T_C3_MATCHED_PARAMETER_LEDGER_%s.json" % stamp)
+        backup_request = ROOT / "research_artifacts" / "aws_backup_proofs" / ("REQUEST_BACKUP_AFTER_T_C3_MATCHED_PARAMETER_LEDGER_%s.json" % stamp)
         write_json(backup_request, {
             "request": "backup_after_t_c3_matched_parameter_ledger",
             "created_utc": created.isoformat(),
@@ -513,8 +544,7 @@ def main() -> int:
             "validation64_bank_opened": False,
             "sealed_test_accessed": False,
         })
-        state_path = ROOT / "research_artifacts/aws_state" / ("continue_state_%s_after_t_c3_matched_parameter_ledger.md" % stamp)
-        state_path.parent.mkdir(parents=True, exist_ok=True)
+        state_path = ROOT / "research_artifacts" / "aws_state" / ("continue_state_%s_after_t_c3_matched_parameter_ledger.md" % stamp)
         doc_block = """
 <!-- {marker} -->
 ## T-C3 matched-parameter ledger
@@ -536,7 +566,8 @@ UTC: {created}. Structured zero-solve task `{task}`. Known opt_p hashes found fo
         )
         for doc in [ROOT / "STATUS.md", ROOT / "RESEARCH_LOG.md", ROOT / "DECISIONS.md", ROOT / "RESULTS_AUDIT.md", ROOT / "REPRODUCTION_PROTOCOL.md", RESPONSE_LOG]:
             append_if_missing(doc, marker, doc_block)
-        state_path.write_text("# Continue state after T-C3 matched-parameter ledger\n\n" + doc_block + "\nIf task gates failed because full opt_p vectors are absent, return this actual insufficiency to Opus before T-C2.\n", encoding="utf-8")
+        state_path.parent.mkdir(parents=True, exist_ok=True)
+        state_path.write_text("# Continue state after T-C3 matched-parameter ledger\n\n" + doc_block + "\nIf task gates fail because full opt_p vectors are absent, return this actual insufficiency to Opus before T-C2.\n", encoding="utf-8")
         with (ROOT / "EXPERIMENT_REGISTRY.csv").open("a", encoding="utf-8", newline="") as f:
             csv.writer(f).writerow([created.isoformat(), NAME, result["classification"], "not_applicable_no_training_seed", "opened_development_artifacts_only_no_validation64_no_sealed_test", 0, 0, 0, 0, 0, False, rel(run_dir / "completed.json"), marker])
 
@@ -579,8 +610,10 @@ UTC: {created}. Structured zero-solve task `{task}`. Known opt_p hashes found fo
         hash_paths = [Path(__file__).resolve(), raw_path, summary_path, arm_summary_path, diff_csv, completed_path, backup_request, state_path, RESPONSE_LOG, ROOT / "STATUS.md", ROOT / "RESEARCH_LOG.md", ROOT / "DECISIONS.md", ROOT / "RESULTS_AUDIT.md", ROOT / "REPRODUCTION_PROTOCOL.md", ROOT / "EXPERIMENT_REGISTRY.csv"]
         completed["hashes"] = {rel(p): sha256(p) for p in hash_paths if p.exists()}
         write_json(completed_path, completed)
-        print(json.dumps(clean({"completed": rel(completed_path), "summary": rel(summary_path), "headline": completed["headline"], "pass_evidence": pass_evidence, "backup_request": rel(backup_request)}), sort_keys=True), flush=True)
-        return 0 if completed["hard_pass"] else 2
+        print(json.dumps(clean({"completed": rel(completed_path), "summary": rel(summary_path), "headline": completed["headline"], "pass_evidence": pass_evidence, "hard_pass": completed["hard_pass"], "backup_request": rel(backup_request)}), sort_keys=True), flush=True)
+        # Exit 0 for a completed measurement even when a scientific gate fails;
+        # the receipt pass_evidence controls structured acceptance.
+        return 0
     except Exception as exc:
         return write_failure(run_dir, "unexpected T-C3 error: %s: %s" % (type(exc).__name__, exc), snapshot, "loader")
 

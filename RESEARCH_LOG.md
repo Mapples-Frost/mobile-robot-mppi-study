@@ -7490,3 +7490,122 @@ UTC: 2026-09-30T14:13:39.945272+00:00. Structured zero-solve task `T-C3R-matched
 
 ## 2026-09-30T14:15:15.472622+00:00
 
+
+
+## 2026-09-30T14:18:35.499341+00:00
+Elapsed service lifetime (as of the durable handoff written at ~2026-09-30T14:20Z): ~4 days 3 hours 24 minutes since 2026-09-26T10:55:29.419331Z. Cumulative server API `total_tokens` from `research.sqlite`: not re-read this iteration because no experiment script executed; desktop conversation usage excluded.
+
+Concrete actions completed this iteration:
+
+1. Inspected active lead authorization and execution plan:
+   - `docs/bohn2021_takeover/opus_lead/PLAN_READY.json`
+   - `docs/bohn2021_takeover/opus_lead/20260930T135811Z_8f32d0.execution_plan.json`
+
+2. Verified dependency status:
+   - `T-C3R-matched-parameter-ledger-operational-repair` is complete and hard-passed.
+   - Evidence: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_matched_parameter_ledger_v0_20260930T141339Z/completed.json`
+   - It reports zero resource use and no validation64/sealed-test access.
+
+3. Inspected the prepared T-C5 script:
+   - `experiments/bohn2021_aws/vehicle_true_variable_horizon_v34z_converged_contract_gate_v0.py`
+   - Confirmed it implements `T-C5-OC-epsilon-2-vector-sum-closure` as a zero-solve opened-artifact-only task.
+
+4. Attempted to launch T-C5:
+   - First `run_experiment` call was rejected before execution because I nested the frozen config under `config_constraints`; scheduler required those fields at top level.
+   - Corrected launch was then rejected by the one-experiment-per-iteration guard.
+   - No script execution occurred.
+
+5. Preserved state for next iteration:
+   - Wrote: `research_artifacts/aws_state/continue_state_20260930T1420XX_after_tc5_scheduler_block.md`
+   - Updated durable state with the exact next action and launch correction.
+
+Resource/access accounting this iteration:
+
+- New solver calls: 0
+- Plant steps: 0
+- Training/refit/gradient steps: 0
+- Validation64 episodes: 0
+- Sealed/final test episodes: 0
+- New AWS resources/IAM/scheduler changes: none
+- Scientific evidence produced: none; only scheduler/tool rejection was recorded.
+
+Next required action:
+
+Run T-C5 next bounded cycle using:
+
+- Script: `experiments/bohn2021_aws/vehicle_true_variable_horizon_v34z_converged_contract_gate_v0.py`
+- Task ID: `T-C5-OC-epsilon-2-vector-sum-closure`
+- Split: `opened_development_artifacts_only_no_validation64_no_sealed_test`
+- Seed: `not_applicable_no_training_seed`
+- Resource request: `{solver_calls: 0, plant_steps: 0, training_steps: 0, validation_episodes: 0, test_episodes: 0}`
+- Important launch correction: all frozen T-C5 config fields must be placed at top level of `run_experiment.config`, not nested under `config_constraints`.
+
+After T-C5 completes, wait for/verify backup before any solver-bearing T-C2 attempt.
+
+<!-- vehicle-tc5-oc-epsilon-vector-sum-closure-20260930T141917Z -->
+## T-C5 OC-epsilon vector-sum closure
+
+UTC: 2026-09-30T14:19:17.767610+00:00. Structured zero-solve task `T-C5-OC-epsilon-2-vector-sum-closure`. Verdict: v34u data are insufficient for non-circular individual-epsilon closure because labelled per-stage/per-obstacle epsilon vectors are not serialized; no partial sum was fabricated. `eps_nonzero_count` is corrected to a stage/scenario aggregate count and is non-discriminating, not support for the truncation prediction. Historical H15 converged zero-epsilon evidence was reconciled; the prior universal no-converged-slack-evidence claim is withdrawn, while T-C2 remains necessary. Evidence: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34z_converged_contract_gate_v0_20260930T141917Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34z_converged_contract_gate_v0_20260930T141917Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34z_converged_contract_gate_v0_20260930T141917Z/epsilon_closure_sufficiency_table.csv`. Backup request: `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_T_C5_OC_EPSILON_VECTOR_SUM_CLOSURE_20260930T141917Z.json`. Resources: solver=0, plant=0, training=0, validation64=0, sealed/final test=0.
+
+
+## 2026-09-30T14:22:15.021252+00:00
+Elapsed service lifetime: ~4 days 3 hours 24 minutes since 2026-09-26T10:55:29.419331Z, as of the T-C5 completion at 2026-09-30T14:19:17Z. Cumulative server API `total_tokens` from `research.sqlite`: unavailable because no `research.sqlite` file was found in checked repository locations; desktop conversation usage excluded.
+
+Concrete actions completed:
+
+1. Re-read the active Opus plan:
+   - `docs/bohn2021_takeover/opus_lead/PLAN_READY.json`
+   - `docs/bohn2021_takeover/opus_lead/20260930T135811Z_8f32d0.execution_plan.json`
+
+2. Verified T-C3R dependency remains complete:
+   - `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_matched_parameter_ledger_v0_20260930T141339Z/completed.json`
+   - `hard_pass=true`, zero resources, no validation64/sealed-test access.
+
+3. Executed approved structured task T-C5:
+   - Run ID: `20260930T141917_2d7f4abc`
+   - Script: `experiments/bohn2021_aws/vehicle_true_variable_horizon_v34z_converged_contract_gate_v0.py`
+   - Task ID: `T-C5-OC-epsilon-2-vector-sum-closure`
+   - Exit status: 0
+   - Structured receipt: valid
+   - Local task gates: passed
+
+4. T-C5 evidence created:
+   - `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34z_converged_contract_gate_v0_20260930T141917Z/completed.json`
+   - `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34z_converged_contract_gate_v0_20260930T141917Z/summary.md`
+   - `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34z_converged_contract_gate_v0_20260930T141917Z/raw.json`
+   - `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34z_converged_contract_gate_v0_20260930T141917Z/epsilon_closure_sufficiency_table.csv`
+   - Registry: `research_artifacts/aws_runs/20260930T141917_2d7f4abc/registry.json`
+
+Main T-C5 findings:
+
+- Data sufficiency verdict: `INSUFFICIENT`.
+- v34u records aggregate `epsterm_total` and aggregate `eps_nonzero_count`, but not full labelled individual per-stage/per-obstacle epsilon vectors.
+- No partial epsilon sum was fabricated.
+- `eps_nonzero_count` is corrected to a stage/scenario aggregate count, not an individual slack-variable count.
+- Counts 12/15/35/15 are non-discriminating and do not support the truncation prediction.
+- Historical H15 converged zero-epsilon evidence was reconciled:
+  - v34l records zero epsilon contribution.
+  - v34g contains `Solve_Succeeded`.
+  - The prior universal claim that no converged slack evidence exists anywhere is withdrawn.
+- T-C2 remains necessary because T-C5 did not prospectively capture the four production-tolerance cells or labelled epsilon vectors.
+
+Resource/access accounting this iteration:
+
+- Solver calls: 0
+- Plant steps: 0
+- Training/refit/gradient steps: 0
+- Validation64 episodes: 0
+- Sealed/final test episodes: 0
+- New AWS resources/IAM/scheduler changes: none
+
+Backup/state:
+
+- Backup request written:
+  - `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_T_C5_OC_EPSILON_VECTOR_SUM_CLOSURE_20260930T141917Z.json`
+- Durable handoff written:
+  - `research_artifacts/aws_state/continue_state_20260930T141917Z_after_t_c5_oc_epsilon_vector_sum_closure.md`
+- Updated project logs/docs and persisted state via `update_state`.
+
+Next required action:
+
+Wait for or verify external backup covering T-C5 artifacts and updated logs before any solver-bearing T-C2 work. Then re-read the active plan, verify T-C3R and T-C5 receipts, reconcile the T-C2 solver-call ceiling, and only then prepare/execute T-C2 under the Opus-approved contract.

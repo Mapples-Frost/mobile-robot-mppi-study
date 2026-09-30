@@ -1,29 +1,28 @@
 {
-  "created": "2026-09-30T04:42:51.420306+00:00",
-  "evidence_paths": [
-    "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v31_label_coverage_lower_bound_v0_20260930T044251Z/summary.md",
-    "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v31_label_coverage_lower_bound_v0_20260930T044251Z/raw.json",
-    "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v31_label_coverage_lower_bound_v0_20260930T044251Z/completed.json",
-    "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v30b_cluster_stability_diagnostic_v31_20260930T0405Z/summary.md",
-    "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v30b_cluster_stability_diagnostic_v31_20260930T0405Z/raw.json",
-    "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v30b_cluster_stability_diagnostic_v31_20260930T0405Z/completed.json",
-    "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_three_way_selector_feature_audit_v30b_fast_20260930T0410Z/raw.json",
-    "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_success_aware_longer_H_feasibility_probe_v29_20260930T0340Z/raw.json",
-    "docs/bohn2021_takeover/astra_reviews/RESPONSE_LOG.md"
-  ],
-  "experiment_id": "vehicle_true_variable_horizon_v31_label_coverage_lower_bound_v0",
-  "question": "Astra should incorporate the new v31 label-coverage lower-bound diagnostic into the v29/v30b/v31 direction decision. Current opened rows are row-level separable by deployable features, but independent source-family coverage is H12=3, H15=1, H35=1; H15 and H35 each need at least one additional independent family before basic leave-one-source-family-out class presence is possible, and two each for a three-source stability target. Decide the next scientific action: fresh source-independent triage-label acquisition around H15/H35 boundaries, terminal-risk/value refit/training, or scenario/comparison redesign. GPT-5.5 should not treat v31/v31-lower-bound as deployable validation or start a new scientific branch before this matching/superseding analysis is read.",
-  "request_id": "v31-label-coverage-lower-bound-20260930T044251Z",
-  "supersedes_request_id": "v31-cluster-stability-diagnostic-20260930T0405Z",
-  "status": "analysis_requested",
-  "trigger": "concrete_label_coverage_lower_bound_after_v31_cluster_stability",
   "access_and_budget_note": {
-    "new_simulation_episodes": 0,
     "new_control_steps": 0,
+    "new_simulation_episodes": 0,
     "new_training_or_gradient_steps": 0,
+    "sealed_test_accessed": false,
+    "sealed_test_episodes": 0,
     "selector_refits": 0,
     "validation64_bank_opened": false,
-    "sealed_test_accessed": false
+    "validation64_episodes": 0
   },
-  "operational_note": "Post-04:42 outputs and this refreshed request require follow-up external backup before unique simulation/refit/training/validation/final-test work. Continue only reversible integrity/preparation while Astra analysis is pending."
+  "created": "2026-09-30T04:48:19.103132+00:00",
+  "evidence_paths": [
+    "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v31_source_budget_bounds_v0_20260930T044819Z/summary.md",
+    "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v31_source_budget_bounds_v0_20260930T044819Z/raw.json",
+    "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v31_source_budget_bounds_v0_20260930T044819Z/completed.json",
+    "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v31_label_coverage_lower_bound_v0_20260930T044251Z/raw.json",
+    "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v30b_cluster_stability_diagnostic_v31_20260930T0405Z/raw.json",
+    "docs/bohn2021_takeover/astra_reviews/RESPONSE_LOG.md"
+  ],
+  "experiment_id": "vehicle_true_variable_horizon_v31_source_budget_bounds_v0",
+  "operational_note": "Post-diagnostic outputs and this refreshed request require external backup before unique simulation/refit/training/validation/final-test work.",
+  "question": "Astra should incorporate this source-coverage budget/identifiability diagnostic into the v29/v30b/v31 direction decision. It quantifies that current independent source-family counts are H12=3, H15=1, H35=1; same-family extra rows cannot repair grouped-CV class presence; if Astra chooses fresh source-independent triage-label acquisition, the lower bound is +1 H15-like and +1 H35-like independent family for basic LOGO class presence (6 H12/H15/H35 rollout episodes or 8 if H25 is included), or +2 each for a three-source stability target. Decide whether acquisition, terminal-risk/value refit/training, or scenario/comparison redesign is the next scientific action. GPT-5.5 should not treat this as branch selection or validation.",
+  "request_id": "v31-source-coverage-budget-bounds-20260930T044819Z",
+  "status": "analysis_requested",
+  "supersedes_request_id": "v31-label-coverage-lower-bound-20260930T044251Z",
+  "trigger": "source_coverage_budget_bounds_after_v31_label_coverage_lower_bound"
 }

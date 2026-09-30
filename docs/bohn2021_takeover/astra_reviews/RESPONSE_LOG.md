@@ -262,3 +262,23 @@ Updated by GPT-5.5 executor at `2026-09-30T04:42:51.420306+00:00`. Analysis-only
 |---|---|---|---|
 | Astra v31 handoff / non-default source coverage | accepted as concrete diagnostic while Astra direction pending | `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v31_label_coverage_lower_bound_v0_20260930T044251Z/summary.md` and `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v31_label_coverage_lower_bound_v0_20260930T044251Z/raw.json` show current oracle-label family counts `{'12': 3, '15': 1, '35': 1}`. Basic grouped-CV class-presence deficits are `{'12': 0, '15': 1, '35': 1}`; H15 and H35 each need at least one additional independent family before leave-one-source-family-out can train with that class present. | Carry to Astra. Do not validate/deploy a selector from v31; do not choose acquisition/refit/scenario branch until matching Astra report is read. |
 | `A12_registry_backup_schema_contract` | accepted; new diagnostic pending backup | Backup request `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_V31_LABEL_COVERAGE_LOWER_BOUND_20260930T044251Z.json`. | Require follow-up external backup before unique simulation/refit/training/validation/final-test work. |
+
+<!-- vehicle_true_variable_horizon_v31_source_budget_bounds_v0-20260930T044819Z -->
+## v31 source-coverage budget/identifiability bounds
+
+Updated by GPT-5.5 executor at `2026-09-30T04:48:19.103132+00:00`. Analysis-only; no simulations, no training/refit, no validation64 access and no sealed-test access.
+
+| linked recommendation(s) | disposition | verified evidence | action / outcome / next step |
+|---|---|---|---|
+| Astra v31 handoff / non-default source coverage | accepted as bounded preparatory diagnostic while Astra direction pending | `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v31_source_budget_bounds_v0_20260930T044819Z/summary.md` and `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v31_source_budget_bounds_v0_20260930T044819Z/raw.json` show current family counts `{'12': 3, '15': 1, '35': 1}`. Same-family extra rows cannot repair LOGO missing-class structure. If Astra selects fresh source-label acquisition, basic grouped-CV class-presence lower bound is +1 H15-like and +1 H35-like independent family = 6 H12/H15/H35 rollout episodes or 8 including H25; three-source target is +2 each = 12 or 16 rollout episodes. | Refreshed NEXT_REVIEW_REQUEST `v31-source-coverage-budget-bounds-20260930T044819Z`. Do not start acquisition/refit/scenario branch until matching/superseding Astra report is read and backup gate is satisfied. |
+| `A12_registry_backup_schema_contract` | accepted; new diagnostic pending backup | Backup request `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_V31_SOURCE_BUDGET_BOUNDS_20260930T044819Z.json`. | Require follow-up external backup before unique simulation/refit/training/validation/final-test work. |
+
+<!-- vehicle_true_variable_horizon_v31_0447_backup_astra_gate_recheck_v0-20260930T045206Z -->
+## v31 04:47 backup/Astra gate recheck
+
+Updated by GPT-5.5 executor at `2026-09-30T04:52:06.544655+00:00`. Metadata-only; no simulations, no control steps, no selector refits, no training, no validation64 access and no sealed-test access.
+
+| linked recommendation(s) | disposition | verified evidence | action / outcome / next step |
+|---|---|---|---|
+| `A12_registry_backup_schema_contract` | accepted; latest supervisor backup claim materialized, but local temporal consistency decides whether it clears unique-science gate | Proof `research_artifacts/aws_backup_proofs/backup_proof_20260930T044752_from_user_context_after_v31_source_budget_bounds.json` records commit `aa4fba19cba24fa6447df8dc43d2b16bfde4e2bd`, package SHA256 `5a200a111a3cf587527f2ca4116331591ffc9218c581ce928add7140e19fdbc8`, request files present=`True`, temporal consistency=`False`, prior gate cleared by local check=`False`. | New request `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_V31_0447_BACKUP_ASTRA_GATE_RECHECK_20260930T045206Z.json` covers this metadata run. Do not run unique simulation/refit/training/validation/final-test work unless backup gate is explicitly clear. |
+| Astra v31 direction request | pending | NEXT_REVIEW_REQUEST id `v31-source-coverage-budget-bounds-20260930T044819Z`; ANALYSIS_READY exists=`False`, matches/supersedes current=`False`. | Await/read matching Astra report before choosing acquisition/refit/scenario branch. |

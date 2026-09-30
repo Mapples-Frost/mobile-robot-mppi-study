@@ -6504,3 +6504,126 @@ UTC: 2026-09-30T04:42:51.420306+00:00. Development-analysis only; no simulation/
 
 ## 2026-09-30T04:47:07.871793+00:00
 
+<!-- vehicle_true_variable_horizon_v31_source_budget_bounds_v0-20260930T044819Z -->
+## 2026-09-30 v31 source-coverage budget/identifiability bounds
+
+UTC: 2026-09-30T04:48:19.103132+00:00. Analysis-only; no simulation/control/training/refit/validation64/sealed-test access. Service elapsed `3d 17h 52m 49.684s`. Current source-family counts `{'12': 3, '15': 1, '35': 1}`. Same-family densification cannot fix LOGO missing-class coverage. If Astra chooses fresh source-independent labels, basic grouped-CV lower bound is `{'12': 0, '15': 1, '35': 1}` with `6` H12/H15/H35 rollout episodes (`8` including H25); three-source target lower bound is `{'12': 0, '15': 2, '35': 2}` with `12` or `16` episodes. Not a branch decision or validation. Artifacts: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v31_source_budget_bounds_v0_20260930T044819Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v31_source_budget_bounds_v0_20260930T044819Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v31_source_budget_bounds_v0_20260930T044819Z/completed.json`. Backup request: `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_V31_SOURCE_BUDGET_BOUNDS_20260930T044819Z.json`. Astra request `v31-source-coverage-budget-bounds-20260930T044819Z`.
+
+
+## 2026-09-30T04:49:32.258779+00:00
+Elapsed service lifetime (latest measured): 3d 17h 52m 49.684s since 2026-09-26T10:55:29.419331Z.  
+Cumulative server API total_tokens: unknown via repository tools; desktop conversation tokens excluded.
+
+Concrete actions completed:
+
+1. Ran bounded analysis-only diagnostic:
+   - Experiment ID: `20260930T044818_81f75082`
+   - Script: `experiments/bohn2021_aws/vehicle_true_variable_horizon_v31_source_budget_bounds_v0.py`
+   - Runtime: 2.01s
+   - No simulations, no control steps, no selector refits, no training/gradient steps.
+   - No validation64 bank access.
+   - No sealed-test access.
+
+2. Verified/quantified v31 source-family identifiability limits:
+   - Current independent source-family counts by oracle label:
+     - H12: 3
+     - H15: 1
+     - H35: 1
+   - Same-family extra rows cannot fix leave-one-source-family-out missing-class structure for H15/H35.
+   - If Astra selects fresh source-independent triage-label acquisition:
+     - Basic LOGO class-presence lower bound: +1 H15-like and +1 H35-like independent family.
+       - H12/H15/H35 only: minimum 6 rollout episodes, estimated 349 control steps.
+       - Including H25 reference: minimum 8 rollout episodes, estimated 465 control steps.
+     - Three-source stability target: +2 H15-like and +2 H35-like independent families.
+       - H12/H15/H35 only: minimum 12 rollout episodes, estimated 698 control steps.
+       - Including H25 reference: minimum 16 rollout episodes, estimated 930 control steps.
+
+3. Refreshed Astra handoff:
+   - `docs/bohn2021_takeover/astra_reviews/NEXT_REVIEW_REQUEST.json`
+   - New request ID: `v31-source-coverage-budget-bounds-20260930T044819Z`
+   - Supersedes: `v31-label-coverage-lower-bound-20260930T044251Z`
+   - Asked Astra to choose between:
+     - fresh source-independent triage-label acquisition,
+     - terminal-risk/value refit/training,
+     - scenario/comparison redesign.
+
+4. Updated/preserved state and response logs:
+   - `docs/bohn2021_takeover/astra_reviews/RESPONSE_LOG.md`
+   - `research_artifacts/aws_state/continue_state_20260930T044819Z_after_v31_source_budget_bounds.md`
+   - Supervisor state via `update_state`.
+
+Key artifacts:
+- `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v31_source_budget_bounds_v0_20260930T044819Z/summary.md`
+- `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v31_source_budget_bounds_v0_20260930T044819Z/raw.json`
+- `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v31_source_budget_bounds_v0_20260930T044819Z/completed.json`
+- `research_artifacts/aws_runs/20260930T044818_81f75082/registry.json`
+- `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_V31_SOURCE_BUDGET_BOUNDS_20260930T044819Z.json`
+
+Current blockers:
+1. Backup gate: post-04:48 artifacts require verified external backup before any unique simulation/refit/training/validation/final-test work.
+2. Astra gate: `ANALYSIS_READY.json` was absent after the run; need matching/superseding Astra analysis for request `v31-source-coverage-budget-bounds-20260930T044819Z` before selecting the next scientific branch.
+3. Sealed test remains closed and unauthorized.
+
+Next safe action: once backup and Astra analysis are available, verify the report’s cited evidence, log dispositions in `RESPONSE_LOG.md`, then implement Astra’s selected plan.
+
+<!-- vehicle_true_variable_horizon_v31_0447_backup_astra_gate_recheck_v0-20260930T045206Z -->
+## 2026-09-30 v31 04:47 backup/Astra gate recheck
+
+UTC: 2026-09-30T04:52:06.544655+00:00. Metadata-only/reversible; no simulation/control/training/refit/validation64/sealed-test access. Service elapsed `3d 17h 56m 37.125s`; server API total_tokens `unknown (research.sqlite not found in checked locations)`. Materialized supervisor backup claim `2026-09-30T04:47:52.479502+00:00` at `research_artifacts/aws_backup_proofs/backup_proof_20260930T044752_from_user_context_after_v31_source_budget_bounds.json` for request `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_V31_SOURCE_BUDGET_BOUNDS_20260930T044819Z.json`; requested files present=`True`, temporal consistency with local mtimes=`False`, prior gate cleared by local check=`False`. Current Astra request `v31-source-coverage-budget-bounds-20260930T044819Z`; ANALYSIS_READY matching=`False`. New backup request: `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_V31_0447_BACKUP_ASTRA_GATE_RECHECK_20260930T045206Z.json`. Evidence status unchanged: v31 source-budget result is analysis-only and awaits Astra branch selection.
+
+
+## 2026-09-30T04:52:59.709010+00:00
+Elapsed service lifetime (latest measured): **3d 17h 56m 37.125s** since `2026-09-26T10:55:29.419331Z`.  
+Cumulative server API total_tokens: **unknown** (`research.sqlite` not found by repository tools); desktop conversation tokens excluded.
+
+Concrete actions completed:
+
+1. Ran one bounded metadata-only integrity/gate recheck:
+   - Experiment ID: `20260930T045206_4372119b`
+   - Script: `experiments/bohn2021_aws/vehicle_true_variable_horizon_v31_0447_backup_astra_gate_recheck_v0.py`
+   - Runtime: 2.01s
+   - New simulations/control/training/refits: **0**
+   - validation64 bank opened: **false**
+   - sealed test accessed: **false**
+
+2. Rechecked current v31 source-budget evidence:
+   - Independent source-family counts remain:
+     - H12: 3
+     - H15: 1
+     - H35: 1
+   - Basic grouped-CV class-presence lower bound remains:
+     - +1 independent H15-like family
+     - +1 independent H35-like family
+   - Three-source stability lower bound remains:
+     - +2 independent H15-like families
+     - +2 independent H35-like families
+   - This is still development/opened-row analysis only, not validation/test evidence and not a branch decision.
+
+3. Checked Astra handoff:
+   - Current request ID: `v31-source-coverage-budget-bounds-20260930T044819Z`
+   - `ANALYSIS_READY.json`: not present
+   - Latest old review still predates v29/v30b/v31, so it is not usable as analysis of current results.
+   - I did **not** choose between source-label acquisition, refit/training, or scenario/comparison redesign.
+
+4. Materialized the user/supervisor 04:47 backup claim:
+   - Claimed backup time: `2026-09-30T04:47:52.479502+00:00`
+   - Commit: `aa4fba19cba24fa6447df8dc43d2b16bfde4e2bd`
+   - Package SHA256: `5a200a111a3cf587527f2ca4116331591ffc9218c581ce928add7140e19fdbc8`
+   - All files requested by `REQUEST_BACKUP_AFTER_V31_SOURCE_BUDGET_BOUNDS_20260930T044819Z.json` were locally present.
+   - However, local mtime audit found 14 requested files modified after the claimed backup time, so I conservatively **did not treat this as independently clearing the unique-science backup gate**.
+
+Key artifacts:
+- `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v31_0447_backup_astra_gate_recheck_v0_20260930T045206Z/summary.md`
+- `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v31_0447_backup_astra_gate_recheck_v0_20260930T045206Z/raw.json`
+- `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v31_0447_backup_astra_gate_recheck_v0_20260930T045206Z/completed.json`
+- `research_artifacts/aws_backup_proofs/backup_proof_20260930T044752_from_user_context_after_v31_source_budget_bounds.json`
+- `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_V31_0447_BACKUP_ASTRA_GATE_RECHECK_20260930T045206Z.json`
+- `research_artifacts/aws_state/continue_state_20260930T045206Z_after_v31_0447_backup_astra_gate_recheck.md`
+- Registry: `research_artifacts/aws_runs/20260930T045206_4372119b/registry.json`
+
+Current blockers:
+1. **Astra gate:** no matching/superseding Astra analysis yet for `v31-source-coverage-budget-bounds-20260930T044819Z`.
+2. **Backup gate:** post-04:52 metadata outputs require external backup; local audit did not independently clear the 04:47 backup for unique science.
+3. **Sealed test remains closed/unauthorized.**
+
+State was persisted with `update_state`. Next safe action is to wait/check for Astra analysis and verified backup, then verify Astra’s report against raw evidence and implement its selected plan.

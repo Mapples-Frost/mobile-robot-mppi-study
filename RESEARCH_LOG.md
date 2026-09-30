@@ -8118,3 +8118,11 @@ UTC: 2026-09-30T19:00:48.358558+00:00. Development-only source242 microcontinuat
 
 ## 2026-09-30T21:07:53.538767+00:00
 
+<!-- s-tc2h8-backup-422-status-capture-20260930T211255Z -->
+## S-TC2H8 backup HTTP-422 status capture
+
+UTC: 2026-09-30T21:12:55.877894+00:00. Metadata-only infrastructure diagnostic; resources `{'solver_calls': 0, 'plant_steps': 0, 'training_steps': 0, 'validation_episodes': 0, 'test_episodes': 0}`; no validation64 or sealed/final-test access. Adequate backup for S-TC2H8=`False`; reasons=`['backup_status_missing_or_unreadable']`; status=`None`; error=`None`; message=`None`; public asset probe ok=`True` asset_count=`1000`. Evidence: `research_artifacts/aws_diagnostics/backup_failure_status_capture_s_tc2h8_asset422_v0_20260930T211255Z/summary.md`, `research_artifacts/aws_diagnostics/backup_failure_status_capture_s_tc2h8_asset422_v0_20260930T211255Z/raw.json`. Request/proof: `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_REPAIR_AFTER_S_TC2H8_ASSET422_20260930T211255Z.json`.
+
+
+## 2026-09-30T21:15:45.504833+00:00
+

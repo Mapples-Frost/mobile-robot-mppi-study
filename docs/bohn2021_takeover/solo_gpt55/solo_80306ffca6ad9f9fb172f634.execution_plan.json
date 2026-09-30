@@ -1,0 +1,87 @@
+{
+  "schema_version": 1,
+  "request_id": "execution-result:20260930T190047_54183e0e",
+  "tasks": [
+    {
+      "task_id": "S-BACKUP422-STC2H8-status-capture-v0",
+      "description": "Metadata-only infrastructure diagnostic after S-TC2H8 could not spend solver/plant resources because external backup was unavailable and the latest supervisor backup_status reports RuntimeError Asset upload HTTP 422. This task records sanitized backup_status, backup receipts, backup index coverage for S-TC2H8-required artifacts, disposable staging status, public GitHub release asset metadata, current git status, and a next backup repair/request. It must not run MPC/controller code, simulations, training/refits, validation64, or sealed/final tests. It is operational evidence only and cannot establish vehicle control performance or ORIGINAL/IMPROVED scientific acceptance.",
+      "script_patterns": [
+        "experiments/bohn2021_aws/backup_failure_status_capture_s_tc2h8_asset422_v0.py"
+      ],
+      "split": "audit",
+      "method": "metadata-only S-TC2H8 backup HTTP-422 status capture: read sanitized supervisor backup_status/receipts/index and public release asset metadata; write raw/summary/completed/state/request artifacts; zero solver/plant/training/validation/test resources",
+      "seeds": [
+        "no_random_seed_metadata_only"
+      ],
+      "config_constraints": {
+        "label_ORIGINAL_vs_IMPROVED": "IMPROVED_operational_metadata_only",
+        "authority_mode": "temporary_user_authorized_solo_self_review",
+        "operational_repair_only": true,
+        "no_controller_or_mpc_import": true,
+        "no_simulation_no_training_no_refit": true,
+        "no_validation64_access": true,
+        "no_sealed_or_final_test_access": true,
+        "target_blocker": "S-TC2H8 pre-resource external-backup gate blocked after supervisor backup_status failed with Asset upload HTTP 422",
+        "prior_blocked_task_id": "S-TC2H8-source242-env-tvp-format-repair-v0",
+        "prior_blocked_attempt_experiment_id": "20260930T210609_251bf3c6",
+        "audit_script": "experiments/bohn2021_aws/backup_failure_status_capture_s_tc2h8_asset422_v0.py",
+        "audit_script_sha256_at_plan_publication": "e5bc115983a7952ef59938a8de4390d73d568ec15f58f4708c3c7d48cfe08891",
+        "must_preserve_failures": [
+          "S-TC2H6 three-solver zero-plant interface failure",
+          "S-TC2H7 zero-solver zero-plant TVP-format failure",
+          "S-TC2H8 zero-resource backup dependency failures"
+        ],
+        "no_new_paid_infrastructure": true,
+        "development_only_not_validation_not_final": true,
+        "resource_counters_all_zero_required": true,
+        "cumulative_S_TC2H_family_usage_before_this_task": {
+          "solver_calls": 9,
+          "plant_steps": 0,
+          "training_steps": 0,
+          "validation_episodes": 0,
+          "test_episodes": 0
+        }
+      },
+      "training_budget": {
+        "gradient_steps": 0,
+        "selector_refits": 0,
+        "training_steps": 0
+      },
+      "validation_budget": {
+        "opened_development_branch_episodes": 0,
+        "max_plant_steps": 0,
+        "solver_calls": 0,
+        "validation64_episodes": 0
+      },
+      "test_budget": {
+        "final_test_episodes": 0,
+        "sealed_test_episodes": 0
+      },
+      "resource_limits": {
+        "solver_calls": 0,
+        "plant_steps": 0,
+        "training_steps": 0,
+        "validation_episodes": 0,
+        "test_episodes": 0
+      },
+      "max_attempts": 2,
+      "max_zero_usage_repairs": 1,
+      "timeout_seconds": 900,
+      "dependencies": [],
+      "pass_conditions": {
+        "backup_422_status_capture_completed": true,
+        "no_solver_plant_training_validation_test_usage": true,
+        "backup_status_read_attempted": true,
+        "backup_receipts_tail_captured": true,
+        "backup_index_probe_completed": true,
+        "public_release_asset_probe_attempted": true,
+        "backup_failure_422_or_current_status_classified": true,
+        "s_tc2h8_backup_gate_decision_recorded": true,
+        "artifacts_persisted": true,
+        "no_secrets_read": true,
+        "no_validation64_or_test_usage": true
+      },
+      "continue_without_review": false
+    }
+  ]
+}

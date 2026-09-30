@@ -5863,3 +5863,94 @@ UTC: 2026-09-30T01:57:29.103230+00:00. Dry-run only; no simulations, no validati
 
 ## 2026-09-30T01:58:29.334458+00:00
 
+<!-- vehicle-h12-h15-risk-family-acquisition-v25-run-20260930T0210Z -->
+## 2026-09-30 vehicle H12/H15 risk-family acquisition v25 run
+
+UTC: 2026-09-30T02:04:13.379250+00:00. Development-only source72-neighborhood H12-risk-family acquisition completed; validation64 closed, sealed test closed, no training/refit. Budget 40 episodes / 1642 control steps plus 16 preoutcome selector decisions. States=16, H12-beneficial=16, H12-catastrophic/high-cost=0. Fixed H12 save=0.19159715606423805, bad=0, pass5=True; selector save=0.12110167355602902, H counts={'12': 10, '15': 6}, bad=0, pass5=True. Decision: v25 source72-neighborhood risk-family rows still favor safe fixed H12; adaptivity is not justified for this stress-pool family, so prioritize scenario/comparison design or fixed-H12-primary confirmation.. Artifacts: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_h12_h15_risk_family_acquisition_v25_20260930T0210Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_h12_h15_risk_family_acquisition_v25_20260930T0210Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_h12_h15_risk_family_acquisition_v25_20260930T0210Z/completed.json`. Backup required before further unique science: `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_H12_RISK_FAMILY_ACQUISITION_V25_RUN_20260930T0210Z.json`.
+
+
+## 2026-09-30T02:06:21.789293+00:00
+Elapsed service lifetime since first supervisor event: ~87h10m. Server API total_tokens from research.sqlite: unavailable via repository tools this cycle (unknown, not zero; desktop conversation excluded).
+
+Concrete actions completed:
+
+1. Verified reviewer coordination context
+   - Re-read `docs/bohn2021_takeover/astra_reviews/COORDINATION.md`.
+   - Re-read `LATEST.md`; latest Astra report remains `20260929T153837Z`.
+   - Preserved stable Astra recommendation IDs in `RESPONSE_LOG.md`.
+
+2. Materialized backup proof before new v25 simulation
+   - Wrote local proof from supervisor/user context:
+     - `research_artifacts/aws_backup_proofs/backup_proof_20260930T015912_from_supervisor_context_after_v25_dryrun.json`
+   - This covered the v25 dry-run/protocol freeze before running v25 simulations.
+
+3. Ran v25 H12/H15 source72-risk-family acquisition
+   - Script: `experiments/bohn2021_aws/vehicle_true_variable_horizon_h12_h15_risk_family_acquisition_v25.py`
+   - Run registry: `research_artifacts/aws_runs/20260930T020004_53a68db1/registry.json`
+   - Runtime: ~252 s, exit status 0.
+   - Legacy interpreter used.
+   - No validation64 access.
+   - No sealed final test access.
+   - No mobile-robot MPPI.
+   - No new training, gradients, or selector grid refit.
+   - Budget used: 40 development episodes, 1642 control steps, 16 preoutcome selector decisions.
+
+4. Main v25 result
+   - Artifacts:
+     - `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_h12_h15_risk_family_acquisition_v25_20260930T0210Z/summary.md`
+     - `.../completed.json`
+     - `.../raw.json`
+     - `.../preoutcome_selector_choices.json`
+   - 16 source-independent source72-neighborhood branch states.
+   - H12-beneficial rows: 16/16.
+   - H12 catastrophic/high-cost rows: 0/16.
+   - H15 unsafe rows: 0/16.
+   - Fixed H12 vs H15:
+     - decision saving: 19.16%
+     - solver saving: 21.76%
+     - bad rows: 0
+     - physical gate: true
+     - pass5: true
+   - v20b/v22 preoutcome selector:
+     - selected H12 on 10/16 states, H15 on 6/16
+     - overhead-adjusted decision saving: 12.11%
+     - solver saving: 13.76%
+     - bad rows: 0
+     - pass5: true
+     - measured feature+selector overhead mean: 0.002596 s, p95: 0.002809 s.
+
+Scientific interpretation:
+
+- v25 did not reproduce the opened v19/source72 H12-negative cluster in unused source72-neighborhood stress-bank cases.
+- Together, v21+v23+v25 now provide fresh source-independent development evidence where fixed H12 is safe and faster on 56 branch states.
+- The current selector is safe but worse than fixed H12 on these fresh rows because it conservatively chooses H15 in states where H12 was actually beneficial.
+- Therefore, adaptivity is not currently justified for this stress-pool family; the evidence favors fixed-H12-primary comparison/scenario-design diagnosis over immediate terminal-risk/value retraining.
+- This is still development/stress-pool evidence only, not population validation, not sealed-test evidence, and not ORIGINAL SAC reproduction.
+
+State and docs preserved:
+
+- Updated by script and inspection:
+  - `STATUS.md`
+  - `RESEARCH_LOG.md`
+  - `DECISIONS.md`
+  - `RESULTS_AUDIT.md`
+  - `REPRODUCTION_PROTOCOL.md`
+  - `EXPERIMENT_REGISTRY.csv`
+  - `docs/bohn2021_takeover/astra_reviews/RESPONSE_LOG.md`
+  - `research_artifacts/aws_state/continue_state_20260930T0210_after_h12_risk_family_acquisition_v25.md`
+  - `research_artifacts/aws_state/continue_state_20260930T0205_after_v25_run_inspection.md`
+
+Backup gate:
+
+- Wrote post-v25 backup requests:
+  - `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_H12_RISK_FAMILY_ACQUISITION_V25_RUN_20260930T0210Z.json`
+  - `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_V25_RUN_INSPECTION_FINAL_ADDENDUM_20260930T0205Z.json`
+- Further unique science is blocked until a verified external backup covers v25 run artifacts, docs, registry, response log, and the new backup-proof materialization.
+
+Next planned action after verified backup:
+
+- Freeze/run a v26 fixed-H12-primary source-independent comparison/confirmation protocol, excluding v19/v21/v23/v25 sources.
+- Primary baseline should be fixed true H12, with H15 and adaptive/oracle H12/H15 as secondary comparisons.
+- Measure physical/complete cost, safety, success, solver failures, whole-decision timing, solver timing, and p50/p95 timing.
+- If fixed H12 remains safe and faster, pivot toward scenario redesign or a credible negative adaptive-opportunity conclusion for this distribution.
+- If fixed H12 failures recur, inspect telemetry and then run terminal-risk/value refit or bounded training rather than another static sweep.

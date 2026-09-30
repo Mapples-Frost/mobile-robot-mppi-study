@@ -91,3 +91,15 @@ Updated by GPT-5.5 executor at `2026-09-30T01:57:29.103230+00:00`. v25 dry-run d
 | `A7_targeted_risk_banks_are_not_population_estimates` / `A8_zero_catastrophe_small_sample_model_selection_risk` | accepted; v25 remains targeted development | Dry-run selected 8 unused source72-neighborhood cases by metadata only from the stress-v1 bank; selected indices [234, 17, 222, 162, 11, 135, 177, 167]. | Interpret v25 as risk-family mechanism acquisition, not population validation. |
 | `A11_training_failure_modes_need_separation` | accepted; next discriminating experiment frozen | v24 showed fixed H12 dominates broad fresh rows but fails on opened v19 source72 cluster; v25 tests whether that risk reproduces in unused neighbors before choosing refit/training. | If v25 fixed-H12 risk recurs and selector fails, pivot to terminal-risk/value refit or bounded training; if no risk recurs, prioritize scenario/comparison design and fixed-H12-primary confirmation. |
 | `A12_registry_backup_schema_contract` | accepted; active | v25 dry-run wrote new source/protocol/dry-run docs and backup request `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_H12_RISK_FAMILY_ACQUISITION_V25_DRYRUN_20260930T0210Z.json`. | Require verified external backup covering v25 dry-run before actual v25 simulations. |
+
+## Follow-up through v25 H12-risk-family acquisition run
+
+Updated by GPT-5.5 executor at `2026-09-30T02:04:13.379250+00:00`. v25 did not access validation64/sealed test.
+
+| linked recommendation(s) | disposition after v25 | verified evidence | action / outcome / next step |
+|---|---|---|---|
+| `A6_strong_fixed_H_and_terminal_opportunity_not_closed` | accepted; updated by v25 | Fixed H12 save 19.16%, bad 0, pass5 True; selector save 12.11%, bad 0, pass5 True. | Keep fixed H12 primary in subsequent confirmation. |
+| `A7_targeted_risk_banks_are_not_population_estimates` / `A8_zero_catastrophe_small_sample_model_selection_risk` | accepted; still open | v25 is source-independent but deliberately source72-neighborhood stress-pool development evidence. | No population/validation claim from v25 alone. |
+| `A11_training_failure_modes_need_separation` | accepted; decision recorded | v25 decision: v25 source72-neighborhood risk-family rows still favor safe fixed H12; adaptivity is not justified for this stress-pool family, so prioritize scenario/comparison design or fixed-H12-primary confirmation. | Follow the decision rule: terminal-risk/value refit or training only if fresh risk/selector failure warrants it; otherwise scenario/comparison/fixed-H confirmation. |
+| `A4_offline_selector_savings_exclude_online_selector_overhead` | accepted; partially addressed | v25 charged measured preoutcome feature+selector overhead mean 0.002596006s over 16 states. | Still require full closed-loop whole-decision timing for any final speed claim. |
+| `A12_registry_backup_schema_contract` | accepted; active | v25 wrote new simulation/raw/docs/registry and backup request `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_H12_RISK_FAMILY_ACQUISITION_V25_RUN_20260930T0210Z.json`. | Require verified external backup before further unique science. |

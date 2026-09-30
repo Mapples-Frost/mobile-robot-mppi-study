@@ -1,0 +1,145 @@
+{
+  "schema_version": 1,
+  "request_id": "execution-result:20260930T190047_54183e0e",
+  "tasks": [
+    {
+      "task_id": "S-TC2H8-source242-env-tvp-format-repair-v0",
+      "description": "Temporary GPT-5.5 solo bounded operational repair after S-TC2H7. S-TC2H7/v0h applied the correct high-level LetMPCEnv.step([H]) action but still stopped before any solver or plant resource with TypeError(\"'float' object is not subscriptable\"). The v0h raw trace localizes the exception before mpc.solve: all arms had solver_calls_observed=0, plant_steps_observed=0, history_initialization_meta.initial_observation.observation_exception shows the same TypeError, and env.step saw no internal solver events. Source inspection shows LetMPCEnv/ControlSystem/TVP expect env.control_system.tvps[name].values in the legacy list-of-dicts format with true/forecast keys, whereas prior wrappers scalarized those values for controller initial-guess metadata and wrote the scalarized arrays back into the environment TVP storage. This task performs only the corresponding interface-format repair: keep the S-TC2H7 high-level mpc_horizon env.step path but restore raw list-of-dicts TVP values for env.get_observation/env.step while using scalarized TVP only for strict MPC initial-guess metadata. Preserve source242_slot0_branch_start, goal case.tvp.trajectory_endpoint[61], H=[12,15,35], V15_shared terminal, canonical initialization, no training/refit, no validation64, no sealed/final-test access, and solver/plant caps. Pre-resource backup/prior gates must pass; if backup proof is absent or stale, fail zero-resource and preserve the gate evidence. Strict pass requires all three H arms to advance at least one plant step with no env/controller exceptions and full per-step cost/safety/solver/timing traces.",
+      "script_patterns": [
+        "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34z2_source242_microcontinuation_v0i_env_tvp_format_repair.py"
+      ],
+      "split": "opened_development_source242_slot0_branch_start_microcontinuation_raw_env_tvp_format_no_validation64_no_sealed_test",
+      "method": "source242 fixed-H closed-loop microcontinuation using LetMPCEnv.step high-level mpc_horizon action with raw legacy env TVP storage restored; H=[12,15,35], V15_shared terminal held fixed, canonical initialization, max 60 plant steps per arm, internal solver instrumentation, full cost/safety/solver/timing traces",
+      "seeds": [
+        "source242_branch_deterministic_no_training_seed"
+      ],
+      "config_constraints": {
+        "label_ORIGINAL_vs_IMPROVED": "IMPROVED",
+        "authority_mode": "temporary_user_authorized_solo_self_review",
+        "operational_repair_only": true,
+        "repair_scope": "restore raw legacy list-of-dicts TVP storage for LetMPCEnv/ControlSystem observation and stepping while preserving the S-TC2H7 high-level mpc_horizon env.step([H]) repair; do not change horizons, terminal mode, source242 context, goal source, objective, costs, training/refit, validation/test access, or scientific acceptance rules",
+        "previous_attempt_experiment_id": "20260930T190047_54183e0e",
+        "previous_attempt_raw": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34z2_source242_microcontinuation_v0h_highlevel_env_step_repair_20260930T190048Z/raw.json",
+        "previous_attempt_receipt": "research_artifacts/aws_runs/20260930T190047_54183e0e/outcome_receipt.json",
+        "previous_attempt_finding": "v0h consumed solver_calls=0 and plant_steps=0. Each H arm attempted high-level LetMPCEnv.step([H]) but failed before mpc.solve and before plant transition with TypeError(\"'float' object is not subscriptable\"); v0h traces also show initial_observation.observation_exception with the same TypeError, consistent with env TVP storage being scalarized incorrectly.",
+        "repair_source": "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34z2_source242_microcontinuation_v0i_env_tvp_format_repair.py",
+        "repair_source_sha256_at_plan_publication": "44623f1bb5e515eee4713671196cb0103b1db25f3478d09b0c0d02c5e6123c83",
+        "latest_verified_external_backup_before_plan_from_supervisor_context": {
+          "time": "2026-09-30T19:05:55.550058+00:00",
+          "status": "verified",
+          "remaining_changed_files": 0,
+          "commit": "4811adf4df93ac01cf18e90ac1bb7dc8d7f67ed6",
+          "package_sha256": "3cc81007e8813965b3192b15aa675a5c7a4186b2eda5491fd10b83db4f560f2f",
+          "release": "https://github.com/Mapples-Frost/mobile-robot-mppi-study/releases/tag/bohn-aws-evidence-20260926"
+        },
+        "materialized_backup_proof_185232": "research_artifacts/aws_backup_proofs/BACKUP_VERIFIED_FROM_SUPERVISOR_CONTEXT_20260930T185232Z.json",
+        "materialized_backup_proof_185834": "research_artifacts/aws_backup_proofs/BACKUP_VERIFIED_FROM_SUPERVISOR_CONTEXT_20260930T185834Z.json",
+        "require_verified_external_backup_after_v0h_failure_v0i_source_and_active_plan_before_solver_or_plant_steps": true,
+        "microcontinuation_source_context": "source242_slot0_branch_start",
+        "goal_source_required": "case.tvp.trajectory_endpoint[61]",
+        "horizon_grid": [
+          12,
+          15,
+          35
+        ],
+        "terminal_mode_for_all_arms": "V15_shared",
+        "max_steps_per_arm": 60,
+        "arm_count": 3,
+        "plant_step_cap": 180,
+        "solver_call_cap": 180,
+        "strict_scientific_pass_requires_actual_plant_transitions": true,
+        "strict_scientific_pass_requires_no_env_or_controller_exceptions": true,
+        "ordinary_deployment_style_warm_start_after_first_action": true,
+        "first_action_initialization": "canonical_zero_control_only_if_explicit_initial_primal_is_required",
+        "forbid_goal_facing_initialization": true,
+        "report_physical_control_constraint_total_costs": true,
+        "report_success_constraint_solver_failure_accounting": true,
+        "report_solver_and_whole_decision_timing": true,
+        "report_per_step_solver_status_iterations": true,
+        "report_context_and_prefix_hashes": true,
+        "development_only_not_validation_not_final": true,
+        "no_training_no_refits": true,
+        "no_validation64_access": true,
+        "no_sealed_or_final_test_access": true,
+        "no_new_paid_infrastructure": true,
+        "cumulative_S_TC2H_family_usage_before_this_task": {
+          "solver_calls": 9,
+          "plant_steps": 0,
+          "training_steps": 0,
+          "validation_episodes": 0,
+          "test_episodes": 0
+        },
+        "prior_S_TC2H7_attempts_before_this_plan": [
+          {
+            "experiment_id": "20260930T183432_519fde37",
+            "solver_calls": 0,
+            "plant_steps": 0,
+            "failure": "terminal_for_mode wrapper binding AttributeError"
+          },
+          {
+            "experiment_id": "20260930T184556_ab696475",
+            "solver_calls": 0,
+            "plant_steps": 0,
+            "failure": "backup dependency gate missing v0h-recency candidate"
+          },
+          {
+            "experiment_id": "20260930T190047_54183e0e",
+            "solver_calls": 0,
+            "plant_steps": 0,
+            "failure": "raw/scalarized TVP format mismatch causing TypeError before solver and plant"
+          }
+        ]
+      },
+      "training_budget": {
+        "gradient_steps": 0,
+        "selector_refits": 0,
+        "training_steps": 0
+      },
+      "validation_budget": {
+        "opened_development_branch_episodes": 3,
+        "max_plant_steps": 180,
+        "solver_calls": 180,
+        "validation64_episodes": 0
+      },
+      "test_budget": {
+        "final_test_episodes": 0,
+        "sealed_test_episodes": 0
+      },
+      "resource_limits": {
+        "solver_calls": 180,
+        "plant_steps": 180,
+        "training_steps": 0,
+        "validation_episodes": 0,
+        "test_episodes": 0
+      },
+      "max_attempts": 3,
+      "max_zero_usage_repairs": 2,
+      "timeout_seconds": 3600,
+      "dependencies": [],
+      "pass_conditions": {
+        "source242_microcontinuation_completed": true,
+        "prior_T_C2_and_S_TC2G_failures_preserved": true,
+        "prior_T_C2_and_S_TC2H_failures_preserved": true,
+        "S_TC2H5_zero_resource_failure_preserved": true,
+        "S_TC2H6_three_solver_zero_plant_interface_failure_preserved": true,
+        "S_TC2H7_zero_solver_zero_plant_env_tvp_format_failure_preserved": true,
+        "materialized_185232_backup_proof_preserved": true,
+        "materialized_185834_backup_proof_preserved": true,
+        "backup_verified_before_solver_or_plant_steps": true,
+        "backup_verified_after_v0h_failure_v0i_source_and_plan_before_solver_or_plant_steps": true,
+        "all_three_horizon_arms_attempted_or_budget_cap_reported": true,
+        "per_step_cost_safety_solver_timing_traces_persisted": true,
+        "context_source242_goal61_identity_verified": true,
+        "high_level_env_step_interface_repair_applied": true,
+        "raw_tvp_format_restored_for_LetMPCEnv_step": true,
+        "source242_microcontinuation_produced_plant_transitions": true,
+        "all_three_horizon_arms_advanced_at_least_one_plant_step": true,
+        "no_env_or_controller_exceptions_in_attempted_arms": true,
+        "no_training_validation64_or_test_usage": true,
+        "plant_steps_at_most_180": true,
+        "solver_calls_at_most_180": true
+      },
+      "continue_without_review": false
+    }
+  ]
+}

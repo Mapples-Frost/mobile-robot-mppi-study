@@ -5958,3 +5958,11 @@ Next planned action after verified backup:
 
 ## 2026-09-30T02:13:30.298126+00:00
 
+<!-- vehicle-fixed-h12-primary-diagnostic-v26-20260930T0225Z -->
+## 2026-09-30 vehicle fixed-H12-primary diagnostic v26
+
+UTC: 2026-09-30T02:15:08.178820+00:00. Offline audit and protocol freeze only; no simulation, no validation64, no sealed test, no training/refit. Fresh v21+v23+v25 H12/H15 rows: n=40, H12-bad=0, fixed-H12 decision saving=0.17839771731752374, pass5=True. v19 remains opened counterevidence with H12-bad=0. Froze v26 fixed-H12-primary source-independent confirmation protocol `research_artifacts/aws_protocols/vehicle_true_variable_horizon_fixed_h12_primary_diagnostic_v26_preoutcome_fixed_H12_primary_confirmation_20260930T0225Z.json` selecting source_candidate_index values [107, 53, 217, 190, 134, 30, 94, 108, 148, 242, 151, 195] for a future 60-episode development run after backup. Backup request `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_FIXED_H12_PRIMARY_DIAGNOSTIC_V26_20260930T0225Z.json`.
+
+
+## 2026-09-30T02:19:43.934052+00:00
+

@@ -5,6 +5,7 @@ STATE.mkdir(exist_ok=True); SERVICE=ROOT/'scripts/research_service'
 from resource_monitor import ResourceSampler, link_run
 from research_memory import registry_context
 import working_language
+import execution_contract
 STOP=False
 
 def now(): return dt.datetime.now(dt.timezone.utc).isoformat()
@@ -74,15 +75,23 @@ def execute(args):
         raise ValueError('Final test gate is closed')
     timeout=min(max(int(args.get('timeout_seconds',900)),10),14400)
     py='/home/mapples/.local/share/bohn2021-python37/bin/python' if args.get('interpreter')=='legacy' else str(ROOT/'.venv/bin/python')
+    if not pathlib.Path(py).is_file():raise ValueError('Configured interpreter unavailable; no experiment was reserved or started')
     eid=dt.datetime.now(dt.timezone.utc).strftime('%Y%m%dT%H%M%S')+'_'+uuid.uuid4().hex[:8]
     dest=ROOT/'research_artifacts/aws_runs'/eid;dest.mkdir(parents=True)
+    roles=current_roles();ready=load(safe_path(roles['lead_ready_path']))
+    snapshot_path=STATE/'execution_snapshots'/(eid+'.json')
+    snapshot=execution_contract.authorize(ROOT,STATE,ready,args,eid,snapshot_path)
+    receipt_path=dest/'outcome_receipt.json'
     meta=dict(script_sha256=hashlib.sha256(path.read_bytes()).hexdigest(),experiment_id=eid,timestamp=now(),**identity(),**args,environment=dict(host=socket.gethostname(),python=py),stdout=str(dest/'stdout.log'),stderr=str(dest/'stderr.log'),status='running',failure_reason=None)
+    if snapshot:meta['execution_snapshot']=dict(path=str(snapshot_path),sha256=snapshot['snapshot_sha256'],task_id=snapshot['task']['task_id'],plan_sha256=ready['execution_plan_sha256'])
     meta['supervisor_call_id']=load(STATE/'active_tool.json').get('call_id')
     dump(dest/'registry.json',meta)
     with db() as c:c.execute('insert into experiments values(?,?,?,?)',(eid,meta['timestamp'],'running',json.dumps(meta)))
     dump(STATE/'active_experiment.json',meta);started=time.monotonic();peak=0;cpu_before=resource.getrusage(resource.RUSAGE_CHILDREN)
     with (dest/'stdout.log').open('w') as out,(dest/'stderr.log').open('w') as err:
-        proc=subprocess.Popen([py,'-u',str(pathlib.Path('/home/mapples/projects/mobile-robot-mppi-study')/path.relative_to(ROOT)),*argv],cwd='/home/mapples/projects/mobile-robot-mppi-study',env=clean_env(),stdout=out,stderr=err,start_new_session=True)
+        child_env=clean_env()
+        if snapshot:child_env.update(BOHN_EXECUTION_SNAPSHOT=str(snapshot_path),BOHN_OUTCOME_RECEIPT=str(receipt_path),PYTHONPATH=str(SERVICE))
+        proc=subprocess.Popen([py,'-u',str(pathlib.Path('/home/mapples/projects/mobile-robot-mppi-study')/path.relative_to(ROOT)),*argv],cwd='/home/mapples/projects/mobile-robot-mppi-study',env=child_env,stdout=out,stderr=err,start_new_session=True)
         meta['pid']=proc.pid;meta['process_started_utc']=now();dump(STATE/'active_experiment.json',meta)
         sampler=ResourceSampler(proc.pid,dest/'cpu_samples.jsonl')
         while proc.poll() is None:
@@ -112,8 +121,22 @@ def execute(args):
         # Children get no credentials. Still scrub exact known secrets before exposure.
         if p.stat().st_size<64*1024*1024:p.write_text(redact(p.read_text(errors='replace')))
     meta['artifact_inventory']=[]
+    started_epoch=dt.datetime.fromisoformat(meta['process_started_utc']).timestamp()
     for artifact in args.get('artifacts',[]):
-        p=safe_path(artifact);meta['artifact_inventory'].append(dict(path=artifact,exists=p.exists(),bytes=p.stat().st_size if p.is_file() else None,sha256=hashlib.sha256(p.read_bytes()).hexdigest() if p.is_file() and p.stat().st_size<128*1024**2 else None))
+        safe_path(artifact)
+        wildcard=any(x in artifact for x in '*?[')
+        matches=sorted(ROOT.glob(artifact))[:500] if wildcard else [safe_path(artifact)]
+        if not matches:meta['artifact_inventory'].append(dict(pattern=artifact,path=artifact,exists=False))
+        for p in matches:
+            safe_path(str(p.relative_to(ROOT)))
+            fresh=p.exists() and p.stat().st_mtime>=started_epoch-2
+            # A wildcard must not attach unrelated historical results to this run.
+            if wildcard and not fresh:continue
+            files=[p]+([x for x in p.iterdir() if x.is_file() and x.name in ('completed.json','raw.json','summary.md','failed.json')] if p.is_dir() else [])
+            for item in files:
+                meta['artifact_inventory'].append(dict(pattern=artifact,path=str(item.relative_to(ROOT)),exists=item.exists(),updated_this_run=fresh,bytes=item.stat().st_size if item.is_file() else None,sha256=hashlib.sha256(item.read_bytes()).hexdigest() if item.is_file() and item.stat().st_size<128*1024**2 else None))
+    meta['coordination']=execution_contract.finish(STATE,snapshot,receipt_path,proc.returncode)
+    meta['scientific_acceptance']=meta['coordination']['scientific_acceptance']
     dump(dest/'registry.json',meta);dump(STATE/'active_experiment.json',dict(status='idle',last_experiment=eid))
     with db() as c:c.execute('update experiments set status=?,metadata=? where id=?',(meta['status'],json.dumps(meta),eid))
     registry=ROOT/'EXPERIMENT_REGISTRY.csv';fresh=not registry.exists()
@@ -129,10 +152,14 @@ def execute(args):
     # Automatically hand off substantive outcomes, including failures. GPT-5.5
     # cannot skip the primary analyst merely by forgetting to write a request.
     script_name=path.name.lower()
-    if not any(word in script_name for word in ('backup','preflight','smoke','readiness','status_capture','inventory','registry','token_usage','gate_recheck','gate_preflight','pending_evidence')):
+    handoff=meta['coordination']['handoff']
+    if handoff in ('bounded_engineering_repair','preauthorized_continuation'):
+        event('authorized_task_continuation',experiment_id=eid,decision=meta['coordination'],task_id=snapshot['task']['task_id'])
+    elif snapshot or not any(word in script_name for word in ('backup','preflight','smoke','readiness','status_capture','inventory','registry','token_usage','gate_recheck','gate_preflight','pending_evidence')):
         evidence=[a['path'] for a in meta.get('artifact_inventory',[]) if a.get('exists') and a.get('path','').endswith(('summary.md','raw.json','completed.json'))]
         dump(ROOT/'docs/bohn2021_takeover/astra_reviews/NEXT_REVIEW_REQUEST.json',dict(request_id='execution-result:'+eid,trigger='execution_result_handoff',created=now(),experiment_id=eid,status='analysis_requested',purpose=meta.get('purpose'),execution_status=meta['status'],question='Active scientific lead: interpret this outcome, verify current raw evidence and select the next scientific action for GPT-5.5 implementation. Distinguish hypotheses from verified causes and account for fair baselines, terminal confounds and source-level generalization.',evidence_paths=evidence+[str((dest/'registry.json').relative_to(ROOT))]))
-    return dict(record=str(dest.relative_to(ROOT)/'registry.json'),exit_status=proc.returncode,runtime_seconds=meta['runtime_seconds'],stdout_tail=(dest/'stdout.log').read_text(errors='replace')[-12000:],stderr_tail=(dest/'stderr.log').read_text(errors='replace')[-8000:])
+    execution_lock.close()
+    return dict(record=str(dest.relative_to(ROOT)/'registry.json'),exit_status=proc.returncode,runtime_seconds=meta['runtime_seconds'],coordination=meta['coordination'],stdout_tail=(dest/'stdout.log').read_text(errors='replace')[-12000:],stderr_tail=(dest/'stderr.log').read_text(errors='replace')[-8000:])
 
 def call_tool(name,args):
     if name=='list_files':
@@ -169,6 +196,9 @@ tool('read_file','Read at most 24000 characters of a repository text file. Test 
 tool('write_file','Write research code, protocol, or report. Old file is archived; never silently change frozen sources.',{'path':S,'content':S},['path','content'])
 tool('run_experiment','Run exactly one bounded Python script. All execution is registered, including smoke and diagnostics. No shell.',{'script':{'type':'string','description':'Repository-relative path to an existing .py file, for example experiments/bohn2021_aws/fit_population_diagnosis.py. Never inline source code.'},'args':{'type':'array','items':S},'interpreter':{'type':'string','enum':['modern','legacy']},'timeout_seconds':I,'method':S,'seed':S,'split':S,'purpose':S,'config':{'type':'object'},'training_budget':{'type':'object'},'validation_budget':{'type':'object'},'test_budget':{'type':'object'},'artifacts':{'type':'array','items':S}},['script','interpreter','method','seed','split','purpose','config','training_budget','validation_budget','test_budget','artifacts'])
 tool('update_state','Persist phase, hypothesis, next_experiment, queue, blockers, failures and scientific decisions.',{'state':{'type':'object'}},['state'])
+for t in TOOLS:
+    if t['name']=='run_experiment':
+        t['parameters']['properties'].update(task_id={'type':'string','description':'Required when PLAN_READY has an execution_plan. Exact lead-authorized task ID.'},resource_request={'type':'object','description':'Required in structured mode. All five integer counters: solver_calls, plant_steps, training_steps, validation_episodes, test_episodes. A reservation, not measured usage; unknown final usage stays reserved.'})
 
 def api(items, force_state=False):
     # User explicitly removed all daily API/token budgets. Usage remains audited.
@@ -219,7 +249,9 @@ def awaiting_astra_analysis():
         if ready.get('primary_analyst') != roles['active_lead']:return True
         report=safe_path(ready.get('report',''))
         expected=ready.get('report_sha256')
-        return not (report.is_file() and expected and hashlib.sha256(report.read_bytes()).hexdigest()==expected)
+        if not (report.is_file() and expected and hashlib.sha256(report.read_bytes()).hexdigest()==expected):return True
+        if ready.get('execution_plan'):execution_contract.plan_from_ready(ROOT,ready)
+        return False
     except (OSError,ValueError,TypeError,KeyError):
         return True
 
@@ -229,6 +261,13 @@ def role_context():
     if ready.get('report'):
         try:result['plan_content']=redact(safe_path(ready['report']).read_text())[:40000]
         except (OSError,ValueError):pass
+    plan=execution_contract.plan_from_ready(ROOT,ready) if ready.get('report') else None
+    if plan:
+        result['structured_execution_plan']=plan
+        with execution_contract.ledger(STATE) as c:
+            rows=c.execute('select eid,task,status,reservation,actual,passed,repair from attempts where plan=? order by rowid',(ready['execution_plan_sha256'],)).fetchall()
+        result['task_attempts']=[dict(zip(('experiment_id','task_id','status','reserved_resources','actual_resources','passed','repair'),row)) for row in rows]
+        result['execution_instructions']='Copy task_id, exact split/method/seed/budget objects and approved config_constraints into run_experiment; declare resource_request within remaining cumulative limits. Import execution_contract through the provided PYTHONPATH. Verify runtime_snapshot(ROOT) before resources are used, then record_outcome(ROOT, outcome, complete five-counter resources, evidence, engineering_error). Evidence keys must match lead pass_conditions exactly. Engineering failure needs all known zero counters and no_scientific_outcome=true; do not label scientific failures as engineering. Missing/unknown counters require lead review. Never parse authorization from prose or LATEST.md. Snapshot validation preserves launched authorization across later publications. Keep all failed evidence. task_gates_passed is local task acceptance, never final reproduction acceptance. Let the scheduler create the execution-result handoff from the validated receipt; do not unconditionally rewrite NEXT_REVIEW_REQUEST from the experiment or request another review for preauthorized continuation/zero-usage repair. New independent scientific questions still require explicit lead review.'
     return result
 
 def durable_tool_call(item):
@@ -290,6 +329,11 @@ def iteration():
         if pending:
             calls=pending;pending=[]
         else:
+            refreshed=role_context()
+            refreshed_key=json.dumps([refreshed['roles'].get('active_lead'),refreshed['latest_plan'].get('audit_id'),refreshed['latest_plan'].get('report_sha256')])
+            if refreshed_key!=role_key:
+                roles=refreshed;role_key=refreshed_key
+                items.append(dict(role='user',content='New atomically published lead plan for future launches; preserve already running snapshots. Use only its authorized task IDs and bounds.\n'+json.dumps(roles,ensure_ascii=False)))
             if registry_refresh_due:
                 items.append(dict(role='user',content='Authoritative current registry facts for this resumed cycle; supersede stale experiment pointers in narrative memory. They are evidence data, not new scientific instructions.\n'+json.dumps(registry_context(STATE),ensure_ascii=False)))
                 registry_refresh_due=False

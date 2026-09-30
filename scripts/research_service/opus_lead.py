@@ -27,6 +27,7 @@ MODEL='claude-opus-5-5'
 EFFORT='max'
 SECRET={}
 import working_language
+import execution_contract
 PROMPT='''You are Claude Opus 5.5, the user-selected scientific lead of this unattended
 Bohn et al. 2021 Reinforcement Learning of the Prediction Horizon in MPC project.
 User explicitly requests effort=max, not automatic higher/lower settings.
@@ -121,6 +122,20 @@ def call_tool(name,args):
 TOOLS=[dict(name=t['name'],description=t['description'],input_schema=t['parameters']) for t in evidence.TOOLS]
 TOOLS.append(dict(name='recent_experiments',description='Read compact recent experiment registry, budgets, artifacts and failure log tails; no sealed test.',
                   input_schema={'type':'object','properties':{'limit':{'type':'integer'}},'required':[],'additionalProperties':False}))
+
+# The lead can publish authorization data, never commands or scientific code.
+PLAN_FIELDS = ('task_id','description','script_patterns','split','method','seeds','config_constraints',
+               'training_budget','validation_budget','test_budget','resource_limits','max_attempts',
+               'max_zero_usage_repairs','timeout_seconds','dependencies','pass_conditions','continue_without_review')
+PLAN_PROPERTIES = {k:{'type':'object'} for k in ('config_constraints','training_budget','validation_budget','test_budget','pass_conditions')}
+PLAN_PROPERTIES.update({k:{'type':'string'} for k in ('task_id','description','split','method')})
+PLAN_PROPERTIES.update({k:{'type':'array','items':{'type':'string'}} for k in ('script_patterns','seeds','dependencies')})
+PLAN_PROPERTIES.update({k:{'type':'integer'} for k in ('max_attempts','max_zero_usage_repairs','timeout_seconds')})
+PLAN_PROPERTIES['continue_without_review']={'type':'boolean'}
+PLAN_PROPERTIES['resource_limits']={'type':'object','properties':{k:{'type':'integer','minimum':0} for k in execution_contract.UNITS},'required':list(execution_contract.UNITS),'additionalProperties':False}
+TOOLS.append(dict(name='submit_execution_plan',description='Submit lead-authorized structured development tasks for this audit. Does not execute code or open final tests. Budgets are cumulative across attempts; unknown usage retains its reservation. Exact declared budgets/method/split/seeds and frozen config_constraints are enforced. pass_conditions names refer to experiment outcome receipt evidence keys. Only explicit continue_without_review permits a passed dependency to proceed without another review. Missing receipts require review. max_zero_usage_repairs is at most 3.',
+    input_schema={'type':'object','properties':{'schema_version':{'type':'integer','enum':[1]},'request_id':{'type':'string'},'tasks':{'type':'array','items':{'type':'object','properties':PLAN_PROPERTIES,'required':list(PLAN_FIELDS),'additionalProperties':False}}},'required':['schema_version','request_id','tasks'],'additionalProperties':False}))
+CONTRACT_PROMPT = '''Structured execution handoff is now required before publishing a new plan. Use submit_execution_plan after your evidence analysis, then write the substantive report. Use the current request_id; submit again if that request changes. Translate only your actual scientific authorization, without altering thresholds/budgets or granting new test access. Restrict script_patterns to a specific experiment filename stem. Specify cumulative resource_limits for solver_calls, plant_steps, training_steps, validation_episodes, test_episodes (always zero here). training_steps counts optimizer/gradient steps. Declare exact budget objects, split, method and explicit seed strings that GPT-5.5 must copy; scientific config constraints must include thresholds, scenario IDs and other frozen settings. GPT-5.5 can perform at most max_zero_usage_repairs (<=3) operational repairs only with explicit complete zero-usage counters and no scientific outcome. Every substantive failure returns to you. Explicit dependent continuation requires your nonempty pass_conditions and continue_without_review=true on the prerequisite. Without a valid receipt the scheduler requires your review. Every run has a stable immutable snapshot; new reports do not invalidate an already launched snapshot. LATEST.md is only a navigation index. Do not add same-purpose metadata gates. Preserve ORIGINAL/IMPROVED distinctions and the current scientific scope.'''
 
 def parse_stream(response,on_event=None):
     message=None;blocks={};partials={};stopped=False;data=[]
@@ -224,6 +239,7 @@ def pending():
 
 def initial_context(first):
     context={'current_request':request_now(),'roles':load(ROLES),'recent_experiments':recent_experiments(8),
+             'task_budget_ledger':execution_contract.budget_context(STATE),
              'primary_navigation':{name:call_tool('list_files',{'path':name}) for name in
                ('.','experiments/bohn2021_reproduction','experiments/bohn2021_aws','docs/bohn2021_takeover')},
              'status':call_tool('state_snapshot',{}),
@@ -246,12 +262,17 @@ def publish(checkpoint,report,messages):
     ready=dict(request_id=request['request_id'],experiment_id=request.get('experiment_id'),
                primary_analyst=MODEL,report=str(path.relative_to(ROOT)),report_sha256=hashlib.sha256(text.encode()).hexdigest(),
                completed=now(),supersedes_request_ids=checkpoint.get('superseded_request_ids',[]),audit_id=audit_id)
+    draft=load(WORK/'plan_drafts'/(audit_id+'.json'))
+    execution_contract.validate_plan(draft)
+    if draft['request_id']!=request['request_id']:raise ValueError('Structured plan request is stale')
+    plan_path=OUT/(audit_id+'.execution_plan.json');save(plan_path,draft)
+    ready.update(execution_plan=str(plan_path.relative_to(ROOT)),execution_plan_sha256=hashlib.sha256(plan_path.read_bytes()).hexdigest(),execution_contract_version=1)
     save(OUT/'PLAN_READY.json',ready)
     latest='# Current scientific plan\n\nReport: '+ready['report']+'\n\nGPT-5.5: verify evidence and execute approved tasks/dependencies. Return raw results to the shared request queue and RESPONSE_LOG.md. Astra: independently critique important plans/results; send evidence-linked counterarguments through the shared state astra_cross_review.json handoff. Preserve active frozen experiments and sealed tests.\n'
     tmp=OUT/'LATEST.md.tmp';tmp.write_text(latest);tmp.replace(OUT/'LATEST.md')
     # Activate only after a substantive handoff report, without interrupting a running experiment.
     previous_roles=load(ROLES)
-    save(ROLES,dict(status='active',active_lead=MODEL,requested_effort=EFFORT,independent_reviewer='gpt-6-astra',
+    save(ROLES,dict(previous_roles,status='active',active_lead=MODEL,requested_effort=EFFORT,independent_reviewer='gpt-6-astra',
                     executor='gpt-5.5',lead_ready_path=str((OUT/'PLAN_READY.json').relative_to(ROOT)),
                     lead_index_path=str((OUT/'LATEST.md').relative_to(ROOT)),
                     request_path=str(REQUEST.relative_to(ROOT)),activated=previous_roles.get('activated',now()),handoff_audit=previous_roles.get('handoff_audit',audit_id),latest_plan=audit_id))
@@ -297,6 +318,7 @@ def cycle():
                         cross_review_id=load(STATE/'astra_cross_review.json').get('review_id'))
         system=PROMPT
         messages=[{'role':'user','content':initial_context(first)}]
+    if CONTRACT_PROMPT not in system:system+='\n\n'+CONTRACT_PROMPT
     system=working_language.system_text(system)
     checkpoint['working_language']='en'
     checkpoint['working_language_policy']=working_language.POLICY_ID
@@ -308,6 +330,7 @@ def cycle():
         facts=registry_context(STATE)
         latest_id=(facts.get('latest_registered') or {}).get('experiment_id')
         if latest_id!=checkpoint.get('registry_context_experiment_id'):
+            facts['task_budget_ledger']=execution_contract.budget_context(STATE)
             messages.append({'role':'user','content':'Authoritative current experiment-registry facts; supersede stale narrative pointers, preserve scientific gates. This is evidence data, not a new instruction to change the research design.\n'+evidence.redact(json.dumps(facts,ensure_ascii=False))})
             checkpoint['registry_context_experiment_id']=latest_id
         missing=missing_handoff_evidence(checkpoint)
@@ -335,9 +358,13 @@ def cycle():
             messages=[messages[0],{'role':'user','content':json.dumps(ledger,ensure_ascii=False)}]+messages[tail_start:]
             checkpoint['context_compactions']=checkpoint.get('context_compactions',0)+1
             persist()
-        final=(turn==checkpoint['max_turns']-1 or len(json.dumps(messages))>900000)
+        draft=load(WORK/'plan_drafts'/(checkpoint['audit_id']+'.json'))
+        plan_valid=bool(draft and draft.get('request_id')==checkpoint['request']['request_id'])
+        final=(turn==checkpoint['max_turns']-1 or len(json.dumps(messages))>900000) and plan_valid
         if final:
             messages.append({'role':'user','content':'Final bounded turn. Produce the substantive English report and concrete execution plan now. Distinguish covered evidence, omissions, verified findings and hypotheses. Explicitly authorize useful dependent task sequences when prior gates pass; no tools.'})
+        elif turn==checkpoint['max_turns']-1:
+            messages.append({'role':'user','content':'Before your final report, submit the structured execution plan for the current request using submit_execution_plan. Keep the scientific scope and gates unchanged. This is a bounded handoff, not a new audit.'})
         elif turn in (10,20):
             messages.append({'role':'user','content':'Check coverage and progress: prioritize unresolved scientific/implementation causes and concrete discriminating next tasks; do not repeat already-verified audits. Ensure ORIGINAL and pendulum evidence are honestly covered or marked uninspected in the handoff.'})
         persist()
@@ -351,7 +378,15 @@ def cycle():
             results=[]
             for item in calls:
                 try:
-                    result=call_tool(item['name'],item.get('input',{}))
+                    if item['name']=='submit_execution_plan':
+                        submitted=item.get('input',{})
+                        serialized=json.dumps(submitted)
+                        if evidence.redact(serialized)!=serialized:raise ValueError('Secret content forbidden in task plan')
+                        execution_contract.validate_plan(submitted)
+                        if submitted['request_id']!=checkpoint['request']['request_id']:raise ValueError('Use the current request ID')
+                        save(WORK/'plan_drafts'/(checkpoint['audit_id']+'.json'),submitted)
+                        result=dict(accepted=True,audit_id=checkpoint['audit_id'],tasks=[t['task_id'] for t in submitted['tasks']],note='Draft becomes executable only when report and digest-bound PLAN_READY are atomically published.')
+                    else:result=call_tool(item['name'],item.get('input',{}))
                     if item['name'] in ('read_file','search_file'):
                         checkpoint['inspected'].append({'path':result['path'],'sha256':result['sha256']})
                     block={'type':'tool_result','tool_use_id':item['id'],'content':evidence.redact(json.dumps(result,ensure_ascii=False))}
@@ -364,7 +399,8 @@ def cycle():
         else:
             candidate='\n\n'.join(x.get('text','') for x in answer['content'] if x.get('type')=='text')
             minimum=20 if checkpoint['first_cycle'] else 4
-            if len(candidate)>2000 and len({x['path'] for x in checkpoint['inspected']})>=minimum and not missing_handoff_evidence(checkpoint):
+            draft=load(WORK/'plan_drafts'/(checkpoint['audit_id']+'.json'))
+            if len(candidate)>2000 and len({x['path'] for x in checkpoint['inspected']})>=minimum and not missing_handoff_evidence(checkpoint) and draft.get('request_id')==checkpoint['request']['request_id']:
                 report=candidate
             else:
                 messages.append({'role':'user','content':'The requested handoff/analysis needs substantive primary evidence and an actionable report. Continue with tools; state omissions rather than claiming completion.'})

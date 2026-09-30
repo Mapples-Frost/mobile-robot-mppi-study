@@ -30,7 +30,7 @@ def registry_context(state,limit=6):
         meta=json.loads(metadata)
         if protected_split(meta):continue
         item={k:meta.get(k) for k in FIELDS}
-        item.update(experiment_id=eid,timestamp=timestamp,process_status=status,registry_path='research_artifacts/aws_runs/'+eid+'/registry.json',scientific_acceptance='unverified_here_read_raw_gates')
+        item.update(experiment_id=eid,timestamp=timestamp,process_status=status,registry_path='research_artifacts/aws_runs/'+eid+'/registry.json',scientific_acceptance=meta.get('scientific_acceptance','unverified_here_read_raw_gates'),coordination=meta.get('coordination'),execution_snapshot=meta.get('execution_snapshot'))
         item['artifact_paths']=[x.get('path') for x in meta.get('artifact_inventory',[]) if x.get('exists') and x.get('path') and not DENY.search(x['path'])][:12]
         recent.append(item)
         if len(recent)>=max(1,min(10,int(limit))):break

@@ -207,3 +207,7 @@ Models, reasoning effort, role authority, research scope, budgets and test isola
 remain unchanged. The separate final Chinese summary for the human user remains
 authorized; it is not the internal analysis/handoff document.
 
+
+
+## Structured execution coordination v1
+The user authorized operational coordination optimization. Scientific roles, goals, acceptance criteria, split isolation and model/effort settings stay unchanged. When PLAN_READY includes execution_plan, the scheduler requires its exact task_id, split/method/seed/budget declarations, frozen scientific config_constraints and a complete five-counter resource_request. Follow role_context.execution_instructions and docs/bohn2021_takeover/COORDINATION_CONTRACT_V1.md. Import execution_contract using the provided PYTHONPATH; verify the immutable launch snapshot before resource use, then record measured outcome/resources/gates. Never equate exit0 with scientific acceptance, invent zero usage, infer authority from a prose token, or unconditionally request another audit for a preauthorized continuation. Missing/invalid/unknown receipts and substantive failures return to Opus; proven zero-usage engineering repairs are bounded. Preserve failed evidence and disclose all cross-plan usage. Legacy plans remain compatible until Opus publishes the first structured contract.

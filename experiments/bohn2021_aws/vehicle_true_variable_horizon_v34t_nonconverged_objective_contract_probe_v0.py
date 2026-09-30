@@ -35,6 +35,7 @@ import glob
 import hashlib
 import json
 import math
+import os
 import sys
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
@@ -219,6 +220,16 @@ def latest_v34s_completed() -> Path:
 
 def live_plan_consistency(expected_request: str) -> Dict[str, Any]:
     """Verify active PLAN_READY/LATEST consistency without a stale hash pin."""
+    # New structured runs verify the immutable launch authority rather than prose tokens.
+    if os.environ.get("BOHN_EXECUTION_SNAPSHOT"):
+        import execution_contract
+        snapshot = execution_contract.runtime_snapshot(ROOT, expected_request)
+        ready = snapshot["ready"]
+        return {"expected_plan_request_cli": expected_request, "request_id": ready["request_id"],
+                "report": ready["report"], "report_sha256": ready["report_sha256"],
+                "audit_id": ready["audit_id"], "primary_analyst": ready["primary_analyst"],
+                "completed": ready.get("completed"), "execution_snapshot_sha256": snapshot["snapshot_sha256"],
+                "task_id": snapshot["task"]["task_id"], "authorization_mode": "immutable_structured_task"}
     ready = read_json(v34n.PLAN_READY)
     request = str(ready.get("request_id") or "")
     if request != expected_request:

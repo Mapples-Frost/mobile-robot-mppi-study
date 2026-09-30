@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "request_id": "execution-result:20260930T213912_366c1f10",
+  "tasks": [
+    {
+      "task_id": "S-TC2H8-v0i-raw-tvp-unit-diagnostic-v0",
+      "description": "Zero-resource implementation diagnostic for the already-authored S-TC2H8 v0i raw-TV P repair while nonzero solver/plant work remains blocked by external-backup failure. The task imports the v0i wrapper without running its main, exercises the actual _restore_raw_env_tvps function on a fake LetMPCEnv-shaped object, and statically checks that the high-level horizon action path is present and raw TVP restoration precedes observation/history initialization. It does not construct MPC, call solvers, advance plant dynamics, train/refit, access validation64, or access sealed/final tests. It cannot establish vehicle control performance; it only reduces implementation uncertainty before the backup-gated v0i microcontinuation.",
+      "script_patterns": [
+        "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34z2_source242_v0i_raw_tvp_unit_diagnostic_v0.py"
+      ],
+      "split": "audit",
+      "method": "zero-resource S-TC2H8 v0i raw-TVP implementation unit diagnostic: fake-env exercise of _restore_raw_env_tvps plus static high-level horizon-action source checks; no MPC construction, no solver calls, no plant steps, no training/refit, no validation64, no sealed/final test",
+      "seeds": [
+        "no_random_seed_unit_diagnostic"
+      ],
+      "config_constraints": {
+        "label_ORIGINAL_vs_IMPROVED": "IMPROVED_operational_unit_diagnostic",
+        "authority_mode": "temporary_user_authorized_solo_self_review",
+        "follows_experiment_id": "20260930T213912_366c1f10",
+        "follows_task_id": "S-BACKUP-RECHECK-STC2H8-current-status-v0c",
+        "target_blocker": "S-TC2H8 nonzero solver/plant evidence remains blocked until verified external backup postdates required artifacts",
+        "diagnostic_scope": "implementation_unit_check_only_no_control_claim",
+        "no_controller_or_mpc_runtime_construction": true,
+        "no_simulation_no_training_no_refit": true,
+        "no_validation64_access": true,
+        "no_sealed_or_final_test_access": true,
+        "must_not_read_secrets": true,
+        "script": "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34z2_source242_v0i_raw_tvp_unit_diagnostic_v0.py",
+        "prior_v0i_source": "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34z2_source242_microcontinuation_v0i_env_tvp_format_repair.py",
+        "preserve_backup_blocker": true,
+        "development_only_not_validation_not_final": true,
+        "resource_counters_all_zero_required": true,
+        "cumulative_S_TC2H_family_usage_before_this_task": {
+          "solver_calls": 9,
+          "plant_steps": 0,
+          "training_steps": 0,
+          "validation_episodes": 0,
+          "test_episodes": 0
+        }
+      },
+      "training_budget": {
+        "gradient_steps": 0,
+        "selector_refits": 0,
+        "training_steps": 0
+      },
+      "validation_budget": {
+        "opened_development_branch_episodes": 0,
+        "max_plant_steps": 0,
+        "solver_calls": 0,
+        "validation64_episodes": 0
+      },
+      "test_budget": {
+        "final_test_episodes": 0,
+        "sealed_test_episodes": 0
+      },
+      "resource_limits": {
+        "solver_calls": 0,
+        "plant_steps": 0,
+        "training_steps": 0,
+        "validation_episodes": 0,
+        "test_episodes": 0
+      },
+      "max_attempts": 2,
+      "max_zero_usage_repairs": 1,
+      "timeout_seconds": 900,
+      "dependencies": [],
+      "pass_conditions": {
+        "runtime_snapshot_verified": true,
+        "v0i_raw_tvp_restore_unit_check_completed": true,
+        "fake_raw_tvp_restore_keeps_list_of_dicts": true,
+        "deepcopy_isolation_verified": true,
+        "high_level_horizon_action_static_check": true,
+        "raw_restore_before_observation_history_static_check": true,
+        "no_solver_plant_training_validation_test_usage": true,
+        "no_validation64_or_sealed_test_access": true,
+        "artifacts_persisted": true
+      },
+      "continue_without_review": false
+    }
+  ]
+}

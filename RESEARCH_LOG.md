@@ -6128,3 +6128,78 @@ UTC: 2026-09-30T03:46:34.079983+00:00. Analysis-only over v29; validation64 clos
 
 ## 2026-09-30T03:49:58.631315+00:00
 
+<!-- vehicle-v30b-feature-stability-postdiagnostic-20260930T0355Z -->
+## 2026-09-30 v30b feature-stability postdiagnostic
+
+UTC: 2026-09-30T03:51:36.708427+00:00. Analysis-only over opened v29/v30b; simulations=0, control_steps=0, training/refit=0, validation64 closed, sealed test closed. Diagnostic result: opened features are separable in-sample with a low-complexity margin rule, but leave-one-out model selection is unstable on the tiny risk cluster; this is not yet deployable evidence. Margin-rule same-opened-row metric bad=0, H counts={'12': 6, '15': 3, '35': 2}, decision saving vs fixed H35=50.57%; v30b LOO remained bad=1. H35 margin on `abs_obs_00` is 0.027297 from only 2 rows; H15 margin on `abs_obs_07` after H35 guard is 0.167916 from 3 rows. This is not independent confirmation; it is a handoff diagnostic for Astra. Artifacts: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v30b_feature_stability_postdiagnostic_20260930T0355Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v30b_feature_stability_postdiagnostic_20260930T0355Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v30b_feature_stability_postdiagnostic_20260930T0355Z/completed.json`. Backup request: `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_V30B_FEATURE_STABILITY_POSTDIAGNOSTIC_20260930T0355Z.json`.
+
+
+## 2026-09-30T03:52:30.851161+00:00
+Elapsed since first supervisor event: **3d 16h 56m 7.289s** at `2026-09-30T03:51:36.708427Z` (`320167.289096 s`; desktop conversation excluded). Cumulative server API `total_tokens`: **unavailable via repository tools in this cycle**; treated as unknown, not zero.
+
+Concrete actions completed:
+
+1. **Verified coordination state**
+   - Re-read `COORDINATION.md`, `LATEST.md`, `NEXT_REVIEW_REQUEST.json`, and recent `RESPONSE_LOG.md`.
+   - Checked for `docs/bohn2021_takeover/astra_reviews/ANALYSIS_READY.json`; none was present.
+
+2. **Materialized latest supervisor-reported backup proof**
+   - Wrote:
+     - `research_artifacts/aws_backup_proofs/backup_proof_20260930T035044_from_supervisor_context_after_v30b_and_feature_stability_source.json`
+   - SHA256:
+     - `bd6ffe2f133b1b2f31967c595f270c5840db87b0bef4f5ce7bca331f72c198e1`
+   - This records the verified backup reported in supervisor context at `2026-09-30T03:50:44Z`, commit `7845b847e31745d589d769a85d0211cd2eb4bbc1`.
+
+3. **Executed bounded analysis-only postdiagnostic**
+   - Experiment:
+     - `20260930T035136_ee411d20`
+   - Script:
+     - `experiments/bohn2021_aws/vehicle_true_variable_horizon_v30b_feature_stability_postdiagnostic.py`
+   - Runtime:
+     - `2.006 s`
+   - Classification:
+     - Development analysis only over already-opened v29/v30b artifacts.
+     - No simulations.
+     - No control steps.
+     - No training/refit.
+     - No validation64 access.
+     - No sealed-test access.
+
+4. **Postdiagnostic result**
+   - Artifacts:
+     - `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v30b_feature_stability_postdiagnostic_20260930T0355Z/summary.md`
+     - `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v30b_feature_stability_postdiagnostic_20260930T0355Z/raw.json`
+     - `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v30b_feature_stability_postdiagnostic_20260930T0355Z/completed.json`
+   - Headline:
+     - v30b oracle H12/H15/H35 triage: `bad=0`, saving vs fixed H35 `50.57%` on 11 opened states.
+     - v30b LOO feature rule: `bad=1`, nominal saving vs fixed H35 `48.30%`; still not deployable/safe evidence.
+     - Same-opened-row margin rule: `bad=0`, H counts `{'12': 6, '15': 3, '35': 2}`, saving vs fixed H35 `50.57%`.
+     - H35 separability margin on `abs_obs_00`: `0.027297`, based on only 2 H35 rows.
+     - H15 separability margin on `abs_obs_07`: `0.167916`, based on 3 H15 rows.
+   - Execution-level interpretation:
+     - Opened features are separable in-sample with a low-complexity margin rule, but leave-one-out model selection is unstable on the tiny risk cluster.
+     - This is **not independent confirmation** and does **not** authorize validation64 or sealed-test use.
+
+5. **Astra handoff updated**
+   - Updated:
+     - `docs/bohn2021_takeover/astra_reviews/NEXT_REVIEW_REQUEST.json`
+     - New request ID: `v30b-feature-stability-postdiagnostic-20260930T0355Z`
+   - Updated:
+     - `docs/bohn2021_takeover/astra_reviews/RESPONSE_LOG.md`
+   - The request asks Astra to choose among:
+     - fresh source-independent triage label acquisition,
+     - bounded terminal-risk/value refit/training,
+     - scenario/comparison redesign or stratification.
+
+6. **State preserved**
+   - Persisted state via `update_state`.
+   - Key blocker:
+     - A new external backup is required before any unique simulations, refits/training, validation64 access, or final-test access.
+   - Backup request written:
+     - `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_V30B_FEATURE_STABILITY_POSTDIAGNOSTIC_20260930T0355Z.json`
+
+Next safe iteration should begin by verifying/obtaining backup coverage for the postdiagnostic outputs and updated Astra handoff, then checking for `ANALYSIS_READY.json` and implementing Astra’s selected direction.
+
+
+## 2026-09-30T03:57:35.748299+00:00
+

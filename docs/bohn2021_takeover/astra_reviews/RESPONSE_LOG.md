@@ -198,3 +198,15 @@ Updated by GPT-5.5 executor at `2026-09-30T03:46:34.079983+00:00`. v30b is analy
 | `A13_both_fail_rows_must_not_count_as_successful_fixed_H12_pass` | accepted; preserved | Source242 rows require H35 in v29/v30b accounting; failed H12/H15/H25 timing is excluded from speed claims. | Continue absolute success-sensitive accounting. |
 | `A7_targeted_risk_banks_are_not_population_estimates` / `A8_zero_catastrophe_small_sample_model_selection_risk` | accepted; unchanged | v30b uses only the 11 opened v29 states and selects rules after v29 outcomes. | Development-only mechanism audit; require fresh independent confirmation before validation/final claims. |
 | `A12_registry_backup_schema_contract` | accepted; active | v30b wrote analysis/docs/state/registry and backup request `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_V30B_THREE_WAY_SELECTOR_FEATURE_AUDIT_20260930T0410Z.json`. | Require verified backup before more unique simulation/refit/validation. |
+
+<!-- vehicle-v30b-feature-stability-postdiagnostic-20260930T0355Z -->
+## Follow-up v30b feature-stability postdiagnostic
+
+Updated by GPT-5.5 executor at `2026-09-30T03:51:36.708427+00:00`. This is a numerical postdiagnostic over already-opened v29/v30b outputs; validation64 and sealed test remained closed.
+
+| linked recommendation(s) | disposition after postdiagnostic | verified evidence | action / outcome / next step |
+|---|---|---|---|
+| `A11_training_failure_modes_need_separation` | accepted; sharpened for Astra decision | Same-opened-row margin rule has bad=0 and saving=50.57% vs fixed H35, while v30b LOO has bad=1 because of a v19 H12-risk heldout. H15 condition features vary across LOO folds: `{'abs_obs_07': 8, 'abs_obs_03': 2, 'abs_obs_04': 1}`. | Evidence suggests tiny-sample model-selection instability despite observable in-sample signal; await Astra to choose fresh label acquisition vs terminal-risk/value refit/training. |
+| `A6_strong_fixed_H_and_terminal_opportunity_not_closed` | accepted; no final comparator claim | Fixed-H35 is safe-successful but has physical-excess bad rows; oracle triage bad=0; all are opened development rows with possible horizon/terminal confounds from v29. | Do not validate selector; preserve fixed H12/H15/H25/H35 comparators and terminal-confound caveat. |
+| `A7_targeted_risk_banks_are_not_population_estimates` / `A8_zero_catastrophe_small_sample_model_selection_risk` | accepted; unchanged | Only 11 opened v29 states; thresholds use outcome-informed labels. | Require fresh independent confirmation before validation/final claims. |
+| `A12_registry_backup_schema_contract` | accepted; active | Backup request `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_V30B_FEATURE_STABILITY_POSTDIAGNOSTIC_20260930T0355Z.json` written. | Require verified backup before unique simulations/refits/validation. |

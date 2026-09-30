@@ -1518,3 +1518,11 @@ UTC `2026-09-30T07:45:44.815804+00:00`: gate passed `True`; schedule/raw/trace c
 ## 2026-09-30 v34c zero-solve objective-basin contract preflight
 
 UTC: 2026-09-30T09:39:32.043254+00:00. Executed Astra Task1 repair/preflight with 24 scheduled cells and 24 controlled intercepts before `mpc.solve`; lower-level solver calls=0, plant steps=0, training/refit=0, validation64=false, sealed test=false. hard_pass=True; vf4_ok=24/24; lterm_ok=24/24; group_failures=0. Artifacts: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34c_contract_preflight_v0e_20260930T093751Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34c_contract_preflight_v0e_20260930T093751Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34c_contract_preflight_v0e_20260930T093751Z/completed.json`. Backup request: `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_V34C_CONTRACT_PREFLIGHT_V0E_20260930T093751Z.json`.
+
+### vehicle-v34f-backup-gate-preflight-20260930T100335Z
+
+UTC: 2026-09-30T10:03:35.369934+00:00
+
+Opus task A backup-gate preflight passed with zero solver/plant/training/validation/test budget. Matched verified backup proof `research_artifacts/aws_backup_proofs/backup_proof_20260930T095445_from_user_context_after_v34e_source_and_docs.json` for commit `c376745cacb765419e0d31007a1d8e89b711dbb6` and package `8003dfb75ab3ec38b084c453faa58ac15956de55f5ee581c6706716ff9836cfd`. This only verifies the repaired gate; it is not objective-vs-basin science. External backup covering v34f source/preflight outputs is required before the one-cell objective-reconstruction smoke.
+
+Artifacts: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34f_backup_gate_preflight_v0_20260930T100335Z/completed.json`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34f_backup_gate_preflight_v0_20260930T100335Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34f_backup_gate_preflight_v0_20260930T100335Z/summary.md`.

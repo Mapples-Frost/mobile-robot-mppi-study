@@ -7,6 +7,8 @@ import json
 import os
 import pathlib
 import sqlite3
+import signal
+import sys
 import time
 import urllib.request
 import urllib.error
@@ -165,6 +167,8 @@ def api(system,messages,final=False):
         'anthropic-version':'2023-06-01','Content-Type':'application/json',
         'Accept':'text/event-stream','User-Agent':'BohnResearchAgent/1.0'})
     cid=uuid.uuid4().hex;began=time.monotonic();status='error';usage={};observed={}
+    with sqlite3.connect(STATE/'research.sqlite',timeout=30) as c:
+        c.execute('insert into calls values(?,?,?,?,?,?,?)',(cid,now(),MODEL,'max_requested','running','{}',0))
     try:
         stream_path=WORK/'streams'/(cid+'.jsonl');stream_path.parent.mkdir(exist_ok=True)
         with stream_path.open('w') as log:
@@ -174,6 +178,10 @@ def api(system,messages,final=False):
                 log.write(json.dumps(item,ensure_ascii=False)+'\n')
                 if item.get('type')=='message_start':observed.update(item.get('message',{}).get('usage',{}))
                 elif item.get('type')=='message_delta':observed.update(item.get('usage',{}))
+                if item.get('type') in ('message_start','message_delta'):
+                    log.flush()
+                    with sqlite3.connect(STATE/'research.sqlite',timeout=30) as c:
+                        c.execute('update calls set usage=?,duration=? where id=?',(json.dumps(normalize_usage(observed)),time.monotonic()-began,cid))
                 if time.monotonic()-began>1800:raise TimeoutError('Per-call wall-time limit exceeded')
             with urllib.request.urlopen(req,timeout=1800) as response:
                 if 'text/event-stream' in response.headers.get('Content-Type',''):
@@ -195,7 +203,7 @@ def api(system,messages,final=False):
     finally:
         if not usage:usage=normalize_usage(observed)
         with sqlite3.connect(STATE/'research.sqlite',timeout=30) as c:
-            c.execute('insert into calls values(?,?,?,?,?,?,?)',(cid,now(),MODEL,'max_requested',status,json.dumps(usage),time.monotonic()-began))
+            c.execute('update calls set timestamp=?,status=?,usage=?,duration=? where id=?',(now(),status,json.dumps(usage),time.monotonic()-began,cid))
         event('api',call_id=cid,status=status,requested_effort=EFFORT,effort_echo_available=False,usage=usage,duration=time.monotonic()-began)
 
 def request_now():
@@ -298,6 +306,18 @@ def cycle():
         if cross.get('review_id')!=checkpoint.get('cross_review_id') and cross.get('review_id'):
             checkpoint['cross_review_id']=cross['review_id']
             messages.append({'role':'user','content':'New independent Astra cross-review. Check its evidence and decide whether it changes the plan; model agreement is not proof:\n'+evidence.redact(json.dumps(cross,ensure_ascii=False))})
+        if len(json.dumps(messages))>750000 and missing_handoff_evidence(checkpoint):
+            # Native signed blocks are opaque: archive/drop whole old turns, never edit
+            # a signature or leave a tool_result without its preceding tool_use.
+            save(WORK/'compactions'/(checkpoint['audit_id']+'-%03d.json'%turn),dict(system=system,messages=messages))
+            tail_start=max(1,len(messages)-10)
+            while tail_start>1 and messages[tail_start]['role']!='assistant':tail_start-=1
+            ledger={'inspected_source_hashes':checkpoint['inspected'],'current_request':checkpoint['request'],
+                    'missing_handoff_evidence':missing_handoff_evidence(checkpoint),
+                    'note':'Older complete native turns are archived under compactions; retained source hashes are navigation, not enough to assert numerical facts. Re-read precise primary lines if needed. Keep original/pending task evidence and avoid restarting the whole audit.'}
+            messages=[messages[0],{'role':'user','content':json.dumps(ledger,ensure_ascii=False)}]+messages[tail_start:]
+            checkpoint['context_compactions']=checkpoint.get('context_compactions',0)+1
+            persist()
         final=(turn==checkpoint['max_turns']-1 or len(json.dumps(messages))>900000)
         if final:
             messages.append({'role':'user','content':'Final bounded turn. Produce the substantive Chinese report and concrete execution plan now. Distinguish covered evidence, omissions, verified findings and hypotheses. Explicitly authorize useful dependent task sequences when prior gates pass; no tools.'})
@@ -350,6 +370,10 @@ def main():
     global SECRET
     WORK.mkdir(parents=True,exist_ok=True);OUT.mkdir(parents=True,exist_ok=True)
     lock=(WORK/'worker.lock').open('a');fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
+    # Clean service termination commits any observable usage in API finally blocks.
+    signal.signal(signal.SIGTERM,lambda *_:sys.exit(0))
+    with sqlite3.connect(STATE/'research.sqlite',timeout=30) as c:
+        c.execute("update calls set status='interrupted_unverified' where model=? and status='running'",(MODEL,))
     SECRET=dict(x.split('=',1) for x in (BASE/'.secrets/opus.env').read_text().splitlines() if '=' in x)
     for p in (BASE/'.secrets').glob('*'):
         if p.is_file():

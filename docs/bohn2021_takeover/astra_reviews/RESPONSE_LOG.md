@@ -428,3 +428,11 @@ Updated by GPT-5.5 executor at `2026-09-30T09:39:32.043254+00:00` for Astra repo
 |---|---|---|---|
 | `A11_training_failure_modes_need_separation`, `A12_registry_backup_schema_contract` | accepted/executed | `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34c_contract_preflight_v0e_20260930T093751Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34c_contract_preflight_v0e_20260930T093751Z/summary.md`; headline `{'preflight_rows': 24, 'controlled_no_solve_intercepts': 24, 'lower_level_solver_calls': 0, 'plant_steps': 0, 'env_reset_calls_after_construction': 0, 'vf4_ok_rows': 24, 'lterm_ok_rows': 24, 'group_failure_count': 0, 'validation64_bank_opened': False, 'sealed_test_accessed': False}` | If hard_pass is true and backup is verified, proceed to the fixed 24-call objective-basin probe using this contract; if false, repair the listed missing primitive only. |
 | `A6_strong_fixed_H_and_terminal_opportunity_not_closed` | preserved | same artifacts; terminal modes zero/V15/V35 retained for all frozen cells | No selector/refit/validation64/test access from this preflight. |
+
+### vehicle-v34f-backup-gate-preflight-20260930T100335Z
+
+UTC: 2026-09-30T10:03:35.369934+00:00
+
+Opus task A backup-gate preflight passed with zero solver/plant/training/validation/test budget. Matched verified backup proof `research_artifacts/aws_backup_proofs/backup_proof_20260930T095445_from_user_context_after_v34e_source_and_docs.json` for commit `c376745cacb765419e0d31007a1d8e89b711dbb6` and package `8003dfb75ab3ec38b084c453faa58ac15956de55f5ee581c6706716ff9836cfd`. This only verifies the repaired gate; it is not objective-vs-basin science. External backup covering v34f source/preflight outputs is required before the one-cell objective-reconstruction smoke.
+
+Artifacts: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34f_backup_gate_preflight_v0_20260930T100335Z/completed.json`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34f_backup_gate_preflight_v0_20260930T100335Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34f_backup_gate_preflight_v0_20260930T100335Z/summary.md`.

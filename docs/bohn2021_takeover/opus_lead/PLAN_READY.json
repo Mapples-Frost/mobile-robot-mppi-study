@@ -1,0 +1,12 @@
+{
+  "request_id": "execution-result:20260930T094857_bf0b0af1",
+  "experiment_id": "20260930T094857_bf0b0af1",
+  "primary_analyst": "claude-opus-5-5",
+  "report": "docs/bohn2021_takeover/opus_lead/20260930T094740Z_3d9a1e.md",
+  "report_sha256": "efb65f58271438a4eb3331cae954373b554185f375525f6162e7628ceac5f840",
+  "completed": "2026-09-30T09:57:18.970894+00:00",
+  "supersedes_request_ids": [
+    "execution-result:20260930T084409_7dd79362"
+  ],
+  "audit_id": "20260930T094740Z_3d9a1e"
+}

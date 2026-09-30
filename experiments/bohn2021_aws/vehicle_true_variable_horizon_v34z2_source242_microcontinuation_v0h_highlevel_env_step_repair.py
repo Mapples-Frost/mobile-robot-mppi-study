@@ -1,17 +1,20 @@
 #!/usr/bin/env python3
 """S-TC2H7 high-level environment-step repair for source242 microcontinuation.
 
-S-TC2H6/v0g proved that the H12/H15/H35 first MPC optimizations solve under the
-source242/V15_shared context, but it still passed the low-level control returned
-by ``controller.get_action`` into ``LetMPCEnv.step``.  The retained gym-horizon
-environment expects the high-level agent action ``mpc_horizon`` and internally
-calls ``ControlSystem.step`` -> ``controller.get_action`` -> ``simulator.make_step``.
+This is the bounded zero-usage repair after the first S-TC2H7 attempt failed
+before solver/plant resources with
+``AttributeError: module '...microcontinuation_v0' has no attribute
+'terminal_for_mode'``.  The defect was a wrapper/module-name mistake: terminal
+selection belongs to the loaded vehicle objective probe module
+``gate.MODULES['base']``, while the name ``base`` in this wrapper denotes the
+S-TC2H microcontinuation runner module.
 
-This wrapper changes only that interface layer: it no longer pre-solves before
-``env.step`` and instead calls ``env.step([H])`` while instrumenting the internal
-MPC solve.  The source242 state/TVP/goal, H=[12,15,35], V15_shared terminal
-weights, canonical initial guess, budgets, and access restrictions are inherited.
-No validation64, sealed/final test, training, or refit is used.
+The scientific intervention remains unchanged from S-TC2H7: call
+``LetMPCEnv.step([H])`` (the high-level ``mpc_horizon`` action) rather than
+passing a low-level control into the environment.  Source242 context, goal61,
+H=[12,15,35], V15_shared, canonical initialization, budgets, and split/test
+restrictions are held fixed.  A verified external backup after this repaired
+source is still required before any solver or plant resources.
 """
 from __future__ import annotations
 
@@ -26,6 +29,8 @@ import numpy as np
 
 import vehicle_true_variable_horizon_v34z2_source242_microcontinuation_v0g_backup_proof_materialization_rerun as v0g
 
+# ``base`` is the original S-TC2H microcontinuation runner module.  The loaded
+# vehicle objective/context helper is named ``model_base`` inside run_arm.
 base = v0g.base
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE = Path(__file__).resolve()
@@ -192,18 +197,11 @@ def _initialize_env_histories(env: Any) -> Dict[str, Any]:
     cs.history = {"state": [copy.deepcopy(cs.current_state)], "process_noise": [process0], "tvp": []}
     env.steps_count = 0
     try:
-        obs0 = env.get_observation()
-        obs0_clean = base.clean(obs0)
+        obs0_clean = base.clean(env.get_observation())
     except Exception as exc:
         obs0_clean = {"observation_exception": repr(exc)}
     env.history = {"obs": [obs0_clean], "actions": [], "rewards": []}
-    return {
-        "control_system_history_initialized": True,
-        "env_history_initialized": True,
-        "initial_step_count": int(getattr(cs, "_step_count", 0) or 0),
-        "initial_env_steps_count": int(getattr(env, "steps_count", 0) or 0),
-        "initial_observation": obs0_clean,
-    }
+    return {"control_system_history_initialized": True, "env_history_initialized": True, "initial_step_count": int(getattr(cs, "_step_count", 0) or 0), "initial_env_steps_count": int(getattr(env, "steps_count", 0) or 0), "initial_observation": obs0_clean}
 
 
 def _enhanced_costs(info: Mapping[str, Any], reward: Optional[float]) -> Dict[str, Any]:
@@ -239,7 +237,7 @@ def run_arm_highlevel(h: int, context: Mapping[str, Any], terminals: Mapping[int
     model_base = gate.MODULES["base"]
     stage1 = gate.MODULES["stage1_runner"]
     v34u = gate.MODULES["v34u"]
-    terminal, term_h, term_note = base.terminal_for_mode(h, base.TERMINAL_MODE, terminals)
+    terminal, term_h, term_note = model_base.terminal_for_mode(h, base.TERMINAL_MODE, terminals)
     env = base.create_env_with_terminal(model_base, stage1, h, terminal)
     ctrl = env.control_system.controller
     mpc = ctrl.mpc
@@ -278,18 +276,7 @@ def run_arm_highlevel(h: int, context: Mapping[str, Any], terminals: Mapping[int
         elapsed = float(time.perf_counter() - t0)
         stats = copy.deepcopy(getattr(mpc, "solver_stats", {}))
         post = gate.capture_mpc_state(mpc)
-        ev = {
-            "step_index": len(solve_events),
-            "pre": pre,
-            "post": post,
-            "solver_wall_s": elapsed,
-            "solver_exception": exc,
-            "solver_stats": stats,
-            "return_status": stats.get("return_status"),
-            "success": bool(stats.get("success", False)),
-            "iterations": stats.get("iter_count") or stats.get("iterations"),
-            "objective_opt_f_num": gate.finite_float(getattr(mpc, "opt_f_num", None), None),
-        }
+        ev = {"step_index": len(solve_events), "pre": pre, "post": post, "solver_wall_s": elapsed, "solver_exception": exc, "solver_stats": stats, "return_status": stats.get("return_status"), "success": bool(stats.get("success", False)), "iterations": stats.get("iter_count") or stats.get("iterations"), "objective_opt_f_num": gate.finite_float(getattr(mpc, "opt_f_num", None), None)}
         solve_events.append(ev)
         if exc is not None:
             raise base.MicroError("mpc.solve failed: " + exc)
@@ -316,10 +303,9 @@ def run_arm_highlevel(h: int, context: Mapping[str, Any], terminals: Mapping[int
         t0 = time.perf_counter()
         try:
             step_result = env.step(high_level_action)
-            obs, reward, done, info = base.parse_step_result(step_result)
+            _obs, reward, done, info = base.parse_step_result(step_result)
             step_exc = None
         except Exception as exc:
-            obs = None
             reward = None
             done = False
             info = {}
@@ -351,31 +337,7 @@ def run_arm_highlevel(h: int, context: Mapping[str, Any], terminals: Mapping[int
             success_flag = True
         if con is True:
             constraint_flag = True
-        row = {
-            "step": step,
-            "horizon": h,
-            "interface": "LetMPCEnv.step(high_level_mpc_horizon_action)",
-            "high_level_action": base.clean(high_level_action),
-            "state_before": state_before,
-            "state_after": state_after,
-            "state_delta_l1_best_effort": _numeric_state_distance(state_before, state_after),
-            "action": base.clean(act),
-            "first_control_hash": first_control_hash if step == 0 else None,
-            "solver_events": base.clean(new_events),
-            "solver_status": status,
-            "solver_iterations": new_events[-1].get("iterations") if new_events else None,
-            "solver_wall_s": new_events[-1].get("solver_wall_s") if new_events else None,
-            "whole_decision_wall_s": whole,
-            "control_system_step_count_before": cs_step_before,
-            "control_system_step_count_after": cs_step_after,
-            "plant_step_delta_counted": delta_steps,
-            "reward": reward,
-            "done": done,
-            "info": base.clean(info),
-            "costs": costs,
-            "env_step_exception": step_exc,
-        }
-        steps.append(row)
+        steps.append({"step": step, "horizon": h, "interface": "LetMPCEnv.step(high_level_mpc_horizon_action)", "high_level_action": base.clean(high_level_action), "state_before": state_before, "state_after": state_after, "state_delta_l1_best_effort": _numeric_state_distance(state_before, state_after), "action": base.clean(act), "first_control_hash": first_control_hash if step == 0 else None, "solver_events": base.clean(new_events), "solver_status": status, "solver_iterations": new_events[-1].get("iterations") if new_events else None, "solver_wall_s": new_events[-1].get("solver_wall_s") if new_events else None, "whole_decision_wall_s": whole, "control_system_step_count_before": cs_step_before, "control_system_step_count_after": cs_step_after, "plant_step_delta_counted": delta_steps, "reward": reward, "done": done, "info": base.clean(info), "costs": costs, "env_step_exception": step_exc})
         if step_exc is not None:
             stopped = "env_step_exception"
             break
@@ -384,8 +346,7 @@ def run_arm_highlevel(h: int, context: Mapping[str, Any], terminals: Mapping[int
             break
     if steps and steps[-1].get("solver_status") != "Solve_Succeeded":
         final_solver_failures += 1
-    physical_values = [((s.get("costs") or {}).get("physical_or_stage_cost_best_effort")) for s in steps]
-    total_values = [((s.get("costs") or {}).get("total_cost_best_effort")) for s in steps]
+
     def finite_sum(vals: Sequence[Any]) -> Optional[float]:
         xs: List[float] = []
         for v in vals:
@@ -396,32 +357,10 @@ def run_arm_highlevel(h: int, context: Mapping[str, Any], terminals: Mapping[int
             except Exception:
                 pass
         return float(math.fsum(xs)) if xs else None
-    return {
-        "horizon": h,
-        "terminal_mode": base.TERMINAL_MODE,
-        "terminal_source_horizon": int(term_h),
-        "terminal_note": term_note,
-        "context_hash": context_hash,
-        "context_identity": {"context_id": context.get("context_id"), "state_label": context.get("state_label"), "tvp_start_index": context.get("tvp_start_index"), "goal": goal_meta, "state0": state0},
-        "initialization_meta": base.clean(init_meta),
-        "history_initialization_meta": base.clean(history_meta),
-        "steps": steps,
-        "steps_executed": int(plant_steps_in_arm),
-        "solver_calls_observed": len(solve_events),
-        "plant_steps_observed": int(plant_steps_in_arm),
-        "success": success_flag,
-        "constraint": constraint_flag,
-        "stopped_reason": stopped,
-        "first_control_hash": first_control_hash,
-        "physical_or_stage_cost_sum_best_effort": finite_sum(physical_values),
-        "total_cost_sum_best_effort": finite_sum(total_values),
-        "decision_timing_summary_s": base.timing_summary([s.get("whole_decision_wall_s") for s in steps]),
-        "solver_timing_summary_s": base.timing_summary([s.get("solver_wall_s") for s in steps]),
-        "solver_status_counts": {str(k): sum(1 for ev in solve_events if str(ev.get("return_status")) == str(k)) for k in sorted(set(str(ev.get("return_status")) for ev in solve_events))},
-        "initial_failed_steps": initial_solver_failures,
-        "final_failed_steps": final_solver_failures,
-        "solver_failure_steps": solver_failure_steps,
-    }
+
+    physical_values = [((s.get("costs") or {}).get("physical_or_stage_cost_best_effort")) for s in steps]
+    total_values = [((s.get("costs") or {}).get("total_cost_best_effort")) for s in steps]
+    return {"horizon": h, "terminal_mode": base.TERMINAL_MODE, "terminal_source_horizon": int(term_h), "terminal_note": term_note, "context_hash": context_hash, "context_identity": {"context_id": context.get("context_id"), "state_label": context.get("state_label"), "tvp_start_index": context.get("tvp_start_index"), "goal": goal_meta, "state0": state0}, "initialization_meta": base.clean(init_meta), "history_initialization_meta": base.clean(history_meta), "steps": steps, "steps_executed": int(plant_steps_in_arm), "solver_calls_observed": len(solve_events), "plant_steps_observed": int(plant_steps_in_arm), "success": success_flag, "constraint": constraint_flag, "stopped_reason": stopped, "first_control_hash": first_control_hash, "physical_or_stage_cost_sum_best_effort": finite_sum(physical_values), "total_cost_sum_best_effort": finite_sum(total_values), "decision_timing_summary_s": base.timing_summary([s.get("whole_decision_wall_s") for s in steps]), "solver_timing_summary_s": base.timing_summary([s.get("solver_wall_s") for s in steps]), "solver_status_counts": {str(k): sum(1 for ev in solve_events if str(ev.get("return_status")) == str(k)) for k in sorted(set(str(ev.get("return_status")) for ev in solve_events))}, "initial_failed_steps": initial_solver_failures, "final_failed_steps": final_solver_failures, "solver_failure_steps": solver_failure_steps}
 
 
 def _strict_microcontinuation_evidence_current() -> Dict[str, Any]:
@@ -433,24 +372,13 @@ def _strict_microcontinuation_evidence_current() -> Dict[str, Any]:
         except OSError:
             pass
     if not candidates:
-        return {
-            "source242_microcontinuation_produced_plant_transitions": False,
-            "all_three_horizon_arms_advanced_at_least_one_plant_step": False,
-            "no_env_or_controller_exceptions_in_attempted_arms": False,
-            "strict_microcontinuation_evidence_source": None,
-        }
+        return {"source242_microcontinuation_produced_plant_transitions": False, "all_three_horizon_arms_advanced_at_least_one_plant_step": False, "no_env_or_controller_exceptions_in_attempted_arms": False, "strict_microcontinuation_evidence_source": None}
     candidates.sort()
     raw_path = candidates[-1][1]
     try:
         raw = base.read_json(raw_path)
     except Exception as exc:
-        return {
-            "source242_microcontinuation_produced_plant_transitions": False,
-            "all_three_horizon_arms_advanced_at_least_one_plant_step": False,
-            "no_env_or_controller_exceptions_in_attempted_arms": False,
-            "strict_microcontinuation_evidence_source": base.rel(raw_path),
-            "strict_microcontinuation_evidence_error": "%s: %s" % (type(exc).__name__, exc),
-        }
+        return {"source242_microcontinuation_produced_plant_transitions": False, "all_three_horizon_arms_advanced_at_least_one_plant_step": False, "no_env_or_controller_exceptions_in_attempted_arms": False, "strict_microcontinuation_evidence_source": base.rel(raw_path), "strict_microcontinuation_evidence_error": "%s: %s" % (type(exc).__name__, exc)}
     arms = raw.get("arms") or []
     if not isinstance(arms, list):
         arms = []
@@ -462,17 +390,7 @@ def _strict_microcontinuation_evidence_current() -> Dict[str, Any]:
             plant_by_horizon[str(a.get("horizon"))] = int(a.get("plant_steps_observed", 0) or 0)
     exception_free = bool(arms) and all(reason not in ("env_step_exception", "controller_get_action_exception") for reason in stop_reasons)
     all_three_advanced = bool(len(arms) == 3 and all(int(a.get("plant_steps_observed", 0) or 0) > 0 for a in arms if isinstance(a, Mapping)))
-    if len(arms) != 3:
-        all_three_advanced = False
-    return {
-        "source242_microcontinuation_produced_plant_transitions": plant_total > 0,
-        "all_three_horizon_arms_advanced_at_least_one_plant_step": all_three_advanced,
-        "no_env_or_controller_exceptions_in_attempted_arms": exception_free,
-        "strict_microcontinuation_evidence_source": base.rel(raw_path),
-        "observed_total_plant_steps": plant_total,
-        "observed_arm_stop_reasons": stop_reasons,
-        "observed_plant_steps_by_horizon": plant_by_horizon,
-    }
+    return {"source242_microcontinuation_produced_plant_transitions": plant_total > 0, "all_three_horizon_arms_advanced_at_least_one_plant_step": all_three_advanced, "no_env_or_controller_exceptions_in_attempted_arms": exception_free, "strict_microcontinuation_evidence_source": base.rel(raw_path), "observed_total_plant_steps": plant_total, "observed_arm_stop_reasons": stop_reasons, "observed_plant_steps_by_horizon": plant_by_horizon}
 
 
 def _augment_evidence_v0h(evidence: Any) -> Any:
@@ -494,7 +412,7 @@ def record_outcome_v0h(root: Any, outcome: str, used: Mapping[str, int], evidenc
     return _previous_record_outcome(root, outcome, used, _augment_evidence_v0h(evidence), engineering_error=engineering_error)
 
 
-# Apply launch/prerequisite/evidence and the only scientific-interface repair.
+# Apply launch/prerequisite/evidence and the one-variable high-level env.step repair.
 base.NAME = NAME
 base.TASK_ID = TASK_ID
 base.__dict__["__file__"] = str(SOURCE)

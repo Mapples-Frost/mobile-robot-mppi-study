@@ -1,0 +1,91 @@
+{
+  "request_id": "execution-result:20260930T163205_2de4d7ea",
+  "schema_version": 1,
+  "tasks": [
+    {
+      "task_id": "S-TC2-OC-epsilon-1b-converged-contract-gate-wrapper-v0",
+      "description": "TEMPORARY GPT-5.5 SOLO SELF-REVIEW / SOLVER-BEARING DEVELOPMENT OBJECTIVE-CONTRACT GATE. Run the already prepared solo-compatible wrapper around the frozen v34z2 T-C2 objective-contract gate after the S-TC2C2 source242 goal-source preflight and T-C4R ledger both passed with zero resources and after the supervisor-reported external backup at 2026-09-30T16:35:36Z. The wrapper must verify the current structured snapshot, bind the gate's expected request/task ID to the current solo plan, preserve the source242 in-memory goal extraction rule case.tvp.trajectory_endpoint[61], and delegate to the wrapped gate without opening validation64 or sealed/final tests. Measure exactly the frozen five-cell schedule: H15 canonical, H15 goal-facing, H12 canonical, H35 canonical, and H12 truncated-control max_iter=1. Preserve the hard inert-intervention gate before solver use; persist per-stage epsilon vectors with labels/dimensions; report direct NLP f checks, objective reconstruction errors, solver status/iterations, solver wall timing and whole-decision get_action timing. Stop/escalate if any converged cell exceeds the predeclared hard-defect relative-error threshold or if the setup becomes inert. This is development evidence only, not validation64, not final test, and not ORIGINAL SAC reproduction.",
+      "script_patterns": [
+        "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34z2_solo_converged_contract_gate_wrapper_v0.py"
+      ],
+      "split": "opened_development_source242_slot0_branch_start_only_no_validation64_no_sealed_test",
+      "method": "solo-compatible five-solve v34z2 objective-contract gate measuring converged cells, epsilon vectors, direct NLP f reconstruction, solver timing and whole-decision timing after source242 goal-source wrapper repair",
+      "seeds": [
+        "canonical_solve_no_training_seed"
+      ],
+      "config_constraints": {
+        "label_ORIGINAL_vs_IMPROVED": "IMPROVED",
+        "authority_mode": "temporary_user_authorized_solo_self_review",
+        "no_change_to_frozen_scientific_contract": true,
+        "wrapper_task_id": "S-TC2-OC-epsilon-1b-converged-contract-gate-wrapper-v0",
+        "wrapped_gate_source": "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34z2_converged_contract_gate_v0.py",
+        "expected_wrapped_gate_sha256": "66dbf84e4a7917d824152cae1cac4da77c51efff576cd4775e8cd1be29dbcc97",
+        "wrapper_source_sha256": "d4034ffc7241305423d47e9c4322184e4b6aa3841e3a2c82131726d3ea34f70e",
+        "required_preflight_completed": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34z2_converged_contract_preflight_v0b_20260930T162146Z/completed.json",
+        "required_t_c4r_completed": "research_artifacts/aws_diagnostics/vehicle_fixedh_terminal_opportunity_ledger_v0_20260930T163205Z/completed.json",
+        "backup_verified_before_solver_bearing_work": "2026-09-30T16:35:36.547355+00:00 commit 07420c021b0647a0aef9ec9f13798ff044d89c51 package_sha256 948129ffd2586ae4724fdfdb92873913cae9071a1477615525be9f72119a7bc1 remaining_changed_files 0",
+        "split_source_context": "source242_slot0_branch_start",
+        "goal_source_required": "case.tvp.trajectory_endpoint[61]",
+        "terminal_mode": "V15_shared",
+        "production_cells": [
+          "H12_canonical",
+          "H15_canonical",
+          "H35_canonical",
+          "H15_goal_facing"
+        ],
+        "truncated_cell": "H12_truncated_control",
+        "scheduled_solver_calls": 5,
+        "solver_call_cap": 5,
+        "hard_defect_converged_relative_error_threshold": 0.0001,
+        "converged_relative_error_threshold": 1e-06,
+        "h35_nonconverged_relative_error_threshold": 1e-05,
+        "preserve_hard_inert_intervention_gate": true,
+        "persist_per_stage_epsilon_vectors": true,
+        "report_direct_nlp_f_checks": true,
+        "report_objective_reconstruction_errors": true,
+        "report_solver_and_whole_decision_timing": true,
+        "stop_or_escalate_on_hard_defect_or_inert_setup": true,
+        "no_plant_steps": true,
+        "no_training_no_refits": true,
+        "no_validation64_access": true,
+        "no_sealed_or_final_test_access": true,
+        "no_new_paid_infrastructure": true
+      },
+      "training_budget": {
+        "gradient_steps": 0,
+        "selector_refits": 0,
+        "training_steps": 0
+      },
+      "validation_budget": {
+        "env_steps_after_construction": 0,
+        "plant_steps": 0,
+        "solver_calls": 5,
+        "validation64_episodes": 0
+      },
+      "test_budget": {
+        "final_test_episodes": 0,
+        "sealed_test_episodes": 0
+      },
+      "resource_limits": {
+        "solver_calls": 5,
+        "plant_steps": 0,
+        "training_steps": 0,
+        "validation_episodes": 0,
+        "test_episodes": 0
+      },
+      "max_attempts": 1,
+      "max_zero_usage_repairs": 1,
+      "timeout_seconds": 7200,
+      "dependencies": [],
+      "pass_conditions": {
+        "converged_cells_reported_with_relative_errors": true,
+        "inert_intervention_gate_evaluated_and_reported": true,
+        "no_plant_training_validation_or_test_usage": true,
+        "numeric_readback_reported_for_intended_primals": true,
+        "per_stage_epsilon_vector_persisted_with_label_and_dimension": true,
+        "solver_and_whole_decision_timing_reported_with_n": true
+      },
+      "continue_without_review": false
+    }
+  ]
+}

@@ -7827,3 +7827,11 @@ UTC: 2026-09-30T16:32:05.524537+00:00. Temporary GPT-5.5 solo self-review comple
 
 ## 2026-09-30T16:34:44.457913+00:00
 
+<!-- vehicle-tc2-oc-epsilon-1b-converged-contract-gate-20260930T163737Z -->
+## T-C2 OC-epsilon-1b converged contract gate
+
+UTC: 2026-09-30T16:37:37.735258+00:00. Local task hard_pass `False`; new solver calls `5`; plant/training/validation64/sealed-test all zero. Evidence: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34z2_converged_contract_gate_v0_20260930T163737Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34z2_converged_contract_gate_v0_20260930T163737Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34z2_converged_contract_gate_v0_20260930T163737Z/cell_metrics.csv`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34z2_converged_contract_gate_v0_20260930T163737Z/epsilon_vectors.json`. The H12 max_iter=1 timing is explicitly not deployable. Backup request: `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_T_C2_OC_EPSILON_1B_CONVERGED_CONTRACT_GATE_20260930T163737Z.json`.
+
+
+## 2026-09-30T16:42:22.074253+00:00
+

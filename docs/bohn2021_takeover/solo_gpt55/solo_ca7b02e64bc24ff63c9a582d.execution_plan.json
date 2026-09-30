@@ -1,0 +1,92 @@
+{
+  "request_id": "execution-result:20260930T163737_45b3d5d7",
+  "schema_version": 1,
+  "tasks": [
+    {
+      "task_id": "S-TC2G-h15-initialization-basin-triage-v0",
+      "description": "TEMPORARY GPT-5.5 SOLO SELF-REVIEW / BOUNDED H15 INITIALIZATION-BASIN TRIAGE AFTER T-C2 GATE FAILURE. The T-C2 wrapper produced five solver calls on opened development source242 and failed the local task gate only because the deliberately noncanonical H15_goal_facing production cell returned Infeasible_Problem_Detected. Canonical H15, H12 and H35 all converged with full objective reconstruction relative errors below 1e-6 and no converged hard defect. The failed H15_goal_facing cell nevertheless had direct/full objective reconstruction relative error about 1.7e-16 and a large epsilon/slack penalty, so the next question is whether the nonconvergence is caused by an overly aggressive noncanonical initialization basin rather than by the repaired objective or source242 setup. Implement/run a narrowly scoped diagnostic on the same opened development source242, H15, V15_shared problem only: read and preserve the prior T-C2 raw evidence; verify a post-T-C2 external backup before consuming solver calls; then solve at most three H15 production cells initialized by convex blends between the prior canonical zero-control initialization and the prior goal-facing initialization, with frozen alpha values [0.25, 0.50, 0.75]. Do not rerun alpha=0 or alpha=1 as new solver calls; use prior T-C2 results as anchors. For each new cell report initialization hash, readback counts, solver status/iterations, objective value, full and no-epsilon reconstruction errors, epsilon vector labels/dimensions/nonzero counts/weighted sums, direct NLP f/g checks, constraint/bound residuals, solver wall time and whole-decision get_action timing. Stop after three solver calls or immediately if setup becomes inert or a converged cell exceeds the hard-defect relative-error threshold. No plant rollout, no training/refit, no validation64, no sealed/final test, no new infrastructure. This is development evidence only and cannot establish reproduction success.",
+      "script_patterns": [
+        "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34z2_h15_initialization_basin_triage_v0.py"
+      ],
+      "split": "opened_development_source242_H15_only_no_validation64_no_sealed_test",
+      "method": "three-solve H15 initialization-basin triage using convex blends alpha=[0.25,0.50,0.75] between the already observed canonical-success and goal-facing-infeasible initial primals, with objective/epsilon/direct-NLP/timing readback",
+      "seeds": [
+        "canonical_solve_no_training_seed"
+      ],
+      "config_constraints": {
+        "label_ORIGINAL_vs_IMPROVED": "IMPROVED",
+        "authority_mode": "temporary_user_authorized_solo_self_review",
+        "no_change_to_frozen_scientific_contract": true,
+        "diagnostic_reason": "T-C2 failed because H15_goal_facing was nonconverged while canonical production cells passed objective reconstruction; test initialization basin sensitivity before larger control/training work.",
+        "prior_T_C2_completed": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34z2_converged_contract_gate_v0_20260930T163737Z/completed.json",
+        "prior_T_C2_raw": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34z2_converged_contract_gate_v0_20260930T163737Z/raw.json",
+        "prior_T_C2_cell_metrics": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34z2_converged_contract_gate_v0_20260930T163737Z/cell_metrics.csv",
+        "prior_T_C2_wrapper_source": "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34z2_solo_converged_contract_gate_wrapper_v0.py",
+        "wrapped_gate_source": "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34z2_converged_contract_gate_v0.py",
+        "expected_wrapped_gate_sha256": "66dbf84e4a7917d824152cae1cac4da77c51efff576cd4775e8cd1be29dbcc97",
+        "post_T_C2_backup_required_before_solver_calls": true,
+        "split_source_context": "source242_slot0_branch_start",
+        "goal_source_required": "case.tvp.trajectory_endpoint[61]",
+        "horizon": 15,
+        "terminal_mode": "V15_shared",
+        "alpha_grid": [
+          0.25,
+          0.5,
+          0.75
+        ],
+        "do_not_rerun_alpha_0_or_1": true,
+        "canonical_anchor_from_prior_T_C2": "H15_canonical Solve_Succeeded rel_full 2.5706387692426444e-07 eps_abs_sum 0.0",
+        "goal_facing_anchor_from_prior_T_C2": "H15_goal_facing Infeasible_Problem_Detected rel_full 1.6618699208769952e-16 eps_abs_sum 5.562747676358372 epsterm_total 4300.334710558594",
+        "solver_call_cap": 3,
+        "hard_defect_converged_relative_error_threshold": 0.0001,
+        "converged_relative_error_threshold": 1e-06,
+        "preserve_hard_inert_intervention_gate": true,
+        "persist_per_stage_epsilon_vectors": true,
+        "report_direct_nlp_f_checks": true,
+        "report_objective_reconstruction_errors": true,
+        "report_solver_and_whole_decision_timing": true,
+        "no_plant_steps": true,
+        "no_training_no_refits": true,
+        "no_validation64_access": true,
+        "no_sealed_or_final_test_access": true,
+        "no_new_paid_infrastructure": true
+      },
+      "training_budget": {
+        "gradient_steps": 0,
+        "selector_refits": 0,
+        "training_steps": 0
+      },
+      "validation_budget": {
+        "env_steps_after_construction": 0,
+        "plant_steps": 0,
+        "solver_calls": 3,
+        "validation64_episodes": 0
+      },
+      "test_budget": {
+        "final_test_episodes": 0,
+        "sealed_test_episodes": 0
+      },
+      "resource_limits": {
+        "solver_calls": 3,
+        "plant_steps": 0,
+        "training_steps": 0,
+        "validation_episodes": 0,
+        "test_episodes": 0
+      },
+      "max_attempts": 2,
+      "max_zero_usage_repairs": 1,
+      "timeout_seconds": 3600,
+      "dependencies": [],
+      "pass_conditions": {
+        "h15_initialization_basin_triage_completed": true,
+        "prior_T_C2_failure_preserved": true,
+        "backup_verified_before_solver_calls_or_zero_usage_dependency_failure": true,
+        "initialization_hashes_and_alpha_grid_reported": true,
+        "direct_nlp_and_objective_reconstruction_reported": true,
+        "no_plant_training_validation_or_test_usage": true,
+        "solver_calls_at_most_three": true
+      },
+      "continue_without_review": false
+    }
+  ]
+}

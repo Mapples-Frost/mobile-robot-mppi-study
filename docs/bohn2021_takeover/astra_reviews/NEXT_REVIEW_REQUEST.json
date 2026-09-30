@@ -1,16 +1,16 @@
 {
-  "request_id": "execution-result:20260930T163205_2de4d7ea",
+  "request_id": "execution-result:20260930T163737_45b3d5d7",
   "trigger": "execution_result_handoff",
-  "created": "2026-09-30T16:32:07.551247+00:00",
-  "experiment_id": "20260930T163205_2de4d7ea",
+  "created": "2026-09-30T16:38:41.631677+00:00",
+  "experiment_id": "20260930T163737_45b3d5d7",
   "status": "analysis_requested",
-  "purpose": "Execute the solo-authorized T-C4R zero-resource primary-summary reconciliation for the frozen twelve v19_c13 fixed-H by terminal-treatment rows, preserving per-value source paths, absolute success/failure, timing distinctions, and split isolation without solver/plant/training/validation/test use.",
+  "purpose": "Execute the user-authorized temporary GPT-5.5 solo T-C2 objective-contract gate wrapper on opened development source242 only, after zero-resource preflight and T-C4R passed, to obtain bounded solver-bearing evidence without plant/training/validation/test access.",
   "execution_status": "complete",
   "question": "Active scientific lead: interpret this outcome, verify current raw evidence and select the next scientific action for GPT-5.5 implementation. Distinguish hypotheses from verified causes and account for fair baselines, terminal confounds and source-level generalization.",
   "evidence_paths": [
-    "research_artifacts/aws_diagnostics/vehicle_fixedh_terminal_opportunity_ledger_v0_20260930T163205Z/completed.json",
-    "research_artifacts/aws_diagnostics/vehicle_fixedh_terminal_opportunity_ledger_v0_20260930T163205Z/raw.json",
-    "research_artifacts/aws_diagnostics/vehicle_fixedh_terminal_opportunity_ledger_v0_20260930T163205Z/summary.md",
-    "research_artifacts/aws_runs/20260930T163205_2de4d7ea/registry.json"
+    "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34z2_converged_contract_gate_v0_20260930T163737Z/completed.json",
+    "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34z2_converged_contract_gate_v0_20260930T163737Z/raw.json",
+    "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34z2_converged_contract_gate_v0_20260930T163737Z/summary.md",
+    "research_artifacts/aws_runs/20260930T163737_45b3d5d7/registry.json"
   ]
 }

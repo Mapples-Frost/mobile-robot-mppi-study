@@ -1,0 +1,64 @@
+{
+  "commit": "03e9c5224b6d49b63613bfd201032034d52191b0",
+  "executor_received_structured_context": true,
+  "native_lead_plan": {
+    "audit_id": "20260930T131933Z_8873cc",
+    "completed": "2026-09-30T13:32:39.395732+00:00",
+    "execution_contract_version": 1,
+    "execution_plan": "docs/bohn2021_takeover/opus_lead/20260930T131933Z_8873cc.execution_plan.json",
+    "execution_plan_sha256": "6e5fc931578004a4438173a8893f68724b5281392317bb4cda59c0b10a5208ac",
+    "experiment_id": "20260930T131908_12b79445",
+    "primary_analyst": "claude-opus-5-5",
+    "report": "docs/bohn2021_takeover/opus_lead/20260930T131933Z_8873cc.md",
+    "report_sha256": "9f484573f892d9a12bcf6ee40a112d3a12e482acc095cd3f36fcd0f1eab55a0d",
+    "request_id": "execution-result:20260930T131908_12b79445",
+    "supersedes_request_ids": []
+  },
+  "remote_tracking_commit": "03e9c5224b6d49b63613bfd201032034d52191b0",
+  "research_reproduction_success": false,
+  "scope": "operational_coordination_only",
+  "services": {
+    "bohn-astra-reviewer": {
+      "ActiveState": "active",
+      "MainPID": "114370",
+      "Restart": "on-failure",
+      "SubState": "running"
+    },
+    "bohn-opus-lead": {
+      "ActiveState": "active",
+      "MainPID": "119128",
+      "Restart": "on-failure",
+      "SubState": "running"
+    },
+    "bohn-research": {
+      "ActiveState": "active",
+      "MainPID": "119129",
+      "Restart": "on-failure",
+      "SubState": "running"
+    }
+  },
+  "status": "deployed_verified",
+  "task_ledger": {
+    "accounted_resources_including_unknown_reservations": {
+      "plant_steps": 0,
+      "solver_calls": 0,
+      "test_episodes": 0,
+      "training_steps": 0,
+      "validation_episodes": 0
+    },
+    "attempt_count": 0,
+    "known_usage_count": 0,
+    "recent_attempts": [],
+    "rule": "Task budgets are cumulative within a published plan. New plans are explicit lead reauthorization, not free retries; disclose cumulative cross-plan usage. Unknown counters retain reservations."
+  },
+  "tests": {
+    "control_tests": 18,
+    "isolated_integration_tests": 2,
+    "runtimes": [
+      "Python3.12",
+      "Python3.7"
+    ],
+    "simulation_calls": 0
+  },
+  "time": "2026-09-30T13:35:21.463658+00:00"
+}

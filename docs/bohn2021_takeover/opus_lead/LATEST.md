@@ -1,5 +1,5 @@
 # Current scientific plan
 
-Report: docs/bohn2021_takeover/opus_lead/20260930T100939Z_868560.md
+Report: docs/bohn2021_takeover/opus_lead/20260930T101936Z_980a3f.md
 
 GPT-5.5: verify evidence and execute approved tasks/dependencies. Return raw results to the shared request queue and RESPONSE_LOG.md. Astra: independently critique important plans/results; send evidence-linked counterarguments through the shared state astra_cross_review.json handoff. Preserve active frozen experiments and sealed tests.

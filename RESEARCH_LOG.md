@@ -8146,3 +8146,7 @@ UTC: 2026-09-30T21:39:12.341783+00:00. Metadata-only current backup-state rechec
 
 ## 2026-09-30T21:48:31.536997+00:00
 
+<!-- s-tc2h8-v0i-raw-tvp-unit-diagnostic-20260930T214943Z -->
+## S-TC2H8 v0i raw-TVP unit diagnostic
+
+UTC: 2026-09-30T21:49:43.400851+00:00. Zero-resource implementation unit diagnostic completed with hard_pass `True`. It verified on a fake LetMPCEnv-shaped object that `_restore_raw_env_tvps` writes list-of-dicts entries containing `true` and `forecast` into environment TVP objects and deep-copies them, and it statically confirmed the high-level `env.step(high_level_action)` horizon-action path. This is not solver/control evidence and does not remove the external-backup blocker. Evidence: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34z2_source242_v0i_raw_tvp_unit_diagnostic_v0_20260930T214943Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34z2_source242_v0i_raw_tvp_unit_diagnostic_v0_20260930T214943Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34z2_source242_v0i_raw_tvp_unit_diagnostic_v0_20260930T214943Z/completed.json`.

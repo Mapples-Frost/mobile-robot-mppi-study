@@ -1,0 +1,90 @@
+{
+  "request_id": "execution-result:20260930T154029_56f95ec9",
+  "schema_version": 1,
+  "tasks": [
+    {
+      "task_id": "S-TC2C2-source242-goal-source-preflight-wrapper-v0",
+      "description": "TEMPORARY GPT-5.5 SOLO SELF-REVIEW / ZERO-SOLVER OPERATIONAL REPAIR AFTER 20260930T161553_7a0c9d9d. The previous S-TC2C wrapper failed before scientific outcome with zero solver/plant/training/validation/test resources because gate.prepare_cell called the legacy base.configure_context_no_reset path, whose global extract_goal_xy still refused the saved source242 case even though v34q had already established the authoritative source242 goal as case.tvp.trajectory_endpoint[61]. This task keeps the frozen v34z2 solver-bearing gate source unchanged at sha256 66dbf84e4a7917d824152cae1cac4da77c51efff576cd4775e8cd1be29dbcc97. It runs a wrapper-of-wrapper script that verifies that hash before importing/using the gate, updates only in-memory structured-request/TASK_ID bindings, and installs an in-memory base.extract_goal_xy patch for this preflight process only: the patch delegates to the already archived v34q robust_goal_from_saved_case evidence and fail-closes unless the source is exactly case.tvp.trajectory_endpoint[61]. The wrapper then calls the same real gate sequence as S-TC2C: load_modules(), install_nlpsol_patch(), load_context_and_terminals(), and prepare_cell(..., for_presolve_only=True) for every frozen SOLVE_ORDER arm, stopping before controller.get_action(), mpc.solve(), any low-level solver call, env.reset(), env.step(), training/refit, validation64, or sealed/final-test access. Pre-solve MPC/NLP construction remains allowed because it is the real T-C2 setup chain; optimization solve and plant rollout remain forbidden. Required outputs are the same S-TC2C pass-condition keys plus raw setup records showing source242 context construction without base.load_contexts, H15 terminal presence, per-arm intended-primal assignment/readback/hash data, the inert-intervention gate, and source242 goal provenance from the in-memory patch. If this fails with zero resources, preserve the failure and do not run solver-bearing T-C2 in the same cycle.",
+      "script_patterns": [
+        "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34z2_converged_contract_preflight_v0b.py"
+      ],
+      "split": "opened_development_source242_slot0_branch_start_only_no_validation64_no_sealed_test",
+      "method": "zero-solver source242 goal-source repaired wrapper preflight of the frozen v34z2 T-C2 gate: verify hash, patch only in-memory base.extract_goal_xy to authoritative case.tvp.trajectory_endpoint[61], load terminal grid and source242 context, prepare all planned arms, stop before controller action or low-level solve",
+      "seeds": [
+        "canonical_solve_no_training_seed"
+      ],
+      "config_constraints": {
+        "label_ORIGINAL_vs_IMPROVED": "IMPROVED",
+        "authority_mode": "temporary_user_authorized_solo_self_review",
+        "prior_failure_experiment_id": "20260930T161553_7a0c9d9d",
+        "prior_failure_error": "ContractError: could not reconstruct goal_x/goal_y from case/tvp; refusing to use observation heuristic",
+        "prior_failure_zero_resources": true,
+        "wrapped_gate_path": "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34z2_converged_contract_gate_v0.py",
+        "accepted_v34z2_sha256": "66dbf84e4a7917d824152cae1cac4da77c51efff576cd4775e8cd1be29dbcc97",
+        "do_not_modify_wrapped_gate_source": true,
+        "in_memory_expected_request_binding_only": true,
+        "in_memory_goal_extractor_patch_only": true,
+        "goal_patch_must_delegate_to_v34q_robust_goal_from_saved_case": true,
+        "context_id": "source242_slot0_branch_start",
+        "terminal_mode": "V15_shared",
+        "goal_source": "case.tvp.trajectory_endpoint[61]",
+        "planned_arms_frozen": [
+          "H12_canonical",
+          "H15_canonical",
+          "H15_goal_facing",
+          "H35_canonical",
+          "H12_truncated_max_iter_1"
+        ],
+        "distinct_H15_intended_primals_required": true,
+        "pre_solve_mpc_nlp_construction_allowed": true,
+        "stop_before_controller_get_action": true,
+        "stop_before_first_low_level_solver_call": true,
+        "abort_if_any_solver_call_occurs": true,
+        "fail_closed_on_inert_intervention_failure": true,
+        "report_pre_opt_x_and_opt_p_hash_per_arm": true,
+        "do_not_settle_epsilon_closure_here": true,
+        "do_not_assert_physical_performance": true,
+        "no_solver_calls": true,
+        "no_plant_steps": true,
+        "no_env_step_or_reset_after_construction": true,
+        "no_training_no_refits": true,
+        "no_validation64_access": true,
+        "no_sealed_or_final_test_access": true,
+        "no_new_paid_infrastructure": true,
+        "no_aws_iam_or_scheduler_change": true
+      },
+      "training_budget": {
+        "gradient_steps": 0,
+        "selector_refits": 0,
+        "training_steps": 0
+      },
+      "validation_budget": {
+        "env_steps_after_construction": 0,
+        "plant_steps": 0,
+        "solver_calls": 0,
+        "validation64_episodes": 0
+      },
+      "test_budget": {
+        "final_test_episodes": 0,
+        "sealed_test_episodes": 0
+      },
+      "resource_limits": {
+        "solver_calls": 0,
+        "plant_steps": 0,
+        "training_steps": 0,
+        "validation_episodes": 0,
+        "test_episodes": 0
+      },
+      "max_attempts": 1,
+      "max_zero_usage_repairs": 0,
+      "timeout_seconds": 900,
+      "dependencies": [],
+      "pass_conditions": {
+        "preflight_chain_verified": true,
+        "no_solver_plant_training_validation_or_test_usage": true,
+        "inert_intervention_gate_evaluated_and_reported": true
+      },
+      "continue_without_review": false
+    }
+  ]
+}

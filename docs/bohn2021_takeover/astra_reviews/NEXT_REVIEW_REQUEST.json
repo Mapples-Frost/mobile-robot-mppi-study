@@ -1,16 +1,16 @@
 {
-  "request_id": "execution-result:20260930T154029_56f95ec9",
+  "request_id": "execution-result:20260930T162146_e10680cb",
   "trigger": "execution_result_handoff",
-  "created": "2026-09-30T15:41:13.541127+00:00",
-  "experiment_id": "20260930T154029_56f95ec9",
+  "created": "2026-09-30T16:22:38.644435+00:00",
+  "experiment_id": "20260930T162146_e10680cb",
   "status": "analysis_requested",
-  "purpose": "Execute Opus-approved T-C2R2 zero-resource source242 context-loader repair/pass-evidence task under the legacy interpreter after the previous modern-interpreter CasADi import failure; no solver, plant, training, validation64, or sealed-test access.",
+  "purpose": "Run the active temporary solo GPT-5.5 S-TC2C2 zero-solver preflight repair for the frozen v34z2 T-C2 setup chain after the preserved zero-resource source242 goal extraction failure; no solver/plant/training/validation/test access is permitted.",
   "execution_status": "complete",
   "question": "Active scientific lead: interpret this outcome, verify current raw evidence and select the next scientific action for GPT-5.5 implementation. Distinguish hypotheses from verified causes and account for fair baselines, terminal confounds and source-level generalization.",
   "evidence_paths": [
-    "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34z2_environment_probe_v0_20260930T154029Z/completed.json",
-    "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34z2_environment_probe_v0_20260930T154029Z/raw.json",
-    "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34z2_environment_probe_v0_20260930T154029Z/summary.md",
-    "research_artifacts/aws_runs/20260930T154029_56f95ec9/registry.json"
+    "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34z2_converged_contract_preflight_v0b_20260930T162146Z/completed.json",
+    "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34z2_converged_contract_preflight_v0b_20260930T162146Z/raw.json",
+    "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34z2_converged_contract_preflight_v0b_20260930T162146Z/summary.md",
+    "research_artifacts/aws_runs/20260930T162146_e10680cb/registry.json"
   ]
 }

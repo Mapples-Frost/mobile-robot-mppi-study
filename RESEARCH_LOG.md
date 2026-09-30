@@ -7229,3 +7229,11 @@ UTC: 2026-09-30T10:19:19.491925+00:00. Executed Opus Task E/F as offline develop
 
 ## 2026-09-30T10:31:32.277888+00:00
 
+<!-- vehicle-v34i-objective-contract-localization-20260930T103304Z -->
+## v34i objective contract localization
+
+UTC: 2026-09-30T10:33:30.317279+00:00. Executed active Opus E′/F′ zero-solve diagnostic after verified post-v34h backup. Budgets: solver_calls=0, plant_steps=0, env_reset/env_step after construction=0, training/refit=0, validation64=false, sealed_test=false. Assembly/indexability pass=False; G-E pass=False; G-F pass=True; both_pass=False. Best candidate `None` rel_error=None total=None solver=None; components stage=None, eps=None, rterm=None, terminal=None. Evidence: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34i_objective_contract_localization_v0_20260930T103304Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34i_objective_contract_localization_v0_20260930T103304Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34i_objective_contract_localization_v0_20260930T103304Z/candidate_residuals.csv`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34i_objective_contract_localization_v0_20260930T103304Z/assembly_bool_table.csv`. Backup request: `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_V34I_OBJECTIVE_CONTRACT_LOCALIZATION_20260930T103304Z.json`.
+
+
+## 2026-09-30T10:38:08.703692+00:00
+

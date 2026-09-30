@@ -1,0 +1,89 @@
+{
+  "status": "completed",
+  "audit_id": "20260930T123802Z_2ce7e5",
+  "started": "2026-09-30T12:38:02.862459+00:00",
+  "turn": 7,
+  "max_turns": 16,
+  "first_cycle": false,
+  "supplemental_audit_request_id": "20260930-comprehensive-handoff-missing-raw-training-audit",
+  "request": {
+    "request_id": "execution-result:20260930T123746_30cba63d",
+    "trigger": "execution_result_handoff",
+    "created": "2026-09-30T12:37:48.545505+00:00",
+    "experiment_id": "20260930T123746_30cba63d",
+    "status": "analysis_requested",
+    "purpose": "Execute Opus-approved repair and rerun of A13c-3: flatten saved shifted_tvp object/objective channels to finite controller scalars, preserve previous_input and saved-trajectory goal repairs, run identical four cells under <=6 low-level solver calls, and measure objective reconstruction residuals, alias candidates, direct NLP availability and timing.",
+    "execution_status": "failed",
+    "question": "Active scientific lead: interpret this outcome, verify current raw evidence and select the next scientific action for GPT-5.5 implementation. Distinguish hypotheses from verified causes and account for fair baselines, terminal confounds and source-level generalization.",
+    "evidence_paths": [
+      "research_artifacts/aws_runs/20260930T123746_30cba63d/registry.json"
+    ]
+  },
+  "commit_start": "7acb09804cc616f5fdc0fba932fad3e4f40ec2fe",
+  "inspected": [
+    {
+      "path": "research_artifacts/aws_runs/20260930T123746_30cba63d/registry.json",
+      "sha256": "df25773d73e93ab564a6a231c81d63fea0ce8835e3fbe135146079a85e2becfe"
+    },
+    {
+      "path": "docs/bohn2021_takeover/opus_lead/LATEST.md",
+      "sha256": "e594eb3a95f73e66afac909542bbcbe31125d471fcb2cebc5d4128f413a01e1c"
+    },
+    {
+      "path": "docs/bohn2021_takeover/astra_reviews/LATEST.md",
+      "sha256": "8fcd25681f6aa870804cf375b745f43bf8bf844e40974caab1bd18d7159b6b2b"
+    },
+    {
+      "path": "docs/bohn2021_takeover/opus_lead/20260930T123232Z_7f2504.md",
+      "sha256": "4db4140a840168aef1cbaaa0a954a82995fa1accec6f1e29b1028a64ce6300a5"
+    },
+    {
+      "path": "docs/bohn2021_takeover/astra_reviews/20260930T121234Z.md",
+      "sha256": "7e2abd75d159b26a2c919a6149771a54640b2bc7dd6658aae6b02fad1cbc6461"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34t_nonconverged_objective_contract_probe_v0_20260930T123746Z/failed.json",
+      "sha256": "062625cb4e80286e43a7d1bbd7519ccff1d4310498d800efa11e6d568a697409"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34t_nonconverged_objective_contract_probe_v0_20260930T123137Z/progress.json",
+      "sha256": "3f4c316b4b299e745179a776a7924b10183a12897714c19b7b4d45688c2ce4fa"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34t_nonconverged_objective_contract_probe_v0_20260930T123137Z/summary.md",
+      "sha256": "f88bc5a467600e01d91141675ea0aa4338985f26addf82c7f97cde93a02ba7ea"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34t_nonconverged_objective_contract_probe_v0_20260930T123137Z/cell_metrics.csv",
+      "sha256": "a4783fcd443a199ae86ea293342423a3d03bb481557224c81658b69d5bf8f75d"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34t_nonconverged_objective_contract_probe_v0_20260930T123137Z/raw.json",
+      "sha256": "cfce78d1b65fb5a702075e112f989b4684ca1a785e4a66662fb5ffd1e11fc0bc"
+    },
+    {
+      "path": "docs/bohn2021_takeover/opus_lead/PLAN_READY.json",
+      "sha256": "d56c9a4a06148e3b0c61af8f43eb58286b760eb54b74455963b2f2a87a71a73a"
+    },
+    {
+      "path": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34t_nonconverged_objective_contract_probe_v0_20260930T123137Z/raw.json",
+      "sha256": "cfce78d1b65fb5a702075e112f989b4684ca1a785e4a66662fb5ffd1e11fc0bc"
+    },
+    {
+      "path": "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34t_nonconverged_objective_contract_probe_v0.py",
+      "sha256": "694ed07c8c96a50baabe4e8214500a59fc8dfb7cb6e1bed631620274c491f99d"
+    },
+    {
+      "path": "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34t_nonconverged_objective_contract_probe_v0.py",
+      "sha256": "694ed07c8c96a50baabe4e8214500a59fc8dfb7cb6e1bed631620274c491f99d"
+    }
+  ],
+  "superseded_request_ids": [],
+  "cross_review_id": "20260930T121234Z",
+  "working_language": "en",
+  "working_language_policy": "RESEARCH_WORKING_LANGUAGE_EN_V1",
+  "registry_context_experiment_id": "20260930T123137_8ad7efaf",
+  "updated": "2026-09-30T12:41:51.715224+00:00",
+  "completed": "2026-09-30T12:41:51.720755+00:00",
+  "commit_end": "7acb09804cc616f5fdc0fba932fad3e4f40ec2fe"
+}

@@ -387,12 +387,25 @@ def cycle():
     save(STATE/'astra_cross_review.json',dict(review_id=audit['audit_id'],report=str((OUT/report_name).relative_to(ROOT)),report_sha256=hashlib.sha256(text.encode()).hexdigest(),request_id=req.get('request_id'),experiment_id=req.get('experiment_id'),completed=now(),question='Opus: reconcile this independent evidence review with your scientific plan. Change direction only when evidence warrants; retain approved dependent task sequences otherwise.'))
     event('review_completed',audit_id=audit['audit_id'],report=report_name)
 
+def pause_on_provider_outage(message):
+    policy=load(STATE/'astra_pause_policy.json')
+    if policy.get('user_authorized') is not True or policy.get('condition')!='both_endpoints_unavailable' or not message.startswith('Both Astra endpoints unavailable:'):
+        return False
+    pause=dict(paused=True,requested_by='user',reason='both_authorized_endpoints_unavailable',time=now(),last_error=redact(message)[:1500],resume='Clear astra_pause_state.json and restart the reviewer after user authorization.')
+    save(STATE/'astra_pause_state.json',pause)
+    save(WORK/'status.json',dict(status='paused_by_user_condition',updated=now(),pause=pause))
+    event('paused_by_user_condition',reason=pause['reason'])
+    return True
+
 def main():
     global SECRETS, REDACTIONS
     WORK.mkdir(parents=True,exist_ok=True);OUT.mkdir(parents=True,exist_ok=True)
     lock=(WORK/'worker.lock').open('a')
     fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
     signal.signal(signal.SIGTERM, lambda *_: sys.exit(0))
+    if load(STATE/'astra_pause_state.json').get('paused'):
+        save(WORK/'status.json',dict(status='paused_by_user_condition',updated=now(),pause=load(STATE/'astra_pause_state.json')))
+        return
     for p in (BASE/'.secrets').glob('*'):
         if p.is_file():
             for line in p.read_text(errors='replace').splitlines():
@@ -429,6 +442,7 @@ def main():
             save(WORK/'retry_state.json',dict(consecutive_failures=failure,last_failure=now(),routing_enabled=True))
             message=redact(str(e))[:1500]
             event('error',error_type=type(e).__name__,message=message,consecutive_failures=failure)
+            if pause_on_provider_outage(message):return
             save(WORK/'status.json',dict(status='retry_backoff',updated=now(),message=message,consecutive_failures=failure))
             # Finite retries per group; persisted diagnostic cooldown, no alternate models.
             astra_routing.wait_retry(min(1800,30*2**min(failure,6)))

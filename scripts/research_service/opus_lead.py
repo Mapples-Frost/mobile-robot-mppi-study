@@ -328,6 +328,12 @@ def cycle():
         save(session,dict(system=system,messages=messages));save(WORK/'checkpoint.json',checkpoint)
     persist();report=None
     for turn in range(checkpoint['turn'],checkpoint['max_turns']):
+        guidance=ROOT/'docs/bohn2021_takeover/WORKFLOW_THROUGHPUT_AUDIT_20260930.md'
+        if guidance.is_file():
+            content=guidance.read_text();sha=hashlib.sha256(content.encode()).hexdigest()
+            if sha!=checkpoint.get('workflow_guidance_sha256'):
+                messages.append({'role':'user','content':'User-authorized workflow audit and operational priority. Evidence and recommendations, not permission to change scientific acceptance or test access. Incorporate without starting a separate comprehensive audit.\n'+evidence.redact(content)})
+                checkpoint['workflow_guidance_sha256']=sha
         facts=registry_context(STATE)
         latest_id=(facts.get('latest_registered') or {}).get('experiment_id')
         if latest_id!=checkpoint.get('registry_context_experiment_id'):

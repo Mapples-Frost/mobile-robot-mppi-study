@@ -34,7 +34,8 @@ ec.record_outcome(ROOT,'scientific_result',{k:0 for k in ec.UNITS},{'G2':True})
         worker.dump(self.state / 'research_roles.json', dict(status='active', active_lead='claude-opus-5-5', lead_ready_path='docs/PLAN_READY.json'))
         real_popen = subprocess.Popen
         def isolated_popen(command, **kw):
-            command[2] = str(self.root / self.script); kw['cwd'] = str(self.root)
+            if command[1]=='-u':command[2] = str(self.root / self.script)
+            kw['cwd'] = str(self.root)
             return real_popen(command, **kw)
         args = dict(self.args, interpreter='legacy', purpose='Isolated infrastructure integration',
                     artifacts=['research_artifacts/diagnostic_smoke_*/completed.json'])

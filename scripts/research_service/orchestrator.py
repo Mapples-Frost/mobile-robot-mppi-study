@@ -6,6 +6,7 @@ from resource_monitor import ResourceSampler, link_run
 from research_memory import registry_context
 import working_language
 import execution_contract
+import execution_preflight
 STOP=False
 
 def now(): return dt.datetime.now(dt.timezone.utc).isoformat()
@@ -76,6 +77,13 @@ def execute(args):
     timeout=min(max(int(args.get('timeout_seconds',900)),10),14400)
     py='/home/mapples/.local/share/bohn2021-python37/bin/python' if args.get('interpreter')=='legacy' else str(ROOT/'.venv/bin/python')
     if not pathlib.Path(py).is_file():raise ValueError('Configured interpreter unavailable; no experiment was reserved or started')
+    try:
+        execution_preflight.validate_source(path.read_text(encoding='utf-8'),str(path))
+        execution_preflight.validate_interpreter(py,path,clean_env())
+    except (SyntaxError,ValueError,subprocess.TimeoutExpired) as error:
+        event('execution_preflight_failed',script=args['script'],interpreter=py,script_sha256=hashlib.sha256(path.read_bytes()).hexdigest(),error=redact(str(error))[:2000],resources_used=0)
+        execution_lock.close()
+        raise ValueError('Operational source check failed; no experiment launched or budget reserved. Repair source in this bounded cycle: '+redact(str(error))[:2000]) from None
     eid=dt.datetime.now(dt.timezone.utc).strftime('%Y%m%dT%H%M%S')+'_'+uuid.uuid4().hex[:8]
     dest=ROOT/'research_artifacts/aws_runs'/eid;dest.mkdir(parents=True)
     roles=current_roles();ready=load(safe_path(roles['lead_ready_path']))
@@ -176,6 +184,7 @@ def call_tool(name,args):
             raise ValueError('Analyst publications are protected; use the shared analysis request and RESPONSE_LOG handoff')
         content=args['content']
         if any(s and s in content for s in REDACT):raise ValueError('Secret content forbidden')
+        if p.suffix=='.py':execution_preflight.validate_source(content,str(p))
         if p.exists():
             hist=STATE/'edit_history'/uuid.uuid4().hex;hist.parent.mkdir(exist_ok=True);shutil.copy2(p,hist)
         p.parent.mkdir(parents=True,exist_ok=True);p.write_text(content);return dict(written=str(p.relative_to(ROOT)),sha256=hashlib.sha256(content.encode()).hexdigest())

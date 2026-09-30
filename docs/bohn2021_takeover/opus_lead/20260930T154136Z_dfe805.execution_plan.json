@@ -1,0 +1,369 @@
+{
+  "request_id": "execution-result:20260930T154029_56f95ec9",
+  "schema_version": 1,
+  "tasks": [
+    {
+      "task_id": "T-C2R2F-module-binding-and-alias-provenance-verification",
+      "description": "ZERO-RESOURCE MECHANISM CONFIRMATION, NOT A REPAIR. The loader repair is accepted by the lead and MUST NOT be redone: v34z2 experiments/bohn2021_aws/vehicle_true_variable_horizon_v34z2_converged_contract_gate_v0.py sha256 66dbf84e4a7917d824152cae1cac4da77c51efff576cd4775e8cd1be29dbcc97 has load_context_and_terminals at lines 824-868 building source242_slot0_branch_start directly from base.v29.build_state_specs() + base.find_spec('v27_case09_slot0_early_risk') + base.state_clean, with no base.load_contexts() call; run 20260930T154029_56f95ec9 recorded source_sha256_before == source_sha256_after == that hash, action already_patched_no_source_write, field_equality_all_observed_fields true for all ten fields, second_run_idempotent true, all resources zero. WHAT REMAINS UNVERIFIED IS WHY TERMINAL_SOURCE_PROTOCOL RESOLVED. Two different module objects are implicated and the lead has not established which one produced the earlier AttributeError: experiments/bohn2021_aws/do_mpc/__init__.py (sha256 f755a0937f14a65adadb4f8ace01fd38f67b1536ccbebfbfb8630d762a09a557, lines 60-83) setattr-patches the module named vehicle_stress_v1d_trace_selected_terminal_stable_opportunity_v0_runner, while the gate binds MODULES['stage1_runner'] = vehicle_stress_scenario_opportunity_probe_v1_runner at gate line 281, and that latter module already defines TERMINAL_SOURCE_PROTOCOL natively at its line 63. REQUIRED WORK: (1) report whether any source write occurred this run and on which exact lines, else report that no write was needed. (2) report resolved sys.modules identity and __file__ of BOTH named modules and whether MODULES['stage1_runner'] IS the module that received the alias. (3) report that the repository-local experiments/bohn2021_aws/do_mpc package does NOT shadow the vendored do-mpc under research_artifacts/bohn2021_reproduction_2026-09-17/sources/do-mpc-horizon/do_mpc for the controller/plant import path the gate uses, giving both __path__ and __file__ values. (4) report stage1_runner.TERMINAL_SOURCE_PROTOCOL resolved path plus file sha256 and confirm equality with the terminal protocol recorded in the T-C2R2 raw.json load_meta.terminal_protocol. (5) call stage1_runner.load_terminal_grid through the same call path the gate uses and report returned horizon keys, that 15 is present, and H15 terminal-receipt provenance hashes, without constructing an MPC. (6) report sys.executable, sys.version and casadi version, and state explicitly whether this is the legacy interpreter of docs/bohn2021_takeover/legacy-pip-freeze.txt (casadi 3.5.5, numpy 1.18.5, gym 0.17.3). Emit receipt evidence key alias_provenance_verified with these subkeys. If any step requires a source write to v34z2, v1d or v1, stop and report failure for lead review instead of patching. Configuration constraints must include frozen settings, acceptance thresholds and untouched-path rules. Include resource accounting in the receipt. Emit exact_lines_changed_stated_explicitly even when the value is 'none'. Do not modify any runner or gate source. Do not construct an MPC that solves.",
+      "script_patterns": [
+        "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34z2_environment_probe_v0.py"
+      ],
+      "split": "environment_diagnostic_only_no_solver_no_validation64_no_sealed_test",
+      "method": "bounded zero-usage module-binding, do_mpc package-resolution and terminal-grid provenance verification over the accepted T-C2R2 loader repair",
+      "seeds": [
+        "not_applicable_no_training_seed"
+      ],
+      "config_constraints": {
+        "label_ORIGINAL_vs_IMPROVED": "IMPROVED",
+        "no_change_to_frozen_scientific_contract": true,
+        "context_id": "source242_slot0_branch_start",
+        "terminal_mode": "V15_shared",
+        "goal_source": "case.tvp.trajectory_endpoint[61]",
+        "accepted_v34z2_sha256": "66dbf84e4a7917d824152cae1cac4da77c51efff576cd4775e8cd1be29dbcc97",
+        "accepted_loader_line_range_1_based_inclusive": [
+          824,
+          868
+        ],
+        "do_not_redo_T_C2R2_loader_repair": true,
+        "do_not_modify_v34z2_source": true,
+        "do_not_modify_v1d_or_v1_runner_sources": true,
+        "do_not_modify_base_objective_basin_solver_probe": true,
+        "terminal_15_present_required": true,
+        "no_mpc_construction": true,
+        "no_solver_calls": true,
+        "no_plant_steps": true,
+        "no_training_no_refits": true,
+        "no_validation64_access": true,
+        "no_sealed_or_final_test_access": true,
+        "no_new_paid_infrastructure": true,
+        "no_aws_iam_or_scheduler_change": true,
+        "do_not_rerun_T_C3_T_C3R_T_C1R_T_C5_T_C4": true
+      },
+      "training_budget": {
+        "gradient_steps": 0,
+        "selector_refits": 0,
+        "training_steps": 0
+      },
+      "validation_budget": {
+        "env_steps_after_construction": 0,
+        "plant_steps": 0,
+        "solver_calls": 0,
+        "validation64_episodes": 0
+      },
+      "test_budget": {
+        "final_test_episodes": 0,
+        "sealed_test_episodes": 0
+      },
+      "resource_limits": {
+        "solver_calls": 0,
+        "plant_steps": 0,
+        "training_steps": 0,
+        "validation_episodes": 0,
+        "test_episodes": 0
+      },
+      "max_attempts": 2,
+      "max_zero_usage_repairs": 1,
+      "timeout_seconds": 600,
+      "dependencies": [],
+      "pass_conditions": {
+        "alias_provenance_verified": true,
+        "exact_lines_changed_stated_explicitly": true,
+        "no_solver_plant_training_validation_or_test_usage": true
+      },
+      "continue_without_review": true
+    },
+    {
+      "task_id": "T-C2C-source242-converged-contract-preflight",
+      "description": "ZERO-SOLVER PREFLIGHT OF THE REAL GATE'S PRE-SOLVE CHAIN, running immediately before the frozen T-C2 measurement so that solver budget is not spent against an unverified chain. REQUIRED WORK: import experiments/bohn2021_aws/vehicle_true_variable_horizon_v34z2_converged_contract_gate_v0.py (sha256 66dbf84e4a7917d824152cae1cac4da77c51efff576cd4775e8cd1be29dbcc97) as a module and call its own functions in the gate's own order: load_modules(), install_nlpsol_patch(), load_context_and_terminals(), then the full pre-launch setup gate over every arm in SOLVE_ORDER via prepare_cell(..., for_presolve_only=True), and STOP. Do NOT call the gate's main() and do NOT modify the gate source; the probe run 20260930T154029_56f95ec9 already proved this import-and-call pattern reaches the patched loader. Report: context built without base.load_contexts; terminal grid horizon keys with 15 present; the complete inert_intervention_gate result including H15_actual_solver_entry_identical_opt_x_and_opt_p and the actual H15 solver-entry pre-state; per production arm the assignments_attempted, assignments_succeeded, numeric_readback_count, numeric_readback_all_successful, production_max_iter_not_forced_to_1, truncated_max_iter_forced_to_1, pre_opt_x_hash and pre_opt_p_hash; and for the H12 canonical, H15 canonical, H15 goal-facing and H35 canonical arms whether both intended primals are present and distinct where the contract requires distinctness. Fail closed on inert_intervention_failure and report the exact exception plus traceback tail. HARD RESOURCE REQUIREMENT: this task must consume exactly zero solver calls, zero plant steps, zero training/refit, zero validation episodes and zero test episodes. If any low-level solver call, env.step or env.reset occurs, abort the task, report the event, and treat the run as a failure requiring lead review. Do not settle any epsilon-closure or objective-contract question here and do not assert physical performance. This task gates the solver-bearing measurement; when every declared pass condition holds, the dependent measurement task is authorized to proceed without a further review cycle.",
+      "script_patterns": [
+        "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34z2_converged_contract_gate_v0.py"
+      ],
+      "split": "opened_development_source242_slot0_branch_start_only_no_validation64_no_sealed_test",
+      "method": "zero-solver pre-launch preflight of the frozen IMPROVED latency-tree T-C2 gate: module binding, terminal grid load, source242 context load and full pre-launch inert-intervention setup gate over all planned arms, stopping before the first low-level solver call",
+      "seeds": [
+        "canonical_solve_no_training_seed"
+      ],
+      "config_constraints": {
+        "label_ORIGINAL_vs_IMPROVED": "IMPROVED",
+        "no_change_to_frozen_scientific_contract": true,
+        "context_id": "source242_slot0_branch_start",
+        "terminal_mode": "V15_shared",
+        "goal_source": "case.tvp.trajectory_endpoint[61]",
+        "planned_arms_frozen": [
+          "H12_canonical",
+          "H15_canonical",
+          "H15_goal_facing",
+          "H35_canonical",
+          "H12_truncated_max_iter_1"
+        ],
+        "distinct_H15_intended_primals_required": true,
+        "stop_before_first_low_level_solver_call": true,
+        "abort_if_any_solver_call_occurs": true,
+        "fail_closed_on_inert_intervention_failure": true,
+        "report_pre_opt_x_and_opt_p_hash_per_arm": true,
+        "do_not_settle_epsilon_closure_here": true,
+        "converged_relative_error_threshold": 1e-06,
+        "hard_defect_relative_error_threshold": 0.0001,
+        "h35_nonconverged_allowance_relative_error_threshold": 1e-05,
+        "do_not_weaken_acceptance_thresholds": true,
+        "do_not_modify_gate_source": true,
+        "no_mpc_construction": true,
+        "no_solver_calls": true,
+        "no_plant_steps": true,
+        "no_env_step_or_reset_after_construction": true,
+        "no_training_no_refits": true,
+        "no_validation64_access": true,
+        "no_sealed_or_final_test_access": true,
+        "no_new_paid_infrastructure": true,
+        "no_aws_iam_or_scheduler_change": true
+      },
+      "training_budget": {
+        "gradient_steps": 0,
+        "selector_refits": 0,
+        "training_steps": 0
+      },
+      "validation_budget": {
+        "env_steps_after_construction": 0,
+        "plant_steps": 0,
+        "solver_calls": 0,
+        "validation64_episodes": 0
+      },
+      "test_budget": {
+        "final_test_episodes": 0,
+        "sealed_test_episodes": 0
+      },
+      "resource_limits": {
+        "solver_calls": 0,
+        "plant_steps": 0,
+        "training_steps": 0,
+        "validation_episodes": 0,
+        "test_episodes": 0
+      },
+      "max_attempts": 2,
+      "max_zero_usage_repairs": 1,
+      "timeout_seconds": 900,
+      "dependencies": [
+        "T-C2R2F-module-binding-and-alias-provenance-verification"
+      ],
+      "pass_conditions": {
+        "preflight_chain_verified": true,
+        "no_solver_plant_training_validation_or_test_usage": true,
+        "inert_intervention_gate_evaluated_and_reported": true
+      },
+      "continue_without_review": true
+    },
+    {
+      "task_id": "T-C2-OC-epsilon-1b-converged-contract-gate",
+      "description": "FROZEN T-C2 SCIENTIFIC MEASUREMENT, authorized only if T-C2C passed with every declared pass condition. Execute experiments/bohn2021_aws/vehicle_true_variable_horizon_v34z2_converged_contract_gate_v0.py (sha256 66dbf84e4a7917d824152cae1cac4da77c51efff576cd4775e8cd1be29dbcc97, unmodified) on the opened development context source242_slot0_branch_start with terminal mode V15_shared and goal source case.tvp.trajectory_endpoint[61]: production cells H12 canonical, H15 canonical, H15 goal-facing and H35 canonical at production solver tolerance, plus exactly one H12 truncated max_iter=1 control cell. Allowed solver calls: 5. The gate's internal SOLVER_CAP of 6 is a safety ceiling only and is NOT authorization for a sixth cell or a replacement cell. REQUIRED OUTPUTS: per-cell return_status, unified_return_status, actual iteration count, convergence flag, solver objective opt_f_num, reconstructed historical no-epsilon objective, reconstructed full objective, both relative errors, persisted per-stage epsilon vector with its labels and dimension, individual epsilon nonzero count, epsilon absolute sum under the predeclared materiality threshold, and the geometry rows; the solution of the epsilon identity J_epsilon = sum over k=0..H-1 of 0.97^k * 1000 * sum_j epsilon_k,j consistent with the recorded per-stage values, reporting the residual rather than a verdict if the recorded vectors do not permit closure; the direct NLP f evaluation; the four constraint residual vectors against lb/ub; the inert-intervention gate including H15 actual solver-entry equality of opt_x and opt_p; and timing reported as solver wall time and whole-decision get_action wall time SEPARATELY, each with n and mean/median/P95. REPORT actual solver time and actual whole-decision time; never infer speed from a smaller H and never present truncated-cell timing as a deployable estimate. Acceptance is predeclared and must not be weakened by the executor: every production cell converged with full-objective relative error <= 1e-06 constitutes closure; the documented H35 non-converged allowance of relative error <= 1e-05 applies only if H35 is non-converged and must be reported as a separate diagnostic outcome; a converged cell with relative error in (1e-06, 1e-04] remains unresolved and must be reported as unresolved, not as pass; any converged cell above 1e-04 triggers the frozen hard-defect stop. If the pre-launch inert-intervention gate fails, stop, write the inert-intervention failure artifact, and report that no initialization-sensitivity claim is made. Do not open validation64, do not open sealed or final test, do not train or refit, do not take plant steps beyond what the gate's own construction requires, and assert no deployed-policy or final-acceptance claim.",
+      "script_patterns": [
+        "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34z2_converged_contract_gate_v0.py"
+      ],
+      "split": "opened_development_source242_slot0_branch_start_only_no_validation64_no_sealed_test",
+      "method": "A13c-4 bounded converged plus single truncated-control objective-contract gate with full prospective capture on the frozen IMPROVED latency-tree vehicle controller",
+      "seeds": [
+        "canonical_solve_no_training_seed"
+      ],
+      "config_constraints": {
+        "label_ORIGINAL_vs_IMPROVED": "IMPROVED",
+        "no_change_to_frozen_scientific_contract": true,
+        "context_id": "source242_slot0_branch_start",
+        "terminal_mode": "V15_shared",
+        "goal_source": "case.tvp.trajectory_endpoint[61]",
+        "accepted_v34z2_sha256": "66dbf84e4a7917d824152cae1cac4da77c51efff576cd4775e8cd1be29dbcc97",
+        "planned_arms_frozen": [
+          "H12_canonical",
+          "H15_canonical",
+          "H15_goal_facing",
+          "H35_canonical",
+          "H12_truncated_max_iter_1"
+        ],
+        "authorized_solver_calls": 5,
+        "internal_solver_cap_is_safety_ceiling_only": true,
+        "no_additional_or_replacement_cells": true,
+        "converged_relative_error_threshold": 1e-06,
+        "hard_defect_relative_error_threshold": 0.0001,
+        "unresolved_band_relative_error_low_exclusive": 1e-06,
+        "unresolved_band_relative_error_high_inclusive": 0.0001,
+        "h35_nonconverged_allowance_relative_error_threshold": 1e-05,
+        "h35_nonconverged_allowance_only_if_h35_nonconverged": true,
+        "h35_nonconverged_allowance_reported_separately": true,
+        "do_not_weaken_acceptance_thresholds": true,
+        "epsilon_materiality_threshold_predeclared_in_source": true,
+        "epsilon_identity_j_eps_sum_0p97_pow_k_times_1000_times_sum_j_eps_kj": true,
+        "report_timing_mean_median_p95_with_n": true,
+        "report_solver_and_whole_decision_timing_separately": true,
+        "do_not_infer_speed_from_smaller_horizon": true,
+        "truncated_cell_not_deployable_estimate": true,
+        "do_not_modify_gate_source": true,
+        "no_training_no_refits": true,
+        "no_validation64_access": true,
+        "no_sealed_or_final_test_access": true,
+        "no_new_paid_infrastructure": true,
+        "no_aws_iam_or_scheduler_change": true,
+        "development_oracle_is_not_a_deployed_policy": true
+      },
+      "training_budget": {
+        "gradient_steps": 0,
+        "selector_refits": 0,
+        "training_steps": 0
+      },
+      "validation_budget": {
+        "env_steps_after_construction": 0,
+        "plant_steps": 0,
+        "solver_calls": 5,
+        "validation64_episodes": 0
+      },
+      "test_budget": {
+        "final_test_episodes": 0,
+        "sealed_test_episodes": 0
+      },
+      "resource_limits": {
+        "solver_calls": 5,
+        "plant_steps": 0,
+        "training_steps": 0,
+        "validation_episodes": 0,
+        "test_episodes": 0
+      },
+      "max_attempts": 1,
+      "max_zero_usage_repairs": 0,
+      "timeout_seconds": 3600,
+      "dependencies": [
+        "T-C2C-source242-converged-contract-preflight"
+      ],
+      "pass_conditions": {
+        "converged_cells_reported_with_relative_errors": true,
+        "per_stage_epsilon_vector_persisted_with_label_and_dimension": true,
+        "numeric_readback_reported_for_intended_primals": true,
+        "inert_intervention_gate_evaluated_and_reported": true,
+        "solver_and_whole_decision_timing_reported_with_n": true,
+        "no_plant_training_validation_or_test_usage": true
+      },
+      "continue_without_review": false
+    },
+    {
+      "task_id": "T-C4R-c13-terminal-treatment-matrix-reconciliation",
+      "description": "ZERO-RESOURCE PRIMARY-EVIDENCE LEDGER REBUILD, independent of the T-C2 chain. The lead independently verified the three load-bearing episodes under research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v33_terminal_h_cross_causal_probe_v0_20260930T054827Z/episodes/: exec33036_v33_036_v19_c13_V35_shared_H12_trueH12 (success false, termination 'steps', steps 150, physical_constraint_cost 2228.129454180774, total_cost 2229.929454180774, solver_failure_steps 0, constraint false, mean decision 0.03872750960678483 s), exec33038_v33_038_v19_c13_zero_H12_trueH12 (success true, 'goal', 29 steps, 11.161896430040322, 11.509896430040321, 0, false, mean 0.05582433607196435 s), exec33039_v33_039_v19_c13_V15_shared_H12_trueH12 (success true, 'goal', 39 steps, 105.97974600461487, 106.44774600461487, 0, false, mean 0.05368298730508496 s). All three share branch_state theta 0.4484628235999271 / x 13.265087662399235 / y 2.725292661785182, an identical 14-element initial_observation_at_branch, branch_step_from_original_episode 45, opt_x size 216, source_candidate_index 72, and true_mpc_n_horizon 12. Astra review 20260930T152601Z sections 3-4 reports that the T-C4 ledger research_artifacts/aws_diagnostics/vehicle_fixedh_terminal_opportunity_ledger_v0_20260930T150201Z/raw.json left constraint_count and total_cost null on rows whose values ARE present in these summaries. REQUIRED WORK: join the SAME twelve v19_c13 rows against their primary episode summary.json files and fill per row success, termination, steps, steps_metered, physical_constraint_cost, total_cost, constraint, solver_failure_steps, initial_failed_steps, final_failed_steps, and whichever solver and whole-decision timing fields the primary source actually contains, leaving a field explicitly null ONLY when no primary source contains it, and naming the source path for each filled value. Do not recompute, re-simulate, re-select terminals, add rows, or add terminal donors. Report separately: total rows, independent source states versus branch repeats from one state, source_candidate_index values, and explicitly that these are development artifacts from one state and not independent training seeds. Preserve the already-verified distinction that whole-decision wall sum is not solver-time sum, and note that the failed V35 episode has the LOWEST mean decision time of the three, so neither shorter mean solve time nor lower aggregate time establishes acceptable control. Report absolute outcome before relative cost or time.",
+      "script_patterns": [
+        "experiments/bohn2021_aws/vehicle_fixedh_terminal_opportunity_ledger_v0.py"
+      ],
+      "split": "opened_development_artifacts_only_no_validation64_no_sealed_test",
+      "method": "zero-solve bounded primary-summary join completing the twelve v19_c13 fixed-H by terminal-treatment ledger rows with outcome, termination, cost and timing fields recovered from existing episode summary evidence",
+      "seeds": [
+        "not_applicable_no_training_seed"
+      ],
+      "config_constraints": {
+        "label_ORIGINAL_vs_IMPROVED": "IMPROVED",
+        "no_change_to_frozen_scientific_contract": true,
+        "row_set_frozen_to_existing_twelve_v19_c13_rows": true,
+        "do_not_add_or_reselect_rows": true,
+        "do_not_add_or_reselect_terminal_donors": true,
+        "report_absolute_success_before_relative_cost_or_time": true,
+        "separate_source_states_branch_repeats_and_training_seeds": true,
+        "preserve_verified_timing_field_distinction": true,
+        "null_only_when_no_primary_source_contains_field": true,
+        "name_source_path_per_filled_value": true,
+        "no_mpc_construction": true,
+        "no_solver_calls": true,
+        "no_plant_steps": true,
+        "no_training_no_refits": true,
+        "no_validation64_access": true,
+        "no_sealed_or_final_test_access": true,
+        "no_new_paid_infrastructure": true,
+        "do_not_rerun_T_C3_T_C3R_T_C1R_T_C5": true
+      },
+      "training_budget": {
+        "gradient_steps": 0,
+        "selector_refits": 0,
+        "training_steps": 0
+      },
+      "validation_budget": {
+        "env_steps_after_construction": 0,
+        "plant_steps": 0,
+        "solver_calls": 0,
+        "validation64_episodes": 0
+      },
+      "test_budget": {
+        "final_test_episodes": 0,
+        "sealed_test_episodes": 0
+      },
+      "resource_limits": {
+        "solver_calls": 0,
+        "plant_steps": 0,
+        "training_steps": 0,
+        "validation_episodes": 0,
+        "test_episodes": 0
+      },
+      "max_attempts": 2,
+      "max_zero_usage_repairs": 1,
+      "timeout_seconds": 600,
+      "dependencies": [],
+      "pass_conditions": {
+        "primary_rows_reconciled": true,
+        "no_solver_plant_training_validation_or_test_usage": true
+      },
+      "continue_without_review": false
+    },
+    {
+      "task_id": "T-C6R-reconstruction-training-evidence-inventory",
+      "description": "ZERO-RESOURCE COVERAGE COMPLETION FOR THE GLOBAL AUDIT: ORIGINAL-author reconstruction and pendulum status. Prior handoff audit explicitly omitted ORIGINAL SAC training evidence, checkpoint metadata and pendulum state, and the lead has not inspected them. This task is read-only metadata reconstruction from PRIMARY training records, NOT a new experiment and NOT a marker-name inventory. REQUIRED WORK, vehicle ORIGINAL section: from research_artifacts/bohn2021_reproduction_2026-09-17/results/ and its logs, manifests, progress receipts and checkpoint metadata, establish per run whether it was genuine gradient training (SAC/TF updates) or a finite parameter/selector search, the recorded update or step counts, seeds, wall-clock and completion, interrupted or failed status, and whether the checkpoint is reusable for a fresh evaluation. The lead has separately verified only that the terminal receipts referenced by T-C2R2 raw.json are fixed-H runs at H=10,15,20,25,30,35 with manifest_summary seed 0, steps 15000, task 'vehicle' located under results/paper_defaults and results/paper_exact_grid_2026-09-23, with model load times near 2.0-2.5 s: confirm or correct this and report how many DISTINCT training seeds exist for fixed H rather than assuming seed 0 is the only one. PENDULUM section: report the actual current state of pendulum evidence, which the lead located only as names in a directory listing (results/engineering_pendulum/, engineering_pendulum.log, pendulum_smoke.log, pendulum_raw_smoke.log, replay_check_pendulum.json) and did NOT open; state independently what was trained, at what seed count, with what checkpoint or log evidence, and what is missing, without asserting pendulum results. Report the ORIGINAL versus IMPROVED distinction explicitly and mark any field that cannot be established from records as unavailable rather than guessing. Emit receipt evidence key reconstruction_evidence_inventory_complete. Zero solves, plant steps, training gradients, refits, validation episodes and test access.",
+      "script_patterns": [
+        "experiments/bohn2021_aws/vehicle_reproduction_campaign_inventory_v0.py",
+        "experiments/bohn2021_aws/vehicle_training_evidence_inventory_v0.py"
+      ],
+      "split": "opened_development_metadata_and_training_records_only_no_validation64_no_sealed_test",
+      "method": "zero-resource read-only reconstruction-evidence inventory over existing vehicle ORIGINAL training records, checkpoint metadata and pendulum artifacts, separating genuine gradient training from finite searches",
+      "seeds": [
+        "not_applicable_no_training_seed"
+      ],
+      "config_constraints": {
+        "label_ORIGINAL_vs_IMPROVED": "BOTH_REPORTED_SEPARATELY",
+        "no_change_to_frozen_scientific_contract": true,
+        "read_only_no_new_training": true,
+        "classify_from_primary_manifests_and_logs_not_marker_names": true,
+        "report_distinct_fixed_h_training_seed_count": true,
+        "distinguish_gradient_training_from_finite_search": true,
+        "mark_unavailable_fields_explicitly": true,
+        "do_not_open_validation64": true,
+        "no_solver_calls": true,
+        "no_plant_steps": true,
+        "no_training_no_refits": true,
+        "no_validation64_access": true,
+        "no_sealed_or_final_test_access": true,
+        "no_new_paid_infrastructure": true,
+        "no_aws_iam_or_scheduler_change": true,
+        "do_not_rerun_T_C3_T_C3R_T_C1R_T_C5_T_C4": true
+      },
+      "training_budget": {
+        "gradient_steps": 0,
+        "selector_refits": 0,
+        "training_steps": 0
+      },
+      "validation_budget": {
+        "env_steps_after_construction": 0,
+        "plant_steps": 0,
+        "solver_calls": 0,
+        "validation64_episodes": 0
+      },
+      "test_budget": {
+        "final_test_episodes": 0,
+        "sealed_test_episodes": 0
+      },
+      "resource_limits": {
+        "solver_calls": 0,
+        "plant_steps": 0,
+        "training_steps": 0,
+        "validation_episodes": 0,
+        "test_episodes": 0
+      },
+      "max_attempts": 2,
+      "max_zero_usage_repairs": 1,
+      "timeout_seconds": 900,
+      "dependencies": [],
+      "pass_conditions": {
+        "reconstruction_evidence_inventory_complete": true,
+        "no_solver_plant_training_validation_or_test_usage": true
+      },
+      "continue_without_review": false
+    }
+  ]
+}

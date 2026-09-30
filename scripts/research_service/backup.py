@@ -1,5 +1,5 @@
 """Incremental, restorable GitHub release backups, with content verification."""
-import datetime as dt, hashlib, json, os, pathlib, sqlite3, subprocess, tarfile, time, urllib.request, urllib.error, uuid
+import datetime as dt, hashlib, json, os, pathlib, sqlite3, subprocess, tarfile, time, urllib.request, urllib.error, uuid, tempfile, fcntl
 BASE=pathlib.Path('/data/openai-agent');ROOT=BASE/'mobile-robot-mppi-study';STATE=BASE/'state';TMP=BASE/'backup_staging';TMP.mkdir(exist_ok=True)
 REPO='Mapples-Frost/mobile-robot-mppi-study';BRANCH='codex/bohn-aws-20260926';TAG='bohn-aws-evidence-20260926';TOKEN=(BASE/'.secrets/github.token').read_text().strip()
 
@@ -77,14 +77,37 @@ def files():
    if p.suffix in ('.pyc','.lock') or p.name.endswith(('-wal','-shm')) or p.name in ('heartbeat.json','orchestrator.lock','backup_status.json','backup_index.sqlite','backup_receipts.jsonl','research.sqlite'):continue
    yield p
 
-def main():
+def capture_state_file(p, destination):
+ # STATE contains live telemetry and worker progress. Capture a bounded point-in-time
+ # file version; scientific raw evidence outside STATE retains strict mutation checks.
+ for attempt in range(3):
+  with p.open('rb') as source, destination.open('wb') as target:
+   before=os.fstat(source.fileno());remaining=before.st_size
+   while remaining:
+    block=source.read(min(1024*1024,remaining))
+    if not block:break
+    target.write(block);remaining-=len(block)
+   after=os.fstat(source.fileno())
+  append_only_prefix=(p.suffix=='.jsonl' and after.st_size>=before.st_size)
+  if remaining==0 and (after.st_mtime_ns==before.st_mtime_ns or append_only_prefix):
+   os.utime(destination,ns=(before.st_atime_ns,before.st_mtime_ns))
+   return before.st_size,before.st_mtime_ns
+  time.sleep(0.05)
+ raise RuntimeError('Unable to capture consistent state snapshot: '+str(p.relative_to(BASE)))
+
+def main(snapshot_dir):
  source=sqlite3.connect(STATE/'research.sqlite'); target=sqlite3.connect(STATE/'research.snapshot.sqlite'); source.backup(target); target.close(); source.close()
  commit=code_backup();rel=release();con=sqlite3.connect(STATE/'backup_index.sqlite')
  con.execute('create table if not exists files(path text primary key,size integer,mtime integer,sha text,asset text)')
  changed=[]
  for p in files():
   s=p.stat();key=str(p.relative_to(BASE));old=con.execute('select size,mtime from files where path=?',(key,)).fetchone()
-  if old!=(s.st_size,s.st_mtime_ns):changed.append((p,key,s.st_size,s.st_mtime_ns))
+  if old!=(s.st_size,s.st_mtime_ns):
+   if p.is_relative_to(STATE):
+    destination=pathlib.Path(snapshot_dir)/uuid.uuid4().hex
+    n,mtime=capture_state_file(p,destination)
+    changed.append((destination,key,n,mtime))
+   else:changed.append((p,key,s.st_size,s.st_mtime_ns))
  changed.sort(key=lambda entry:entry[3],reverse=True)
  packages=[];batch=[];size=0
  def flush(batch):
@@ -95,7 +118,7 @@ def main():
    for p,key,n,mtime in batch:
     digest=sha(p);tar.add(p,arcname=key,recursive=False)
     if p.stat().st_size!=n or p.stat().st_mtime_ns!=mtime:raise RuntimeError('Source changed during backup: '+key)
-    entries.append(dict(path=key,bytes=n,mtime_ns=mtime,sha256=digest))
+    entries.append(dict(path=key,bytes=n,mtime_ns=mtime,sha256=digest,snapshot_semantics='point_in_time_state' if key.startswith('state/') else 'immutable_scientific_evidence'))
   asset=upload(rel,archive);manifest=TMP/(name+'.manifest.json');manifest.write_text(json.dumps(dict(commit=commit,asset=asset,entries=entries),indent=2))
   manifest_asset=upload(rel,manifest)
   for row in entries:con.execute('insert or replace into files values(?,?,?,?,?)',(row['path'],row['bytes'],row['mtime_ns'],row['sha256'],asset['name']))
@@ -114,7 +137,10 @@ def main():
  print(json.dumps({'backup':'partial' if remaining else 'verified','remaining_changed_files':remaining,'changed_files':len(changed),'packages':len(packages),'release':rel['html_url']}))
 
 if __name__=='__main__':
- try:main()
+ try:
+  with (STATE/'backup.lock').open('a') as backup_lock:
+   fcntl.flock(backup_lock,fcntl.LOCK_EX)
+   with tempfile.TemporaryDirectory(prefix="state_snapshot_",dir=TMP) as snapshot_dir:main(snapshot_dir)
  except Exception as e:
   # Do not surface credential-bearing HTTP errors.
   save(STATE/'backup_status.json',dict(time=dt.datetime.now(dt.timezone.utc).isoformat(),status='failed',error_type=type(e).__name__,message=str(e).replace(TOKEN,'[REDACTED]')[:1000]));raise SystemExit(1)

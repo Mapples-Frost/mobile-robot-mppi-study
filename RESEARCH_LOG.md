@@ -6496,3 +6496,11 @@ UTC: 2026-09-30T04:39:31.989213+00:00. Metadata-only/reversible; no simulation/c
 
 ## 2026-09-30T04:41:23.402313+00:00
 
+<!-- vehicle_true_variable_horizon_v31_label_coverage_lower_bound_v0-20260930T044251Z -->
+## 2026-09-30 v31 label-coverage lower-bound diagnostic
+
+UTC: 2026-09-30T04:42:51.420306+00:00. Development-analysis only; no simulation/control/training/refit/validation64/sealed-test access. Service elapsed `3d 17h 47m 22.001s`. Current source-family counts by oracle label `{'12': 3, '15': 1, '35': 1}` imply lower-bound basic grouped-CV class-presence deficits `{'12': 0, '15': 1, '35': 1}`; non-default total deficit `2`. This is not a selector validation or a new branch decision; carry to Astra request `v31-cluster-stability-diagnostic-20260930T0405Z`. Artifacts: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v31_label_coverage_lower_bound_v0_20260930T044251Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v31_label_coverage_lower_bound_v0_20260930T044251Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v31_label_coverage_lower_bound_v0_20260930T044251Z/completed.json`. Backup request: `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_V31_LABEL_COVERAGE_LOWER_BOUND_20260930T044251Z.json`.
+
+
+## 2026-09-30T04:47:07.871793+00:00
+

@@ -7790,3 +7790,12 @@ Current blocker / next gate:
   1. verify external backup covering T-C2R2 artifacts/docs/registry/state;
   2. re-read `PLAN_READY.json`;
   3. execute the next Opus-published structured task if available.
+
+<!-- vehicle-tc2r2f-module-binding-alias-provenance-verification-20260930T160037Z -->
+## T-C2R2F module-binding and alias provenance verification
+
+UTC: 2026-09-30T16:00:37.303719+00:00. Local task hard_pass `True` under Opus plan `20260930T154136Z_dfe805`. No source write occurred; exact lines changed: none. `MODULES['stage1_runner']` resolved to `vehicle_stress_scenario_opportunity_probe_v1_runner`; terminal protocol matched T-C2R2 raw metadata `True`; H15 terminal grid was present `True`; do_mpc controller imports resolved to the vendored package `True`; legacy interpreter core versions matched `True`. Evidence: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34z2_environment_probe_v0_20260930T160037Z/summary.md` and `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34z2_environment_probe_v0_20260930T160037Z/raw.json`. Resources were zero for solver, plant, training, validation and test; validation64 and sealed/final test remained closed. Backup request: `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_T_C2R2F_MODULE_BINDING_ALIAS_PROVENANCE_20260930T160037Z.json`.
+
+
+## 2026-09-30T16:01:58.089152+00:00
+

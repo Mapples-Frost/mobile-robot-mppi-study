@@ -1,0 +1,9 @@
+{
+  "requested_by": "user",
+  "authorized_lead": "gpt-5.5",
+  "mode": "temporary_user_authorized_solo",
+  "final_test_authorized": false,
+  "time": "20260930T160907Z",
+  "instruction": "Run GPT-5.5 alone tonight. Pause Opus and Astra until explicit user resumption after the user supplies Opus tomorrow. GPT-5.5 owns analysis, scientific direction within the existing Bohn goal/protocol, bounded plans, implementation and evidence-driven continuation. Preserve split isolation and frozen experiments. Self-review is not independent acceptance.",
+  "original_roles_backup": "/data/openai-agent/state/deployments/solo_gpt55_20260930T160907Z/original_research_roles.json"
+}

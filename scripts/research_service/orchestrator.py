@@ -180,6 +180,7 @@ def call_tool(name,args):
         if str(p).startswith(str(SERVICE)):raise ValueError('Supervisor code is protected; write research extension scripts elsewhere')
         analyst_root=ROOT/'docs/bohn2021_takeover/astra_reviews'
         opus_root=ROOT/'docs/bohn2021_takeover/opus_lead'
+        if ROOT/'docs/bohn2021_takeover/solo_gpt55' in p.parents:raise ValueError('Solo authorization/publications are protected; use submit_solo_execution_plan')
         if opus_root in p.parents or (analyst_root in p.parents and not (p.parent==analyst_root and p.name in ('NEXT_REVIEW_REQUEST.json','RESPONSE_LOG.md'))):
             raise ValueError('Analyst publications are protected; use the shared analysis request and RESPONSE_LOG handoff')
         content=args['content']
@@ -189,8 +190,39 @@ def call_tool(name,args):
             hist=STATE/'edit_history'/uuid.uuid4().hex;hist.parent.mkdir(exist_ok=True);shutil.copy2(p,hist)
         p.parent.mkdir(parents=True,exist_ok=True);p.write_text(content);return dict(written=str(p.relative_to(ROOT)),sha256=hashlib.sha256(content.encode()).hexdigest())
     if name=='run_experiment':return execute(args)
+    if name=='submit_solo_execution_plan':
+        roles=current_roles()
+        if roles.get('mode')!='temporary_user_authorized_solo' or roles.get('active_lead')!='gpt-5.5':raise ValueError('Solo plan publication is not authorized in the current role mode')
+        plan=execution_contract.validate_plan(args['plan']);rationale=args['rationale']
+        if not isinstance(rationale,str) or len(rationale.strip())<100:raise ValueError('Evidence-linked English rationale of at least 100 characters required')
+        payload=json.dumps(args)
+        if redact(payload)!=payload:raise ValueError('Secret content forbidden in plan')
+        authority=safe_path(roles['user_authorization'])
+        if hashlib.sha256(authority.read_bytes()).hexdigest()!=roles['user_authorization_sha256']:raise ValueError('User role override was modified')
+        call_id=load(STATE/'active_tool.json').get('call_id') or uuid.uuid4().hex
+        audit_id='solo_'+hashlib.sha256(call_id.encode()).hexdigest()[:24]
+        out=ROOT/'docs/bohn2021_takeover/solo_gpt55';out.mkdir(parents=True,exist_ok=True)
+        report=out/(audit_id+'.md');plan_path=out/(audit_id+'.execution_plan.json');manifest_path=out/(audit_id+'.manifest.json')
+        old=load(manifest_path)
+        if old:
+            if old.get('publication_arguments_sha256')!=execution_contract.digest(args):raise ValueError('Solo publication replay payload mismatch')
+            return dict(published=True,replayed=True,ready=old['ready'])
+        request=load(ROOT/'docs/bohn2021_takeover/astra_reviews/NEXT_REVIEW_REQUEST.json')
+        if request.get('request_id') and plan['request_id']!=request['request_id']:raise ValueError('Use the current execution-result request ID; do not discard pending outcome analysis')
+        text='# Temporary GPT-5.5 solo research plan\n\nUser-authorized single-agent mode. Self-reviewed development evidence; no independent Opus/Astra acceptance and no sealed/final-test authorization.\n\n'+rationale+'\n'
+        report.write_text(text);dump(plan_path,plan)
+        ready=dict(request_id=plan['request_id'],primary_analyst='gpt-5.5',authority_mode='temporary_user_authorized_solo',user_authorization=roles['user_authorization'],user_authorization_sha256=roles['user_authorization_sha256'],report=str(report.relative_to(ROOT)),report_sha256=hashlib.sha256(report.read_bytes()).hexdigest(),execution_plan=str(plan_path.relative_to(ROOT)),execution_plan_sha256=hashlib.sha256(plan_path.read_bytes()).hexdigest(),execution_contract_version=1,audit_id=audit_id,completed=now(),independent_audit_passed=False)
+        execution_contract.plan_from_ready(ROOT,ready)
+        dump(manifest_path,dict(publication_arguments_sha256=execution_contract.digest(args),ready=ready,created=now(),previous_reference=roles['lead_ready_path']))
+        dump(out/'PLAN_READY.json',ready)
+        roles.update(lead_ready_path=str((out/'PLAN_READY.json').relative_to(ROOT)),lead_index_path=str((out/'LATEST.md').relative_to(ROOT)),latest_plan=audit_id)
+        (out/'LATEST.md').write_text('# Current temporary solo plan\n\nReport: '+ready['report']+'\n')
+        dump(STATE/'research_roles.json',roles)
+        event('solo_plan_published',audit_id=audit_id,request_id=plan['request_id'],task_ids=[t['task_id'] for t in plan['tasks']])
+        return dict(published=True,ready=ready)
     if name=='update_state':
         state=load(STATE/'research_state.json');patch=args['state']
+        if current_roles().get('mode')=='temporary_user_authorized_solo' and (patch.get('final_test_authorized') or patch.get('independent_audit_passed')):raise ValueError('Temporary solo mode cannot grant final tests or independent audit acceptance')
         if patch.get('final_test_authorized'):
             gate=load(ROOT/'final_test_gate.json')
             if not gate.get('validation_passed') or not gate.get('frozen_commit') or not gate.get('model_hashes') or not gate.get('independent_audit_passed'):raise ValueError('Incomplete final test gate')
@@ -205,6 +237,7 @@ tool('read_file','Read at most 24000 characters of a repository text file. Test 
 tool('write_file','Write research code, protocol, or report. Old file is archived; never silently change frozen sources.',{'path':S,'content':S},['path','content'])
 tool('run_experiment','Run exactly one bounded Python script. All execution is registered, including smoke and diagnostics. No shell.',{'script':{'type':'string','description':'Repository-relative path to an existing .py file, for example experiments/bohn2021_aws/fit_population_diagnosis.py. Never inline source code.'},'args':{'type':'array','items':S},'interpreter':{'type':'string','enum':['modern','legacy']},'timeout_seconds':I,'method':S,'seed':S,'split':S,'purpose':S,'config':{'type':'object'},'training_budget':{'type':'object'},'validation_budget':{'type':'object'},'test_budget':{'type':'object'},'artifacts':{'type':'array','items':S}},['script','interpreter','method','seed','split','purpose','config','training_budget','validation_budget','test_budget','artifacts'])
 tool('update_state','Persist phase, hypothesis, next_experiment, queue, blockers, failures and scientific decisions.',{'state':{'type':'object'}},['state'])
+tool('submit_solo_execution_plan','Only in the user-authorized temporary GPT-5.5 solo mode: publish the next bounded scientific plan after reading outcomes. Use the existing execution plan schema (schema_version=1, current request_id, tasks); fields and resource/split/frozen-config gates stay enforced. Evidence-linked English rationale must distinguish ORIGINAL/IMPROVED, pending failures and limitations. This is self-review, never independent acceptance; final/sealed tests remain closed.',{'plan':{'type':'object'},'rationale':S},['plan','rationale'])
 for t in TOOLS:
     if t['name']=='run_experiment':
         t['parameters']['properties'].update(task_id={'type':'string','description':'Required when PLAN_READY has an execution_plan. Exact lead-authorized task ID.'},resource_request={'type':'object','description':'Required in structured mode. All five integer counters: solver_calls, plant_steps, training_steps, validation_episodes, test_episodes. A reservation, not measured usage; unknown final usage stays reserved.'})
@@ -241,6 +274,7 @@ def heartbeat():
 
 def current_roles():
     roles=load(STATE/'research_roles.json')
+    if roles.get('status')=='active' and roles.get('active_lead')=='gpt-5.5' and roles.get('mode')=='temporary_user_authorized_solo':return roles
     if roles.get('status')=='active' and roles.get('active_lead')=='claude-opus-5-5':
         return roles
     return dict(active_lead='gpt-6-astra',independent_reviewer='gpt-6-astra',executor='gpt-5.5',
@@ -252,6 +286,7 @@ def awaiting_astra_analysis():
     out=ROOT/'docs/bohn2021_takeover/astra_reviews'
     try:
         roles=current_roles();request=load(out/'NEXT_REVIEW_REQUEST.json')
+        if roles.get('mode')=='temporary_user_authorized_solo':return False
         if not request.get('request_id'):return False
         ready=load(safe_path(roles['lead_ready_path']))
         if ready.get('request_id') != request['request_id'] and request['request_id'] not in ready.get('supersedes_request_ids',[]):return True
@@ -267,6 +302,8 @@ def awaiting_astra_analysis():
 def role_context():
     roles=current_roles();ready=load(safe_path(roles['lead_ready_path']))
     result=dict(roles=roles,latest_plan=ready)
+    if roles.get('mode')=='temporary_user_authorized_solo':
+        result['solo_user_instruction']='The latest human instruction temporarily pauses Opus and Astra and appoints GPT-5.5 sole lead, analyst and executor until the user resumes them. It supersedes earlier executor-only/wait-for-Opus instructions. Analyze outcomes, diagnose and repair, decide the next useful bounded experiment and immediately continue; do not wait for absent reviewers. Existing frozen tasks are references and may be completed under their bounds. For a new task, exhausted allowance or substantive branch, use submit_solo_execution_plan with the current request ID, the same task schema and an evidence-linked rationale. Keep cumulative usage, all failed evidence, strong fair fixed-H, ORIGINAL/IMPROVED labels, protocol versions and split isolation. No final/sealed test or claim of independent acceptance in solo mode. Do not spend all night on metadata-only checks; finish existing validity prerequisites, get informative solver/control/training evidence, then continue evidence-driven iteration. No new infrastructure or paid resources. Opus/Astra context/checkpoints are retained for the later user-requested handoff.'
     if ready.get('report'):
         try:result['plan_content']=redact(safe_path(ready['report']).read_text())[:40000]
         except (OSError,ValueError):pass

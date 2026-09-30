@@ -115,8 +115,20 @@ def plan_from_ready(root, ready):
     if hashlib.sha256(path.read_bytes()).hexdigest() != ready.get('execution_plan_sha256'):
         raise ValueError('Execution plan digest mismatch')
     plan = validate_plan(read(path))
-    if plan['request_id'] != ready['request_id'] or ready.get('primary_analyst') != 'claude-opus-5-5':
+    if plan['request_id'] != ready['request_id']:
         raise ValueError('Execution plan authority/request mismatch')
+    if ready.get('primary_analyst') != 'claude-opus-5-5':
+        if ready.get('primary_analyst') != 'gpt-5.5' or ready.get('authority_mode') != 'temporary_user_authorized_solo':
+            raise ValueError('Execution plan author is not authorized')
+        authority_name=ready.get('user_authorization','')
+        if not authority_name.startswith('docs/bohn2021_takeover/solo_gpt55/ROLE_OVERRIDE_') or not authority_name.endswith('.json'):
+            raise ValueError('Solo authority must reference the protected user override')
+        authority=repo_path(root,authority_name)
+        if hashlib.sha256(authority.read_bytes()).hexdigest()!=ready.get('user_authorization_sha256'):
+            raise ValueError('Solo user authorization digest mismatch')
+        record=read(authority)
+        if record.get('requested_by')!='user' or record.get('authorized_lead')!='gpt-5.5' or record.get('mode')!='temporary_user_authorized_solo' or record.get('final_test_authorized') is not False:
+            raise ValueError('Invalid solo user authorization record')
     return plan
 
 

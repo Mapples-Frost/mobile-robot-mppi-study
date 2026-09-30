@@ -1586,3 +1586,29 @@ UTC `2026-09-30T07:45:44.815804+00:00`: gate passed `True`; schedule/raw/trace c
 ## 2026-09-30 v34c zero-solve objective-basin contract preflight
 
 UTC: 2026-09-30T09:39:32.043254+00:00. Executed Astra Task1 repair/preflight with 24 scheduled cells and 24 controlled intercepts before `mpc.solve`; lower-level solver calls=0, plant steps=0, training/refit=0, validation64=false, sealed test=false. hard_pass=True; vf4_ok=24/24; lterm_ok=24/24; group_failures=0. Artifacts: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34c_contract_preflight_v0e_20260930T093751Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34c_contract_preflight_v0e_20260930T093751Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34c_contract_preflight_v0e_20260930T093751Z/completed.json`. Backup request: `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_V34C_CONTRACT_PREFLIGHT_V0E_20260930T093751Z.json`.
+
+
+## Opus lead deployment2026-09-30
+
+{
+  "time": "2026-09-30T09:49:01.833466+00:00",
+  "decision": "user_authorized_opus_scientific_lead",
+  "model": "claude-opus-5-5",
+  "requested_effort": "max",
+  "roles": "Opus lead after evidence-grounded onboarding; Astra independent cross-review; GPT-5.5 execute",
+  "reason": "User requested a scientific-lead Opus model and retained existing executor and independent reviewer",
+  "verification": [
+    "model-list and native text smoke",
+    "native tools plus unchanged signed-thinking multi-turn continuation",
+    "real SSE with usage",
+    "incomplete stream and secret/sealed path rejection",
+    "active-lead identity/request/report-hash execution gate"
+  ],
+  "limitations": [
+    "Native response does not consistently echo effort; max requested/accepted only",
+    "Scientific handoff audit not yet completed"
+  ],
+  "secrets": "External /data/openai-agent/.secrets/opus.env mode0600; no credentials in records",
+  "supervision": "enabled systemd bohn-opus-lead / bohn-astra-reviewer / bohn-research",
+  "frozen_experiments": "Reloaded at idle experiment and completed reviewer boundaries; no experiment interrupted"
+}

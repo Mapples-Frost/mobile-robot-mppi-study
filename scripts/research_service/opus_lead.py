@@ -248,6 +248,24 @@ def publish(checkpoint,report,messages):
     save(WORK/'status.json',dict(status='completed',audit_id=audit_id,report=ready['report'],updated=now()))
     event('plan_published',audit_id=audit_id,request_id=request['request_id'],initial_handoff=checkpoint.get('first_cycle'))
 
+HANDOFF_REQUIRED_EVIDENCE=(
+    'experiments/bohn2021_reproduction/SOURCE_MAP.md',
+    'experiments/bohn2021_reproduction/configure.py',
+    'experiments/bohn2021_reproduction/runtime.py',
+    'research_artifacts/bohn2021_reproduction_2026-09-17/sources/rlmpcopt/train_model.py',
+    'research_artifacts/bohn2021_reproduction_2026-09-17/sources/rlmpcopt/configs/cart_pendulum_ah.json',
+    'experiments/bohn2021_reproduction/optimized_pendulum_diagnosis.py',
+    'experiments/bohn2021_reproduction/gated_horizon_training_witness.py',
+    'experiments/bohn2021_reproduction/latency_tree_baselines.py',
+    'REPRODUCTION_PROTOCOL.md',
+    'RESULTS_AUDIT.md',
+)
+
+def missing_handoff_evidence(checkpoint):
+    if not checkpoint.get('first_cycle'):return []
+    seen={x['path'] for x in checkpoint.get('inspected',[])}
+    return [p for p in HANDOFF_REQUIRED_EVIDENCE if p not in seen]
+
 def cycle():
     checkpoint=load(WORK/'checkpoint.json')
     if checkpoint.get('status')=='in_progress':
@@ -267,6 +285,10 @@ def cycle():
         save(session,dict(system=system,messages=messages));save(WORK/'checkpoint.json',checkpoint)
     persist();report=None
     for turn in range(checkpoint['turn'],checkpoint['max_turns']):
+        missing=missing_handoff_evidence(checkpoint)
+        if missing and (not checkpoint.get('broad_coverage_prompted') or turn in (20,28)):
+            messages.append({'role':'user','content':'The FIRST-cycle priority is the user-requested COMPREHENSIVE handoff, not only the latest v34 bug. Before you can activate as lead, independently read at least these existing primary source/protocol paths; then investigate actual linked training/checkpoint/raw evidence and fair baseline budgets. Acknowledge unresolved omissions honestly. Batch independent reads. Missing required handoff navigation (not sufficient by itself for a full audit):\n'+json.dumps(missing)})
+            checkpoint['broad_coverage_prompted']=True
         request=request_now()
         if request['request_id']!=checkpoint['request']['request_id']:
             checkpoint['superseded_request_ids'].append(checkpoint['request']['request_id'])
@@ -305,7 +327,7 @@ def cycle():
         else:
             candidate='\n\n'.join(x.get('text','') for x in answer['content'] if x.get('type')=='text')
             minimum=20 if checkpoint['first_cycle'] else 4
-            if len(candidate)>2000 and len({x['path'] for x in checkpoint['inspected']})>=minimum:
+            if len(candidate)>2000 and len({x['path'] for x in checkpoint['inspected']})>=minimum and not missing_handoff_evidence(checkpoint):
                 report=candidate
             else:
                 messages.append({'role':'user','content':'The requested handoff/analysis needs substantive primary evidence and an actionable report. Continue with tools; state omissions rather than claiming completion.'})
@@ -314,8 +336,14 @@ def cycle():
             unique_files=len({x['path'] for x in checkpoint['inspected']}),first_cycle=checkpoint['first_cycle'],updated=now()))
         if report:break
     if not report:
-        checkpoint['status']='insufficient_evidence';persist()
-        raise RuntimeError('No substantive sufficiently grounded report; next bounded cycle must inspect missing evidence')
+        # Preserve the inspected evidence and native context across bounded continuation,
+        # rather than resetting the full audit and repeating the same reads.
+        checkpoint['max_turns']=checkpoint['turn']+16
+        checkpoint['bounded_continuations']=checkpoint.get('bounded_continuations',0)+1
+        messages.append({'role':'user','content':'Continue the handoff from retained evidence in the next bounded segment. Finish missing coverage and publish a grounded concrete plan; do not repeat already-read evidence without a specific reason.'})
+        persist()
+        save(WORK/'status.json',dict(status='bounded_continuation',audit_id=checkpoint['audit_id'],turn=checkpoint['turn'],missing_handoff_evidence=missing_handoff_evidence(checkpoint),updated=now()))
+        return
     publish(checkpoint,report,messages)
 
 def main():

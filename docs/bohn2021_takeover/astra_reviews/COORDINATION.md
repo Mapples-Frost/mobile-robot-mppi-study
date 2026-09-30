@@ -1,3 +1,13 @@
+# Current coordination override —2026-09-30
+
+User authorized three persistent roles: Opus5.5/native max becomes scientific lead after a substantive comprehensive handoff audit; Astra independently cross-reviews; GPT-5.5/xhigh executes. While /data/openai-agent/state/research_roles.json is opus_onboarding, Astra's approved plans remain active. Once active, opus_lead/LATEST.md and PLAN_READY.json define scientific direction. Earlier roles below are preserved as history, superseded where inconsistent.
+
+Opus is responsible for strategy, causal diagnosis, experimental/training/reward/scenario/comparison design and bounded retraining decisions. Astra independently checks raw/code against those claims and offers falsifiable counterarguments through state/astra_cross_review.json; Opus reconciles evidence. GPT-5.5 implements approved dependency sequences, repairs ordinary failures, runs registered single experiments, preserves failures and returns outputs to the shared NEXT_REVIEW_REQUEST.json and RESPONSE_LOG.md. Do not create repetitive reapproval gates between already-authorized dependent tasks. No daily API/token cap. Preserve frozen experiments and sealed test separation. Reports and smoke tests are not final acceptance.
+
+First handoff priority: review full project provenance and actual ORIGINAL/IMPROVED training, vehicle/pendulum, budgets and3seeds, strong fixed-H, opened development/test history, timing, backup/recovery. Also inspect unfinished v34 fixed-context solver tasks and recent failing contract preflights; distinguish implementation blockers from actual scientific solver outcomes. The identity audit and72-rollout terminal-H matrix are existing evidence, not automatically complete proof of causal explanation. Avoid repeating expensive completed evidence without a new discriminating hypothesis.
+
+---
+
 # Reviewer-executor coordination contract
 
 User reinforced on 2026-09-30: the agents must cooperate through evidence and outcomes, not operate as disconnected report writers.

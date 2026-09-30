@@ -1836,3 +1836,12 @@ UTC: 2026-09-30T22:13:11.008678+00:00. Metadata-only current backup-state rechec
 - Preserved conclusions: s0/s1 are structurally H25-only with zero policy/trace mismatches; s2 uses H35 on 409/5014 stored steps with zero policy/trace mismatches, but all-shard validation shows physical mean 628.572 vs matched fixed H25 18.918 and case43 failure with horizon counts {25:149, 35:1} while fixed H25/H35 comparators succeed.
 - Decision: current latency-tree selector is negative development evidence; next nonzero work, after backup recoverability, should continue source242 true-variable-horizon microcontinuation/controller-path measurement or its direct repair rather than another unchanged latency-tree validation sweep.
 - Artifacts: `research_artifacts/aws_diagnostics/vehicle_learned_policy_collapse_diagnostic_v3_receipt_repair_solo_v0_20260930T231002Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_learned_policy_collapse_diagnostic_v3_receipt_repair_solo_v0_20260930T231002Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_learned_policy_collapse_diagnostic_v3_receipt_repair_solo_v0_20260930T231002Z/completed.json`.
+
+<!-- vehicle-learned-collapse-v3-receipt-repair-solo-v0c-decisions -->
+### Learned-policy collapse receipt pass-predicate repair solo v0c (2026-09-30T23:17:19.404525+00:00)
+
+- Ran a zero-resource repair for the v0b local `completed.passed` predicate. The v0b evidence values matched the plan, but `all(evidence.values())` incorrectly failed expected-false safety flags (`validation_bank_content_opened=False`, `sealed_or_final_test_accessed=False`).
+- Corrected pass predicate: `True`. Evidence mismatches: `{}`.
+- Preserved scientific finding: s0/s1 are structurally H25-only; s2 uses H35 on 409 stored validation steps with no policy/trace mismatches but is worse than matched fixed H25 and preserves the case43 failure. This is IMPROVED development/validation-output evidence only, not ORIGINAL or final-test evidence.
+- No validation bank/generator, solver, plant, training/refit, new validation episode, sealed test or final test was accessed. Resources are zero.
+- Artifacts: `research_artifacts/aws_diagnostics/vehicle_learned_policy_collapse_diagnostic_v3_receipt_repair_solo_v0c_20260930T231719Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_learned_policy_collapse_diagnostic_v3_receipt_repair_solo_v0c_20260930T231719Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_learned_policy_collapse_diagnostic_v3_receipt_repair_solo_v0c_20260930T231719Z/completed.json`.

@@ -1,0 +1,111 @@
+{
+  "request_id": "execution-result:20260930T172124_fe559608",
+  "schema_version": 1,
+  "tasks": [
+    {
+      "task_id": "S-TC2H3-source242-taskid-evidence-key-repair-v0",
+      "description": "TEMPORARY GPT-5.5 SOLO SELF-REVIEW / ZERO-USAGE OPERATIONAL REPAIR PLUS SAME MICROCONTINUATION. S-TC2H2 v0c preserved the nested 2x1 action-payload repair but failed before solver/plant resources because the delegated base runner still required the old structured task id, producing MicroError(\"unexpected task_id in structured snapshot\") with a valid zero-resource engineering-failure receipt. This task runs the v0d wrapper that patches only launch-contract compatibility: it binds base.TASK_ID to this new approved task id, inherits the v0c nested 2x1 payload adapter, adds receipt evidence-key aliases matching the current pass_conditions, normalizes any zero-use backup dependency receipt to the contract's allowed engineering-error vocabulary, and requires a verified external backup after both the v0c zero-resource failure and v0d source before solver/plant resources. If that backup gate is satisfied, it reruns the same opened-development source242 fixed-H microcontinuation. It does not alter source242 context, goal source, horizons, V15_shared terminal mode, objective, initialization, training/refit, validation64 access, sealed/final-test access, or resource caps.",
+      "script_patterns": [
+        "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34z2_source242_microcontinuation_v0d_taskid_evidence_repair.py"
+      ],
+      "split": "opened_development_source242_slot0_branch_start_microcontinuation_taskid_evidence_repair_no_validation64_no_sealed_test",
+      "method": "three-arm source242 fixed-H closed-loop microcontinuation rerun after task-id/evidence-key wrapper repair and inherited nested 2x1 control-payload repair, H=[12,15,35], V15_shared terminal held fixed, canonical/default warm-start, max 60 plant steps per arm, full cost/safety/solver/timing traces",
+      "seeds": [
+        "source242_branch_deterministic_no_training_seed"
+      ],
+      "config_constraints": {
+        "label_ORIGINAL_vs_IMPROVED": "IMPROVED",
+        "authority_mode": "temporary_user_authorized_solo_self_review",
+        "operational_repair_only": true,
+        "repair_scope": "bind delegated microcontinuation runner to the active structured task id, inherit the v0c [[u_omega],[u_s]] action payload repair, and add receipt evidence-key aliases; do not change horizons, terminal mode, source242 context, objective, cost, training, validation/test access, or scientific acceptance rules",
+        "previous_attempt_experiment_id": "20260930T172124_fe559608",
+        "previous_attempt_failed": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34z2_source242_microcontinuation_v0c_nested_payload_repair_20260930T172125Z/failed.json",
+        "previous_attempt_finding": "v0c failed before solver/plant resources with MicroError(\"unexpected task_id in structured snapshot\") because the delegated base runner retained the old task id; nested payload itself was not tested by v0c",
+        "repair_source": "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34z2_source242_microcontinuation_v0d_taskid_evidence_repair.py",
+        "repair_source_sha256_at_plan_publication": "18859f957832dc217e0358736f558bed92cbf3abffef64853edee5ccf9888888",
+        "latest_verified_external_backup_before_plan_from_supervisor_context": {
+          "time": "2026-09-30T17:20:44.192731+00:00",
+          "status": "verified",
+          "remaining_changed_files": 0,
+          "commit": "6f65c3b16c2ddd2d3593376a9d2ec7b23b8b1ce0",
+          "package_sha256": "0e474ed83ff58652c4c2df677c548a33a2eaaf6432a804b44471f83969fa2283",
+          "release": "https://github.com/Mapples-Frost/mobile-robot-mppi-study/releases/tag/bohn-aws-evidence-20260926"
+        },
+        "require_verified_backup_after_v0c_failure_and_v0d_source_before_solver_or_plant_steps": true,
+        "microcontinuation_source_context": "source242_slot0_branch_start",
+        "goal_source_required": "case.tvp.trajectory_endpoint[61]",
+        "horizon_grid": [
+          12,
+          15,
+          35
+        ],
+        "terminal_mode_for_all_arms": "V15_shared",
+        "max_steps_per_arm": 60,
+        "arm_count": 3,
+        "plant_step_cap": 180,
+        "solver_call_cap": 180,
+        "ordinary_deployment_style_warm_start_after_first_action": true,
+        "first_action_initialization": "canonical_zero_control_only_if_explicit_initial_primal_is_required",
+        "forbid_goal_facing_initialization": true,
+        "report_physical_control_constraint_total_costs": true,
+        "report_success_constraint_solver_failure_accounting": true,
+        "report_solver_and_whole_decision_timing": true,
+        "report_per_step_solver_status_iterations": true,
+        "report_context_and_prefix_hashes": true,
+        "development_only_not_validation_not_final": true,
+        "no_training_no_refits": true,
+        "no_validation64_access": true,
+        "no_sealed_or_final_test_access": true,
+        "no_new_paid_infrastructure": true,
+        "cumulative_S_TC2H_family_usage_before_this_rerun": {
+          "solver_calls": 6,
+          "plant_steps": 0,
+          "training_steps": 0,
+          "validation_episodes": 0,
+          "test_episodes": 0
+        }
+      },
+      "training_budget": {
+        "gradient_steps": 0,
+        "selector_refits": 0,
+        "training_steps": 0
+      },
+      "validation_budget": {
+        "opened_development_branch_episodes": 3,
+        "max_plant_steps": 180,
+        "solver_calls": 180,
+        "validation64_episodes": 0
+      },
+      "test_budget": {
+        "final_test_episodes": 0,
+        "sealed_test_episodes": 0
+      },
+      "resource_limits": {
+        "solver_calls": 180,
+        "plant_steps": 180,
+        "training_steps": 0,
+        "validation_episodes": 0,
+        "test_episodes": 0
+      },
+      "max_attempts": 1,
+      "max_zero_usage_repairs": 0,
+      "timeout_seconds": 3600,
+      "dependencies": [],
+      "pass_conditions": {
+        "source242_microcontinuation_completed": true,
+        "prior_T_C2_and_S_TC2H_failures_preserved": true,
+        "backup_verified_after_v0b_before_solver_or_plant_steps": true,
+        "backup_verified_after_v0c_failure_and_v0d_source_before_solver_or_plant_steps": true,
+        "all_three_horizon_arms_attempted_or_budget_cap_reported": true,
+        "per_step_cost_safety_solver_timing_traces_persisted": true,
+        "context_source242_goal61_identity_verified": true,
+        "task_id_binding_repaired": true,
+        "receipt_evidence_key_aliases_added": true,
+        "no_training_validation64_or_test_usage": true,
+        "plant_steps_at_most_180": true,
+        "solver_calls_at_most_180": true
+      },
+      "continue_without_review": false
+    }
+  ]
+}

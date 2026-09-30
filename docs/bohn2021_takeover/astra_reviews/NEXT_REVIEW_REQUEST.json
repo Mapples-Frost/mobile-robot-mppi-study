@@ -1,16 +1,13 @@
 {
-  "request_id": "execution-result:20260930T171032_6c3fb20f",
+  "request_id": "execution-result:20260930T172124_fe559608",
   "trigger": "execution_result_handoff",
-  "created": "2026-09-30T17:11:19.273492+00:00",
-  "experiment_id": "20260930T171032_6c3fb20f",
+  "created": "2026-09-30T17:21:27.144859+00:00",
+  "experiment_id": "20260930T172124_fe559608",
   "status": "analysis_requested",
-  "purpose": "Execute the active temporary GPT-5.5 solo task S-TC2H rerun after operational action-payload repair. The previous attempt solved first decisions but env.step failed with KeyError(0); this run tests whether ordered [u_omega,u_s] payloads permit actual source242 closed-loop plant advancement and collection of cost/safety/solver/timing evidence without changing the scientific setup or accessing validation64/sealed tests.",
-  "execution_status": "complete",
+  "purpose": "Run the temporary GPT-5.5 solo-authorized S-TC2H2 one-variable nested 2x1 action-payload repair microcontinuation on opened development source242 only; determine whether the low-level vehicle plant advances beyond the previous zero-plant-step TypeError while preserving horizons, V15_shared terminal mode, context, objective, no training, no validation64, and no sealed/final test access.",
+  "execution_status": "failed",
   "question": "Active scientific lead: interpret this outcome, verify current raw evidence and select the next scientific action for GPT-5.5 implementation. Distinguish hypotheses from verified causes and account for fair baselines, terminal confounds and source-level generalization.",
   "evidence_paths": [
-    "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34z2_source242_microcontinuation_v0b_action_payload_repair_20260930T171033Z/completed.json",
-    "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34z2_source242_microcontinuation_v0b_action_payload_repair_20260930T171033Z/raw.json",
-    "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34z2_source242_microcontinuation_v0b_action_payload_repair_20260930T171033Z/summary.md",
-    "research_artifacts/aws_runs/20260930T171032_6c3fb20f/registry.json"
+    "research_artifacts/aws_runs/20260930T172124_fe559608/registry.json"
   ]
 }

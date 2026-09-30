@@ -5990,3 +5990,105 @@ UTC: 2026-09-30T02:43:28.789811+00:00. Development-only v26b-repaired fixed-H12-
 
 ## 2026-09-30T02:47:02.985398+00:00
 
+<!-- vehicle-fixed-h12-primary-v27-postdiagnostic-20260930T0300Z -->
+## 2026-09-30 v27 fixed-H12-primary postdiagnostic
+
+UTC: 2026-09-30T02:48:21.906171+00:00. Analysis-only audit of v27 completed; no simulations/control steps/training, no validation64-bank access, no sealed-test access. It preserves v27's relative result (fixed H12 decision saving 19.62%, relative bad=0, H15-referenced pass5=True) but clarifies failure accounting: absolute unsafe rows for fixed H12=2, fixed H15=2, both-fail rows=2 from source_candidate_index [242]; success-sensitive fixed-H12 pass5=False. Combined fresh v21+v23+v25+v27 relative rows=80 with H12_bad=0 and decision saving=17.90%, but this remains stress-pool development evidence. Decision: v27 strengthens the comparison-design conclusion: on fresh stress-pool rows, true fixed H12 is the dominant H12/H15 relative-compute baseline and the current adaptive selector is too conservative. However two source242 rows are absolute failures for both H12 and H15, so the v27 pass is H15-referenced rather than a deployable success/safety pass. After external backup, do not validate this adaptive H12/H15 selector; freeze a success-aware scenario/comparison audit/protocol that separates feasible states, both-fail hard cases, and the opened v19 H12-negative cluster before deciding on scenario redesign or terminal-risk/value training. Artifacts: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_fixed_h12_primary_v27_postdiagnostic_20260930T0300Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_fixed_h12_primary_v27_postdiagnostic_20260930T0300Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_fixed_h12_primary_v27_postdiagnostic_20260930T0300Z/completed.json`. Backup required: `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_V27_POSTDIAGNOSTIC_20260930T0300Z.json`.
+
+
+## 2026-09-30T02:49:26.157483+00:00
+Elapsed service lifetime since first supervisor event: ~87.88 h (2026-09-26T10:55:29Z → 2026-09-30T02:48:21Z). Cumulative server API total_tokens from `research.sqlite`: unavailable via current repository tools (`research.sqlite` not visible); not estimated, desktop conversation usage excluded.
+
+Concrete action completed: ran the previously blocked v27 postdiagnostic as the sole experiment this iteration.
+
+## Experiment completed
+
+- Experiment ID: `20260930T024821_8b3c3b30`
+- Script: `experiments/bohn2021_aws/vehicle_true_variable_horizon_fixed_h12_primary_v27_postdiagnostic.py`
+- Type: analysis-only postdiagnostic
+- Runtime: ~2.01 s
+- New simulations: 0
+- New control steps: 0
+- New training / gradient / refit steps: 0
+- Validation64 opened: no
+- Sealed test accessed: no
+- Mobile robot MPPI resumed: no
+
+## Verified result
+
+The audit clarified that v27’s fixed-H12 result is only an H15-referenced relative tradeoff success, not an absolute deployability/safety success.
+
+Key numbers:
+
+- v27 fixed H12 vs H15:
+  - decision saving: 19.62%
+  - solver saving: 21.17%
+  - relative catastrophic bad rows: 0
+  - H15-referenced pass5: true
+- Success-sensitive accounting:
+  - fixed H12 absolute unsafe rows: 2
+  - fixed H15 absolute unsafe rows: 2
+  - both-fail rows: 2
+  - both-fail source candidate index: `[242]`
+  - success-sensitive fixed-H12 pass5: false
+- Current adaptive selector:
+  - H counts: `{'12': 6, '15': 18}`
+  - decision saving: 3.72%
+  - absolute unsafe rows: 2
+  - success-sensitive pass5: false
+
+Combined development context now recorded:
+
+- Fresh v21+v23+v25+v27: 80 rows, relative H12-bad = 0, H12-beneficial = 76, decision saving = 17.90%.
+- All opened v19+v21+v23+v25+v27: 104 rows, relative H12-bad = 3, decision saving = 17.06%, physical delta still unfavorable due v19 counterevidence.
+
+## Scientific decision
+
+Do not validate the current adaptive H12/H15 selector on this distribution.
+
+The evidence now points to a comparison/scenario/failure-accounting issue before more selector retraining: fresh stress-pool rows mostly favor fixed true H12, but hard both-fail cases can make an H15-referenced gate look successful while absolute safety fails. The next useful step is not another label-density sweep and not validation; it is a success-aware scenario/comparison audit/protocol that separates:
+
+1. feasible rows where both H12 and H15 succeed,
+2. both-fail hard rows such as v27 source242,
+3. H12-only failure / adaptive-opportunity rows such as opened v19,
+4. H15-only failures if present.
+
+Terminal-risk/value refit or bounded retraining remains deferred only until that audit shows whether adaptive opportunity persists beyond fixed H12 and whether failures are separable by state/scenario features.
+
+## Artifacts updated
+
+Main outputs:
+
+- `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_fixed_h12_primary_v27_postdiagnostic_20260930T0300Z/summary.md`
+- `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_fixed_h12_primary_v27_postdiagnostic_20260930T0300Z/raw.json`
+- `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_fixed_h12_primary_v27_postdiagnostic_20260930T0300Z/completed.json`
+- `research_artifacts/aws_runs/20260930T024821_8b3c3b30/registry.json`
+- `research_artifacts/aws_state/continue_state_20260930T0300_after_v27_postdiagnostic.md`
+
+Docs/state updated by the script:
+
+- `STATUS.md`
+- `RESEARCH_LOG.md`
+- `DECISIONS.md`
+- `RESULTS_AUDIT.md`
+- `REPRODUCTION_PROTOCOL.md`
+- `EXPERIMENT_REGISTRY.csv`
+- `docs/bohn2021_takeover/astra_reviews/RESPONSE_LOG.md`
+
+Astra response log now includes new stable recommendation:
+
+- `A13_both_fail_rows_must_not_count_as_successful_fixed_H12_pass`
+
+## Backup / next-iteration gate
+
+Latest verified backup before this work covered commit `78fa84b66a43fc263ba3aa4d9c2077da1acb4e31`.
+
+New artifacts now require external backup before more unique science:
+
+- Backup request written: `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_V27_POSTDIAGNOSTIC_20260930T0300Z.json`
+
+Next after verified backup: freeze a v28 success-aware scenario/comparison audit/protocol; no validation64 or sealed test access.
+
+
+## 2026-09-30T02:55:39.835099+00:00
+

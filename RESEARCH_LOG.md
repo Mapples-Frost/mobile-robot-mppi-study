@@ -7217,3 +7217,11 @@ UTC: 2026-09-30T10:08:59.178066+00:00. Opus Task B executed one fixed-context so
 
 ## 2026-09-30T10:09:50.604670+00:00
 
+<!-- vehicle-v34h-objective-localization-20260930T101852Z -->
+## v34h objective/residual localization
+
+UTC: 2026-09-30T10:19:19.491925+00:00. Executed Opus Task E/F as offline development-only localization from the already-opened v34g one-cell arrays. Budgets: solver_calls=0, plant_steps=0, env_reset_calls_after_construction=0, training/refit=0, validation64=false, sealed_test=false. G-E objective reconstruction pass=False with best candidate `None`, total=None, solver=None, rel_error=None. G-F residual alias offline pass=True; repaired residuals={'bound_residual_using_lb_opt_x_names': 0.0, 'constraint_residual_using_cons_lb_names': 8.612633157188794e-09}; legacy residuals={'bound_residual_using_opt_x_lb_names': None, 'constraint_residual_using_opt_g_lb_names': None}. Artifacts: `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34h_objective_localization_v0_20260930T101852Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34h_objective_localization_v0_20260930T101852Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34h_objective_localization_v0_20260930T101852Z/candidate_residuals.csv`, `research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34h_objective_localization_v0_20260930T101852Z/completed.json`. Backup request: `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_V34H_OBJECTIVE_LOCALIZATION_20260930T101852Z.json`.
+
+
+## 2026-09-30T10:20:00.885949+00:00
+

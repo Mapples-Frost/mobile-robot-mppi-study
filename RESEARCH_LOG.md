@@ -6385,3 +6385,105 @@ UTC: 2026-09-30T04:27:32.786046+00:00. Metadata-only/reversible step; no simulat
 
 ## 2026-09-30T04:28:30.904894+00:00
 
+
+
+## 2026-09-30T04:32:44.839446+00:00
+Elapsed service lifetime (latest verified supervisor backup): **3d 17h 33m 44.665s** since 2026-09-26T10:55:29.419331Z.  
+Cumulative server API total_tokens: **unknown** via repository tools (`research.sqlite` unavailable); desktop conversation tokens excluded.
+
+Concrete actions completed this iteration:
+
+1. **Rechecked Astra coordination state**
+   - Read `COORDINATION.md` and current `NEXT_REVIEW_REQUEST.json`.
+   - Confirmed current request remains:
+     - `v31-cluster-stability-diagnostic-20260930T0405Z`
+   - Checked `docs/bohn2021_takeover/astra_reviews/`: **no `ANALYSIS_READY.json` present**.
+   - `LATEST.md` still points to old `20260929T153837Z.md`, which predates v29/v30b/v31 and is **not** valid analysis of the new results.
+
+2. **Re-inspected key evidence**
+   - v29: 11 opened states; H35 rescues both H12/H15 both-fail rows; H12/H15/H35 tradeoff is development-only.
+   - v30b: oracle H12/H15/H35 triage bad=0 with 50.5688% decision-time saving vs fixed H35 on opened rows, but not deployable.
+   - v31: 11 rows collapse to 5 source-family groups; oracle family counts H12=3, H15=1, H35=1; row-level LOO bad=0 but leave-one-source-family-out bad=5. This remains evidence of inadequate source-independent non-default label coverage, not validation success.
+
+3. **Materialized the latest user-context backup proof**
+   - Wrote:
+     - `research_artifacts/aws_backup_proofs/backup_proof_20260930T042914_from_user_context_after_v31_0427_materialization.json`
+   - It records the verified supervisor backup:
+     - time: `2026-09-30T04:29:14.084561+00:00`
+     - commit: `15a24f749073d360ceb96d1f563b6a909c71fc84`
+     - package SHA256: `2dd145451f04afc4b2f36176bc4542bbecfa0515393874b7ff60ba8a3c910d1f`
+   - Interpreted as covering known pre-04:29 v29/v30b/v31 and 04:27 materialization outputs per explicit supervisor context.
+
+4. **Preserved next-iteration state**
+   - Wrote:
+     - `research_artifacts/aws_state/continue_state_20260930_after_user_context_0429_backup_and_astra_pending.md`
+   - Wrote backup request for files created after the 04:29 backup:
+     - `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_USER_CONTEXT_0429_PROOF_AND_STATE_20260930.json`
+   - Updated durable supervisor state via `update_state`.
+
+Budgets/access this iteration:
+- New development simulations: **0**
+- New control steps: **0**
+- Training/gradient steps: **0**
+- Selector refits: **0**
+- Validation64 opened: **false**
+- Sealed test accessed: **false**
+- `run_experiment` calls: **0**
+
+Current blockers / next safe action:
+- **Astra analysis is still pending** for `v31-cluster-stability-diagnostic-20260930T0405Z`; I did not select a fresh scientific branch.
+- Newly written post-04:29 proof/state/request files need another external backup before unique simulation/refit/training/validation/final-test work.
+- Next iteration should first check for a matching/superseding `ANALYSIS_READY.json`; if present, verify cited evidence and execute Astra’s plan. If still absent, continue only reversible integrity/preparation work.
+
+
+## 2026-09-30T04:35:33.145173+00:00
+Elapsed service lifetime: **latest verified available = 3d 17h 33m 44.665s** since `2026-09-26T10:55:29.419331Z` at the 2026-09-30 04:29 backup. Current exact wall time is unavailable via repository tools.  
+Cumulative server API total_tokens: **unknown**, because `research.sqlite` was not found via repository tools; desktop conversation tokens excluded.
+
+Concrete actions completed this iteration:
+
+1. **Rechecked Astra coordination**
+   - Read/rechecked:
+     - `docs/bohn2021_takeover/astra_reviews/COORDINATION.md`
+     - `docs/bohn2021_takeover/astra_reviews/NEXT_REVIEW_REQUEST.json`
+     - `docs/bohn2021_takeover/astra_reviews/LATEST.md`
+     - `docs/bohn2021_takeover/astra_reviews/RESPONSE_LOG.md` tail
+   - Confirmed current request remains:
+     - `v31-cluster-stability-diagnostic-20260930T0405Z`
+   - Repository listing still shows **no `ANALYSIS_READY.json`**.
+   - `LATEST.md` still points to old `20260929T153837Z.md`, which predates v29/v30b/v31 and must not be treated as analysis of the new evidence.
+
+2. **Rechecked backup state**
+   - Latest verified backup remains the 04:29 supervisor backup:
+     - time: `2026-09-30T04:29:14.084561+00:00`
+     - commit: `15a24f749073d360ceb96d1f563b6a909c71fc84`
+     - package SHA256: `2dd145451f04afc4b2f36176bc4542bbecfa0515393874b7ff60ba8a3c910d1f`
+   - No later `backup_proof_20260930T043*` proof was present.
+   - This backup covers known pre-04:29 v29/v30b/v31 and 04:27 materialization artifacts per supervisor context.
+   - Files written after that backup now need follow-up external backup before unique simulation/refit/training/validation/final-test work.
+
+3. **Re-inspected key evidence**
+   - v29: development-only H12/H15/H25/H35 identical-state probe, 11 opened states, 44 episodes, 2557 control steps; H35 rescues both source242 H12/H15 both-fail rows; H12 fastest safe on 6 safe-control rows; H15 fastest on 3 v19 rows.
+   - v30b: analysis-only; oracle H12/H15/H35 triage bad=0 with 50.5688% decision-time saving vs fixed H35 on opened rows, but simple feature rule is not deployable due LOO failure.
+   - v31: analysis-only; 11 rows collapse to 5 source-family groups; oracle family counts H12=3, H15=1, H35=1; row-level LOO bad=0 but leave-one-source-family-out bad=5. This remains evidence of insufficient source-independent non-default label coverage, not validation success.
+
+4. **Preserved state for next iteration**
+   - Wrote:
+     - `research_artifacts/aws_state/continue_state_20260930_after_0429_backup_astra_absent_recheck_v2.md`
+   - Wrote backup request:
+     - `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_0429_BACKUP_ASTRA_ABSENT_RECHECK_V2_20260930.json`
+   - Updated durable supervisor state with phase, evidence, blockers and next action.
+
+Budgets/access this iteration:
+- New development simulations: **0**
+- New control steps: **0**
+- Training/gradient steps: **0**
+- Selector refits: **0**
+- Validation64 opened: **false**
+- Sealed test accessed: **false**
+- `run_experiment` calls: **0**
+
+Current blockers / next safe action:
+- **Astra analysis is still pending** for `v31-cluster-stability-diagnostic-20260930T0405Z`; I did not choose a fresh scientific branch.
+- **Backup needed** for post-04:29 proof/state/request files before any unique simulation, refit, training, validation64 access, or final-test work.
+- Next iteration should first check for a matching/superseding `ANALYSIS_READY.json`; if present, verify the linked Astra report against raw evidence and execute its plan after backup. If still absent, continue only reversible integrity/preparation work.

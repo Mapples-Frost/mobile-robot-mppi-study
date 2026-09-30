@@ -1,0 +1,98 @@
+{
+  "schema_version": 1,
+  "request_id": "execution-result:20260930T221310_30f1e04d",
+  "tasks": [
+    {
+      "task_id": "S-TC2H8-source242-env-tvp-format-repair-v0",
+      "description": "Attempt the already-authored S-TC2H8 v0i source242 microcontinuation only behind its internal pre-resource external-backup gate. If backup remains unavailable, the script must stop before solver/plant resources and record a zero-resource dependency failure. If a verified backup proof postdating required artifacts is visible, run the bounded development-only H12/H15/H35 microcontinuation with the v0i raw-TVP environment-storage repair, collecting per-step solver/plant/cost/timing traces. This is IMPROVED operational/control diagnostic evidence only, not ORIGINAL reproduction, validation64, or sealed/final-test evidence.",
+      "script_patterns": [
+        "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34z2_source242_microcontinuation_v0i_env_tvp_format_repair.py"
+      ],
+      "split": "opened_development_source242_slot0_branch_start_microcontinuation_no_validation64_no_sealed_test",
+      "method": "S-TC2H8 v0i backup-gated source242 fixed-H microcontinuation: legacy interpreter; H=[12,15,35]; terminal_mode=V15_shared; high-level LetMPCEnv.step(np.asarray([H])) path with raw TVP list-of-dicts restored for environment storage; no training/refit; no validation64; no sealed/final test; per-step solver, plant, cost, safety and wall-time traces persisted if backup gate passes; zero-resource dependency failure if backup gate remains blocked",
+      "seeds": [
+        "source242_branch_deterministic_no_training_seed"
+      ],
+      "config_constraints": {
+        "label_ORIGINAL_vs_IMPROVED": "IMPROVED_development_microcontinuation",
+        "authority_mode": "temporary_user_authorized_solo_self_review",
+        "follows_experiment_id": "20260930T221310_30f1e04d",
+        "follows_task_id": "S-BACKUP-RECHECK-STC2H8-current-status-v0c",
+        "required_backup_gate": "script must verify an external backup proof postdating v0i source, v0i unit diagnostic, current plan/state/docs and latest backup request before any solver or plant resource is used; otherwise stop with zero-resource dependency failure",
+        "current_backup_evidence": "research_artifacts/aws_diagnostics/backup_failure_status_capture_s_tc2h8_current_status_v0c_20260930T221311Z/summary.md reports backup failed with GitHub asset upload HTTP 422 and no verified package metadata",
+        "prior_unit_diagnostic": "research_artifacts/aws_diagnostics/vehicle_true_variable_horizon_v34z2_source242_v0i_raw_tvp_unit_diagnostic_v0_20260930T214943Z/summary.md passed raw-TVP unit gates",
+        "script": "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34z2_source242_microcontinuation_v0i_env_tvp_format_repair.py",
+        "context_id": "source242_slot0_branch_start",
+        "horizons": [
+          12,
+          15,
+          35
+        ],
+        "terminal_mode": "V15_shared",
+        "max_steps_per_arm": 60,
+        "solver_cap": 180,
+        "plant_cap": 180,
+        "no_training_no_refit": true,
+        "no_validation64_access": true,
+        "no_sealed_or_final_test_access": true,
+        "must_not_read_secrets": true,
+        "development_only_not_validation_not_final": true,
+        "preserve_v0h_failure_evidence": true,
+        "raw_tvp_restore_required": true,
+        "high_level_env_step_interface_required": true,
+        "cumulative_S_TC2H_family_usage_before_this_task": {
+          "solver_calls": 9,
+          "plant_steps": 0,
+          "training_steps": 0,
+          "validation_episodes": 0,
+          "test_episodes": 0
+        }
+      },
+      "training_budget": {
+        "gradient_steps": 0,
+        "selector_refits": 0,
+        "training_steps": 0
+      },
+      "validation_budget": {
+        "opened_development_branch_episodes": 3,
+        "max_plant_steps": 180,
+        "solver_calls": 180,
+        "validation64_episodes": 0
+      },
+      "test_budget": {
+        "final_test_episodes": 0,
+        "sealed_test_episodes": 0
+      },
+      "resource_limits": {
+        "solver_calls": 180,
+        "plant_steps": 180,
+        "training_steps": 0,
+        "validation_episodes": 0,
+        "test_episodes": 0
+      },
+      "max_attempts": 2,
+      "max_zero_usage_repairs": 1,
+      "timeout_seconds": 7200,
+      "dependencies": [],
+      "pass_conditions": {
+        "source242_microcontinuation_completed": true,
+        "prior_T_C2_and_S_TC2G_failures_preserved": true,
+        "backup_verified_before_solver_or_plant_steps": true,
+        "backup_verified_after_v0h_failure_v0i_source_and_plan_before_solver_or_plant_steps": true,
+        "S_TC2H7_zero_solver_zero_plant_env_tvp_format_failure_preserved": true,
+        "raw_tvp_format_restored_for_LetMPCEnv_step": true,
+        "high_level_env_step_interface_repair_applied": true,
+        "all_three_horizon_arms_attempted_or_budget_cap_reported": true,
+        "source242_microcontinuation_produced_plant_transitions": true,
+        "all_three_horizon_arms_advanced_at_least_one_plant_step": true,
+        "no_env_or_controller_exceptions_in_attempted_arms": true,
+        "per_step_cost_safety_solver_timing_traces_persisted": true,
+        "context_source242_goal61_identity_verified": true,
+        "no_training_validation64_or_test_usage": true,
+        "plant_steps_at_most_180": true,
+        "solver_calls_at_most_180": true
+      },
+      "continue_without_review": false
+    }
+  ]
+}

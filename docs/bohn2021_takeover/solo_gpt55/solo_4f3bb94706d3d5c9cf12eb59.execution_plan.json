@@ -1,0 +1,105 @@
+{
+  "schema_version": 1,
+  "request_id": "execution-result:20261001T010054_c708c8d5",
+  "tasks": [
+    {
+      "task_id": "S-BACKUP-POST-ROTATION-REQUEST-STATUS-RECHECK-v0",
+      "description": "Zero-resource post-release-rotation-request backup status gate. The prior approved request task passed and wrote a backup release-rotation/equivalent repair request; this task checks whether the protected supervisor backup status now contains a verified proof postdating that request. It reads only the repair request and sanitized supervisor backup metadata, records either a verified-proof artifact or a retry request, and preserves the nonzero-work gate if backup remains inadequate. It does not run backup upload, controllers, solvers, plant, training/refit, validation episodes, sealed tests, or final tests.",
+      "script_patterns": [
+        "experiments/bohn2021_aws/backup_post_rotation_request_status_recheck_solo_v0.py"
+      ],
+      "split": "diagnostic",
+      "method": "Zero-resource post-request backup status recheck: inspect the written release-rotation repair request and current sanitized supervisor backup status/receipts; require verified backup status, remaining_changed_files=0, commit, verified package metadata, and status time postdating the repair request before any nonzero scientific work can resume.",
+      "seeds": [
+        "backup_post_rotation_request_status_recheck_no_random_seed"
+      ],
+      "config_constraints": {
+        "label_ORIGINAL_vs_IMPROVED": "diagnostic_backup_gate_only_no_algorithmic_claim",
+        "authority_mode": "temporary_user_authorized_solo_self_review",
+        "follows_experiment_id": "20261001T010054_c708c8d5",
+        "follows_task_id": "S-BACKUP-RELEASE-ROTATION-REQUEST-AFTER-RECEIPT-REPAIR-v0",
+        "script": "experiments/bohn2021_aws/backup_post_rotation_request_status_recheck_solo_v0.py",
+        "script_sha256": "83f5d50a9e6bbefb11bde3eb6145be53433743cc7999d885c4318039f0975ee4",
+        "script_purpose": "zero-resource status gate after backup release-rotation repair request",
+        "no_solver_calls": true,
+        "no_plant_steps": true,
+        "no_controller_execution": true,
+        "no_training_no_refit": true,
+        "no_validation_bank_content_opening": true,
+        "no_new_validation_episodes": true,
+        "no_sealed_or_final_test_access": true,
+        "must_not_read_or_log_secrets": true,
+        "does_not_import_or_execute_backup_service": true,
+        "inputs_are_release_rotation_request_and_sanitized_backup_status_only": true,
+        "release_rotation_request": "research_artifacts/aws_backup_proofs/REQUEST_BACKUP_RELEASE_ROTATION_AFTER_RECEIPT_REPAIR_SOLO_V0_20261001T010054Z.json",
+        "prior_request_summary": "research_artifacts/aws_diagnostics/backup_release_rotation_request_solo_v0_20261001T010054Z/summary.md",
+        "prior_request_raw": "research_artifacts/aws_diagnostics/backup_release_rotation_request_solo_v0_20261001T010054Z/raw.json",
+        "prior_request_receipt": "research_artifacts/aws_runs/20261001T010054_c708c8d5/outcome_receipt.json",
+        "required_backup_properties": {
+          "status_or_backup_verified": "verified true",
+          "remaining_changed_files": 0,
+          "must_include_commit": true,
+          "must_include_verified_package_metadata": true,
+          "must_postdate_release_rotation_request": true,
+          "must_not_contain_secrets": true
+        },
+        "next_action_if_passes": "Publish a fresh bounded scientific/control plan that cites the verified backup proof; do not treat this backup gate as scientific reproduction acceptance.",
+        "next_action_if_fails": "Do not repeat status-only checks unless backup status changes or a verified proof appears; continue only zero-resource preparation and keep nonzero controller/solver/plant/training work blocked.",
+        "pass_conditions": {
+          "zero_solver_plant_training_validation_test_resources": true,
+          "validation_bank_content_opened": false,
+          "sealed_or_final_test_accessed": false,
+          "no_secrets_read_or_logged": true,
+          "release_rotation_request_inspected": true,
+          "backup_status_artifacts_inspected": true,
+          "backup_recoverability_status_recorded": true,
+          "post_request_backup_time_evaluated": true,
+          "verified_backup_proof_handled_or_absence_recorded": true,
+          "nonzero_work_gate_decision_recorded": true,
+          "outputs_persisted": true
+        }
+      },
+      "training_budget": {
+        "gradient_steps": 0,
+        "selector_refits": 0,
+        "training_steps": 0
+      },
+      "validation_budget": {
+        "new_validation_episodes": 0,
+        "validation64_bank_opens": 0,
+        "solver_calls": 0,
+        "plant_steps": 0,
+        "metadata_artifact_reads": "existing release-rotation request plus sanitized supervisor backup status/receipts only"
+      },
+      "test_budget": {
+        "final_test_episodes": 0,
+        "sealed_test_episodes": 0
+      },
+      "resource_limits": {
+        "solver_calls": 0,
+        "plant_steps": 0,
+        "training_steps": 0,
+        "validation_episodes": 0,
+        "test_episodes": 0
+      },
+      "max_attempts": 1,
+      "max_zero_usage_repairs": 1,
+      "timeout_seconds": 900,
+      "dependencies": [],
+      "pass_conditions": {
+        "zero_solver_plant_training_validation_test_resources": true,
+        "validation_bank_content_opened": false,
+        "sealed_or_final_test_accessed": false,
+        "no_secrets_read_or_logged": true,
+        "release_rotation_request_inspected": true,
+        "backup_status_artifacts_inspected": true,
+        "backup_recoverability_status_recorded": true,
+        "post_request_backup_time_evaluated": true,
+        "verified_backup_proof_handled_or_absence_recorded": true,
+        "nonzero_work_gate_decision_recorded": true,
+        "outputs_persisted": true
+      },
+      "continue_without_review": false
+    }
+  ]
+}

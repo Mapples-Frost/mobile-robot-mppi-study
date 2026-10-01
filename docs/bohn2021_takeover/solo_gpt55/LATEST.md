@@ -1,3 +1,3 @@
 # Current temporary solo plan
 
-Report: docs/bohn2021_takeover/solo_gpt55/solo_a7533c0e7073c6bf77d4aecc.md
+Report: docs/bohn2021_takeover/solo_gpt55/solo_4f3bb94706d3d5c9cf12eb59.md

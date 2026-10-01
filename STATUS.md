@@ -1742,3 +1742,13 @@ UTC: 2026-10-01T00:32:37.974546+00:00. Metadata-only current backup-state rechec
 - Nonzero controller/solver/plant/training work remains blocked until a verified backup proof postdating this repair exists.
 - No validation bank/generator, controller, plant, solver, training/refit, new validation episode, sealed test, or final test was accessed. Resources are zero.
 - Artifacts: `research_artifacts/aws_diagnostics/backup_recheck_receipt_key_repair_solo_v0_20261001T004811Z/raw.json`, `research_artifacts/aws_diagnostics/backup_recheck_receipt_key_repair_solo_v0_20261001T004811Z/summary.md`, `research_artifacts/aws_diagnostics/backup_recheck_receipt_key_repair_solo_v0_20261001T004811Z/completed.json`.
+
+<!-- backup-release-rotation-request-solo-v0-20261001 -->-status-md
+### 2026-10-01 backup release-rotation repair request (solo v0)
+
+- Task: `S-BACKUP-RELEASE-ROTATION-REQUEST-AFTER-RECEIPT-REPAIR-v0`.
+- Outcome: `passed`.
+- Evidence: `research_artifacts/aws_diagnostics/backup_release_rotation_request_solo_v0_20261001T010054Z/summary.md`, `research_artifacts/aws_diagnostics/backup_release_rotation_request_solo_v0_20261001T010054Z/raw.json`, `research_artifacts/aws_diagnostics/backup_release_rotation_request_solo_v0_20261001T010054Z/completed.json`.
+- Backup repair request: `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_RELEASE_ROTATION_AFTER_RECEIPT_REPAIR_SOLO_V0_20261001T010054Z.json`.
+- Backup remains blocked for nonzero work. The protected supervisor backup path should rotate away from the saturated base release or apply an equivalent repair, then verify external recoverability before source242/control/training work resumes.
+- Resource use: solver_calls=0, plant_steps=0, training_steps=0, validation_episodes=0, test_episodes=0. No validation-bank source, sealed test, or final test access.

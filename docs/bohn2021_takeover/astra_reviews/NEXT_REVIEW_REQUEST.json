@@ -1,16 +1,16 @@
 {
-  "request_id": "execution-result:20261001T010054_c708c8d5",
+  "request_id": "execution-result:20261001T010846_132558c8",
   "trigger": "execution_result_handoff",
-  "created": "2026-10-01T01:00:56.376447+00:00",
-  "experiment_id": "20261001T010054_c708c8d5",
+  "created": "2026-10-01T01:08:48.398870+00:00",
+  "experiment_id": "20261001T010846_132558c8",
   "status": "analysis_requested",
-  "purpose": "Execute approved zero-resource backup-path repair handoff after backup receipt-key repair passed; preserve nonzero work gate until verified recoverable external backup exists.",
+  "purpose": "Zero-resource post-release-rotation-request backup status gate. Check whether protected supervisor backup status now contains a verified proof postdating the release-rotation/equivalent repair request; preserve the nonzero-work gate if backup remains inadequate. No backup upload, controllers, solvers, plant, training/refit, validation episodes, sealed tests, or final tests.",
   "execution_status": "complete",
   "question": "Active scientific lead: interpret this outcome, verify current raw evidence and select the next scientific action for GPT-5.5 implementation. Distinguish hypotheses from verified causes and account for fair baselines, terminal confounds and source-level generalization.",
   "evidence_paths": [
-    "research_artifacts/aws_diagnostics/backup_release_rotation_request_solo_v0_20261001T010054Z/summary.md",
-    "research_artifacts/aws_diagnostics/backup_release_rotation_request_solo_v0_20261001T010054Z/raw.json",
-    "research_artifacts/aws_diagnostics/backup_release_rotation_request_solo_v0_20261001T010054Z/completed.json",
-    "research_artifacts/aws_runs/20261001T010054_c708c8d5/registry.json"
+    "research_artifacts/aws_diagnostics/backup_post_rotation_request_status_recheck_solo_v0_20261001T010846Z/completed.json",
+    "research_artifacts/aws_diagnostics/backup_post_rotation_request_status_recheck_solo_v0_20261001T010846Z/summary.md",
+    "research_artifacts/aws_diagnostics/backup_post_rotation_request_status_recheck_solo_v0_20261001T010846Z/raw.json",
+    "research_artifacts/aws_runs/20261001T010846_132558c8/registry.json"
   ]
 }

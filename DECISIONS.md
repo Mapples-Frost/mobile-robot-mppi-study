@@ -1883,3 +1883,12 @@ UTC: 2026-10-01T00:32:37.974546+00:00. Metadata-only current backup-state rechec
 - Backup repair request: `research_artifacts/aws_backup_proofs/REQUEST_BACKUP_RELEASE_ROTATION_AFTER_RECEIPT_REPAIR_SOLO_V0_20261001T010054Z.json`.
 - Backup remains blocked for nonzero work. The protected supervisor backup path should rotate away from the saturated base release or apply an equivalent repair, then verify external recoverability before source242/control/training work resumes.
 - Resource use: solver_calls=0, plant_steps=0, training_steps=0, validation_episodes=0, test_episodes=0. No validation-bank source, sealed test, or final test access.
+
+<!-- backup-post-rotation-request-status-recheck-solo-v0 -->-DECISIONS-md
+### 2026-10-01 backup post-rotation-request status recheck (solo v0)
+
+- Task: `S-BACKUP-POST-ROTATION-REQUEST-STATUS-RECHECK-v0`.
+- Outcome: task_gate_passed=`True`, adequate_backup_for_nonzero_work=`False`.
+- Evidence: `research_artifacts/aws_diagnostics/backup_post_rotation_request_status_recheck_solo_v0_20261001T010846Z/summary.md`, `research_artifacts/aws_diagnostics/backup_post_rotation_request_status_recheck_solo_v0_20261001T010846Z/raw.json`, `research_artifacts/aws_diagnostics/backup_post_rotation_request_status_recheck_solo_v0_20261001T010846Z/completed.json`.
+- Next action: Nonzero scientific work remains blocked. Do not repeat this status check unless the supervisor backup status changes or a new verified backup proof appears; perform only zero-resource preparation if needed.
+- Resource use: solver_calls=0, plant_steps=0, training_steps=0, validation_episodes=0, test_episodes=0. No validation-bank, sealed-test, or final-test access.

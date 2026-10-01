@@ -1892,3 +1892,13 @@ UTC: 2026-10-01T00:32:37.974546+00:00. Metadata-only current backup-state rechec
 - Evidence: `research_artifacts/aws_diagnostics/backup_post_rotation_request_status_recheck_solo_v0_20261001T010846Z/summary.md`, `research_artifacts/aws_diagnostics/backup_post_rotation_request_status_recheck_solo_v0_20261001T010846Z/raw.json`, `research_artifacts/aws_diagnostics/backup_post_rotation_request_status_recheck_solo_v0_20261001T010846Z/completed.json`.
 - Next action: Nonzero scientific work remains blocked. Do not repeat this status check unless the supervisor backup status changes or a new verified backup proof appears; perform only zero-resource preparation if needed.
 - Resource use: solver_calls=0, plant_steps=0, training_steps=0, validation_episodes=0, test_episodes=0. No validation-bank, sealed-test, or final-test access.
+
+<!-- backup-release-rotation-patch-apply-solo-v0b-static-check-repair -->-DECISIONS-md
+### 2026-10-01 backup release-rotation patch apply static-check repair (solo v0b)
+
+- Task: `S-BACKUP-RELEASE-ROTATION-PATCH-APPLY-v0b-static-check-repair`.
+- Outcome: task_gate_passed=`True`, backup_py_modified=`True`, after_sha256=`fb5a21945ab8441007ffcbb34b456cd59053e93243e6532d98bf2af493bc3d8e`.
+- Evidence: `research_artifacts/aws_diagnostics/backup_release_rotation_patch_apply_solo_v0b_static_check_repair_20261001T013009Z/summary.md`, `research_artifacts/aws_diagnostics/backup_release_rotation_patch_apply_solo_v0b_static_check_repair_20261001T013009Z/raw.json`, `research_artifacts/aws_diagnostics/backup_release_rotation_patch_apply_solo_v0b_static_check_repair_20261001T013009Z/completed.json`.
+- Previous zero-resource failure preserved: `research_artifacts/aws_runs/20261001T012227_7bdb86d5/outcome_receipt.json`.
+- Next action: Run only a zero-resource post-patch backup-status recheck after the protected supervisor backup path has had a chance to run. Nonzero controller/solver/plant/training work remains blocked until backup_status is verified with remaining_changed_files=0, commit, and verified package metadata.
+- Resource use: solver_calls=0, plant_steps=0, training_steps=0, validation_episodes=0, test_episodes=0. The backup uploader was not executed; no validation-bank, sealed-test, or final-test access.

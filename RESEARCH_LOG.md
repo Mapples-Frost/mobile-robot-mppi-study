@@ -8470,3 +8470,69 @@ After that repair passes, the next useful work should be a bounded backup-path r
 
 ## 2026-10-01T01:29:00.105898+00:00
 
+<!-- backup-release-rotation-patch-apply-solo-v0b-static-check-repair -->-RESEARCH_LOG-md
+### 2026-10-01 backup release-rotation patch apply static-check repair (solo v0b)
+
+- Task: `S-BACKUP-RELEASE-ROTATION-PATCH-APPLY-v0b-static-check-repair`.
+- Outcome: task_gate_passed=`True`, backup_py_modified=`True`, after_sha256=`fb5a21945ab8441007ffcbb34b456cd59053e93243e6532d98bf2af493bc3d8e`.
+- Evidence: `research_artifacts/aws_diagnostics/backup_release_rotation_patch_apply_solo_v0b_static_check_repair_20261001T013009Z/summary.md`, `research_artifacts/aws_diagnostics/backup_release_rotation_patch_apply_solo_v0b_static_check_repair_20261001T013009Z/raw.json`, `research_artifacts/aws_diagnostics/backup_release_rotation_patch_apply_solo_v0b_static_check_repair_20261001T013009Z/completed.json`.
+- Previous zero-resource failure preserved: `research_artifacts/aws_runs/20261001T012227_7bdb86d5/outcome_receipt.json`.
+- Next action: Run only a zero-resource post-patch backup-status recheck after the protected supervisor backup path has had a chance to run. Nonzero controller/solver/plant/training work remains blocked until backup_status is verified with remaining_changed_files=0, commit, and verified package metadata.
+- Resource use: solver_calls=0, plant_steps=0, training_steps=0, validation_episodes=0, test_episodes=0. The backup uploader was not executed; no validation-bank, sealed-test, or final-test access.
+
+
+## 2026-10-01T01:34:06.040542+00:00
+Elapsed service lifetime: 110.58 hours since first supervisor event (2026-09-26T10:55:29Z). Server API total_tokens: 474.39M, using the last measured supervisor-side total; desktop conversation usage excluded.
+
+Completed concrete action this iteration:
+
+- Ran approved task `S-BACKUP-RELEASE-ROTATION-PATCH-APPLY-v0b-static-check-repair`.
+- Experiment: `20261001T013008_2c0202f6`.
+- Result: passed with valid structured receipt.
+- Scientific/control resources consumed: zero.
+  - `solver_calls=0`
+  - `plant_steps=0`
+  - `training_steps=0`
+  - `validation_episodes=0`
+  - `test_episodes=0`
+- Safety:
+  - No validation-bank content opened.
+  - No sealed/final test accessed.
+  - No secrets read or logged.
+  - Backup uploader was not executed.
+  - No direct GitHub API call was made.
+
+Evidence inspected/preserved:
+
+- `research_artifacts/aws_runs/20261001T013008_2c0202f6/outcome_receipt.json`
+- `research_artifacts/aws_diagnostics/backup_release_rotation_patch_apply_solo_v0b_static_check_repair_20261001T013009Z/summary.md`
+- `research_artifacts/aws_diagnostics/backup_release_rotation_patch_apply_solo_v0b_static_check_repair_20261001T013009Z/raw.json`
+
+Key operational finding:
+
+- `scripts/research_service/backup.py` was successfully updated to the release-rotation/lazy-token implementation.
+- Backup script hash changed:
+  - before: `81671c1cdb77d897a56249be604cb2c2034d3a5be9ae6581edbc54c757ab1005`
+  - after: `fb5a21945ab8441007ffcbb34b456cd59053e93243e6532d98bf2af493bc3d8e`
+- Static checks passed:
+  - release-rotation logic present
+  - lazy token read present
+  - backup script compiles
+  - no destructive GitHub DELETE API pattern detected
+  - prior false-positive static-check failure recorded
+
+Scientific status:
+
+- This is not an ORIGINAL or IMPROVED vehicle-control result; it is an operational backup-gate repair.
+- Existing negative vehicle adaptive-horizon evidence remains carried forward: current gated selectors collapse or underperform, and nonzero source242/controller/training work remains blocked until external backup recoverability is verified.
+
+Next approved task prepared but not launched due scheduler guard:
+
+- Plan published: `solo_5989cc6e7f4bc99448e8cd5c`
+- Pending task: `S-BACKUP-POST-ROTATION-STATUS-RECHECK-v0-after-patch`
+- Script: `experiments/bohn2021_aws/backup_post_rotation_request_status_recheck_solo_v0.py`
+- Script SHA-256: `83f5d50a9e6bbefb11bde3eb6145be53433743cc7999d885c4318039f0975ee4`
+- Purpose: zero-resource local metadata recheck of post-patch backup status to determine whether nonzero scientific work can resume.
+- Launch attempt was rejected by the one-experiment-per-iteration guard; no resources were consumed by that rejected launch.
+
+State was preserved via `update_state`. Next cycle should launch exactly the pending approved backup-status recheck task under the published plan bounds.

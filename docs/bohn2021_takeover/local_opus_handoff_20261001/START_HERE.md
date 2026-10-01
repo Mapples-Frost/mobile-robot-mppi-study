@@ -12,6 +12,7 @@ Clone into a new directory to preserve the user's existing dirty workspaces:
 
 ```sh
 git clone --branch codex/bohn-aws-20260926 https://github.com/Mapples-Frost/mobile-robot-mppi-study.git mobile-robot-mppi-study
+cd mobile-robot-mppi-study
 ```
 
 Raw results, checkpoints, source snapshots, non-secret server state and runtimes are stored in immutable GitHub release archives. The final HANDOFF_INDEX.json.gz maps every evidence file to its final verified archive. Downloading only the newest incremental archive is not a complete restore.
@@ -32,3 +33,5 @@ Exact environment locks, system package versions, service definitions and symlin
 Credentials are intentionally excluded from GitHub. Permission-restricted server secret files remain available to the authorized local coordinator. AWS infrastructure and scheduled expiration are unchanged. Current instance remains 2 vCPU/4 GB; termination remains 2026-10-25 18:30 Asia/Shanghai.
 
 Keep ORIGINAL versus IMPROVED clear; audit prior test/validation exposure; preserve failed seeds and negative results. No reproduction-success claim is justified yet. Strong fixed-H search, fair budgets, at least three independent training seeds, frozen independent final tests, full provenance, and real wall/solver timing remain necessary. The server GPT report and LOCAL_OPUS_PROMPT.md identify immediate debugging priorities.
+
+`HANDOFF_ROLE_AUTHORIZATION.json` confirms that routine continuation within the existing research scope is already authorized. Read root `CLAUDE.md` and `LOCAL_OPUS_PROMPT.md` when starting the single local coordinator. `REMOTE_ASSET_AUDIT.json` verifies all 494 referenced archives against current GitHub asset IDs, sizes and SHA256 digests; `LIVE_RESTORE_ACCEPTANCE.json` records an actual public download and selected-file recovery. Full evidence has not been downloaded into the local checkout.

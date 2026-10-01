@@ -1,0 +1,14 @@
+{
+  "status": "passed",
+  "host": "local WSL Ubuntu-20.04",
+  "python": "3.8.10",
+  "checks": [
+    "latest-file selection across overlapping archives",
+    "per-file and archive SHA256",
+    "checkpoint resume",
+    "verify-only",
+    "path traversal rejection",
+    "corrupt-download rejection"
+  ],
+  "scientific_resources_used": 0
+}

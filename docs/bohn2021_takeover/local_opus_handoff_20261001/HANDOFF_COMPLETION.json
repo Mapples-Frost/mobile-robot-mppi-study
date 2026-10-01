@@ -1,0 +1,15 @@
+{
+  "time": "2026-10-01T02:49:34.692640+00:00",
+  "owner": "local-opus-5.5",
+  "server_agents_disabled": true,
+  "no_new_scientific_experiments_during_handoff": true,
+  "full_upload_verified": true,
+  "full_local_raw_restore_completed": false,
+  "local_code_checkout": "/home/mapples/projects/bohn-opus-handoff-20261001/mobile-robot-mppi-study",
+  "evidence_files": 183483,
+  "evidence_packages": 494,
+  "evidence_bytes": 60696944771,
+  "external_backup": "GitHub immutable releases and complete per-file recovery index",
+  "runtime_credentials_excluded": true,
+  "standing_research_authorization_continues": true
+}

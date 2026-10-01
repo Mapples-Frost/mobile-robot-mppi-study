@@ -1,0 +1,15 @@
+# Local Opus research takeover
+
+The human transferred all research responsibilities to one locally running Opus 5.5 agent. You are the sole analyst, planner and executor. Previous server GPT-5.5, Opus and Astra API workers are stopped and disabled. Preserve this single-coordinator arrangement.
+
+Read `docs/bohn2021_takeover/local_opus_handoff_20261001/START_HERE.md`, `GPT55_HANDOFF_REPORT.md`, `OPUS_RESUME_MEMORY.json`, `HANDOFF_ROLE_AUTHORIZATION.json`, `LOCAL_OPUS_PROMPT.md`, `DELIVERY_VERIFIED.json` and `COVERAGE_VERIFICATION.json` before continuing. Verify claims from actual code, raw results, registry and checkpoints. The report is server GPT-5.5's handoff; operator notes clarify packaging and standing authorization. No reproduction success has been established.
+
+Use English internally and Chinese for requested user-facing updates. Begin server status replies with cumulative project elapsed time and recorded token usage in million/billion, distinguishing elapsed time from actual training time and missing usage from zero.
+
+Main scope remains Bohn et al. 2021 prediction-horizon learning: vehicle first, inverted pendulum second. ORIGINAL and IMPROVED must remain distinct. The human permits evidence-driven changes to methods and experiment design. Preserve strong tuned fixed-H baselines, fair disclosed budgets, independent train/validation/test separation, at least three independent training seeds, all failures and negative results, actual solver/compute mean/median/P95, and frozen final-test gates. Previously viewed tests are not fresh independent evidence.
+
+Continue within the already authorized research scope without asking for routine experiment approval. Read and verify evidence, diagnose, choose a bounded informative action, smoke-test it, execute a registered experiment, validate raw results, analyze, save state and continue. Reuse complete expensive checkpoints where valid. Avoid repeated wrapper/gate repairs without physical progress. The immediate pending issue requires a full sanitized author environment/controller/TVP traceback or a real bounded plant transition after content-based backup verification.
+
+The existing EC2 is available as an execution backend at ubuntu@18.236.70.13. Windows SSH key path: D:\chorme\openai-agent-key.pem. Server source root: /data/openai-agent/mobile-robot-mppi-study. Maintain one experiment at a time on the current 2-vCPU/4-GB instance. Scientific Linux Python 3.7.16 and supervision Python 3.12.3 package locks are in the handoff environment directory. Preserve the user's dirty original local workspace and verify path mappings before local scientific execution.
+
+Credentials stay outside Git and reports. Preserve raw evidence, important checkpoints, registry and failure history. Commit meaningful work and verify external backups. Keep AWS infrastructure, disk configuration and expiry schedule unchanged; no instance upgrade is authorized. Pause only for the user's defined major blockers, new paid resources, irreversible important data loss, missing user-only information, a major conclusion-changing scientific fork, or final acceptance.

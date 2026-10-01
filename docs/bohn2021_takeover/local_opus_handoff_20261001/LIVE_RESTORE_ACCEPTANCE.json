@@ -1,0 +1,11 @@
+{
+  "status": "verified",
+  "scope": "one_actual_immutable_GitHub_archive_and_selected_registered_outcome_receipt",
+  "asset": "20261001T020259_57ab800f.tar.gz",
+  "archive_sha256": "86dbfa1b4c3e57add0a7a662c65031aa6451b1a74b20eac3c1be2bb6c05c7b97",
+  "selected_file": "mobile-robot-mppi-study/research_artifacts/aws_runs/20261001T014703_27a3c026/outcome_receipt.json",
+  "file_sha256": "24ea6592f210383b12c4b5d824007705d92e0c47e9580fe105e53ccf47865a1f",
+  "source_matches": true,
+  "does_not_claim_full_local_restore": true,
+  "credentialless_public_download": true
+}

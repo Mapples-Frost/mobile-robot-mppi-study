@@ -1781,3 +1781,8 @@ UTC: 2026-10-01T00:32:37.974546+00:00. Metadata-only current backup-state rechec
 - Backup proof: `research_artifacts/aws_backup_proofs/BACKUP_VERIFIED_AFTER_RELEASE_ROTATION_PATCH_SOLO_V0B_20261001T013958Z.json`. Retry request: `None`.
 - Next action: Backup is verified after the release-rotation patch; nonzero development work may resume only under a separately frozen scientific execution plan citing this proof.
 - Resource use: solver_calls=0, plant_steps=0, training_steps=0, validation_episodes=0, test_episodes=0. No validation-bank, sealed-test, or final-test access.
+
+
+## 2026-10-01T02:49:34.692640+00:00 — human-requested local Opus takeover
+
+Server GPT-5.5 wrote the handoff report. Local Opus is now the sole research owner. Prior research/watchdog/Opus/Astra services are stopped and disabled. No new scientific experiment was run during handoff. No reproduction success claim. Full non-secret evidence upload covers 183483 files / 60696944771 bytes in 494 verified immutable archives; current GitHub SHA256 digests and a real selected-file restore passed. Start at docs/bohn2021_takeover/local_opus_handoff_20261001/START_HERE.md and root CLAUDE.md. Existing EC2 remains available; AWS configuration and expiry are unchanged.

@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "request_id": "execution-result:20261001T003237_16fae53f",
+  "tasks": [
+    {
+      "task_id": "S-BACKUP-RECHECK-AFTER-CURRENT-GATED-RECEIPT-REPAIR-v0b-receipt-key-repair",
+      "description": "Zero-resource operational repair for the just-completed backup recheck. The prior run correctly inspected backup status and found that external backup recoverability remains blocked by TimeoutError, with zero solver/plant/training/validation/test resources and no validation-bank/sealed-test access. However structured acceptance failed because the script's receipt evidence keys did not match the plan pass-condition names. This repair reads only the prior backup-recheck artifacts and emits a new structured receipt using exact pass-condition keys; it does not run backup, controllers, solvers, plant, training/refit, validation episodes, or sealed/final tests.",
+      "script_patterns": [
+        "experiments/bohn2021_aws/backup_recheck_receipt_key_repair_solo_v0.py"
+      ],
+      "split": "diagnostic",
+      "method": "Zero-resource receipt-key repair for backup recheck after current gated-horizon audit receipt repair; reads existing backup status artifacts and prior run receipt only; verifies backup still blocked and exact pass-condition evidence names; no validation-bank source opening; no controller/plant/solver execution; no training/refit; no new validation episodes; no sealed/final test.",
+      "seeds": [
+        "backup_recheck_receipt_key_repair_no_random_seed"
+      ],
+      "config_constraints": {
+        "label_ORIGINAL_vs_IMPROVED": "diagnostic_backup_gate_only_no_algorithmic_claim",
+        "authority_mode": "temporary_user_authorized_solo_self_review",
+        "follows_experiment_id": "20261001T003237_16fae53f",
+        "follows_task_id": "S-BACKUP-RECHECK-AFTER-CURRENT-GATED-RECEIPT-REPAIR-v0",
+        "script": "experiments/bohn2021_aws/backup_recheck_receipt_key_repair_solo_v0.py",
+        "script_sha256": "acc88c5cbb0a2d51d8fab6869e4c8b0e97f46886996f5808aed567c97a7a37f1",
+        "script_purpose": "zero-resource structured receipt key repair after backup recheck task-gate failure",
+        "no_solver_calls": true,
+        "no_plant_steps": true,
+        "no_controller_execution": true,
+        "no_training_no_refit": true,
+        "no_validation_bank_content_opening": true,
+        "no_new_validation_episodes": true,
+        "no_sealed_or_final_test_access": true,
+        "must_not_read_or_log_secrets": true,
+        "inputs_are_prior_backup_recheck_artifacts_only": true,
+        "preserve_timeout_failure": true,
+        "prior_backup_recheck_completed": "research_artifacts/aws_diagnostics/backup_failure_status_capture_s_tc2h8_current_status_v0c_20261001T003237Z/completed.json",
+        "prior_backup_recheck_summary": "research_artifacts/aws_diagnostics/backup_failure_status_capture_s_tc2h8_current_status_v0c_20261001T003237Z/summary.md",
+        "prior_backup_recheck_receipt": "research_artifacts/aws_runs/20261001T003237_16fae53f/outcome_receipt.json",
+        "next_action_if_repair_passes": "publish a bounded backup-path operational repair or supervisor-compatible retry plan; keep nonzero scientific work blocked until verified backup exists",
+        "next_action_if_repair_fails": "diagnose missing prior artifacts or evidence key mismatch; do not launch nonzero scientific work"
+      },
+      "training_budget": {
+        "gradient_steps": 0,
+        "selector_refits": 0,
+        "training_steps": 0
+      },
+      "validation_budget": {
+        "new_validation_episodes": 0,
+        "validation64_bank_opens": 0,
+        "solver_calls": 0,
+        "plant_steps": 0,
+        "metadata_artifact_reads": "prior backup recheck artifacts only"
+      },
+      "test_budget": {
+        "final_test_episodes": 0,
+        "sealed_test_episodes": 0
+      },
+      "resource_limits": {
+        "solver_calls": 0,
+        "plant_steps": 0,
+        "training_steps": 0,
+        "validation_episodes": 0,
+        "test_episodes": 0
+      },
+      "max_attempts": 1,
+      "max_zero_usage_repairs": 1,
+      "timeout_seconds": 900,
+      "dependencies": [],
+      "pass_conditions": {
+        "zero_solver_plant_training_validation_test_resources": true,
+        "validation_bank_content_opened": false,
+        "sealed_or_final_test_accessed": false,
+        "backup_status_artifacts_inspected": true,
+        "latest_receipt_repair_backup_request_seen": true,
+        "backup_recoverability_status_recorded": true,
+        "nonzero_work_gate_decision_recorded": true,
+        "outputs_persisted": true,
+        "prior_receipt_key_mismatch_recorded": true,
+        "backup_still_blocks_nonzero_work": true
+      },
+      "continue_without_review": false
+    }
+  ]
+}

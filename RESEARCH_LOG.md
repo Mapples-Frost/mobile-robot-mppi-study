@@ -8427,3 +8427,16 @@ Run the already approved task exactly as frozen:
 - Resources: solver_calls=0, plant_steps=0, training_steps=0, validation_episodes=0, test_episodes=0
 
 After that repair passes, the next useful work should be a bounded backup-path repair/retry plan. Nonzero source242/control/training diagnostics should remain blocked until a verified recoverable backup proof exists.
+
+<!-- backup-recheck-receipt-key-repair-solo-v0-20261001-research_log-md -->
+### Backup recheck receipt-key repair solo v0 (2026-10-01T00:48:11.021446+00:00)
+
+- Repaired the structured evidence-key mismatch for the prior backup recheck run `20261001T003237_16fae53f`; the prior receipt was valid but did not use the lead plan's exact pass-condition keys.
+- The backup finding is unchanged: adequate verified external backup is `False`, status is `failed`, failure class is `backup_write_timeout`, and error type is `TimeoutError`.
+- Nonzero controller/solver/plant/training work remains blocked until a verified backup proof postdating this repair exists.
+- No validation bank/generator, controller, plant, solver, training/refit, new validation episode, sealed test, or final test was accessed. Resources are zero.
+- Artifacts: `research_artifacts/aws_diagnostics/backup_recheck_receipt_key_repair_solo_v0_20261001T004811Z/raw.json`, `research_artifacts/aws_diagnostics/backup_recheck_receipt_key_repair_solo_v0_20261001T004811Z/summary.md`, `research_artifacts/aws_diagnostics/backup_recheck_receipt_key_repair_solo_v0_20261001T004811Z/completed.json`.
+
+
+## 2026-10-01T00:56:41.496020+00:00
+

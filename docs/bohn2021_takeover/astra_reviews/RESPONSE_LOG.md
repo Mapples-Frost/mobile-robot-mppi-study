@@ -616,3 +616,12 @@ UTC: 2026-09-30T23:54:14.978755+00:00. Metadata-only current backup-state rechec
 ## S-TC2H8 current backup status recheck v0c
 
 UTC: 2026-10-01T00:32:37.974546+00:00. Metadata-only current backup-state recheck completed in temporary solo GPT-5.5 mode; no solver, plant, training/refit, validation64, or sealed/final-test resources were used. Current backup adequate for S-TC2H8=`False`; class=`backup_write_timeout`; reasons=`["status_is_'failed'_not_verified", 'remaining_changed_files_not_zero_or_missing', 'missing_commit', 'missing_verified_package_metadata']`. Evidence: `research_artifacts/aws_diagnostics/backup_failure_status_capture_s_tc2h8_current_status_v0c_20261001T003237Z/summary.md`, `research_artifacts/aws_diagnostics/backup_failure_status_capture_s_tc2h8_current_status_v0c_20261001T003237Z/raw.json`, `research_artifacts/aws_diagnostics/backup_failure_status_capture_s_tc2h8_current_status_v0c_20261001T003237Z/completed.json`. Next action: Nonzero S-TC2H8 resources remain blocked by backup. Use this current-status evidence to repair/retry backup; do not run solver/plant work until a verified proof postdating v0c exists.
+
+<!-- backup-recheck-receipt-key-repair-solo-v0-20261001-response-log -->
+### Backup recheck receipt-key repair solo v0 (2026-10-01T00:48:11.021446+00:00)
+
+- Repaired the structured evidence-key mismatch for the prior backup recheck run `20261001T003237_16fae53f`; the prior receipt was valid but did not use the lead plan's exact pass-condition keys.
+- The backup finding is unchanged: adequate verified external backup is `False`, status is `failed`, failure class is `backup_write_timeout`, and error type is `TimeoutError`.
+- Nonzero controller/solver/plant/training work remains blocked until a verified backup proof postdating this repair exists.
+- No validation bank/generator, controller, plant, solver, training/refit, new validation episode, sealed test, or final test was accessed. Resources are zero.
+- Artifacts: `research_artifacts/aws_diagnostics/backup_recheck_receipt_key_repair_solo_v0_20261001T004811Z/raw.json`, `research_artifacts/aws_diagnostics/backup_recheck_receipt_key_repair_solo_v0_20261001T004811Z/summary.md`, `research_artifacts/aws_diagnostics/backup_recheck_receipt_key_repair_solo_v0_20261001T004811Z/completed.json`.

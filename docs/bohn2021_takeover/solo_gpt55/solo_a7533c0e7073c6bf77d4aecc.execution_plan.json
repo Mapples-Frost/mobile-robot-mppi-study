@@ -1,0 +1,87 @@
+{
+  "schema_version": 1,
+  "request_id": "execution-result:20261001T004810_28a1096e",
+  "tasks": [
+    {
+      "task_id": "S-BACKUP-RELEASE-ROTATION-REQUEST-AFTER-RECEIPT-REPAIR-v0",
+      "description": "Zero-resource backup-path repair handoff after the receipt-key repair passed. The prior task proved that external backup recoverability remains blocked while consuming zero solver/plant/training/validation/test resources. This task reads only existing backup-gate artifacts and the protected backup service source as text (without importing it and without reading credentials), records the release-cap/TimeoutError/HTTP-422 evidence, writes a supervisor-compatible backup release-rotation or equivalent repair request, and preserves the nonzero-work gate. It does not run backup upload, controllers, solvers, plant, training/refit, validation episodes, sealed tests, or final tests.",
+      "script_patterns": [
+        "experiments/bohn2021_aws/backup_release_rotation_request_solo_v0.py"
+      ],
+      "split": "diagnostic",
+      "method": "Zero-resource backup-path repair request: inspect existing backup failure/receipt artifacts plus protected backup.py as text only; record that backup remains blocked, that release-cap or timeout evidence exists, and that the protected supervisor backup path should rotate to a fresh evidence release or equivalent verified external backup path before nonzero scientific work resumes.",
+      "seeds": [
+        "backup_release_rotation_request_no_random_seed"
+      ],
+      "config_constraints": {
+        "label_ORIGINAL_vs_IMPROVED": "diagnostic_backup_gate_only_no_algorithmic_claim",
+        "authority_mode": "temporary_user_authorized_solo_self_review",
+        "follows_experiment_id": "20261001T004810_28a1096e",
+        "follows_task_id": "S-BACKUP-RECHECK-AFTER-CURRENT-GATED-RECEIPT-REPAIR-v0b-receipt-key-repair",
+        "script": "experiments/bohn2021_aws/backup_release_rotation_request_solo_v0.py",
+        "script_sha256": "e6902516e0f8922eeef090f330087ae04c2a4aed0af404fdaacdc19124c7feea",
+        "script_purpose": "zero-resource supervisor-backup release-rotation repair request after backup-still-blocked receipt repair passed",
+        "no_solver_calls": true,
+        "no_plant_steps": true,
+        "no_controller_execution": true,
+        "no_training_no_refit": true,
+        "no_validation_bank_content_opening": true,
+        "no_new_validation_episodes": true,
+        "no_sealed_or_final_test_access": true,
+        "must_not_read_or_log_secrets": true,
+        "does_not_import_or_execute_backup_service": true,
+        "protected_supervisor_backup_script_not_modified": true,
+        "inputs_are_existing_backup_failure_artifacts_and_backup_script_text_only": true,
+        "prior_receipt_repair_summary": "research_artifacts/aws_diagnostics/backup_recheck_receipt_key_repair_solo_v0_20261001T004811Z/summary.md",
+        "prior_receipt_repair_raw": "research_artifacts/aws_diagnostics/backup_recheck_receipt_key_repair_solo_v0_20261001T004811Z/raw.json",
+        "prior_receipt_repair_receipt": "research_artifacts/aws_runs/20261001T004810_28a1096e/outcome_receipt.json",
+        "current_backup_status_raw": "research_artifacts/aws_diagnostics/backup_failure_status_capture_s_tc2h8_current_status_v0c_20261001T003237Z/raw.json",
+        "asset_422_summary": "research_artifacts/aws_diagnostics/backup_failure_status_capture_s_tc2h8_asset422_v0b_absolute_state_20260930T211710Z/summary.md",
+        "next_action_if_passes": "wait for or trigger supervisor backup repair/retry through the written request; keep nonzero controller/solver/plant/training work blocked until verified backup proof postdating this request exists; continue only zero-resource preparation if backup remains failed",
+        "next_action_if_fails": "diagnose missing backup-gate artifacts or evidence extraction defect; do not launch nonzero scientific work"
+      },
+      "training_budget": {
+        "gradient_steps": 0,
+        "selector_refits": 0,
+        "training_steps": 0
+      },
+      "validation_budget": {
+        "new_validation_episodes": 0,
+        "validation64_bank_opens": 0,
+        "solver_calls": 0,
+        "plant_steps": 0,
+        "metadata_artifact_reads": "existing backup failure/receipt artifacts plus protected backup.py text only"
+      },
+      "test_budget": {
+        "final_test_episodes": 0,
+        "sealed_test_episodes": 0
+      },
+      "resource_limits": {
+        "solver_calls": 0,
+        "plant_steps": 0,
+        "training_steps": 0,
+        "validation_episodes": 0,
+        "test_episodes": 0
+      },
+      "max_attempts": 1,
+      "max_zero_usage_repairs": 1,
+      "timeout_seconds": 900,
+      "dependencies": [],
+      "pass_conditions": {
+        "zero_solver_plant_training_validation_test_resources": true,
+        "validation_bank_content_opened": false,
+        "sealed_or_final_test_accessed": false,
+        "no_secrets_read_or_logged": true,
+        "source_code_backup_script_read_as_text_only": true,
+        "backup_still_blocks_nonzero_work": true,
+        "release_asset_cap_or_timeout_evidence_recorded": true,
+        "protected_supervisor_backup_script_not_modified": true,
+        "backup_path_repair_request_written": true,
+        "rollover_release_recommendation_recorded": true,
+        "nonzero_work_gate_decision_recorded": true,
+        "outputs_persisted": true
+      },
+      "continue_without_review": false
+    }
+  ]
+}

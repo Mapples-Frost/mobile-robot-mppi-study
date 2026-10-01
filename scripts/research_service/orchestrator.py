@@ -7,6 +7,7 @@ from research_memory import registry_context
 import working_language
 import execution_contract
 import execution_preflight
+import backup_contract
 STOP=False
 
 def now(): return dt.datetime.now(dt.timezone.utc).isoformat()
@@ -246,7 +247,11 @@ def api(items, force_state=False):
     # User explicitly removed all daily API/token budgets. Usage remains audited.
     effort=load(STATE/'api_smoke.json')['selected_effort']
     assert SECRET['OPENAI_MODEL']=='gpt-5.5' and effort=='xhigh'
-    body=dict(model='gpt-5.5',reasoning={'effort':effort},input=working_language.responses_input(items),tools=TOOLS,store=False)
+    api_input=working_language.responses_input(items)
+    progress=load(STATE/'progress_watchdog.json')
+    if progress.get('alert_active') and progress.get('instructions'):
+        api_input.append(dict(role='user',content='Persistent research-progress supervisor observation. This is an operational correction, not new scientific authorization or permission to change frozen criteria.\n'+json.dumps(progress,ensure_ascii=False)))
+    body=dict(model='gpt-5.5',reasoning={'effort':effort},input=api_input,tools=TOOLS,store=False)
     if force_state:body['tool_choice']={'type':'function','name':'update_state'}
     req=urllib.request.Request(SECRET['OPENAI_BASE_URL'].rstrip('/')+'/responses',data=json.dumps(body).encode(),headers={'Authorization':'Bearer '+SECRET['OPENAI_API_KEY'],'Content-Type':'application/json'})
     cid=uuid.uuid4().hex;started=time.monotonic();usage={};status='error'
@@ -260,7 +265,7 @@ def api(items, force_state=False):
         raise RuntimeError('API_HTTP_'+str(error.code)+': '+detail) from None
     finally:
         with db() as c:c.execute('insert into calls values(?,?,?,?,?,?,?)',(cid,now(),'gpt-5.5',effort,status,json.dumps(usage),time.monotonic()-started))
-        event('api',call_id=cid,status=status,usage=usage)
+        event('api',call_id=cid,status=status,usage=usage,progress_alert_id=progress.get('alert_id'))
 
 def heartbeat():
     while True:
@@ -395,11 +400,12 @@ def iteration():
             persist(turn,calls)
             if not calls:break
         for index,item in enumerate(calls):
-            if item['name']=='run_experiment' and executions>=1:
-                result={'error':'ValueError','message':'One experiment per iteration: persist next action for the next bounded cycle'}
+            maximum_runs=3 if current_roles().get('mode')=='temporary_user_authorized_solo' else 1
+            if item['name']=='run_experiment' and executions>=maximum_runs:
+                result={'error':'ValueError','message':'Bounded sequential run allowance exhausted: persist next action for the next cycle'}
             else:
                 result=durable_tool_call(item)
-                if item['name']=='run_experiment':executions+=1
+                if item['name']=='run_experiment' and result.get('record') and not result.get('replayed_without_execution'):executions+=1
             text=redact(json.dumps(result,default=str))[:30000]
             items.append(dict(type='function_call_output',call_id=item['call_id'],output=text))
             event('tool',name=item['name'],arguments={k:v for k,v in json.loads(item['arguments']).items() if k!='content'},result_summary=text[:2000])
@@ -410,13 +416,25 @@ def iteration():
     with (ROOT/'RESEARCH_LOG.md').open('a') as f:f.write('\n\n## '+now()+'\n'+redact('\n'.join(outputs))+'\n')
     dump(checkpoint,dict(status='completed',iteration_id=iteration_id,updated=now()))
 
+def materialize_verified_backup():
+    status=load(STATE/'backup_status.json')
+    try:backup_contract.validate_status(status)
+    except ValueError:return None
+    # Preserve the actual external verification time; never manufacture recency.
+    identifier=hashlib.sha256(json.dumps(status,sort_keys=True).encode()).hexdigest()[:20]
+    path=ROOT/'research_artifacts/aws_backup_proofs'/('VERIFIED_SUPERVISOR_BACKUP_'+identifier+'.json')
+    if not path.exists():dump(path,dict(status,backup_verified=True,materialized_at=now(),provenance='verified_supervisor_backup_status',backup_status_sha256=hashlib.sha256(json.dumps(status,sort_keys=True).encode()).hexdigest()))
+    return path
+
 def housekeeping():
     # Stable commit and upload handled separately; no API calls or training overlap.
     previous=load(STATE/'backup_status.json')
-    if previous.get('status') in ('verified','partial') and (dt.datetime.now(dt.timezone.utc)-dt.datetime.fromisoformat(previous['time'])).total_seconds()<300:return
+    if previous.get('status') in ('verified','partial') and (dt.datetime.now(dt.timezone.utc)-dt.datetime.fromisoformat(previous['time'])).total_seconds()<300:
+        materialize_verified_backup();return
     p=subprocess.run(['/usr/bin/python3',str(SERVICE/'backup.py')],cwd=ROOT,env=clean_env(),capture_output=True,text=True,timeout=14400)
     event('backup_process',exit=p.returncode,tail=redact(p.stdout[-1000:]+p.stderr[-1000:]))
     if p.returncode:raise RuntimeError('Backup not verified; diagnose infrastructure before unique formal work')
+    materialize_verified_backup()
 
 def main():
     lock=(STATE/'orchestrator.lock').open('a');fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)

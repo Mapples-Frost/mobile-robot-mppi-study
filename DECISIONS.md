@@ -1912,3 +1912,7 @@ UTC: 2026-10-01T00:32:37.974546+00:00. Metadata-only current backup-state rechec
 - Backup proof: `research_artifacts/aws_backup_proofs/BACKUP_VERIFIED_AFTER_RELEASE_ROTATION_PATCH_SOLO_V0B_20261001T013958Z.json`. Retry request: `None`.
 - Next action: Backup is verified after the release-rotation patch; nonzero development work may resume only under a separately frozen scientific execution plan citing this proof.
 - Resource use: solver_calls=0, plant_steps=0, training_steps=0, validation_episodes=0, test_episodes=0. No validation-bank, sealed-test, or final-test access.
+
+
+## 20261001T020540Z — Evidence-progress supervision after user complaint
+Previous supervision primarily checked liveness and reported on user requests. Overnight: 867 GPT-5.5 calls, 40 runs, 15 failures, ~566.67 s registered run wall, 17 measured solves, zero plant/training updates. Added persistent deterministic progress watchdog without model/API calls; alert injected into GPT requests; up to three sequential solo runs within the existing model-call/experiment budgets. Shared external backup verifier checks immutable content against pushed Git and verified raw index; verified status is automatically materialized with its real time. Current source action vectors are already correct at entry, confirmed with mock author-step tests; deeper environment traceback remains necessary. Tests passed without real solver/plant/training use. No scientific threshold, final-test or role change.

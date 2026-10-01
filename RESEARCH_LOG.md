@@ -8373,3 +8373,57 @@ UTC: 2026-10-01T00:32:37.974546+00:00. Metadata-only current backup-state rechec
 
 ## 2026-10-01T00:41:34.062060+00:00
 
+
+
+## 2026-10-01T00:44:02.831923+00:00
+Elapsed service lifetime: latest measured 109.62 hours since 2026-09-26T10:55:29Z; server API total_tokens: latest measured 474.39M, from `research_artifacts/aws_state/continue_state_20261001T003237Z_after_s_tc2h8_backup_current_status_v0c.md` and not remeasured in this desktop reply.
+
+Concrete actions completed this iteration:
+
+1. Inspected the active solo plan and execution contract artifacts:
+   - `docs/bohn2021_takeover/solo_gpt55/PLAN_READY.json`
+   - `docs/bohn2021_takeover/solo_gpt55/solo_678db35a9bf11885e058ff89.execution_plan.json`
+   - `experiments/bohn2021_aws/backup_recheck_receipt_key_repair_solo_v0.py`
+
+2. Verified the pending task is the approved zero-resource operational repair:
+   - Task: `S-BACKUP-RECHECK-AFTER-CURRENT-GATED-RECEIPT-REPAIR-v0b-receipt-key-repair`
+   - Purpose: repair receipt evidence-key names for the prior backup recheck.
+   - Scientific status preserved: backup remains blocked; this task does not make backup recoverable.
+   - Resource request: all five counters zero.
+   - No validation-bank content, sealed test, final test, solver, plant, controller, training, or refit access.
+
+3. Attempted to launch the approved task.
+   - First attempt was rejected before launch due to my operator error: `script_sha256` in the `run_experiment` config was mistyped.
+   - Correct approved hash is:
+     `acc88c5cbb0a2d51d8fab6869e4c8b0e97f46886996f5808aed567c97a7a37f1`
+   - Second attempt used the corrected hash but was rejected by the scheduler:
+     `ValueError: One experiment per iteration: persist next action for the next bounded cycle`
+   - No scientific execution occurred in either attempt.
+
+4. Persisted durable state with:
+   - the failed prelaunch hash-mismatch attempt,
+   - the one-experiment-per-iteration rejection,
+   - zero resource consumption,
+   - continued backup blocker,
+   - and the exact next task to run next cycle.
+
+Current scientific state is unchanged:
+
+- External backup recoverability remains unverified/blocked.
+- Prior evidence indicates failed backup status, including TimeoutError/write-timeout and later HTTP 422 asset-upload failure.
+- Therefore nonzero controller/solver/plant/training work remains gated.
+- Existing vehicle learned-selector evidence remains negative: `learned_s0`/`learned_s1` collapse to H25; `learned_s2` uses H35 but is worse/slower than matched fixed H25 and includes the case43 failure context.
+- No sealed/final test was accessed.
+
+Next concrete action for the next bounded cycle:
+
+Run the already approved task exactly as frozen:
+
+- Task ID: `S-BACKUP-RECHECK-AFTER-CURRENT-GATED-RECEIPT-REPAIR-v0b-receipt-key-repair`
+- Script: `experiments/bohn2021_aws/backup_recheck_receipt_key_repair_solo_v0.py`
+- Script SHA256: `acc88c5cbb0a2d51d8fab6869e4c8b0e97f46886996f5808aed567c97a7a37f1`
+- Split: `diagnostic`
+- Seed: `backup_recheck_receipt_key_repair_no_random_seed`
+- Resources: solver_calls=0, plant_steps=0, training_steps=0, validation_episodes=0, test_episodes=0
+
+After that repair passes, the next useful work should be a bounded backup-path repair/retry plan. Nonzero source242/control/training diagnostics should remain blocked until a verified recoverable backup proof exists.

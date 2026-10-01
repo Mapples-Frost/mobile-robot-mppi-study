@@ -1,0 +1,131 @@
+{
+  "project_goal": "Reproduce and/or improve Bøhn et al. 2021 adaptive MPC prediction-horizon results for vehicle and inverted pendulum, while preserving ORIGINAL SAC reconstruction separately from IMPROVED latency-tree/gated/true-variable-H variants. No reproduction success is established.",
+  "source_of_truth": {
+    "primary_reports": [
+      "docs/protocols/bohn2021_latency_tree_2026-09-26.md",
+      "docs/bohn2021_takeover/LATENCY_TREE_RECOVERY_MIGRATION_AMENDMENT_20260926.md",
+      "research_artifacts/aws_diagnostics/vehicle_validation64_full_aggregate_model_selection_20260927/summary.md",
+      "research_artifacts/aws_diagnostics/pendulum_inventory_metadata/summary.md",
+      "docs/bohn2021_takeover/PROGRESS_SUPERVISION_20261001.md",
+      "docs/bohn2021_takeover/local_opus_handoff_20261001/AUDIT_FACTS.json"
+    ],
+    "locators": [
+      "docs/bohn2021_takeover/local_opus_handoff_20261001/SERVER_FILE_INVENTORY.jsonl",
+      "docs/bohn2021_takeover/local_opus_handoff_20261001/REGISTERED_RUNS.json",
+      "docs/bohn2021_takeover/local_opus_handoff_20261001/CHECKPOINT_LOCATOR.json",
+      "docs/bohn2021_takeover/local_opus_handoff_20261001/EVIDENCE_LOCATOR.json",
+      "docs/bohn2021_takeover/local_opus_handoff_20261001/WATCHDOG_AT_FREEZE.json"
+    ],
+    "latest_backup": [
+      "research_artifacts/aws_backup_proofs/BACKUP_VERIFIED_AFTER_RELEASE_ROTATION_PATCH_SOLO_V0B_20261001T013958Z.json",
+      "research_artifacts/aws_backup_proofs/BACKUP_VERIFIED_FROM_SUPERVISOR_CONTEXT_20261001T014627Z.json"
+    ]
+  },
+  "current_stage": "Frozen handoff to local Opus. Server research execution stopped. Current scientific stage is incomplete development/validation diagnosis; immediate pending blocker is source242 microcontinuation env/controller/TVP traceback after reconciling legacy backup gates with verified backup evidence.",
+  "completed_evidence": {
+    "vehicle_latency_tree_validation64": "12 shards complete, 2688 episodes, 236348 represented control steps; learned_s0/s1 H25-only; learned_s2 H25/H35 with one catastrophic case43 failure and worse/slower than matched fixed H25. Evidence: research_artifacts/aws_diagnostics/vehicle_validation64_full_aggregate_model_selection_20260927/summary.md and vehicle_validation64_all_shards_pairwise_summary_solo_v0_20260930T225821Z/summary.md.",
+    "pendulum_inventory": "pendulum_s0 complete training artifact selected g1_c10; pendulum_s1 partial/interrupted; pendulum_s2 absent/unstarted. Evidence: research_artifacts/aws_diagnostics/pendulum_inventory_metadata/summary.md.",
+    "backup_repair": "backup.py release-rotation patch applied and post-patch backup verified; evidence paths include backup_release_rotation_patch_apply_solo_v0b summary, backup_post_rotation_status_recheck_solo_v0b summary, and BACKUP_VERIFIED_AFTER_RELEASE_ROTATION_PATCH_SOLO_V0B_20261001T013958Z.json.",
+    "source242_unit": "v0i raw TVP unit diagnostic passed zero-resource fake-env/static checks; not solver/control evidence."
+  },
+  "unresolved_failures": {
+    "source242_microcontinuation": "Latest v0j attempt 20261001T014703_27a3c026 failed before resources at legacy backup gate despite verified global backup; observed plant_steps=0 solver_calls=0. Prior v0g had 3 solver calls but 0 plant steps; v0h/v0i failures lack decisive full traceback. Top-level high-level action vector is already present; exact env/controller/TVP failure remains unresolved.",
+    "original_reproduction": "Historical original-style artifacts exist but were not fully audited in this handoff; historic opened tests cannot count as fresh final test. No original reproduction success.",
+    "pendulum": "s1 interrupted/stale and s2 unstarted for latency-tree training; two-task reproduction incomplete.",
+    "validation_test_contamination": "vehicle validation64 already opened for current IMPROVED latency-tree; sealed/final test not authorized; historic test traces are contaminated for current final claims."
+  },
+  "next_actions": [
+    {
+      "priority": 1,
+      "action": "Local restore verification only: inspect commit, status, locator JSONs and cited summary files; do not run physics/training/validation/test."
+    },
+    {
+      "priority": 2,
+      "action": "Design a successor source242 microcontinuation repair using backup_contract.verify or equivalent immutable-input proof, not legacy per-wrapper live-log gates. Cite request execution-result:20261001T014703_27a3c026."
+    },
+    {
+      "priority": 3,
+      "action": "If user later authorizes experiments, run the smallest source242 diagnostic preserving H=[12,15,35], V15_shared, goal endpoint[61], no training/refit, no validation64/test; capture full sanitized tracebacks and exact solver/plant counters."
+    },
+    {
+      "priority": 4,
+      "action": "If plant transitions occur, analyze fixed-H costs/safety/solver/timing and strong fixed-H comparators before any training/refit. If no transitions, repair the exact traceback; do not guess top-level action shape."
+    },
+    {
+      "priority": 5,
+      "action": "Do not open sealed/final test or unused validation banks; do not claim reproduction until all original acceptance criteria are met."
+    }
+  ],
+  "original_vs_improved": {
+    "original": "Historical SAC/paper-default/fixed-H artifacts exist under research_artifacts/bohn2021_reproduction_2026-09-17/results/ and scripts under experiments/bohn2021_reproduction/. They need fresh audit before any claim; old final/test traces are contaminated for current final acceptance.",
+    "improved": "Latency-tree, gated horizon, safe-shortening, risk/actual-time reselection, true-variable-H, terminal/objective, and source242 diagnostics are IMPROVED methods. Current latency-tree/gated evidence is negative or incomplete; true-variable-H/source242 is engineering/development only."
+  },
+  "checkpoint_reuse": {
+    "status": "Checkpoints are numerous and indexed in CHECKPOINT_LOCATOR.json. Reuse only after verifying hashes and matching protocol/terminal/source. Vehicle validation used historical learned/fixed terminal artifacts; pendulum_s0 has completed artifact, s1 partial, s2 missing. Do not mix WSL and AWS timing for ranking.",
+    "important_paths": [
+      "docs/bohn2021_takeover/local_opus_handoff_20261001/CHECKPOINT_LOCATOR.json",
+      "research_artifacts/bohn2021_reproduction_2026-09-17/results/paper_exact_grid_2026-09-23/",
+      "research_artifacts/bohn2021_reproduction_2026-09-17/results/latency_tree_2026-09-26/"
+    ]
+  },
+  "splits_and_contamination": {
+    "validation64_vehicle": "Opened and fully used for IMPROVED latency-tree; not fresh for new methods.",
+    "sealed_final_test": "Closed/unauthorized for current branch. Do not open without explicit frozen final_test_gate and user authorization.",
+    "historical_tests": "Historical opened test traces under original artifacts, if present, are development/historical only and cannot count as fresh sealed tests.",
+    "development_banks": "Numerous true-variable-H/safe-shortening/risk-reselection banks are opened development/model-selection evidence only."
+  },
+  "acceptance_gates": {
+    "original_required": "Both vehicle and pendulum, all required seeds, adaptive behavior actually using multiple horizons, success/constraint/failure nonworsening, physical+constraint cost noninferiority, >=3% total cost or >=10% decision-time route per protocol, validation pass, then fresh sealed 128-case final confirmation. Not met.",
+    "improved_latency_tree_vehicle": "Validation64 complete but fails: s0/s1 nonadaptive fixed H25, s2 adaptive but worse/slower and case43 failure. No final test.",
+    "source242_current_task": "Pass only if verified backup before resources, prior failures preserved, H12/H15/H35 arms each advance at least one plant step without env/controller exceptions, no validation/test/training; latest v0j fails this with zero resources."
+  },
+  "resource_limits": {
+    "server": "t3a.medium, one experiment at a time, no AWS/IAM/EBS/network changes, max experiment about 4h, single-thread discipline.",
+    "interpreters": {
+      "legacy_TF1": "/home/mapples/.local/share/bohn2021-python37/bin/python",
+      "modern": "metadata/offline only"
+    },
+    "recent_watchdog": "WINDOW 2h: zero solver/plant/training/validation/test resources; stagnation alert active.",
+    "model_usage_latest": "operator metadata: GPT-5.5 6278 calls / 411816463 recorded tokens; Astra/Opus usage also recorded. Usage is operational, not progress."
+  },
+  "entrypoints": {
+    "protocols": [
+      "docs/protocols/bohn2021_latency_tree_2026-09-26.md",
+      "docs/bohn2021_takeover/LATENCY_TREE_RECOVERY_MIGRATION_AMENDMENT_20260926.md"
+    ],
+    "current_source242_context": [
+      "docs/bohn2021_takeover/solo_gpt55/solo_500adfc8b53031a4fa3722a3.execution_plan.json",
+      "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34z2_source242_microcontinuation_v0j_task_id_binding_repair.py",
+      "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34z2_source242_microcontinuation_v0i_env_tvp_format_repair.py",
+      "scripts/research_service/backup_contract.py"
+    ],
+    "vehicle_evidence": [
+      "research_artifacts/aws_diagnostics/vehicle_validation64_full_aggregate_model_selection_20260927/summary.md",
+      "research_artifacts/aws_diagnostics/vehicle_validation64_all_shards_pairwise_summary_solo_v0_20260930T225821Z/summary.md"
+    ],
+    "pendulum_evidence": [
+      "research_artifacts/aws_diagnostics/pendulum_inventory_metadata/summary.md"
+    ]
+  },
+  "obsolete_pointers": {
+    "do_not_use_as_active": [
+      "Old Opus/Astra plans unless reinstated",
+      "legacy v0-v0j wrapper chain as clean implementation",
+      "validation64 as fresh validation for new variants",
+      "historical final/test traces as current sealed test",
+      "modern interpreter for TF1 rollouts"
+    ],
+    "use_as_history": [
+      "experiments/bohn2021_aws/vehicle_true_variable_horizon_v34z2_source242_microcontinuation_v0*.py",
+      "docs/bohn2021_takeover/opus_lead/",
+      "docs/bohn2021_takeover/astra_reviews/"
+    ]
+  },
+  "handoff_limitations": [
+    "Additional source reading was prohibited before final handoff; this report relies on files already read plus operator-provided audit metadata.",
+    "Large locator files were sampled/identified, not fully audited line-by-line.",
+    "Original SAC/full historical results were not revalidated from every raw trace/checkpoint in this final pass.",
+    "Packaging/upload/restore to GitHub/local Opus is outside this report and not claimed complete.",
+    "No hidden credentials or private reasoning are included."
+  ]
+}

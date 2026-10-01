@@ -1,0 +1,33 @@
+{
+  "time": "2026-10-01T02:33:26.616782+00:00",
+  "human_request": "Transfer all project tasks to local Opus 5.5; have server GPT-5.5 write a handoff and upload all server work to GitHub.",
+  "new_owner": "local-opus-5.5",
+  "server_agents_disabled": true,
+  "previous_roles": {
+    "status": "active",
+    "active_lead": "gpt-5.5",
+    "requested_effort": "xhigh",
+    "independent_reviewer": "paused_by_user",
+    "executor": "gpt-5.5",
+    "lead_ready_path": "docs/bohn2021_takeover/solo_gpt55/PLAN_READY.json",
+    "lead_index_path": "docs/bohn2021_takeover/solo_gpt55/LATEST.md",
+    "request_path": "docs/bohn2021_takeover/astra_reviews/NEXT_REVIEW_REQUEST.json",
+    "activated": "2026-09-30T09:57:18.971768+00:00",
+    "handoff_audit": "20260930T094740Z_3d9a1e",
+    "latest_plan": "solo_500adfc8b53031a4fa3722a3",
+    "mode": "temporary_user_authorized_solo",
+    "paused_models": [
+      "claude-opus-5-5",
+      "gpt-6-astra"
+    ],
+    "user_authorization": "docs/bohn2021_takeover/solo_gpt55/ROLE_OVERRIDE_20260930T160907Z.json",
+    "user_authorization_sha256": "056fd245e4c221b7bb6142feb0ce60a65edea13b3b8b15f2c8e584ef44ee6356",
+    "original_roles_backup": "/data/openai-agent/state/deployments/solo_gpt55_20260930T160907Z/original_research_roles.json",
+    "resume_requires_user": true,
+    "solo_activated": "20260930T160907Z"
+  },
+  "continuation_within_existing_scope_authorized": true,
+  "additional_routine_experiment_approval_required": false,
+  "scientific_acceptance_and_final_test_gates_unchanged": true,
+  "clarification": "Any report wording suggesting additional routine research authorization is superseded by the human standing instructions and this requested transfer. Major-blocker and final-acceptance rules remain."
+}

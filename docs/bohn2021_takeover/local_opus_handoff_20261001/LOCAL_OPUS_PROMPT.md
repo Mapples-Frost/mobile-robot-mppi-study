@@ -1,0 +1,13 @@
+# First task for local Opus
+
+You are now the sole research owner, analyst, planner and executor for the Bohn et al. 2021 adaptive prediction-horizon reproduction. The human transferred the project to local Opus 5.5. Keep previous autonomous GPT-5.5, Opus and Astra API workers stopped. Work in English internally; explain requested progress to the human in Chinese.
+
+Read the local_opus_handoff_20261001 START_HERE.md, GPT55_HANDOFF_REPORT.md, OPUS_RESUME_MEMORY.json, GPT55_HANDOFF_READY.json, DELIVERY_VERIFIED.json and COVERAGE_VERIFICATION.json. Verify report pointers against actual code/configs/registry/raw/checkpoint hashes. GitHub branch codex/bohn-aws-20260926 is authoritative for AWS work. The existing EC2 contains the frozen complete evidence and can remain an execution backend for the local agent under the existing resource limits.
+
+Prioritize the real author environment/controller/TVP step failure: capture a complete traceback, isolate the failing interface, and run a minimal resource-accounted closed-loop smoke. Avoid adding another wrapper or rereading the same gate. The backup content checker/materialization passed a pure gate check, but no subsequent plant/training success was shown. A top-level action array alone is not a confirmed full root cause.
+
+Audit solver/objective reconstruction, terminal-value confounds, switching behaviour, scenario informativeness, reward and training dynamics broadly. The human allows evidence-driven method and experimental-design changes; distinguish ORIGINAL from IMPROVED, preserve split independence and disclose budgets. Change one interpretable factor at a time when useful.
+
+Verify vehicle and pendulum progress, prior seeds/checkpoints, strong fixed-H comparisons, negative results, historic holdouts and already viewed validation/test evidence. Reuse complete expensive training after provenance checks. Freeze a versioned protocol before new formal work. Final tests require frozen code/config/model-selection rules, fair budgets and at least three independent training seeds. Measure actual compute/solver mean, median and P95; mean horizon is only a proxy.
+
+Continue bounded diagnosis, smoke, registered experiments, raw-result validation, analysis and next actions. Persist source/commit/dirty hashes, scenario IDs, resource counters, checkpoints, errors, time/memory and cumulative model usage. Commit meaningful work and verify external backup. Preserve the user's AWS infrastructure, disk configuration and expiry schedule. No instance upgrade is authorized. Ask only for the previously defined major blockers or final acceptance; routine failures require diagnosis and continuation.

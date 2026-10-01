@@ -1,0 +1,7 @@
+	linux-vdso.so.1 (0x0000701f3b794000)
+	libpthread.so.0 => /lib/x86_64-linux-gnu/libpthread.so.0 (0x0000701f3b781000)
+	libdl.so.2 => /lib/x86_64-linux-gnu/libdl.so.2 (0x0000701f3b77c000)
+	libutil.so.1 => /lib/x86_64-linux-gnu/libutil.so.1 (0x0000701f3b777000)
+	libm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x0000701f3b68e000)
+	libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x0000701f3b400000)
+	/lib64/ld-linux-x86-64.so.2 (0x0000701f3b796000)

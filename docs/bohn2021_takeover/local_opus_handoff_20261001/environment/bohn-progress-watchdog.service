@@ -1,0 +1,25 @@
+[Unit]
+Description=Evidence-progress watchdog for unattended Bohn research
+After=bohn-research.service
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/data/openai-agent/mobile-robot-mppi-study
+ExecStart=/usr/bin/python3 -u /data/openai-agent/mobile-robot-mppi-study/scripts/research_service/progress_watchdog.py
+Restart=on-failure
+RestartSec=15
+MemoryHigh=96M
+MemoryMax=128M
+CPUQuota=5%
+Nice=15
+UMask=0077
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=read-only
+PrivateTmp=true
+ReadWritePaths=/data/openai-agent/state
+TimeoutStopSec=15
+
+[Install]
+WantedBy=multi-user.target

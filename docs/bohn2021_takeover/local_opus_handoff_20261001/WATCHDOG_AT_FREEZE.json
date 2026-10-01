@@ -1,0 +1,31 @@
+{
+  "time": "2026-10-01T02:13:54.625520+00:00",
+  "window_hours": 2,
+  "window_registered_runs": 10,
+  "window_failed_runs": 2,
+  "measured_resources": {
+    "solver_calls": 0,
+    "plant_steps": 0,
+    "training_steps": 0,
+    "validation_episodes": 0,
+    "test_episodes": 0
+  },
+  "unknown_receipt_runs": 1,
+  "last_measured_solver_utc": "2026-09-30T17:54:10.567144+00:00",
+  "last_plant_or_training_utc": null,
+  "active_experiment": null,
+  "status": "stagnation_detected",
+  "alert_active": true,
+  "alert_id": "progress:no-recorded-transition:2026-09-30 17:54:10.567144+00:00:no_measurement_progress",
+  "recent_experiment_ids": [
+    "20261001T010054_c708c8d5",
+    "20261001T010846_132558c8",
+    "20261001T012227_7bdb86d5",
+    "20261001T013008_2c0202f6",
+    "20261001T013958_3f8d9432",
+    "20261001T014703_27a3c026"
+  ],
+  "backup_status": "verified",
+  "instructions": "Research-progress alarm: service uptime, token usage, metadata receipts and process exit0 are not experimental progress. Continue work; do not pause the project or alter scientific thresholds/splits. Diagnose the exact remaining operational blocker from raw errors and fix its shared cause, rather than adding another wrapper or metadata-only gate. Preserve all failure evidence and cumulative resource limits. Prefer the smallest already-authorized useful solver/plant/training measurement after genuine prerequisites pass. Use up to three sequential registered runs within a bounded solo cycle for approved repair/measurement feedback; never run in parallel. External backup currently reports verified. If an experiment still reports backup missing, reconcile its per-version gate with the verified content/source evidence. Do not equate a dirty live research log with unbacked immutable inputs. Read backup_contract.py and PROGRESS_SUPERVISION_20261001.md; keep real recoverability verification. ",
+  "caveat": "Counters are measured reported usage, not success or independent scientific acceptance. Unknown receipts are not assumed zero."
+}

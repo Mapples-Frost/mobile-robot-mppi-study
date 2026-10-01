@@ -8353,3 +8353,15 @@ UTC: 2026-09-30T23:54:14.978755+00:00. Metadata-only current backup-state rechec
 
 ## 2026-10-01T00:18:33.166656+00:00
 
+<!-- vehicle-current-gated-horizon-training-audit-v1-receipt-repair-solo-v0-research-log -->
+### Current gated-horizon training audit receipt repair solo v0 (2026-10-01T00:26:36.264015+00:00)
+
+- Repaired the structured receipt omission for `S-TRAINING-CURRENT-GATED-HORIZON-AUDIT-v0`. The prior audit exited status 0 and wrote `completed.passed=true`, but no `outcome_receipt.json`, so scheduler acceptance was unverified.
+- Corrected pass predicate: `True`. Evidence mismatches: `{}`.
+- Preserved audit findings: current vehicle policies are finite-search IMPROVED gated selectors, not ORIGINAL SAC and not the older latency tree; seed0 uses `h20_p1_g5`, seed1 uses `h15_p2_g5`, seed2 uses `h10_p0_g5`; all three have `new_gradient_steps=0`; selection used mean raw cost with physical-cost gates and no measured wall-clock objective.
+- No validation bank/generator, controller, plant, solver, training/refit, new validation episode, sealed test or final test was accessed. Resources are zero.
+- Artifacts: `research_artifacts/aws_diagnostics/vehicle_current_gated_horizon_training_audit_v1_receipt_repair_solo_v0_20261001T002636Z/raw.json`, `research_artifacts/aws_diagnostics/vehicle_current_gated_horizon_training_audit_v1_receipt_repair_solo_v0_20261001T002636Z/summary.md`, `research_artifacts/aws_diagnostics/vehicle_current_gated_horizon_training_audit_v1_receipt_repair_solo_v0_20261001T002636Z/completed.json`.
+
+
+## 2026-10-01T00:28:33.063879+00:00
+

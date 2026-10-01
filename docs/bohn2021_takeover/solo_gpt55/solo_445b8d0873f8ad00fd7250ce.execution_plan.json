@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "request_id": "execution-result:20261001T001445_3d582b25",
+  "tasks": [
+    {
+      "task_id": "S-TRAINING-CURRENT-GATED-HORIZON-AUDIT-v0b-receipt-repair",
+      "description": "Zero-resource structured receipt repair for the already completed current gated-horizon training/search provenance audit. The previous audit wrote raw/summary/completed artifacts with completed.passed=true and consumed zero solver/plant/training/validation/test resources, but no outcome_receipt.json was produced, so structured acceptance remained unverified. This repair reads only the existing audit artifacts and run logs, verifies the intended pass-condition evidence, writes compact raw/summary/completed repair artifacts and emits the missing structured receipt. It does not open validation64 generator/bank sources, run controllers/plant/solvers, train/refit, create new validation episodes, or access sealed/final tests.",
+      "script_patterns": [
+        "experiments/bohn2021_aws/vehicle_current_gated_horizon_training_audit_v1_receipt_repair_solo_v0.py"
+      ],
+      "split": "diagnostic",
+      "method": "Zero-resource structured receipt repair for the current gated-horizon training/selection provenance audit; reads existing prior audit raw/summary/completed/candidate-table and run logs only; verifies prior completed.pass=true, confirms missing prior outcome_receipt.json, preserves seed-level finite-search provenance, horizon-collapse/adaptivity records and missing-evidence notes; no validation-bank source opening; no controller/plant/solver execution; no training/refit; no new validation episodes; no sealed/final test.",
+      "seeds": [
+        "existing_current_gated_policy_audit_outputs_no_new_random_seed"
+      ],
+      "config_constraints": {
+        "label_ORIGINAL_vs_IMPROVED": "IMPROVED_current_latency_tree/gated_horizon_diagnostic_receipt_repair_only_not_ORIGINAL_reproduction",
+        "authority_mode": "temporary_user_authorized_solo_self_review",
+        "follows_experiment_id": "20261001T001445_3d582b25",
+        "follows_task_id": "S-TRAINING-CURRENT-GATED-HORIZON-AUDIT-v0",
+        "script": "experiments/bohn2021_aws/vehicle_current_gated_horizon_training_audit_v1_receipt_repair_solo_v0.py",
+        "script_purpose": "structured receipt repair for current gated-horizon training/selection audit after outcome_receipt omission",
+        "no_solver_calls": true,
+        "no_plant_steps": true,
+        "no_controller_execution": true,
+        "no_training_no_refit": true,
+        "no_validation_bank_content_opening": true,
+        "no_new_validation_episodes": true,
+        "no_sealed_or_final_test_access": true,
+        "development_only_not_final_acceptance": true,
+        "backup_status_blocker_preserved": "current external backup remains failed/timeout and earlier GitHub release asset cap HTTP 422 blocks nonzero solver/plant work until recoverability is verified",
+        "must_not_read_or_log_secrets": true,
+        "inputs_are_existing_prior_audit_artifacts_and_run_logs_only": true,
+        "do_not_repeat_training_audit_or_all_shard_pairwise_summary": true,
+        "next_action_if_repair_succeeds": "Use accepted audit evidence to plan a bounded zero-resource method freeze/preparation or, after verified external backup, the source242 true-variable-horizon microcontinuation/controller-path measurement; do not treat current reused gated selector as a success path without substantive training/selection change."
+      },
+      "training_budget": {
+        "gradient_steps": 0,
+        "selector_refits": 0,
+        "training_steps": 0
+      },
+      "validation_budget": {
+        "new_validation_episodes": 0,
+        "validation64_bank_opens": 0,
+        "solver_calls": 0,
+        "plant_steps": 0,
+        "metadata_artifact_reads": "existing prior training-audit artifacts and run logs only"
+      },
+      "test_budget": {
+        "final_test_episodes": 0,
+        "sealed_test_episodes": 0
+      },
+      "resource_limits": {
+        "solver_calls": 0,
+        "plant_steps": 0,
+        "training_steps": 0,
+        "validation_episodes": 0,
+        "test_episodes": 0
+      },
+      "max_attempts": 1,
+      "max_zero_usage_repairs": 1,
+      "timeout_seconds": 900,
+      "dependencies": [],
+      "pass_conditions": {
+        "zero_solver_plant_training_validation_test_resources": true,
+        "validation_bank_content_opened": false,
+        "sealed_or_final_test_accessed": false,
+        "prior_audit_artifacts_inspected": true,
+        "prior_completed_passed_true": true,
+        "prior_run_missing_outcome_receipt_confirmed": true,
+        "current_gated_policy_artifacts_inspected_or_missing_recorded": true,
+        "seed_level_horizon_collapse_or_adaptivity_recorded": true,
+        "training_selection_provenance_recorded": true,
+        "missing_training_or_selection_evidence_recorded": true,
+        "outputs_persisted": true,
+        "backup_blocker_preserved": true
+      },
+      "continue_without_review": false
+    }
+  ]
+}

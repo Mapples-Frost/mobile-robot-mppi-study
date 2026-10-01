@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "request_id": "execution-result:20261001T002635_d5b80a98",
+  "tasks": [
+    {
+      "task_id": "S-BACKUP-RECHECK-AFTER-CURRENT-GATED-RECEIPT-REPAIR-v0",
+      "description": "Zero-resource backup recoverability recheck after the current gated-horizon training-audit receipt repair passed structured gates. Nonzero controller/plant/solver work remains blocked until external backup status is verified. This task reads only supervisor backup status/proof artifacts and the latest backup request produced by the receipt repair, summarizes whether a verified recoverable backup now exists, and preserves the next-action decision. It does not open validation banks, run controllers/solvers/plant, train/refit, create validation episodes, or access sealed/final tests.",
+      "script_patterns": [
+        "experiments/bohn2021_aws/backup_failure_status_capture_s_tc2h8_current_status_v0c.py"
+      ],
+      "split": "diagnostic",
+      "method": "Zero-resource external-backup recoverability status capture after current gated-horizon audit receipt repair; read only backup status/proof/request artifacts and run registry/log context; determine whether nonzero source242/risk-reselection smoke work remains gated; no validation-bank source opening; no controller/plant/solver execution; no training/refit; no new validation episodes; no sealed/final test.",
+      "seeds": [
+        "backup_status_no_random_seed_after_current_gated_receipt_repair"
+      ],
+      "config_constraints": {
+        "label_ORIGINAL_vs_IMPROVED": "diagnostic_backup_gate_only_no_algorithmic_claim",
+        "authority_mode": "temporary_user_authorized_solo_self_review",
+        "follows_experiment_id": "20261001T002635_d5b80a98",
+        "follows_task_id": "S-TRAINING-CURRENT-GATED-HORIZON-AUDIT-v0b-receipt-repair",
+        "script": "experiments/bohn2021_aws/backup_failure_status_capture_s_tc2h8_current_status_v0c.py",
+        "script_purpose": "zero-resource backup gate recheck before any nonzero controller/solver/training work after the accepted current-gated audit receipt repair",
+        "no_solver_calls": true,
+        "no_plant_steps": true,
+        "no_controller_execution": true,
+        "no_training_no_refit": true,
+        "no_validation_bank_content_opening": true,
+        "no_new_validation_episodes": true,
+        "no_sealed_or_final_test_access": true,
+        "must_not_read_or_log_secrets": true,
+        "inputs_are_backup_status_and_backup_request_artifacts_only": true,
+        "preserve_asset422_or_timeout_failures": true,
+        "latest_backup_request": "research_artifacts/aws_backup_proofs/REQUEST_BACKUP_AFTER_CURRENT_GATED_AUDIT_RECEIPT_REPAIR_SOLO_V0_20261001T002636Z.json",
+        "next_action_if_backup_verified": "publish and run a bounded nonzero smoke/controller-path measurement from the already prepared source242 or risk-reselection branch under explicit resource limits",
+        "next_action_if_backup_still_blocked": "continue only zero-resource preparation/repair/state preservation; do not launch solver/plant/controller/training work"
+      },
+      "training_budget": {
+        "gradient_steps": 0,
+        "selector_refits": 0,
+        "training_steps": 0
+      },
+      "validation_budget": {
+        "new_validation_episodes": 0,
+        "validation64_bank_opens": 0,
+        "solver_calls": 0,
+        "plant_steps": 0,
+        "metadata_artifact_reads": "backup status/proof/request artifacts only"
+      },
+      "test_budget": {
+        "final_test_episodes": 0,
+        "sealed_test_episodes": 0
+      },
+      "resource_limits": {
+        "solver_calls": 0,
+        "plant_steps": 0,
+        "training_steps": 0,
+        "validation_episodes": 0,
+        "test_episodes": 0
+      },
+      "max_attempts": 1,
+      "max_zero_usage_repairs": 1,
+      "timeout_seconds": 900,
+      "dependencies": [],
+      "pass_conditions": {
+        "zero_solver_plant_training_validation_test_resources": true,
+        "validation_bank_content_opened": false,
+        "sealed_or_final_test_accessed": false,
+        "backup_status_artifacts_inspected": true,
+        "latest_receipt_repair_backup_request_seen": true,
+        "backup_recoverability_status_recorded": true,
+        "nonzero_work_gate_decision_recorded": true,
+        "outputs_persisted": true
+      },
+      "continue_without_review": false
+    }
+  ]
+}

@@ -1,16 +1,16 @@
 {
-  "request_id": "execution-result:20261001T001445_3d582b25",
+  "request_id": "execution-result:20261001T002635_d5b80a98",
   "trigger": "execution_result_handoff",
-  "created": "2026-10-01T00:14:54.271331+00:00",
-  "experiment_id": "20261001T001445_3d582b25",
+  "created": "2026-10-01T00:26:38.342928+00:00",
+  "experiment_id": "20261001T002635_d5b80a98",
   "status": "analysis_requested",
-  "purpose": "Execute approved task S-TRAINING-CURRENT-GATED-HORIZON-AUDIT-v0 under temporary GPT-5.5 solo plan: metadata-only audit of CURRENT reused gated-horizon/latency-tree IMPROVED vehicle policies after all-shard validation showed s0/s1 constant-H25 collapse and s2 harmful H35 usage; preserve backup blocker and prepare next causal intervention without nonzero solver/plant/training/validation/test use.",
+  "purpose": "Repair missing structured outcome receipt for the completed zero-resource current gated-horizon training/search provenance audit, preserving evidence and pass/failure state without executing solvers, plant, controllers, training/refit, validation episodes or sealed/final tests.",
   "execution_status": "complete",
   "question": "Active scientific lead: interpret this outcome, verify current raw evidence and select the next scientific action for GPT-5.5 implementation. Distinguish hypotheses from verified causes and account for fair baselines, terminal confounds and source-level generalization.",
   "evidence_paths": [
-    "research_artifacts/aws_diagnostics/vehicle_current_gated_horizon_training_audit_v1_20261001T001446+0000/completed.json",
-    "research_artifacts/aws_diagnostics/vehicle_current_gated_horizon_training_audit_v1_20261001T001446+0000/raw.json",
-    "research_artifacts/aws_diagnostics/vehicle_current_gated_horizon_training_audit_v1_20261001T001446+0000/summary.md",
-    "research_artifacts/aws_runs/20261001T001445_3d582b25/registry.json"
+    "research_artifacts/aws_diagnostics/vehicle_current_gated_horizon_training_audit_v1_receipt_repair_solo_v0_20261001T002636Z/raw.json",
+    "research_artifacts/aws_diagnostics/vehicle_current_gated_horizon_training_audit_v1_receipt_repair_solo_v0_20261001T002636Z/summary.md",
+    "research_artifacts/aws_diagnostics/vehicle_current_gated_horizon_training_audit_v1_receipt_repair_solo_v0_20261001T002636Z/completed.json",
+    "research_artifacts/aws_runs/20261001T002635_d5b80a98/registry.json"
   ]
 }

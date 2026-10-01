@@ -1,0 +1,16 @@
+{
+  "time": "2026-10-01T02:44:45.141317+00:00",
+  "scanned_files": 184370,
+  "indexed_files": 183483,
+  "missing_paths": [],
+  "hash_mismatches": [],
+  "known_exclusions": [
+    "credentials",
+    "Git internals",
+    "Python/pip caches",
+    "transient locks/WAL/SHM",
+    "disposable upload staging"
+  ],
+  "sqlite_snapshot_integrity": "ok",
+  "source_commit": "c78641154430c744018df620a53bda2f8034b7cb"
+}

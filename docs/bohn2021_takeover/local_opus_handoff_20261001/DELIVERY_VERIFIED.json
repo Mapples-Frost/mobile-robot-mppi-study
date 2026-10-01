@@ -1,0 +1,101 @@
+{
+  "time": "2026-10-01T02:44:54.777392+00:00",
+  "status": "verified",
+  "repository": "https://github.com/Mapples-Frost/mobile-robot-mppi-study",
+  "branch": "codex/bohn-aws-20260926",
+  "source_commit": "c78641154430c744018df620a53bda2f8034b7cb",
+  "release": "https://github.com/Mapples-Frost/mobile-robot-mppi-study/releases/tag/bohn-local-opus-handoff-20261001",
+  "index": {
+    "name": "HANDOFF_INDEX.json.gz",
+    "url": "https://github.com/Mapples-Frost/mobile-robot-mppi-study/releases/download/bohn-local-opus-handoff-20261001/HANDOFF_INDEX.json.gz",
+    "id": 602290994,
+    "sha256": "9901de1364276dd7c67f6338626071ba025657aa511d8028a9ae3761415839f7",
+    "bytes": 9978512,
+    "verification": "github_server_sha256",
+    "release_tag": "bohn-local-opus-handoff-20261001",
+    "release_url": "https://github.com/Mapples-Frost/mobile-robot-mppi-study/releases/tag/bohn-local-opus-handoff-20261001",
+    "release_asset_count_seen_before_upload": null,
+    "release_free_slots_seen_before_upload": null
+  },
+  "assets": [
+    {
+      "name": "HANDOFF_INDEX.json.gz",
+      "url": "https://github.com/Mapples-Frost/mobile-robot-mppi-study/releases/download/bohn-local-opus-handoff-20261001/HANDOFF_INDEX.json.gz",
+      "id": 602290994,
+      "sha256": "9901de1364276dd7c67f6338626071ba025657aa511d8028a9ae3761415839f7",
+      "bytes": 9978512,
+      "verification": "github_server_sha256",
+      "release_tag": "bohn-local-opus-handoff-20261001",
+      "release_url": "https://github.com/Mapples-Frost/mobile-robot-mppi-study/releases/tag/bohn-local-opus-handoff-20261001",
+      "release_asset_count_seen_before_upload": null,
+      "release_free_slots_seen_before_upload": null
+    },
+    {
+      "name": "GPT55_HANDOFF_REPORT.md",
+      "url": "https://github.com/Mapples-Frost/mobile-robot-mppi-study/releases/download/bohn-local-opus-handoff-20261001/GPT55_HANDOFF_REPORT.md",
+      "id": 602291039,
+      "sha256": "ffa46452d2da4f1fc11bfadda0195c38fda17c7cc5cc437b5e0ae168ca7b2f4d",
+      "bytes": 25321,
+      "verification": "github_server_sha256",
+      "release_tag": "bohn-local-opus-handoff-20261001",
+      "release_url": "https://github.com/Mapples-Frost/mobile-robot-mppi-study/releases/tag/bohn-local-opus-handoff-20261001",
+      "release_asset_count_seen_before_upload": null,
+      "release_free_slots_seen_before_upload": null
+    },
+    {
+      "name": "OPUS_RESUME_MEMORY.json",
+      "url": "https://github.com/Mapples-Frost/mobile-robot-mppi-study/releases/download/bohn-local-opus-handoff-20261001/OPUS_RESUME_MEMORY.json",
+      "id": 602291058,
+      "sha256": "baad434ba300636d6ea7f15330074a01be92ff942f18fcc1d80fb23d72b9b974",
+      "bytes": 10625,
+      "verification": "github_server_sha256",
+      "release_tag": "bohn-local-opus-handoff-20261001",
+      "release_url": "https://github.com/Mapples-Frost/mobile-robot-mppi-study/releases/tag/bohn-local-opus-handoff-20261001",
+      "release_asset_count_seen_before_upload": null,
+      "release_free_slots_seen_before_upload": null
+    },
+    {
+      "name": "GPT55_HANDOFF_READY.json",
+      "url": "https://github.com/Mapples-Frost/mobile-robot-mppi-study/releases/download/bohn-local-opus-handoff-20261001/GPT55_HANDOFF_READY.json",
+      "id": 602291076,
+      "sha256": "83ba4928fd85e4873823f2b08f16136e5fc4084c91930adff238d2d79c6e3f9b",
+      "bytes": 3765,
+      "verification": "github_server_sha256",
+      "release_tag": "bohn-local-opus-handoff-20261001",
+      "release_url": "https://github.com/Mapples-Frost/mobile-robot-mppi-study/releases/tag/bohn-local-opus-handoff-20261001",
+      "release_asset_count_seen_before_upload": null,
+      "release_free_slots_seen_before_upload": null
+    },
+    {
+      "name": "COVERAGE_VERIFICATION.json",
+      "url": "https://github.com/Mapples-Frost/mobile-robot-mppi-study/releases/download/bohn-local-opus-handoff-20261001/COVERAGE_VERIFICATION.json",
+      "id": 602291086,
+      "sha256": "d0edc92414000e53253538156d8c2da3bca8ada08262bf3de293969a7dc3a26e",
+      "bytes": 407,
+      "verification": "github_server_sha256",
+      "release_tag": "bohn-local-opus-handoff-20261001",
+      "release_url": "https://github.com/Mapples-Frost/mobile-robot-mppi-study/releases/tag/bohn-local-opus-handoff-20261001",
+      "release_asset_count_seen_before_upload": null,
+      "release_free_slots_seen_before_upload": null
+    },
+    {
+      "name": "restore_handoff.py",
+      "url": "https://github.com/Mapples-Frost/mobile-robot-mppi-study/releases/download/bohn-local-opus-handoff-20261001/restore_handoff.py",
+      "id": 602291109,
+      "sha256": "323475183a4ec4704218e2e753e6bc094adfdaf1671ea3d2be3c37305892239a",
+      "bytes": 5397,
+      "verification": "github_server_sha256",
+      "release_tag": "bohn-local-opus-handoff-20261001",
+      "release_url": "https://github.com/Mapples-Frost/mobile-robot-mppi-study/releases/tag/bohn-local-opus-handoff-20261001",
+      "release_asset_count_seen_before_upload": null,
+      "release_free_slots_seen_before_upload": null
+    }
+  ],
+  "restore_files": 183483,
+  "restore_packages": 494,
+  "uncompressed_bytes": 60696944771,
+  "download_bytes": 18013880667,
+  "full_file_coverage_verified": true,
+  "server_services_disabled": true,
+  "no_reproduction_claim": true
+}

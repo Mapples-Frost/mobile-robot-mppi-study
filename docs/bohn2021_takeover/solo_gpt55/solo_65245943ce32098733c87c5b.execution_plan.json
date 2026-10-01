@@ -1,0 +1,102 @@
+{
+  "schema_version": 1,
+  "request_id": "execution-result:20261001T013008_2c0202f6",
+  "tasks": [
+    {
+      "task_id": "S-BACKUP-POST-ROTATION-STATUS-RECHECK-v0b-gate-key-repair",
+      "description": "Zero-resource post-patch backup-status recheck after the release-rotation backup.py patch, repairing the previously identified risk that the v0 script's outcome evidence keys do not match the structured plan pass-condition names. Read only local backup/status/proof metadata, the patch receipt/summary and backup.py source hash; do not execute the backup uploader, call GitHub APIs directly, read credentials, run controllers/solvers/plant, train/refit, open validation banks, or access sealed/final tests. The task passes if it checks the patched backup.py hash, inspects backup status artifacts, records whether external backup recoverability is verified or remains blocking, records commit/package/release or failure status where available, and records the nonzero-work gate decision under exact pass-condition evidence keys. It does not require recoverability to be true; it must preserve the blocking decision if backup still fails.",
+      "script_patterns": [
+        "experiments/bohn2021_aws/backup_post_rotation_status_recheck_solo_v0b_gate_key_repair.py"
+      ],
+      "split": "diagnostic",
+      "method": "Zero-resource local metadata recheck of backup status after the release-rotation patch, with exact structured receipt evidence keys. Confirm patched backup.py hash and inspect newest backup status/proof artifacts for remaining_changed_files, commit/package metadata, release rotation or timeout/failure evidence, then record whether nonzero source242/controller/training work is allowed or remains blocked. No validation-bank content, no sealed/final test, no solver/plant/training, no backup uploader execution, no direct GitHub API calls, and no secrets access.",
+      "seeds": [
+        "backup_post_rotation_status_recheck_gate_key_repair_no_random_seed"
+      ],
+      "config_constraints": {
+        "label_ORIGINAL_vs_IMPROVED": "diagnostic_backup_gate_only_no_algorithmic_claim",
+        "authority_mode": "temporary_user_authorized_solo_self_review",
+        "follows_experiment_id": "20261001T013008_2c0202f6",
+        "follows_task_id": "S-BACKUP-RELEASE-ROTATION-PATCH-APPLY-v0b-static-check-repair",
+        "patch_receipt": "research_artifacts/aws_runs/20261001T013008_2c0202f6/outcome_receipt.json",
+        "patch_summary": "research_artifacts/aws_diagnostics/backup_release_rotation_patch_apply_solo_v0b_static_check_repair_20261001T013009Z/summary.md",
+        "patched_backup_py_sha256": "fb5a21945ab8441007ffcbb34b456cd59053e93243e6532d98bf2af493bc3d8e",
+        "script": "experiments/bohn2021_aws/backup_post_rotation_status_recheck_solo_v0b_gate_key_repair.py",
+        "script_sha256": "c51650c1d0dc6632760158861731a504d6517fe848c979f6c855f7a7bc54e16b",
+        "script_purpose": "zero-resource post-release-rotation-patch backup-status gate recheck with exact pass-condition evidence keys",
+        "backup_service_target": "scripts/research_service/backup.py",
+        "no_solver_calls": true,
+        "no_plant_steps": true,
+        "no_controller_execution": true,
+        "no_training_no_refit": true,
+        "no_validation_bank_content_opening": true,
+        "no_new_validation_episodes": true,
+        "no_sealed_or_final_test_access": true,
+        "must_not_read_or_log_secrets": true,
+        "backup_uploader_must_not_execute": true,
+        "direct_github_api_must_not_execute": true,
+        "nonzero_work_allowed_only_if_verified_backup_recoverable": true,
+        "pass_conditions": {
+          "zero_solver_plant_training_validation_test_resources": true,
+          "validation_bank_content_opened": false,
+          "sealed_or_final_test_accessed": false,
+          "no_secrets_read_or_logged": true,
+          "backup_uploader_not_executed": true,
+          "direct_github_api_not_called": true,
+          "patched_backup_py_hash_checked": true,
+          "patched_backup_py_hash_matches_expected": true,
+          "backup_status_artifacts_inspected": true,
+          "backup_recoverability_status_recorded": true,
+          "commit_and_package_metadata_recorded_if_available": true,
+          "release_rotation_or_failure_status_recorded": true,
+          "nonzero_work_gate_decision_recorded": true,
+          "outputs_persisted": true
+        }
+      },
+      "training_budget": {
+        "gradient_steps": 0,
+        "selector_refits": 0,
+        "training_steps": 0
+      },
+      "validation_budget": {
+        "new_validation_episodes": 0,
+        "validation64_bank_opens": 0,
+        "solver_calls": 0,
+        "plant_steps": 0,
+        "metadata_artifact_reads": "local backup status/proof artifacts, the patch receipt/summary and scripts/research_service/backup.py source hash only; no validation-bank source opening"
+      },
+      "test_budget": {
+        "final_test_episodes": 0,
+        "sealed_test_episodes": 0
+      },
+      "resource_limits": {
+        "solver_calls": 0,
+        "plant_steps": 0,
+        "training_steps": 0,
+        "validation_episodes": 0,
+        "test_episodes": 0
+      },
+      "max_attempts": 1,
+      "max_zero_usage_repairs": 1,
+      "timeout_seconds": 900,
+      "dependencies": [],
+      "pass_conditions": {
+        "zero_solver_plant_training_validation_test_resources": true,
+        "validation_bank_content_opened": false,
+        "sealed_or_final_test_accessed": false,
+        "no_secrets_read_or_logged": true,
+        "backup_uploader_not_executed": true,
+        "direct_github_api_not_called": true,
+        "patched_backup_py_hash_checked": true,
+        "patched_backup_py_hash_matches_expected": true,
+        "backup_status_artifacts_inspected": true,
+        "backup_recoverability_status_recorded": true,
+        "commit_and_package_metadata_recorded_if_available": true,
+        "release_rotation_or_failure_status_recorded": true,
+        "nonzero_work_gate_decision_recorded": true,
+        "outputs_persisted": true
+      },
+      "continue_without_review": false
+    }
+  ]
+}

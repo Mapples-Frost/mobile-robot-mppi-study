@@ -8536,3 +8536,17 @@ Next approved task prepared but not launched due scheduler guard:
 - Launch attempt was rejected by the one-experiment-per-iteration guard; no resources were consumed by that rejected launch.
 
 State was preserved via `update_state`. Next cycle should launch exactly the pending approved backup-status recheck task under the published plan bounds.
+
+<!-- backup-post-rotation-status-recheck-solo-v0b-gate-key-repair -->-RESEARCH_LOG-md
+### 2026-10-01 backup post-rotation status recheck (solo v0b gate-key repair)
+
+- Task: `S-BACKUP-POST-ROTATION-STATUS-RECHECK-v0b-gate-key-repair`.
+- Outcome: task_gate_passed=`True`, adequate_backup_for_nonzero_work=`True`.
+- Evidence: `research_artifacts/aws_diagnostics/backup_post_rotation_status_recheck_solo_v0b_gate_key_repair_20261001T013958Z/summary.md`, `research_artifacts/aws_diagnostics/backup_post_rotation_status_recheck_solo_v0b_gate_key_repair_20261001T013958Z/raw.json`, `research_artifacts/aws_diagnostics/backup_post_rotation_status_recheck_solo_v0b_gate_key_repair_20261001T013958Z/completed.json`.
+- Backup proof: `research_artifacts/aws_backup_proofs/BACKUP_VERIFIED_AFTER_RELEASE_ROTATION_PATCH_SOLO_V0B_20261001T013958Z.json`. Retry request: `None`.
+- Next action: Backup is verified after the release-rotation patch; nonzero development work may resume only under a separately frozen scientific execution plan citing this proof.
+- Resource use: solver_calls=0, plant_steps=0, training_steps=0, validation_episodes=0, test_episodes=0. No validation-bank, sealed-test, or final-test access.
+
+
+## 2026-10-01T01:45:31.697054+00:00
+
